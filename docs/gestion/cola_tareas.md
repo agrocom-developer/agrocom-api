@@ -1,6 +1,74 @@
 # Cola de tareas automatizables
 
-**Última actualización: 23/9/2026 (sesión de continuación de la tarea 128).**
+**Última actualización: 23/9/2026, aún más tarde (tarea 142 agregada).** El
+dueño encontró, mirando `/panel/bitacora`, que "Ver detalle" expande la tabla
+de cambios adentro de la última columna en vez de una fila propia — deforma
+el grid. Tarea 142 escrita con ese alcance puntual; el ciclo ya venía
+corriendo 135-141 cuando se agregó, así que entra al final de la cola.
+
+**Última actualización anterior: 23/9/2026, más tarde (el dueño encarga la
+reestructuración del dashboard y un motor de notificaciones — tareas 135 a
+141 escritas).** Con la cola en cero y el ciclo ya detenido (ver la entrada
+de abajo), el dueño dictó en una sesión interactiva aparte, mirando las
+pantallas, cómo quiere que cada rol vea su propio dashboard (hoy los 4 tabs
+—resumen/mapa/lotes/multimedia— son iguales para los seis roles) y que la
+campana de notificaciones del header, hoy decorativa, dispare a algo real.
+El diagnóstico completo, la arquitectura ya existente que se reusa
+(`ArmarDashboard`/`SeccionDashboard`, tarea 67 — ya arma el dashboard por rol
+activo, solo falta el agrupamiento en tabs) y el porqué del orden están en
+[plan_dashboard_notificaciones_por_rol.md](plan_dashboard_notificaciones_por_rol.md).
+135 abre con el mecanismo de tabs-por-rol y el dashboard del Dueño; 136 a 139
+son un dashboard por rol cada una (Encargado de Operaciones, Piloto/Ayudante,
+Jefe de Campo, Administrador), sin dependencias entre sí, todas apoyadas en
+135. 140 ("ver como otro usuario", incluido el portal cliente) y 141 (motor
+de notificaciones) quedan marcadas **crítica**: la primera toca el scoping
+del portal (invariante 5 de `CLAUDE.md`, la única cosa que nunca se delega
+sin revisión línea por línea), la segunda es un patrón arquitectónico nuevo
+que cruza todos los módulos y escribe su propio ADR antes de tocar código.
+
+**Antes de que el ciclo tome la 140 o la 141**: la sección "Deuda técnica
+detectada" de más abajo (23/9/2026) encontró que `prompts/plantillas/planificar.md`
+sigue mandando abrir en borrador los PR de tareas `critica=si` — la causa de
+que el PR #289 (tarea 134) esté trabado. Si esas dos líneas de la plantilla
+no se corrigen antes, 140 y 141 van a quedar en el mismo lugar que la 134.
+
+**Última actualización anterior: 23/9/2026 (planificación tras la tarea 134 — sin tarea
+nueva, ciclo detenido).** Las tareas 129 a 134 (ronda dirigida por el dueño del
+22/9/2026) cerraron todas: 129 (PR #284), 130 (PR #285), 131 (PR #286), 132
+(PR #287) y 133 (PR #288) mergeadas a `develop`; 134 (Finanzas, crítica) con su
+implementación y su verificación independiente aprobadas
+(`runs/134-veredicto.md` = APROBADO), pero el PR #289 sigue **en borrador**
+— ver el hallazgo de abajo.
+
+Con la cola vacía, esta sesión revisó `plan_sprints.md` entero (Sprints 1 a
+25, HU-01 a HU-103, TE-01 a TE-14) contra `git log`/`gh pr list`, no contra el
+texto del documento: **no queda ninguna HU/TE pendiente que califique**. Todo
+lo de software está integrado — confirmado HU por HU vía PR mergeado para las
+rondas recientes (HU-96 a HU-103, Sprints 19 a 25) y por evidencia directa de
+código para las anteriores (el portal del cliente, Mantenimiento y Finanzas
+con sus máquinas de estados ya existen, lo que solo es posible si los Sprints
+8, 10, 11 y 12 ya están hechos). Lo único que queda del plan es lo que ya
+estaba anotado en "Fuera del ciclo automático" (TE-02 sin el RC en mano, TE-04
+en `agrocom-field`, TE-08 a TE-12 atadas a infraestructura/datos/campo reales,
+la reunión de cierre de la especificación) más dos frentes de decisiones de
+negocio sin resolver (`docs/negocio/observaciones_siembra_etapas_2026-09-21.md`
+§4, y las dos preguntas que dejó abiertas `runs/134.md` sobre el `anular()` de
+Planilla y el alcance real de "cobranza"). Se escribió `runs/DETENER` — ahí
+está la pregunta concreta para el dueño.
+
+**Hallazgo de esta sesión, no una tarea nueva** (va a "Deuda técnica
+detectada" más abajo): el PR #289 (tarea 134, crítica) nació **en borrador**,
+tercera vez que pasa esto (antes: #46 el 2/9, #59/#62 el 2/9, #189/#190 el
+14/9) por la misma causa raíz, nunca corregida —
+`prompts/plantillas/planificar.md` (líneas 101 y 132) sigue diciendo "su PR se
+abre en borrador"/"PR en borrador" para `critica=si`, en contra de
+`CLAUDE.md` y de `automatizacion_desarrollo.md` §5. `bin/ciclo` (`fase_pr`)
+tiene la lógica correcta y no fue quien lo abrió así: el PR ya existía cuando
+el ciclo llegó a esa fase (`runs/134.pr.md` dice explícitamente "PR en
+borrador", escrito por la propia sesión de implementación, siguiendo la
+plantilla tal como está redactada hoy).
+
+**Última actualización anterior: 23/9/2026 (sesión de continuación de la tarea 128).**
 La 128 (helper `TextoDeFiltro`) cerró `OK` con `bin/verify` en verde: el PR
 #281 había quedado **abierto contra `master` por error** de la sesión que lo
 abrió (de ahí el `mergeStateStatus=BLOCKED` — no era el auto-merge esperando,
@@ -497,12 +565,20 @@ exista el módulo `Mezclas`).
 | 126 | Fichas de Finanzas al arquetipo Detalle: Planilla, Rendición (sin `confirm()` nativo) y Devengos (sin `.ag-filtros`); la lista de pendientes queda vacía y `filter-bar.css` se retira | `./bin/verify` = 0 con `panel_homogeneo_pendientes.txt` vacío, `grep 'ag-filtros'` vacío en `app`/`resources`, Playwright `runs/126-navegador.cjs` (incluye 404/403 de `/panel/devengos/4` con otro usuario) | `Finanzas/**` (vistas, controladores solo para pintar), `resources/css/pages/**`, `lang/es/finanzas.php`, `docs/**`, tests | no | 3 | **hecha** (PR #279, mergeado 23/9/2026) |
 | 127 | La Orden de Trabajo se puede editar (pedido del dueño 22/9/2026): indicaciones compartidas y condición de pago por equipo con `PoliticaEdicionOrdenTrabajo` (nada validado; motivo si hay cerrados; condición solo con todos abiertos); el reparto sigue por trabajo | `./bin/verify` = 0 con `PoliticaEdicionOrdenTrabajoTest`, script de rollback `storage/app/verifica-edicion-ot.php`, Playwright `runs/127-navegador.cjs` | `Operaciones/**`, migración add (`motivo_correccion`, `corregida_at`), `routes/web.php`, `lang/es/operaciones.php`, tests, `runs/revision-pendiente.txt` | no | 3 | **hecha** (PR #280, mergeado 23/9/2026; dejó anotación en `runs/revision-pendiente.txt` — ZONA DE DINERO, condición de pago por equipo, ADR 0023 — para revisión humana) |
 | 128 | `?q[]=x` (y `?estado[]=x`) deja de dar 500 en todos los listados: un helper de Plataforma, patrón de la 121 | `./bin/verify` = 0, `runs/128-sondas.log` sin 500 en todos los `index`, `grep "string('q')"` vacío en controladores | `Plataforma/**` (helper), controladores web de listado de todos los módulos (solo cómo leen el parámetro), tests | no | 2 | **hecha** (PR #281 mergeado a `develop` 23/9/2026; había quedado abierto contra `master` por error de la sesión anterior — de ahí el `mergeStateStatus=BLOCKED`, no la protección de rama en sí — corregido con `gh pr edit --base develop` y el auto-merge lo tomó solo) |
-| 129 | Limpieza tras la homogeneización: CSS muerto fuera de las pantallas excluidas, `campos-form.js` huérfano, usuario viejo en `sistema_diseno_panel.md` | `./bin/verify` = 0 y barrido `runs/129-barrido.cjs` con 0 | `resources/css/pages/**`, `resources/js/pages/campos-form.js`, `docs/diseno/sistema_diseno_panel.md` | no | 1 | pendiente |
-| 130 | Grilla de Órdenes de aplicación: el título se corta en tableta cuando hay dos badges en la cabecera de la tarjeta (identidad se queda sin ancho); "Con inconvenientes" pasa a `danger` y a una línea propia debajo del título, fuera de la fila de estados | `./bin/verify` = 0, sin `variant="warning"` en el badge de inconvenientes en las tres vistas, Playwright `runs/130-capturas/` con el título completo en `?vista=grilla` | `Operaciones/**` (vistas de `ordenes`), `resources/css/pages/ordenes.css` | no | 1 | pendiente |
-| 131 | La cola de Validación de sesiones muestra el piloto real (no `Piloto #:id`) y enlaza el trabajo a su ficha (tarea 124) en vez de un `#id` suelto | `./bin/verify` = 0, `grep` sin `sesion_piloto', ['id'` en la vista, Playwright con el enlace al detalle del trabajo | `Operaciones/**` (vista y controlador de `sesiones/validacion`), `Personal/Contratos/**` (contrato de lectura si hace falta) | no | 1 | pendiente |
-| 132 | La ficha de Base reemplaza los inputs numéricos de latitud/longitud por un mapa con marcador arrastrable, reusando el patrón del editor de mapa de Propiedad | `./bin/verify` = 0, los dos inputs pasan a `hidden`, Playwright con alta y edición moviendo el marcador | `Personal/**` (vista y JS de `bases`), `resources/js/organisms/base-mapa-marcador.js`, `resources/css/pages/bases.css` | no | 2 | pendiente |
-| 133 | `/panel/stock` gana un listado de solo lectura de los movimientos (hoy solo se puede registrar, nunca ver la lista); editar/eliminar un movimiento sigue sin existir, a propósito (es un asiento contable) | `./bin/verify` = 0, sin `row-actions` en el nuevo listado, Playwright filtrando por repuesto/base | `Inventario/**` (vista, controlador, `Aplicacion/ListarMovimientosStock`), `lang/es/inventario.php` | no | 2 | pendiente |
-| 134 | Finanzas: clasificar cada objeto (Gastos/Combustible sin estado → edición simple; Rendición con máquina de estados → corrección con motivo; Planilla y Factura inmutables por diseño → no se tocan) y agregar edición solo donde el dominio lo permite | `./bin/verify` = 0 con `PoliticaEdicionRendicionTest`, `runs/134.md` con la clasificación de las seis, Playwright confirmando qué edita y qué no | `Finanzas/**`, `routes/web.php`, `lang/es/finanzas.php`, tests, `runs/revision-pendiente.txt` | sí | 3 | pendiente |
+| 129 | Limpieza tras la homogeneización: CSS muerto fuera de las pantallas excluidas, `campos-form.js` huérfano, usuario viejo en `sistema_diseno_panel.md` | `./bin/verify` = 0 y barrido `runs/129-barrido.cjs` con 0 | `resources/css/pages/**`, `resources/js/pages/campos-form.js`, `docs/diseno/sistema_diseno_panel.md` | no | 1 | **hecha** (PR #284, mergeado 23/9/2026) |
+| 130 | Grilla de Órdenes de aplicación: el título se corta en tableta cuando hay dos badges en la cabecera de la tarjeta (identidad se queda sin ancho); "Con inconvenientes" pasa a `danger` y a una línea propia debajo del título, fuera de la fila de estados | `./bin/verify` = 0, sin `variant="warning"` en el badge de inconvenientes en las tres vistas, Playwright `runs/130-capturas/` con el título completo en `?vista=grilla` | `Operaciones/**` (vistas de `ordenes`), `resources/css/pages/ordenes.css` | no | 1 | **hecha** (PR #285, mergeado 23/9/2026) |
+| 131 | La cola de Validación de sesiones muestra el piloto real (no `Piloto #:id`) y enlaza el trabajo a su ficha (tarea 124) en vez de un `#id` suelto | `./bin/verify` = 0, `grep` sin `sesion_piloto', ['id'` en la vista, Playwright con el enlace al detalle del trabajo | `Operaciones/**` (vista y controlador de `sesiones/validacion`), `Personal/Contratos/**` (contrato de lectura si hace falta) | no | 1 | **hecha** (PR #286, mergeado 23/9/2026) |
+| 132 | La ficha de Base reemplaza los inputs numéricos de latitud/longitud por un mapa con marcador arrastrable, reusando el patrón del editor de mapa de Propiedad | `./bin/verify` = 0, los dos inputs pasan a `hidden`, Playwright con alta y edición moviendo el marcador | `Personal/**` (vista y JS de `bases`), `resources/js/organisms/base-mapa-marcador.js`, `resources/css/pages/bases.css` | no | 2 | **hecha** (PR #287, mergeado 23/9/2026) |
+| 133 | `/panel/stock` gana un listado de solo lectura de los movimientos (hoy solo se puede registrar, nunca ver la lista); editar/eliminar un movimiento sigue sin existir, a propósito (es un asiento contable) | `./bin/verify` = 0, sin `row-actions` en el nuevo listado, Playwright filtrando por repuesto/base | `Inventario/**` (vista, controlador, `Aplicacion/ListarMovimientosStock`), `lang/es/inventario.php` | no | 2 | **hecha** (PR #288, mergeado 23/9/2026) |
+| 134 | Finanzas: clasificar cada objeto (Gastos/Combustible sin estado → edición simple; Rendición con máquina de estados → corrección con motivo; Planilla y Factura inmutables por diseño → no se tocan) y agregar edición solo donde el dominio lo permite | `./bin/verify` = 0 con `PoliticaEdicionRendicionTest`, `runs/134.md` con la clasificación de las seis, Playwright confirmando qué edita y qué no | `Finanzas/**`, `routes/web.php`, `lang/es/finanzas.php`, tests, `runs/revision-pendiente.txt` | sí | 3 | **hecha** — implementación y verificación independiente aprobadas (`runs/134-veredicto.md`); PR #289 sigue **en borrador** esperando que una persona lo pase a "ready for review" (ver "Deuda técnica detectada", 23/9/2026) |
+| 135 | Dashboard: el agrupamiento de tabs pasa a depender del rol activo (reemplaza el `$tabs` fijo de `dashboard.blade.php:20-29`, reusando `ArmarDashboard`/`SeccionDashboard` tal cual); primera implementación, el Dueño en 3 tabs (estado de cuentas de clientes/contratos, resumen de trabajos por equipo, progreso de toda la campaña) | `./bin/verify` = 0, el dueño ve exactamente esas 3 tabs y ningún otro rol cambia su vista actual, Playwright `runs/135-navegador.cjs` | `Seguridad/**` (dashboard), posible sección nueva en Finanzas/Comercial/Personal según lo que la tab de estado de cuentas necesite | no | 3 | pendiente |
+| 136 | Dashboard del Encargado de Operaciones en 3 tabs: estados de las órdenes de aplicación, proceso de los trabajos (cola de validación + pausas), resumen de vuelos con granularidad diaria/semanal/mensual | `./bin/verify` = 0, las 3 tabs con datos correctos y el selector de granularidad probado en los tres casos, Playwright `runs/136-navegador.cjs` | `Operaciones/**` (lectura), `Seguridad/**` (agrupamiento) | no | 3 | pendiente |
+| 137 | Dashboard del Piloto y del Ayudante (rol `auxiliar`) reagrupando `MisSesiones`/`MisEquipos`/`MiLiquidacion` ya existentes; de paso, evalúa si el label "Ayudante" reemplaza a "Auxiliar" en la UI (sin tocar la clave del rol sin confirmación explícita del dueño) | `./bin/verify` = 0, piloto y auxiliar ven su dashboard reagrupado sin ver nada nuevo que no vieran antes, Playwright `runs/137-navegador.cjs` | `Seguridad/**` (agrupamiento), `lang/es/*.php` (solo si el label cambia) | no | 2 | pendiente |
+| 138 | Dashboard del Jefe de Campo en 3 tabs: recursos ocupados/faltantes, órdenes de trabajo con sus cuadrillas, estado de todas las órdenes de aplicación cruzando haciendas y equipamiento (Mantenimiento) | `./bin/verify` = 0, las 3 tabs con datos cruzando los módulos que corresponde, sin acciones de escritura en el dashboard, Playwright `runs/138-navegador.cjs` | `Operaciones/**`, `Personal/**`, `Mantenimiento/**` (lectura), `Seguridad/**` (agrupamiento) | no | 3 | pendiente |
+| 139 | Dashboard del Administrador de plataforma (técnico, no operativo/financiero): usuarios y accesos, bitácora y accesos directos a configuración/organización | `./bin/verify` = 0, el admin ve solo contenido técnico aunque tenga otros roles asignados, Playwright `runs/139-navegador.cjs` | `Seguridad/**` (agrupamiento y secciones nuevas) | no | 2 | pendiente |
+| 140 | El administrador puede "ver como" otro usuario (los 6 roles internos y, cruzando de guard, un usuario del portal cliente) — de solo lectura, con indicador visible, bitácora de entrada/salida y permiso propio (`seguridad.usuario.ver_como`) | `./bin/verify` = 0, tests de que ninguna ruta de escritura responde durante la vista, de bitácora de entrada/salida, y de que el portal impersonado respeta el invariante 5; Playwright `runs/140-navegador.cjs` | `Seguridad/**` (nuevo), `Portal/**` (scoping), `runs/revision-pendiente.txt` | sí | 4 | pendiente |
+| 141 | Motor de notificaciones interno (módulo nuevo, con su propio ADR): generaliza el patrón de evento de dominio de `SesionValidada`, conecta `notifications-menu.blade.php` a datos reales con acción al click, y cablea la primera cadena real (contrato creado → orden de aplicación/trabajo → trabajo realizado) | `./bin/verify` = 0, test de idempotencia del listener genérico, test de que cada usuario ve solo sus propias notificaciones, Playwright `runs/141-navegador.cjs` con la cadena de punta a punta | módulo nuevo `Notificaciones` (a confirmar en el ADR), eventos de dominio nuevos en los módulos que los emiten, `docs/decisiones/`, `runs/revision-pendiente.txt` | sí | 5 | pendiente |
+| 142 | `/panel/bitacora`: "Ver detalle" deja de expandir la tabla de cambios adentro de la última columna (la deforma) y pasa a una sub-fila propia debajo, a todo el ancho de la tabla | `./bin/verify` = 0, Playwright `runs/142-navegador.cjs` confirmando que la sub-fila ocupa el ancho de `.ag-bitacora__tabla` y que ninguna otra fila cambia de ancho al abrirse, en escritorio y en ≤992px | `Seguridad/**` (solo la vista `bitacora/index.blade.php`), `resources/css/pages/bitacora.css` | no | 2 | pendiente |
 
 ### El bug de la 24 — ya pasó dos veces, sigue sin arreglarse
 
@@ -573,6 +649,28 @@ el 9/9/2026 con las tareas 82 a 84.
 
 Cuando la sesión de planificación se queda sin HU/TE y encuentra algo acá,
 escribe `runs/DETENER` y para: la decisión es del usuario.
+
+**Pendiente al 23/9/2026** (hallazgo propio al planificar tras la tarea 134,
+no pedido por el dueño): el PR #289 (tarea 134, crítica) nació **en
+borrador**. Es la tercera vez que pasa exactamente esto — antes el PR #46
+(2/9), los PR #59/#62 (2/9) y los PR #189/#190 (14/9) — y la causa raíz sigue
+siendo la misma que ya se había identificado el 14/9/2026 y **nunca se
+corrigió**: `prompts/plantillas/planificar.md` (líneas 101 y 132) todavía dice
+"su PR se abre en borrador" / "`critica=si` para lo de la lista de arriba (PR
+en borrador)" — el mismo texto que motivó la entrada de deuda técnica del
+14/9/2026 más abajo. `bin/ciclo` (`fase_pr`) tiene la lógica correcta (con
+`critica=si` no pasa `--draft`, solo anota `runs/revision-pendiente.txt`), y
+no fue quien creó este PR en borrador: `runs/134.pr.md` deja escrito, en su
+propia primera línea de cuerpo, "PR en borrador" — la sesión de
+implementación/verificación de la tarea 134 leyó la plantilla (la misma que
+usa toda sesión de planificación, esta incluida) y siguió al pie de la letra
+una instrucción que contradice `CLAUDE.md` y
+`docs/gestion/automatizacion_desarrollo.md` §5. Sin fila propia, mismo
+criterio que la entrada del 14/9: decisión del usuario — corregir de una vez
+las dos líneas de la plantilla (quitar "PR en borrador" y describir la
+integración normal con revisión posterior anotada en
+`runs/revision-pendiente.txt`) y pasar el PR #289 a "ready for review" /
+mergearlo (ya tiene veredicto **APROBADO**, `runs/134-veredicto.md`).
 
 **Pendiente al 13/9/2026** (hallazgo propio al planificar el Sprint 18, no
 pedido por el dueño — ver

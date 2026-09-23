@@ -14,22 +14,21 @@
 
     Datos esperados: la cáscara de CascaraPanel (menu/roles/…/tema/periodo/
     version) + `secciones` (array<string, mixed>) y `visibles` (list<string>)
-    de ArmarDashboard.
+    de ArmarDashboard, más `tabs` (list<array{id: string, label: string,
+    claves: list<string>}>) de ArmarDashboard::tabsPara() (tarea 135): el
+    agrupamiento en pestañas, ya resuelto por rol activo — acá solo se decide
+    si cada tab tiene contenido (alguna de sus claves cayó en `visibles`).
+    `tecnico` (bool, tarea 139): el rol activo no es del negocio, así que el
+    encabezado no habla de operación ni de planilla.
 --}}
 @php
-    $tabs = collect([
-        ['id' => 'resumen', 'label' => __('seguridad.dashboard.tab_resumen'), 'visible' => (bool) array_intersect($visibles, [
-            'alertas', 'distribucion_sesiones', 'hectareas_por_dia', 'cola_validacion',
-            'mis_sesiones', 'mis_equipos', 'mi_liquidacion', 'pausas', 'stock', 'avance_clientes',
-            'dias_en_hacienda',
-        ])],
-        ['id' => 'mapa', 'label' => __('seguridad.dashboard.tab_mapa'), 'visible' => isset($secciones['mapa'])],
-        ['id' => 'lotes', 'label' => __('seguridad.dashboard.tab_resumen_lote'), 'visible' => isset($secciones['resumen_por_lote'])],
-        ['id' => 'multimedia', 'label' => __('seguridad.dashboard.tab_multimedia'), 'visible' => isset($secciones['multimedia'])],
-    ])->where('visible')->values();
+    $tabs = collect($tabs)
+        ->map(fn (array $tab) => [...$tab, 'visible' => (bool) array_intersect($visibles, $tab['claves'])])
+        ->where('visible')
+        ->values();
 @endphp
 
-<x-templates.panel-shell :title="__('seguridad.dashboard.titulo')" :tema="$tema">
+<x-templates.panel-shell :title="__($tecnico ? 'seguridad.dashboard.titulo_tecnico' : 'seguridad.dashboard.titulo')" :tema="$tema">
     <x-templates.panel-layout
         :menu="$menu"
         :roles="$roles"
@@ -43,7 +42,7 @@
         :vista-actual="__('seguridad.dashboard.tab_resumen')"
     >
         <div class="ag-dash">
-            @include('seguridad::pages.dashboard._encabezado', ['rol' => $activeRoleLabel])
+            @include('seguridad::pages.dashboard._encabezado', ['rol' => $activeRoleLabel, 'tecnico' => $tecnico])
 
             @if ($tabs->isEmpty())
                 @include('seguridad::pages.dashboard._sin-secciones')

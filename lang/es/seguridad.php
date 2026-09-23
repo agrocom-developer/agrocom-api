@@ -209,7 +209,7 @@ return [
                 'permisos' => ['Programación', 'Sesiones', 'Mezclas'],
             ],
             'auxiliar' => [
-                'nombre' => 'Auxiliar de campo',
+                'nombre' => 'Ayudante',
                 'descripcion' => 'Apoya la preparación de mezclas y la logística de cada sesión.',
                 'permisos' => ['Mezclas', 'Checklist', 'Evidencias'],
             ],
@@ -349,6 +349,138 @@ return [
         'lote_col_litros' => 'Litros',
         'lote_col_litros_ha' => 'L/ha',
         'lote_col_tiempo' => 'Vuelo',
+
+        // Tabs del dueño (tarea 135): estado de cuentas, trabajos actuales
+        // por equipo y progreso de toda la campaña.
+        'tab_estado_cuentas' => 'Estado de cuentas',
+        'tab_trabajos_equipo' => 'Trabajos por equipo',
+        'tab_progreso_campania' => 'Progreso de campaña',
+
+        'seccion_estado_cuentas' => 'Estado de cuenta por contrato',
+        'cuentas_col_cliente' => 'Cliente',
+        'cuentas_col_contratado' => 'Contratado',
+        'cuentas_col_facturado' => 'Facturado',
+        'cuentas_col_adelanto' => 'Adelanto',
+        'cuentas_col_saldo' => 'Saldo pendiente',
+
+        'seccion_trabajos_equipo' => 'Trabajos abiertos por equipo',
+        'trabajos_equipo_col_equipo' => 'Equipo',
+        'trabajos_equipo_col_abiertos' => 'Abiertos',
+        'trabajos_equipo_col_hectareas' => 'Hectáreas',
+        'trabajos_equipo_col_lotes' => 'Lotes',
+        'trabajos_equipo_col_ultimo' => 'Último inicio',
+
+        'seccion_progreso_campania' => 'Progreso de la campaña',
+        'progreso_campania_kpi_totales' => 'Hectáreas totales',
+        'progreso_campania_kpi_aplicadas' => 'Hectáreas aplicadas',
+        'progreso_campania_kpi_pendientes' => 'Hectáreas pendientes',
+        'progreso_campania_kpi_pct' => 'Completado',
+        'progreso_campania_unidad_hectareas' => 'ha',
+        'progreso_campania_lotes' => '{0} sin lotes con actividad|{1} :cantidad lote con actividad|[2,*] :cantidad lotes con actividad',
+
+        // Tabs del encargado de operaciones (tarea 136): cómo van las órdenes
+        // de aplicación, el proceso de los trabajos y el resumen de vuelos.
+        'tab_estado_aplicaciones' => 'Estados de las aplicaciones',
+        'tab_proceso_trabajos' => 'Proceso de los trabajos',
+        'tab_resumen_vuelos' => 'Resumen de vuelos',
+
+        // Tabs del piloto y del ayudante (tarea 137): lo que devengan y el
+        // trabajo que hicieron.
+        'tab_mis_devengos' => 'Mis devengos',
+        'tab_mis_trabajos' => 'Mis trabajos',
+
+        // Tabs del jefe de campo (tarea 138): los recursos que se ocupan o
+        // faltan, las órdenes de trabajo de cada cuadrilla y cómo van las
+        // órdenes de aplicación con su equipamiento.
+        'tab_recursos' => 'Recursos',
+        'tab_ordenes_cuadrillas' => 'Órdenes de trabajo',
+        'tab_ordenes_equipamiento' => 'Órdenes y equipamiento',
+
+        'seccion_recursos_en_uso' => 'Recursos en uso ahora',
+        'recursos_en_uso_total' => '{1} :cantidad recurso en uso|[0,*] :cantidad recursos en uso',
+        'recursos_en_uso_carga' => '{1} :cantidad trabajo abierto · :hectareas ha|[2,*] :cantidad trabajos abiertos · :hectareas ha',
+        'recursos_en_uso_integrantes' => 'Integrantes',
+        'recursos_en_uso_sin_integrantes' => 'Sin integrantes vigentes',
+        'recursos_en_uso_sin_equipamiento' => 'Sin equipamiento asignado',
+        'recursos_en_uso_ver' => 'Ver cuadrillas',
+
+        'seccion_ordenes_cuadrillas' => 'Órdenes de trabajo por cuadrilla',
+        'ordenes_cuadrillas_ver' => 'Ver órdenes de trabajo',
+        'ordenes_cuadrillas_col_trabajo' => 'Orden de trabajo',
+        'ordenes_cuadrillas_col_aplicacion' => 'Orden de aplicación',
+        'ordenes_cuadrillas_col_lotes' => 'Lotes',
+        'ordenes_cuadrillas_col_trabajos' => 'Abiertos',
+        'ordenes_cuadrillas_col_hectareas' => 'Hectáreas',
+        'ordenes_cuadrillas_col_estado' => 'Estado',
+        'ordenes_cuadrillas_tandas' => '{1} :cantidad orden de trabajo|[2,*] :cantidad órdenes de trabajo',
+        'ordenes_cuadrillas_aplicacion' => 'Orden #:id · aplicación :nro',
+        'ordenes_cuadrillas_abiertos' => ':abiertos de :total',
+
+        'seccion_ordenes_equipamiento' => 'Estado de las órdenes de aplicación',
+        'ordenes_equipamiento_ver' => 'Ver órdenes',
+        'ordenes_equipamiento_col_orden' => 'Orden',
+        'ordenes_equipamiento_col_estado' => 'Estado',
+        'ordenes_equipamiento_col_haciendas' => 'Haciendas',
+        'ordenes_equipamiento_col_cuadrillas' => 'Cuadrillas',
+        'ordenes_equipamiento_col_equipamiento' => 'Equipamiento',
+        'ordenes_equipamiento_numero' => '#:id · aplicación :nro',
+        'ordenes_equipamiento_hectareas' => ':hectareas ha',
+        'ordenes_equipamiento_cuadrillas' => ':asignadas de :necesarias',
+        'ordenes_equipamiento_sin_cuadrillas' => 'Sin cuadrillas asignadas',
+        'ordenes_equipamiento_todo_operativo' => '{1} :cantidad recurso operativo|[0,*] :cantidad recursos operativos',
+        'ordenes_equipamiento_fuera' => ':cantidad de :total fuera de servicio',
+
+        'seccion_ordenes_estado' => 'Órdenes de aplicación por estado',
+        'ordenes_estado_total' => 'Órdenes en total',
+        'ordenes_estado_ver' => 'Ver órdenes',
+
+        'seccion_resumen_vuelos' => 'Hectáreas aplicadas',
+        'vuelos_granularidad_aria' => 'Agrupar las hectáreas por',
+        'vuelos_dia' => 'Diario',
+        'vuelos_semana' => 'Semanal',
+        'vuelos_mes' => 'Mensual',
+        'vuelos_serie' => 'Hectáreas validadas',
+        'vuelos_periodo_dia' => 'Últimos :cantidad días',
+        'vuelos_periodo_semana' => 'Últimas :cantidad semanas',
+        'vuelos_periodo_mes' => 'Últimos :cantidad meses',
+        'vuelos_nota_semana' => 'Cada punto es una semana, de lunes a domingo; la fecha es la del lunes.',
+
+        // Tablero del administrador de plataforma (tarea 139): el título y la
+        // bajada no hablan de operación ni de planilla; y sus dos tabs, las
+        // cuentas y los accesos, y la bitácora con los atajos a la
+        // configuración.
+        'titulo_tecnico' => 'Estado de la plataforma',
+        'bajada_tecnica' => ':fecha · usuarios, accesos y registros del sistema.',
+        'tab_usuarios_accesos' => 'Usuarios y accesos',
+        'tab_bitacora_configuracion' => 'Bitácora y configuración',
+
+        'seccion_usuarios_por_rol' => 'Usuarios activos por rol',
+        'usuarios_por_rol_col_rol' => 'Rol',
+        'usuarios_por_rol_col_usuarios' => 'Usuarios',
+        'usuarios_por_rol_total' => 'Cuentas internas activas',
+        'usuarios_por_rol_portal' => 'Cuentas del portal de clientes',
+        'usuarios_por_rol_nota' => 'Una cuenta con varios roles cuenta en cada uno.',
+        'usuarios_por_rol_ver' => 'Ver usuarios',
+
+        'seccion_dispositivos' => 'Dispositivos con sesión abierta',
+        'dispositivos_ver' => '{1} Ver el dispositivo|[2,*] Ver los :cantidad dispositivos',
+
+        'seccion_versiones_apk' => 'Versiones del APK',
+        'versiones_apk_vigente' => 'Versión autorizada',
+        'versiones_apk_sin_vigente' => 'Ninguna versión autorizada',
+        'versiones_apk_pendientes' => 'Pendientes de autorizar',
+        'versiones_apk_sin_pendientes' => 'No hay versiones pendientes de autorizar',
+        'versiones_apk_codigo' => 'código :codigo',
+        'versiones_apk_ver' => 'Ver versiones',
+
+        'seccion_bitacora_reciente' => 'Últimos cambios en la bitácora',
+        'bitacora_reciente_ver' => 'Ver bitácora',
+
+        'seccion_accesos' => 'Accesos directos',
+        'acceso_configuracion_titulo' => 'Configuración del sistema',
+        'acceso_configuracion_detalle' => 'Mapas y correo',
+        'acceso_organizacion_titulo' => 'Organización',
+        'acceso_organizacion_detalle' => 'Empresa, plan y facturación',
     ],
 
     // HU-45 (tarea 39): alta y mantenimiento de usuarios internos del panel,

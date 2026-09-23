@@ -23,12 +23,15 @@ use Illuminate\Pagination\LengthAwarePaginator;
  *
  * `$busqueda` mira el nombre y el identificador del equipo y el nombre o el
  * usuario de su dueño; `$rolId`, el rol con el que opera el dispositivo. La
- * flota crece con cada teléfono, así que el listado se pagina.
+ * flota crece con cada teléfono, así que el listado se pagina. `$pagina` fija
+ * la página; sin ella se toma el `?page=` de la request, que es lo que quiere
+ * la pantalla y NO lo que quiere el tablero (tarea 139), que siempre pide la
+ * primera para no heredar el de su propia URL.
  */
 final class ListarDispositivosRegistrados
 {
     /** @return LengthAwarePaginator<int, SecTokenDispositivo> */
-    public function ejecutar(?string $busqueda = null, ?int $rolId = null, bool $incluirRevocados = false, int $porPagina = 15): LengthAwarePaginator
+    public function ejecutar(?string $busqueda = null, ?int $rolId = null, bool $incluirRevocados = false, int $porPagina = 15, ?int $pagina = null): LengthAwarePaginator
     {
         return SecTokenDispositivo::query()
             ->when($incluirRevocados, fn (Builder $consulta) => $consulta->withTrashed())
@@ -46,7 +49,7 @@ final class ListarDispositivosRegistrados
             ->with(['rol', 'tokenable'])
             ->orderByDesc('last_used_at')
             ->orderByDesc('id')
-            ->paginate($porPagina)
+            ->paginate($porPagina, page: $pagina)
             ->withQueryString();
     }
 }
