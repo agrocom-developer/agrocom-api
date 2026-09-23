@@ -94,7 +94,15 @@ mismo comentario ("mismo patrón que `FinanzasServiceProvider` con
   `auxiliar`; la tarea decide si es solo el label visible o si el dueño
   quiere el rol renombrado en serio, y en ese caso NO lo hace sin
   confirmarlo primero, por lo invasivo de tocar la clave de un rol): estado
-  de sus devengos, trabajos pendientes y realizados.
+  de sus devengos, trabajos pendientes y realizados. Hecha el 23/9/2026:
+  ambos roles comparten el agrupamiento —`Mis devengos` (`MiLiquidacion`) y
+  `Mis trabajos` (`MisSesiones` + `MisEquipos`)— porque ven exactamente las
+  mismas tres secciones, todas acotadas a su `persona_id`. Sobre el nombre:
+  solo se cambió el texto visible —`seguridad.rol.meta.auxiliar.nombre` y
+  `personal.roles.auxiliar` pasan a «Ayudante», como ya decían las pantallas
+  de cuadrillas, tarifas y estadías—; la clave `auxiliar` de `sec_role`, los
+  permisos y el enum `RolOperativoPersona` no se tocaron. Renombrar la clave
+  en serio sigue esperando la confirmación del dueño.
 - **Jefe de Campo** (138): recursos que se ocupan o faltan; órdenes de
   trabajo con sus cuadrillas; estado de todas las órdenes de aplicación
   (considerando haciendas y estado del equipamiento).
