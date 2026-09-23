@@ -41,6 +41,9 @@ enum SeccionDashboard: string
     case ProgresoCampania = 'progreso_campania';
     case EstadoOrdenesAplicacion = 'estado_ordenes_aplicacion';
     case ResumenVuelos = 'resumen_vuelos';
+    case RecursosEnUso = 'recursos_en_uso';
+    case OrdenesTrabajoPorCuadrilla = 'ordenes_trabajo_por_cuadrilla';
+    case OrdenesConEquipamiento = 'ordenes_con_equipamiento';
 
     /**
      * El mapa se gatea con `operaciones.trabajo.ver` y no con
@@ -64,7 +67,10 @@ enum SeccionDashboard: string
             self::ProgresoCampania,
             // Mismo permiso que HectareasPorDia: es la MISMA serie de
             // hectáreas validadas, con selector de granularidad (tarea 136).
-            self::ResumenVuelos => 'operaciones.trabajo.ver',
+            self::ResumenVuelos,
+            // Las Órdenes de Trabajo agrupadas por cuadrilla (tarea 138): el
+            // permiso de su pantalla, `/panel/trabajos`.
+            self::OrdenesTrabajoPorCuadrilla => 'operaciones.trabajo.ver',
             self::ColaValidacion => 'operaciones.sesion.validar',
             self::Pausas => 'operaciones.pausa.ver',
             self::DiasEnHacienda => 'operaciones.estadia.ver',
@@ -76,7 +82,14 @@ enum SeccionDashboard: string
             self::Alertas => 'operaciones.alerta.ver',
             // El permiso de la pantalla de órdenes de aplicación, que es la
             // que este donut resume (tarea 136).
-            self::EstadoOrdenesAplicacion => 'operaciones.orden.ver',
+            self::EstadoOrdenesAplicacion,
+            // La misma lista de órdenes con las haciendas y el equipamiento
+            // que le corresponde a cada una (tarea 138).
+            self::OrdenesConEquipamiento => 'operaciones.orden.ver',
+            // Qué lleva cada cuadrilla al campo — sus integrantes y sus
+            // recursos — es el contenido de la pantalla de cuadrillas, y con
+            // su permiso se gatea (tarea 138).
+            self::RecursosEnUso => 'personal.equipo_trabajo.ver',
             self::MiLiquidacion => 'finanzas.devengo.ver',
             // Sin permiso propio: son las sesiones y los drones de quien
             // mira, derivados de su `persona_id`. No hay nada que gatear que

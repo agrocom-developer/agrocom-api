@@ -7,6 +7,7 @@ use App\Dominios\Comercial\Contratos\AvanceClientePanel;
 use App\Dominios\Comercial\Contratos\EstadoCuentaContratoPanel;
 use App\Dominios\Comercial\Contratos\LecturaPanelComercial;
 use App\Dominios\Comercial\Contratos\LecturaPropiedades;
+use App\Dominios\Comercial\Contratos\LotePanel;
 use App\Dominios\Finanzas\Contratos\LecturaPanelFinanzas;
 use App\Dominios\Inventario\Contratos\LecturaPanelInventario;
 use App\Dominios\Inventario\Contratos\StockPanel;
@@ -15,10 +16,13 @@ use App\Dominios\Operaciones\Contratos\EquipoPersonaPanel;
 use App\Dominios\Operaciones\Contratos\EvidenciaPanel;
 use App\Dominios\Operaciones\Contratos\GranularidadVuelos;
 use App\Dominios\Operaciones\Contratos\LecturaPanelOperaciones;
+use App\Dominios\Operaciones\Contratos\OrdenAplicacionPanel;
 use App\Dominios\Operaciones\Contratos\ResumenEquipoTrabajoPanel;
 use App\Dominios\Operaciones\Contratos\ResumenLotePanel;
 use App\Dominios\Operaciones\Contratos\SesionPanel;
+use App\Dominios\Operaciones\Contratos\TandaDeEquipoPanel;
 use App\Dominios\Personal\Contratos\DatosEquipoTrabajo;
+use App\Dominios\Personal\Contratos\DatosIntegranteEquipo;
 use App\Dominios\Personal\Contratos\LecturaEquipoTrabajo;
 use App\Dominios\Seguridad\Dominio\SeccionDashboard;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
@@ -70,6 +74,9 @@ final class ArmarDashboard
 
     private const MESES_RESUMEN_VUELOS = 6;
 
+    /** Órdenes ya terminadas que acompañan a las abiertas en el estado de órdenes (tarea 138). */
+    private const ORDENES_TERMINADAS = 4;
+
     private const PERMISO_CREAR_CAMPANIA = 'campania.campania.crear';
 
     public function __construct(
@@ -82,6 +89,7 @@ final class ArmarDashboard
         private readonly ArmarMapaOperativo $mapa,
         private readonly LecturaEquipoTrabajo $cuadrillas,
         private readonly LecturaPropiedades $propiedades,
+        private readonly CatalogoEquipamientoPanel $equipamiento,
     ) {}
 
     /**
@@ -152,6 +160,9 @@ final class ArmarDashboard
             SeccionDashboard::ProgresoCampania => $this->progresoCampania(),
             SeccionDashboard::EstadoOrdenesAplicacion => $this->estadoOrdenesAplicacion(),
             SeccionDashboard::ResumenVuelos => $this->resumenVuelos(),
+            SeccionDashboard::RecursosEnUso => $this->recursosEnUso(),
+            SeccionDashboard::OrdenesTrabajoPorCuadrilla => $this->ordenesTrabajoPorCuadrilla(),
+            SeccionDashboard::OrdenesConEquipamiento => $this->ordenesConEquipamiento(),
         };
     }
 
@@ -165,8 +176,7 @@ final class ArmarDashboard
      *
      * El caso `default` es el agrupamiento original de la tarea 67
      * (resumen/mapa/lotes/multimedia): sigue siendo el de cualquier rol que
-     * todavía no tenga el suyo propio (138 y 139 lo agregan cada uno por su
-     * cuenta).
+     * todavía no tenga el suyo propio (la 139 agrega el del administrador).
      *
      * Piloto y auxiliar comparten el agrupamiento (tarea 137): ven las mismas
      * tres secciones —todas acotadas a su `persona_id`— y solo cambia de
@@ -222,6 +232,27 @@ final class ArmarDashboard
                     'id' => 'mis-trabajos',
                     'label' => __('seguridad.dashboard.tab_mis_trabajos'),
                     'claves' => [SeccionDashboard::MisSesiones->value, SeccionDashboard::MisEquipos->value],
+                ],
+            ],
+            // Lo que el jefe de campo coordina (tarea 138): con qué recursos
+            // cuenta, qué órdenes de trabajo tiene cada cuadrilla y cómo van
+            // todas las órdenes de aplicación con su equipamiento. Es solo
+            // lectura: las acciones viven en sus pantallas.
+            'jefe_campo' => [
+                [
+                    'id' => 'recursos',
+                    'label' => __('seguridad.dashboard.tab_recursos'),
+                    'claves' => [SeccionDashboard::RecursosEnUso->value, SeccionDashboard::Stock->value],
+                ],
+                [
+                    'id' => 'ordenes-cuadrillas',
+                    'label' => __('seguridad.dashboard.tab_ordenes_cuadrillas'),
+                    'claves' => [SeccionDashboard::OrdenesTrabajoPorCuadrilla->value],
+                ],
+                [
+                    'id' => 'ordenes-equipamiento',
+                    'label' => __('seguridad.dashboard.tab_ordenes_equipamiento'),
+                    'claves' => [SeccionDashboard::OrdenesConEquipamiento->value],
                 ],
             ],
             default => [
@@ -684,6 +715,184 @@ final class ArmarDashboard
             'pctCompletado' => $hectareasTotales > 0.0 ? min(100.0, round($hectareasAplicadas / $hectareasTotales * 100, 1)) : 0.0,
             'sesiones' => $sesiones,
             'sesionesValidadas' => $sesionesValidadas,
+        ];
+    }
+
+    /**
+     * Qué recursos están ocupados AHORA (tab del jefe de campo, tarea 138): las
+     * cuadrillas con algún trabajo abierto, con quiénes salen y con qué equipo
+     * —dron, vehículo, generador, baterías— y en qué estado está cada pieza.
+     * La carga la da `Operaciones`, las personas `Personal` y el equipamiento
+     * {@see CatalogoEquipamientoPanel}. Sin ningún trabajo abierto se omite.
+     *
+     * @return array{cuadrillas: list<array<string, mixed>>, recursos: int, fueraDeServicio: int}|null
+     */
+    private function recursosEnUso(): ?array
+    {
+        $porEquipo = $this->operaciones->trabajosAbiertosPorEquipo();
+
+        if ($porEquipo === []) {
+            return null;
+        }
+
+        $equipoIds = array_keys($porEquipo);
+        $equipos = $this->cuadrillas->porIds($equipoIds);
+        $this->equipamiento->precargar($equipoIds);
+        $hoy = today()->toDateString();
+
+        $cuadrillas = array_map(function (ResumenEquipoTrabajoPanel $resumen) use ($equipos, $hoy): array {
+            $equipamiento = $this->equipamiento->deEquipo($resumen->equipoTrabajoId);
+
+            return [
+                'equipoTrabajoId' => $resumen->equipoTrabajoId,
+                'equipo' => $this->nombreCuadrilla($resumen->equipoTrabajoId, $equipos),
+                'trabajosAbiertos' => $resumen->trabajosAbiertos,
+                'hectareasDeclaradas' => $resumen->hectareasDeclaradas,
+                'integrantes' => array_map(fn (DatosIntegranteEquipo $integrante): array => [
+                    'nombre' => $integrante->nombrePersona,
+                    'rol' => __('personal.rol_equipo.'.$integrante->rolEquipo),
+                ], $this->cuadrillas->integrantesAFecha($resumen->equipoTrabajoId, $hoy)),
+                'equipamiento' => $equipamiento,
+                'fueraDeServicio' => count(array_filter($equipamiento, fn (array $recurso): bool => ! $recurso['operativo'])),
+            ];
+        }, array_values($porEquipo));
+
+        usort($cuadrillas, fn (array $a, array $b): int => strnatcasecmp($a['equipo'], $b['equipo']));
+
+        return [
+            'cuadrillas' => $cuadrillas,
+            'recursos' => array_sum(array_map(fn (array $cuadrilla): int => count($cuadrilla['equipamiento']), $cuadrillas)),
+            'fueraDeServicio' => array_sum(array_column($cuadrillas, 'fueraDeServicio')),
+        ];
+    }
+
+    /**
+     * Las Órdenes de Trabajo (tandas) que siguen en marcha, agrupadas por la
+     * cuadrilla que las trabaja (tab del jefe de campo, tarea 138). La tanda y
+     * su carga las da `Operaciones`; el nombre de la cuadrilla, `Personal`; los
+     * lotes, `Comercial` — el mismo cruce de {@see trabajosPorEquipo()}, pero
+     * por orden en vez de totalizado por equipo.
+     *
+     * @return list<array{equipoTrabajoId: int, equipo: string, tandas: list<array<string, mixed>>}>|null
+     */
+    private function ordenesTrabajoPorCuadrilla(): ?array
+    {
+        $porEquipo = $this->operaciones->tandasAbiertasPorEquipo();
+
+        if ($porEquipo === []) {
+            return null;
+        }
+
+        $equipos = $this->cuadrillas->porIds(array_keys($porEquipo));
+
+        $filas = [];
+
+        foreach ($porEquipo as $equipoId => $tandas) {
+            $filas[] = [
+                'equipoTrabajoId' => $equipoId,
+                'equipo' => $this->nombreCuadrilla($equipoId, $equipos),
+                'tandas' => array_map(fn (TandaDeEquipoPanel $tanda): array => [
+                    'ordenTrabajoId' => $tanda->ordenTrabajoId,
+                    'ordenId' => $tanda->ordenId,
+                    'nroAplicacion' => $tanda->nroAplicacion,
+                    'estado' => $tanda->estadoOrden,
+                    'tono' => $tanda->tonoOrden,
+                    'lotes' => array_map(fn (int $loteId): string => $this->nombres->lote($loteId)->codigo ?? "#{$loteId}", $tanda->loteIds),
+                    'trabajosAbiertos' => $tanda->trabajosAbiertos,
+                    'trabajosTotal' => $tanda->trabajosTotal,
+                    'hectareasDeclaradas' => $tanda->hectareasDeclaradas,
+                ], $tandas),
+            ];
+        }
+
+        usort($filas, fn (array $a, array $b): int => strnatcasecmp($a['equipo'], $b['equipo']));
+
+        return $filas;
+    }
+
+    /**
+     * Estado de las órdenes de aplicación con sus haciendas y su equipamiento
+     * (tab del jefe de campo, tarea 138). El estado y las cuadrillas de cada
+     * orden los da `Operaciones`; las haciendas y el cliente salen de los
+     * lotes que la orden copió del contrato (`Comercial`); y el estado de
+     * dron, vehículo, generador y baterías de cada cuadrilla, de `Mantenimiento`
+     * vía {@see CatalogoEquipamientoPanel}.
+     *
+     * Solo las órdenes abiertas llevan equipamiento: el estado de una batería
+     * HOY no dice nada de una orden que ya se consumió o se canceló.
+     *
+     * @return list<array<string, mixed>>|null
+     */
+    private function ordenesConEquipamiento(): ?array
+    {
+        $ordenes = $this->operaciones->ordenesAplicacionConEquipos(self::ORDENES_TERMINADAS);
+
+        if ($ordenes === []) {
+            return null;
+        }
+
+        $equipoIds = [];
+
+        foreach ($ordenes as $orden) {
+            if ($orden->abierta) {
+                array_push($equipoIds, ...$orden->equipoTrabajoIds);
+            }
+        }
+
+        $equipos = $this->cuadrillas->porIds(array_values(array_unique($equipoIds)));
+        $this->equipamiento->precargar($equipoIds);
+
+        return array_map(function (OrdenAplicacionPanel $orden) use ($equipos): array {
+            $lotes = array_values(array_filter(array_map(fn (int $loteId): ?LotePanel => $this->nombres->lote($loteId), $orden->loteIds)));
+
+            $hectareas = BigDecimal::zero();
+
+            foreach ($lotes as $lote) {
+                $hectareas = $hectareas->plus(BigDecimal::of($lote->hectareas));
+            }
+
+            return [
+                'id' => $orden->id,
+                'nroAplicacion' => $orden->nroAplicacion,
+                'estado' => $orden->estado,
+                'tono' => $orden->tono,
+                'abierta' => $orden->abierta,
+                'fechaEmision' => $orden->fechaEmision,
+                'clientes' => array_values(array_unique(array_map(fn (LotePanel $lote): string => $lote->clienteNombre, $lotes))),
+                'haciendas' => array_values(array_unique(array_map(fn (LotePanel $lote): string => $lote->propiedadNombre, $lotes))),
+                'hectareas' => (string) $hectareas->toScale(2, RoundingMode::HalfUp),
+                'equiposNecesarios' => $orden->equiposNecesarios,
+                'cuadrillasAsignadas' => count($orden->equipoTrabajoIds),
+                'cuadrillas' => $orden->abierta
+                    ? array_map(fn (int $equipoId): array => $this->cuadrillaConEquipamiento($equipoId, $equipos), $orden->equipoTrabajoIds)
+                    : [],
+            ];
+        }, $ordenes);
+    }
+
+    /**
+     * Una cuadrilla de una orden con la salud de su equipamiento: cuántas
+     * piezas lleva y cuáles NO están operativas (las que sí lo están no
+     * necesitan nombrarse fila a fila).
+     *
+     * @param  array<int, DatosEquipoTrabajo>  $equipos
+     * @return array{equipo: string, recursos: int, fuera: list<array{tipoEtiqueta: string, identificador: string, etiquetaEstado: string, tono: string}>}
+     */
+    private function cuadrillaConEquipamiento(int $equipoTrabajoId, array $equipos): array
+    {
+        $equipamiento = $this->equipamiento->deEquipo($equipoTrabajoId);
+
+        $fuera = array_values(array_filter($equipamiento, fn (array $recurso): bool => ! $recurso['operativo']));
+
+        return [
+            'equipo' => $this->nombreCuadrilla($equipoTrabajoId, $equipos),
+            'recursos' => count($equipamiento),
+            'fuera' => array_map(fn (array $recurso): array => [
+                'tipoEtiqueta' => $recurso['tipoEtiqueta'],
+                'identificador' => $recurso['identificador'],
+                'etiquetaEstado' => $recurso['etiquetaEstado'],
+                'tono' => $recurso['tono'],
+            ], $fuera),
         ];
     }
 

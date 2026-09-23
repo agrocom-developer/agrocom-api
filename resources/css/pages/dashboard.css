@@ -225,6 +225,122 @@
     min-width: 680px;
 }
 
+/* ---------- Tabs del jefe de campo (tarea 138) ---------- */
+
+/* Órdenes de trabajo por cuadrilla: tanda + orden de aplicación + lotes +
+   cifras + estado. Misma excepción de tablet que las tablas del dueño (ver el
+   breakpoint 1199.98px): sin variante angosta, scrollea horizontal. */
+.ag-table--tandas .ag-table__head,
+.ag-table--tandas .ag-table__row {
+    grid-template-columns: 90px 1.4fr 1.4fr 90px 100px 130px;
+    min-width: 760px;
+}
+
+/* Fila de grupo: nombra a la cuadrilla a la que pertenecen las tandas que
+   siguen. Ocupa todo el ancho de la grilla (no es una fila de columnas). */
+.ag-table__grupo {
+    display: flex;
+    align-items: baseline;
+    gap: var(--ag-space-3);
+    min-width: 760px;
+    padding: var(--ag-space-2) var(--ag-space-4);
+    background: var(--ag-color-bg-table-head);
+    border-bottom: 1px solid var(--ag-color-border-row);
+    font-size: 0.8125rem;
+}
+
+/* Estado de las órdenes con su equipamiento: la celda de equipamiento apila
+   una línea por cuadrilla (y por pieza fuera de servicio), así que las celdas
+   de esta tabla envuelven en vez de truncar y la fila alinea arriba. */
+.ag-table--ordenes-equipo .ag-table__head,
+.ag-table--ordenes-equipo .ag-table__row {
+    grid-template-columns: 1.2fr 110px 1.4fr 110px 2.2fr;
+    min-width: 900px;
+}
+
+.ag-table--ordenes-equipo .ag-table__row {
+    align-items: start;
+}
+
+.ag-table--ordenes-equipo .ag-table__row > span {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+}
+
+.ag-dash__equipamiento-orden {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
+}
+
+.ag-dash__equipamiento-cuadrilla {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+/* Recursos en uso: una tarjeta por cuadrilla. `min(100%, ...)` para que en un
+   móvil de 390 px la columna mínima no desborde la página. */
+.ag-dash__cuadrillas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+    gap: var(--ag-space-4);
+}
+
+.ag-dash__cuadrilla-cabecera {
+    flex-wrap: wrap;
+}
+
+.ag-dash__cuadrilla-integrantes {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--ag-space-1) var(--ag-space-4);
+    margin: 0;
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text);
+}
+
+.ag-dash__cuadrilla-rotulo {
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-dash__cuadrilla-rol {
+    display: inline;
+}
+
+.ag-dash__equipamiento {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ag-dash__equipamiento-item {
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-2) 0;
+    border-bottom: 1px solid var(--ag-color-border-row);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-dash__equipamiento-item:last-child {
+    border-bottom: none;
+}
+
+.ag-dash__equipamiento-tipo {
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
 /* ---------- Tabs del encargado de operaciones (tarea 136) ---------- */
 
 /* Órdenes de aplicación por estado: donut + lista de cifras. La lista es un
@@ -431,6 +547,10 @@
 
 .ag-table__dot--warning {
     background: var(--ag-color-warning-strong);
+}
+
+.ag-table__dot--danger {
+    background: var(--ag-color-danger-strong);
 }
 
 .ag-table__estado {
@@ -749,14 +869,17 @@
        mantiene con scroll horizontal (ver .ag-table-scroll arriba). Mismo
        criterio para las dos tablas nuevas del dueño (tarea 135): estado de
        cuentas y trabajos por equipo; y para las dos del piloto y el auxiliar
-       (tarea 137): detalle de la liquidación y equipos del mes. Sin esta
-       excepción se ocultaban y, en equipos, quedaba la tarjeta con solo el
-       título. */
+       (tarea 137): detalle de la liquidación y equipos del mes; y para las
+       dos del jefe de campo (tarea 138): órdenes de trabajo por cuadrilla y
+       órdenes con su equipamiento. Sin esta excepción se ocultaban y, en
+       equipos, quedaba la tarjeta con solo el título. */
     .ag-table.ag-table--clientes,
     .ag-table.ag-table--cuentas,
     .ag-table.ag-table--trabajos-equipo,
     .ag-table.ag-table--liquidacion,
-    .ag-table.ag-table--equipos {
+    .ag-table.ag-table--equipos,
+    .ag-table.ag-table--tandas,
+    .ag-table.ag-table--ordenes-equipo {
         display: block;
     }
 

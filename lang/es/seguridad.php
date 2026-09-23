@@ -389,6 +389,47 @@ return [
         'tab_mis_devengos' => 'Mis devengos',
         'tab_mis_trabajos' => 'Mis trabajos',
 
+        // Tabs del jefe de campo (tarea 138): los recursos que se ocupan o
+        // faltan, las órdenes de trabajo de cada cuadrilla y cómo van las
+        // órdenes de aplicación con su equipamiento.
+        'tab_recursos' => 'Recursos',
+        'tab_ordenes_cuadrillas' => 'Órdenes de trabajo',
+        'tab_ordenes_equipamiento' => 'Órdenes y equipamiento',
+
+        'seccion_recursos_en_uso' => 'Recursos en uso ahora',
+        'recursos_en_uso_total' => '{1} :cantidad recurso en uso|[0,*] :cantidad recursos en uso',
+        'recursos_en_uso_carga' => '{1} :cantidad trabajo abierto · :hectareas ha|[2,*] :cantidad trabajos abiertos · :hectareas ha',
+        'recursos_en_uso_integrantes' => 'Integrantes',
+        'recursos_en_uso_sin_integrantes' => 'Sin integrantes vigentes',
+        'recursos_en_uso_sin_equipamiento' => 'Sin equipamiento asignado',
+        'recursos_en_uso_ver' => 'Ver cuadrillas',
+
+        'seccion_ordenes_cuadrillas' => 'Órdenes de trabajo por cuadrilla',
+        'ordenes_cuadrillas_ver' => 'Ver órdenes de trabajo',
+        'ordenes_cuadrillas_col_trabajo' => 'Orden de trabajo',
+        'ordenes_cuadrillas_col_aplicacion' => 'Orden de aplicación',
+        'ordenes_cuadrillas_col_lotes' => 'Lotes',
+        'ordenes_cuadrillas_col_trabajos' => 'Abiertos',
+        'ordenes_cuadrillas_col_hectareas' => 'Hectáreas',
+        'ordenes_cuadrillas_col_estado' => 'Estado',
+        'ordenes_cuadrillas_tandas' => '{1} :cantidad orden de trabajo|[2,*] :cantidad órdenes de trabajo',
+        'ordenes_cuadrillas_aplicacion' => 'Orden #:id · aplicación :nro',
+        'ordenes_cuadrillas_abiertos' => ':abiertos de :total',
+
+        'seccion_ordenes_equipamiento' => 'Estado de las órdenes de aplicación',
+        'ordenes_equipamiento_ver' => 'Ver órdenes',
+        'ordenes_equipamiento_col_orden' => 'Orden',
+        'ordenes_equipamiento_col_estado' => 'Estado',
+        'ordenes_equipamiento_col_haciendas' => 'Haciendas',
+        'ordenes_equipamiento_col_cuadrillas' => 'Cuadrillas',
+        'ordenes_equipamiento_col_equipamiento' => 'Equipamiento',
+        'ordenes_equipamiento_numero' => '#:id · aplicación :nro',
+        'ordenes_equipamiento_hectareas' => ':hectareas ha',
+        'ordenes_equipamiento_cuadrillas' => ':asignadas de :necesarias',
+        'ordenes_equipamiento_sin_cuadrillas' => 'Sin cuadrillas asignadas',
+        'ordenes_equipamiento_todo_operativo' => '{1} :cantidad recurso operativo|[0,*] :cantidad recursos operativos',
+        'ordenes_equipamiento_fuera' => ':cantidad de :total fuera de servicio',
+
         'seccion_ordenes_estado' => 'Órdenes de aplicación por estado',
         'ordenes_estado_total' => 'Órdenes en total',
         'ordenes_estado_ver' => 'Ver órdenes',
