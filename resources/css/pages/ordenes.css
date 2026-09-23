@@ -79,9 +79,12 @@
     font-size: var(--ag-font-size-sm);
 }
 
-/* Estado de la orden + badge "Con inconvenientes" (ADR 0022): dos badges en la
-   misma celda o cabecera de tarjeta, que se acomodan en otra línea si no
-   entran. */
+/* Estado de la orden (listado) o estado + badge "Con inconvenientes" (ADR
+   0022) en la misma celda de tabla/chip de ficha: se acomodan en otra línea
+   si no entran. En la tarjeta de grilla el badge de inconvenientes NO va
+   acá — ver `.ag-ordenes-card__inconvenientes` (tarea 130: con los dos
+   badges compitiendo por ancho contra el título, que tiene `min-width: 0`,
+   el título se cortaba palabra por palabra). */
 .ag-ordenes__estados {
     display: flex;
     flex-wrap: wrap;
@@ -176,6 +179,13 @@
     font-weight: var(--ag-font-weight-bold);
     line-height: 1.15;
     margin-top: 0.125rem;
+}
+
+/* Badge "Con inconvenientes" (ADR 0022, tarea 130): línea propia debajo del
+   título, no junto al badge de estado — deja a `.ag-ordenes-card__identidad`
+   todo el ancho disponible para el título. */
+.ag-ordenes-card__inconvenientes {
+    margin-top: var(--ag-space-1);
 }
 
 .ag-ordenes-card__lote {

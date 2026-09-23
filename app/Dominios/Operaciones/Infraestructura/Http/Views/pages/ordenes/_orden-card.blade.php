@@ -16,7 +16,10 @@
     ya arma `index.blade.php` para la fila de tabla. La banda del medio
     muestra cuántos lotes tiene la orden y cuántas órdenes de trabajo se
     hicieron; con incidencias o pausas en el campo, el badge "Con
-    inconvenientes" (informativo, ADR 0022).
+    inconvenientes" (informativo, ADR 0022) va en línea propia debajo del
+    título — no junto al badge de estado (tarea 130: con los dos badges
+    compitiendo por ancho contra `.ag-ordenes-card__identidad`, que tiene
+    `min-width: 0`, el título se cortaba palabra por palabra).
 --}}
 @php
     $estadoValor = $orden->estado->value;
@@ -36,16 +39,18 @@
                 {{ $previstas !== null ? __('operaciones.ordenes.nro_aplicacion_display', ['nro' => $orden->nro_aplicacion, 'total' => $previstas]) : __('operaciones.ordenes.col_aplicacion').' #'.$orden->nro_aplicacion }}
             </p>
             <p class="ag-ordenes-card__cliente">{{ $etiquetasContrato[$orden->contrato_id] ?? "#{$orden->contrato_id}" }}</p>
+            @if ($tieneInconvenientes)
+                <div class="ag-ordenes-card__inconvenientes">
+                    <x-atoms.badge variant="danger" icon="warning">
+                        {{ __('operaciones.ordenes.badge_inconvenientes') }}
+                    </x-atoms.badge>
+                </div>
+            @endif
         </div>
         <div class="ag-ordenes__estados">
             <x-atoms.badge :variant="$variantePorEstado[$estadoValor]">
                 {{ __('operaciones.estado.'.$estadoValor) }}
             </x-atoms.badge>
-            @if ($tieneInconvenientes)
-                <x-atoms.badge variant="warning" icon="warning">
-                    {{ __('operaciones.ordenes.badge_inconvenientes') }}
-                </x-atoms.badge>
-            @endif
         </div>
     </div>
 

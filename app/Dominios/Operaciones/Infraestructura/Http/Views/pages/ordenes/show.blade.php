@@ -87,7 +87,7 @@
                         {{ __('operaciones.estado.'.$estadoValor) }}
                     </x-atoms.badge>
                     @if ($tieneInconvenientes)
-                        <x-atoms.badge variant="warning" icon="warning">
+                        <x-atoms.badge variant="danger" icon="warning">
                             {{ __('operaciones.ordenes.badge_inconvenientes') }}
                         </x-atoms.badge>
                     @endif
