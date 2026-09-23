@@ -521,7 +521,7 @@ de rol" del sidebar/menú de usuario, con `?cambiar=1`).
   `Http/Demo/DatosDemoPanel` (KPIs, 5 sesiones, 5 causas de pausa, 3 ítems
   de stock, ventana volable, badges del menú, campaña/período/versión) —
   marcado MOCK, nunca hardcodeado en vistas; usuario demo multirol
-  `carlos.ferrufino`/`password` en `Demo/PersonalDemoSeeder`.
+  `miguelo`/`0000` en `Demo/PersonalDemoSeeder`.
 
 ## 8. Reglas fijas de pulido UI (sexta vuelta, 28/8/2026)
 
@@ -746,7 +746,7 @@ pantalla ya hecha, se anota acá.
 Ejecuta `docs/gestion/plan_dashboard_rediseno.md` — Anexo A y fases 1 a 7 de
 ese plan (queda solo la Fase 8, auditoría final, que es este mismo cierre).
 Verificado en navegador (Playwright, claro/oscuro/móvil, usuario
-`carlos.ferrufino`) antes de cerrar cada fase.
+`miguelo`) antes de cerrar cada fase.
 
 - **Fase 1 — sidebar (nivel 2)**: collapse/expand nuevo (botón hamburguesa
   en `.ag-module-sidebar__header`, JS propio

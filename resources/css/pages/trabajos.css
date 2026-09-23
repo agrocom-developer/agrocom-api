@@ -62,15 +62,3 @@
     font-weight: var(--ag-font-weight-medium);
     color: var(--ag-color-text-muted);
 }
-
-@media (max-width: 992px) {
-    .ag-trabajos__sesiones-head,
-    .ag-trabajos__sesiones-fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-1);
-    }
-
-    .ag-trabajos__sesiones-head {
-        display: none;
-    }
-}
