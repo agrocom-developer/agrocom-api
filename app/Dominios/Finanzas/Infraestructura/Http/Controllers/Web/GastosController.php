@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Finanzas\Aplicacion\CrearGasto;
 use App\Dominios\Finanzas\Aplicacion\EliminarGasto;
 use App\Dominios\Finanzas\Aplicacion\ListarGastos;
@@ -55,7 +56,7 @@ final class GastosController
         $trabajoId = $request->integer('trabajo_id') ?: null;
         $equipoTrabajoId = $request->integer('equipo_trabajo_id') ?: null;
         $campaniaId = $request->integer('campania_id') ?: null;
-        $periodo = $request->string('periodo')->toString();
+        $periodo = TextoDeFiltro::de($request, 'periodo');
         $periodoFiltro = $periodo !== '' ? $periodo : null;
 
         $gastos = $listarGastos->ejecutar($rubroId, $baseId, $trabajoId, $periodoFiltro, $equipoTrabajoId, $campaniaId);

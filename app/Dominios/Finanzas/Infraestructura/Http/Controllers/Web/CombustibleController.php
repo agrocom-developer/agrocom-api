@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Finanzas\Aplicacion\CrearCombustible;
 use App\Dominios\Finanzas\Aplicacion\EliminarCombustible;
 use App\Dominios\Finanzas\Aplicacion\ListarCombustibles;
@@ -70,8 +71,8 @@ final class CombustibleController
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
         $baseId = $request->integer('base_id') ?: null;
-        $desde = $request->string('desde')->toString();
-        $hasta = $request->string('hasta')->toString();
+        $desde = TextoDeFiltro::de($request, 'desde');
+        $hasta = TextoDeFiltro::de($request, 'hasta');
         $equipoTrabajoId = $request->integer('equipo_trabajo_id') ?: null;
         $campaniaId = $request->integer('campania_id') ?: null;
         $desdeFiltro = $desde !== '' ? $desde : null;

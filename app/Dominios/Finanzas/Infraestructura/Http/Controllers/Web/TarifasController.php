@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Finanzas\Aplicacion\ActualizarTarifa;
 use App\Dominios\Finanzas\Aplicacion\CrearTarifa;
 use App\Dominios\Finanzas\Aplicacion\EliminarTarifa;
@@ -44,7 +45,7 @@ final class TarifasController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $busqueda = $request->string('q')->toString();
+        $busqueda = TextoDeFiltro::de($request, 'q');
 
         return view('finanzas::pages.tarifas.index', [
             ...$this->autorizacion->cascara($request),
