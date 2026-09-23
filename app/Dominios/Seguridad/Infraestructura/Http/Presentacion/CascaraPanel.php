@@ -179,10 +179,10 @@ final class CascaraPanel
      *   entrar a `/panel/alertas` tampoco las lee por la campana), y ahora con
      *   enlace a esa pantalla — hasta acá eran texto plano.
      *
-     * La lista prioriza lo no leído: entran primero todos los avisos sin leer
-     * (hasta el tope) y se completa con los leídos más recientes, del más
-     * nuevo al más viejo. Así el badge de la campana —que cuenta lo no leído de
-     * la lista que recibe— sigue siendo exacto hasta «9+».
+     * Cuáles entran y en qué orden lo decide {@see CampanaDeAvisos}: primero
+     * todo lo no leído, después los leídos más recientes. Así el badge de la
+     * campana —que cuenta lo no leído de la lista que recibe— sigue siendo
+     * exacto hasta «9+».
      *
      * @return list<array{id: int|null, icon: string, title: string, time: string, unread: bool, href: string}>
      */
@@ -212,27 +212,6 @@ final class CascaraPanel
             }
         }
 
-        $masNuevoPrimero = static fn (array $a, array $b): int => $b['momento'] <=> $a['momento'];
-
-        usort($candidatas, $masNuevoPrimero);
-
-        $sinLeer = array_values(array_filter($candidatas, static fn (array $item): bool => $item['unread']));
-        $leidas = array_values(array_filter($candidatas, static fn (array $item): bool => ! $item['unread']));
-
-        $elegidas = [
-            ...array_slice($sinLeer, 0, self::MAXIMO_EN_CAMPANA),
-            ...array_slice($leidas, 0, max(0, self::MAXIMO_EN_CAMPANA - count($sinLeer))),
-        ];
-
-        usort($elegidas, $masNuevoPrimero);
-
-        return array_map(static fn (array $item): array => [
-            'id' => $item['id'],
-            'icon' => $item['icon'],
-            'title' => $item['title'],
-            'time' => $item['momento']->diffForHumans(),
-            'unread' => $item['unread'],
-            'href' => $item['href'],
-        ], $elegidas);
+        return CampanaDeAvisos::elegir($candidatas, self::MAXIMO_EN_CAMPANA);
     }
 }
