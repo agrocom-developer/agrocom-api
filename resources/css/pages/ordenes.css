@@ -178,11 +178,6 @@
     margin-top: 0.125rem;
 }
 
-.ag-ordenes-card__subtitulo {
-    font-size: var(--ag-font-size-sm);
-    color: var(--ag-color-text-muted);
-}
-
 .ag-ordenes-card__lote {
     display: flex;
     align-items: center;
@@ -285,44 +280,6 @@
 
 /* Formulario (create/edit) */
 
-/* Mismo estilo que el `help` nativo de los átomos (`.ag-date__help`,
-   `.ag-select__help`, `.ag-input__help` — todos idénticos): acá va aparte
-   (no el prop `help` del átomo) porque necesita la fecha de inicio del
-   contrato destacada en rojo, algo que el prop `help` (texto plano) no
-   puede resolver. */
-.ag-ordenes-form__ayuda {
-    margin: 0;
-    font-size: var(--ag-font-size-xs);
-    color: var(--ag-color-text-muted);
-}
-
-/* Fecha de inicio del contrato, destacada dentro de la ayuda de "Fecha de
-   emisión" (reforma 18/9/2026) — referencia visual, no marca de error. */
-.ag-ordenes-form__fecha-destacada {
-    color: var(--ag-color-danger);
-    font-weight: var(--ag-font-weight-medium);
-}
-
-/* Lotes repetibles (HU-92, tarea 107) — mismo patrón que
-   `.ag-campos-form__lotes`/`.ag-campos-form__lote` (campos.css): el grid de
-   columnas de cada fila es el de `.ag-form-section__body`
-   (components/form-section.css), acá solo el separador entre filas. */
-.ag-ordenes-form__lotes {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-4);
-}
-
-.ag-ordenes-form__lote {
-    padding-top: var(--ag-space-4);
-    border-top: 1px solid var(--ag-color-border-row);
-}
-
-[data-ag-orden-lotes-lista] > .ag-ordenes-form__lote:first-child {
-    padding-top: 0;
-    border-top: none;
-}
-
 /* Sección "Datos del contrato" (reforma 18/9/2026) — resumen del cliente,
    propiedades, y aplicaciones previstas una vez elegido el contrato. El
    grid de dos columnas lo da la clase compartida `ag-form-section__body`
@@ -368,73 +325,4 @@
     border: 1px solid var(--ag-color-border-row);
 }
 
-/* Ícono de ayuda (tooltip) junto a un encabezado de columna de la tabla de
-   lotes — "Hectáreas solicitadas" no es obvio a simple vista. */
-.ag-ordenes-form__lotes-ayuda-icono {
-    margin-left: var(--ag-space-1);
-    font-size: 1rem;
-    vertical-align: text-bottom;
-    color: var(--ag-color-text-muted);
-    cursor: help;
-}
-
-/* Buscador de lotes (tabla, §6.2) — input de búsqueda por código/propiedad.
-   Envuelto en div para que sea field--full sin contaminar el input atom
-   (que no se puede wrappear sin perder su grid/margin). */
-.ag-ordenes-form__lotes-buscador {
-    display: flex;
-    align-items: center;
-}
-
-.ag-ordenes-form__lotes-buscador .ag-input__control {
-    width: 100%;
-}
-
-/* Input de hectáreas dentro de la tabla — oculto hasta que se tilden
-   el checkbox de la fila (lógica en JS). Aunque lleva clase `.ag-input__control`
-   (por reutilización de estilos base), acá es un <input> directo en una <td>,
-   no un contenedor flex: se restituye display:inline para que funcione como
-   input nativo en su cell. */
-.ag-ordenes-form__lotes-hectareas {
-    display: inline;
-    width: 100%;
-    flex: none;
-    align-items: unset;
-}
-
-.ag-ordenes-form__lotes-hectareas:disabled {
-    opacity: 0.5;
-    pointer-events: none;
-}
-
-/* Contenedor de paginado — botones anterior/siguiente + info (X / Y) en el
-   centro. Flexbox con botones a los costados y el texto en el medio. */
-.ag-ordenes-form__lotes-paginado {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: var(--ag-space-3);
-    padding: var(--ag-space-3) var(--ag-space-4);
-    border-top: 1px solid var(--ag-color-border-row);
-}
-
-/* Información de página actual — "1 / 5", texto pequeño muted. */
-.ag-ordenes-form__paginado-info {
-    flex: 1;
-    text-align: center;
-    font-size: var(--ag-font-size-sm);
-    color: var(--ag-color-text-muted);
-    font-variant-numeric: tabular-nums;
-}
-
-/* Estado vacío — cuando no hay lotes (sin contrato elegido o búsqueda sin
-   resultados). Mismo estilo que `.ag-contratos-form__modal-tabla-vacio`
-   (contratos.css línea ~412): texto faint, padding, para verse como un estado
-   de interfaz y no confundirse con error. */
-.ag-ordenes-form__lotes-vacio {
-    padding: var(--ag-space-4);
-    text-align: center;
-    color: var(--ag-color-text-faint);
-    font-size: var(--ag-font-size-sm);
-}
 

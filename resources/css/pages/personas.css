@@ -22,16 +22,12 @@
 }
 
 /* Listado (index): columnas propias de `molecules/index-table`
-   (índice · nombre · rol · base · tarifa · acciones) — el resto de la
+   (índice · nombre · rol · base · acciones) — el resto de la
    anatomía de la tabla (borde, cabecera, hover, colapso mobile) vive en el
    componente. */
 
 .ag-personas__nombre {
     font-weight: var(--ag-font-weight-medium);
-}
-
-.ag-personas__tarifa {
-    font-family: var(--ag-font-family-mono);
 }
 
 /*
