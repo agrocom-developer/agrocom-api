@@ -21,4 +21,12 @@ interface LecturaNotificaciones
      * @return list<NotificacionPanel>
      */
     public function recientesDe(int $usuarioId, int $limite): array;
+
+    /**
+     * Qué hizo esa cuenta con las alertas técnicas de Operaciones que vio en
+     * la campana: cuáles abrió y cuáles limpió. Es estado de lectura de la
+     * cuenta, no el estado de la alerta (que es de todos y lo atiende quien
+     * tiene el permiso).
+     */
+    public function alertasDeCuenta(int $usuarioId): AlertasDeCuenta;
 }

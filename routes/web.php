@@ -273,8 +273,17 @@ Route::middleware('auth:interno')->group(function () {
             ->where('notificacion', '[0-9]{1,18}')
             ->name('panel.notificaciones.abrir');
 
+        // Las alertas técnicas de Operaciones también se abren desde la campana: dejan leída
+        // la alerta para esta cuenta (no la atienden) y llevan a su pantalla.
+        Route::get('/panel/notificaciones/alertas/{alerta}/abrir', [NotificacionesController::class, 'abrirAlerta'])
+            ->where('alerta', '[0-9]{1,18}')
+            ->name('panel.notificaciones.abrir-alerta');
+
         Route::post('/panel/notificaciones/marcar-todas', [NotificacionesController::class, 'marcarTodas'])
             ->name('panel.notificaciones.marcar-todas');
+
+        Route::post('/panel/notificaciones/limpiar', [NotificacionesController::class, 'limpiar'])
+            ->name('panel.notificaciones.limpiar');
 
         // La matriz vive en su propia URL y no como pestaña del formulario:
         // son dos operaciones con permisos distintos (`editar` cambia el

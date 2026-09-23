@@ -16,7 +16,7 @@ Este skill dice dónde va cada cosa; el porqué está en `docs/decisiones/0003-a
 | `Operaciones` | `ope_` | órdenes de aplicación |
 | `Personal` | `per_` | personas, bases |
 | `Seguridad` | `sec_` | usuarios, roles, permisos, menú, preferencias |
-| `Notificaciones` | `ntf_` | avisos internos de la campana del panel: una fila por cuenta destinataria (ADR 0025) |
+| `Notificaciones` | `ntf_` | avisos internos de la campana del panel: una fila por cuenta destinataria (`ntf_notificaciones`), y lo que cada cuenta hizo con las alertas técnicas de Operaciones (`ntf_alertas_vistas`); leer al abrir y «Limpiar» son por cuenta (ADR 0025, punto 11) |
 | `Compartido` | — | plataforma: `ModeloDominio`, `RegistraAutoria`, middleware transversal |
 
 Prefijos ya reservados para módulos que aún no existen (ADR 0011): `syn_` Sync,

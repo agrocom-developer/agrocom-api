@@ -298,9 +298,10 @@ final class LecturaPanelOperacionesEloquent implements LecturaPanelOperaciones
         ), $evidencias);
     }
 
-    public function alertasRecientes(int $limite): array
+    public function alertasRecientes(int $limite, array $excluirIds = []): array
     {
         $alertas = Alerta::query()
+            ->when($excluirIds !== [], static fn ($consulta) => $consulta->whereNotIn('id', $excluirIds))
             ->orderByRaw('CASE WHEN estado = ? THEN 0 ELSE 1 END', [EstadoAlerta::Pendiente->value])
             ->orderByDesc('created_at')
             ->orderByDesc('id')
@@ -315,6 +316,20 @@ final class LecturaPanelOperacionesEloquent implements LecturaPanelOperaciones
                 creadaEn: $alerta->created_at?->toIso8601String() ?? '',
                 pendiente: $alerta->estado === EstadoAlerta::Pendiente,
             ))
+            ->all();
+    }
+
+    public function idsAlertasExistentes(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        return Alerta::query()
+            ->whereIn('id', $ids)
+            ->pluck('id')
+            ->map(intval(...))
+            ->values()
             ->all();
     }
 

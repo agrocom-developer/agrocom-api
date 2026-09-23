@@ -20,8 +20,8 @@ use Illuminate\Support\Carbon;
 final class CampanaDeAvisos
 {
     /**
-     * @param  list<array{id: int|null, icon: string, title: string, momento: Carbon, unread: bool, href: string}>  $candidatas
-     * @return list<array{id: int|null, icon: string, title: string, time: string, unread: bool, href: string}>
+     * @param  list<array{id: int|null, alerta_id?: int|null, icon: string, title: string, momento: Carbon, unread: bool, href: string}>  $candidatas
+     * @return list<array{id: int|null, alerta_id: int|null, icon: string, title: string, time: string, unread: bool, href: string}>
      */
     public static function elegir(array $candidatas, int $maximo): array
     {
@@ -40,6 +40,7 @@ final class CampanaDeAvisos
 
         return array_map(static fn (array $aviso): array => [
             'id' => $aviso['id'],
+            'alerta_id' => $aviso['alerta_id'] ?? null,
             'icon' => $aviso['icon'],
             'title' => $aviso['title'],
             'time' => $aviso['momento']->diffForHumans(),
