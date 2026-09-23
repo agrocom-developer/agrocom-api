@@ -5,6 +5,7 @@ namespace App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web;
 use App\Dominios\Comercial\Contratos\LecturaPropiedades;
 use App\Dominios\Comercial\Contratos\PropiedadCatalogo;
 use App\Dominios\Compartido\Infraestructura\Http\PasosDeEstado;
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Mantenimiento\Contratos\LecturaEquipamiento;
 use App\Dominios\Mantenimiento\Contratos\RecursoCatalogo;
 use App\Dominios\Operaciones\Aplicacion\ActualizarEstadiaHacienda;
@@ -97,14 +98,14 @@ final class EstadiasHaciendaController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $q = $request->string('q')->toString();
+        $q = TextoDeFiltro::de($request, 'q');
         $busqueda = $q !== '' ? $q : null;
-        $desde = $request->filled('desde') ? $request->string('desde')->toString() : null;
-        $hasta = $request->filled('hasta') ? $request->string('hasta')->toString() : null;
+        $desde = $request->filled('desde') ? TextoDeFiltro::de($request, 'desde') : null;
+        $hasta = $request->filled('hasta') ? TextoDeFiltro::de($request, 'hasta') : null;
         $equipoTrabajoId = $request->integer('equipo_trabajo_id') ?: null;
         $propiedadId = $request->integer('propiedad_id') ?: null;
-        $estado = $request->string('estado')->toString() ?: null;
-        $tipoAlojamiento = $request->string('tipo_alojamiento')->toString() ?: null;
+        $estado = TextoDeFiltro::de($request, 'estado') ?: null;
+        $tipoAlojamiento = TextoDeFiltro::de($request, 'tipo_alojamiento') ?: null;
 
         $equipoIdsCoincidentes = $busqueda !== null ? $this->equipoIdsQueCoinciden($busqueda) : [];
         $propiedadIdsCoincidentes = $busqueda !== null ? $this->propiedades->idsQueCoinciden($busqueda) : [];

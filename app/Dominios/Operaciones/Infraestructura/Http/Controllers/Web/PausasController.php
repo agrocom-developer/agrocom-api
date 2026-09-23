@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Operaciones\Aplicacion\AgregarPausasPorCausa;
 use App\Dominios\Operaciones\Aplicacion\ListarPausas;
 use App\Dominios\Operaciones\Aplicacion\RegistrarPausa;
@@ -44,7 +45,7 @@ final class PausasController
     ): View {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $periodo = $request->string('periodo')->toString();
+        $periodo = TextoDeFiltro::de($request, 'periodo');
         $periodoFiltro = $periodo !== '' ? $periodo : null;
 
         return view('operaciones::pages.pausas.index', [
