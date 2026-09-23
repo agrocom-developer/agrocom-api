@@ -209,7 +209,7 @@ return [
                 'permisos' => ['Programación', 'Sesiones', 'Mezclas'],
             ],
             'auxiliar' => [
-                'nombre' => 'Auxiliar de campo',
+                'nombre' => 'Ayudante',
                 'descripcion' => 'Apoya la preparación de mezclas y la logística de cada sesión.',
                 'permisos' => ['Mezclas', 'Checklist', 'Evidencias'],
             ],
