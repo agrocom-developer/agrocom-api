@@ -633,6 +633,12 @@
 
     /* Excepción: la tabla de clientes no tiene variante de tablet, se
        mantiene con scroll horizontal (ver .ag-table-scroll arriba). Mismo
+/* `_seccion-pausas` pide este tono desde que el tablero es real (tarea 67) y
+   la clase no existía: las barras de pausas salían vacías. */
+.ag-bars__fill--warning {
+    background: var(--ag-color-warning);
+}
+
        criterio para las dos tablas nuevas del dueño (tarea 135): estado de
        cuentas y trabajos por equipo. */
     .ag-table.ag-table--clientes,
