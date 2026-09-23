@@ -15,6 +15,7 @@ use App\Dominios\Seguridad\Dominio\TemaPreferencia;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUserPreferencia;
 use Illuminate\Support\Carbon;
+use Throwable;
 
 /**
  * Datos de cáscara que `templates/panel-layout` + `templates/panel-shell`
@@ -188,6 +189,16 @@ final class CascaraPanel
      */
     private function notificaciones(SecUser $usuario, int $idRolActivo): array
     {
+        try {
+            $delMotor = $this->notificacionesDelMotor->recientesDe($usuario->id, self::MAXIMO_EN_CAMPANA);
+        } catch (Throwable $excepcion) {
+            // La campana es un widget secundario: si falla la lectura de avisos (p. ej. un
+            // entorno al que le falta la migración), se reporta y el panel sigue, con las
+            // alertas técnicas si las hay — un aviso roto no tira todas las páginas.
+            report($excepcion);
+            $delMotor = [];
+        }
+
         $candidatas = array_map(fn (NotificacionPanel $aviso): array => [
             'id' => $aviso->id,
             'icon' => $aviso->icono,
@@ -195,7 +206,7 @@ final class CascaraPanel
             'momento' => Carbon::parse($aviso->creadaEn),
             'unread' => ! $aviso->leida,
             'href' => route('panel.notificaciones.abrir', $aviso->id),
-        ], $this->notificacionesDelMotor->recientesDe($usuario->id, self::MAXIMO_EN_CAMPANA));
+        ], $delMotor);
 
         if ($usuario->tienePermisoEnRol('operaciones.alerta.ver', $idRolActivo)) {
             $hrefAlertas = route('panel.alertas.index');
