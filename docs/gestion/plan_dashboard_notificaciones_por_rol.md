@@ -213,11 +213,37 @@ Se hizo completo, los dos casos, sin un tercer guard. Lo que quedó y por qué:
 - **Dónde se usa:** listado de usuarios, acción «Ver como» en el menú ⋮ de la fila (modal con el
   selector de rol si la cuenta tiene más de uno).
 
-Verificación: `runs/140-navegador.cjs` (Playwright contra el compose: 132 rutas de escritura, 448
-pedidos, ninguno se ejecutó), `runs/140-integracion.php.txt` (casos de uso, middleware y
-controladores del portal contra Postgres en una transacción revertida) y
-`runs/140-VistaComoTest.php.txt` (42 casos puros, propuestos para `tests/Unit/`: `tests/` está
-congelado en el turno noche).
+**Cómo se verificó** (contra el compose, con el administrador de plataforma):
+
+- Como una cuenta con dos roles (piloto y jefe de campo) bajo el rol **Jefe de campo**: el
+  dashboard de la tarea 138 con sus tres tabs, sin «Cerrar sesión» ni «Cambiar de rol»; bajo el rol
+  **Piloto** de la misma cuenta, ninguna de esas tabs (el rol activo manda, no la unión). «Volver a
+  mi vista» devuelve al listado de usuarios con su propio menú.
+- Como cada cuenta de portal: el listado de actas es exactamente el de su contrato; pedir por id un
+  acta o un reporte de otro contrato da 404 (nunca 403 ni el archivo); `/panel/*` desvía al portal.
+- Barrido de escritura: las 132 rutas de escritura del grupo `web` (según `route:list`), con
+  variantes JSON, HTML, `_method` y un POST disfrazado de GET, dieron 403 o 405 —ninguna 2xx, 3xx ni
+  5xx— y la base quedó idéntica.
+- Bitácora: dos filas por vista (`creado` y `actualizado`), ambas con el administrador real como
+  actor y ninguna a nombre de la cuenta observada.
+
+**Decisiones abiertas y límites conocidos**
+
+- **Delegar `ver_como`.** Quien administra la matriz de permisos (el dueño tiene
+  `seguridad.rol.asignar_permiso`) puede otorgar el permiso a cualquier otro rol, y
+  `IniciarVistaComo` solo exige el permiso: no compara a quien mira con la cuenta mirada, así que ese
+  rol podría ver como un `dueno` y leer finanzas. Ninguna siembra lo hace y el pedido solo exigía que
+  no estuviera activo por defecto, así que no se cerró. Si se quiere impedir la delegación, la guarda
+  va en `AsignarPermisosRol` (rechazar este código para todo rol distinto de `admin_plataforma`); si
+  se quiere permitirla con tope, en `IniciarVistaComo`.
+- **Una vista que muere con la sesión queda sin salida** en la bitácora (arriba). Cerrarla «al
+  siguiente ingreso» daría falsos positivos con dos sesiones abiertas. Si algún día importa, el
+  camino es guardar el id de sesión en `sec_vistas_como` y cerrar por barrido de sesiones vencidas.
+- **`POST /login` y `POST /logout` dan 403 mientras hay una bandera colgada** (hasta que vence la
+  sesión): falla cerrado y es consecuencia de rechazar toda escritura. El administrador sale con
+  «Volver a mi vista», disponible en cualquier pantalla del panel.
+- **No se pueden mirar** las cuentas bloqueadas (no hay sesión real que reproducir) ni una cuenta de
+  portal sin contrato (no hay nada que ver).
 
 ## 7. Motor de notificaciones (141) — por qué es su propia tarea, y por qué al final
 
