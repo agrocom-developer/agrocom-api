@@ -13,7 +13,7 @@ return [
     // §4.2) — compartido por el listado y el formulario de personas.
     'roles' => [
         'piloto' => 'Piloto',
-        'auxiliar' => 'Auxiliar',
+        'auxiliar' => 'Ayudante',
         'jefe_campo' => 'Jefe de campo',
         'encargado_operaciones' => 'Encargado de operaciones',
         'dueno' => 'Dueño',
@@ -137,7 +137,7 @@ return [
         'filtro_vacio_titulo' => 'Sin resultados para esta búsqueda',
         'filtro_vacio_detalle' => 'Ninguna persona coincide con el nombre o la cédula buscados. Prueba con otro dato.',
         'vacio_titulo' => 'Todavía no hay personas registradas',
-        'vacio_detalle' => 'Las personas operativas se registran con sus datos personales, sus referencias y su puesto (piloto, auxiliar, jefe de campo). Se da de alta una nueva desde el formulario arriba.',
+        'vacio_detalle' => 'Las personas operativas se registran con sus datos personales, sus referencias y su puesto (piloto, ayudante, jefe de campo). Se da de alta una nueva desde el formulario arriba.',
         'col_nombre' => 'Nombre',
         'col_rol' => 'Puesto',
         'col_base' => 'Base',
@@ -215,7 +215,7 @@ return [
         'aside_sesiones_total' => 'Total',
         'aside_sesiones_validadas' => 'Validadas',
         'aside_sesiones_vacio_titulo' => 'Sin sesiones',
-        'aside_sesiones_vacio_detalle' => 'Esta persona todavía no participó en ninguna sesión de vuelo, ni como piloto ni como auxiliar.',
+        'aside_sesiones_vacio_detalle' => 'Esta persona todavía no participó en ninguna sesión de vuelo, ni como piloto ni como ayudante.',
         'aside_sesiones_accion_desempenio' => 'Ver desempeño',
         'aside_anticipos_titulo' => 'Anticipos',
         'aside_anticipos_cantidad' => 'Registrados',
