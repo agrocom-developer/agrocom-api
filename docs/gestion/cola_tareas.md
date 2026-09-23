@@ -621,7 +621,10 @@ homogeneización del panel; el detalle y cómo se midió cada uno están en
   una propiedad (por eso `filter-bar.css` no es CSS muerto), y hay `confirm()`
   nativo en Roles y en el `show` de Planilla, Rendición y Trabajo. **Resuelto el
   22/9/2026:** el arquetipo Detalle se adopta en todo el sistema → tareas 124 a
-  126. Roles sigue excluido por el dueño.
+  126. Roles sigue excluido por el dueño. **Cerrado por la tarea 126:** las tres
+  fichas de Finanzas ya no usan `.ag-filtros`; sin ninguna pantalla del panel
+  que lo referencie, `filter-bar.css` pasó a CSS muerto y se borró (junto con su
+  import en `components/index.css`) el mismo 22/9/2026.
 - **`molecules/confirm-button` y `molecules/state-transition` siguen en uso**
   (seis y ocho Blade), así que no se borraron. El primero está en el listado de
   cinco pantallas de referencia (Clientes, Propiedades, Lotes, Estadías,

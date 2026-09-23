@@ -67,8 +67,9 @@
 }
 
 /* Fila de controles en línea, no formulario apilado: el margen inferior
-   del átomo empujaría el botón por debajo del campo (mismo motivo que
-   documenta components/filter-bar.css). */
+   del átomo empujaría el botón por debajo del campo (misma regla de "fila
+   de controles" del catálogo: los átomos de campo van con
+   margin-bottom: 0 dentro de una fila en línea). */
 .ag-reparto-cuadrillas-ficha__equipo-cabecera .ag-input,
 .ag-reparto-cuadrillas-ficha__equipo-cabecera .ag-select,
 .ag-reparto-cuadrillas-ficha__lote-fila .ag-input,

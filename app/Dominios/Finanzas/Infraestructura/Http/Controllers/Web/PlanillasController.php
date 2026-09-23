@@ -7,6 +7,7 @@ use App\Dominios\Finanzas\Aplicacion\GenerarPlanilla;
 use App\Dominios\Finanzas\Aplicacion\ListarPlanillas;
 use App\Dominios\Finanzas\Dominio\EstadoPlanilla;
 use App\Dominios\Finanzas\Dominio\Excepciones\PlanillaNoAprobable;
+use App\Dominios\Finanzas\Infraestructura\Eloquent\DevengoPersonal;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\Planilla;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\PlanillaDetalle;
 use App\Dominios\Finanzas\Infraestructura\Http\Requests\GenerarPlanillaRequest;
@@ -14,6 +15,7 @@ use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -84,6 +86,13 @@ final class PlanillasController
         ]);
     }
 
+    /**
+     * Arquetipo Detalle (tarea 126, guía §6.4): misma anatomía que
+     * `TrabajosController::show()`/`CuadrillasController::show()` —
+     * `page-header` + KPI + `form-layout` de solo lectura + aside con
+     * metadatos/vínculos/actividad. Aprobar es la única transición de la
+     * máquina (`TransicionesPlanilla`), misma guarda que el listado.
+     */
     public function show(Request $request, Planilla $planilla): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
@@ -95,9 +104,12 @@ final class PlanillasController
             'planilla' => $planilla,
             'detalles' => $detalles,
             'etiquetasPersona' => $this->etiquetasPersona($detalles->pluck('persona_id')->unique()->values()->all()),
-            'aprobadaPorNombre' => $planilla->aprobada_por !== null
-                ? DB::table('sec_user')->where('id', $planilla->aprobada_por)->value('name')
-                : null,
+            'generadaPorNombre' => $this->nombreAutor($planilla->created_by),
+            'aprobadaPorNombre' => $this->nombreAutor($planilla->aprobada_por),
+            'devengosIncluidos' => $this->devengosDelPeriodo($planilla->periodo),
+            'vinculos' => $this->vinculosDePlanilla($request),
+            'actividad' => $this->actividadDePlanilla($planilla),
+            'tonoPorEstado' => self::TONO_POR_ESTADO,
             'puedeAprobar' => $this->autorizacion->tienePermiso($request, self::PERMISO_APROBAR),
         ]);
     }
@@ -157,5 +169,95 @@ final class PlanillasController
             ->whereIn('id', $ids)
             ->pluck('nombre', 'id')
             ->all();
+    }
+
+    /**
+     * Nombre de usuario (`sec_user`, mismo criterio que
+     * `CuadrillasController::nombreAutor()`): `created_by`/`aprobada_por` son
+     * el mismo tipo de referencia (un `sec_user`, no una `per_personas`).
+     * `"#id"` si el usuario ya no existe.
+     */
+    private function nombreAutor(?int $userId): ?string
+    {
+        if ($userId === null) {
+            return null;
+        }
+
+        return DB::table('sec_user')->where('id', $userId)->value('name') ?? "#{$userId}";
+    }
+
+    /**
+     * "Devengos incluidos" del KPI: cuenta (no suma dinero) los
+     * `fin_devengos_personal` PAGABLES del mismo mes calendario que
+     * `GenerarPlanilla` usó para armar esta planilla — mismo rango de fechas,
+     * sin recalcular ningún monto (invariante 6: esto no es una suma nueva,
+     * es un `count()` de filas ya existentes).
+     */
+    private function devengosDelPeriodo(string $periodo): int
+    {
+        $inicioMes = Carbon::createFromFormat('Y-m-d', "{$periodo}-01")->startOfMonth();
+        $finMes = $inicioMes->copy()->endOfMonth();
+
+        return DevengoPersonal::query()
+            ->pagables()
+            ->whereBetween('fecha', [$inicioMes->toDateString(), $finMes->toDateString()])
+            ->count();
+    }
+
+    /**
+     * "Vínculos" de `show()` (arquetipo Detalle): solo el listado de
+     * planillas — no hay ruta de "devengos del período" agregada (Devengos
+     * es por persona, `panel.devengos.show/{persona}`), así que ese enlace
+     * no se ofrece (guía §6.4: nunca se inventa una ruta que no existe).
+     *
+     * @return list<array{href: string, icon: string, title: string, meta: ?string, tone: string}>
+     */
+    private function vinculosDePlanilla(Request $request): array
+    {
+        $vinculos = [];
+
+        if ($this->autorizacion->tienePermiso($request, self::PERMISO_VER)) {
+            $vinculos[] = [
+                'href' => route('panel.planillas.index'),
+                'icon' => 'event_note',
+                'title' => __('finanzas.planillas.vinculo_listado'),
+                'meta' => null,
+                'tone' => 'primary-2',
+            ];
+        }
+
+        return $vinculos;
+    }
+
+    /**
+     * "Actividad" de `show()`: solo eventos reconstruibles desde columnas
+     * reales (guía §6.4 regla 3) — `created_at`/`created_by` (generada) y
+     * `aprobada_en`/`aprobada_por` (aprobada), las dos ya persistidas por
+     * `MaquinaEstadosPlanilla`.
+     *
+     * @return list<array{title: string, meta: string, tone: string}>
+     */
+    private function actividadDePlanilla(Planilla $planilla): array
+    {
+        $eventos = [[
+            'title' => __('finanzas.planillas.actividad_generada'),
+            'meta' => $this->metaFecha($planilla->created_at),
+            'tone' => 'neutral',
+        ]];
+
+        if ($planilla->aprobada_en !== null) {
+            $eventos[] = [
+                'title' => __('finanzas.planillas.actividad_aprobada'),
+                'meta' => $this->metaFecha($planilla->aprobada_en),
+                'tone' => 'success',
+            ];
+        }
+
+        return $eventos;
+    }
+
+    private function metaFecha(?\DateTimeInterface $fecha): string
+    {
+        return $fecha?->format('d/m/Y H:i') ?? '—';
     }
 }

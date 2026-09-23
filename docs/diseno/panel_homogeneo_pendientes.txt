@@ -17,10 +17,9 @@
 # de APK).
 #
 # Sumadas el 22/9/2026 (tarea 124, decisión del dueño de §1.1 y §8 del plan):
-# las siete fichas del arquetipo Detalle que todavía no lo siguen. Las dos
+# las siete fichas del arquetipo Detalle que todavía no lo seguían. Las dos
 # referencias (Operaciones/ordenes/show, Operaciones/ordenes-trabajo/show) NO
-# entran acá: ya cumplen el patrón desde el 17/9 y el 21/9/2026.
-
-Finanzas/planillas/show.blade.php # tarea 126
-Finanzas/rendiciones/show.blade.php # tarea 126
-Finanzas/devengos/show.blade.php # tarea 126
+# entran acá: ya cumplen el patrón desde el 17/9 y el 21/9/2026. Las siete
+# salieron con las tareas 124 (Trabajo, Reparto de cuadrillas), 125
+# (Cuadrilla, Desempeño de persona) y 126 (Planilla, Rendición, Devengos):
+# vuelve a estar vacía.

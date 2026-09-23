@@ -76,6 +76,9 @@ final class RendicionesController
 
     private const PERMISO_APROBAR = 'finanzas.rendicion.aprobar';
 
+    /** Tarea 126: el vínculo "Relacionado" a la base gatea por SU permiso, mismo criterio que `CuadrillasController`. */
+    private const PERMISO_VER_BASE = 'personal.base.editar';
+
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
     public function index(Request $request, ListarRendiciones $listarRendiciones): View
@@ -140,6 +143,14 @@ final class RendicionesController
             ->with('estado', __('finanzas.rendiciones.creada'));
     }
 
+    /**
+     * Arquetipo Detalle (tarea 126, guía §6.4): misma anatomía que
+     * `PlanillasController::show()` — `page-header` + KPI + `form-layout` de
+     * solo lectura + aside con metadatos/vínculos/actividad. Presentar y
+     * Aprobar son las dos transiciones de `TransicionesRendicion`, cada una
+     * gateada por su propio permiso y (Aprobar) por
+     * `PoliticaAprobacionRendicion` vía `personaId`.
+     */
     public function show(Request $request, Rendicion $rendicion): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
@@ -156,14 +167,20 @@ final class RendicionesController
                 ->get()
             : new Collection;
 
+        $etiquetasJefeCampo = $this->etiquetasPersona([(int) $rendicion->jefe_campo_id, ...($rendicion->aprobado_por !== null ? [(int) $rendicion->aprobado_por] : [])]);
+
         return view('finanzas::pages.rendiciones.show', [
             ...$this->autorizacion->cascara($request),
             'rendicion' => $rendicion,
             'gastosAsociados' => $gastosAsociados,
             'gastosDisponibles' => $gastosDisponibles,
             'etiquetasBase' => $this->etiquetasBase([(int) $rendicion->base_id]),
-            'etiquetasJefeCampo' => $this->etiquetasPersona([(int) $rendicion->jefe_campo_id]),
+            'etiquetasJefeCampo' => $etiquetasJefeCampo,
+            'creadaPorNombre' => $this->nombreAutor($rendicion->created_by),
             'personaId' => $this->autorizacion->personaId($request),
+            'vinculos' => $this->vinculosDeRendicion($rendicion, $request),
+            'actividad' => $this->actividadDeRendicion($rendicion, $etiquetasJefeCampo),
+            'tonoPorEstado' => self::TONO_POR_ESTADO,
             'puedeCrear' => $this->autorizacion->tienePermiso($request, self::PERMISO_CREAR),
             'puedePresentar' => $this->autorizacion->tienePermiso($request, self::PERMISO_PRESENTAR),
             'puedeAprobar' => $this->autorizacion->tienePermiso($request, self::PERMISO_APROBAR),
@@ -290,5 +307,105 @@ final class RendicionesController
             ->whereIn('id', $ids)
             ->pluck('nombre', 'id')
             ->all();
+    }
+
+    /**
+     * Nombre de usuario (`sec_user`), mismo criterio que
+     * `PlanillasController::nombreAutor()`/`CuadrillasController::nombreAutor()`:
+     * `created_by` es un `sec_user`, distinto de `jefe_campo_id`/`aprobado_por`
+     * (que son `per_personas`). `"#id"` si el usuario ya no existe.
+     */
+    private function nombreAutor(?int $userId): ?string
+    {
+        if ($userId === null) {
+            return null;
+        }
+
+        return DB::table('sec_user')->where('id', $userId)->value('name') ?? "#{$userId}";
+    }
+
+    /**
+     * "Vínculos" de `show()` (arquetipo Detalle): las rendiciones de la
+     * misma base y la ficha de la base (si el rol puede editarla) — mismo
+     * espíritu que `CuadrillasController::vinculosDeCuadrilla()`. La base es
+     * un entero plano de `per_bases` (ADR 0003 regla 3): la navegación a su
+     * ficha es un `href` directo a la ruta de Personal, sin leer sus datos
+     * acá.
+     *
+     * @return list<array{href: string, icon: string, title: string, meta: ?string, tone: string}>
+     */
+    private function vinculosDeRendicion(Rendicion $rendicion, Request $request): array
+    {
+        $vinculos = [];
+
+        if ($this->autorizacion->tienePermiso($request, self::PERMISO_VER)) {
+            $vinculos[] = [
+                'href' => route('panel.rendiciones.index', ['base_id' => $rendicion->base_id]),
+                'icon' => 'receipt_long',
+                'title' => __('finanzas.rendiciones.vinculo_listado'),
+                'meta' => null,
+                'tone' => 'primary-2',
+            ];
+        }
+
+        if ($this->autorizacion->tienePermiso($request, self::PERMISO_VER_BASE)) {
+            $vinculos[] = [
+                'href' => route('panel.bases.edit', $rendicion->base_id),
+                'icon' => 'holiday_village',
+                'title' => __('finanzas.rendiciones.vinculo_base'),
+                'meta' => $this->etiquetasBase([(int) $rendicion->base_id])[$rendicion->base_id] ?? null,
+                'tone' => 'distintivo-1',
+            ];
+        }
+
+        return $vinculos;
+    }
+
+    /**
+     * "Actividad" de `show()`: solo eventos reconstruibles desde columnas
+     * reales (guía §6.4 regla 3). `fin_rendiciones` NO persiste una fecha
+     * propia de "presentada" (solo `estado`) ni de "aprobada" (solo
+     * `aprobado_por`, sin timestamp): mientras la rendición está
+     * `Presentada`, `updated_at` SÍ refleja exactamente ese momento (una
+     * única transición desde la creación); en cuanto llega a `Aprobada`,
+     * `updated_at` pasa a reflejar la aprobación y el momento de la
+     * presentación deja de ser reconstruible — no se inventa esa fecha, se
+     * omite ese evento intermedio (documentado en runs/126.md).
+     *
+     * @param  array<int, string>  $etiquetasJefeCampo
+     * @return list<array{title: string, meta: string, tone: string}>
+     */
+    private function actividadDeRendicion(Rendicion $rendicion, array $etiquetasJefeCampo): array
+    {
+        $eventos = [[
+            'title' => __('finanzas.rendiciones.actividad_creada'),
+            'meta' => $this->metaFecha($rendicion->created_at),
+            'tone' => 'neutral',
+        ]];
+
+        if ($rendicion->estado === EstadoRendicion::Presentada) {
+            $eventos[] = [
+                'title' => __('finanzas.rendiciones.actividad_presentada'),
+                'meta' => $this->metaFecha($rendicion->updated_at),
+                'tone' => 'info',
+            ];
+        }
+
+        if ($rendicion->estado === EstadoRendicion::Aprobada) {
+            $eventos[] = [
+                'title' => __('finanzas.rendiciones.actividad_aprobada', [
+                    'persona' => $etiquetasJefeCampo[(int) $rendicion->aprobado_por] ?? "#{$rendicion->aprobado_por}",
+                ]),
+                'meta' => $this->metaFecha($rendicion->updated_at),
+                'tone' => 'success',
+            ];
+        }
+
+        return $eventos;
+    }
+
+    private function metaFecha(?\DateTimeInterface $fecha): string
+    {
+        return $fecha?->format('d/m/Y H:i') ?? '—';
     }
 }
