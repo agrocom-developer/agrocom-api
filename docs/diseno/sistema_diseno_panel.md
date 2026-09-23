@@ -641,9 +641,20 @@ pantalla ya hecha, se anota acá.
     `min-width` nombrando también `.ag-input`, los desplegables quedaron
     además más angostos que su propia etiqueta. Regla: la fila anula el
     margen de TODOS los átomos de campo y les fija el mismo `min-width`, no
-    del que hoy se use. Con compuerta automática en
-    `tests/Unit/PulidoNavegacionPanelTest.php`, que descubre sola qué átomos
-    llevan margen de raíz.
+    del que hoy se use.
+
+    **Compuerta retirada (22/9/2026, tarea 126).** La regla en sí sigue
+    vigente para cualquier fila de controles en línea nueva (ver
+    `resources/css/pages/reparto-cuadrillas.css` para un ejemplo vivo), pero
+    dejó de tener gate automático: `.ag-filtros`/`components/filter-bar.css`
+    —el archivo contra el que `tests/Unit/PulidoNavegacionPanelTest.php`
+    comparaba cada átomo— se borró al quedar sin una sola pantalla que lo
+    usara (Desempeño de persona y el detalle de Devengos, las dos últimas,
+    pasaron a `filter-panel`). `filter-panel` apila sus campos verticalmente
+    dentro del desplegable, así que el margen de apilado ahí es el
+    comportamiento CORRECTO, no el bug — no hay un archivo equivalente que
+    proteger con una compuerta general. Un campo nuevo en una fila en línea
+    se revisa a mano contra esta regla.
 
 12. **Una fila repetible (contactos, ventanas, lotes) COMPARTE la clase
     `.ag-form-section__body`, nunca redeclara su propio grid de dos columnas

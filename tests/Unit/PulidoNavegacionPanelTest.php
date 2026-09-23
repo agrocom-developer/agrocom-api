@@ -25,10 +25,14 @@
  *    la tarea 76 migró los 70 selects del panel al átomo `atoms/select`
  *    —otra clase de raíz, `.ag-select`— el botón "Filtrar" volvió a caer
  *    16px por debajo del campo en las 29 pantallas con filtros a la vez
- *    (reportado con captura por el usuario el 8/9/2026). Esta cuarta
- *    compuerta se descubre sola: cualquier átomo de campo nuevo que declare
- *    `margin-bottom` en su regla raíz tiene que estar anulado en
- *    `components/filter-bar.css` o el test falla.
+ *    (reportado con captura por el usuario el 8/9/2026). Retirada el
+ *    22/9/2026 (tarea 126): la última pantalla con `.ag-filtros`
+ *    (Devengos) pasó a `filter-panel`, `components/filter-bar.css` quedó
+ *    sin uso y se borró — `filter-panel` apila sus campos, así que ese
+ *    margen ahí es el comportamiento correcto, no el bug. Regla vigente
+ *    para una fila de controles en línea nueva, documentada en
+ *    `sistema_diseno_panel.md` §8 regla 11; sin gate automático porque ya
+ *    no hay un archivo único contra el que compararla.
  * 5. Listado con menos columnas declaradas que celdas por fila: CSS Grid no
  *    avisa, ABRE UNA FILA IMPLÍCITA. En `campanias/index` las acciones
  *    ("Editar", "Cerrar") caían así debajo del nombre del cliente, en la
@@ -163,43 +167,6 @@ test('el átomo icon reserva su caja para que la ligadura no mueva el layout', f
     expect($iconCss)
         ->toContain('width: 1em')
         ->toContain('display: inline-block');
-});
-
-test('la barra de filtros anula el margen de apilado de todo átomo de campo', function () use ($raizProyecto) {
-    $barraFiltros = file_get_contents($raizProyecto.'/resources/css/components/filter-bar.css');
-    $sinCubrir = [];
-
-    foreach (glob($raizProyecto.'/resources/views/components/atoms/*.blade.php') ?: [] as $blade) {
-        $hoja = $raizProyecto.'/resources/css/components/'.basename($blade, '.blade.php').'.css';
-
-        if (! is_file($hoja)) {
-            continue;
-        }
-
-        $contenido = file_get_contents($hoja);
-
-        if ($contenido === false) {
-            continue;
-        }
-
-        // Solo las reglas RAÍZ del átomo (`.ag-select { … }`), nunca un
-        // elemento BEM (`.ag-select__listbox`): el margen que importa es el
-        // que separa un campo del siguiente en un formulario apilado, y es
-        // el que sobra cuando el campo está en línea con un botón.
-        preg_match_all('~^\.(ag-[a-z-]+) \{([^}]*)\}~m', $contenido, $reglas, PREG_SET_ORDER);
-
-        foreach ($reglas as $regla) {
-            if (! str_contains($regla[2], 'margin-bottom')) {
-                continue;
-            }
-
-            if (! str_contains($barraFiltros, ".ag-filtros .{$regla[1]},") && ! str_contains($barraFiltros, ".ag-filtros .{$regla[1]} {")) {
-                $sinCubrir[] = $regla[1];
-            }
-        }
-    }
-
-    expect($sinCubrir)->toBe([], 'Estos átomos de campo llevan margen de apilado y `components/filter-bar.css` no lo anula: dentro de una barra de filtros van a empujar el botón por debajo del campo. Sumalos a la regla de `margin-bottom: 0`.');
 });
 
 test('cada listado declara tantas columnas de grid como celdas tiene su encabezado', function () use ($raizProyecto) {
