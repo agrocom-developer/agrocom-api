@@ -23,6 +23,9 @@
     - $equipos (list<array{etiqueta, hectareas, trabajos}>): los trabajos por equipo.
     - $etiquetasLote (array<int, string>), $vinculos (list), $actividad (list).
     - $puedeEditarTrabajo / $puedeEliminarTrabajo (bool).
+    - $puedeEditarOrdenTrabajo (bool, tarea 127): «Editar» de la CABECERA —
+      permiso `operaciones.trabajo.editar` más `PoliticaEdicionOrdenTrabajo::admiteEdicion()`
+      (no todos sus trabajos validados). Va a `panel.trabajos.edit`.
 
     Gateada por `operaciones.trabajo.ver`. "Ver" del trabajo va siempre;
     "Editar"/"Eliminar" solo si hay permisos Y el trabajo no está `validado`
@@ -91,6 +94,12 @@
 
                 <x-slot:actions>
                     <x-molecules.boton-volver :href="route('panel.trabajos.index')" :label="__('operaciones.ordenes_trabajo.volver')" />
+
+                    @if ($puedeEditarOrdenTrabajo)
+                        <x-atoms.button :href="route('panel.trabajos.edit', $ordenTrabajo)" variant="warning-outline" icon="edit">
+                            {{ __('operaciones.ordenes_trabajo.editar') }}
+                        </x-atoms.button>
+                    @endif
                 </x-slot:actions>
             </x-organisms.page-header>
 
