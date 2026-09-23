@@ -4,6 +4,7 @@ namespace App\Dominios\Operaciones\Infraestructura\Eloquent;
 
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -40,6 +41,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $litros_ha
  * @property string|null $kilos_ha
  * @property list<string>|null $calda_productos
+ * @property string|null $motivo_correccion
+ * @property CarbonImmutable|null $corregida_at
  */
 class OrdenTrabajo extends ModeloDominio
 {
@@ -64,6 +67,8 @@ class OrdenTrabajo extends ModeloDominio
         'litros_ha',
         'kilos_ha',
         'calda_productos',
+        'motivo_correccion',
+        'corregida_at',
     ];
 
     /** @return array<string, string> */
@@ -83,6 +88,7 @@ class OrdenTrabajo extends ModeloDominio
             'litros_ha' => 'decimal:2',
             'kilos_ha' => 'decimal:2',
             'calda_productos' => 'array',
+            'corregida_at' => 'immutable_datetime',
         ];
     }
 
@@ -96,5 +102,15 @@ class OrdenTrabajo extends ModeloDominio
     public function trabajos(): HasMany
     {
         return $this->hasMany(Trabajo::class, 'orden_trabajo_id');
+    }
+
+    /**
+     * Condición de pago de cada equipo de la orden (ADR 0023).
+     *
+     * @return HasMany<OrdenTrabajoEquipo, $this>
+     */
+    public function equipos(): HasMany
+    {
+        return $this->hasMany(OrdenTrabajoEquipo::class, 'orden_trabajo_id');
     }
 }

@@ -4,6 +4,8 @@ namespace App\Dominios\Inventario\Infraestructura\Eloquent;
 
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * Asiento de un movimiento de stock (HU-36, tarea 52): `compra`, `salida`,
@@ -17,6 +19,12 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
  * mutación de negocio auditable en sí misma — quién, cuándo, qué tipo, qué
  * motivo.
  *
+ * `base_id`/`base_destino_id` son enteros planos — FK hacia otro módulo
+ * (`Personal`), prohibido tener `belongsTo` cross-módulo por ADR 0003 regla
+ * 3. `repuesto_id` sí es del mismo módulo: la relación `repuesto()` existe
+ * para que `ListarMovimientosStock` traiga código/descripción sin N+1
+ * (mismo criterio que `Stock::repuesto()`).
+ *
  * @property int $id
  * @property int $repuesto_id
  * @property int $base_id
@@ -27,6 +35,10 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
  * @property string|null $costo_unitario
  * @property string|null $motivo
  * @property int|null $orden_mantenimiento_id
+ * @property Carbon $instante atributo NO persistido: `created_at` ya
+ *                            convertido a la zona horaria de quien mira. Lo
+ *                            calcula y asigna `ListarMovimientosStock` —
+ *                            ausente fuera de ese caso de uso.
  */
 class MovimientoStock extends ModeloDominio
 {
@@ -54,5 +66,11 @@ class MovimientoStock extends ModeloDominio
             'cantidad' => 'decimal:2',
             'costo_unitario' => 'decimal:2',
         ];
+    }
+
+    /** @return BelongsTo<Repuesto, $this> */
+    public function repuesto(): BelongsTo
+    {
+        return $this->belongsTo(Repuesto::class);
     }
 }

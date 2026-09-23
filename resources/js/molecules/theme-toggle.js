@@ -52,6 +52,13 @@ function persistirTema(tema) {
         return; // página sin usuario autenticado (login) — nada que persistir
     }
 
+    // Vista "como otro usuario" (tarea 140): solo lectura. El tema se aplica en
+    // el navegador (localStorage, arriba) pero no se guarda en la cuenta que se
+    // está mirando — el servidor tampoco lo aceptaría.
+    if (document.documentElement.hasAttribute('data-ag-vista-como')) {
+        return;
+    }
+
     fetch(url, {
         method: 'POST',
         headers: {

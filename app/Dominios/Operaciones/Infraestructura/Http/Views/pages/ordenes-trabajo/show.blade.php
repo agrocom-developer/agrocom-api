@@ -3,7 +3,7 @@
     Ficha de una Orden de Trabajo. Replica la distribución de la ficha de la
     orden de aplicación (`ordenes/show.blade.php`, pedido del dueño, 21/9/2026;
     arquetipo Detalle, §6.4 de docs/diseno/guia_pantalla_panel.md) y reusa sus
-    clases `ag-ordenes-detalle*` (resources/css/pages/ordenes.css): KPI bajo la
+    clases `ag-detalle*` (resources/css/pages/ordenes.css): KPI bajo la
     cabecera; columna principal con lo que se lee de corrido; aside pegajoso con
     avance, relacionado y actividad; y debajo, a todo el ancho, los trabajos.
 
@@ -23,6 +23,9 @@
     - $equipos (list<array{etiqueta, hectareas, trabajos}>): los trabajos por equipo.
     - $etiquetasLote (array<int, string>), $vinculos (list), $actividad (list).
     - $puedeEditarTrabajo / $puedeEliminarTrabajo (bool).
+    - $puedeEditarOrdenTrabajo (bool, tarea 127): «Editar» de la CABECERA —
+      permiso `operaciones.trabajo.editar` más `PoliticaEdicionOrdenTrabajo::admiteEdicion()`
+      (no todos sus trabajos validados). Va a `panel.trabajos.edit`.
 
     Gateada por `operaciones.trabajo.ver`. "Ver" del trabajo va siempre;
     "Editar"/"Eliminar" solo si hay permisos Y el trabajo no está `validado`
@@ -78,7 +81,7 @@
         :version="$version"
         :vista-actual="__('operaciones.ordenes_trabajo.detalle_titulo', ['id' => $ordenTrabajo->id])"
     >
-        <div class="ag-ordenes-detalle">
+        <div class="ag-detalle">
             <x-organisms.page-header
                 :title="__('operaciones.ordenes_trabajo.detalle_titulo', ['id' => $ordenTrabajo->id])"
                 :subtitle="__('operaciones.ordenes_trabajo.detalle_subtitulo', ['cliente' => $clienteLabel ?? '—', 'fecha' => $ordenTrabajo->created_at?->format('d/m/Y') ?? '—'])"
@@ -91,6 +94,12 @@
 
                 <x-slot:actions>
                     <x-molecules.boton-volver :href="route('panel.trabajos.index')" :label="__('operaciones.ordenes_trabajo.volver')" />
+
+                    @if ($puedeEditarOrdenTrabajo)
+                        <x-atoms.button :href="route('panel.trabajos.edit', $ordenTrabajo)" variant="warning-outline" icon="edit">
+                            {{ __('operaciones.ordenes_trabajo.editar') }}
+                        </x-atoms.button>
+                    @endif
                 </x-slot:actions>
             </x-organisms.page-header>
 
@@ -106,7 +115,7 @@
                 </x-molecules.alert-strip>
             @endif
 
-            <div class="ag-ordenes-detalle__kpis">
+            <div class="ag-detalle__kpis">
                 <x-molecules.stat-card
                     :label="__('operaciones.ordenes_trabajo.kpi_hectareas')"
                     icon="landscape"
@@ -137,51 +146,51 @@
 
             <x-molecules.form-layout>
                 <x-molecules.form-section accent="primary-2" :title="__('operaciones.ordenes_trabajo.seccion_orden')">
-                    <div class="ag-ordenes-detalle__campo">
-                        <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes_trabajo.campo_orden') }}</p>
-                        <p class="ag-ordenes-detalle__campo-valor">{{ __('operaciones.ordenes_trabajo.detalle_orden', ['id' => $ordenTrabajo->orden_id, 'aplicacion' => $ordenTrabajo->nro_aplicacion]) }}</p>
+                    <div class="ag-detalle__campo">
+                        <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes_trabajo.campo_orden') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ __('operaciones.ordenes_trabajo.detalle_orden', ['id' => $ordenTrabajo->orden_id, 'aplicacion' => $ordenTrabajo->nro_aplicacion]) }}</p>
                     </div>
-                    <div class="ag-ordenes-detalle__campo">
-                        <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes_trabajo.campo_cliente') }}</p>
-                        <p class="ag-ordenes-detalle__campo-valor">{{ $valor($clienteLabel) }}</p>
+                    <div class="ag-detalle__campo">
+                        <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes_trabajo.campo_cliente') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ $valor($clienteLabel) }}</p>
                     </div>
-                    <div class="ag-ordenes-detalle__campo">
-                        <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_tipo_insumo') }}</p>
-                        <p class="ag-ordenes-detalle__campo-valor">{{ $tipoInsumo !== null ? __('operaciones.tipo_insumo.'.$tipoInsumo) : '—' }}</p>
+                    <div class="ag-detalle__campo">
+                        <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes.campo_tipo_insumo') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ $tipoInsumo !== null ? __('operaciones.tipo_insumo.'.$tipoInsumo) : '—' }}</p>
                     </div>
-                    <div class="ag-ordenes-detalle__campo">
-                        <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_categoria_insumo') }}</p>
-                        <p class="ag-ordenes-detalle__campo-valor">{{ $valor($orden?->categoriaInsumo?->nombre) }}</p>
+                    <div class="ag-detalle__campo">
+                        <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes.campo_categoria_insumo') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ $valor($orden?->categoriaInsumo?->nombre) }}</p>
                     </div>
                 </x-molecules.form-section>
 
                 <x-molecules.form-section accent="success" :title="__('operaciones.asignacion_equipos.seccion_calda')" :count="__('operaciones.ordenes_trabajo.indicacion_contador')">
-                    <div class="ag-form-section__field--full ag-ordenes-detalle__campo">
-                        <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes_trabajo.detalle_calda_productos') }}</p>
-                        <p class="ag-ordenes-detalle__campo-valor">{{ $valor($llevaCalda) }}</p>
+                    <div class="ag-form-section__field--full ag-detalle__campo">
+                        <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes_trabajo.detalle_calda_productos') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ $valor($llevaCalda) }}</p>
                     </div>
                     @foreach ($datosCalda as $etiqueta => $dato)
-                        <div class="ag-ordenes-detalle__campo">
-                            <p class="ag-ordenes-detalle__campo-label">{{ $etiqueta }}</p>
-                            <p class="ag-ordenes-detalle__campo-valor ag-ordenes__mono">{{ $dato }}</p>
+                        <div class="ag-detalle__campo">
+                            <p class="ag-detalle__campo-label">{{ $etiqueta }}</p>
+                            <p class="ag-detalle__campo-valor ag-ordenes__mono">{{ $dato }}</p>
                         </div>
                     @endforeach
                 </x-molecules.form-section>
 
                 <x-molecules.form-section accent="warning" :title="__('operaciones.ordenes_trabajo.seccion_clima')" :count="__('operaciones.ordenes_trabajo.indicacion_contador')">
                     @foreach ($datosClima as $etiqueta => $dato)
-                        <div class="ag-ordenes-detalle__campo">
-                            <p class="ag-ordenes-detalle__campo-label">{{ $etiqueta }}</p>
-                            <p class="ag-ordenes-detalle__campo-valor ag-ordenes__mono">{{ $valor($dato) }}</p>
+                        <div class="ag-detalle__campo">
+                            <p class="ag-detalle__campo-label">{{ $etiqueta }}</p>
+                            <p class="ag-detalle__campo-valor ag-ordenes__mono">{{ $valor($dato) }}</p>
                         </div>
                     @endforeach
                 </x-molecules.form-section>
 
                 <x-molecules.form-section accent="distintivo-1" :title="__('operaciones.ordenes_trabajo.seccion_vuelo')" :count="__('operaciones.ordenes_trabajo.indicacion_contador')">
                     @foreach ($datosVuelo as $etiqueta => $dato)
-                        <div class="ag-ordenes-detalle__campo">
-                            <p class="ag-ordenes-detalle__campo-label">{{ $etiqueta }}</p>
-                            <p class="ag-ordenes-detalle__campo-valor ag-ordenes__mono">{{ $valor($dato) }}</p>
+                        <div class="ag-detalle__campo">
+                            <p class="ag-detalle__campo-label">{{ $etiqueta }}</p>
+                            <p class="ag-detalle__campo-valor ag-ordenes__mono">{{ $valor($dato) }}</p>
                         </div>
                     @endforeach
                 </x-molecules.form-section>
@@ -194,7 +203,7 @@
                     />
 
                     <x-molecules.form-section accent="alert" :title="__('operaciones.ordenes.seccion_vinculos')">
-                        <div class="ag-form-section__field--full ag-ordenes-detalle__vinculos">
+                        <div class="ag-form-section__field--full ag-detalle__vinculos">
                             @foreach ($vinculos as $vinculo)
                                 <x-molecules.link-row
                                     :href="$vinculo['href']"
@@ -248,6 +257,35 @@
                                 {{ trans_choice('operaciones.ordenes_trabajo.equipo_resumen', $equipo['trabajos']->count(), ['cantidad' => $equipo['trabajos']->count(), 'hectareas' => $equipo['hectareas']]) }}
                             </p>
                         </div>
+
+                        {{-- Resumen de pago del equipo (ADR 0023) --}}
+                        @if (array_key_exists('pago', $equipo))
+                            <div class="ag-ordenes-trabajo-detalle__pago">
+                                @if ($equipo['pago'] !== null)
+                                    <p class="ag-ordenes-trabajo-detalle__pago-texto">
+                                        {{ __('operaciones.ordenes_trabajo.pago_resumen', [
+                                            'modalidad' => $equipo['pago']['modalidad'] ?? '—',
+                                            'piloto' => number_format($equipo['pago']['monto_piloto'] ?? 0, 2, ',', '.'),
+                                            'auxiliar' => number_format($equipo['pago']['monto_auxiliar'] ?? 0, 2, ',', '.'),
+                                        ]) }}
+                                    </p>
+                                    @if ($equipo['pago']['negociado'] ?? false)
+                                        <x-atoms.badge variant="success" tone="success">
+                                            {{ __('operaciones.ordenes_trabajo.pago_negociado') }}
+                                        </x-atoms.badge>
+                                    @endif
+                                    @if ($equipo['pago']['motivo'] ?? null)
+                                        <p class="ag-ordenes-trabajo-detalle__pago-motivo">
+                                            {{ __('operaciones.ordenes_trabajo.pago_negociado_motivo', ['motivo' => $equipo['pago']['motivo']]) }}
+                                        </p>
+                                    @endif
+                                @else
+                                    <p class="ag-ordenes-trabajo-detalle__pago-texto">
+                                        {{ __('operaciones.ordenes_trabajo.pago_sin_condicion') }}
+                                    </p>
+                                @endif
+                            </div>
+                        @endif
 
                         <x-molecules.index-table columns="6rem minmax(0, 2fr) 7rem minmax(0, 1.2fr) 7rem var(--ag-row-actions-width)">
                             <x-slot:head>

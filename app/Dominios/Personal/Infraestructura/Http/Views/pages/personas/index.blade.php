@@ -5,7 +5,7 @@
     paginación. Homogeneizado con el patrón de Clientes (tarea 112): tabla en
     `molecules/index-table`, acciones en `organisms/row-actions` y la baja con
     `molecules/confirm-modal`. Mismo molde que bases/index.blade.php, con dos
-    columnas más (rol, base) y la tarifa. Sin columna de estado: activo/inactivo
+    columnas más (rol, base). Sin columna de estado: activo/inactivo
     no se muestra en un listado de catálogo (guía §6.2). El listado solo busca
     por nombre — no filtra por rol ni por base —, así que no lleva
     `filter-panel` (mismo criterio que Campañas y Bases).
@@ -89,13 +89,12 @@
                     />
                 @endif
             @else
-                <x-molecules.index-table columns="3rem minmax(0, 1.6fr) minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, 1fr) var(--ag-row-actions-width)">
+                <x-molecules.index-table columns="3rem minmax(0, 1.6fr) minmax(0, 1.2fr) minmax(0, 1.2fr) var(--ag-row-actions-width)">
                     <x-slot:head>
                         <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('personal.personas.col_nombre') }}</span>
                         <span role="columnheader">{{ __('personal.personas.col_rol') }}</span>
                         <span role="columnheader">{{ __('personal.personas.col_base') }}</span>
-                        <span role="columnheader">{{ __('personal.personas.col_tarifa') }}</span>
                         <span role="columnheader" class="ag-index-table__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
                     </x-slot:head>
 
@@ -107,9 +106,6 @@
                             <span role="cell" class="ag-personas__nombre">{{ $persona->nombre }}</span>
                             <span role="cell">{{ __('personal.roles.'.$persona->rol->value) }}</span>
                             <span role="cell">{{ $persona->base?->nombre ?? __('personal.personas.sin_base') }}</span>
-                            <span role="cell" class="ag-personas__tarifa">
-                                {{ $persona->tarifa_ha !== null ? __('personal.personas.tarifa_valor', ['monto' => $persona->tarifa_ha]) : __('personal.personas.sin_tarifa') }}
-                            </span>
 
                             <span role="cell" class="ag-index-table__acciones">
                                 @php

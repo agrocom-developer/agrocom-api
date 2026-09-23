@@ -7,7 +7,12 @@ de aplicación, que no mostraba qué había sembrado en cada uno. Este documento
 consolida esa conversación: no hace falta volver a preguntar qué se pidió.
 
 **Estado.** Implementado en la rama `feature/siembra-lotes` lo de las secciones
-2 y 3. La sección 4 son decisiones abiertas: no están resueltas.
+2 y 3. De la sección 4, el dueño decidió el 22/9/2026 (rama
+`feature/siembra-contrato-kpi`): **el contrato valida que sus lotes sembrados no
+mezclen cultivo ni etapa** (`VerificadorCultivoDelContrato`; los lotes sin
+siembra no bloquean) y el **listado de Cultivos lleva una franja de KPI**
+(cultivos, sembrados hoy, lotes y hectáreas en las campañas abiertas). Siguen
+abiertos la foto de la etapa en cada orden y el cruce con `tipo_aplicacion`.
 
 ---
 

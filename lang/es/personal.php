@@ -13,7 +13,7 @@ return [
     // §4.2) — compartido por el listado y el formulario de personas.
     'roles' => [
         'piloto' => 'Piloto',
-        'auxiliar' => 'Auxiliar',
+        'auxiliar' => 'Ayudante',
         'jefe_campo' => 'Jefe de campo',
         'encargado_operaciones' => 'Encargado de operaciones',
         'dueno' => 'Dueño',
@@ -81,10 +81,8 @@ return [
         'campos_contador' => ':cantidad campos',
         'campo_nombre' => 'Nombre',
         'campo_ubicacion' => 'Ubicación',
-        'campo_latitud' => 'Latitud',
-        'campo_latitud_ayuda' => 'En grados decimales, entre -90 y 90. Se completa junto con la longitud.',
-        'campo_longitud' => 'Longitud',
-        'campo_longitud_ayuda' => 'En grados decimales, entre -180 y 180. Se completa junto con la latitud.',
+        'campo_coordenadas' => 'Ubicación en el mapa',
+        'campo_coordenadas_ayuda' => 'Arrastra el marcador o haz clic en el mapa para ubicar la base. Latitud y longitud se completan solas.',
         'error_coordenada_incompleta' => 'Completa latitud y longitud juntas, o deja las dos vacías.',
         'error_nombre_requerido' => 'Ingresa el nombre de la base.',
         'estado_form' => 'Los cambios se guardan al confirmar.',
@@ -120,8 +118,9 @@ return [
     ],
 
     // HU-26 (tarea 37): alta y mantenimiento de personas operativas, con su
-    // rol y tarifa por hectárea. `base_id` es opcional — mismo criterio de
-    // select nativo que `cliente_id` en comercial.campos.
+    // puesto y base. `base_id` es opcional — mismo criterio de select nativo
+    // que `cliente_id` en comercial.campos. La tarifa ya no es de la persona
+    // (ADR 0023): vive en Financiero → Tarifas y en cada Orden de Trabajo.
     'personas' => [
         'creado' => 'La persona se dio de alta correctamente.',
         'actualizado' => 'Los datos de la persona se actualizaron correctamente.',
@@ -129,7 +128,7 @@ return [
 
         // Listado
         'titulo' => 'Personas',
-        'subtitulo' => 'Personas de campo registradas, con su puesto y tarifa por hectárea.',
+        'subtitulo' => 'Personas de campo registradas, con su puesto y su base.',
         'nueva' => 'Nueva persona',
         'filtro_busqueda' => 'Buscar',
         'filtro_busqueda_placeholder' => 'Nombre o cédula…',
@@ -138,14 +137,11 @@ return [
         'filtro_vacio_titulo' => 'Sin resultados para esta búsqueda',
         'filtro_vacio_detalle' => 'Ninguna persona coincide con el nombre o la cédula buscados. Prueba con otro dato.',
         'vacio_titulo' => 'Todavía no hay personas registradas',
-        'vacio_detalle' => 'Las personas operativas se registran con sus datos personales, sus referencias y su puesto (piloto, auxiliar, jefe de campo). Se da de alta una nueva desde el formulario arriba.',
+        'vacio_detalle' => 'Las personas operativas se registran con sus datos personales, sus referencias y su puesto (piloto, ayudante, jefe de campo). Se da de alta una nueva desde el formulario arriba.',
         'col_nombre' => 'Nombre',
         'col_rol' => 'Puesto',
         'col_base' => 'Base',
-        'col_tarifa' => 'Tarifa/ha',
         'sin_base' => 'Sin base asignada',
-        'sin_tarifa' => '—',
-        'tarifa_valor' => 'Bs :monto',
         'editar' => 'Editar',
         'eliminar_accion' => 'Eliminar',
         'confirmar_eliminar_titulo' => 'Eliminar persona',
@@ -184,8 +180,6 @@ return [
         'campo_rol_ayuda' => 'Lo que hace en campo. No da acceso al sistema: eso lo define el usuario vinculado a la persona.',
         'campo_base' => 'Base',
         'campo_base_placeholder' => 'Sin base asignada',
-        'campo_tarifa' => 'Tarifa por hectárea',
-        'campo_tarifa_ayuda' => 'Se usa para calcular el devengo de cada sesión validada. Cambiarla no altera los devengos ya generados.',
         'error_nombres_requerido' => 'Ingresa los nombres de la persona.',
         'error_apellido_paterno_requerido' => 'Ingresa el apellido paterno.',
         'error_ci_requerido' => 'Ingresa la cédula de identidad.',
@@ -221,7 +215,7 @@ return [
         'aside_sesiones_total' => 'Total',
         'aside_sesiones_validadas' => 'Validadas',
         'aside_sesiones_vacio_titulo' => 'Sin sesiones',
-        'aside_sesiones_vacio_detalle' => 'Esta persona todavía no participó en ninguna sesión de vuelo, ni como piloto ni como auxiliar.',
+        'aside_sesiones_vacio_detalle' => 'Esta persona todavía no participó en ninguna sesión de vuelo, ni como piloto ni como ayudante.',
         'aside_sesiones_accion_desempenio' => 'Ver desempeño',
         'aside_anticipos_titulo' => 'Anticipos',
         'aside_anticipos_cantidad' => 'Registrados',
@@ -489,6 +483,37 @@ return [
         'aside_base_nombre' => 'Nombre',
         'aside_base_ubicacion' => 'Ubicación',
         'aside_base_accion' => 'Ver base',
+
+        // Ficha (show, arquetipo Detalle, tarea 125): KPI, resumen de datos,
+        // vínculos y actividad — la ficha pasó a ser de solo lectura, los
+        // formularios de alta/finalizar viven en edit() (HU-101 punto 4).
+        'kpi_integrantes' => 'Integrantes vigentes',
+        'kpi_recursos' => 'Recursos vigentes',
+        'kpi_vigencia' => 'Vigencia de la cuadrilla',
+        'kpi_vigencia_sufijo' => 'días',
+        'kpi_estadias' => 'Estadías en curso',
+        'ficha_historico_titulo' => 'Integrantes históricos',
+        'ficha_historico_vacio_titulo' => 'Sin historial',
+        'ficha_historico_vacio_detalle' => 'Esta cuadrilla todavía no tuvo integrantes.',
+        'ficha_integrantes_vacio_titulo' => 'Sin integrantes en esta fecha',
+        'ficha_recursos_vacio_titulo' => 'Sin recursos en esta fecha',
+        'aside_datos_titulo' => 'Datos de la cuadrilla',
+        'aside_datos_base' => 'Base',
+        'aside_datos_vigencia' => 'Vigencia',
+        'aside_datos_creada_por' => 'Creada por',
+        'aside_relacionado_titulo' => 'Relacionado',
+        'aside_actividad_titulo' => 'Actividad',
+        'vinculo_base' => 'Base',
+        'vinculo_trabajos' => 'Órdenes de trabajo',
+        'vinculo_trabajos_meta' => ':total en total, :abiertos abiertos',
+        'vinculo_estadias' => 'Estadías en hacienda',
+        'vinculo_estadias_meta' => ':total en total, :enCurso en curso',
+        'actividad_creada' => 'Cuadrilla creada',
+        'actividad_integrante_alta' => ':persona se suma como :rol',
+        'actividad_integrante_baja' => ':persona deja la cuadrilla',
+        'actividad_recurso_alta' => ':recurso se asigna a la cuadrilla',
+        'actividad_recurso_baja' => ':recurso deja de estar asignado',
+        'actividad_meta' => ':fecha · :autor',
     ],
 
     // Ficha de desempeño de una persona (HU-58, tarea 81): "¿qué hizo esta
@@ -498,7 +523,12 @@ return [
     'desempenio' => [
         'titulo' => 'Desempeño de :nombre',
         'subtitulo' => 'Sesiones, rechazos e incidencias de la persona en el rango elegido — hechos, no un puntaje.',
-        'volver' => 'Volver a personas',
+        'volver' => 'Volver a la persona',
+
+        // Aside "Relacionado" (arquetipo Detalle, tarea 125).
+        'aside_relacionado_titulo' => 'Relacionado',
+        'vinculo_persona' => 'Ficha de la persona',
+        'vinculo_devengos' => 'Ver mis devengos',
 
         'filtro_desde' => 'Desde',
         'filtro_hasta' => 'Hasta',
@@ -522,6 +552,7 @@ return [
         'vacio_detalle' => 'Esta persona no tiene sesiones en el rango elegido. Prueba ampliar las fechas, o vuelve cuando haya volado su primera aplicación.',
 
         'seccion_sesiones' => 'Sesiones',
+        'sesiones_vacio_titulo' => 'Sin sesiones con este filtro',
         'sesiones_vacio' => 'No hay sesiones de esta persona con estos filtros.',
         'col_fecha' => 'Fecha',
         'col_rol' => 'Rol',
@@ -533,11 +564,13 @@ return [
         'sin_campania' => '—',
 
         'seccion_rechazos' => 'Sesiones rechazadas',
+        'rechazos_vacio_titulo' => 'Sin rechazos con este filtro',
         'rechazos_vacio' => 'Ninguna sesión rechazada con estos filtros.',
         'col_motivo' => 'Motivo',
         'col_rechazado_por' => 'Rechazado por',
 
         'seccion_incidencias' => 'Incidencias',
+        'incidencias_vacio_titulo' => 'Sin incidencias con este filtro',
         'incidencias_vacio' => 'Sin incidencias registradas con estos filtros.',
         'col_tipo' => 'Tipo',
         'col_descripcion' => 'Descripción',

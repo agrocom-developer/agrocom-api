@@ -7,12 +7,14 @@ use App\Dominios\Comercial\Aplicacion\CrearCultivo;
 use App\Dominios\Comercial\Aplicacion\EliminarCultivo;
 use App\Dominios\Comercial\Aplicacion\ListarCultivos;
 use App\Dominios\Comercial\Aplicacion\ResumirSiembraDeCultivo;
+use App\Dominios\Comercial\Aplicacion\ResumirSiembraDeCultivos;
 use App\Dominios\Comercial\Dominio\CicloVidaCultivo;
 use App\Dominios\Comercial\Dominio\Excepciones\CultivoDuplicado;
 use App\Dominios\Comercial\Dominio\TipoCultivo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cultivo;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\ActualizarCultivoRequest;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\CrearCultivoRequest;
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -45,13 +47,13 @@ final class CultivosController
 
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
-    public function index(Request $request, ListarCultivos $listarCultivos): View
+    public function index(Request $request, ListarCultivos $listarCultivos, ResumirSiembraDeCultivos $resumirSiembra): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $busqueda = $request->string('q')->toString();
-        $tipoCultivo = $request->string('tipo_cultivo')->toString();
-        $cicloVida = $request->string('ciclo_vida')->toString();
+        $busqueda = TextoDeFiltro::de($request, 'q');
+        $tipoCultivo = TextoDeFiltro::de($request, 'tipo_cultivo');
+        $cicloVida = TextoDeFiltro::de($request, 'ciclo_vida');
 
         return view('comercial::pages.cultivos.index', [
             ...$this->autorizacion->cascara($request),
@@ -67,6 +69,9 @@ final class CultivosController
             ],
             'tiposCultivo' => TipoCultivo::cases(),
             'ciclosVida' => CicloVidaCultivo::cases(),
+            // Franja fija de KPI bajo la cabecera (22/9/2026): catálogo y
+            // siembra en las campañas abiertas. Sin filtro: es la foto global.
+            'resumen' => $resumirSiembra->ejecutar(),
         ]);
     }
 

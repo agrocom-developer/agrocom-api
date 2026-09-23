@@ -77,7 +77,7 @@
         :version="$version"
         :vista-actual="__('operaciones.ordenes.detalle_titulo', ['id' => $orden->id])"
     >
-        <div class="ag-ordenes-detalle">
+        <div class="ag-detalle">
             <x-organisms.page-header
                 :title="__('operaciones.ordenes.detalle_titulo', ['id' => $orden->id])"
                 :subtitle="__('operaciones.ordenes.detalle_subtitulo', ['cliente' => $contratoLabel, 'fecha' => $orden->fecha_emision->format('d/m/Y')])"
@@ -87,7 +87,7 @@
                         {{ __('operaciones.estado.'.$estadoValor) }}
                     </x-atoms.badge>
                     @if ($tieneInconvenientes)
-                        <x-atoms.badge variant="warning" icon="warning">
+                        <x-atoms.badge variant="danger" icon="warning">
                             {{ __('operaciones.ordenes.badge_inconvenientes') }}
                         </x-atoms.badge>
                     @endif
@@ -144,7 +144,7 @@
                 :help="$ayudaEstado"
             />
 
-            <div class="ag-ordenes-detalle__kpis">
+            <div class="ag-detalle__kpis">
                 <x-molecules.stat-card
                     :label="__('operaciones.ordenes.aside_hectareas_contratadas')"
                     icon="landscape"
@@ -177,33 +177,33 @@
 
             <x-molecules.form-layout>
                 <x-molecules.form-section accent="primary-2" :title="__('operaciones.ordenes.seccion_datos_contrato')">
-                    <div class="ag-ordenes-detalle__campo">
-                        <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato') }}</p>
-                        <p class="ag-ordenes-detalle__campo-valor">{{ $contratoLabel }}</p>
+                    <div class="ag-detalle__campo">
+                        <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ $contratoLabel }}</p>
                     </div>
-                    <div class="ag-ordenes-detalle__campo">
-                        <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contacto') }}</p>
-                        <p class="ag-ordenes-detalle__campo-valor">{{ $contactoLabel ?? __('operaciones.ordenes.campo_contacto_placeholder') }}</p>
+                    <div class="ag-detalle__campo">
+                        <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes.campo_contacto') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ $contactoLabel ?? __('operaciones.ordenes.campo_contacto_placeholder') }}</p>
                     </div>
                     @if ($resumenContrato)
                         <div class="ag-form-section__field--full ag-ordenes-form__resumen-contrato">
                             <img class="ag-ordenes-form__logo" src="{{ $resumenContrato['logo_url'] ?? asset('images/logo-placeholder.png') }}" alt="">
                             <div class="ag-form-section__body ag-ordenes-form__resumen-datos">
-                                <div class="ag-ordenes-detalle__campo">
-                                    <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_cliente') }}</p>
-                                    <p class="ag-ordenes-detalle__campo-valor">{{ $resumenContrato['cliente'] }}</p>
+                                <div class="ag-detalle__campo">
+                                    <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_cliente') }}</p>
+                                    <p class="ag-detalle__campo-valor">{{ $resumenContrato['cliente'] }}</p>
                                 </div>
-                                <div class="ag-ordenes-detalle__campo">
-                                    <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_propiedades') }}</p>
-                                    <p class="ag-ordenes-detalle__campo-valor">{{ $resumenContrato['propiedades'] === [] ? '—' : implode(', ', $resumenContrato['propiedades']) }}</p>
+                                <div class="ag-detalle__campo">
+                                    <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_propiedades') }}</p>
+                                    <p class="ag-detalle__campo-valor">{{ $resumenContrato['propiedades'] === [] ? '—' : implode(', ', $resumenContrato['propiedades']) }}</p>
                                 </div>
-                                <div class="ag-ordenes-detalle__campo">
-                                    <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_aplicaciones') }}</p>
-                                    <p class="ag-ordenes-detalle__campo-valor">{{ $resumenContrato['aplicaciones_previstas'] }}</p>
+                                <div class="ag-detalle__campo">
+                                    <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_aplicaciones') }}</p>
+                                    <p class="ag-detalle__campo-valor">{{ $resumenContrato['aplicaciones_previstas'] }}</p>
                                 </div>
-                                <div class="ag-ordenes-detalle__campo">
-                                    <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_hectareas') }}</p>
-                                    <p class="ag-ordenes-detalle__campo-valor">{{ $resumenContrato['hectareas_contratadas'] }} ha</p>
+                                <div class="ag-detalle__campo">
+                                    <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes.campo_contrato_hectareas') }}</p>
+                                    <p class="ag-detalle__campo-valor">{{ $resumenContrato['hectareas_contratadas'] }} ha</p>
                                 </div>
                             </div>
                         </div>
@@ -211,26 +211,26 @@
                 </x-molecules.form-section>
 
                 <x-molecules.form-section accent="success" :title="__('operaciones.ordenes.seccion_datos')" :count="__('operaciones.ordenes.campos_contador', ['cantidad' => 4])">
-                    <div class="ag-ordenes-detalle__campo">
-                        <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_tipo_insumo') }}</p>
-                        <p class="ag-ordenes-detalle__campo-valor">{{ $tipoInsumo !== null ? __('operaciones.tipo_insumo.'.$tipoInsumo) : '—' }}</p>
+                    <div class="ag-detalle__campo">
+                        <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes.campo_tipo_insumo') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ $tipoInsumo !== null ? __('operaciones.tipo_insumo.'.$tipoInsumo) : '—' }}</p>
                     </div>
-                    <div class="ag-ordenes-detalle__campo">
-                        <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_categoria_insumo') }}</p>
-                        <p class="ag-ordenes-detalle__campo-valor">{{ $orden->categoriaInsumo?->nombre ?? '—' }}</p>
+                    <div class="ag-detalle__campo">
+                        <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes.campo_categoria_insumo') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ $orden->categoriaInsumo?->nombre ?? '—' }}</p>
                     </div>
-                    <div class="ag-ordenes-detalle__campo">
-                        <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_tipo_aplicacion') }}</p>
-                        <p class="ag-ordenes-detalle__campo-valor">{{ __('operaciones.tipo_aplicacion.'.$orden->tipo_aplicacion->value) }}</p>
+                    <div class="ag-detalle__campo">
+                        <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes.campo_tipo_aplicacion') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ __('operaciones.tipo_aplicacion.'.$orden->tipo_aplicacion->value) }}</p>
                     </div>
-                    <div class="ag-ordenes-detalle__campo">
-                        <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_fecha_emision') }}</p>
-                        <p class="ag-ordenes-detalle__campo-valor">{{ $orden->fecha_emision->format('d/m/Y') }}</p>
+                    <div class="ag-detalle__campo">
+                        <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes.campo_fecha_emision') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ $orden->fecha_emision->format('d/m/Y') }}</p>
                     </div>
                     @if ($orden->observaciones)
-                        <div class="ag-form-section__field--full ag-ordenes-detalle__campo">
-                            <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.campo_observaciones') }}</p>
-                            <p class="ag-ordenes-detalle__campo-valor">{{ $orden->observaciones }}</p>
+                        <div class="ag-form-section__field--full ag-detalle__campo">
+                            <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes.campo_observaciones') }}</p>
+                            <p class="ag-detalle__campo-valor">{{ $orden->observaciones }}</p>
                         </div>
                     @endif
                 </x-molecules.form-section>
@@ -293,19 +293,19 @@
                     @if ($tieneInconvenientes)
                         <x-molecules.form-section accent="warning" :title="__('operaciones.ordenes.inconvenientes_seccion')">
                             <div class="ag-form-section__field--full">
-                                <p class="ag-ordenes-detalle__campo-valor">
+                                <p class="ag-detalle__campo-valor">
                                     {{ trans_choice('operaciones.ordenes.inconvenientes_incidencias', $inconvenientes['incidencias'], ['cantidad' => $inconvenientes['incidencias']]) }}
                                     ·
                                     {{ trans_choice('operaciones.ordenes.inconvenientes_pausas', $inconvenientes['pausas'], ['cantidad' => $inconvenientes['pausas']]) }}
                                 </p>
-                                <p class="ag-ordenes-detalle__campo-label">{{ __('operaciones.ordenes.inconvenientes_detalle') }}</p>
+                                <p class="ag-detalle__campo-label">{{ __('operaciones.ordenes.inconvenientes_detalle') }}</p>
                             </div>
                         </x-molecules.form-section>
                     @endif
 
                     @if (count($vinculos))
                         <x-molecules.form-section accent="alert" :title="__('operaciones.ordenes.seccion_vinculos')">
-                            <div class="ag-form-section__field--full ag-ordenes-detalle__vinculos">
+                            <div class="ag-form-section__field--full ag-detalle__vinculos">
                                 @foreach ($vinculos as $vinculo)
                                     <x-molecules.link-row
                                         :href="$vinculo['href']"

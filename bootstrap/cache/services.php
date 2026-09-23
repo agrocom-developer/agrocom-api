@@ -49,6 +49,7 @@
     45 => 'App\\Dominios\\Inventario\\Infraestructura\\InventarioServiceProvider',
     46 => 'App\\Dominios\\Portal\\Infraestructura\\PortalServiceProvider',
     47 => 'App\\Dominios\\Campania\\Infraestructura\\CampaniaServiceProvider',
+    48 => 'App\\Dominios\\Notificaciones\\Infraestructura\\NotificacionesServiceProvider',
   ),
   'eager' => 
   array (
@@ -85,6 +86,7 @@
     30 => 'App\\Dominios\\Inventario\\Infraestructura\\InventarioServiceProvider',
     31 => 'App\\Dominios\\Portal\\Infraestructura\\PortalServiceProvider',
     32 => 'App\\Dominios\\Campania\\Infraestructura\\CampaniaServiceProvider',
+    33 => 'App\\Dominios\\Notificaciones\\Infraestructura\\NotificacionesServiceProvider',
   ),
   'deferred' => 
   array (

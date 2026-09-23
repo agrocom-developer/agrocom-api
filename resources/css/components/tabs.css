@@ -42,6 +42,44 @@
     outline-offset: 2px;
 }
 
+/*
+ * Variante `segmented` (tarea 136): un selector de vistas del mismo dato
+ * dentro de una tarjeta — caja tenue con borde, como `view-toggle`, pero con
+ * texto y con la opción activa en el color de «seleccionado». Sin subrayado
+ * ni línea base: eso es de las pestañas de la página.
+ */
+.ag-tabs--segmented {
+    display: inline-flex;
+    flex: none;
+    gap: var(--ag-space-1);
+    padding: var(--ag-space-1);
+    background-color: var(--ag-color-bg-surface);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+}
+
+.ag-tabs--segmented .ag-tabs__tab {
+    padding: var(--ag-space-1) var(--ag-space-3);
+    margin-bottom: 0;
+    border: none;
+    border-radius: var(--ag-radius-sm);
+    transition: background-color var(--ag-transition-fast), color var(--ag-transition-fast);
+}
+
+.ag-tabs--segmented .ag-tabs__tab:hover {
+    background-color: var(--ag-color-bg-row-hover);
+}
+
+/* La opción activa usa el par de «seleccionado» del sistema (fondo
+   -primary-subtle, texto -primary-emphasis, borde -primary-border-subtle): en
+   el tema oscuro `--ag-color-primary` sobre la superficie no llega a contraste
+   como texto, y la superficie elevada no se distingue de la propia tarjeta. */
+.ag-tabs--segmented .ag-tabs__tab.active {
+    background-color: var(--ag-color-primary-subtle);
+    color: var(--ag-color-primary-emphasis);
+    box-shadow: inset 0 0 0 1px var(--ag-color-primary-border-subtle);
+}
+
 /* Móvil (maqueta 5b): fila más apretada. */
 @media (max-width: 767.98px) {
     .ag-tabs {

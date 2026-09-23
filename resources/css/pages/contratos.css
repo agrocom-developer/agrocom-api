@@ -40,38 +40,6 @@
 /* Formulario (create/edit): el layout de dos columnas es
    `molecules/form-layout`. */
 
-.ag-contratos-form__ayuda {
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-sm);
-}
-
-.ag-contratos-form__ventanas {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-4);
-}
-
-/* El grid de dos columnas es el de `.ag-form-section__body`
-   (components/form-section.css) — la fila lo comparte por clase en vez de
-   redeclararlo (ver §8 regla 12 de sistema_diseno_panel.md); acá solo lo que
-   es propio de ser una fila DENTRO de una lista repetible: el separador
-   entre una fila y la siguiente. */
-.ag-contratos-form__ventana {
-    padding-top: var(--ag-space-4);
-    border-top: 1px solid var(--ag-color-border-row);
-}
-
-/* La primera fila no necesita separador: no hay nada arriba de qué separarla. */
-[data-ag-ventanas-lista] > .ag-contratos-form__ventana:first-child {
-    padding-top: 0;
-    border-top: none;
-}
-
-.ag-contratos-form__ventana-pie {
-    display: flex;
-    align-items: flex-end;
-}
-
 /* Logística: los 3 switches en una sola fila (pedido del dueño, tarea
    "contratos-lotes"). Sub-grid propio de 3 columnas DENTRO de la celda
    `ag-form-section__field--full` — no toca `.ag-form-section__body`
@@ -91,61 +59,8 @@
 
 /* Sección de lotes (tarea "contratos-lotes") */
 
-/* Patrón reutilizable: label + acción a la derecha en la misma fila */
-.ag-field-label-with-action {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--ag-space-3);
-}
-
-.ag-field-label-with-action__label {
-    font-size: var(--ag-font-size-sm);
-    font-weight: var(--ag-font-weight-medium);
-    color: var(--ag-color-text);
-}
-
-.ag-field-label-with-action__link {
-    font-size: var(--ag-font-size-sm);
-    color: var(--ag-color-accent);
-    text-decoration: none;
-    transition: color var(--ag-transition-fast), background-color var(--ag-transition-fast);
-    padding: var(--ag-space-1) var(--ag-space-2);
-    border-radius: var(--ag-radius-sm);
-}
-
-.ag-field-label-with-action__link:hover {
-    color: var(--ag-color-accent);
-    background-color: var(--ag-color-accent-subtle);
-    text-decoration: underline;
-}
-
-/* Área de checkboxes de lotes */
-.ag-contratos-form__lotes-checkboxes {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-3);
-}
-
-.ag-contratos-form__lotes-select-all {
-    display: flex;
-    align-items: center;
-    gap: var(--ag-space-2);
-    cursor: pointer;
-}
-
-.ag-contratos-form__lotes-select-all-label {
-    font-weight: var(--ag-font-weight-medium);
-}
-
-/* Área "sin datos" - cuando no hay lotes en la propiedad */
-.ag-contratos-form__lotes-empty {
-    padding: var(--ag-space-4);
-    background-color: var(--ag-color-bg-surface);
-    border-radius: var(--ag-radius-md);
-    text-align: center;
-}
-
+/* Texto del área "sin datos" del modal de lotes — cuando la propiedad no
+   tiene ningún lote cargado en el catálogo. */
 .ag-contratos-form__lotes-empty-text {
     color: var(--ag-color-text-muted);
     margin: 0 0 var(--ag-space-2) 0;
@@ -386,8 +301,7 @@
 
 /* Modal de lotes por propiedad (reemplaza al panel lateral con checkboxes
    siempre visibles). Fila de cabecera: bajada a la izquierda, botón "Crear
-   lote" a la derecha — mismo patrón que `.ag-field-label-with-action` del
-   resto del formulario (label/acción en los extremos de una fila). */
+   lote" a la derecha. */
 .ag-contratos-form__modal-header-row {
     display: flex;
     justify-content: space-between;
@@ -485,7 +399,7 @@
 }
 
 /* Modal "Contrato en conflicto" (tarea "contrato-lotes-conflicto", rediseño
-   18/9/2026): mismo lenguaje visual que `.ag-ordenes-detalle__campo-label`/
+   18/9/2026): mismo lenguaje visual que `.ag-detalle__campo-label`/
    `-valor` de Operaciones (label chico en mayúscula muted, valor mediano) —
    clases propias de Comercial, mismo TRATAMIENTO, cada módulo dueño de su
    propio CSS (no se referencia `ordenes.css` desde acá). */

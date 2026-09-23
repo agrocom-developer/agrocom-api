@@ -360,6 +360,10 @@ class SecMenuSeeder extends Seeder
         // esta tarea lo crea y lo activa en el mismo paso. Orden 7 (al
         // final del grupo) para no reordenar los ítems ya sembrados.
         $this->item($financiero, 'financiero', 'anticipos', 'payments', 7, ruta: 'panel.anticipos.index', codigoPermiso: 'finanzas.anticipo.ver');
+        // ADR 0023 (22/9/2026): tarifas de pago al personal — la configuración
+        // de pago base (por día o por hectárea, montos por puesto) de la que
+        // parte cada Orden de Trabajo. Orden 8, al final del grupo.
+        $this->item($financiero, 'financiero', 'tarifas', 'price_change', 8, ruta: 'panel.tarifas.index', codigoPermiso: 'finanzas.tarifa.ver');
 
         // Reportes (cap. 9 y 10)
         // HU-43 (tarea 57): "como encargado, quiero listar y descargar los

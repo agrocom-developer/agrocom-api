@@ -704,6 +704,14 @@ return [
     // HU-48 (tarea 71, ADR 0015 punto 4): catálogo de cultivos. Cuarto ABM
     // simple del panel — mismo molde que `lotes`/`bases`, sin sub-entidad.
     'cultivos' => [
+        // Franja de KPI del listado (22/9/2026).
+        'kpi_cultivos' => 'Cultivos en el catálogo',
+        'kpi_sembrados' => 'Sembrados hoy',
+        'kpi_campanias_pie' => 'En :campanias',
+        'kpi_sin_campania_pie' => 'Sin campaña abierta',
+        'kpi_lotes' => 'Lotes sembrados',
+        'kpi_hectareas' => 'Hectáreas sembradas',
+        'kpi_unidad_ha' => 'ha',
         'creado' => 'El cultivo se dio de alta correctamente.',
         'actualizado' => 'Los datos del cultivo se actualizaron correctamente.',
         'eliminado' => 'El cultivo se dio de baja correctamente.',
@@ -1067,6 +1075,8 @@ return [
         'lotes_nuevos_sin_hectareas' => 'Indica las hectáreas de los lotes nuevos.',
         'lote_ya_contratado' => "El lote ':codigo' ya está en el contrato #:contrato de esta campaña. Quítalo para poder guardar.",
         'lotes_ya_contratados' => 'Estos lotes ya están en otros contratos de esta campaña: :codigos. Quítalos para poder guardar.',
+        'lotes_de_distinto_cultivo' => 'Los lotes elegidos mezclan cultivos o etapas: :grupos. Un contrato agrupa lotes del mismo cultivo y la misma etapa; arma un contrato por cada grupo.',
+        'lotes_de_distinto_cultivo_grupo' => ':cultivo en :etapa (:codigos)',
         'contrato_activacion_lote_ocupado' => "No se puede aprobar el contrato #:id: el lote ':codigo' ya está en el contrato #:contrato de esta campaña.",
         'contrato_activacion_lotes_ocupados' => 'No se puede aprobar el contrato #:id: estos lotes ya están en otros contratos de esta campaña: :codigos.',
         'contrato_con_aplicacion_abierta' => 'El contrato #:id tiene una aplicación abierta. Cierra o cancela la aplicación antes de cancelarlo o finalizarlo.',

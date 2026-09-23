@@ -8,15 +8,17 @@
     «estado actual → destino».
 
     Una rendición tiene máquina de estados (`TransicionesRendicion`:
-    abierta → presentada → aprobada) pero NO ficha de edición: no lleva
-    pasos. Lo que sí lleva es el badge del listado y las acciones de fila que
-    la mueven de estado, todos con el tono de
-    `RendicionesController::TONO_POR_ESTADO` — definido una sola vez y
-    compartido con los modales (plan §3.1). Sin editar ni eliminar: una
-    rendición es inmutable salvo su estado.
+    abierta → presentada → aprobada). Lo que sí lleva es el badge del
+    listado y las acciones de fila que la mueven de estado, todos con el
+    tono de `RendicionesController::TONO_POR_ESTADO` — definido una sola vez
+    y compartido con los modales (plan §3.1). Sin eliminar: una rendición no
+    tiene baja, solo su máquina de estados y, mientras sigue `abierta`, su
+    cabecera (tarea 134).
 
     Qué acción ofrece cada fila (las mismas condiciones que ya gateaban los
     botones del detalle, contra las mismas rutas):
+    - «Editar», solo si está `abierta` (`Dominio/PoliticaEdicionRendicion`) —
+      tarea 134.
     - «Presentar», solo si está `abierta` y tiene al menos un gasto asociado
       (`gastos_count`): sin gastos, `PresentarRendicion` la rechazaría.
     - «Aprobar», solo si está `presentada` y la persona del usuario NO es la
@@ -39,8 +41,9 @@
       campos con el valor tras el submit.
     - $tonoPorEstado (array<string, string>): estado → tono del badge.
     - $personaId (int|null): persona del usuario autenticado.
-    - $puedeCrear / $puedePresentar / $puedeAprobar (bool): permisos del rol
-      activo.
+    - $puedeCrear / $puedePresentar / $puedeAprobar / $puedeEditar (bool):
+      permisos del rol activo (tarea 134: `$puedeEditar` es
+      `finanzas.rendicion.presentar`, reusado).
 
     Gateada por `finanzas.rendicion.ver`, verificado server-side en el
     controlador. El botón "Nueva rendición" y las acciones de estado se
@@ -195,6 +198,7 @@
                             $puedeAprobarEsta = $puedeAprobar
                                 && $estadoValor === 'presentada'
                                 && $personaId !== (int) $rendicion->jefe_campo_id;
+                            $puedeEditarEsta = $puedeEditar && $estadoValor === 'abierta';
                         @endphp
 
                         <div class="ag-index-table__row" role="row">
@@ -258,6 +262,12 @@
                                     <x-atoms.button :href="route('panel.rendiciones.show', $rendicion)" variant="info-outline" size="sm" icon="visibility">
                                         {{ __('finanzas.rendiciones.ver_accion') }}
                                     </x-atoms.button>
+
+                                    @if ($puedeEditarEsta)
+                                        <x-atoms.button :href="route('panel.rendiciones.edit', $rendicion)" variant="warning-outline" size="sm" icon="edit">
+                                            {{ __('finanzas.rendiciones.editar_accion') }}
+                                        </x-atoms.button>
+                                    @endif
 
                                     @if ($puedePresentarEsta)
                                         <x-atoms.button

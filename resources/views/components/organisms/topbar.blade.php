@@ -41,8 +41,9 @@
 
     Props:
     - moduloLabel / vistaActual (nullable string): breadcrumb, ya traducidos.
-    - notifications (list, default []): `{icon, title, time, unread}` ya
-      resueltos por el llamador. Lista vacía = estado vacío del popover.
+    - notifications (list, default []): `{icon, title, time, unread, href?,
+      id?}` ya resueltos por el llamador (`href` e `id`: tarea 141, ver
+      molecules/notifications-menu). Lista vacía = estado vacío del popover.
     - activeRoleLabel (nullable string): nombre LEGIBLE del rol activo
       (PresentadorRol), mono uppercase bajo el nombre.
     - userName (nullable string).
@@ -82,7 +83,7 @@
             <input
                 type="search"
                 name="q"
-                value="{{ request()->routeIs('panel.buscar') ? request()->string('q') : '' }}"
+                value="{{ request()->routeIs('panel.buscar') ? \App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro::de(request(), 'q') : '' }}"
                 class="ag-topbar__search-input"
                 placeholder="{{ __('ui.header.buscador_placeholder') }}"
                 aria-label="{{ __('ui.header.buscador_aria') }}"

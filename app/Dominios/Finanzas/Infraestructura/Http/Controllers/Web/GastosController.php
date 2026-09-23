@@ -2,12 +2,17 @@
 
 namespace App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
+use App\Dominios\Finanzas\Aplicacion\ActualizarGasto;
 use App\Dominios\Finanzas\Aplicacion\CrearGasto;
 use App\Dominios\Finanzas\Aplicacion\EliminarGasto;
 use App\Dominios\Finanzas\Aplicacion\ListarGastos;
 use App\Dominios\Finanzas\Dominio\Excepciones\CampaniaNoAbierta;
+use App\Dominios\Finanzas\Dominio\Excepciones\GastoNoEditable;
+use App\Dominios\Finanzas\Dominio\PoliticaEdicionGasto;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\Gasto;
 use App\Dominios\Finanzas\Infraestructura\Eloquent\Rubro;
+use App\Dominios\Finanzas\Infraestructura\Http\Requests\ActualizarGastoRequest;
 use App\Dominios\Finanzas\Infraestructura\Http\Requests\CrearGastoRequest;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
@@ -19,16 +24,19 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 /**
- * `GET/POST/DELETE /panel/gastos*` (HU-33, tarea 47): "como encargado,
- * quiero cargar gastos con su categoría y comprobante, para que la campaña
- * tenga costo real". Mismo molde que `AnticiposController` — ABM acotado sin
- * edición: alta, listado y baja lógica.
+ * `GET/POST/PUT/DELETE /panel/gastos*` (HU-33, tarea 47; edición agregada en
+ * la tarea 134): "como encargado, quiero cargar gastos con su categoría y
+ * comprobante, para que la campaña tenga costo real". Alta, listado, edición
+ * y baja lógica.
  *
  * Tres permisos de grano fino (`finanzas.gasto.ver`/`.crear`/`.eliminar`),
  * verificados DENTRO del controlador contra el ROL ACTIVO vía
- * {@see AutorizacionPanelWeb} — mismo criterio que el resto del panel.
- * Ninguna regla de negocio acá: el cálculo de `monto` y el guardado del
- * comprobante los hace `Aplicacion/CrearGasto`.
+ * {@see AutorizacionPanelWeb} — mismo criterio que el resto del panel. La
+ * edición reusa `finanzas.gasto.eliminar` (no existe `.editar` en el
+ * catálogo, tarea 134: "no crees uno nuevo sin falta"). Ninguna regla de
+ * negocio acá: el cálculo de `monto`, el guardado del comprobante y la
+ * guarda de fondo (rendición ya congelada) los hacen `Aplicacion/CrearGasto`/
+ * `Aplicacion/ActualizarGasto` vía `Dominio/PoliticaEdicionGasto`.
  *
  * Los selects de `base_id`/`trabajo_id` se arman con `DB::table` directo
  * (ADR 0003 regla 3, mismo criterio que
@@ -44,6 +52,9 @@ final class GastosController
 
     private const PERMISO_ELIMINAR = 'finanzas.gasto.eliminar';
 
+    /** Reusado para gatear la edición (tarea 134): no existe `finanzas.gasto.editar`. */
+    private const PERMISO_EDITAR = self::PERMISO_ELIMINAR;
+
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
     public function index(Request $request, ListarGastos $listarGastos): View
@@ -55,13 +66,17 @@ final class GastosController
         $trabajoId = $request->integer('trabajo_id') ?: null;
         $equipoTrabajoId = $request->integer('equipo_trabajo_id') ?: null;
         $campaniaId = $request->integer('campania_id') ?: null;
-        $periodo = $request->string('periodo')->toString();
+        $periodo = TextoDeFiltro::de($request, 'periodo');
         $periodoFiltro = $periodo !== '' ? $periodo : null;
 
         $gastos = $listarGastos->ejecutar($rubroId, $baseId, $trabajoId, $periodoFiltro, $equipoTrabajoId, $campaniaId);
+        /** @var \Illuminate\Database\Eloquent\Collection<int, Gasto> $coleccionGastos */
+        $coleccionGastos = $gastos->getCollection();
+        $coleccionGastos->load('rendicion');
         $rubrosDisponibles = $this->rubrosDisponibles();
         $basesDisponibles = $this->basesDisponibles();
         $equiposDisponibles = $this->equiposDisponibles();
+        $puedeEditarPermiso = $this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR);
 
         return view('finanzas::pages.gastos.index', [
             ...$this->autorizacion->cascara($request),
@@ -84,6 +99,11 @@ final class GastosController
             ],
             'resumen' => $listarGastos->resumen($rubroId, $baseId, $trabajoId, $periodoFiltro, $equipoTrabajoId, $campaniaId),
             'puedeEliminar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR),
+            'puedeEditar' => $puedeEditarPermiso
+                ? $gastos->getCollection()->mapWithKeys(fn (Gasto $gasto): array => [
+                    $gasto->id => PoliticaEdicionGasto::admiteEdicion($gasto->rendicion?->estado),
+                ])->all()
+                : [],
         ]);
     }
 
@@ -93,11 +113,8 @@ final class GastosController
 
         return view('finanzas::pages.gastos.create', [
             ...$this->autorizacion->cascara($request),
-            'rubrosConSubrubros' => Rubro::query()->with('subrubros')->orderBy('nombre')->get(),
-            'equiposDisponibles' => $this->equiposDisponibles(),
-            'basesDisponibles' => $this->basesDisponibles(),
-            'trabajosDisponibles' => $this->trabajosDisponibles(),
-            'campaniasDisponibles' => $this->campaniasAbiertas(),
+            ...$this->datosFormulario(),
+            'gasto' => null,
         ]);
     }
 
@@ -132,6 +149,71 @@ final class GastosController
             ->with('estado', __('finanzas.gastos.creado'));
     }
 
+    /**
+     * `GET /panel/gastos/{gasto}/editar` (tarea 134). Mismo criterio de
+     * guarda de redirección que `OrdenesController::edit()`: si la política
+     * no admite editar este gasto (su rendición ya congeló el monto), vuelve
+     * al listado con el error en vez de mostrar un formulario que el
+     * `update()` va a rechazar igual.
+     */
+    public function edit(Request $request, Gasto $gasto): View|RedirectResponse
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
+
+        $gasto->load('rendicion');
+        $rendicion = $gasto->rendicion;
+
+        if ($rendicion !== null && ! PoliticaEdicionGasto::admiteEdicion($rendicion->estado)) {
+            $mensaje = GastoNoEditable::porRendicion($rendicion->id, $rendicion->estado->value)->getMessage();
+
+            return redirect()
+                ->route('panel.gastos.index')
+                ->withErrors(['gasto' => $mensaje]);
+        }
+
+        return view('finanzas::pages.gastos.edit', [
+            ...$this->autorizacion->cascara($request),
+            ...$this->datosFormulario($gasto->campania_id),
+            'gasto' => $gasto,
+        ]);
+    }
+
+    public function update(ActualizarGastoRequest $request, Gasto $gasto, ActualizarGasto $actualizarGasto): RedirectResponse
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
+
+        $datos = $request->validated();
+
+        try {
+            $actualizarGasto->ejecutar(
+                gasto: $gasto,
+                fecha: (string) $datos['fecha'],
+                rubroId: (int) $datos['rubro_id'],
+                subrubroId: isset($datos['subrubro_id']) ? (int) $datos['subrubro_id'] : null,
+                cantidad: (string) $datos['cantidad'],
+                precioUnitario: (string) $datos['precio_unitario'],
+                baseId: isset($datos['base_id']) ? (int) $datos['base_id'] : null,
+                trabajoId: isset($datos['trabajo_id']) ? (int) $datos['trabajo_id'] : null,
+                campaniaId: isset($datos['campania_id']) ? (int) $datos['campania_id'] : null,
+                comprobante: $request->file('comprobante'),
+                equipoTrabajoId: isset($datos['equipo_trabajo_id']) ? (int) $datos['equipo_trabajo_id'] : null,
+            );
+        } catch (CampaniaNoAbierta $excepcion) {
+            return redirect()
+                ->route('panel.gastos.edit', $gasto)
+                ->withInput()
+                ->withErrors(['campania_id' => $excepcion->getMessage()]);
+        } catch (GastoNoEditable $excepcion) {
+            return redirect()
+                ->route('panel.gastos.index')
+                ->withErrors(['gasto' => $excepcion->getMessage()]);
+        }
+
+        return redirect()
+            ->route('panel.gastos.index')
+            ->with('estado', __('finanzas.gastos.actualizado'));
+    }
+
     public function destroy(Request $request, Gasto $gasto, EliminarGasto $eliminarGasto): RedirectResponse
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR), 403);
@@ -157,6 +239,39 @@ final class GastosController
         return response(Storage::disk('r2')->get($gasto->comprobante_url), 200, [
             'Content-Type' => Storage::disk('r2')->mimeType($gasto->comprobante_url) ?: 'application/octet-stream',
         ]);
+    }
+
+    /**
+     * Datos del formulario, compartidos por `create()` y `edit()` (tarea
+     * 134, `_formulario.blade.php` compartido) — mismo criterio que
+     * `_formulario` de Bases/Cuadrillas.
+     *
+     * `$campaniaActualId`: en edición, si el gasto ya tenía una campaña que
+     * mientras tanto se cerró, se agrega igual a las opciones — si no,
+     * `<select>` la mostraría vacía y el `PUT` le borraría la campaña sin
+     * que el usuario lo haya pedido.
+     *
+     * @return array{rubrosConSubrubros: \Illuminate\Database\Eloquent\Collection<int, Rubro>, equiposDisponibles: Collection<int, string>, basesDisponibles: Collection<int, string>, trabajosDisponibles: Collection<int, string>, campaniasDisponibles: Collection<int, non-falsy-string>}
+     */
+    private function datosFormulario(?int $campaniaActualId = null): array
+    {
+        $campaniasDisponibles = $this->campaniasAbiertas();
+
+        if ($campaniaActualId !== null && ! $campaniasDisponibles->has($campaniaActualId)) {
+            $etiqueta = $this->todasLasCampanias()->get($campaniaActualId);
+
+            if ($etiqueta !== null) {
+                $campaniasDisponibles->put($campaniaActualId, $etiqueta);
+            }
+        }
+
+        return [
+            'rubrosConSubrubros' => Rubro::query()->with('subrubros')->orderBy('nombre')->get(),
+            'equiposDisponibles' => $this->equiposDisponibles(),
+            'basesDisponibles' => $this->basesDisponibles(),
+            'trabajosDisponibles' => $this->trabajosDisponibles(),
+            'campaniasDisponibles' => $campaniasDisponibles,
+        ];
     }
 
     /** @return Collection<int, string> */

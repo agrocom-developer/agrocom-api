@@ -35,4 +35,13 @@ interface LecturaPanelComercial
      * @return list<AvanceClientePanel>
      */
     public function avancePorCliente(int $limite): array;
+
+    /**
+     * Estado de cuenta por contrato (contratado, facturado, adelanto y
+     * saldo pendiente de facturar), del saldo más alto al más bajo: la
+     * plata sin cobrar primero.
+     *
+     * @return list<EstadoCuentaContratoPanel>
+     */
+    public function estadoDeCuentas(int $limite): array;
 }

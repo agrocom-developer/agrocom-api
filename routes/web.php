@@ -20,6 +20,7 @@ use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\DevengosControlle
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\GastosController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\PlanillasController;
 use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\RendicionesController;
+use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\TarifasController;
 use App\Dominios\Inventario\Infraestructura\Http\Controllers\Web\RepuestosController;
 use App\Dominios\Inventario\Infraestructura\Http\Controllers\Web\StockController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\BateriasController;
@@ -28,6 +29,7 @@ use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\GeneradoresC
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\OrdenesMantenimientoController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\PlanesMantenimientoController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\VehiculosController;
+use App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Web\NotificacionesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\DronesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\EstadiasHaciendaController;
@@ -63,6 +65,7 @@ use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RolesController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\SesionController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\SesionPortalController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\UsuariosController;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\VistaComoController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -145,6 +148,16 @@ Route::middleware('auth:interno')->group(function () {
     Route::post('/panel/rol-activo', [RolActivoController::class, 'update'])
         ->name('panel.rol-activo.actualizar');
 
+    // Salida de la vista "como otro usuario" (tarea 140). Sin `rol.activo` por
+    // la misma razón que el cambio de rol: mientras hay una vista abierta, la
+    // sesión guarda el rol activo de la cuenta OBSERVADA, que no es un rol del
+    // administrador — con ese middleware la salida rebotaría al selector. Es
+    // además la única escritura que `AplicarVistaComo` deja pasar en ese modo,
+    // y la única ruta donde ese middleware NO sustituye el guard: la bitácora
+    // tiene que firmar el regreso con el administrador real.
+    Route::post('/vista-como/salir', [VistaComoController::class, 'salir'])
+        ->name('vista-como.salir');
+
     // Selector de rol (GET): misma vía de escape que la ruta de arriba,
     // deliberadamente sin `rol.activo` — ver RolActivoController::create().
     Route::get('/panel/seleccionar-rol', [RolActivoController::class, 'create'])
@@ -202,6 +215,14 @@ Route::middleware('auth:interno')->group(function () {
         Route::post('/panel/usuarios/{usuario}/bloqueo', [UsuariosController::class, 'alternarBloqueo'])
             ->name('panel.usuarios.bloqueo');
 
+        // Tarea 140: mirar el panel o el portal COMO esta cuenta, en solo
+        // lectura. Permiso propio `seguridad.usuario.ver_como` (solo
+        // `admin_plataforma`), verificado dentro del controlador contra el ROL
+        // ACTIVO. No cambia nada de la cuenta observada: abre una bandera de
+        // sesión y una fila de bitácora — ver IniciarVistaComo.
+        Route::post('/panel/usuarios/{usuario}/ver-como', [VistaComoController::class, 'iniciar'])
+            ->name('panel.usuarios.ver-como');
+
         // Administración del catálogo de roles y de la matriz rol↔permiso.
         // Es lo último del modelo `sec_*` que solo existía como seeder: los
         // cinco permisos `seguridad.rol.*` se siembran únicamente para
@@ -241,6 +262,19 @@ Route::middleware('auth:interno')->group(function () {
         // buscador y no le aparece ningún cliente.
         Route::get('/panel/buscar', [BusquedaController::class, 'index'])
             ->name('panel.buscar');
+
+        // Campana del header (tarea 141, ADR 0025): los avisos del motor de
+        // notificaciones. SIN permiso propio, mismo criterio que el perfil: el
+        // sujeto es siempre la cuenta autenticada, nunca un id de la petición
+        // — `abrir` busca el aviso ENTRE LOS DE ESA CUENTA (404 si es de otra)
+        // y resuelve el destino contra el rol activo.
+        Route::get('/panel/notificaciones/{notificacion}/abrir', [NotificacionesController::class, 'abrir'])
+            // Hasta 18 dígitos: un id más largo no cabe en un bigint ni en el `int` del controlador y daría 500.
+            ->where('notificacion', '[0-9]{1,18}')
+            ->name('panel.notificaciones.abrir');
+
+        Route::post('/panel/notificaciones/marcar-todas', [NotificacionesController::class, 'marcarTodas'])
+            ->name('panel.notificaciones.marcar-todas');
 
         // La matriz vive en su propia URL y no como pestaña del formulario:
         // son dos operaciones con permisos distintos (`editar` cambia el
@@ -345,6 +379,15 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::get('/panel/trabajos/{ordenTrabajo}', [OrdenesTrabajoController::class, 'show'])
             ->name('panel.trabajos.show');
+
+        // Tarea 127: edición de la cabecera de la tanda y de la condición de
+        // pago por equipo — mismo permiso que ya edita un `Trabajo` puntual
+        // (`operaciones.trabajo.editar`, sin permiso nuevo).
+        Route::get('/panel/trabajos/{ordenTrabajo}/editar', [OrdenesTrabajoController::class, 'edit'])
+            ->name('panel.trabajos.edit');
+
+        Route::put('/panel/trabajos/{ordenTrabajo}', [OrdenesTrabajoController::class, 'update'])
+            ->name('panel.trabajos.update');
 
         // Detalle de UN `Trabajo` puntual (equipo×lote): sesiones, acta,
         // reporte, evidencias, editar/eliminar (HU-93). Prefijo `detalle/`
@@ -931,6 +974,12 @@ Route::middleware('auth:interno')->group(function () {
         Route::get('/panel/stock', [StockController::class, 'index'])
             ->name('panel.stock.index');
 
+        // Listado de solo lectura de los asientos (tarea 133): antes del
+        // alta, mismo criterio de orden que las demás rutas con prefijo
+        // compartido (ver ordenes-trabajo).
+        Route::get('/panel/stock/movimientos', [StockController::class, 'movimientos'])
+            ->name('panel.stock.movimientos.index');
+
         Route::get('/panel/stock/movimientos/crear', [StockController::class, 'create'])
             ->name('panel.stock.movimientos.create');
 
@@ -1046,12 +1095,36 @@ Route::middleware('auth:interno')->group(function () {
         Route::delete('/panel/anticipos/{anticipo}', [AnticiposController::class, 'destroy'])
             ->name('panel.anticipos.destroy');
 
+        // ADR 0023 (22/9/2026): tarifas de pago al personal — catálogo de
+        // Finanzas (la configuración de pago base). Cuatro permisos de grano
+        // fino (`finanzas.tarifa.ver`/`.crear`/`.editar`/`.eliminar`),
+        // verificados DENTRO del controlador contra el ROL ACTIVO.
+        Route::get('/panel/tarifas', [TarifasController::class, 'index'])
+            ->name('panel.tarifas.index');
+
+        Route::get('/panel/tarifas/crear', [TarifasController::class, 'create'])
+            ->name('panel.tarifas.create');
+
+        Route::post('/panel/tarifas', [TarifasController::class, 'store'])
+            ->name('panel.tarifas.store');
+
+        Route::get('/panel/tarifas/{tarifa}/editar', [TarifasController::class, 'edit'])
+            ->name('panel.tarifas.edit');
+
+        Route::put('/panel/tarifas/{tarifa}', [TarifasController::class, 'update'])
+            ->name('panel.tarifas.update');
+
+        Route::delete('/panel/tarifas/{tarifa}', [TarifasController::class, 'destroy'])
+            ->name('panel.tarifas.destroy');
+
         // HU-33 (tarea 47): "como encargado, quiero cargar gastos con su
         // categoría y comprobante, para que la campaña tenga costo real" —
-        // ABM acotado (sin edición), gateado por tres permisos de grano fino
-        // (`finanzas.gasto.ver`/`.crear`/`.eliminar`), verificados DENTRO
-        // del controlador contra el ROL ACTIVO, mismo criterio que las
-        // rutas de arriba.
+        // gateado por tres permisos de grano fino (`finanzas.gasto.ver`/
+        // `.crear`/`.eliminar`), verificados DENTRO del controlador contra
+        // el ROL ACTIVO, mismo criterio que las rutas de arriba. Edición
+        // agregada en la tarea 134 (reusa `.eliminar`, no existe `.editar`):
+        // se corrige mientras su rendición asociada, si tiene una, siga
+        // `abierta` (`Dominio/PoliticaEdicionGasto`).
         Route::get('/panel/gastos', [GastosController::class, 'index'])
             ->name('panel.gastos.index');
 
@@ -1060,6 +1133,12 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::post('/panel/gastos', [GastosController::class, 'store'])
             ->name('panel.gastos.store');
+
+        Route::get('/panel/gastos/{gasto}/editar', [GastosController::class, 'edit'])
+            ->name('panel.gastos.edit');
+
+        Route::put('/panel/gastos/{gasto}', [GastosController::class, 'update'])
+            ->name('panel.gastos.update');
 
         Route::delete('/panel/gastos/{gasto}', [GastosController::class, 'destroy'])
             ->name('panel.gastos.destroy');
@@ -1098,7 +1177,9 @@ Route::middleware('auth:interno')->group(function () {
         // criterio que las rutas de arriba. El aprobador nunca puede ser el
         // mismo jefe de campo que rindió (invariante 4 de CLAUDE.md,
         // `PoliticaAprobacionRendicion`) — eso lo resuelve el caso de uso,
-        // no el permiso.
+        // no el permiso. Edición de CABECERA agregada en la tarea 134 (reusa
+        // `.presentar`, no existe `.editar`): solo mientras sigue `abierta`
+        // (`Dominio/PoliticaEdicionRendicion`) — nunca `estado`/`monto`.
         Route::get('/panel/rendiciones', [RendicionesController::class, 'index'])
             ->name('panel.rendiciones.index');
 
@@ -1111,6 +1192,12 @@ Route::middleware('auth:interno')->group(function () {
         Route::get('/panel/rendiciones/{rendicion}', [RendicionesController::class, 'show'])
             ->name('panel.rendiciones.show');
 
+        Route::get('/panel/rendiciones/{rendicion}/editar', [RendicionesController::class, 'edit'])
+            ->name('panel.rendiciones.edit');
+
+        Route::put('/panel/rendiciones/{rendicion}', [RendicionesController::class, 'update'])
+            ->name('panel.rendiciones.update');
+
         Route::post('/panel/rendiciones/{rendicion}/gastos/{gasto}', [RendicionesController::class, 'asociarGasto'])
             ->name('panel.rendiciones.asociar_gasto');
 
@@ -1122,12 +1209,13 @@ Route::middleware('auth:interno')->group(function () {
 
         // HU-35 (tarea 49): "como encargado, quiero registrar el
         // combustible del generador y de los vehículos, para imputarlo a la
-        // campaña" — cierra Sprint 10. ABM acotado (sin edición), gateado
-        // por tres permisos de grano fino (`finanzas.combustible.ver`/
-        // `.crear`/`.eliminar`), verificados DENTRO del controlador contra
-        // el ROL ACTIVO, mismo criterio que las rutas de arriba. Entidad
-        // independiente de `ope_recargas.litros_combustible_generador` —
-        // ver el docblock de la migración.
+        // campaña" — cierra Sprint 10. Gateado por tres permisos de grano
+        // fino (`finanzas.combustible.ver`/`.crear`/`.eliminar`), verificados
+        // DENTRO del controlador contra el ROL ACTIVO, mismo criterio que
+        // las rutas de arriba. Entidad independiente de
+        // `ope_recargas.litros_combustible_generador` — ver el docblock de
+        // la migración. Edición agregada en la tarea 134 (reusa `.eliminar`,
+        // no existe `.editar`): sin `rendicion_id`, siempre se corrige.
         Route::get('/panel/combustible', [CombustibleController::class, 'index'])
             ->name('panel.combustible.index');
 
@@ -1136,6 +1224,12 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::post('/panel/combustible', [CombustibleController::class, 'store'])
             ->name('panel.combustible.store');
+
+        Route::get('/panel/combustible/{combustible}/editar', [CombustibleController::class, 'edit'])
+            ->name('panel.combustible.edit');
+
+        Route::put('/panel/combustible/{combustible}', [CombustibleController::class, 'update'])
+            ->name('panel.combustible.update');
 
         Route::delete('/panel/combustible/{combustible}', [CombustibleController::class, 'destroy'])
             ->name('panel.combustible.destroy');

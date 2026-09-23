@@ -15,3 +15,11 @@
 # Ya no queda ninguna: las 46 salieron con los PR #255 a #263 (42 pantallas) y
 # con el de la tarea 123, que integró la 121 (Usuarios, Dispositivos y Versiones
 # de APK).
+#
+# Sumadas el 22/9/2026 (tarea 124, decisión del dueño de §1.1 y §8 del plan):
+# las siete fichas del arquetipo Detalle que todavía no lo seguían. Las dos
+# referencias (Operaciones/ordenes/show, Operaciones/ordenes-trabajo/show) NO
+# entran acá: ya cumplen el patrón desde el 17/9 y el 21/9/2026. Las siete
+# salieron con las tareas 124 (Trabajo, Reparto de cuadrillas), 125
+# (Cuadrilla, Desempeño de persona) y 126 (Planilla, Rendición, Devengos):
+# vuelve a estar vacía.

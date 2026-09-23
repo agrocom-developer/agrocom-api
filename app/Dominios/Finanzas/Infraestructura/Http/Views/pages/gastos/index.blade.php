@@ -7,9 +7,11 @@
     `confirm-modal` para la baja (antes era la confirmación nativa del
     navegador y el `<form class="ag-filtros">` anterior).
 
-    Sin acción de editar (invariante de esta tarea: un gasto es inmutable
-    salvo baja, ver Aplicacion/CrearGasto) y sin buscador: los cinco filtros
-    (rubro, cuadrilla, base, campaña y período) son todos del panel.
+    "Editar" en la fila (tarea 134), solo si `$puedeEditar[$gasto->id]` es
+    `true` — el gasto no tiene rendición, o la tiene pero sigue `Abierta`
+    (`Dominio/PoliticaEdicionGasto`, calculado en el controlador). Sin
+    buscador: los cinco filtros (rubro, cuadrilla, base, campaña y período)
+    son todos del panel.
 
     Un gasto no tiene máquina de estados ni activo/inactivo: no lleva pasos,
     badge de estado ni columna de activo (guía §6.2).
@@ -36,6 +38,8 @@
       la vista solo los formatea (`FormatoMonto`, sin `float`), nunca calcula
       con ellos (invariante 6).
     - $puedeEliminar (bool): gatea el botón "Eliminar" por fila.
+    - $puedeEditar (array<int, bool>): gasto_id => admite edición (tarea 134),
+      vacío si el rol no tiene el permiso.
 
     Gateada por `finanzas.gasto.ver`, verificado server-side en el
     controlador. El botón "Nuevo gasto" y "Eliminar" se ocultan con `@puede`
@@ -76,6 +80,14 @@
             @if (session('estado'))
                 <x-molecules.alert-strip variant="success" icon="check_circle">
                     {{ session('estado') }}
+                </x-molecules.alert-strip>
+            @endif
+
+            {{-- Tarea 134: GastosController::edit() rebota acá con este error
+                 cuando la rendición asociada ya no admite tocar el gasto. --}}
+            @if ($errors->has('gasto'))
+                <x-molecules.alert-strip variant="danger" icon="error">
+                    {{ $errors->first('gasto') }}
                 </x-molecules.alert-strip>
             @endif
 
@@ -205,6 +217,7 @@
                         @php
                             $formIdEliminar = "gasto-eliminar-{$gasto->id}";
                             $modalIdEliminar = "gasto-eliminar-modal-{$gasto->id}";
+                            $puedeEditarEsta = $puedeEditar[$gasto->id] ?? false;
                         @endphp
 
                         <div class="ag-index-table__row" role="row">
@@ -257,7 +270,7 @@
                                     />
                                 @endif
 
-                                @if ($gasto->comprobante_url !== null || $puedeEliminar)
+                                @if ($gasto->comprobante_url !== null || $puedeEditarEsta || $puedeEliminar)
                                     <x-organisms.row-actions>
                                         @if ($gasto->comprobante_url !== null)
                                             <x-atoms.button
@@ -269,6 +282,17 @@
                                                 icon="visibility"
                                             >
                                                 {{ __('finanzas.gastos.comprobante_ver') }}
+                                            </x-atoms.button>
+                                        @endif
+
+                                        @if ($puedeEditarEsta)
+                                            <x-atoms.button
+                                                :href="route('panel.gastos.edit', $gasto)"
+                                                variant="warning-outline"
+                                                size="sm"
+                                                icon="edit"
+                                            >
+                                                {{ __('finanzas.gastos.editar_accion') }}
                                             </x-atoms.button>
                                         @endif
 

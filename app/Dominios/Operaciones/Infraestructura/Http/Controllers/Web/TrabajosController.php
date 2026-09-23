@@ -4,7 +4,9 @@ namespace App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Operaciones\Aplicacion\ActualizarTrabajo;
 use App\Dominios\Operaciones\Aplicacion\EliminarTrabajo;
+use App\Dominios\Operaciones\Dominio\EstadoActa;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
+use App\Dominios\Operaciones\Dominio\EstadoTableroTrabajo;
 use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
 use App\Dominios\Operaciones\Dominio\Excepciones\EquipoTrabajoNoVigente;
 use App\Dominios\Operaciones\Dominio\Excepciones\HectareasAsignadasSuperanLote;
@@ -14,12 +16,14 @@ use App\Dominios\Operaciones\Dominio\Excepciones\TrabajoValidadoNoEliminable;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenTrabajo;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenTrabajoEquipo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use App\Dominios\Operaciones\Infraestructura\Http\PasosDeOrden;
 use App\Dominios\Operaciones\Infraestructura\Http\PasosDeTrabajo;
 use App\Dominios\Operaciones\Infraestructura\Http\Requests\ActualizarTrabajoRequest;
 use App\Dominios\Personal\Contratos\DatosEquipoTrabajo;
 use App\Dominios\Personal\Contratos\LecturaEquipoTrabajo;
+use App\Dominios\Personal\Contratos\LecturaPanelPersonal;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Brick\Math\BigDecimal;
 use Illuminate\Http\RedirectResponse;
@@ -72,15 +76,209 @@ final class TrabajosController
 
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
-    public function show(Request $request, Trabajo $trabajo): View
+    /**
+     * Arquetipo Detalle (tarea 124, guía §6.4): misma anatomía que
+     * `OrdenesController::show()`/`OrdenesTrabajoController::show()` —
+     * `page-header` + KPI + `form-layout` de solo lectura + aside con
+     * avance/vínculos/actividad. Editar/eliminar son las mismas dos acciones
+     * que ya existían (mismo permiso y misma guarda de "no validado" que
+     * `edit()`/`destroy()`), ninguna acción nueva.
+     */
+    public function show(Request $request, Trabajo $trabajo, LecturaPanelPersonal $lecturaPersonal): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO), 403);
 
+        $trabajo->load(['sesiones.rechazo', 'sesiones.dron', 'acta', 'reporteTecnico', 'ordenTrabajo.equipos']);
+        $sesionesVigentes = $trabajo->sesiones->whereNull('anulada_en');
+        $editable = $trabajo->estadoTablero() !== EstadoTableroTrabajo::Validado;
+        $condicionPago = $trabajo->ordenTrabajo?->equipos->firstWhere('equipo_trabajo_id', $trabajo->equipo_trabajo_id);
+
+        $hectareasDeclaradas = BigDecimal::of((string) $trabajo->hectareas_declaradas);
+        $hectareasAplicadas = BigDecimal::of($this->hectareasAplicadas($trabajo));
+        $porcentajeCobertura = $hectareasDeclaradas->isZero()
+            ? 0
+            : (int) round(((float) (string) $hectareasAplicadas / (float) (string) $hectareasDeclaradas) * 100);
+
         return view('operaciones::pages.trabajos.show', [
             ...$this->autorizacion->cascara($request),
-            'trabajo' => $trabajo->load(['sesiones.rechazo', 'acta', 'reporteTecnico', 'ordenTrabajo']),
+            'trabajo' => $trabajo,
+            'loteLabel' => $this->etiquetasLote([$trabajo->lote_id])[$trabajo->lote_id] ?? "#{$trabajo->lote_id}",
+            'cuadrillaLabel' => $trabajo->equipo_trabajo_id !== null
+                ? ($this->etiquetasEquipo([$trabajo->equipo_trabajo_id])[$trabajo->equipo_trabajo_id] ?? "#{$trabajo->equipo_trabajo_id}")
+                : null,
+            'pagoEquipo' => $this->pagoDeEquipo($condicionPago),
+            'hectareasAplicadas' => (string) $hectareasAplicadas,
+            'porcentajeCobertura' => min(100, $porcentajeCobertura),
+            'sesionesValidadas' => $sesionesVigentes->where('estado', EstadoSesion::Validado)->count(),
+            'sesionesTotal' => $sesionesVigentes->count(),
+            'puedeEditar' => $editable && $this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR),
+            'puedeEliminar' => $editable && $this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR),
             'puedeVerReporte' => $this->autorizacion->tienePermiso($request, self::PERMISO_REPORTE),
+            'vinculos' => $this->vinculosDeTrabajo($trabajo, $request),
+            'actividad' => $this->actividadDeTrabajo($trabajo),
+            // Tarea 131: nombre real del piloto por sesión, en lote — mismo
+            // contrato cruzado de módulos que usa ahora ValidacionSesionesController.
+            'etiquetasPiloto' => $lecturaPersonal->nombresDePersonas(
+                $trabajo->sesiones->pluck('piloto_id')->unique()->values()->all()
+            ),
         ]);
+    }
+
+    /**
+     * Condición de pago del equipo de ESTE trabajo (ADR 0023), leída como la
+     * ficha de la OT (`OrdenesTrabajoController::pagoDeEquipo()`, misma
+     * forma): `null` si el trabajo no tiene OT o su equipo no tiene
+     * condición registrada (OT anterior a la reforma de pago).
+     *
+     * @return array{modalidad: string, monto_piloto: string, monto_auxiliar: string, negociado: bool, motivo: ?string}|null
+     */
+    private function pagoDeEquipo(?OrdenTrabajoEquipo $condicion): ?array
+    {
+        if ($condicion === null) {
+            return null;
+        }
+
+        return [
+            'modalidad' => $condicion->modalidad_pago->etiqueta(),
+            'monto_piloto' => (string) $condicion->monto_piloto,
+            'monto_auxiliar' => (string) $condicion->monto_auxiliar,
+            'negociado' => $condicion->negociado,
+            'motivo' => $condicion->motivo_negociacion,
+        ];
+    }
+
+    /**
+     * Hectáreas voladas: suma de las sesiones VIGENTES (invariante 2 — las
+     * anuladas no cuentan), recalculada en cada llamada desde la base
+     * (invariante 6 — `DECIMAL`, nunca `float`; mismo criterio que
+     * `Trabajo::cuadreCaldo()`). También la usa {@see self::tarjetaRegistroEnCampo()}
+     * para el aside de `edit()` — no es una cuenta nueva, es la misma.
+     */
+    private function hectareasAplicadas(Trabajo $trabajo): string
+    {
+        return (string) BigDecimal::of((string) $trabajo->sesiones()->whereNull('anulada_en')->sum('hectareas_declaradas'))->toScale(2);
+    }
+
+    /**
+     * "Vínculos" de `show()` (arquetipo Detalle): accesos a la OT (si este
+     * trabajo pertenece a una), la orden de aplicación, la cuadrilla asignada
+     * y los dos PDF cuando existen — mismo espíritu que
+     * `OrdenesController::vinculosOrden()`, como filas sueltas en vez de
+     * tarjetas completas. Cada uno gatea por el permiso del módulo de LO QUE
+     * MUESTRA, igual que {@see self::relacionadoDeEdicion()}.
+     *
+     * @return list<array{href: string, icon: string, title: string, meta: ?string, tone: string}>
+     */
+    private function vinculosDeTrabajo(Trabajo $trabajo, Request $request): array
+    {
+        $vinculos = [];
+
+        if ($trabajo->ordenTrabajo !== null && $this->autorizacion->tienePermiso($request, self::PERMISO)) {
+            $vinculos[] = [
+                'href' => route('panel.trabajos.show', $trabajo->ordenTrabajo),
+                'icon' => 'work_history',
+                'title' => __('operaciones.trabajos.vinculo_ot'),
+                'meta' => __('operaciones.trabajos.vinculo_ot_meta', ['id' => $trabajo->orden_trabajo_id]),
+                'tone' => 'info',
+            ];
+        }
+
+        if ($this->autorizacion->tienePermiso($request, self::PERMISO_VER_ORDEN)) {
+            $vinculos[] = [
+                'href' => route('panel.ordenes.show', $trabajo->orden_id),
+                'icon' => 'assignment',
+                'title' => __('operaciones.trabajos.vinculo_orden'),
+                'meta' => __('operaciones.trabajos.vinculo_orden_meta', ['aplicacion' => $trabajo->nro_aplicacion]),
+                'tone' => 'primary-2',
+            ];
+        }
+
+        if ($trabajo->equipo_trabajo_id !== null && $this->autorizacion->tienePermiso($request, self::PERMISO_VER_CUADRILLA)) {
+            $vinculos[] = [
+                'href' => route('panel.cuadrillas.show', $trabajo->equipo_trabajo_id),
+                'icon' => 'groups',
+                'title' => __('operaciones.trabajos.vinculo_cuadrilla'),
+                'meta' => null,
+                'tone' => 'distintivo-1',
+            ];
+        }
+
+        if ($trabajo->acta?->pdf_path !== null) {
+            $vinculos[] = [
+                'href' => route('panel.trabajos.acta-pdf', $trabajo),
+                'icon' => 'picture_as_pdf',
+                'title' => __('operaciones.trabajos.vinculo_acta_pdf'),
+                'meta' => null,
+                'tone' => 'success',
+            ];
+        }
+
+        if ($this->autorizacion->tienePermiso($request, self::PERMISO_REPORTE) && $trabajo->reporteTecnico?->pdf_path !== null) {
+            $vinculos[] = [
+                'href' => route('panel.trabajos.reporte-pdf', $trabajo),
+                'icon' => 'summarize',
+                'title' => __('operaciones.trabajos.vinculo_reporte_pdf'),
+                'meta' => null,
+                'tone' => 'alert',
+            ];
+        }
+
+        return $vinculos;
+    }
+
+    /**
+     * "Actividad" de `show()`: solo eventos reconstruibles desde columnas
+     * reales (guía §6.4 regla 3) — nunca una bitácora antes/después que no
+     * existe todavía (invariante 9 de CLAUDE.md, pendiente).
+     *
+     * @return list<array{title: string, meta: string, tone: string}>
+     */
+    private function actividadDeTrabajo(Trabajo $trabajo): array
+    {
+        $eventos = [[
+            'title' => __('operaciones.trabajos.actividad_sincronizado'),
+            'meta' => $this->metaFecha($trabajo->created_at),
+            'tone' => 'neutral',
+        ]];
+
+        if ($trabajo->fin !== null) {
+            $eventos[] = [
+                'title' => __('operaciones.trabajos.actividad_cerrado'),
+                'meta' => $this->metaFecha($trabajo->fin),
+                'tone' => 'info',
+            ];
+        }
+
+        foreach ($trabajo->sesiones as $sesion) {
+            if ($sesion->anulada_en !== null && $sesion->rechazo !== null) {
+                $eventos[] = [
+                    'title' => __('operaciones.trabajos.actividad_sesion_rechazada', ['secuencia' => $sesion->secuencia, 'motivo' => $sesion->rechazo->motivo]),
+                    'meta' => $this->metaFecha($sesion->rechazo->created_at),
+                    'tone' => 'danger',
+                ];
+            } elseif ($sesion->fecha_validacion !== null) {
+                $eventos[] = [
+                    'title' => __('operaciones.trabajos.actividad_sesion_validada', ['secuencia' => $sesion->secuencia]),
+                    'meta' => $this->metaFecha($sesion->fecha_validacion),
+                    'tone' => 'success',
+                ];
+            }
+        }
+
+        if ($trabajo->acta?->estado === EstadoActa::Firmada) {
+            $eventos[] = [
+                'title' => __('operaciones.trabajos.actividad_acta_firmada', ['firmante' => $trabajo->acta->firmante ?? '—']),
+                'meta' => $this->metaFecha($trabajo->acta->fecha_firma),
+                'tone' => 'success',
+            ];
+        }
+
+        return $eventos;
+    }
+
+    private function metaFecha(?\DateTimeInterface $fecha): string
+    {
+        return $fecha?->format('d/m/Y H:i') ?? '—';
     }
 
     /**
@@ -390,7 +588,6 @@ final class TrabajosController
     private function tarjetaRegistroEnCampo(Trabajo $trabajo): array
     {
         $vigentes = $trabajo->sesiones()->whereNull('anulada_en');
-        $hectareas = BigDecimal::of((string) $vigentes->clone()->sum('hectareas_declaradas'))->toScale(2);
 
         return [
             'titulo' => __('operaciones.trabajos.aside_campo_titulo'),
@@ -407,7 +604,7 @@ final class TrabajosController
                 ],
                 [
                     'label' => __('operaciones.trabajos.aside_campo_hectareas'),
-                    'value' => number_format((float) (string) $hectareas, 2, ',', '.'),
+                    'value' => number_format((float) $this->hectareasAplicadas($trabajo), 2, ',', '.'),
                     'mono' => true,
                 ],
             ],

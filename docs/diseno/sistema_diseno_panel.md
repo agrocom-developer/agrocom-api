@@ -175,7 +175,7 @@ Consecuencia de diseño explícita: **el relleno sólido de marca (botones) es c
 | Atom | `tema-inicial` | `resources/views/components/atoms/tema-inicial.blade.php` | Implementado (9/9/2026 — script inline anti-parpadeo del `<head>`, ver §20). No dibuja nada: es el único componente sin salida visual del catálogo. |
 | Template | `panel-shell` | `resources/views/components/templates/panel-shell.blade.php` | Implementado (28/8/2026, quinta vuelta — cáscara `<html>` compartida por todas las páginas del panel, con el tema persistido del usuario). Faltaba en esta tabla; se agrega el 2/9/2026. |
 | Organism | `page-header` | `resources/views/components/organisms/page-header.blade.php` | Implementado (2/9/2026, tarea 31 — arquetipo formulario, ver §14) |
-| Molecule | `tabs` | `resources/views/components/molecules/tabs.blade.php` | Implementado (2/9/2026, tarea 31 — el CSS ya existía desde el rediseño del dashboard, faltaba el componente) |
+| Molecule | `tabs` | `resources/views/components/molecules/tabs.blade.php` | Implementado (2/9/2026, tarea 31 — el CSS ya existía desde el rediseño del dashboard, faltaba el componente). 23/9/2026 (tarea 136): prop `variant` (`underline` por defecto, `segmented`) — la segmentada es la misma mecánica de `tab` de Bootstrap con la piel de un selector (caja con borde, opción activa en el par «seleccionado» `-primary-subtle`/`-primary-emphasis`), para alternar vistas del MISMO dato dentro de una tarjeta sin recargar; primer uso: diario/semanal/mensual del resumen de vuelos del encargado. |
 | Organism | `form-actions-bar` | `resources/views/components/organisms/form-actions-bar.blade.php` | Implementado (2/9/2026, tarea 31) |
 | Molecule | `summary-card` | `resources/views/components/molecules/summary-card.blade.php` | Implementado (2/9/2026, tarea 31). 19/9/2026: el slot `action` admite varios botones — el contenedor (`.ag-summary-card__action`) es una columna con `gap`, un solo botón se ve igual que antes |
 | Molecule | `progress-meter` | `resources/views/components/molecules/progress-meter.blade.php` | Implementado (2/9/2026, tarea 31) |
@@ -521,7 +521,7 @@ de rol" del sidebar/menú de usuario, con `?cambiar=1`).
   `Http/Demo/DatosDemoPanel` (KPIs, 5 sesiones, 5 causas de pausa, 3 ítems
   de stock, ventana volable, badges del menú, campaña/período/versión) —
   marcado MOCK, nunca hardcodeado en vistas; usuario demo multirol
-  `carlos.ferrufino`/`password` en `Demo/PersonalDemoSeeder`.
+  `miguelo`/`0000` en `Demo/PersonalDemoSeeder`.
 
 ## 8. Reglas fijas de pulido UI (sexta vuelta, 28/8/2026)
 
@@ -641,9 +641,20 @@ pantalla ya hecha, se anota acá.
     `min-width` nombrando también `.ag-input`, los desplegables quedaron
     además más angostos que su propia etiqueta. Regla: la fila anula el
     margen de TODOS los átomos de campo y les fija el mismo `min-width`, no
-    del que hoy se use. Con compuerta automática en
-    `tests/Unit/PulidoNavegacionPanelTest.php`, que descubre sola qué átomos
-    llevan margen de raíz.
+    del que hoy se use.
+
+    **Compuerta retirada (22/9/2026, tarea 126).** La regla en sí sigue
+    vigente para cualquier fila de controles en línea nueva (ver
+    `resources/css/pages/reparto-cuadrillas.css` para un ejemplo vivo), pero
+    dejó de tener gate automático: `.ag-filtros`/`components/filter-bar.css`
+    —el archivo contra el que `tests/Unit/PulidoNavegacionPanelTest.php`
+    comparaba cada átomo— se borró al quedar sin una sola pantalla que lo
+    usara (Desempeño de persona y el detalle de Devengos, las dos últimas,
+    pasaron a `filter-panel`). `filter-panel` apila sus campos verticalmente
+    dentro del desplegable, así que el margen de apilado ahí es el
+    comportamiento CORRECTO, no el bug — no hay un archivo equivalente que
+    proteger con una compuerta general. Un campo nuevo en una fila en línea
+    se revisa a mano contra esta regla.
 
 12. **Una fila repetible (contactos, ventanas, lotes) COMPARTE la clase
     `.ag-form-section__body`, nunca redeclara su propio grid de dos columnas
@@ -735,7 +746,7 @@ pantalla ya hecha, se anota acá.
 Ejecuta `docs/gestion/plan_dashboard_rediseno.md` — Anexo A y fases 1 a 7 de
 ese plan (queda solo la Fase 8, auditoría final, que es este mismo cierre).
 Verificado en navegador (Playwright, claro/oscuro/móvil, usuario
-`carlos.ferrufino`) antes de cerrar cada fase.
+`miguelo`) antes de cerrar cada fase.
 
 - **Fase 1 — sidebar (nivel 2)**: collapse/expand nuevo (botón hamburguesa
   en `.ag-module-sidebar__header`, JS propio
@@ -2119,3 +2130,39 @@ ver la tarea que encargó estas piezas):
     confirm-label="{{ __('comercial.propiedades.campo_color_modal_aplicar') }}"
 />
 ```
+
+## 22. Tarea 141 (23/9/2026) — `molecules/notifications-menu`: avisos con destino y «Marcar todas como leídas»
+
+La campana deja de ser decorativa. La molécula sigue siendo la misma que
+comparten `organisms/topbar` y `organisms/mobile-topbar` (los dos llamadores
+no cambian de API), pero cada aviso de la lista puede traer dos claves más:
+
+- **`href`** (opcional): con él la fila es un enlace real. Sin él sigue siendo
+  texto plano, como antes. El destino lo resuelve el servidor contra el rol
+  activo (`panel.notificaciones.abrir`, ADR 0025 punto 6): el aviso nunca sabe
+  a qué URL lleva.
+- **`id`** (opcional): lo traen los avisos que nacen del motor de
+  `Notificaciones`; las alertas técnicas de `ope_alertas` no lo llevan porque
+  se atienden en su propia pantalla. Si hay al menos un aviso con `id` sin leer,
+  el popover suma el pie **«Marcar todas como leídas»** (`ui.topbar.mark_all_read`,
+  un `POST` con `@csrf`); sin ninguno, el pie no aparece.
+
+Marcado y estilos:
+
+- La fila es siempre un `<a class="ag-notification-item">` dentro de un `<li>`:
+  un `<a>` sin `href` es un marcador de posición válido, así el markup y el
+  estilo son idénticos con y sin destino.
+- Hover/foco de una fila con destino: `--ag-color-bg-row-hover`. Una fila «sin
+  leer» ya está tintada de `--ag-color-primary-subtle`, así que su hover suma un
+  borde propio (`--ag-color-primary-border-subtle`, regla 4 de §8) en vez de
+  cambiar a otro verde parecido.
+- `.ag-notifications-popover__footer` / `__mark-all`: acción secundaria en
+  texto plano, con fondo sutil y transición al pasar el puntero (regla 5 de §8).
+  Solo tokens, ningún color propio; se comporta igual en tema claro y oscuro.
+- Prop nueva documentada en `organisms/topbar`: `notifications` es ahora
+  `{icon, title, time, unread, href?, id?}`.
+
+Qué entra en la lista lo decide `Seguridad\...\Presentacion\CampanaDeAvisos`
+(no la molécula): todo lo no leído primero, hasta el tope de 10, y después los
+leídos más recientes. Así el badge —que cuenta lo no leído de la lista que
+recibe— sigue siendo exacto hasta «9+».

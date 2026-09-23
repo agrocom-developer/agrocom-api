@@ -16,6 +16,10 @@
       `$tanda->trabajos->pluck('equipo_trabajo_id')`.
     - $puedeCrear (bool): si el rol activo tiene `operaciones.trabajo.crear`
       — sin él, no se ofrece el botón de nueva tanda.
+    - $puedeEditar (bool, tarea 127): permiso `operaciones.trabajo.editar`.
+    - $puedeEditarPorTanda (array<int, bool>): por cada tanda,
+      `PoliticaEdicionOrdenTrabajo::admiteEdicion()` (no todos sus trabajos
+      validados) — «Editar» de la fila exige el permiso Y esto.
 
     Gateada por `operaciones.trabajo.ver`. "Ver detalle" a
     `panel.trabajos.show` va siempre. Columna de estado: muestra el estado
@@ -154,6 +158,17 @@
                                     >
                                         {{ __('operaciones.ordenes_trabajo.ver_accion') }}
                                     </x-atoms.button>
+
+                                    @if ($puedeEditar && ($puedeEditarPorTanda[$tanda->id] ?? false))
+                                        <x-atoms.button
+                                            :href="route('panel.trabajos.edit', $tanda)"
+                                            variant="warning-outline"
+                                            size="sm"
+                                            icon="edit"
+                                        >
+                                            {{ __('operaciones.ordenes_trabajo.editar') }}
+                                        </x-atoms.button>
+                                    @endif
                                 </x-organisms.row-actions>
                             </span>
                         </div>

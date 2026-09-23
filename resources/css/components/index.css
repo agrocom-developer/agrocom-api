@@ -43,7 +43,6 @@
 @import './progress-meter.css';
 @import './tiered-progress-bar.css';
 @import './file-field.css';
-@import './filter-bar.css';
 @import './table-search.css';
 @import './pagination.css';
 @import './index-table.css';
@@ -63,6 +62,7 @@
 @import './topbar.css';
 @import './filter-panel.css';
 @import './row-actions.css';
+@import './vista-como-banner.css';
 @import './tabs.css';
 @import './mapa-pantalla-completa.css';
 @import './mapa-operativo.css';

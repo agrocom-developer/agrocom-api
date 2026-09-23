@@ -36,6 +36,20 @@ enum SeccionDashboard: string
     case MisSesiones = 'mis_sesiones';
     case MisEquipos = 'mis_equipos';
     case MiLiquidacion = 'mi_liquidacion';
+    case EstadoCuentas = 'estado_cuentas';
+    case TrabajosPorEquipo = 'trabajos_por_equipo';
+    case ProgresoCampania = 'progreso_campania';
+    case EstadoOrdenesAplicacion = 'estado_ordenes_aplicacion';
+    case ResumenVuelos = 'resumen_vuelos';
+    case RecursosEnUso = 'recursos_en_uso';
+    case OrdenesTrabajoPorCuadrilla = 'ordenes_trabajo_por_cuadrilla';
+    case OrdenesConEquipamiento = 'ordenes_con_equipamiento';
+    case UsuariosPorRol = 'usuarios_por_rol';
+    case DispositivosConSesion = 'dispositivos_con_sesion';
+    case VersionesApk = 'versiones_apk';
+    case BitacoraReciente = 'bitacora_reciente';
+    case AccesoConfiguracion = 'acceso_configuracion';
+    case AccesoOrganizacion = 'acceso_organizacion';
 
     /**
      * El mapa se gatea con `operaciones.trabajo.ver` y no con
@@ -51,13 +65,45 @@ enum SeccionDashboard: string
             self::DistribucionSesiones,
             self::HectareasPorDia,
             self::ResumenPorLote,
-            self::Multimedia => 'operaciones.trabajo.ver',
+            self::Multimedia,
+            // Mismo permiso que ResumenPorLote: son la MISMA data de
+            // trabajos (Operaciones), agrupada distinto — por equipo en vez
+            // de por lote, y totalizada en vez de fila por fila.
+            self::TrabajosPorEquipo,
+            self::ProgresoCampania,
+            // Mismo permiso que HectareasPorDia: es la MISMA serie de
+            // hectáreas validadas, con selector de granularidad (tarea 136).
+            self::ResumenVuelos,
+            // Las Órdenes de Trabajo agrupadas por cuadrilla (tarea 138): el
+            // permiso de su pantalla, `/panel/trabajos`.
+            self::OrdenesTrabajoPorCuadrilla => 'operaciones.trabajo.ver',
             self::ColaValidacion => 'operaciones.sesion.validar',
             self::Pausas => 'operaciones.pausa.ver',
             self::DiasEnHacienda => 'operaciones.estadia.ver',
             self::Stock => 'inventario.movimiento.ver',
-            self::AvanceClientes => 'comercial.contrato.ver',
+            // Mismo permiso que AvanceClientes: ambas resumen contratos de
+            // Comercial, una en hectáreas y otra en plata.
+            self::AvanceClientes,
+            self::EstadoCuentas => 'comercial.contrato.ver',
             self::Alertas => 'operaciones.alerta.ver',
+            // El permiso de la pantalla de órdenes de aplicación, que es la
+            // que este donut resume (tarea 136).
+            self::EstadoOrdenesAplicacion,
+            // La misma lista de órdenes con las haciendas y el equipamiento
+            // que le corresponde a cada una (tarea 138).
+            self::OrdenesConEquipamiento => 'operaciones.orden.ver',
+            // Qué lleva cada cuadrilla al campo — sus integrantes y sus
+            // recursos — es el contenido de la pantalla de cuadrillas, y con
+            // su permiso se gatea (tarea 138).
+            self::RecursosEnUso => 'personal.equipo_trabajo.ver',
+            // Las seis del administrador de plataforma (tarea 139): cada una
+            // con el permiso de la pantalla que resume o a la que lleva.
+            self::UsuariosPorRol => 'seguridad.usuario.ver',
+            self::DispositivosConSesion => 'seguridad.dispositivo.ver',
+            self::VersionesApk => 'distribucion.version.autorizar',
+            self::BitacoraReciente => 'seguridad.bitacora.ver',
+            self::AccesoConfiguracion => 'seguridad.configuracion.ver',
+            self::AccesoOrganizacion => 'seguridad.organizacion.ver',
             self::MiLiquidacion => 'finanzas.devengo.ver',
             // Sin permiso propio: son las sesiones y los drones de quien
             // mira, derivados de su `persona_id`. No hay nada que gatear que

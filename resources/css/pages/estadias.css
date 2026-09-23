@@ -27,7 +27,7 @@
 }
 
 /* KPI del listado: franja fija bajo la cabecera, mismo patrón que
-   `.ag-ordenes-detalle__kpis`. Las tarjetas son `molecules/stat-card`; acá
+   `.ag-detalle__kpis`. Las tarjetas son `molecules/stat-card`; acá
    solo va la grilla. Consulta el ancho de SU contenedor, no el del viewport:
    el contenido del panel cambia de ancho con el sidebar. */
 .ag-estadias {

@@ -7,7 +7,6 @@ use App\Dominios\Comercial\Aplicacion\CrearLote;
 use App\Dominios\Comercial\Aplicacion\EliminarLote;
 use App\Dominios\Comercial\Aplicacion\ListarLotes;
 use App\Dominios\Comercial\Aplicacion\Lote\GuardadoLote;
-use App\Dominios\Comercial\Aplicacion\ResolverProveedorMapa;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteConHistorialAsociado;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteDuplicado;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
@@ -17,6 +16,8 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\LoteCampania;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\ActualizarLoteRequest;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\CrearLoteRequest;
+use App\Dominios\Compartido\Aplicacion\ResolverProveedorMapa;
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -58,7 +59,7 @@ final class LotesController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $busqueda = $request->string('q')->toString();
+        $busqueda = TextoDeFiltro::de($request, 'q');
         $clienteId = $request->filled('cliente_id') ? $request->integer('cliente_id') : null;
         $propiedadId = $request->filled('propiedad_id') ? $request->integer('propiedad_id') : null;
 

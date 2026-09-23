@@ -30,6 +30,13 @@ return [
         'mantenimiento' => 'En mantenimiento',
     ],
 
+    // Estado de un dron. No tiene uno propio: se deduce de sus órdenes de
+    // mantenimiento (con alguna abierta está en mantenimiento).
+    'estado_dron' => [
+        'operativo' => 'Operativo',
+        'en_mantenimiento' => 'En mantenimiento',
+    ],
+
     // Tarjetas del resumen relacionado que comparten batería, generador y
     // vehículo: las cuadrillas que lo tienen asignado y el combustible que se
     // le cargó.

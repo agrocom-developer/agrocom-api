@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Mantenimiento\Aplicacion\ActualizarBateria;
 use App\Dominios\Mantenimiento\Aplicacion\CrearBateria;
 use App\Dominios\Mantenimiento\Aplicacion\EliminarBateria;
@@ -70,10 +71,10 @@ final class BateriasController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $busqueda = $request->string('q')->toString();
-        $baseQuery = $request->string('base_id')->toString();
+        $busqueda = TextoDeFiltro::de($request, 'q');
+        $baseQuery = TextoDeFiltro::de($request, 'base_id');
         $baseId = $baseQuery !== '' ? (int) $baseQuery : null;
-        $estadoQuery = $request->string('estado')->toString();
+        $estadoQuery = TextoDeFiltro::de($request, 'estado');
         $estado = $estadoQuery !== '' ? EstadoBateria::tryFrom($estadoQuery) : null;
 
         $baterias = $listarBaterias->ejecutar(

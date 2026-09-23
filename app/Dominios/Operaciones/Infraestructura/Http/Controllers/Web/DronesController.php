@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Mantenimiento\Contratos\LecturaMantenimientoPorDron;
 use App\Dominios\Operaciones\Aplicacion\ActualizarDron;
 use App\Dominios\Operaciones\Aplicacion\CrearDron;
@@ -47,7 +48,7 @@ final class DronesController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $busqueda = $request->string('q')->toString();
+        $busqueda = TextoDeFiltro::de($request, 'q');
 
         return view('operaciones::pages.drones.index', [
             ...$this->autorizacion->cascara($request),

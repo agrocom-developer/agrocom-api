@@ -23,3 +23,32 @@
 .ag-sesiones-validacion__atenuado {
     color: var(--ag-color-text-muted);
 }
+
+/* Subtítulo de lote bajo el código de trabajo (tarea 131) — mismo criterio
+   que `.ag-table__sub` del dashboard. */
+.ag-sesiones-validacion__sub {
+    display: block;
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+    font-weight: var(--ag-font-weight-regular);
+}
+
+/* Enlace a la ficha del trabajo (tarea 131) — mismo criterio que
+   `.ag-ordenes__crear-trabajo` (hover con fondo sutil, §8.5). */
+.ag-sesiones-validacion__link {
+    display: inline-block;
+    padding: var(--ag-space-1) var(--ag-space-2);
+    margin-left: calc(var(--ag-space-2) * -1);
+    border-radius: var(--ag-radius-sm);
+    color: var(--ag-color-info-strong);
+    font-weight: var(--ag-font-weight-medium);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+    transition: background-color 120ms ease;
+}
+
+.ag-sesiones-validacion__link:hover,
+.ag-sesiones-validacion__link:focus-visible {
+    background-color: var(--ag-color-info-subtle);
+    color: var(--ag-color-info-strong);
+}

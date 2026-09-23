@@ -4,7 +4,7 @@
     docs/diseno/guia_pantalla_panel.md. Sin sub-entidad repetible. Tres
     secciones (21/9/2026, pedido del dueño): Datos personales (nombres,
     apellidos y cédula), Datos de referencia (celular, correo y dirección) y
-    Trabajo en campo (puesto, base y tarifa). El nombre completo que
+    Trabajo en campo (puesto y base). El nombre completo que
     muestra el resto del sistema lo compone el servidor.
 
     «Puesto» es `per_personas.rol`, la clasificación de campo que decide en
@@ -53,7 +53,6 @@
     $rol = old('rol', $persona?->rol?->value ?? '');
     // En el alta, `?base_id=` (atajo «Nueva persona» de la ficha de una base) deja esa base elegida.
     $baseId = old('base_id', $persona?->base_id ?? ($baseIdInicial ?? ''));
-    $tarifaHa = old('tarifa_ha', $persona?->tarifa_ha ?? '');
     $opcionesRol = collect($rolesOperativos)->mapWithKeys(
         fn ($opcionRol) => [$opcionRol->value => __('personal.roles.'.$opcionRol->value)]
     );
@@ -209,17 +208,6 @@
                 :value="$baseId"
                 :placeholder="__('personal.personas.campo_base_placeholder')"
                 :error="$errors->first('base_id')"
-            />
-
-            <x-atoms.input
-                type="number"
-                name="tarifa_ha"
-                :label="__('personal.personas.campo_tarifa')"
-                :value="$tarifaHa"
-                :help="__('personal.personas.campo_tarifa_ayuda')"
-                :error="$errors->first('tarifa_ha')"
-                min="0"
-                step="0.01"
             />
         </x-molecules.form-section>
 

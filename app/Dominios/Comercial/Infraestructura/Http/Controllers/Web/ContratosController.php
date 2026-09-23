@@ -15,6 +15,7 @@ use App\Dominios\Comercial\Dominio\Excepciones\ActivacionContratoNoDisponible;
 use App\Dominios\Comercial\Dominio\Excepciones\CampaniaNoAbierta;
 use App\Dominios\Comercial\Dominio\Excepciones\ContratoConAplicacionAbierta;
 use App\Dominios\Comercial\Dominio\Excepciones\LoteAjenoAlCliente;
+use App\Dominios\Comercial\Dominio\Excepciones\LotesDeDistintoCultivo;
 use App\Dominios\Comercial\Dominio\Excepciones\LotesYaContratados;
 use App\Dominios\Comercial\Dominio\Excepciones\TransicionContratoNoPermitida;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
@@ -25,6 +26,7 @@ use App\Dominios\Comercial\Infraestructura\Http\PasosDeContrato;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\ActualizarContratoRequest;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\CambiarEstadoContratoRequest;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\CrearContratoRequest;
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Operaciones\Contratos\LecturaLotesConOrdenPorContrato;
 use App\Dominios\Operaciones\Contratos\LecturaResumenOrdenesContrato;
 use App\Dominios\Operaciones\Contratos\LecturaTrabajosPorContrato;
@@ -97,7 +99,7 @@ final class ContratosController
     ): View {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $busqueda = $request->string('q')->toString();
+        $busqueda = TextoDeFiltro::de($request, 'q');
         $campaniaId = $request->integer('campania_id') ?: null;
         $clienteId = $request->integer('cliente_id') ?: null;
         $propiedadId = $request->integer('propiedad_id') ?: null;
@@ -163,7 +165,7 @@ final class ContratosController
                 ->route('panel.contratos.create')
                 ->withInput()
                 ->withErrors(['campania_id' => $excepcion->getMessage()]);
-        } catch (LoteAjenoAlCliente|LotesYaContratados $excepcion) {
+        } catch (LoteAjenoAlCliente|LotesYaContratados|LotesDeDistintoCultivo $excepcion) {
             return redirect()
                 ->route('panel.contratos.create')
                 ->withInput()
@@ -360,7 +362,7 @@ final class ContratosController
                 ->route('panel.contratos.edit', $contrato)
                 ->withInput()
                 ->withErrors(['campania_id' => $excepcion->getMessage()]);
-        } catch (LoteAjenoAlCliente|LotesYaContratados $excepcion) {
+        } catch (LoteAjenoAlCliente|LotesYaContratados|LotesDeDistintoCultivo $excepcion) {
             return redirect()
                 ->route('panel.contratos.edit', $contrato)
                 ->withInput()

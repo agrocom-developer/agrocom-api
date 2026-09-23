@@ -192,16 +192,309 @@
 }
 
 /* Liquidación del mes (tablero de piloto/auxiliar): fecha + tres columnas
-   numéricas alineadas a la derecha. */
+   numéricas alineadas a la derecha. Sin variante angosta (tarea 137): bajo
+   1200 mantiene su grilla y scrollea horizontal dentro de `.ag-table-scroll`
+   (ver la regla del breakpoint). */
 .ag-table--liquidacion .ag-table__head,
 .ag-table--liquidacion .ag-table__row {
-    grid-template-columns: 1fr 90px 110px 120px;
+    grid-template-columns: 1fr 90px minmax(0, 1fr) 110px 120px;
+    min-width: 600px;
 }
 
-/* Equipos operados por la persona en el mes. */
+/* Equipos operados por la persona en el mes. Misma excepción de tablet. */
 .ag-table--equipos .ag-table__head,
 .ag-table--equipos .ag-table__row {
     grid-template-columns: 1.4fr 90px 80px 90px 120px;
+    min-width: 540px;
+}
+
+/* Estado de cuentas (tab del dueño, tarea 135): cliente + cuatro columnas de
+   plata. Misma excepción de tablet que `.ag-table--clientes` (ver el
+   breakpoint 1199.98px más abajo): sin variante angosta, scrollea horizontal. */
+.ag-table--cuentas .ag-table__head,
+.ag-table--cuentas .ag-table__row {
+    grid-template-columns: 1.6fr 1fr 1fr 1fr 1fr;
+    min-width: 680px;
+}
+
+/* Trabajos abiertos por equipo (tab del dueño, tarea 135): equipo + carga +
+   lotes + última actividad. Misma excepción de tablet. */
+.ag-table--trabajos-equipo .ag-table__head,
+.ag-table--trabajos-equipo .ag-table__row {
+    grid-template-columns: 1.2fr 90px 100px 1.6fr 120px;
+    min-width: 680px;
+}
+
+/* ---------- Tabs del jefe de campo (tarea 138) ---------- */
+
+/* Órdenes de trabajo por cuadrilla: tanda + orden de aplicación + lotes +
+   cifras + estado. Misma excepción de tablet que las tablas del dueño (ver el
+   breakpoint 1199.98px): sin variante angosta, scrollea horizontal. */
+.ag-table--tandas .ag-table__head,
+.ag-table--tandas .ag-table__row {
+    grid-template-columns: 110px 1.4fr 1.4fr 90px 110px 140px;
+    min-width: 800px;
+}
+
+/* Fila de grupo: nombra a la cuadrilla a la que pertenecen las tandas que
+   siguen. Ocupa todo el ancho de la grilla (no es una fila de columnas). */
+.ag-table__grupo {
+    display: flex;
+    align-items: baseline;
+    gap: var(--ag-space-3);
+    min-width: 800px;
+    padding: var(--ag-space-2) var(--ag-space-4);
+    background: var(--ag-color-bg-table-head);
+    border-bottom: 1px solid var(--ag-color-border-row);
+    font-size: 0.8125rem;
+}
+
+/* Estado de las órdenes con su equipamiento: la celda de equipamiento apila
+   una línea por cuadrilla (y por pieza fuera de servicio), así que las celdas
+   de esta tabla envuelven en vez de truncar y la fila alinea arriba. */
+.ag-table--ordenes-equipo .ag-table__head,
+.ag-table--ordenes-equipo .ag-table__row {
+    grid-template-columns: 1.2fr 110px 1.4fr 110px 2.2fr;
+    min-width: 900px;
+}
+
+.ag-table--ordenes-equipo .ag-table__row {
+    align-items: start;
+}
+
+.ag-table--ordenes-equipo .ag-table__row > span {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+}
+
+.ag-dash__equipamiento-orden {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
+}
+
+.ag-dash__equipamiento-cuadrilla {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+/* Recursos en uso: una tarjeta por cuadrilla. `min(100%, ...)` para que en un
+   móvil de 390 px la columna mínima no desborde la página. */
+.ag-dash__cuadrillas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+    gap: var(--ag-space-4);
+}
+
+.ag-dash__cuadrilla-cabecera {
+    flex-wrap: wrap;
+}
+
+.ag-dash__cuadrilla-integrantes {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--ag-space-1) var(--ag-space-4);
+    margin: 0;
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text);
+}
+
+.ag-dash__cuadrilla-rotulo {
+    font-family: var(--ag-font-family-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ag-color-text-muted);
+}
+
+.ag-dash__cuadrilla-rol {
+    display: inline;
+}
+
+.ag-dash__equipamiento {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ag-dash__equipamiento-item {
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-2) 0;
+    border-bottom: 1px solid var(--ag-color-border-row);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-dash__equipamiento-item:last-child {
+    border-bottom: none;
+}
+
+.ag-dash__equipamiento-tipo {
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
+/* ---------- Tabs del administrador de plataforma (tarea 139) ---------- */
+
+/* Dos bloques de igual peso lado a lado (usuarios por rol + versiones del APK,
+   los dos accesos directos). A diferencia de `.ag-dash__grid` NO se esconde
+   bajo 768 px: apila en una columna desde tablet. */
+.ag-dash__par {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--ag-space-4);
+    align-items: start;
+}
+
+/* Usuarios por rol: rol + cifra. Dos columnas caben en cualquier ancho, pero
+   `.ag-table` se oculta bajo 1200 salvo que se la nombre en el breakpoint. */
+.ag-table--roles .ag-table__head,
+.ag-table--roles .ag-table__row {
+    grid-template-columns: minmax(0, 1fr) 90px;
+}
+
+/* Nota al pie de una tarjeta de tabla. */
+.ag-dash__nota {
+    margin: 0;
+    padding: var(--ag-space-3) var(--ag-space-4);
+    border-top: 1px solid var(--ag-color-border-row);
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
+/* Versión del APK: número + código en una línea. `--vacia` es el «no hay». */
+.ag-dash__version {
+    display: flex;
+    align-items: baseline;
+    gap: var(--ag-space-2);
+    margin: var(--ag-space-1) 0 0;
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-dash__version--vacia {
+    color: var(--ag-color-text-muted);
+}
+
+/* Dispositivos con sesión: cuenta + equipo + rol + último uso. Misma excepción
+   de tablet que las demás (ver el breakpoint 1199.98px): scrollea horizontal. */
+.ag-table--dispositivos .ag-table__head,
+.ag-table--dispositivos .ag-table__row {
+    grid-template-columns: 1.2fr 1.4fr 1.2fr 1fr;
+    min-width: 640px;
+}
+
+/* Bitácora reciente: instante + cuenta + entidad + acción. Misma excepción. */
+.ag-table--bitacora .ag-table__head,
+.ag-table--bitacora .ag-table__row {
+    grid-template-columns: 1.2fr 1.4fr 1.6fr 120px;
+    min-width: 680px;
+}
+
+/* ---------- Tabs del encargado de operaciones (tarea 136) ---------- */
+
+/* Órdenes de aplicación por estado: donut + lista de cifras. La lista es un
+   grid de dos columnas (punto | nombre | cifra) para que las cifras queden
+   alineadas entre filas. */
+.ag-dash__estados {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap: var(--ag-space-5);
+    align-items: center;
+}
+
+.ag-dash__estados-lista {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ag-dash__estados-item {
+    display: grid;
+    grid-template-columns: 8px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-2) 0;
+    border-bottom: 1px solid var(--ag-color-border-row);
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text);
+}
+
+/* El total no lleva punto: su nombre ocupa las dos primeras columnas. */
+.ag-dash__estados-item--total {
+    grid-template-columns: minmax(0, 1fr) auto;
+    border-bottom: none;
+    font-weight: var(--ag-font-weight-bold);
+}
+
+.ag-dash__estados-punto {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--ag-radius-pill);
+    background: var(--ag-color-text-faint);
+}
+
+.ag-dash__estados-punto--success {
+    background: var(--ag-color-success);
+}
+
+.ag-dash__estados-punto--warning {
+    background: var(--ag-color-warning);
+}
+
+.ag-dash__estados-punto--info {
+    background: var(--ag-color-info);
+}
+
+.ag-dash__estados-punto--danger {
+    background: var(--ag-color-danger);
+}
+
+.ag-dash__estados-valor {
+    font-family: var(--ag-font-family-mono);
+    font-variant-numeric: tabular-nums;
+    font-weight: var(--ag-font-weight-bold);
+}
+
+/* Resumen de vuelos: título a la izquierda y selector de granularidad a la
+   derecha; en pantallas angostas el selector baja debajo del título. */
+.ag-dash__vuelos-cabecera {
+    flex-wrap: wrap;
+}
+
+.ag-dash__vuelos-total {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: var(--ag-space-3);
+    margin: var(--ag-space-3) 0 var(--ag-space-2);
+}
+
+.ag-dash__vuelos-cifra {
+    font-size: var(--ag-font-size-xl);
+    font-weight: var(--ag-font-weight-bold);
+    font-variant-numeric: tabular-nums;
+    color: var(--ag-color-text);
+}
+
+.ag-dash__vuelos-unidad {
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-regular);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-dash__vuelos-nota {
+    margin: var(--ag-space-2) 0 0;
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
 }
 
 /* Segunda línea dentro de una celda: el campo bajo el lote, el modelo bajo
@@ -310,6 +603,10 @@
 
 .ag-table__dot--warning {
     background: var(--ag-color-warning-strong);
+}
+
+.ag-table__dot--danger {
+    background: var(--ag-color-danger-strong);
 }
 
 .ag-table__estado {
@@ -516,6 +813,12 @@
     background: var(--ag-color-accent);
 }
 
+/* `_seccion-pausas` pide este tono desde que el tablero es real (tarea 67) y
+   la clase no existía: las barras de pausas salían vacías. */
+.ag-bars__fill--warning {
+    background: var(--ag-color-warning);
+}
+
 .ag-bars__fill--info {
     background: var(--ag-color-info-strong);
 }
@@ -606,6 +909,10 @@
         grid-template-columns: 1fr 1fr;
     }
 
+    .ag-dash__estados {
+        grid-template-columns: 1fr;
+    }
+
     .ag-dash__grid {
         grid-template-columns: 1fr;
     }
@@ -615,9 +922,30 @@
     }
 
     /* Excepción: la tabla de clientes no tiene variante de tablet, se
-       mantiene con scroll horizontal (ver .ag-table-scroll arriba). */
-    .ag-table.ag-table--clientes {
+       mantiene con scroll horizontal (ver .ag-table-scroll arriba). Mismo
+       criterio para las dos tablas nuevas del dueño (tarea 135): estado de
+       cuentas y trabajos por equipo; y para las dos del piloto y el auxiliar
+       (tarea 137): detalle de la liquidación y equipos del mes; y para las
+       dos del jefe de campo (tarea 138): órdenes de trabajo por cuadrilla y
+       órdenes con su equipamiento; y para las tres del administrador de
+       plataforma (tarea 139): usuarios por rol, dispositivos y bitácora.
+       Sin esta excepción se ocultaban y, en equipos, quedaba la tarjeta con
+       solo el título. */
+    .ag-table.ag-table--clientes,
+    .ag-table.ag-table--cuentas,
+    .ag-table.ag-table--trabajos-equipo,
+    .ag-table.ag-table--liquidacion,
+    .ag-table.ag-table--equipos,
+    .ag-table.ag-table--tandas,
+    .ag-table.ag-table--ordenes-equipo,
+    .ag-table.ag-table--roles,
+    .ag-table.ag-table--dispositivos,
+    .ag-table.ag-table--bitacora {
         display: block;
+    }
+
+    .ag-dash__par {
+        grid-template-columns: 1fr;
     }
 
     .ag-session-list {
@@ -645,5 +973,71 @@
     .ag-alert-strip__action,
     .ag-dash__rc-detalle {
         display: none;
+    }
+
+    /* Tablas del jefe de campo (tarea 138): en el celular el equipamiento y
+       el estado son lo que se busca, y quedaban fuera de la vista tras el
+       scroll horizontal. Bajo 768 px no scrollean: sin cabecera, cada fila se
+       apila en dos columnas y cada dato lleva su rótulo (`data-label`). El
+       primer dato es el título de la fila y el equipamiento ocupa el ancho. */
+    .ag-table--tandas .ag-table__head,
+    .ag-table--ordenes-equipo .ag-table__head,
+    .ag-table--dispositivos .ag-table__head,
+    .ag-table--bitacora .ag-table__head {
+        display: none;
+    }
+
+    .ag-table--tandas .ag-table__row,
+    .ag-table--ordenes-equipo .ag-table__row,
+    .ag-table--dispositivos .ag-table__row,
+    .ag-table--bitacora .ag-table__row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--ag-space-2) var(--ag-space-3);
+        min-width: 0;
+        align-items: start;
+    }
+
+    .ag-table--tandas .ag-table__grupo {
+        flex-wrap: wrap;
+        min-width: 0;
+    }
+
+    /* El estado es un flex (punto + texto): el rótulo ocupa su propia línea. */
+    .ag-table--tandas .ag-table__estado,
+    .ag-table--ordenes-equipo .ag-table__estado,
+    .ag-table--bitacora .ag-table__estado {
+        flex-wrap: wrap;
+    }
+
+    .ag-table--tandas .ag-table__row > span,
+    .ag-table--ordenes-equipo .ag-table__row > span,
+    .ag-table--dispositivos .ag-table__row > span,
+    .ag-table--bitacora .ag-table__row > span {
+        overflow: visible;
+        text-overflow: clip;
+        white-space: normal;
+        text-align: left;
+    }
+
+    .ag-table--tandas .ag-table__row > [data-label]::before,
+    .ag-table--ordenes-equipo .ag-table__row > [data-label]::before,
+    .ag-table--dispositivos .ag-table__row > [data-label]::before,
+    .ag-table--bitacora .ag-table__row > [data-label]::before {
+        content: attr(data-label);
+        display: block;
+        font-family: var(--ag-font-family-mono);
+        font-size: 0.625rem;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: var(--ag-color-text-muted);
+        flex: 0 0 100%;
+    }
+
+    .ag-table--tandas .ag-table__row > :first-child,
+    .ag-table--ordenes-equipo .ag-table__row > :first-child,
+    .ag-table--dispositivos .ag-table__row > :first-child,
+    .ag-table--bitacora .ag-table__row > :first-child,
+    .ag-table--ordenes-equipo .ag-table__row > .ag-dash__equipamiento-orden {
+        grid-column: 1 / -1;
     }
 }

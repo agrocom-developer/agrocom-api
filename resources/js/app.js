@@ -15,6 +15,7 @@ import './organisms/login-form.js';
 import './organisms/topbar.js';
 import './organisms/role-selection.js';
 import './organisms/module-sidebar.js';
+import './organisms/vista-como-banner.js';
 import './templates/auth-layout.js';
 import './pages/login.js';
 import './pages/clientes-form.js';
@@ -124,6 +125,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // de Lote (ver su docblock).
     if (document.querySelector('[data-ag-propiedad-mapa]')) {
         import('./organisms/propiedad-mapa-editor.js');
+    }
+
+    // Marcador de ubicación de una Base (tarea 132): mapa embebido, módulo
+    // aparte del de Propiedad (ver su docblock — compartir el chunk de
+    // Leaflet entre editores de mapa rompe la inicialización).
+    if (document.querySelector('[data-ag-base-mapa]')) {
+        import('./organisms/base-mapa-marcador.js');
     }
 
     // atoms/datetime (flatpickr): solo dos usos hoy (pausas), no vale la

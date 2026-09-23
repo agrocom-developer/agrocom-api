@@ -12,62 +12,12 @@
     margin-top: var(--ag-space-4);
 }
 
-.ag-trabajos__sesiones-tabla {
-    margin-top: var(--ag-space-2);
-    border: 1px solid var(--ag-color-border-row);
-    border-radius: var(--ag-radius-sm);
-    overflow: hidden;
-}
-
-.ag-trabajos__sesiones-head,
-.ag-trabajos__sesiones-fila {
-    display: grid;
-    grid-template-columns: 1fr 1.4fr 0.8fr 1fr 1fr;
-    gap: var(--ag-space-3);
-    align-items: center;
-    padding: var(--ag-space-2) var(--ag-space-3);
-}
-
-.ag-trabajos__sesiones-head {
-    background-color: var(--ag-color-bg-table-head);
-    color: var(--ag-color-text-muted);
-    font-size: var(--ag-font-size-xs);
-    font-weight: var(--ag-font-weight-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.ag-trabajos__sesiones-fila {
-    border-top: 1px solid var(--ag-color-border-row);
-}
-
-.ag-trabajos__motivo-cierre {
-    display: block;
-    color: var(--ag-color-text-faint);
-    font-size: var(--ag-font-size-xs);
-    margin-top: var(--ag-space-1);
-}
-
-/* Detalle de un trabajo (trabajos/show.blade.php, HU-15, tarea 15). */
-.ag-trabajo-detalle__resumen {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--ag-space-4) var(--ag-space-6);
-    margin-top: var(--ag-space-5);
-    padding: var(--ag-space-4);
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-}
-
-.ag-trabajo-detalle__campo {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-1);
-    color: var(--ag-color-text);
-    font-size: var(--ag-font-size-sm);
-}
-
+/* `trabajos/show.blade.php` pasó al arquetipo Detalle en la tarea 124: su
+   tabla de sesiones es `molecules/index-table` y sus campos de solo lectura
+   son `.ag-detalle__campo*` (resources/css/pages/detalle.css) — las reglas
+   propias que tenía acá (`.ag-trabajos__sesiones-*`, `.ag-trabajo-detalle__resumen`,
+   `.ag-trabajo-detalle__campo`) se borraron. `.ag-trabajo-detalle__seccion`
+   sigue viva: la sigue usando `trabajos/evidencias.blade.php`. */
 .ag-trabajo-detalle__seccion {
     margin-top: var(--ag-space-6);
     margin-bottom: var(--ag-space-3);
@@ -111,16 +61,4 @@
     font-size: var(--ag-font-size-sm);
     font-weight: var(--ag-font-weight-medium);
     color: var(--ag-color-text-muted);
-}
-
-@media (max-width: 992px) {
-    .ag-trabajos__sesiones-head,
-    .ag-trabajos__sesiones-fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-1);
-    }
-
-    .ag-trabajos__sesiones-head {
-        display: none;
-    }
 }

@@ -8,6 +8,7 @@ use App\Dominios\Operaciones\Dominio\Excepciones\HectareasAsignadasSuperanLote;
 use App\Dominios\Operaciones\Dominio\Excepciones\LoteNoPerteneceAOrden;
 use App\Dominios\Operaciones\Dominio\Excepciones\TrabajoValidadoNoEditable;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenLote;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenTrabajoEquipo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use App\Dominios\Personal\Contratos\DatosEquipoTrabajo;
 use App\Dominios\Personal\Contratos\LecturaEquipoTrabajo;
@@ -92,9 +93,51 @@ final class ActualizarTrabajo
             );
         }
 
+        $equipoAnterior = $trabajo->equipo_trabajo_id;
+
         $trabajo->fill($atributos);
         $trabajo->save();
 
+        $this->heredarCondicionDePago($trabajo, $equipoAnterior);
+
         return $trabajo->refresh();
+    }
+
+    /**
+     * Si el trabajo pasó a otro equipo dentro de la misma Orden de Trabajo y
+     * ese equipo no tiene condición de pago propia ahí, hereda la del equipo
+     * que lo tenía (ADR 0023): lo negociado era por ese trabajo. Sin condición
+     * previa no se inventa nada —el devengo cae a la tarifa predeterminada—.
+     */
+    private function heredarCondicionDePago(Trabajo $trabajo, ?int $equipoAnterior): void
+    {
+        $equipoNuevo = $trabajo->equipo_trabajo_id;
+
+        if ($trabajo->orden_trabajo_id === null || $equipoNuevo === null || $equipoNuevo === $equipoAnterior) {
+            return;
+        }
+
+        $yaTiene = OrdenTrabajoEquipo::query()
+            ->where('orden_trabajo_id', $trabajo->orden_trabajo_id)
+            ->where('equipo_trabajo_id', $equipoNuevo)
+            ->exists();
+
+        if ($yaTiene || $equipoAnterior === null) {
+            return;
+        }
+
+        $condicionAnterior = OrdenTrabajoEquipo::query()
+            ->where('orden_trabajo_id', $trabajo->orden_trabajo_id)
+            ->where('equipo_trabajo_id', $equipoAnterior)
+            ->first();
+
+        if ($condicionAnterior === null) {
+            return;
+        }
+
+        OrdenTrabajoEquipo::create([
+            ...$condicionAnterior->only(['orden_trabajo_id', 'tarifa_id', 'modalidad_pago', 'monto_piloto', 'monto_auxiliar', 'negociado', 'motivo_negociacion']),
+            'equipo_trabajo_id' => $equipoNuevo,
+        ]);
     }
 }

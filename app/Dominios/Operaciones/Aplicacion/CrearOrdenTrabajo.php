@@ -2,18 +2,22 @@
 
 namespace App\Dominios\Operaciones\Aplicacion;
 
+use App\Dominios\Finanzas\Contratos\CondicionPago;
 use App\Dominios\Mezclas\Contratos\EscrituraMezclas;
 use App\Dominios\Mezclas\Contratos\RegistroMezcla;
 use App\Dominios\Operaciones\Aplicacion\MaquinaEstados\MaquinaEstadosTrabajo;
+use App\Dominios\Operaciones\Contratos\Eventos\OrdenTrabajoCreada;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\Excepciones\CaldaNoRegistrada;
 use App\Dominios\Operaciones\Dominio\Excepciones\EquipoTrabajoNoVigente;
 use App\Dominios\Operaciones\Dominio\Excepciones\HectareasAsignadasSuperanLote;
 use App\Dominios\Operaciones\Dominio\Excepciones\LoteNoPerteneceAOrden;
 use App\Dominios\Operaciones\Dominio\Excepciones\OrdenNoVigenteParaAsignacion;
+use App\Dominios\Operaciones\Dominio\Excepciones\TarifaNoDisponible;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenLote;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenTrabajo;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenTrabajoEquipo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use App\Dominios\Personal\Contratos\DatosEquipoTrabajo;
 use App\Dominios\Personal\Contratos\LecturaEquipoTrabajo;
@@ -50,6 +54,9 @@ use Illuminate\Support\Str;
  *      supera `ope_orden_lotes.hectareas_solicitadas` de ese lote. Comparado
  *      con `Brick\Math\BigDecimal` (invariante 6 de CLAUDE.md).
  *
+ * Con la tanda confirmada anuncia {@see OrdenTrabajoCreada} (tarea 141): quién
+ * se entera de que su equipo tiene trabajo nuevo lo decide `Notificaciones`.
+ *
  * La calda tiene dos formas. La pantalla "Orden de Trabajo" la manda como
  * casillas sin cantidades (`calda_productos`, valores de
  * `Dominio\ProductoCalda`) y queda en la cabecera de la tanda. La pantalla
@@ -69,13 +76,21 @@ final class CrearOrdenTrabajo
         private readonly LecturaEquipoTrabajo $equipos,
         private readonly MaquinaEstadosTrabajo $maquinaTrabajo,
         private readonly EscrituraMezclas $mezclas,
+        private readonly ResolverCondicionPago $resolverCondicionPago,
     ) {}
 
     /**
      * @param  array{humedad_min_pct: string|null, viento_max_kmh: string|null, temperatura_max_c: string|null, humedad_max_pct: string|null, altura_vuelo_m: string|null, velocidad_vuelo_kmh: string|null, ancho_pasada_m: string|null, ph_agua: string|null, ph_calda: string|null, litros_ha?: string|null, kilos_ha?: string|null, calda_productos?: list<string>, calda: list<array{producto: string, cantidad: string, unidad: string}>}  $parametrosCompartidos  de TODA la tanda
-     * @param  list<array{equipo_trabajo_id: int, lotes: list<array{lote_id: int, hectareas: string, turno: string, turno_hora_inicio: string|null, turno_hora_fin: string|null}>}>  $equipos
+     * @param  list<array{equipo_trabajo_id: int, pago: array{tarifa_id: int|null, negociado: bool, modalidad: string|null, monto_piloto: string|null, monto_auxiliar: string|null, motivo: string|null}, lotes: list<array{lote_id: int, hectareas: string, turno: string, turno_hora_inicio: string|null, turno_hora_fin: string|null}>}>  $equipos
+     *
+     * La condición de pago de cada equipo (ADR 0023): con `negociado`
+     * falso se COPIAN modalidad y montos de la tarifa elegida; con
+     * `negociado` verdadero valen los del formulario y la tarifa queda solo
+     * como referencia de dónde se partió. En ambos casos lo guardado es una
+     * copia congelada: cambiar la tarifa después no toca esta orden.
      *
      * @throws OrdenNoVigenteParaAsignacion
+     * @throws TarifaNoDisponible
      * @throws EquipoTrabajoNoVigente
      * @throws LoteNoPerteneceAOrden
      * @throws HectareasAsignadasSuperanLote
@@ -96,6 +111,13 @@ final class CrearOrdenTrabajo
             if (! in_array($equipo['equipo_trabajo_id'], $idsVigentes, true)) {
                 throw EquipoTrabajoNoVigente::porId($equipo['equipo_trabajo_id']);
             }
+        }
+
+        /** @var array<int, CondicionPago> $condiciones equipo_trabajo_id => condición */
+        $condiciones = [];
+
+        foreach ($equipos as $equipo) {
+            $condiciones[$equipo['equipo_trabajo_id']] = $this->resolverCondicionPago->ejecutar($equipo['pago']);
         }
 
         /** @var Collection<int, OrdenLote> $lotesOrden */
@@ -130,7 +152,7 @@ final class CrearOrdenTrabajo
             }
         }
 
-        return DB::transaction(function () use ($orden, $parametrosCompartidos, $equipos): OrdenTrabajo {
+        $ordenTrabajo = DB::transaction(function () use ($orden, $parametrosCompartidos, $equipos, $condiciones): OrdenTrabajo {
             $ordenTrabajo = OrdenTrabajo::create([
                 'orden_id' => $orden->id,
                 'nro_aplicacion' => $orden->nro_aplicacion,
@@ -149,6 +171,19 @@ final class CrearOrdenTrabajo
             ]);
 
             foreach ($equipos as $equipo) {
+                $condicion = $condiciones[$equipo['equipo_trabajo_id']];
+
+                OrdenTrabajoEquipo::create([
+                    'orden_trabajo_id' => $ordenTrabajo->id,
+                    'equipo_trabajo_id' => $equipo['equipo_trabajo_id'],
+                    'tarifa_id' => $condicion->tarifaId,
+                    'modalidad_pago' => $condicion->modalidad,
+                    'monto_piloto' => $condicion->montoPiloto,
+                    'monto_auxiliar' => $condicion->montoAuxiliar,
+                    'negociado' => $condicion->negociada,
+                    'motivo_negociacion' => $condicion->negociada ? $equipo['pago']['motivo'] : null,
+                ]);
+
                 foreach ($equipo['lotes'] as $lote) {
                     $trabajo = $this->maquinaTrabajo->abrirPorAsignacion([
                         'uuid_cliente' => (string) Str::uuid(),
@@ -169,6 +204,24 @@ final class CrearOrdenTrabajo
 
             return $ordenTrabajo->refresh()->load('trabajos');
         });
+
+        // Con la tanda confirmada (cabecera, equipos y trabajos): el aviso a
+        // los integrantes de cada equipo (tarea 141, ADR 0025). Crear una
+        // tanda no es una transición de la orden, así que no pasa por la
+        // máquina de estados.
+        event(new OrdenTrabajoCreada(
+            ordenTrabajoId: $ordenTrabajo->id,
+            ordenId: $orden->id,
+            nroAplicacion: $orden->nro_aplicacion,
+            equipoTrabajoIds: array_values(array_unique(array_column($equipos, 'equipo_trabajo_id'))),
+            hectareas: (string) array_reduce(
+                $nuevoPorLote,
+                static fn (BigDecimal $total, BigDecimal $hectareas): BigDecimal => $total->plus($hectareas),
+                BigDecimal::zero(),
+            ),
+        ));
+
+        return $ordenTrabajo;
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Seguridad\Aplicacion\ListarDispositivosRegistrados;
 use App\Dominios\Seguridad\Aplicacion\RevocarTokenDispositivo;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
@@ -54,10 +55,7 @@ final class DispositivosController
 
         abort_unless($usuario->tienePermisoEnRol(self::PERMISO_VER, $idRolActivo), 403);
 
-        // Un arreglo en la query (`?q[]=x`) no es una búsqueda: `string()` lo convertiría a texto y
-        // Laravel eleva esa conversión a excepción (500). Solo se acepta un texto.
-        $busquedaCruda = $request->query('q');
-        $busqueda = is_string($busquedaCruda) ? $busquedaCruda : '';
+        $busqueda = TextoDeFiltro::de($request, 'q');
         $rolId = $request->integer('rol_id') ?: null;
 
         return view('seguridad::pages.dispositivos.index', [

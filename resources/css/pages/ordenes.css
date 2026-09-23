@@ -18,8 +18,7 @@
  */
 
 .ag-ordenes,
-.ag-ordenes-form,
-.ag-ordenes-detalle {
+.ag-ordenes-form {
     display: flex;
     flex-direction: column;
     gap: var(--ag-space-5);
@@ -36,10 +35,6 @@
    contexto de contención nuevo, no global. */
 .ag-ordenes {
     container: ag-ordenes / inline-size;
-}
-
-.ag-ordenes-detalle {
-    container: ag-ordenes-detalle / inline-size;
 }
 
 /* Listado (index): columnas propias de `molecules/index-table` — índice ·
@@ -84,9 +79,12 @@
     font-size: var(--ag-font-size-sm);
 }
 
-/* Estado de la orden + badge "Con inconvenientes" (ADR 0022): dos badges en la
-   misma celda o cabecera de tarjeta, que se acomodan en otra línea si no
-   entran. */
+/* Estado de la orden (listado) o estado + badge "Con inconvenientes" (ADR
+   0022) en la misma celda de tabla/chip de ficha: se acomodan en otra línea
+   si no entran. En la tarjeta de grilla el badge de inconvenientes NO va
+   acá — ver `.ag-ordenes-card__inconvenientes` (tarea 130: con los dos
+   badges compitiendo por ancho contra el título, que tiene `min-width: 0`,
+   el título se cortaba palabra por palabra). */
 .ag-ordenes__estados {
     display: flex;
     flex-wrap: wrap;
@@ -183,9 +181,11 @@
     margin-top: 0.125rem;
 }
 
-.ag-ordenes-card__subtitulo {
-    font-size: var(--ag-font-size-sm);
-    color: var(--ag-color-text-muted);
+/* Badge "Con inconvenientes" (ADR 0022, tarea 130): línea propia debajo del
+   título, no junto al badge de estado — deja a `.ag-ordenes-card__identidad`
+   todo el ancho disponible para el título. */
+.ag-ordenes-card__inconvenientes {
+    margin-top: var(--ag-space-1);
 }
 
 .ag-ordenes-card__lote {
@@ -273,47 +273,11 @@
     font-size: var(--ag-font-size-xs);
 }
 
-/* Detalle (show, 17/9/2026) — arquetipo Detalle, §6.4 de
-   docs/diseno/guia_pantalla_panel.md. Mismo criterio de container query que
-   la grilla del listado (ver arriba): reacciona al ancho real de
-   `.ag-ordenes-detalle`, sidebar colapsado incluido. */
-
-.ag-ordenes-detalle__kpis {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--ag-space-4);
-}
-
-@container ag-ordenes-detalle (min-width: 36rem) {
-    .ag-ordenes-detalle__kpis {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
-@container ag-ordenes-detalle (min-width: 60rem) {
-    .ag-ordenes-detalle__kpis {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-}
-
-/* Campo de solo lectura dentro de `form-section` (etiqueta arriba, valor
-   abajo) — mismo lenguaje que las celdas del listado en grilla
-   (`.ag-ordenes-card__dato`), pero sin fondo/borde propio porque ya vive
-   dentro del grid de 2 columnas de `.ag-form-section__body`. */
-.ag-ordenes-detalle__campo-label {
-    margin: 0;
-    font-size: var(--ag-font-size-xs);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--ag-color-text-muted);
-}
-
-.ag-ordenes-detalle__campo-valor {
-    margin: 0.1875rem 0 0;
-    font-size: var(--ag-font-size-sm);
-    font-weight: var(--ag-font-weight-medium);
-    line-height: 1.5;
-}
+/* El wrapper de la ficha (`.ag-detalle`), la tira de KPI, el par
+   campo-label/campo-valor y la lista de "Vínculos" viven en
+   resources/css/pages/detalle.css desde la tarea 124 (arquetipo Detalle,
+   nombre neutro — antes eran `.ag-ordenes-detalle*` acá, aunque ya las
+   reusaban pantallas que no son de Órdenes). */
 
 /* Equipo y dron de un lote en el detalle de la orden: un renglón por equipo,
    apilados, así el dron queda en la misma línea que su equipo en la celda de al
@@ -324,54 +288,7 @@
     gap: var(--ag-space-1);
 }
 
-/* Lista de "Vínculos" (molecules/link-row): mismo tratamiento que la tabla
-   de "Lotes" — borde/radio propios, separada del padding de la tarjeta,
-   para que se lea como un bloque cohesivo en vez de filas sueltas. */
-.ag-ordenes-detalle__vinculos {
-    border: 1px solid var(--ag-color-border-row);
-    border-radius: var(--ag-radius-md);
-    overflow: hidden;
-}
-
 /* Formulario (create/edit) */
-
-/* Mismo estilo que el `help` nativo de los átomos (`.ag-date__help`,
-   `.ag-select__help`, `.ag-input__help` — todos idénticos): acá va aparte
-   (no el prop `help` del átomo) porque necesita la fecha de inicio del
-   contrato destacada en rojo, algo que el prop `help` (texto plano) no
-   puede resolver. */
-.ag-ordenes-form__ayuda {
-    margin: 0;
-    font-size: var(--ag-font-size-xs);
-    color: var(--ag-color-text-muted);
-}
-
-/* Fecha de inicio del contrato, destacada dentro de la ayuda de "Fecha de
-   emisión" (reforma 18/9/2026) — referencia visual, no marca de error. */
-.ag-ordenes-form__fecha-destacada {
-    color: var(--ag-color-danger);
-    font-weight: var(--ag-font-weight-medium);
-}
-
-/* Lotes repetibles (HU-92, tarea 107) — mismo patrón que
-   `.ag-campos-form__lotes`/`.ag-campos-form__lote` (campos.css): el grid de
-   columnas de cada fila es el de `.ag-form-section__body`
-   (components/form-section.css), acá solo el separador entre filas. */
-.ag-ordenes-form__lotes {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-4);
-}
-
-.ag-ordenes-form__lote {
-    padding-top: var(--ag-space-4);
-    border-top: 1px solid var(--ag-color-border-row);
-}
-
-[data-ag-orden-lotes-lista] > .ag-ordenes-form__lote:first-child {
-    padding-top: 0;
-    border-top: none;
-}
 
 /* Sección "Datos del contrato" (reforma 18/9/2026) — resumen del cliente,
    propiedades, y aplicaciones previstas una vez elegido el contrato. El
@@ -418,73 +335,4 @@
     border: 1px solid var(--ag-color-border-row);
 }
 
-/* Ícono de ayuda (tooltip) junto a un encabezado de columna de la tabla de
-   lotes — "Hectáreas solicitadas" no es obvio a simple vista. */
-.ag-ordenes-form__lotes-ayuda-icono {
-    margin-left: var(--ag-space-1);
-    font-size: 1rem;
-    vertical-align: text-bottom;
-    color: var(--ag-color-text-muted);
-    cursor: help;
-}
-
-/* Buscador de lotes (tabla, §6.2) — input de búsqueda por código/propiedad.
-   Envuelto en div para que sea field--full sin contaminar el input atom
-   (que no se puede wrappear sin perder su grid/margin). */
-.ag-ordenes-form__lotes-buscador {
-    display: flex;
-    align-items: center;
-}
-
-.ag-ordenes-form__lotes-buscador .ag-input__control {
-    width: 100%;
-}
-
-/* Input de hectáreas dentro de la tabla — oculto hasta que se tilden
-   el checkbox de la fila (lógica en JS). Aunque lleva clase `.ag-input__control`
-   (por reutilización de estilos base), acá es un <input> directo en una <td>,
-   no un contenedor flex: se restituye display:inline para que funcione como
-   input nativo en su cell. */
-.ag-ordenes-form__lotes-hectareas {
-    display: inline;
-    width: 100%;
-    flex: none;
-    align-items: unset;
-}
-
-.ag-ordenes-form__lotes-hectareas:disabled {
-    opacity: 0.5;
-    pointer-events: none;
-}
-
-/* Contenedor de paginado — botones anterior/siguiente + info (X / Y) en el
-   centro. Flexbox con botones a los costados y el texto en el medio. */
-.ag-ordenes-form__lotes-paginado {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: var(--ag-space-3);
-    padding: var(--ag-space-3) var(--ag-space-4);
-    border-top: 1px solid var(--ag-color-border-row);
-}
-
-/* Información de página actual — "1 / 5", texto pequeño muted. */
-.ag-ordenes-form__paginado-info {
-    flex: 1;
-    text-align: center;
-    font-size: var(--ag-font-size-sm);
-    color: var(--ag-color-text-muted);
-    font-variant-numeric: tabular-nums;
-}
-
-/* Estado vacío — cuando no hay lotes (sin contrato elegido o búsqueda sin
-   resultados). Mismo estilo que `.ag-contratos-form__modal-tabla-vacio`
-   (contratos.css línea ~412): texto faint, padding, para verse como un estado
-   de interfaz y no confundirse con error. */
-.ag-ordenes-form__lotes-vacio {
-    padding: var(--ag-space-4);
-    text-align: center;
-    color: var(--ag-color-text-faint);
-    font-size: var(--ag-font-size-sm);
-}
 
