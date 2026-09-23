@@ -105,7 +105,29 @@ mismo comentario ("mismo patrón que `FinanzasServiceProvider` con
   en serio sigue esperando la confirmación del dueño.
 - **Jefe de Campo** (138): recursos que se ocupan o faltan; órdenes de
   trabajo con sus cuadrillas; estado de todas las órdenes de aplicación
-  (considerando haciendas y estado del equipamiento).
+  (considerando haciendas y estado del equipamiento). Hecha el 23/9/2026,
+  en tres tabs de solo lectura: `Recursos` (`RecursosEnUso`: las cuadrillas
+  con algún trabajo abierto, con sus integrantes de hoy y su dron, vehículo,
+  generador y baterías con el estado de cada pieza; y debajo `Stock`, lo que
+  falta), `Órdenes de trabajo` (`OrdenesTrabajoPorCuadrilla`: las tandas de
+  las órdenes aún abiertas, agrupadas por cuadrilla) y `Órdenes y
+  equipamiento` (`OrdenesConEquipamiento`: todas las órdenes abiertas más las
+  4 terminadas más recientes, con sus haciendas —de los lotes que la orden
+  copió del contrato—, las cuadrillas asignadas contra las necesarias y las
+  piezas de equipamiento que NO están operativas). «Órdenes de trabajo» se
+  leyó como las tandas de `ope_ordenes_trabajo` (la pantalla `/panel/trabajos`)
+  y «equipamiento» como lo que `per_equipo_recursos` le asigna hoy a cada
+  cuadrilla; el estado del dron sale de sus órdenes de mantenimiento abiertas
+  (`ope_drones` no tiene columna de estado). Contrato nuevo en `Mantenimiento`
+  (`LecturaEstadoEquipamiento`): ningún contrato existente daba el estado en
+  lote. **Permisos:** el jefe de campo NO tenía `operaciones.orden.ver`,
+  `inventario.movimiento.ver` ni `personal.equipo_trabajo.ver`, y cada sección
+  se gatea con el permiso de su pantalla completa (tarea 62); sin ellos no
+  veía ni el stock que el pedido daba por hecho. Se le concedieron los tres,
+  solo lectura (`SeguridadSeeder::PERMISOS_JEFE_CAMPO`): abren el listado de
+  órdenes, el stock y las cuadrillas, pero no ningún alta ni edición. A
+  cambio, con las tres tabs el jefe ya no ve en su tablero la cola de
+  validación, las pausas, el mapa ni el resumen por lote (siguen en el menú).
 - **Administrador de plataforma** (139): no es operativo ni financiero, es
   técnico — usuarios, bitácoras, accesos directos a configuración del
   sistema. Mapea casi directo a permisos que ya existen:
