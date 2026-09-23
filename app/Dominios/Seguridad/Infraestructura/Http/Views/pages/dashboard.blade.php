@@ -18,6 +18,8 @@
     claves: list<string>}>) de ArmarDashboard::tabsPara() (tarea 135): el
     agrupamiento en pestañas, ya resuelto por rol activo — acá solo se decide
     si cada tab tiene contenido (alguna de sus claves cayó en `visibles`).
+    `tecnico` (bool, tarea 139): el rol activo no es del negocio, así que el
+    encabezado no habla de operación ni de planilla.
 --}}
 @php
     $tabs = collect($tabs)
@@ -26,7 +28,7 @@
         ->values();
 @endphp
 
-<x-templates.panel-shell :title="__('seguridad.dashboard.titulo')" :tema="$tema">
+<x-templates.panel-shell :title="__($tecnico ? 'seguridad.dashboard.titulo_tecnico' : 'seguridad.dashboard.titulo')" :tema="$tema">
     <x-templates.panel-layout
         :menu="$menu"
         :roles="$roles"
@@ -40,7 +42,7 @@
         :vista-actual="__('seguridad.dashboard.tab_resumen')"
     >
         <div class="ag-dash">
-            @include('seguridad::pages.dashboard._encabezado', ['rol' => $activeRoleLabel])
+            @include('seguridad::pages.dashboard._encabezado', ['rol' => $activeRoleLabel, 'tecnico' => $tecnico])
 
             @if ($tabs->isEmpty())
                 @include('seguridad::pages.dashboard._sin-secciones')
