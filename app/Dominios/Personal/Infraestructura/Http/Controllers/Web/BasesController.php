@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Personal\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Compartido\Aplicacion\ResolverProveedorMapa;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Inventario\Contratos\LecturaStockPorBase;
 use App\Dominios\Mantenimiento\Contratos\LecturaEquipamientoPorBase;
@@ -56,12 +57,13 @@ final class BasesController
         ]);
     }
 
-    public function create(Request $request): View
+    public function create(Request $request, ResolverProveedorMapa $resolverProveedorMapa): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CREAR), 403);
 
         return view('personal::pages.bases.create', [
             ...$this->autorizacion->cascara($request),
+            'proveedorMapa' => $resolverProveedorMapa->ejecutar(),
         ]);
     }
 
@@ -89,6 +91,7 @@ final class BasesController
         PerBase $base,
         LecturaEquipamientoPorBase $lecturaEquipamiento,
         LecturaStockPorBase $lecturaStock,
+        ResolverProveedorMapa $resolverProveedorMapa,
     ): View {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
 
@@ -96,6 +99,7 @@ final class BasesController
             ...$this->autorizacion->cascara($request),
             'base' => $base,
             'resumenRelacionado' => $this->resumenRelacionado($base, $request, $lecturaEquipamiento, $lecturaStock),
+            'proveedorMapa' => $resolverProveedorMapa->ejecutar(),
         ]);
     }
 

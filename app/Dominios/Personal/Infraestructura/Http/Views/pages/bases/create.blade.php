@@ -3,8 +3,8 @@
     Alta de una base (HU-26, tarea 37): el formulario real vive en
     `_formulario.blade.php`, compartido con `edit.blade.php`.
 
-    Datos esperados (ver BasesController::create()): solo la cáscara de
-    CascaraPanel.
+    Datos esperados (ver BasesController::create()): la cáscara de
+    CascaraPanel, más $proveedorMapa (ver _formulario.blade.php).
 
     Gateada por `personal.base.crear`, verificado server-side en el
     controlador.
@@ -22,6 +22,6 @@
         :version="$version"
         :vista-actual="__('personal.bases.titulo_crear')"
     >
-        @include('personal::pages.bases._formulario', ['base' => null])
+        @include('personal::pages.bases._formulario', ['base' => null, 'proveedorMapa' => $proveedorMapa])
     </x-templates.panel-layout>
 </x-templates.panel-shell>

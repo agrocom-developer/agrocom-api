@@ -26,3 +26,35 @@
 .ag-bases__nombre {
     font-weight: var(--ag-font-weight-medium);
 }
+
+/* Formulario (create/edit): mapa embebido con el marcador de ubicación
+   (tarea 132, `organisms/base-mapa-marcador.js`) — a diferencia del editor
+   de mapa de Propiedad, este vive DENTRO de la tarjeta de datos, con alto
+   FIJO (no ocupa la pantalla): una base es un punto, no un terreno que
+   necesite todo el alto disponible para dibujar. */
+.ag-base-mapa {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
+}
+
+.ag-base-mapa__lienzo {
+    position: relative;
+    height: 320px;
+    border-radius: var(--ag-radius-md);
+    border: 1px solid var(--ag-color-border);
+    overflow: hidden;
+}
+
+/* El div real que Leaflet/Google Maps controlan — llena el marco por
+   completo vía `inset:0` sobre `position:relative` del padre. */
+.ag-base-mapa__mapa {
+    position: absolute;
+    inset: 0;
+}
+
+.ag-base-mapa__coordenadas {
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
+}

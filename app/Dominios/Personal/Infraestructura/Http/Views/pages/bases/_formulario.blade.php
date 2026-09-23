@@ -13,9 +13,19 @@
     - $base (PerBase|null): null en alta; el modelo en edición.
     - $resumenRelacionado (list<array{...}>|null): solo en edición, ver
       BasesController::resumenRelacionado(). `null`/ausente en alta.
+    - $proveedorMapa (array{proveedor: 'google'|'leaflet', googleMapsApiKey: ?string}):
+      resuelto por Compartido\Aplicacion\ResolverProveedorMapa — mismo
+      contrato que usan los editores de mapa de Comercial (tarea 132).
 
     Tras un error de validación, `old()` pisa los valores del modelo/vacíos
     — mismo criterio en alta y en edición.
+
+    Latitud/longitud (tarea 132): ya no se tipean a mano — el mapa embebido
+    de abajo (`organisms/base-mapa-marcador.js`) coloca un único marcador
+    (arrastrable, o un click lo reposiciona) y llena estos dos inputs, que
+    siguen viajando OCULTOS con el mismo `name` de siempre. Sin marcador
+    colocado (alta sin tocar el mapa todavía) quedan vacíos, igual que antes
+    — son opcionales, ver CrearBaseRequest/ActualizarBaseRequest.
 --}}
 @php
     $esEdicion = $base !== null;
@@ -24,6 +34,7 @@
     $ubicacion = old('ubicacion', $base?->ubicacion ?? '');
     $latitud = old('latitud', $base?->latitud ?? '');
     $longitud = old('longitud', $base?->longitud ?? '');
+    $esGoogle = ($proveedorMapa['proveedor'] ?? 'leaflet') === 'google';
 @endphp
 
 <form method="POST" action="{{ $accion }}" class="ag-bases-form" novalidate data-ag-bases-form>
@@ -73,29 +84,41 @@
                 :error="$errors->first('ubicacion')"
             />
 
-            <x-atoms.input
-                type="number"
-                name="latitud"
-                :label="__('personal.bases.campo_latitud')"
-                :value="$latitud"
-                :help="__('personal.bases.campo_latitud_ayuda')"
-                step="0.000001"
-                min="-90"
-                max="90"
-                :error="$errors->first('latitud')"
-            />
+            <div class="ag-form-section__field--full">
+                <span class="ag-input__label">{{ __('personal.bases.campo_coordenadas') }}</span>
 
-            <x-atoms.input
-                type="number"
-                name="longitud"
-                :label="__('personal.bases.campo_longitud')"
-                :value="$longitud"
-                :help="__('personal.bases.campo_longitud_ayuda')"
-                step="0.000001"
-                min="-180"
-                max="180"
-                :error="$errors->first('longitud')"
-            />
+                @error('latitud')
+                    <p class="ag-input__error" role="alert">{{ $message }}</p>
+                @enderror
+                @error('longitud')
+                    <p class="ag-input__error" role="alert">{{ $message }}</p>
+                @enderror
+
+                {{-- Los dos valores reales, ocultos — los llena el marcador
+                     del mapa. DENTRO de este contenedor a propósito: el JS
+                     busca sus referencias con `contenedor.querySelector(...)`
+                     acotado a `[data-ag-base-mapa]`. --}}
+                <div
+                    class="ag-base-mapa"
+                    data-ag-base-mapa
+                    data-ag-base-mapa-proveedor="{{ $esGoogle ? 'google' : 'leaflet' }}"
+                    @if ($esGoogle)
+                        data-ag-base-mapa-google-key="{{ $proveedorMapa['googleMapsApiKey'] }}"
+                        data-ag-base-mapa-error-google="{{ __('ui.errores.google_maps_no_disponible') }}"
+                    @endif
+                >
+                    <input type="hidden" name="latitud" value="{{ $latitud }}" data-ag-base-latitud>
+                    <input type="hidden" name="longitud" value="{{ $longitud }}" data-ag-base-longitud>
+
+                    <div class="ag-base-mapa__lienzo" data-ag-base-mapa-lienzo>
+                        <div class="ag-base-mapa__mapa" data-ag-base-mapa-mapa></div>
+                    </div>
+
+                    <span class="ag-base-mapa__coordenadas" data-ag-base-coordenadas-texto></span>
+                </div>
+
+                <p class="ag-input__help">{{ __('personal.bases.campo_coordenadas_ayuda') }}</p>
+            </div>
         </x-molecules.form-section>
 
         <x-organisms.form-actions-bar :status="__('personal.bases.estado_form')">
