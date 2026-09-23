@@ -172,6 +172,53 @@ del cliente: la única cosa que `CLAUDE.md` nombra explícitamente como que
 `runs/revision-pendiente.txt` apenas se integre, sin esperar a que alguien
 la encuentre.
 
+### 6.1 Resuelto (tarea 140, 23/9/2026)
+
+Se hizo completo, los dos casos, sin un tercer guard. Lo que quedó y por qué:
+
+- **No hay un login como el otro.** La sesión de autenticación del administrador no se toca. Una
+  bandera de sesión `vista_como` (`Seguridad/Dominio/VistaComoActiva`: administrador real, su rol
+  activo al entrar, cuenta observada y, si es interna, el rol bajo el que se la ve) le dice a
+  `AplicarVistaComo` a quién evaluar. Ese middleware va en el grupo `web`, **antes** de `auth:*`
+  (lista de prioridad de `bootstrap/app.php`), pone la cuenta observada en el guard `interno` o
+  `cliente` con `setUser()` —que no escribe la sesión— y la devuelve en un `finally`. Así el panel
+  arma menú, permisos y dashboard del rol observado, y el portal resuelve el contrato desde la misma
+  cuenta de portal que en una sesión real: `AutorizacionPortalCliente::contratoId()` sigue leyendo
+  `user('cliente')->contrato_id`, sin un `where` aparte para «el administrador mirando»
+  (invariante 5). El rol activo observado se fija con `ElegirRolActivo::fijarParaVistaComo()`, que a
+  diferencia de `ejecutar()` no registra el «último rol usado» de la cuenta observada.
+- **Solo lectura, rechazada y no escondida.** Con la bandera presente, todo método distinto de
+  GET/HEAD/OPTIONS responde 403 antes de llegar a un controlador (se mira el método real y el
+  resuelto), salvo `POST /vista-como/salir`. Además, defensa en profundidad: `ModoSoloLectura` +
+  `RespetaModoSoloLectura` (en `ModeloDominio`) hacen que un modelo de dominio no se guarde, borre ni
+  restaure durante el request —si una ruta GET escribiera por descuido, quedaría firmada por la
+  cuenta observada—. No cubre `saveQuietly()` ni las escrituras masivas del query builder (el repo no
+  usa SQL crudo de mutación, ADR 0012).
+- **Revalidación en cada request** (`ResolverVistaComo`): el administrador sigue habilitado y con el
+  permiso en el rol con el que entró, la cuenta observada existe, no está bloqueada y conserva el
+  rol (o el contrato). Si algo falla, la vista se cierra con motivo `invalidada` y el request sigue
+  como el administrador.
+- **Alcance:** una vista de portal solo recorre `/portal/*`; una interna, solo `/panel/*` (sin el
+  selector de rol). Fuera de eso se desvía. No se ofrece «Cerrar sesión» ni «Cambiar de rol» durante
+  la vista; se sale con «Volver a mi vista» del banner.
+- **Bitácora (invariante 9):** tabla `sec_vistas_como` (migración `2026_09_23_000101`) con
+  `RegistraBitacora`: la entrada es un `creado` y la salida un `actualizado` con `finalizada_at` y
+  `motivo_fin`, ambos a nombre del administrador real (la ruta de salida no sustituye el guard, justo
+  para eso). Una vista que muere con la sesión (navegador cerrado, sesión vencida) no tiene ningún
+  request que la cierre: queda con la entrada y sin salida.
+- **Permiso propio** `seguridad.usuario.ver_como`, sembrado solo a `admin_plataforma`
+  (`PERMISOS_SOLO_ADMIN_PLATAFORMA` en `SeguridadSeeder`; el dueño **no** lo recibe). Un dueño puede
+  otorgárselo a otro rol desde la matriz de permisos; ninguna siembra lo hace. El deploy no siembra:
+  en producción rige recién al correr `SeguridadSeeder`.
+- **Dónde se usa:** listado de usuarios, acción «Ver como» en el menú ⋮ de la fila (modal con el
+  selector de rol si la cuenta tiene más de uno).
+
+Verificación: `runs/140-navegador.cjs` (Playwright contra el compose: 132 rutas de escritura, 448
+pedidos, ninguno se ejecutó), `runs/140-integracion.php.txt` (casos de uso, middleware y
+controladores del portal contra Postgres en una transacción revertida) y
+`runs/140-VistaComoTest.php.txt` (42 casos puros, propuestos para `tests/Unit/`: `tests/` está
+congelado en el turno noche).
+
 ## 7. Motor de notificaciones (141) — por qué es su propia tarea, y por qué al final
 
 Es la pieza más nueva arquitectónicamente: ningún módulo `Notificaciones`
