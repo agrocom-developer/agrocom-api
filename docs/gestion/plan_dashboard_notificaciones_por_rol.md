@@ -83,7 +83,13 @@ mismo comentario ("mismo patrón que `FinanzasServiceProvider` con
   y contratos; resumen de trabajos actuales por equipo; progreso en toda la
   campaña.
 - **Encargado de Operaciones** (136): estados de las aplicaciones; proceso
-  de los trabajos; resumen de vuelos (diario, semanal o mensual).
+  de los trabajos; resumen de vuelos (diario, semanal o mensual). Hecha el
+  23/9/2026: «aplicaciones» se leyó como las **órdenes de aplicación**
+  (`ope_ordenes_aplicacion`, sus seis estados), no como las sesiones de vuelo
+  —esas siguen en `DistribucionSesiones`, sin tab propia—; «proceso de los
+  trabajos» agrupa la cola de validación y las pausas del mes; el resumen de
+  vuelos muestra los últimos 14 días, 8 semanas (lunes a domingo) o 6 meses,
+  según el selector, sobre hectáreas validadas.
 - **Piloto y Ayudante** (137 — "ayudante" es como el dueño llama al rol
   `auxiliar`; la tarea decide si es solo el label visible o si el dueño
   quiere el rol renombrado en serio, y en ese caso NO lo hace sin
