@@ -15,8 +15,13 @@ use Illuminate\Auth\Access\AuthorizationException;
  */
 final class EscrituraEnModoSoloLectura extends AuthorizationException
 {
-    public static function paraModelo(string $clase): self
+    /**
+     * El mensaje no nombra la clase del modelo: un 403 que llega al navegador (o
+     * a un `fetch`) no debe mostrar nombres de clases internas — mismo criterio
+     * que `ErroresHttpEnEspanol`.
+     */
+    public static function porSerSoloLectura(): self
     {
-        return new self(Texto::de('ui.errores.escritura_en_modo_solo_lectura', ['clase' => $clase]));
+        return new self(Texto::de('ui.errores.escritura_en_modo_solo_lectura'));
     }
 }

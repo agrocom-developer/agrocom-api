@@ -96,8 +96,10 @@ final class AplicarVistaComo
 
         if ($vista === null) {
             // Ilegible: no hay a quién sustituir. Se descarta y el request
-            // sigue como el administrador (que sí está autenticado).
+            // sigue como el administrador (que sí está autenticado). El rol
+            // activo puede ser el de la cuenta observada: se resuelve de nuevo.
             $sesion->forget(VistaComoActiva::CLAVE_SESION);
+            $this->elegirRolActivo->olvidar();
 
             return $next($request);
         }
@@ -117,6 +119,7 @@ final class AplicarVistaComo
                 'admin_esperado' => $vista->adminId,
             ]);
             $sesion->forget(VistaComoActiva::CLAVE_SESION);
+            $this->elegirRolActivo->olvidar();
 
             return $next($request);
         }

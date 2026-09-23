@@ -53,8 +53,10 @@ final class ModoSoloLectura
      */
     public static function verificar(Model $modelo): void
     {
+        // `$modelo` no se usa hoy: queda en la firma para el día que haya una excepción
+        // por modelo (p. ej. una tabla de plataforma que sí deba escribirse).
         if (self::$activo) {
-            throw EscrituraEnModoSoloLectura::paraModelo($modelo::class);
+            throw EscrituraEnModoSoloLectura::porSerSoloLectura();
         }
     }
 }

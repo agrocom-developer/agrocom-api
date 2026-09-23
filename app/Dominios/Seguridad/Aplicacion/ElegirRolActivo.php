@@ -86,6 +86,19 @@ final class ElegirRolActivo
     }
 
     /**
+     * Borra el rol activo de la sesión, sin fijar ninguno. Lo usan los caminos
+     * que descartan una vista "como otro usuario" SIN poder restaurar el rol con
+     * el que el administrador había entrado (bandera ilegible o de otro
+     * administrador): la clave puede traer el rol de la cuenta observada, y
+     * `ResolverRolActivo` la resuelve de nuevo con las reglas de siempre —rol
+     * único, preferido o selector— en vez de dejar un rol que no eligió.
+     */
+    public function olvidar(): void
+    {
+        Session::forget(self::CLAVE_SESION);
+    }
+
+    /**
      * Registra `sec_user_preferencia.ultimo_rol_id` (badge "ÚLTIMO USADO" de
      * la pantalla de selección, quinta vuelta — maqueta 5c). Va acá y no en
      * cada llamador porque esta clase ya es el ÚNICO punto que activa roles

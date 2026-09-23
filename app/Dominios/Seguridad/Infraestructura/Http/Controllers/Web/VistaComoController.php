@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Seguridad\Aplicacion\ElegirRolActivo;
 use App\Dominios\Seguridad\Aplicacion\IniciarVistaComo;
 use App\Dominios\Seguridad\Aplicacion\TerminarVistaComo;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
@@ -70,13 +71,14 @@ final class VistaComoController
      * única escritura que `AplicarVistaComo` deja pasar mientras hay una vista
      * abierta — justamente porque es la forma de terminarla.
      */
-    public function salir(Request $request, TerminarVistaComo $terminarVistaComo): RedirectResponse
+    public function salir(Request $request, TerminarVistaComo $terminarVistaComo, ElegirRolActivo $elegirRolActivo): RedirectResponse
     {
         $vista = VistaComoActiva::desdeSesion($request->session()->get(VistaComoActiva::CLAVE_SESION));
 
         if ($vista === null) {
             // Nada que cerrar (ya se cerró en otra pestaña, o venció).
             $request->session()->forget(VistaComoActiva::CLAVE_SESION);
+            $elegirRolActivo->olvidar();
 
             return redirect('/');
         }
@@ -85,6 +87,7 @@ final class VistaComoController
         // darse): no se escribe nada a nombre de quien no la abrió, solo se descarta.
         if ((int) $request->user('interno')?->getAuthIdentifier() !== $vista->adminId) {
             $request->session()->forget(VistaComoActiva::CLAVE_SESION);
+            $elegirRolActivo->olvidar();
 
             return redirect('/');
         }
