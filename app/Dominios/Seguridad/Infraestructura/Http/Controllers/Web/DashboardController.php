@@ -4,10 +4,12 @@ namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Seguridad\Aplicacion\ArmarDashboard;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
+use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use App\Dominios\Seguridad\Infraestructura\Http\Middleware\ResolverRolActivo;
 use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\CascaraPanel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 /**
@@ -41,9 +43,21 @@ final class DashboardController
         $usuario = $request->user('interno');
         $idRolActivo = (int) $request->session()->get('sec_rol_activo_id');
 
+        $datosCascara = $cascara->para($usuario, $idRolActivo);
+
+        // La clave del rol activo (`dueno`, `piloto`...) ya la resolvió
+        // `CascaraPanel::para()` para armar `activeRoleLabel` — se relee de
+        // `roles` (ya en memoria, sin consulta nueva) en vez de duplicar esa
+        // búsqueda. `tabsPara()` (tarea 135) decide el agrupamiento de tabs
+        // por rol; sin rol resuelto, cae en el agrupamiento por defecto.
+        /** @var Collection<int, SecRole> $roles */
+        $roles = $datosCascara['roles'];
+        $rolActivo = $roles->firstWhere('id', $idRolActivo);
+
         return view('seguridad::pages.dashboard', [
-            ...$cascara->para($usuario, $idRolActivo),
+            ...$datosCascara,
             ...$armarDashboard->ejecutar($usuario, $idRolActivo),
+            'tabs' => $armarDashboard->tabsPara($rolActivo->name ?? ''),
         ]);
     }
 }

@@ -204,6 +204,23 @@
     grid-template-columns: 1.4fr 90px 80px 90px 120px;
 }
 
+/* Estado de cuentas (tab del dueño, tarea 135): cliente + cuatro columnas de
+   plata. Misma excepción de tablet que `.ag-table--clientes` (ver el
+   breakpoint 1199.98px más abajo): sin variante angosta, scrollea horizontal. */
+.ag-table--cuentas .ag-table__head,
+.ag-table--cuentas .ag-table__row {
+    grid-template-columns: 1.6fr 1fr 1fr 1fr 1fr;
+    min-width: 680px;
+}
+
+/* Trabajos abiertos por equipo (tab del dueño, tarea 135): equipo + carga +
+   lotes + última actividad. Misma excepción de tablet. */
+.ag-table--trabajos-equipo .ag-table__head,
+.ag-table--trabajos-equipo .ag-table__row {
+    grid-template-columns: 1.2fr 90px 100px 1.6fr 120px;
+    min-width: 680px;
+}
+
 /* Segunda línea dentro de una celda: el campo bajo el lote, el modelo bajo
    el identificador del dron. Contexto, no una columna más. */
 .ag-table__sub {
@@ -615,8 +632,12 @@
     }
 
     /* Excepción: la tabla de clientes no tiene variante de tablet, se
-       mantiene con scroll horizontal (ver .ag-table-scroll arriba). */
-    .ag-table.ag-table--clientes {
+       mantiene con scroll horizontal (ver .ag-table-scroll arriba). Mismo
+       criterio para las dos tablas nuevas del dueño (tarea 135): estado de
+       cuentas y trabajos por equipo. */
+    .ag-table.ag-table--clientes,
+    .ag-table.ag-table--cuentas,
+    .ag-table.ag-table--trabajos-equipo {
         display: block;
     }
 

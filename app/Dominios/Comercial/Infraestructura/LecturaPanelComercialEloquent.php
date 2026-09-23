@@ -4,8 +4,10 @@ namespace App\Dominios\Comercial\Infraestructura;
 
 use App\Dominios\Comercial\Aplicacion\ObtenerAvanceComercial;
 use App\Dominios\Comercial\Contratos\AvanceClientePanel;
+use App\Dominios\Comercial\Contratos\EstadoCuentaContratoPanel;
 use App\Dominios\Comercial\Contratos\LecturaPanelComercial;
 use App\Dominios\Comercial\Contratos\LotePanel;
+use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
@@ -99,6 +101,52 @@ final class LecturaPanelComercialEloquent implements LecturaPanelComercial
         usort($avances, fn (AvanceClientePanel $a, AvanceClientePanel $b) => $a->porcentaje <=> $b->porcentaje);
 
         return array_slice($avances, 0, $limite);
+    }
+
+    public function estadoDeCuentas(int $limite): array
+    {
+        $avances = $this->avanceComercial->ejecutar();
+
+        if ($avances === []) {
+            return [];
+        }
+
+        $contratos = Contrato::query()
+            ->whereIn('id', array_column($avances, 'contratoId'))
+            ->get(['id', 'monto_total', 'adelanto_monto'])
+            ->keyBy('id');
+
+        $estados = [];
+
+        foreach ($avances as $avance) {
+            $contrato = $contratos->get($avance['contratoId']);
+
+            if ($contrato === null) {
+                continue;
+            }
+
+            $montoContratado = BigDecimal::of($contrato->monto_total);
+            $montoFacturado = BigDecimal::of($avance['montoFacturado']);
+            $saldoPendiente = $montoContratado->minus($montoFacturado);
+
+            $estados[] = new EstadoCuentaContratoPanel(
+                contratoId: $avance['contratoId'],
+                clienteNombre: $avance['clienteNombre'],
+                montoContratado: $this->aEscalaDos($montoContratado),
+                montoFacturado: $avance['montoFacturado'],
+                adelantoMonto: $this->aEscalaDos($contrato->adelanto_monto !== null ? BigDecimal::of($contrato->adelanto_monto) : BigDecimal::zero()),
+                saldoPendiente: $this->aEscalaDos($saldoPendiente->isNegative() ? BigDecimal::zero() : $saldoPendiente),
+            );
+        }
+
+        usort($estados, fn (EstadoCuentaContratoPanel $a, EstadoCuentaContratoPanel $b) => BigDecimal::of($b->saldoPendiente)->compareTo(BigDecimal::of($a->saldoPendiente)));
+
+        return array_slice($estados, 0, $limite);
+    }
+
+    private function aEscalaDos(BigDecimal $valor): string
+    {
+        return (string) $valor->toScale(2, RoundingMode::HalfUp);
     }
 
     /**

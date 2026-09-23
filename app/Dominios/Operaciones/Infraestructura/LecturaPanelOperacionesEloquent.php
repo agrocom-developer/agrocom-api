@@ -8,15 +8,18 @@ use App\Dominios\Operaciones\Contratos\AlertaPanel;
 use App\Dominios\Operaciones\Contratos\EquipoPersonaPanel;
 use App\Dominios\Operaciones\Contratos\EvidenciaPanel;
 use App\Dominios\Operaciones\Contratos\LecturaPanelOperaciones;
+use App\Dominios\Operaciones\Contratos\ResumenEquipoTrabajoPanel;
 use App\Dominios\Operaciones\Contratos\ResumenLotePanel;
 use App\Dominios\Operaciones\Contratos\SesionPanel;
 use App\Dominios\Operaciones\Dominio\EstadoAlerta;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
+use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
 use App\Dominios\Operaciones\Dominio\TonoEstadoSesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Alerta;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Dron;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 use Illuminate\Support\Carbon;
@@ -362,6 +365,49 @@ final class LecturaPanelOperacionesEloquent implements LecturaPanelOperaciones
         usort($equipos, fn (EquipoPersonaPanel $a, EquipoPersonaPanel $b) => $b->sesiones <=> $a->sesiones);
 
         return $equipos;
+    }
+
+    public function trabajosAbiertosPorEquipo(): array
+    {
+        $trabajos = Trabajo::query()
+            ->whereNotNull('equipo_trabajo_id')
+            ->where('estado', EstadoTrabajo::Abierto)
+            ->orderBy('inicio')
+            ->get(['equipo_trabajo_id', 'lote_id', 'hectareas_declaradas', 'inicio']);
+
+        /** @var array<int, array{trabajos: int, hectareas: BigDecimal, lotes: list<int>, ultima: ?string}> $porEquipo */
+        $porEquipo = [];
+
+        foreach ($trabajos as $trabajo) {
+            /** @var int $equipoId */
+            $equipoId = $trabajo->equipo_trabajo_id;
+
+            $acumulado = $porEquipo[$equipoId] ?? ['trabajos' => 0, 'hectareas' => BigDecimal::zero(), 'lotes' => [], 'ultima' => null];
+
+            $acumulado['trabajos']++;
+            $acumulado['hectareas'] = $acumulado['hectareas']->plus(BigDecimal::of($trabajo->hectareas_declaradas));
+            $acumulado['ultima'] = $trabajo->inicio->toIso8601String();
+
+            if (! in_array($trabajo->lote_id, $acumulado['lotes'], true)) {
+                $acumulado['lotes'][] = $trabajo->lote_id;
+            }
+
+            $porEquipo[$equipoId] = $acumulado;
+        }
+
+        $resumen = [];
+
+        foreach ($porEquipo as $equipoId => $acumulado) {
+            $resumen[$equipoId] = new ResumenEquipoTrabajoPanel(
+                equipoTrabajoId: $equipoId,
+                trabajosAbiertos: $acumulado['trabajos'],
+                hectareasDeclaradas: $this->aEscalaDos($acumulado['hectareas']),
+                loteIds: $acumulado['lotes'],
+                ultimoInicio: $acumulado['ultima'],
+            );
+        }
+
+        return $resumen;
     }
 
     public function totalesDelMesPorPersona(int $personaId): array
