@@ -515,6 +515,24 @@ El encargado de operaciones no revisa todo: recibe solo lo anómalo.
 | Anticipo al límite | Acumulado > 70% del devengado |
 | Rendición pendiente | Gasto de campo sin procesar a más de 7 días |
 
+### 10.1 Avisos de flujo de negocio (campana del panel)
+
+Las alertas de arriba son por excepción. Además, la campana avisa de tres hechos
+normales del flujo, para que cada quien se entere sin entrar a mirar (motor de
+notificaciones interno, ADR 0025; no hay push, correo ni SMS):
+
+| Hecho | Le avisa a | Lleva a |
+|---|---|---|
+| Se crea un contrato | Encargado de operaciones | el contrato |
+| Se crea una orden de trabajo | Los integrantes vigentes de cada equipo asignado | la orden de trabajo (un piloto o ayudante, que no la puede abrir, cae en su tablero) |
+| Un trabajo se cierra en campo | Jefe de campo y encargado de operaciones | el trabajo |
+
+El aviso le llega a **toda cuenta que tenga ese rol asignado**, aunque hoy opere
+con otro de sus roles: enterarse de algo no es un permiso. Quien dispara el hecho
+no se avisa a sí mismo. El dueño no recibe el cierre de cada trabajo (es el aviso
+más frecuente y su tablero ya muestra el avance). Las alertas por excepción
+siguen su propio camino y conviven en la misma campana.
+
 ---
 
 ## 11. Planilla de pagos

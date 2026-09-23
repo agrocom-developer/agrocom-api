@@ -356,9 +356,49 @@
     gap: var(--ag-space-3);
     padding: var(--ag-space-2) var(--ag-space-3);
     border-radius: var(--ag-radius-md);
+    color: inherit;
+    text-decoration: none;
+    transition: background-color var(--ag-transition-fast);
 }
 
 .ag-notification-item.is-unread {
+    background: var(--ag-color-primary-subtle);
+}
+
+/* Con destino (tarea 141): la fila es un enlace y responde al puntero. Una
+   fila «sin leer» ya está tintada, así que su hover no puede ser otro fondo
+   del mismo verde: suma un borde propio (regla 4 de pulido, §8 del catálogo). */
+.ag-notification-item[href]:hover,
+.ag-notification-item[href]:focus-visible {
+    background: var(--ag-color-bg-row-hover);
+    color: inherit;
+}
+
+.ag-notification-item.is-unread[href]:hover,
+.ag-notification-item.is-unread[href]:focus-visible {
+    background: var(--ag-color-primary-subtle);
+    box-shadow: inset 0 0 0 1px var(--ag-color-primary-border-subtle);
+}
+
+.ag-notifications-popover__footer {
+    margin: var(--ag-space-3) 0 0;
+    padding-top: var(--ag-space-3);
+    border-top: 1px solid var(--ag-color-border);
+}
+
+.ag-notifications-popover__mark-all {
+    background: none;
+    border: 0;
+    padding: var(--ag-space-1) var(--ag-space-2);
+    border-radius: var(--ag-radius-md);
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-primary-emphasis);
+    cursor: pointer;
+    transition: background-color var(--ag-transition-fast);
+}
+
+.ag-notifications-popover__mark-all:hover,
+.ag-notifications-popover__mark-all:focus-visible {
     background: var(--ag-color-primary-subtle);
 }
 

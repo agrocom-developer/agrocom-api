@@ -16,6 +16,7 @@ Este skill dice dónde va cada cosa; el porqué está en `docs/decisiones/0003-a
 | `Operaciones` | `ope_` | órdenes de aplicación |
 | `Personal` | `per_` | personas, bases |
 | `Seguridad` | `sec_` | usuarios, roles, permisos, menú, preferencias |
+| `Notificaciones` | `ntf_` | avisos internos de la campana del panel: una fila por cuenta destinataria (ADR 0025) |
 | `Compartido` | — | plataforma: `ModeloDominio`, `RegistraAutoria`, middleware transversal |
 
 Prefijos ya reservados para módulos que aún no existen (ADR 0011): `syn_` Sync,
@@ -50,6 +51,13 @@ y `Personal` hoy son solo `Dominio` + `Infraestructura/Eloquent`.
   el oyente en el módulo que reacciona): `SesionValidada` (Operaciones → Finanzas,
   genera el devengo) y `AplicacionCerrada` (Operaciones → Comercial, finaliza el
   contrato al cerrarse su última aplicación).
+- **Avisos de la campana (ADR 0025, tarea 141):** `ContratoCreado` (Comercial),
+  `OrdenTrabajoCreada` y `TrabajoCerrado` (Operaciones) los escucha UN solo
+  listener genérico en `Notificaciones`; cada evento tiene una regla en
+  `Notificaciones/Aplicacion/Reglas/` que dice a quién le importa (rol, persona
+  o equipo). Un aviso nuevo = evento en el módulo dueño + regla + clave en
+  `lang/es/notificaciones.php`. «Por rol» es rol **asignado**, no activo. El
+  evento implementa `ShouldDispatchAfterCommit` y se emite después de persistir.
 - `tests/Unit/ArquitecturaModulosTest.php` descubre los módulos recorriendo
   `app/Dominios/` — un módulo nuevo queda protegido sin editar el test.
 

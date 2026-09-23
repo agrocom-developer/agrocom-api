@@ -9,9 +9,17 @@
     `data-bs-toggle`: no abría nada al tocarla. Con esta molecule, las dos
     campanas comparten el mismo dropdown de Bootstrap real.
 
+    Tarea 141 (motor de notificaciones): cada aviso puede llevar `href` y,
+    si nace del motor, `id`. Con `href` la fila es un enlace real (el destino
+    lo resuelve el servidor contra el rol activo, ver `panel.notificaciones.
+    abrir`); sin él sigue siendo texto plano, como antes. Los avisos con `id`
+    se pueden marcar como leídos — las alertas técnicas de `ope_alertas`
+    llevan `id` nulo porque se atienden en su propia pantalla — y por eso el
+    pie «Marcar todas como leídas» solo aparece si hay alguno sin leer.
+
     Props:
-    - notifications (list, default []): igual que antes, `{icon, title,
-      time, unread}` ya resueltos por el llamador.
+    - notifications (list, default []): `{icon, title, time, unread, href?,
+      id?}` ya resueltos por el llamador.
     - triggerClass (string, default "ag-topbar__icon-btn"): la clase del
       botón disparador — el llamador la cambia para el estilo de mobile
       (`ag-mobile-topbar__bell-btn`, tokens constantes del riel).
@@ -33,6 +41,9 @@
 
 @php
     $notificacionesSinLeer = collect($notifications)->filter(fn ($n) => (bool) data_get($n, 'unread', false))->count();
+    $hayMarcablesSinLeer = collect($notifications)->contains(
+        fn ($n) => (bool) data_get($n, 'unread', false) && data_get($n, 'id') !== null,
+    );
 @endphp
 
 <div {{ $attributes->class(['dropdown']) }}>
@@ -57,20 +68,34 @@
         @else
             <ul class="ag-notification-list">
                 @foreach ($notifications as $notification)
-                    <li class="ag-notification-item {{ data_get($notification, 'unread') ? 'is-unread' : '' }}">
-                        <span class="ag-notification-item__icon" aria-hidden="true">
-                            <x-atoms.icon :name="data_get($notification, 'icon', 'notifications')" size="sm" />
-                        </span>
-                        <span class="ag-notification-item__body">
-                            <span class="ag-notification-item__title">{{ data_get($notification, 'title') }}</span>
-                            <span class="ag-notification-item__time">{{ data_get($notification, 'time') }}</span>
-                        </span>
-                        @if (data_get($notification, 'unread'))
-                            <span class="ag-notification-item__dot" aria-hidden="true"></span>
-                        @endif
+                    {{-- `<a>` sin `href` es un marcador de posición válido: la
+                         fila sin destino conserva el mismo marcado y estilo. --}}
+                    <li>
+                        <a
+                            class="ag-notification-item {{ data_get($notification, 'unread') ? 'is-unread' : '' }}"
+                            @if (data_get($notification, 'href')) href="{{ data_get($notification, 'href') }}" @endif
+                        >
+                            <span class="ag-notification-item__icon" aria-hidden="true">
+                                <x-atoms.icon :name="data_get($notification, 'icon', 'notifications')" size="sm" />
+                            </span>
+                            <span class="ag-notification-item__body">
+                                <span class="ag-notification-item__title">{{ data_get($notification, 'title') }}</span>
+                                <span class="ag-notification-item__time">{{ data_get($notification, 'time') }}</span>
+                            </span>
+                            @if (data_get($notification, 'unread'))
+                                <span class="ag-notification-item__dot" aria-hidden="true"></span>
+                            @endif
+                        </a>
                     </li>
                 @endforeach
             </ul>
+
+            @if ($hayMarcablesSinLeer)
+                <form method="POST" action="{{ route('panel.notificaciones.marcar-todas') }}" class="ag-notifications-popover__footer">
+                    @csrf
+                    <button type="submit" class="ag-notifications-popover__mark-all">{{ __('ui.topbar.mark_all_read') }}</button>
+                </form>
+            @endif
         @endif
     </div>
 </div>

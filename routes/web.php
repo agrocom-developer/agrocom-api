@@ -29,6 +29,7 @@ use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\GeneradoresC
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\OrdenesMantenimientoController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\PlanesMantenimientoController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\VehiculosController;
+use App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Web\NotificacionesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\DronesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\EstadiasHaciendaController;
@@ -261,6 +262,19 @@ Route::middleware('auth:interno')->group(function () {
         // buscador y no le aparece ningún cliente.
         Route::get('/panel/buscar', [BusquedaController::class, 'index'])
             ->name('panel.buscar');
+
+        // Campana del header (tarea 141, ADR 0025): los avisos del motor de
+        // notificaciones. SIN permiso propio, mismo criterio que el perfil: el
+        // sujeto es siempre la cuenta autenticada, nunca un id de la petición
+        // — `abrir` busca el aviso ENTRE LOS DE ESA CUENTA (404 si es de otra)
+        // y resuelve el destino contra el rol activo.
+        Route::get('/panel/notificaciones/{notificacion}/abrir', [NotificacionesController::class, 'abrir'])
+            // Hasta 18 dígitos: un id más largo no cabe en un bigint ni en el `int` del controlador y daría 500.
+            ->where('notificacion', '[0-9]{1,18}')
+            ->name('panel.notificaciones.abrir');
+
+        Route::post('/panel/notificaciones/marcar-todas', [NotificacionesController::class, 'marcarTodas'])
+            ->name('panel.notificaciones.marcar-todas');
 
         // La matriz vive en su propia URL y no como pestaña del formulario:
         // son dos operaciones con permisos distintos (`editar` cambia el

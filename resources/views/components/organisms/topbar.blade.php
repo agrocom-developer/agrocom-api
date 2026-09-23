@@ -41,8 +41,9 @@
 
     Props:
     - moduloLabel / vistaActual (nullable string): breadcrumb, ya traducidos.
-    - notifications (list, default []): `{icon, title, time, unread}` ya
-      resueltos por el llamador. Lista vacía = estado vacío del popover.
+    - notifications (list, default []): `{icon, title, time, unread, href?,
+      id?}` ya resueltos por el llamador (`href` e `id`: tarea 141, ver
+      molecules/notifications-menu). Lista vacía = estado vacío del popover.
     - activeRoleLabel (nullable string): nombre LEGIBLE del rol activo
       (PresentadorRol), mono uppercase bajo el nombre.
     - userName (nullable string).

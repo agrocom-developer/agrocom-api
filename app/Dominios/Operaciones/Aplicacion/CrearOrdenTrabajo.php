@@ -6,6 +6,7 @@ use App\Dominios\Finanzas\Contratos\CondicionPago;
 use App\Dominios\Mezclas\Contratos\EscrituraMezclas;
 use App\Dominios\Mezclas\Contratos\RegistroMezcla;
 use App\Dominios\Operaciones\Aplicacion\MaquinaEstados\MaquinaEstadosTrabajo;
+use App\Dominios\Operaciones\Contratos\Eventos\OrdenTrabajoCreada;
 use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\Excepciones\CaldaNoRegistrada;
 use App\Dominios\Operaciones\Dominio\Excepciones\EquipoTrabajoNoVigente;
@@ -52,6 +53,9 @@ use Illuminate\Support\Str;
  *      eliminados de esta orden y ese lote) más las nuevas de ESTA tanda no
  *      supera `ope_orden_lotes.hectareas_solicitadas` de ese lote. Comparado
  *      con `Brick\Math\BigDecimal` (invariante 6 de CLAUDE.md).
+ *
+ * Con la tanda confirmada anuncia {@see OrdenTrabajoCreada} (tarea 141): quién
+ * se entera de que su equipo tiene trabajo nuevo lo decide `Notificaciones`.
  *
  * La calda tiene dos formas. La pantalla "Orden de Trabajo" la manda como
  * casillas sin cantidades (`calda_productos`, valores de
@@ -148,7 +152,7 @@ final class CrearOrdenTrabajo
             }
         }
 
-        return DB::transaction(function () use ($orden, $parametrosCompartidos, $equipos, $condiciones): OrdenTrabajo {
+        $ordenTrabajo = DB::transaction(function () use ($orden, $parametrosCompartidos, $equipos, $condiciones): OrdenTrabajo {
             $ordenTrabajo = OrdenTrabajo::create([
                 'orden_id' => $orden->id,
                 'nro_aplicacion' => $orden->nro_aplicacion,
@@ -200,6 +204,24 @@ final class CrearOrdenTrabajo
 
             return $ordenTrabajo->refresh()->load('trabajos');
         });
+
+        // Con la tanda confirmada (cabecera, equipos y trabajos): el aviso a
+        // los integrantes de cada equipo (tarea 141, ADR 0025). Crear una
+        // tanda no es una transición de la orden, así que no pasa por la
+        // máquina de estados.
+        event(new OrdenTrabajoCreada(
+            ordenTrabajoId: $ordenTrabajo->id,
+            ordenId: $orden->id,
+            nroAplicacion: $orden->nro_aplicacion,
+            equipoTrabajoIds: array_values(array_unique(array_column($equipos, 'equipo_trabajo_id'))),
+            hectareas: (string) array_reduce(
+                $nuevoPorLote,
+                static fn (BigDecimal $total, BigDecimal $hectareas): BigDecimal => $total->plus($hectareas),
+                BigDecimal::zero(),
+            ),
+        ));
+
+        return $ordenTrabajo;
     }
 
     /**

@@ -62,7 +62,8 @@ equipo (`bateria_caliente`, `dron_sospechoso`, `condiciones_forzadas`,
 `suma_excedida`). **No hay ninguna tabla ni modelo de notificación genérica
 de flujo de negocio.** `ope_alertas` sigue existiendo y sigue siendo válida
 para su caso (alertas técnicas de equipo) — el motor nuevo no la reemplaza,
-convive con ella o la absorbe como un tipo más (decide la tarea 141).
+convive con ella o la absorbe como un tipo más (**decidido en la tarea 141:
+convive**, ver §7.1).
 
 ## 4. Eventos de dominio — patrón confirmado, un solo caso real
 
@@ -261,6 +262,60 @@ cadena de referencia (contrato → notifica Encargado de Operaciones; orden de
 aplicación/trabajo creada → notifica al equipo asignado; trabajo marcado
 como realizado → notifica Jefe de Campo, Encargado de Operaciones y,
 opcionalmente, Dueño).
+
+### 7.1 Cómo quedó (tarea 141, 23/9/2026)
+
+Las decisiones de fondo están en el ADR 0025 («Motor de notificaciones interno:
+un módulo, un evento por hecho, un aviso por cuenta»). Resumen, para no tener
+que abrir el ADR:
+
+- **Módulo `Notificaciones`, prefijo `ntf_`**, con una sola tabla,
+  `ntf_notificaciones`: una fila por **cuenta** destinataria, creada al ocurrir
+  el hecho. Soft delete, autoría y bitácora como todo modelo de dominio.
+- **Quién recibe.** Las reglas declaran destinatarios por **rol**, por
+  **persona** o por **equipo**, nunca por cuenta. «Por rol» es **rol asignado**
+  (`sec_user_role`), no rol activo: una notificación no es un permiso
+  (invariante 10), así que Abraham —piloto y jefe de campo— recibe los avisos del
+  jefe de campo aunque hoy opere como piloto. Al **abrir**, el rol activo sí
+  manda: el click lleva al recurso si ese rol puede verlo y, si no, a su primera
+  pantalla (un piloto no tiene `operaciones.trabajo.ver` y cae en su tablero,
+  no en un 403). Quien dispara el hecho no se avisa a sí mismo.
+- **Un listener genérico** atiende todos los eventos; cada evento tiene una
+  **regla** en `Notificaciones/Aplicacion/Reglas/`. Los eventos son DTO de
+  primitivos en `Contratos/Eventos/` del módulo dueño y salen **después** de
+  persistir, con `ShouldDispatchAfterCommit`. Un fallo al avisar se reporta y no
+  rompe la operación de negocio.
+- **Idempotencia** por `UNIQUE (usuario_id, clave_evento)`, con la clave armada
+  con el id del recurso (`contrato_creado:12`), no parcial: un aviso dado de baja
+  no resucita por un reintento.
+- **`ope_alertas` convive**: la campana mezcla las dos fuentes (el motor y las
+  alertas técnicas) y `CampanaDeAvisos` prioriza lo no leído. Las alertas ganan el
+  enlace a `/panel/alertas`.
+
+Primera cadena, de punta a punta:
+
+| Hecho | Evento (módulo) | Destinatarios | Lleva a |
+|---|---|---|---|
+| Contrato creado | `ContratoCreado` (Comercial) | rol `encargado_operaciones` | el contrato |
+| Orden de trabajo creada | `OrdenTrabajoCreada` (Operaciones) | integrantes vigentes de cada equipo asignado | la orden de trabajo |
+| Trabajo cerrado en campo | `TrabajoCerrado` (Operaciones) | roles `jefe_campo` y `encargado_operaciones` | el trabajo |
+
+Notas de lectura: la orden de **aplicación** no tiene equipo cuando nace, así
+que «notifica al equipo» sale de la orden de trabajo; el «trabajo marcado como
+realizado» del pedido es la transición `abierto → cerrado`, que hace el piloto
+desde la app de campo; y **el dueño no recibe el «trabajo cerrado»** (es el aviso
+más frecuente y su tablero ya muestra el avance) — sumarlo es una línea en
+`ReglaTrabajoCerrado`.
+
+Pendiente de integrar en el repo (el turno noche congela `tests/`,
+`docs/decisiones/` y `.claude/`, y el prompt de la 141 no declara `descongela=`):
+el ADR 0025 con su fila del prefijo `ntf_` en el ADR 0011, los tests de
+idempotencia y aislamiento entre cuentas y la nota del skill `dominio-backend`
+quedaron como parches verificados con `git apply --check`.
+
+**Coordinación con la tarea 140 («ver como»):** `abrir` escribe `leida_en`. Con
+el modo de solo lectura de la 140 activo esa escritura lanzaría; quien integre las
+dos tiene que hacer que `abrir` redirija sin marcar leído en ese modo.
 
 ## 8. Orden de la cola
 
