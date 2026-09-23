@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Inventario\Contratos\DatosConsumoOrden;
 use App\Dominios\Inventario\Contratos\LecturaConsumosPorOrden;
 use App\Dominios\Mantenimiento\Aplicacion\ListarOrdenesMantenimiento;
@@ -82,11 +83,11 @@ final class OrdenesMantenimientoController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $estadoQuery = $request->string('estado')->toString();
+        $estadoQuery = TextoDeFiltro::de($request, 'estado');
         $estado = $estadoQuery !== '' ? EstadoOrdenMantenimiento::tryFrom($estadoQuery) : null;
-        $equipoTipoQuery = $request->string('equipo_tipo')->toString();
+        $equipoTipoQuery = TextoDeFiltro::de($request, 'equipo_tipo');
         $equipoTipo = in_array($equipoTipoQuery, ['dron', 'vehiculo'], true) ? $equipoTipoQuery : null;
-        $busqueda = trim($request->string('q')->toString());
+        $busqueda = trim(TextoDeFiltro::de($request, 'q'));
         $equipoIdsCoincidentes = $busqueda === '' ? [] : $this->equipoIdsCoincidentes($busqueda);
 
         $ordenes = $listarOrdenesMantenimiento->ejecutar(

@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Personal\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Finanzas\Contratos\LecturaAnticiposPorPersona;
 use App\Dominios\Operaciones\Contratos\LecturaSesionesPorPersona;
 use App\Dominios\Personal\Aplicacion\ActualizarPersona;
@@ -57,7 +58,7 @@ final class PersonasController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $busqueda = $request->string('q')->toString();
+        $busqueda = TextoDeFiltro::de($request, 'q');
 
         return view('personal::pages.personas.index', [
             ...$this->autorizacion->cascara($request),

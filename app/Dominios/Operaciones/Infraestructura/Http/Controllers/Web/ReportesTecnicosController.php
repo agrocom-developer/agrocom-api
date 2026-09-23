@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Operaciones\Aplicacion\ListarReportesTecnicos;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\Request;
@@ -53,8 +54,8 @@ final class ReportesTecnicosController
     {
         return [
             $request->filled('cliente_id') ? $request->integer('cliente_id') : null,
-            $request->filled('desde') ? $request->string('desde')->toString() : null,
-            $request->filled('hasta') ? $request->string('hasta')->toString() : null,
+            $request->filled('desde') ? TextoDeFiltro::de($request, 'desde') : null,
+            $request->filled('hasta') ? TextoDeFiltro::de($request, 'hasta') : null,
         ];
     }
 

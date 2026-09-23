@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Finanzas\Contratos\LecturaCombustiblePorRecurso;
 use App\Dominios\Mantenimiento\Aplicacion\ActualizarGenerador;
 use App\Dominios\Mantenimiento\Aplicacion\CrearGenerador;
@@ -67,10 +68,10 @@ final class GeneradoresController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $busqueda = $request->string('q')->toString();
-        $baseQuery = $request->string('base_id')->toString();
+        $busqueda = TextoDeFiltro::de($request, 'q');
+        $baseQuery = TextoDeFiltro::de($request, 'base_id');
         $baseId = $baseQuery !== '' ? (int) $baseQuery : null;
-        $estadoQuery = $request->string('estado')->toString();
+        $estadoQuery = TextoDeFiltro::de($request, 'estado');
         $estado = $estadoQuery !== '' ? EstadoGenerador::tryFrom($estadoQuery) : null;
 
         $generadores = $listarGeneradores->ejecutar(

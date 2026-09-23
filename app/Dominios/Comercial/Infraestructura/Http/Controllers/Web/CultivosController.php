@@ -14,6 +14,7 @@ use App\Dominios\Comercial\Dominio\TipoCultivo;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cultivo;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\ActualizarCultivoRequest;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\CrearCultivoRequest;
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -50,9 +51,9 @@ final class CultivosController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $busqueda = $request->string('q')->toString();
-        $tipoCultivo = $request->string('tipo_cultivo')->toString();
-        $cicloVida = $request->string('ciclo_vida')->toString();
+        $busqueda = TextoDeFiltro::de($request, 'q');
+        $tipoCultivo = TextoDeFiltro::de($request, 'tipo_cultivo');
+        $cicloVida = TextoDeFiltro::de($request, 'ciclo_vida');
 
         return view('comercial::pages.cultivos.index', [
             ...$this->autorizacion->cascara($request),

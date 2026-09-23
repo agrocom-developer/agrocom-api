@@ -4,6 +4,7 @@ namespace App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Comercial\Contratos\CultivoLotePorCampania;
 use App\Dominios\Comercial\Contratos\LecturaCultivoLote;
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Operaciones\Aplicacion\ActivarOrden;
 use App\Dominios\Operaciones\Aplicacion\ActualizarOrden;
 use App\Dominios\Operaciones\Aplicacion\CancelarOrden;
@@ -119,12 +120,12 @@ final class OrdenesController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $busqueda = $request->string('q')->toString();
+        $busqueda = TextoDeFiltro::de($request, 'q');
 
-        $estadoQuery = $request->string('estado')->toString();
+        $estadoQuery = TextoDeFiltro::de($request, 'estado');
         $estado = $estadoQuery !== '' ? EstadoOrdenAplicacion::tryFrom($estadoQuery) : null;
 
-        $tipoAplicacionQuery = $request->string('tipo_aplicacion')->toString();
+        $tipoAplicacionQuery = TextoDeFiltro::de($request, 'tipo_aplicacion');
         $tipoAplicacion = $tipoAplicacionQuery !== '' ? TipoAplicacion::tryFrom($tipoAplicacionQuery) : null;
 
         $contratoIdQuery = $request->integer('contrato_id') ?: null;

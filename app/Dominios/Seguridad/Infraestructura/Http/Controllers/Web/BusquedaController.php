@@ -3,6 +3,7 @@
 namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Compartido\Dominio\TerminosBusqueda;
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Seguridad\Aplicacion\BuscarEnElPanel;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\CascaraPanel;
@@ -32,7 +33,7 @@ final class BusquedaController
         $usuario = $request->user('interno');
         $idRolActivo = (int) $request->session()->get('sec_rol_activo_id');
 
-        $terminos = TerminosBusqueda::desde($request->string('q')->toString());
+        $terminos = TerminosBusqueda::desde(TextoDeFiltro::de($request, 'q'));
         $bloques = $buscar->ejecutar($usuario, $idRolActivo, $terminos);
 
         return view('seguridad::pages.busqueda.index', array_merge(

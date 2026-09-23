@@ -26,6 +26,7 @@ use App\Dominios\Comercial\Infraestructura\Http\PasosDeContrato;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\ActualizarContratoRequest;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\CambiarEstadoContratoRequest;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\CrearContratoRequest;
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Operaciones\Contratos\LecturaLotesConOrdenPorContrato;
 use App\Dominios\Operaciones\Contratos\LecturaResumenOrdenesContrato;
 use App\Dominios\Operaciones\Contratos\LecturaTrabajosPorContrato;
@@ -98,7 +99,7 @@ final class ContratosController
     ): View {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $busqueda = $request->string('q')->toString();
+        $busqueda = TextoDeFiltro::de($request, 'q');
         $campaniaId = $request->integer('campania_id') ?: null;
         $clienteId = $request->integer('cliente_id') ?: null;
         $propiedadId = $request->integer('propiedad_id') ?: null;

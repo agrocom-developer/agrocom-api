@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Finanzas\Aplicacion\CalcularDisponibleAnticipo;
 use App\Dominios\Finanzas\Aplicacion\EliminarAnticipo;
 use App\Dominios\Finanzas\Aplicacion\ListarAnticipos;
@@ -49,7 +50,7 @@ final class AnticiposController
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
         $personaId = $request->integer('persona_id') ?: null;
-        $periodo = $request->string('periodo')->toString();
+        $periodo = TextoDeFiltro::de($request, 'periodo');
 
         $periodoFiltro = $periodo !== '' ? $periodo : null;
 

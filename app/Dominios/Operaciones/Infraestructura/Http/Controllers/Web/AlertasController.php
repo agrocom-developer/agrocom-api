@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Operaciones\Aplicacion\AtenderAlerta;
 use App\Dominios\Operaciones\Aplicacion\ListarAlertas;
 use App\Dominios\Operaciones\Dominio\EstadoAlerta;
@@ -55,9 +56,9 @@ final class AlertasController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $estadoQuery = $request->string('estado')->toString();
+        $estadoQuery = TextoDeFiltro::de($request, 'estado');
         $estado = $estadoQuery !== '' ? EstadoAlerta::tryFrom($estadoQuery) : null;
-        $tipoQuery = $request->string('tipo')->toString();
+        $tipoQuery = TextoDeFiltro::de($request, 'tipo');
         $tipo = $tipoQuery !== '' ? TipoAlerta::tryFrom($tipoQuery) : null;
 
         return view('operaciones::pages.alertas.index', [

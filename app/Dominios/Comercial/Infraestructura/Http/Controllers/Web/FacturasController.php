@@ -10,6 +10,7 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Factura;
 use App\Dominios\Comercial\Infraestructura\Http\Requests\EmitirFacturaRequest;
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -40,7 +41,7 @@ final class FacturasController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $busqueda = $request->string('q')->toString();
+        $busqueda = TextoDeFiltro::de($request, 'q');
         $busqueda = $busqueda !== '' ? $busqueda : null;
         $clienteId = $request->integer('cliente_id') ?: null;
         $contratoId = $request->integer('contrato_id') ?: null;
@@ -90,7 +91,7 @@ final class FacturasController
     /** Una fecha de filtro `Y-m-d` real (el 31/02 no lo es); cualquier otra cosa se ignora en vez de romper el listado. */
     private function fecha(Request $request, string $clave): ?string
     {
-        $valor = $request->string($clave)->toString();
+        $valor = TextoDeFiltro::de($request, $clave);
         $fecha = $valor !== '' ? \DateTimeImmutable::createFromFormat('!Y-m-d', $valor) : false;
 
         return $fecha !== false && $fecha->format('Y-m-d') === $valor ? $valor : null;

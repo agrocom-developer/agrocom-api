@@ -4,6 +4,7 @@ namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Compartido\Dominio\AccionBitacora;
 use App\Dominios\Compartido\Infraestructura\Eloquent\Bitacora;
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Seguridad\Aplicacion\ListarBitacora;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
@@ -44,11 +45,11 @@ final class BitacoraController
             ?? config('app.timezone');
 
         $usuarioId = $request->integer('usuario_id') ?: null;
-        $tabla = $request->filled('tabla') ? $request->string('tabla')->toString() : null;
-        $accionCodigo = $request->filled('accion') ? $request->string('accion')->toString() : null;
+        $tabla = $request->filled('tabla') ? TextoDeFiltro::de($request, 'tabla') : null;
+        $accionCodigo = $request->filled('accion') ? TextoDeFiltro::de($request, 'accion') : null;
         $accion = $accionCodigo !== null ? AccionBitacora::tryFrom($accionCodigo) : null;
-        $desde = $request->filled('desde') ? $request->string('desde')->toString() : null;
-        $hasta = $request->filled('hasta') ? $request->string('hasta')->toString() : null;
+        $desde = $request->filled('desde') ? TextoDeFiltro::de($request, 'desde') : null;
+        $hasta = $request->filled('hasta') ? TextoDeFiltro::de($request, 'hasta') : null;
         $registroId = $request->integer('registro_id') ?: null;
 
         $bitacora = $listarBitacora->ejecutar(

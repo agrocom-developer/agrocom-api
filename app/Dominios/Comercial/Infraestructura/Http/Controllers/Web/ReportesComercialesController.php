@@ -8,6 +8,7 @@ use App\Dominios\Comercial\Dominio\EstadoContrato;
 use App\Dominios\Comercial\Dominio\SaldoContrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Cultivo;
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -65,7 +66,7 @@ final class ReportesComercialesController
             }
         }
 
-        $tabActiva = $request->string('tab')->value() === 'por_cliente' ? 'por_cliente' : 'por_cultivo';
+        $tabActiva = TextoDeFiltro::de($request, 'tab') === 'por_cliente' ? 'por_cliente' : 'por_cultivo';
 
         return view('comercial::pages.reportes-comerciales.index', [
             ...$this->autorizacion->cascara($request),
@@ -76,10 +77,10 @@ final class ReportesComercialesController
             'clienteIds' => $clienteIds,
             'cultivoIds' => $cultivoIds,
             'campaniaIds' => $this->idsDe($request, 'campania_ids'),
-            'fechaDesde' => $request->string('fecha_desde')->value() ?: null,
-            'fechaHasta' => $request->string('fecha_hasta')->value() ?: null,
-            'estado' => EstadoContrato::tryFrom((string) $request->string('estado')),
-            'saldo' => SaldoContrato::tryFrom((string) $request->string('saldo')),
+            'fechaDesde' => TextoDeFiltro::de($request, 'fecha_desde') ?: null,
+            'fechaHasta' => TextoDeFiltro::de($request, 'fecha_hasta') ?: null,
+            'estado' => EstadoContrato::tryFrom(TextoDeFiltro::de($request, 'estado')),
+            'saldo' => SaldoContrato::tryFrom(TextoDeFiltro::de($request, 'saldo')),
             'incluirDeshabilitados' => $request->boolean('incluir_deshabilitados'),
             'clientesDisponibles' => Cliente::query()
                 ->whereHas('contratos')
@@ -148,10 +149,10 @@ final class ReportesComercialesController
             clienteIds: $clienteIds,
             cultivoIds: $cultivoIds,
             campaniaIds: $this->idsDe($request, 'campania_ids'),
-            fechaDesde: $request->string('fecha_desde')->value() ?: null,
-            fechaHasta: $request->string('fecha_hasta')->value() ?: null,
-            estado: EstadoContrato::tryFrom((string) $request->string('estado')),
-            saldo: SaldoContrato::tryFrom((string) $request->string('saldo')),
+            fechaDesde: TextoDeFiltro::de($request, 'fecha_desde') ?: null,
+            fechaHasta: TextoDeFiltro::de($request, 'fecha_hasta') ?: null,
+            estado: EstadoContrato::tryFrom(TextoDeFiltro::de($request, 'estado')),
+            saldo: SaldoContrato::tryFrom(TextoDeFiltro::de($request, 'saldo')),
             incluirDeshabilitados: $request->boolean('incluir_deshabilitados'),
         );
     }

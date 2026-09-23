@@ -17,6 +17,7 @@ use App\Dominios\Campania\Infraestructura\Http\Requests\CambiarEstadoCampaniaReq
 use App\Dominios\Campania\Infraestructura\Http\Requests\CrearCampaniaRequest;
 use App\Dominios\Comercial\Contratos\LecturaResumenComercialCampania;
 use App\Dominios\Compartido\Infraestructura\Http\PasosDeEstado;
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Finanzas\Contratos\LecturaGastoPorCampania;
 use App\Dominios\Operaciones\Contratos\LecturaTrabajosPorContrato;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
@@ -76,9 +77,9 @@ final class CampaniasController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $busqueda = $request->string('q')->toString();
-        $estado = $request->string('estado')->toString() ?: null;
-        $estacion = $request->string('estacion')->toString() ?: null;
+        $busqueda = TextoDeFiltro::de($request, 'q');
+        $estado = TextoDeFiltro::de($request, 'estado') ?: null;
+        $estacion = TextoDeFiltro::de($request, 'estacion') ?: null;
 
         $campanias = $listarCampanias->ejecutar($busqueda !== '' ? $busqueda : null, $estado, $estacion);
 
