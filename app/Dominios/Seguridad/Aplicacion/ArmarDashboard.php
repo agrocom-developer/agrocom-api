@@ -13,6 +13,7 @@ use App\Dominios\Inventario\Contratos\StockPanel;
 use App\Dominios\Operaciones\Contratos\AlertaPanel;
 use App\Dominios\Operaciones\Contratos\EquipoPersonaPanel;
 use App\Dominios\Operaciones\Contratos\EvidenciaPanel;
+use App\Dominios\Operaciones\Contratos\GranularidadVuelos;
 use App\Dominios\Operaciones\Contratos\LecturaPanelOperaciones;
 use App\Dominios\Operaciones\Contratos\ResumenEquipoTrabajoPanel;
 use App\Dominios\Operaciones\Contratos\ResumenLotePanel;
@@ -214,7 +215,7 @@ final class ArmarDashboard
     /** @return array{fechas: list<string>, valores: list<string>}|null */
     private function hectareasPorDia(): ?array
     {
-        $serie = $this->operaciones->hectareasPorDia(self::DIAS_SERIE_HECTAREAS);
+        $serie = $this->operaciones->hectareasPorPeriodo(GranularidadVuelos::Dia, self::DIAS_SERIE_HECTAREAS);
 
         $huboVuelo = array_filter($serie, fn (array $dia) => $dia['hectareas'] !== '0.00');
 
