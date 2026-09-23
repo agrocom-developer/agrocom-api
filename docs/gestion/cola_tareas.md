@@ -1,6 +1,12 @@
 # Cola de tareas automatizables
 
-**Última actualización: 23/9/2026, más tarde (el dueño encarga la
+**Última actualización: 23/9/2026, aún más tarde (tarea 142 agregada).** El
+dueño encontró, mirando `/panel/bitacora`, que "Ver detalle" expande la tabla
+de cambios adentro de la última columna en vez de una fila propia — deforma
+el grid. Tarea 142 escrita con ese alcance puntual; el ciclo ya venía
+corriendo 135-141 cuando se agregó, así que entra al final de la cola.
+
+**Última actualización anterior: 23/9/2026, más tarde (el dueño encarga la
 reestructuración del dashboard y un motor de notificaciones — tareas 135 a
 141 escritas).** Con la cola en cero y el ciclo ya detenido (ver la entrada
 de abajo), el dueño dictó en una sesión interactiva aparte, mirando las
@@ -572,6 +578,7 @@ exista el módulo `Mezclas`).
 | 139 | Dashboard del Administrador de plataforma (técnico, no operativo/financiero): usuarios y accesos, bitácora y accesos directos a configuración/organización | `./bin/verify` = 0, el admin ve solo contenido técnico aunque tenga otros roles asignados, Playwright `runs/139-navegador.cjs` | `Seguridad/**` (agrupamiento y secciones nuevas) | no | 2 | pendiente |
 | 140 | El administrador puede "ver como" otro usuario (los 6 roles internos y, cruzando de guard, un usuario del portal cliente) — de solo lectura, con indicador visible, bitácora de entrada/salida y permiso propio (`seguridad.usuario.ver_como`) | `./bin/verify` = 0, tests de que ninguna ruta de escritura responde durante la vista, de bitácora de entrada/salida, y de que el portal impersonado respeta el invariante 5; Playwright `runs/140-navegador.cjs` | `Seguridad/**` (nuevo), `Portal/**` (scoping), `runs/revision-pendiente.txt` | sí | 4 | pendiente |
 | 141 | Motor de notificaciones interno (módulo nuevo, con su propio ADR): generaliza el patrón de evento de dominio de `SesionValidada`, conecta `notifications-menu.blade.php` a datos reales con acción al click, y cablea la primera cadena real (contrato creado → orden de aplicación/trabajo → trabajo realizado) | `./bin/verify` = 0, test de idempotencia del listener genérico, test de que cada usuario ve solo sus propias notificaciones, Playwright `runs/141-navegador.cjs` con la cadena de punta a punta | módulo nuevo `Notificaciones` (a confirmar en el ADR), eventos de dominio nuevos en los módulos que los emiten, `docs/decisiones/`, `runs/revision-pendiente.txt` | sí | 5 | pendiente |
+| 142 | `/panel/bitacora`: "Ver detalle" deja de expandir la tabla de cambios adentro de la última columna (la deforma) y pasa a una sub-fila propia debajo, a todo el ancho de la tabla | `./bin/verify` = 0, Playwright `runs/142-navegador.cjs` confirmando que la sub-fila ocupa el ancho de `.ag-bitacora__tabla` y que ninguna otra fila cambia de ancho al abrirse, en escritorio y en ≤992px | `Seguridad/**` (solo la vista `bitacora/index.blade.php`), `resources/css/pages/bitacora.css` | no | 2 | pendiente |
 
 ### El bug de la 24 — ya pasó dos veces, sigue sin arreglarse
 
