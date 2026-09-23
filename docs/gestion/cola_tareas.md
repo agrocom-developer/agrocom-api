@@ -1,13 +1,18 @@
 # Cola de tareas automatizables
 
-**Última actualización: 23/9/2026 (planificación tras la tarea 128 — sin prompts nuevos).** La 128 (helper `TextoDeFiltro`, PR #281) cerró
-`COMPLETA` con `bin/verify` en verde; el PR sigue **abierto**
-(`mergeStateStatus=BLOCKED` por protección de rama, `mergeable=true`) — no
-es una tarea trabada, solo falta que el auto-merge de GitHub la tome. Las
-filas 124 a 127 (ronda de fichas al arquetipo Detalle y edición de la Orden
-de Trabajo) quedan `hecha` con sus PR #277-#280, todos mergeados; ninguna
-dejó nada suelto que afecte lo que sigue — 127 anotó su hallazgo de dinero
-en `runs/revision-pendiente.txt` como correspondía, no generó tarea nueva.
+**Última actualización: 23/9/2026 (sesión de continuación de la tarea 128).**
+La 128 (helper `TextoDeFiltro`) cerró `OK` con `bin/verify` en verde: el PR
+#281 había quedado **abierto contra `master` por error** de la sesión que lo
+abrió (de ahí el `mergeStateStatus=BLOCKED` — no era el auto-merge esperando,
+era la protección real de `master` rechazándolo sin decirlo con claridad; ver
+memoria `pr-contra-master-bloquea-automerge`). Se corrigió la rama base a
+`develop` y el auto-merge lo integró (commit `41f1bdce`). La fila de la 128
+en la tabla de abajo, que había quedado escrita asumiendo que el PR seguiría
+abierto, se corrigió aparte en el PR #282 (también mergeado). Las filas 124 a
+127 (ronda de fichas al arquetipo Detalle y edición de la Orden de Trabajo)
+quedan `hecha` con sus PR #277-#280, todos mergeados; ninguna dejó nada
+suelto que afecte lo que sigue — 127 anotó su hallazgo de dinero en
+`runs/revision-pendiente.txt` como correspondía, no generó tarea nueva.
 
 Esta ronda **no escribió prompts nuevos**: `runs/cola.txt` ya trae 129 a 134
 y los seis prompts (`prompts/129-limpieza-panel.md` a
