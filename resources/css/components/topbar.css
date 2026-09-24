@@ -381,9 +381,19 @@
 }
 
 .ag-notifications-popover__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ag-space-1) var(--ag-space-2);
     margin: var(--ag-space-3) 0 0;
     padding-top: var(--ag-space-3);
     border-top: 1px solid var(--ag-color-border);
+}
+
+/* «Limpiar» va siempre a la derecha, con o sin «Marcar todas como leídas». */
+.ag-notifications-popover__limpiar {
+    margin-left: auto;
 }
 
 .ag-notifications-popover__mark-all {

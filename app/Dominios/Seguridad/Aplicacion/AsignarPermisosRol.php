@@ -4,6 +4,7 @@ namespace App\Dominios\Seguridad\Aplicacion;
 
 use App\Dominios\Seguridad\Dominio\Excepciones\PermisoDenegado;
 use App\Dominios\Seguridad\Dominio\Excepciones\RolProtegido;
+use App\Dominios\Seguridad\Dominio\PermisosReservados;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecPermission;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRolePermission;
@@ -47,6 +48,13 @@ use Illuminate\Support\Facades\DB;
  * hay dos: ahí quitártela a vos mismo dejaría el sistema administrable (por
  * el otro rol) y aun así te dejaría afuera a vos, sin aviso, en el próximo
  * clic. Por eso las dos existen y ninguna sobra.
+ *
+ * Y una quinta, que se evalúa antes que la 2 y mira la operación, no al actor: PERMISO DE PLATAFORMA
+ * ({@see PermisosReservados}) — `seguridad.usuario.ver_como` solo se otorga al
+ * rol `admin_plataforma`. La anti-escalada no alcanza: frena al dueño, que no
+ * lo tiene, pero no al propio administrador de plataforma, que podría
+ * delegárselo a un rol de negocio y dejarlo ver como un dueño. Solo frena el
+ * OTORGAMIENTO: quitarlo de donde no debería estar siempre se puede.
  */
 final class AsignarPermisosRol
 {
@@ -101,6 +109,7 @@ final class AsignarPermisosRol
             return;
         }
 
+        $this->verificarQueNoSeDelegaUnPermisoDePlataforma($rol, $aOtorgar);
         $this->verificarAntiEscalada($actor, $idRolActivo, array_merge($aOtorgar, $aQuitar));
         $this->verificarQueNoSeSueltaLaLlavePropia($rol, $idRolActivo, $aQuitar);
         $this->verificarQueNingunPermisoQuedaHuerfano($rol, $aQuitar);
@@ -112,6 +121,31 @@ final class AsignarPermisosRol
 
             $this->quitar($rol->id, $aQuitar, $actor->id);
         });
+    }
+
+    /**
+     * Guarda 5: un permiso de plataforma no se otorga a otro rol que no sea
+     * `admin_plataforma`.
+     *
+     * @param  list<int>  $aOtorgar
+     *
+     * @throws RolProtegido
+     */
+    private function verificarQueNoSeDelegaUnPermisoDePlataforma(SecRole $rol, array $aOtorgar): void
+    {
+        if ($aOtorgar === [] || PermisosReservados::admiteElRol((string) $rol->name)) {
+            return;
+        }
+
+        $codigo = SecPermission::query()
+            ->whereIn('id', $aOtorgar)
+            ->whereIn('code', PermisosReservados::SOLO_ADMIN_PLATAFORMA)
+            ->orderBy('code')
+            ->value('code');
+
+        if ($codigo !== null) {
+            throw RolProtegido::porPermisoReservado((string) $codigo, (string) $rol->name);
+        }
     }
 
     /**

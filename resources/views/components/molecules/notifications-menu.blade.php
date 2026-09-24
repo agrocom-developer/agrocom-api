@@ -12,14 +12,21 @@
     Tarea 141 (motor de notificaciones): cada aviso puede llevar `href` y,
     si nace del motor, `id`. Con `href` la fila es un enlace real (el destino
     lo resuelve el servidor contra el rol activo, ver `panel.notificaciones.
-    abrir`); sin él sigue siendo texto plano, como antes. Los avisos con `id`
-    se pueden marcar como leídos — las alertas técnicas de `ope_alertas`
-    llevan `id` nulo porque se atienden en su propia pantalla — y por eso el
-    pie «Marcar todas como leídas» solo aparece si hay alguno sin leer.
+    abrir`); sin él sigue siendo texto plano, como antes. Las alertas técnicas
+    de `ope_alertas` llevan `alerta_id` en vez de `id`: se atienden en su
+    propia pantalla, pero cada cuenta tiene su estado de lectura y de limpieza
+    sobre ellas (`panel.notificaciones.abrir-alerta`). Un aviso con `id` o con
+    `alerta_id` se puede marcar leído, y por eso el pie «Marcar todas como
+    leídas» solo aparece si hay alguno sin leer.
+
+    «Limpiar» vacía la campana de la cuenta y aparece siempre que haya algo.
+    Los dos formularios del pie llevan las alertas que esta campana mostraba
+    (`alertas[]`): el servidor las revalida, pero sabe cuáles eran las que
+    tenía delante quien apretó.
 
     Props:
     - notifications (list, default []): `{icon, title, time, unread, href?,
-      id?}` ya resueltos por el llamador.
+      id?, alerta_id?}` ya resueltos por el llamador.
     - triggerClass (string, default "ag-topbar__icon-btn"): la clase del
       botón disparador — el llamador la cambia para el estilo de mobile
       (`ag-mobile-topbar__bell-btn`, tokens constantes del riel).
@@ -42,8 +49,13 @@
 @php
     $notificacionesSinLeer = collect($notifications)->filter(fn ($n) => (bool) data_get($n, 'unread', false))->count();
     $hayMarcablesSinLeer = collect($notifications)->contains(
-        fn ($n) => (bool) data_get($n, 'unread', false) && data_get($n, 'id') !== null,
+        fn ($n) => (bool) data_get($n, 'unread', false)
+            && (data_get($n, 'id') !== null || data_get($n, 'alerta_id') !== null),
     );
+    $idsDeAlerta = collect($notifications)
+        ->map(fn ($n) => data_get($n, 'alerta_id'))
+        ->filter(fn ($id) => $id !== null)
+        ->values();
 @endphp
 
 <div {{ $attributes->class(['dropdown']) }}>
@@ -90,12 +102,29 @@
                 @endforeach
             </ul>
 
-            @if ($hayMarcablesSinLeer)
-                <form method="POST" action="{{ route('panel.notificaciones.marcar-todas') }}" class="ag-notifications-popover__footer">
+            <div class="ag-notifications-popover__footer">
+                @if ($hayMarcablesSinLeer)
+                    <form method="POST" action="{{ route('panel.notificaciones.marcar-todas') }}">
+                        @csrf
+                        @foreach ($idsDeAlerta as $idAlerta)
+                            <input type="hidden" name="alertas[]" value="{{ $idAlerta }}">
+                        @endforeach
+                        <button type="submit" class="ag-notifications-popover__mark-all">{{ __('ui.topbar.mark_all_read') }}</button>
+                    </form>
+                @endif
+
+                <form method="POST" action="{{ route('panel.notificaciones.limpiar') }}" class="ag-notifications-popover__limpiar">
                     @csrf
-                    <button type="submit" class="ag-notifications-popover__mark-all">{{ __('ui.topbar.mark_all_read') }}</button>
+                    @foreach ($idsDeAlerta as $idAlerta)
+                        <input type="hidden" name="alertas[]" value="{{ $idAlerta }}">
+                    @endforeach
+                    <button
+                        type="submit"
+                        class="ag-notifications-popover__mark-all"
+                        aria-label="{{ __('ui.topbar.clear_all_label') }}"
+                    >{{ __('ui.topbar.clear_all') }}</button>
                 </form>
-            @endif
+            </div>
         @endif
     </div>
 </div>

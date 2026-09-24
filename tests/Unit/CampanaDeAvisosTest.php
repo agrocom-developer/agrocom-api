@@ -100,7 +100,17 @@ test('conserva el id, el ícono, el destino y el estado de cada aviso, y arma la
         ->and($lista[1])->toMatchArray(['id' => 7, 'icon' => 'task_alt', 'title' => 'del-motor', 'unread' => true])
         ->and($lista[1]['href'])->toBe('http://localhost/panel/notificaciones/del-motor/abrir')
         ->and($lista[1]['time'])->toBeString()->not->toBeEmpty()
-        ->and(array_keys($lista[0]))->toBe(['id', 'icon', 'title', 'time', 'unread', 'href']);
+        ->and(array_keys($lista[0]))->toBe(['id', 'alerta_id', 'icon', 'title', 'time', 'unread', 'href']);
+});
+
+test('una alerta técnica conserva su alerta_id y un aviso del motor no lo tiene', function () {
+    $alerta = aviso('alerta', '5 minutes', true, null, 'warning');
+    $alerta['alerta_id'] = 3;
+
+    $lista = CampanaDeAvisos::elegir([aviso('del-motor', '2 hours', true, 7), $alerta], 10);
+
+    expect($lista[0])->toMatchArray(['id' => null, 'alerta_id' => 3])
+        ->and($lista[1])->toMatchArray(['id' => 7, 'alerta_id' => null]);
 });
 
 test('sin candidatas, la lista está vacía', function () {

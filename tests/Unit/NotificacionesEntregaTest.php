@@ -9,6 +9,7 @@ use App\Dominios\Notificaciones\Aplicacion\EntregarNotificacion;
 use App\Dominios\Notificaciones\Aplicacion\MarcarTodasLeidas;
 use App\Dominios\Notificaciones\Aplicacion\ReglasDeNotificacion;
 use App\Dominios\Notificaciones\Aplicacion\ResolverDestinatarios;
+use App\Dominios\Notificaciones\Contratos\AlertasDeCuenta;
 use App\Dominios\Notificaciones\Contratos\LecturaNotificaciones;
 use App\Dominios\Notificaciones\Dominio\Destinatario;
 use App\Dominios\Notificaciones\Dominio\NotificacionArmada;
@@ -634,6 +635,11 @@ test('si falla la lectura de avisos, la cáscara del panel los reporta y sigue c
         public function recientesDe(int $usuarioId, int $limite): array
         {
             throw new RuntimeException('no existe la tabla ntf_notificaciones');
+        }
+
+        public function alertasDeCuenta(int $usuarioId): AlertasDeCuenta
+        {
+            return new AlertasDeCuenta;
         }
     });
 

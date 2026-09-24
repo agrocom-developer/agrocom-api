@@ -1,0 +1,47 @@
+/*
+ * Page: perfil/index y portal-perfil (app/Dominios/Seguridad/Infraestructura/Http/Views/pages/)
+ * — «Mi perfil» del panel y del portal. CSS propio de ESTAS páginas (ver
+ * convención en resources/css/pages/index.css).
+ *
+ * El wrapper `.ag-perfil-form` sigue el mismo patrón que `.ag-usuarios-form`:
+ * flex en columna con un único `gap` en vez de `margin-top` repetido en cada
+ * hijo. Sin él la cabecera, el aviso y las tarjetas quedaban pegados. Todo
+ * color y medida por token (CLAUDE.md invariante 11).
+ */
+
+.ag-perfil-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+/* Accesos rápidos por rol (solo el panel): rótulo de sector y una rejilla de
+   tarjetas. Tres columnas como techo —igual que los campos de un formulario—:
+   el `max()` impide que en pantallas anchas el `auto-fit` meta cinco angostas. */
+.ag-perfil__accesos-seccion {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-3);
+}
+
+.ag-perfil__accesos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(max(15rem, calc(33.333% - var(--ag-space-3))), 1fr));
+    gap: var(--ag-space-3);
+}
+
+.ag-perfil__acceso {
+    background: var(--ag-color-surface-card);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-lg);
+    overflow: hidden;
+    min-width: 0;
+}
+
+/* Aclaración bajo la tarjeta de datos personales: por qué no se editan acá. */
+.ag-perfil__nota {
+    margin: 0;
+    padding: 0 var(--ag-space-1);
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
+}

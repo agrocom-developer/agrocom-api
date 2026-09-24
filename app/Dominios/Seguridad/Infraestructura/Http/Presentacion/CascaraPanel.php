@@ -5,6 +5,7 @@ namespace App\Dominios\Seguridad\Infraestructura\Http\Presentacion;
 use App\Dominios\Comercial\Contratos\LecturaContadoresPanel as LecturaContadoresPanelComercial;
 use App\Dominios\Finanzas\Contratos\LecturaContadoresPanel as LecturaContadoresPanelFinanzas;
 use App\Dominios\Inventario\Contratos\LecturaContadoresPanel as LecturaContadoresPanelInventario;
+use App\Dominios\Notificaciones\Contratos\AlertasDeCuenta;
 use App\Dominios\Notificaciones\Contratos\LecturaNotificaciones;
 use App\Dominios\Notificaciones\Contratos\NotificacionPanel;
 use App\Dominios\Operaciones\Contratos\LecturaContadoresPanel as LecturaContadoresPanelOperaciones;
@@ -175,17 +176,19 @@ final class CascaraPanel
      *   Solo los de quien mira (su id sale de la sesión, nunca de la petición).
      *   Cada uno lleva a `panel.notificaciones.abrir`, que lo marca leído y
      *   resuelve el destino contra el rol activo.
-     * - Las alertas por excepción reales (HU-19), como antes: gateadas por
+     * - Las alertas por excepción reales (HU-19), gateadas por
      *   `operaciones.alerta.ver` contra el ROL ACTIVO (un rol que no puede
-     *   entrar a `/panel/alertas` tampoco las lee por la campana), y ahora con
-     *   enlace a esa pantalla — hasta acá eran texto plano.
+     *   entrar a `/panel/alertas` tampoco las lee por la campana). Cada cuenta
+     *   tiene su propio estado sobre ellas: al abrirla desde la campana queda
+     *   leída para esa cuenta (sin declararla atendida, que es de todos), y una
+     *   que la cuenta limpió no vuelve a aparecer — sigue en su pantalla.
      *
      * Cuáles entran y en qué orden lo decide {@see CampanaDeAvisos}: primero
      * todo lo no leído, después los leídos más recientes. Así el badge de la
      * campana —que cuenta lo no leído de la lista que recibe— sigue siendo
      * exacto hasta «9+».
      *
-     * @return list<array{id: int|null, icon: string, title: string, time: string, unread: bool, href: string}>
+     * @return list<array{id: int|null, alerta_id: int|null, icon: string, title: string, time: string, unread: bool, href: string}>
      */
     private function notificaciones(SecUser $usuario, int $idRolActivo): array
     {
@@ -201,6 +204,7 @@ final class CascaraPanel
 
         $candidatas = array_map(fn (NotificacionPanel $aviso): array => [
             'id' => $aviso->id,
+            'alerta_id' => null,
             'icon' => $aviso->icono,
             'title' => $aviso->titulo,
             'momento' => Carbon::parse($aviso->creadaEn),
@@ -209,20 +213,37 @@ final class CascaraPanel
         ], $delMotor);
 
         if ($usuario->tienePermisoEnRol('operaciones.alerta.ver', $idRolActivo)) {
-            $hrefAlertas = route('panel.alertas.index');
+            $deLaCuenta = $this->alertasDeLaCuenta($usuario->id);
 
-            foreach ($this->panelOperaciones->alertasRecientes(self::ALERTAS_NOTIFICACION) as $alerta) {
+            foreach ($this->panelOperaciones->alertasRecientes(self::ALERTAS_NOTIFICACION, $deLaCuenta->limpiadas) as $alerta) {
                 $candidatas[] = [
                     'id' => null,
+                    'alerta_id' => $alerta->id,
                     'icon' => 'warning',
                     'title' => $alerta->mensaje,
                     'momento' => Carbon::parse($alerta->creadaEn),
-                    'unread' => $alerta->pendiente,
-                    'href' => $hrefAlertas,
+                    'unread' => $alerta->pendiente && ! $deLaCuenta->leyo($alerta->id),
+                    'href' => route('panel.notificaciones.abrir-alerta', $alerta->id),
                 ];
             }
         }
 
         return CampanaDeAvisos::elegir($candidatas, self::MAXIMO_EN_CAMPANA);
+    }
+
+    /**
+     * Qué hizo esta cuenta con las alertas. Como la lectura de avisos, es
+     * secundaria: si falla, se reporta y las alertas salen como si la cuenta
+     * no hubiera tocado ninguna.
+     */
+    private function alertasDeLaCuenta(int $usuarioId): AlertasDeCuenta
+    {
+        try {
+            return $this->notificacionesDelMotor->alertasDeCuenta($usuarioId);
+        } catch (Throwable $excepcion) {
+            report($excepcion);
+
+            return new AlertasDeCuenta;
+        }
     }
 }

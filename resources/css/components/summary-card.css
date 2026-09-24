@@ -32,17 +32,23 @@
     gap: var(--ag-space-3);
 }
 
+/* La etiqueta no se encoge y el valor sí puede partirse: un dato largo sin espacios
+   (un correo, una dirección) empujaba y estrechaba la etiqueta hasta partirla en
+   una palabra por línea, y a veces se salía de la tarjeta. */
 .ag-summary-card__label {
+    flex-shrink: 0;
     color: var(--ag-color-text-muted);
     font-size: var(--ag-font-size-sm);
 }
 
 .ag-summary-card__value {
+    min-width: 0;
     margin: 0;
     font-size: var(--ag-font-size-sm);
     font-weight: var(--ag-font-weight-medium);
     color: var(--ag-color-text);
     text-align: right;
+    overflow-wrap: anywhere;
 }
 
 .ag-summary-card__value--mono {

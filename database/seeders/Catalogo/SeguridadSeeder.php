@@ -2,6 +2,7 @@
 
 namespace Database\Seeders\Catalogo;
 
+use App\Dominios\Seguridad\Dominio\PermisosReservados;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecPermission;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRolePermission;
@@ -449,16 +450,13 @@ class SeguridadSeeder extends Seeder
     /**
      * Permisos que el catálogo entrega ÚNICAMENTE a `admin_plataforma`, no a
      * `dueno` (que por lo demás recibe "todo el catálogo, sin excepción"):
-     * capacidades de soporte técnico de la plataforma. Un dueño puede
-     * otorgárselos a otro rol a propósito desde la matriz de permisos
-     * (`seguridad.rol.asignar_permiso`), pero ninguna siembra los activa por
-     * defecto (tarea 140).
+     * capacidades de soporte técnico de la plataforma (tarea 140). Tampoco se
+     * pueden otorgar a otro rol desde la matriz de permisos: la lista es la de
+     * `PermisosReservados`, que `AsignarPermisosRol` hace cumplir.
      *
      * @var list<string>
      */
-    private const PERMISOS_SOLO_ADMIN_PLATAFORMA = [
-        'seguridad.usuario.ver_como',
-    ];
+    private const PERMISOS_SOLO_ADMIN_PLATAFORMA = PermisosReservados::SOLO_ADMIN_PLATAFORMA;
 
     /**
      * Piloto: lo que ejecuta desde `agrocom-field` (HU-17, tarea 24) más su
