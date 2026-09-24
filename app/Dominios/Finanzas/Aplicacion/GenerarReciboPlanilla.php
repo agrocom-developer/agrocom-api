@@ -38,4 +38,31 @@ final class GenerarReciboPlanilla
 
         return $detalle;
     }
+
+    /**
+     * Reconstruye el PDF si el archivo físico no existe en `r2` pero la fila
+     * del recibo sí — mismo criterio que `GenerarActaTrabajo::asegurarPdf`.
+     * Vuelve a cargar `$detalle->planilla` para renderizar con los datos
+     * ACTUALES de la fila, no con lo que haya quedado en memoria.
+     *
+     * Precondición: `$detalle->pdf_path` no es `null`.
+     */
+    public function asegurarPdf(PlanillaDetalle $detalle): void
+    {
+        /** @var string $ruta */
+        $ruta = $detalle->pdf_path;
+
+        if (Storage::disk('r2')->exists($ruta)) {
+            return;
+        }
+
+        $detalle->loadMissing('planilla');
+
+        $pdf = Pdf::loadView('finanzas::pdf.recibo-planilla', [
+            'planilla' => $detalle->planilla,
+            'detalle' => $detalle,
+        ])->output();
+
+        Storage::disk('r2')->put($ruta, $pdf);
+    }
 }

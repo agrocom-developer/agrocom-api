@@ -69,4 +69,30 @@ final class GenerarReporteTecnico
 
         return $reporte;
     }
+
+    /**
+     * Reconstruye el PDF si el archivo físico no existe en `r2` pero la fila
+     * del reporte sí — mismo criterio que `GenerarActaTrabajo::asegurarPdf`.
+     * Vuelve a calcular `$datos` desde el trabajo ACTUAL (no desde lo que
+     * `hora_inicio`/`hora_fin` ya tienen guardado en la fila): si el archivo
+     * se perdió y se reconstruye desde datos viejos, un cambio posterior en
+     * las sesiones del trabajo quedaría sin reflejarse en el PDF reconstruido.
+     *
+     * Precondición: `$reporte->pdf_path` no es `null`.
+     */
+    public function asegurarPdf(ReporteTecnico $reporte): void
+    {
+        /** @var string $ruta */
+        $ruta = $reporte->pdf_path;
+
+        if (Storage::disk('r2')->exists($ruta)) {
+            return;
+        }
+
+        $reporte->loadMissing('trabajo');
+        $datos = $this->armarContenido->ejecutar($reporte->trabajo);
+
+        $pdf = Pdf::loadView('operaciones::pdf.reporte-tecnico', ['trabajo' => $reporte->trabajo, 'reporte' => $reporte, 'datos' => $datos])->output();
+        Storage::disk('r2')->put($ruta, $pdf);
+    }
 }
