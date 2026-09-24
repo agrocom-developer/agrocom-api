@@ -24,8 +24,8 @@ use Illuminate\Support\Facades\Storage;
  * nunca deja un contacto huérfano por omisión (mismo criterio que
  * `AsignarRolesUsuario::sincronizarRoles`).
  *
- * `logo`/`eliminarLogo` (HU-75, tarea 91): mismo criterio que
- * `GuardarDatosEmpresa` — `eliminarLogo` solo actúa si no vino `$logo`
+ * `logo`/`eliminarLogo` (HU-75, tarea 91; ruta actualizada por ADR 0026):
+ * mismo criterio que `GuardarDatosEmpresa` — `eliminarLogo` solo actúa si no vino `$logo`
  * nuevo (subir y tildar "eliminar" a la vez no tiene sentido; el nuevo
  * archivo gana), y el archivo viejo se borra del disco al reemplazar o
  * eliminar. El archivo se toca DESPUÉS del `save()` de los campos de texto,
@@ -85,7 +85,7 @@ final class ActualizarCliente
         }
 
         ['contenido' => $contenido, 'extension' => $extension] = $this->optimizarImagen->ejecutar($logo);
-        $ruta = sprintf('logos/clientes/logo-%d.%s', now()->timestamp, $extension);
+        $ruta = sprintf('logos/clientes/%d/logo-%d.%s', $cliente->id, now()->timestamp, $extension);
 
         Storage::disk('public')->put($ruta, $contenido);
 
