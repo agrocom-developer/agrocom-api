@@ -27,6 +27,11 @@ use Illuminate\Support\Facades\Storage;
  * evita `FirmarActa` (la firma en sí es idempotente y solo llama a esta
  * clase en la rama que TRANSICIONA de verdad), pero el guardarraíl queda acá
  * también, mismo criterio defensivo que `GenerarActaTrabajo`.
+ *
+ * Ruta `trabajos/{trabajo_id}/reportes-tecnicos/{reporte_id}.pdf` (ADR 0026,
+ * objeto primero, actividad después): los reportes ya emitidos con la ruta
+ * anterior (`reportes-tecnicos/{trabajo_id}/{reporte_id}.pdf`) siguen
+ * resolviendo por `pdf_path`.
  */
 final class GenerarReporteTecnico
 {
@@ -57,7 +62,7 @@ final class GenerarReporteTecnico
         ]);
 
         $pdf = Pdf::loadView('operaciones::pdf.reporte-tecnico', ['trabajo' => $trabajo, 'reporte' => $reporte, 'datos' => $datos])->output();
-        $ruta = sprintf('reportes-tecnicos/%d/%d.pdf', $trabajo->id, $reporte->id);
+        $ruta = sprintf('trabajos/%d/reportes-tecnicos/%d.pdf', $trabajo->id, $reporte->id);
         Storage::disk('r2')->put($ruta, $pdf);
 
         $reporte->update(['pdf_path' => $ruta]);

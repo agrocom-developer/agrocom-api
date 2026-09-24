@@ -24,8 +24,8 @@ use Illuminate\Support\Facades\Storage;
  * nunca deja un contacto huérfano por omisión (mismo criterio que
  * `AsignarRolesUsuario::sincronizarRoles`).
  *
- * `logo`/`eliminarLogo` (HU-75, tarea 91; ruta actualizada por ADR 0026):
- * mismo criterio que `GuardarDatosEmpresa` — `eliminarLogo` solo actúa si no vino `$logo`
+ * `logo`/`eliminarLogo` (HU-75, tarea 91): mismo criterio que
+ * `GuardarDatosEmpresa` — `eliminarLogo` solo actúa si no vino `$logo`
  * nuevo (subir y tildar "eliminar" a la vez no tiene sentido; el nuevo
  * archivo gana), y el archivo viejo se borra del disco al reemplazar o
  * eliminar. El archivo se toca DESPUÉS del `save()` de los campos de texto,
@@ -33,6 +33,10 @@ use Illuminate\Support\Facades\Storage;
  * índice parcial del NIT — tocar el archivo antes dejaría el disco
  * desincronizado (archivo borrado o huérfano) si el `save()` termina
  * rechazado por `ClienteDuplicado`.
+ *
+ * Ruta `clientes/{cliente_id}/logos/logo-{timestamp}.{ext}` (ADR 0026,
+ * objeto primero, actividad después) — distinto de `logos/empresa/` de
+ * ADR 0019 (fila única, sin id que anidar).
  *
  * El contenido pasa por {@see OptimizarImagenSubida} antes de guardarse
  * (15/9/2026): el Form Request solo valida tipo y un tope técnico de subida,
@@ -85,7 +89,7 @@ final class ActualizarCliente
         }
 
         ['contenido' => $contenido, 'extension' => $extension] = $this->optimizarImagen->ejecutar($logo);
-        $ruta = sprintf('logos/clientes/%d/logo-%d.%s', $cliente->id, now()->timestamp, $extension);
+        $ruta = sprintf('clientes/%d/logos/logo-%d.%s', $cliente->id, now()->timestamp, $extension);
 
         Storage::disk('public')->put($ruta, $contenido);
 

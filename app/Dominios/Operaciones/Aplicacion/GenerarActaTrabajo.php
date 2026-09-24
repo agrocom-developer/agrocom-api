@@ -38,6 +38,10 @@ use Illuminate\Support\Facades\Storage;
  * (guardarraíl de `RegistrarEvidencia`, tarea 19: nunca I/O de archivo antes
  * de que la fila exista) — si el `Storage::put()` fallara, la transacción
  * completa se revierte, sin dejar un acta sin PDF.
+ *
+ * Ruta `trabajos/{trabajo_id}/actas/{acta_id}.pdf` (ADR 0026, objeto primero,
+ * actividad después): las actas ya emitidas con la ruta anterior
+ * (`actas/{trabajo_id}/{acta_id}.pdf`) siguen resolviendo por `pdf_path`.
  */
 final class GenerarActaTrabajo
 {
@@ -77,7 +81,7 @@ final class GenerarActaTrabajo
                 ]);
 
                 $pdf = Pdf::loadView('operaciones::pdf.acta', ['trabajo' => $trabajoLock, 'acta' => $acta])->output();
-                $ruta = sprintf('actas/%d/%d.pdf', $trabajoLock->id, $acta->id);
+                $ruta = sprintf('trabajos/%d/actas/%d.pdf', $trabajoLock->id, $acta->id);
                 Storage::disk('r2')->put($ruta, $pdf);
 
                 $acta->update(['pdf_path' => $ruta]);

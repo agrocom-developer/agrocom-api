@@ -17,6 +17,10 @@ use Illuminate\Support\Facades\Storage;
  * fila de `$detalle` ya existe (guardarraíl de `RegistrarEvidencia`: nunca
  * I/O de archivo antes de persistir) — nunca al generar la planilla, cuando
  * todavía está en `Borrador`.
+ *
+ * Ruta `planillas/{planilla_id}/recibos/{detalle_id}.pdf` (ADR 0026): los
+ * recibos ya emitidos con la ruta anterior (`planillas/{planilla_id}/{detalle_id}.pdf`)
+ * siguen resolviendo por `pdf_path`.
  */
 final class GenerarReciboPlanilla
 {
@@ -27,7 +31,7 @@ final class GenerarReciboPlanilla
             'detalle' => $detalle,
         ])->output();
 
-        $ruta = sprintf('planillas/%d/%d.pdf', $planilla->id, $detalle->id);
+        $ruta = sprintf('planillas/%d/recibos/%d.pdf', $planilla->id, $detalle->id);
         Storage::disk('r2')->put($ruta, $pdf);
 
         $detalle->update(['pdf_path' => $ruta]);
