@@ -14,6 +14,8 @@ Tres categorías, cada una con su regla:
 2. **Reportes generados** (actas, reporte técnico, reporte comercial, recibos de planilla): mismo bucket, ruta `reportes/{tipo}/{entidad_id}/{uuid}.pdf`. Son inmutables una vez emitidos — una corrección o regeneración crea un archivo nuevo, referenciado desde el registro correspondiente (`actas.evidencia_firma_id`, etc.); nunca se sobrescribe el PDF ya entregado a un cliente.
 3. **Assets de marca** (logo, favicon, iconografía propia del panel, plantillas base de PDF): versionados en el propio repositorio (`public/images/marca/` o `resources/`), no en el bucket. Cambian por deploy, no por operación — no tiene sentido tratarlos como datos generados en producción.
 
+   **Nota (ADR 0026, 23/9/2026):** la regla de anidar por id del objeto dueño que este ADR ya aplica a evidencias y reportes queda explícita como criterio general para cualquier archivo con más de un objeto posible — ver ADR 0026 para el caso concreto que la motivó (logo de cliente) y la ruta prevista para futuras exportaciones.
+
    **Nota (ADR 0019, 11/9/2026):** esta categoría queda matizada, únicamente para el *logo de la propia empresa* (el campo "Logo de empresa" de `/panel/organizacion`, dato de negocio de quien opera el sistema — no el wordmark del panel `public/logo.png`, que sigue acá sin cambios): pensando en el pivot futuro a SaaS multi-tenant, ese archivo puntual pasa a ser subido por el usuario en runtime, en el disco `public` de Laravel (`storage/app/public`, no versionado en git), en vez de un asset fijo del repositorio. Favicon, iconografía propia del panel y plantillas base de PDF siguen exactamente como están escritos acá. Ver ADR 0019 para el detalle completo.
 
 ## Alternativas descartadas
