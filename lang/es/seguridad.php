@@ -797,6 +797,18 @@ return [
         'campo_rol' => 'Rol con el que verla',
         'campo_rol_placeholder' => 'Elige un rol',
         'sin_contrato' => 'Esta cuenta de portal no tiene un contrato asignado, así que no hay nada que ver.',
+
+        // Selector desde el dashboard: acceso directo al mismo flujo de
+        // arriba, sin pasar por Seguridad → Usuarios.
+        'selector_boton' => 'Cambiar vista',
+        'selector_titulo' => 'Elige una cuenta',
+        'selector_subtitulo' => 'Busca por nombre o usuario, o elige de la lista agrupada por rol.',
+        'selector_buscador_placeholder' => 'Busca por nombre o usuario',
+        'selector_grupo_portal' => 'Portal de clientes',
+        'selector_sin_resultados_titulo' => 'Sin resultados para esa búsqueda',
+        'selector_sin_resultados_detalle' => 'Ninguna cuenta coincide con lo que escribiste. Prueba con otro nombre o usuario.',
+        'selector_sin_candidatos_titulo' => 'No hay otra cuenta para ver',
+        'selector_sin_candidatos_detalle' => 'Ninguna otra cuenta está habilitada para ver en este momento.',
     ],
 
     // Tarea 63 (invariante 9 de CLAUDE.md): pantalla `/panel/bitacora`.
