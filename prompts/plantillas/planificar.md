@@ -98,8 +98,11 @@ pendiente.
 Las tareas de la lista "qué no delegar sin revisión línea por línea" de
 `CLAUDE.md` — motor de sync, servicio de estados, listeners que generan dinero,
 scoping del portal del cliente — **sí se toman**, pero se marcan
-`critica=si`: su PR se abre en borrador y lo revisa una persona. No las
-saltees por críticas ni las degrades para que dejen de serlo.
+`critica=si`: su PR se abre y mergea como cualquier otro, y queda anotada en
+`runs/revision-pendiente.txt` para que una persona la revise línea por línea
+sobre `develop`, ya integrada. Retener el PR en borrador hasta esa revisión
+está descartado — fue peor que el problema que resolvía (ver CLAUDE.md, caso
+PR #46). No las saltees por críticas ni las degrades para que dejen de serlo.
 
 ## Si la próxima tarea ya tiene prompt
 
@@ -129,7 +132,7 @@ línea, exactamente este formato:
   terminar la HU. Dimensionalo por el tamaño de la historia, no por miedo: 2
   para algo acotado, 4–5 para una HU de 2 días o más del plan de sprints. Si no
   lo ponés, son 5.
-- `critica=si` para lo de la lista de arriba (PR en borrador).
+- `critica=si` para lo de la lista de arriba (PR normal, va a `runs/revision-pendiente.txt`).
 - `turno-noche=1` **siempre**. Lo que cambia por tarea es `descongela=`, con
   las zonas que esa tarea necesita escribir, separadas por coma:
 
