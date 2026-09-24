@@ -193,9 +193,11 @@ final class ActaController
     )]
     public function pdf(Request $request, Acta $acta): Response
     {
-        if ($acta->pdf_path === null || ! Storage::disk('r2')->exists($acta->pdf_path)) {
+        if ($acta->pdf_path === null) {
             abort(Response::HTTP_NOT_FOUND);
         }
+
+        $this->generarActa->asegurarPdf($acta);
 
         $contenido = Storage::disk('r2')->get($acta->pdf_path);
 

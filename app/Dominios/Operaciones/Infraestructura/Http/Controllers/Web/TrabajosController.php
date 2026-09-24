@@ -4,6 +4,8 @@ namespace App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Operaciones\Aplicacion\ActualizarTrabajo;
 use App\Dominios\Operaciones\Aplicacion\EliminarTrabajo;
+use App\Dominios\Operaciones\Aplicacion\GenerarActaTrabajo;
+use App\Dominios\Operaciones\Aplicacion\GenerarReporteTecnico;
 use App\Dominios\Operaciones\Dominio\EstadoActa;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
 use App\Dominios\Operaciones\Dominio\EstadoTableroTrabajo;
@@ -74,7 +76,11 @@ final class TrabajosController
 
     private const PERMISO_VER_CUADRILLA = 'personal.equipo_trabajo.ver';
 
-    public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
+    public function __construct(
+        private readonly AutorizacionPanelWeb $autorizacion,
+        private readonly GenerarActaTrabajo $generarActa,
+        private readonly GenerarReporteTecnico $generarReporte,
+    ) {}
 
     /**
      * Arquetipo Detalle (tarea 124, guía §6.4): misma anatomía que
@@ -284,7 +290,9 @@ final class TrabajosController
     /**
      * `GET /panel/trabajos/detalle/{trabajo}/acta/pdf` (HU-17, tarea 24):
      * solo lectura, mismo permiso que `show()` — generar/firmar el acta es
-     * de `agrocom-field` (`ActaController`, API), no del panel.
+     * de `agrocom-field` (`ActaController`, API), no del panel. Si el
+     * archivo físico se perdió, lo reconstruye antes de responder
+     * (`GenerarActaTrabajo::asegurarPdf`, ADR 0026).
      */
     public function actaPdf(Request $request, Trabajo $trabajo): Response
     {
@@ -292,7 +300,9 @@ final class TrabajosController
 
         $acta = $trabajo->acta;
 
-        abort_if($acta === null || $acta->pdf_path === null || ! Storage::disk('r2')->exists($acta->pdf_path), 404);
+        abort_if($acta === null || $acta->pdf_path === null, 404);
+
+        $this->generarActa->asegurarPdf($acta);
 
         return response(Storage::disk('r2')->get($acta->pdf_path), 200, ['Content-Type' => 'application/pdf']);
     }
@@ -301,7 +311,8 @@ final class TrabajosController
      * `GET /panel/trabajos/detalle/{trabajo}/reporte/pdf` (HU-18, tarea 25):
      * solo lectura, permiso propio `operaciones.reporte.ver` — el reporte se
      * genera solo al firmar el acta (`GenerarReporteTecnico`, enganchado en
-     * `FirmarActa`); esta ruta nunca lo genera.
+     * `FirmarActa`); esta ruta nunca crea la fila, pero reconstruye el
+     * archivo físico si se perdió (`GenerarReporteTecnico::asegurarPdf`, ADR 0026).
      */
     public function reporteTecnicoPdf(Request $request, Trabajo $trabajo): Response
     {
@@ -309,7 +320,9 @@ final class TrabajosController
 
         $reporte = $trabajo->reporteTecnico;
 
-        abort_if($reporte === null || $reporte->pdf_path === null || ! Storage::disk('r2')->exists($reporte->pdf_path), 404);
+        abort_if($reporte === null || $reporte->pdf_path === null, 404);
+
+        $this->generarReporte->asegurarPdf($reporte);
 
         return response(Storage::disk('r2')->get($reporte->pdf_path), 200, ['Content-Type' => 'application/pdf']);
     }

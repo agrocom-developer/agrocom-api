@@ -5,6 +5,7 @@ namespace App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Finanzas\Aplicacion\AprobarPlanilla;
 use App\Dominios\Finanzas\Aplicacion\GenerarPlanilla;
+use App\Dominios\Finanzas\Aplicacion\GenerarReciboPlanilla;
 use App\Dominios\Finanzas\Aplicacion\ListarPlanillas;
 use App\Dominios\Finanzas\Dominio\EstadoPlanilla;
 use App\Dominios\Finanzas\Dominio\Excepciones\PlanillaNoAprobable;
@@ -65,7 +66,10 @@ final class PlanillasController
 
     private const PERMISO_APROBAR = 'finanzas.planilla.aprobar';
 
-    public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
+    public function __construct(
+        private readonly AutorizacionPanelWeb $autorizacion,
+        private readonly GenerarReciboPlanilla $generarRecibo,
+    ) {}
 
     public function index(Request $request, ListarPlanillas $listarPlanillas): View
     {
@@ -145,7 +149,9 @@ final class PlanillasController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
         abort_if($detalle->planilla_id !== $planilla->id, 404);
-        abort_if($detalle->pdf_path === null || ! Storage::disk('r2')->exists($detalle->pdf_path), 404);
+        abort_if($detalle->pdf_path === null, 404);
+
+        $this->generarRecibo->asegurarPdf($detalle);
 
         return response(Storage::disk('r2')->get($detalle->pdf_path), 200, ['Content-Type' => 'application/pdf']);
     }

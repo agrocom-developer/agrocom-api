@@ -106,4 +106,32 @@ final class GenerarActaTrabajo
             throw TrabajoNoListoParaActa::porConflictoDeUuidCliente($trabajo->id);
         }
     }
+
+    /**
+     * Reconstruye el PDF si el archivo físico no existe en `r2` (borrado a
+     * mano, purga del bucket, etc.) pero la fila del acta sí — nunca al
+     * revés, un archivo huérfano sin fila no es este caso. Nunca sobrescribe
+     * el registro de negocio (`ope_actas`), solo vuelve a renderizar el
+     * mismo contenido desde los datos ya guardados y lo sube a la MISMA
+     * ruta (`$acta->pdf_path`), para no dejar una referencia rota sirviendo
+     * contenido de otra fecha si el trabajo o sus sesiones cambiaron desde
+     * que el archivo se perdió.
+     *
+     * Precondición: `$acta->pdf_path` no es `null` (lo garantiza quien llama,
+     * antes de decidir si corresponde 404 o reconstrucción).
+     */
+    public function asegurarPdf(Acta $acta): void
+    {
+        /** @var string $ruta */
+        $ruta = $acta->pdf_path;
+
+        if (Storage::disk('r2')->exists($ruta)) {
+            return;
+        }
+
+        $acta->loadMissing('trabajo');
+
+        $pdf = Pdf::loadView('operaciones::pdf.acta', ['trabajo' => $acta->trabajo, 'acta' => $acta])->output();
+        Storage::disk('r2')->put($ruta, $pdf);
+    }
 }

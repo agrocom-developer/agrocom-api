@@ -4,6 +4,7 @@ namespace App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Comercial\Contratos\CultivoLotePorCampania;
 use App\Dominios\Comercial\Contratos\LecturaCultivoLote;
+use App\Dominios\Compartido\Aplicacion\ResolverUrlImagenConPlaceholder;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Operaciones\Aplicacion\ActivarOrden;
 use App\Dominios\Operaciones\Aplicacion\ActualizarOrden;
@@ -48,7 +49,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -114,6 +114,7 @@ final class OrdenesController
     public function __construct(
         private readonly AutorizacionPanelWeb $autorizacion,
         private readonly LecturaCultivoLote $lecturaCultivoLote,
+        private readonly ResolverUrlImagenConPlaceholder $resolverLogo,
     ) {}
 
     public function index(Request $request, ListarOrdenesAplicacion $listarOrdenes, ResumenDeOrdenes $resumenOrdenes): View
@@ -321,7 +322,7 @@ final class OrdenesController
      * `null` si el contrato ya no existe (borrado lógicamente después de
      * emitida la orden) — la vista cae a no mostrar la sección.
      *
-     * @return array{cliente: string, logo_url: ?string, propiedades: list<string>, aplicaciones_previstas: int, hectareas_contratadas: string, fecha_inicio: string, fecha_fin: ?string}|null
+     * @return array{cliente: string, logo_url: string, propiedades: list<string>, aplicaciones_previstas: int, hectareas_contratadas: string, fecha_inicio: string, fecha_fin: ?string}|null
      */
     private function resumenContrato(int $contratoId): ?array
     {
@@ -1160,7 +1161,7 @@ final class OrdenesController
      *       $contratoId => [
      *         'label' => string,              // ya enriquecido para el <select> buscable: cliente + propiedad(es) + "Contrato #id"
      *         'cliente' => string,            // razón social
-     *         'logo_url' => ?string,          // URL pública del logo del cliente (com_clientes.logo_path vía disco `public`), null sin logo
+     *         'logo_url' => string,           // URL pública del logo del cliente (com_clientes.logo_path vía disco `public`), o el placeholder si no hay logo o el archivo se perdió (ADR 0026)
      *         'propiedades' => list<string>,  // nombres de propiedad(es) que cubre el contrato — puede ser más de una (com_contrato_lotes cruza propiedades)
      *         'aplicaciones_previstas' => int,
      *         'hectareas_contratadas' => string,  // DECIMAL como string (invariante 6)
@@ -1192,7 +1193,7 @@ final class OrdenesController
      * orden ya tiene el suyo, no hace falta serializar todos los del sistema.
      *
      * @param  list<int>|null  $soloContratoIds
-     * @return array<int, array{label: string, cliente: string, logo_url: ?string, propiedades: list<string>, aplicaciones_previstas: int, hectareas_contratadas: string, fecha_inicio: string, fecha_fin: ?string, contactos: list<array{id: int, nombre: string, tipo: string, label: string}>, lotes: list<array{lote_id: int, codigo: string, propiedad: string, hectareas: string, desnivel: ?string, desnivel_label: ?string, limpieza: ?string, limpieza_label: ?string, cultivo: ?string, etapa: ?string, etapa_label: ?string}>, nro_aplicacion_sugerido: int|null, contrato_edit_url: string}>
+     * @return array<int, array{label: string, cliente: string, logo_url: string, propiedades: list<string>, aplicaciones_previstas: int, hectareas_contratadas: string, fecha_inicio: string, fecha_fin: ?string, contactos: list<array{id: int, nombre: string, tipo: string, label: string}>, lotes: list<array{lote_id: int, codigo: string, propiedad: string, hectareas: string, desnivel: ?string, desnivel_label: ?string, limpieza: ?string, limpieza_label: ?string, cultivo: ?string, etapa: ?string, etapa_label: ?string}>, nro_aplicacion_sugerido: int|null, contrato_edit_url: string}>
      */
     private function datosContratoParaFormulario(?array $soloContratoIds = null, bool $soloVigentes = false): array
     {
@@ -1321,20 +1322,13 @@ final class OrdenesController
 
     /**
      * URL pública del logo del cliente (`com_clientes.logo_path`, ruta
-     * relativa del disco `public`) — mismo criterio de resolución que
-     * `Comercial\ContratosController::logoArchivo()`/`ClientesController`
-     * (ADR 0019): `null` sin logo guardado o si el archivo ya no existe en
-     * disco, la vista ya sabe mostrar el ícono de reemplazo.
+     * relativa del disco `public`) — vía {@see ResolverUrlImagenConPlaceholder}
+     * (ADR 0026): nunca `null`, cae al placeholder fijo del repositorio si
+     * no hay logo guardado o si el archivo ya no existe en disco.
      */
-    private function logoUrl(?string $logoPath): ?string
+    private function logoUrl(?string $logoPath): string
     {
-        if ($logoPath === null) {
-            return null;
-        }
-
-        $disco = Storage::disk('public');
-
-        return $disco->exists($logoPath) ? $disco->url($logoPath) : null;
+        return $this->resolverLogo->ejecutar('public', $logoPath);
     }
 
     /**

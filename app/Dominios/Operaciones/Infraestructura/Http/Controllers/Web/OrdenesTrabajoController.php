@@ -3,6 +3,7 @@
 namespace App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Comercial\Contratos\LecturaLotes;
+use App\Dominios\Compartido\Aplicacion\ResolverUrlImagenConPlaceholder;
 use App\Dominios\Finanzas\Contratos\LecturaTarifasPago;
 use App\Dominios\Finanzas\Contratos\ModalidadPago;
 use App\Dominios\Finanzas\Contratos\TarifaPago;
@@ -35,7 +36,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 /**
@@ -79,7 +79,10 @@ final class OrdenesTrabajoController
     /** Solo para OFRECER la tarjeta de cuadrillas en el resumen relacionado de la edición. */
     private const PERMISO_VER_CUADRILLA = 'personal.equipo_trabajo.ver';
 
-    public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
+    public function __construct(
+        private readonly AutorizacionPanelWeb $autorizacion,
+        private readonly ResolverUrlImagenConPlaceholder $resolverLogo,
+    ) {}
 
     public function index(Request $request, ListarOrdenesTrabajo $listarOrdenesTrabajo): View
     {
@@ -655,7 +658,7 @@ final class OrdenesTrabajoController
      * dos consultas para todos los contratos.
      *
      * @param  list<int>  $contratoIds
-     * @return array<int, array{cliente: string, logo_url: string|null, propiedades: list<string>, aplicaciones_previstas: int}>
+     * @return array<int, array{cliente: string, logo_url: string, propiedades: list<string>, aplicaciones_previstas: int}>
      */
     private function contratosParaFormulario(array $contratoIds): array
     {
@@ -675,8 +678,6 @@ final class OrdenesTrabajoController
             ->get(['ccl.contrato_id', 'p.nombre'])
             ->groupBy('contrato_id');
 
-        $disco = Storage::disk('public');
-
         return DB::table('com_contratos as c')
             ->join('com_clientes as cl', 'cl.id', '=', 'c.cliente_id')
             ->whereIn('c.id', $contratoIds)
@@ -684,7 +685,7 @@ final class OrdenesTrabajoController
             ->mapWithKeys(fn (object $fila): array => [
                 (int) $fila->id => [
                     'cliente' => (string) $fila->razon_social,
-                    'logo_url' => $fila->logo_path !== null && $disco->exists($fila->logo_path) ? $disco->url($fila->logo_path) : null,
+                    'logo_url' => $this->resolverLogo->ejecutar('public', $fila->logo_path),
                     'propiedades' => ($propiedades[$fila->id] ?? collect())->pluck('nombre')->map(fn ($nombre) => (string) $nombre)->all(),
                     'aplicaciones_previstas' => (int) $fila->aplicaciones_previstas,
                 ],
