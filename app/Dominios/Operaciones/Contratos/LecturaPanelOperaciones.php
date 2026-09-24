@@ -97,9 +97,22 @@ interface LecturaPanelOperaciones
     /**
      * Alertas por excepción más recientes (HU-19), pendientes primero.
      *
+     * @param  list<int>  $excluirIds  alertas que quien pregunta ya limpió de su
+     *                                 campana: no cuentan para el límite, así una
+     *                                 limpiada no le tapa a una más vieja.
      * @return list<AlertaPanel>
      */
-    public function alertasRecientes(int $limite): array;
+    public function alertasRecientes(int $limite, array $excluirIds = []): array;
+
+    /**
+     * De estos ids, los que son de una alerta que existe. La campana lo usa
+     * antes de guardar qué hizo una cuenta con una alerta: sin esto un id
+     * inventado dejaría un estado huérfano que taparía una alerta futura.
+     *
+     * @param  list<int>  $ids
+     * @return list<int>
+     */
+    public function idsAlertasExistentes(array $ids): array;
 
     /**
      * Minutos de pausa agregados por causa del mes en curso, con TODAS las

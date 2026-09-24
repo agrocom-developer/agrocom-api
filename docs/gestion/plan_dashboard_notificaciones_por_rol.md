@@ -230,13 +230,11 @@ Se hizo completo, los dos casos, sin un tercer guard. Lo que quedó y por qué:
 
 **Decisiones abiertas y límites conocidos**
 
-- **Delegar `ver_como`.** Quien administra la matriz de permisos (el dueño tiene
-  `seguridad.rol.asignar_permiso`) puede otorgar el permiso a cualquier otro rol, y
-  `IniciarVistaComo` solo exige el permiso: no compara a quien mira con la cuenta mirada, así que ese
-  rol podría ver como un `dueno` y leer finanzas. Ninguna siembra lo hace y el pedido solo exigía que
-  no estuviera activo por defecto, así que no se cerró. Si se quiere impedir la delegación, la guarda
-  va en `AsignarPermisosRol` (rechazar este código para todo rol distinto de `admin_plataforma`); si
-  se quiere permitirla con tope, en `IniciarVistaComo`.
+- **Delegar `ver_como` — resuelto (23/9/2026).** `AsignarPermisosRol` rechaza otorgar el permiso a
+  todo rol distinto de `admin_plataforma` (guarda 5; lista en `Dominio/PermisosReservados`) y la
+  matriz lo pinta trabado en esos roles. El dueño nunca pudo otorgarlo (la guarda anti-escalada exige
+  tener el permiso, y no lo tiene): el único camino era el propio administrador de plataforma.
+  Detalle en el ADR 0004, punto 8 de la extensión.
 - **Una vista que muere con la sesión queda sin salida** en la bitácora (arriba). Cerrarla «al
   siguiente ingreso» daría falsos positivos con dos sesiones abiertas. Si algún día importa, el
   camino es guardar el id de sesión en `sec_vistas_como` y cerrar por barrido de sesiones vencidas.

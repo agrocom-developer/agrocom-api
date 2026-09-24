@@ -150,6 +150,8 @@ return [
         'notifications' => 'Notificaciones',
         'no_notifications' => 'Sin notificaciones nuevas',
         'mark_all_read' => 'Marcar todas como leídas',
+        'clear_all' => 'Limpiar',
+        'clear_all_label' => 'Limpiar todas las notificaciones',
         'logout' => 'Cerrar sesión',
     ],
 

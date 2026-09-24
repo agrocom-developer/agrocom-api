@@ -51,12 +51,19 @@ El único evento de dominio con oyente real era `SesionValidada`, escuchado con 
 
    **El dueño no recibe el «trabajo cerrado».** Es el aviso de mayor frecuencia (uno por equipo×lote, varios al día) y su tablero ya muestra el avance; recibirlo lo convertiría en ruido. Si el dueño lo quisiera, es agregar `RolDestinatario::Dueno` a `ReglaTrabajoCerrado`, una línea.
 
+11. **Extensión (23/9/2026): abrir marca leído también en las alertas, y «Limpiar».** Al probar la campana apareció que el clic en una alerta técnica llevaba a `/panel/alertas` pero la dejaba «sin leer» para siempre: el punto 7 las dejó con su ciclo de vida propio (`pendiente → atendida`, de todos), y ese estado no dice si *esta* cuenta ya la vio. Sin tocar el punto 7:
+   - **Estado de lectura por cuenta, en el módulo que ya sabe de cuentas.** Tabla nueva `ntf_alertas_vistas` (`usuario_id`, `alerta_id` sin FK, `leida_en`, `limpiada_en`, `UNIQUE (usuario_id, alerta_id)` no parcial). Es lo que cada cuenta hizo con cada alerta; **no** cambia el estado de la alerta ni la declara atendida. `Notificaciones` sigue sin leer ninguna tabla ajena: pregunta por contrato de Operaciones (`LecturaPanelOperaciones::idsAlertasExistentes()`) qué ids existen, y el estado se escribe siempre bajo el id de la sesión.
+   - **La campana** calcula «sin leer» de una alerta como `pendiente` **y** no leída por esta cuenta, y no muestra las que la cuenta limpió (`alertasRecientes($limite, $excluirIds)` las descuenta antes de aplicar el tope, así una limpiada no tapa a una más vieja). Cada alerta enlaza a `GET /panel/notificaciones/alertas/{alerta}/abrir`, que exige `operaciones.alerta.ver` contra el rol activo, revalida que la alerta exista (404 si no), deja la lectura y redirige a su pantalla. Con la vista «como otro usuario» activa no escribe, igual que `abrir`.
+   - **«Marcar todas como leídas»** marca los avisos del motor de la cuenta **y** las alertas que su campana mostraba. **«Limpiar»** (`POST /panel/notificaciones/limpiar`) vacía la campana de la cuenta, leídas y no leídas: da de baja (soft delete) **todos** sus avisos del motor —no solo los que alcanzan a verse— y deja limpiadas las alertas que mostraba. El índice único no parcial del punto 5 hace que un reintento del evento no los resucite. Ninguna de las dos toca a otra cuenta ni una pantalla: una alerta limpiada sigue en `/panel/alertas`.
+   - **Qué alertas se marcan o limpian** las dice el formulario (`alertas[]`, las que la campana mostraba); el servidor las ignora si el rol activo no puede verlas y descarta las que no existen. Un id inventado nunca deja una fila que taparía una alerta futura.
+   - Fila por fila con `save()`/`delete()`, no con `update()` masivo, para que cada cambio deje su fila de bitácora (invariantes 8 y 9).
+
 ## Alcance: lo que NO es
 
 - No es un canal externo: ni push, ni correo, ni SMS. Vive dentro de la campana del panel.
 - No reemplaza a `ope_alertas` (punto 7) ni a los contadores del menú.
 - No tiene bandeja propia ni preferencias por usuario todavía: la campana muestra lo reciente (las no leídas primero) y permite marcar todo como leído.
-- No hay retención/limpieza de avisos viejos: el volumen es del orden de unidades por evento.
+- No hay retención automática de avisos viejos (el volumen es del orden de unidades por evento): lo que sí hay, desde el punto 11, es que cada cuenta limpia su propia campana a mano.
 
 ## Consecuencias
 
@@ -66,6 +73,9 @@ El único evento de dominio con oyente real era `SesionValidada`, escuchado con 
 - Zona de revisión línea por línea (`CLAUDE.md`, «qué no delegar»): el reparto por rol y el aislamiento entre cuentas — el aviso de una cuenta nunca lo ve otra. La garantía es de código: todo acceso de lectura pasa por `Notificacion::deUsuario()`.
 - Coordinación con la tarea 140 («ver como»): mientras dura una vista como otra cuenta el panel es de solo lectura, y `abrir` escribe `leida_en`. Quien integre las dos debe hacer que `abrir` no marque leído en ese modo.
 
+- El punto 1 («escribe solo `ntf_notificaciones`») queda ampliado: escribe también `ntf_alertas_vistas` (punto 11). `Notificaciones` ahora depende también de `Operaciones\Contratos\LecturaPanelOperaciones`, como ya dependía de otros contratos de Operaciones.
+- Zona de revisión línea por línea (aislamiento entre cuentas): el estado de una cuenta sobre las alertas y su limpieza. Ambos parten de `AlertaVista::deUsuario()` / `Notificacion::deUsuario()` y del id de la sesión; `tests/Unit/NotificacionesLimpiezaTest.php` lo fija con mutaciones.
+
 ## Alternativas descartadas
 
 - **Notificaciones de Laravel (`Notifiable` + tabla `notifications`).** Ya está en `SecUser`, pero solo para el correo de restablecer contraseña. La tabla estándar es polimórfica (`notifiable_type/id`, prohibido entre módulos por el ADR 0011), guarda un JSON sin esquema, no lleva prefijo de módulo ni soft delete ni autoría, y no tiene forma natural de imponer la unicidad que da la idempotencia.
@@ -73,5 +83,8 @@ El único evento de dominio con oyente real era `SesionValidada`, escuchado con 
 - **Que cada evento declare a sus destinatarios** (una interfaz que el evento implemente). Obliga a los módulos de negocio a conocer claves de rol de Seguridad y a depender de `Notificaciones`. Con las reglas dentro del módulo, la dependencia va en un solo sentido.
 - **Un closure por `ServiceProvider`** (el patrón de `SesionValidada`). Correcto para un cálculo propio de un módulo; para un aviso transversal multiplica el mecanismo.
 - **Meter las alertas en el motor** (punto 7).
+- **Marcar la alerta como atendida al abrirla desde la campana.** Cambiaría el estado de todos por lo que hizo una cuenta, y una alerta que nadie atendió dejaría de estar pendiente por un clic de curiosidad. Leída (de esta cuenta) y atendida (de todos) son cosas distintas.
+- **Una columna «leída por» en `ope_alertas`.** Operaciones tendría que conocer cuentas y estado de lectura, que es de `Notificaciones`; y una sola columna no alcanza para un estado que es por cuenta.
+- **Materializar una fila del motor por cuenta al emitir cada alerta** (absorberlas, la alternativa del punto 7 otra vez): resolvería la lectura, pero duplica el ciclo de vida de la alerta o lo tiene que sincronizar. Se guarda solo lo que cada cuenta hizo, y solo cuando lo hizo.
 - **Guardar la URL en el aviso.** Se rompe si cambia una ruta y no sabe de permisos; se guarda el recurso y el destino se resuelve al abrir.
 - **`Compartido` (`plt_`) como dueño.** `Compartido` es plataforma técnica; una regla de «a quién le importa qué hecho» es dominio.

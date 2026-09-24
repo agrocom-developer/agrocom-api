@@ -102,6 +102,9 @@ porqué: ADR 0004, extensión del 23/9/2026. Lo que hay que respetar al tocar se
 - **El permiso se evalúa contra el rol activo** con el que el administrador entró
   (`tienePermisoEnRol`), nunca la unión de sus roles (invariante 10), y se revalida en
   cada request.
+- **No se delega:** `ver_como` está en `Dominio/PermisosReservados`, y `AsignarPermisosRol`
+  rechaza otorgarlo a todo rol que no sea `admin_plataforma` (guarda 5). Un permiso de
+  plataforma nuevo se agrega a esa lista, no al seeder.
 - **La bitácora sale del modelo:** `SecVistaComo` lleva `RegistraBitacora`; la salida
   corre con el guard `interno` siendo el administrador real para que el actor sea él.
 

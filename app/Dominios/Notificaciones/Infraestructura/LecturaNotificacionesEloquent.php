@@ -2,8 +2,10 @@
 
 namespace App\Dominios\Notificaciones\Infraestructura;
 
+use App\Dominios\Notificaciones\Contratos\AlertasDeCuenta;
 use App\Dominios\Notificaciones\Contratos\LecturaNotificaciones;
 use App\Dominios\Notificaciones\Contratos\NotificacionPanel;
+use App\Dominios\Notificaciones\Infraestructura\Eloquent\AlertaVista;
 use App\Dominios\Notificaciones\Infraestructura\Eloquent\Notificacion;
 
 /**
@@ -54,5 +56,15 @@ final class LecturaNotificacionesEloquent implements LecturaNotificaciones
             ))
             ->values()
             ->all();
+    }
+
+    public function alertasDeCuenta(int $usuarioId): AlertasDeCuenta
+    {
+        $filas = AlertaVista::query()->deUsuario($usuarioId)->get(['alerta_id', 'leida_en', 'limpiada_en']);
+
+        return new AlertasDeCuenta(
+            leidas: $filas->whereNotNull('leida_en')->pluck('alerta_id')->map(intval(...))->values()->all(),
+            limpiadas: $filas->whereNotNull('limpiada_en')->pluck('alerta_id')->map(intval(...))->values()->all(),
+        );
     }
 }
