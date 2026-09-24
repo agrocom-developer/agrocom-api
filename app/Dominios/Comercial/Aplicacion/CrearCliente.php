@@ -16,13 +16,13 @@ use Illuminate\Support\Facades\Storage;
  * en la misma transacción — nunca dos requests separados para una sola
  * acción de usuario.
  *
- * `logo` (HU-75, tarea 91; ruta actualizada por ADR 0026): mismo criterio que
- * `GuardarDatosEmpresa` (ADR 0019) — disco `public`, nombre generado por el
- * servidor, bajo `logos/clientes/{cliente_id}/` (carpeta propia por cliente,
- * distinta de `logos/empresa/`: son dueños de dato distintos, y a diferencia
- * de la empresa —fila única— acá hay muchos clientes compartiendo la
- * categoría, así que el id evita que dos logos de clientes distintos puedan
- * chocar de nombre). `logo_path` nunca se asigna vía `fill()`.
+ * `logo` (HU-75, tarea 91; ruta actualizada por ADR 0026): disco `public`,
+ * nombre generado por el servidor, bajo `clientes/{cliente_id}/logos/`
+ * — objeto primero, actividad después (ADR 0026), para que el resto de lo
+ * que un cliente pueda acumular (reportes, respaldos) cuelgue de la misma
+ * carpeta raíz en vez de esparcirse por directorios de actividad separados.
+ * Distinto de `logos/empresa/` de ADR 0019 (fila única, sin id que anidar).
+ * `logo_path` nunca se asigna vía `fill()`.
  *
  * El archivo se sube DESPUÉS del `save()` inicial, no antes: a diferencia
  * de `SecDatosEmpresa` (fila única, sin unicidad que pueda fallar),
@@ -78,7 +78,7 @@ final class CrearCliente
     private function reemplazarLogo(Cliente $cliente, UploadedFile $logo): void
     {
         ['contenido' => $contenido, 'extension' => $extension] = $this->optimizarImagen->ejecutar($logo);
-        $ruta = sprintf('logos/clientes/%d/logo-%d.%s', $cliente->id, now()->timestamp, $extension);
+        $ruta = sprintf('clientes/%d/logos/logo-%d.%s', $cliente->id, now()->timestamp, $extension);
 
         Storage::disk('public')->put($ruta, $contenido);
 
