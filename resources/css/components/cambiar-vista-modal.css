@@ -1,0 +1,223 @@
+/*
+ * Organism: modal «Cambiar vista» del dashboard
+ * (app/Dominios/Seguridad/Infraestructura/Http/Views/pages/dashboard/
+ * _modal-cambiar-vista.blade.php) — selector con buscador + candidatas
+ * agrupadas por `molecules/section-head`. Cero color/tamaño hardcodeado,
+ * todo por token (CLAUDE.md invariante 11).
+ */
+
+/* Punto 2 del pedido del dueño (23/9/2026): más ancho que el `modal-dialog`
+ * default en cualquier pantalla (la fila con avatar necesita más aire), pero
+ * el ancho de `.modal-lg` de Bootstrap (800px) recién desde `xxl` — no el
+ * quiebre `lg` (992px) que usa Bootstrap por defecto, que en una pantalla de
+ * escritorio angosta ya deja hueco vacío a los costados. */
+.ag-cambiar-vista__dialog {
+    max-width: min(92vw, 640px);
+}
+
+@media (min-width: 1400px) {
+    .ag-cambiar-vista__dialog {
+        max-width: 800px;
+    }
+}
+
+.ag-cambiar-vista__subtitulo {
+    margin: 0;
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-cambiar-vista__lista {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+    margin-top: var(--ag-space-4);
+}
+
+.ag-cambiar-vista__opciones {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ag-cambiar-vista__opcion {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    width: 100%;
+    padding: var(--ag-space-2) var(--ag-space-3);
+    border: 1px solid transparent;
+    border-radius: var(--ag-radius-md);
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+}
+
+.ag-cambiar-vista__opcion:hover,
+.ag-cambiar-vista__opcion:focus-visible {
+    background-color: var(--ag-color-bg-row-hover);
+    border-color: var(--ag-color-border);
+}
+
+/* Punto 3: mismo tratamiento que `.ag-topbar__avatar` (círculo de
+ * iniciales), tokens propios para no depender de topbar.css.
+ *
+ * Color por ROL (pedido del dueño, 28/9/2026): antes de esta vuelta
+ * cualquier cuenta interna —sin importar el rol— salía con el mismo verde
+ * de marca (`--ag-color-primary`), y solo la cuenta de portal se distinguía
+ * (tono `info`). Se pidió un color reconocible POR ROL, para saber de un
+ * vistazo con qué vas a entrar antes de confirmar.
+ *
+ * Esto es identidad visual ACOTADA a este modal, no un token de plataforma
+ * nuevo: cada clase de abajo referencia un `--ag-color-*` SEMÁNTICO que ya
+ * existe en `tokens/semantic/theme-*.css` (invariante 11 — nunca un hex
+ * suelto acá), pero no se agrega ningún token nuevo a esa capa ni se
+ * declara un "color de rol" reutilizable fuera de este archivo — si mañana
+ * `role-card`/`topbar`/`Usuarios` necesitan lo mismo, es una decisión
+ * aparte, no una consecuencia automática de esto.
+ *
+ * Elegidos evitando los tonos ya cargados de significado en las máquinas de
+ * estado de Contrato/Orden/Trabajo (`success`=vigente/validado,
+ * `warning`=pausada/pendiente, `danger`=cancelada/rechazada, `info`=teal ya
+ * usado además por `pausado`/`consumida`/`cerrado`) — ver
+ * `PasosDeContrato::TONO_POR_ESTADO`/`PasosDeOrden::TONO_POR_ESTADO`/
+ * `PasosDeTrabajo::TONO_POR_ESTADO`. `distintivo-1` (violeta) y `primary-2`
+ * (azul acero) son los dos tonos semánticos MENOS cargados (solo aparecen
+ * como color de ícono de un link-row, nunca como estado real todavía); el
+ * verde de marca (`primary`) y el ámbar de marca (`accent`) son los dos
+ * colores de identidad de Agrocom. `distintivo-2` (magenta) queda para
+ * `auxiliar` — es el único de los seis con un uso de estado real
+ * (`finalizado` de Contrato), aceptado porque un avatar de este modal y un
+ * chip de estado de contrato no conviven nunca en la misma pantalla.
+ *
+ * Séptimo caso, `dueno` (26/9/2026 — rol de negocio, distinto de
+ * `admin_plataforma`, que es técnico): agotados los seis semánticos
+ * distinguibles sin carga de estado (`distintivo-3` resuelve al MISMO
+ * teal-500 que `info`/portal; `success`/`warning` repiten literalmente el
+ * tono de `primary`/`accent`; `danger`/`alert` son el rojo de
+ * cancelada/rechazada). No hay un octavo semántico libre — se arma un
+ * séptimo tono con `color-mix()` de dos tokens SEMÁNTICOS ya existentes
+ * (nunca un primitivo de `primitives/*.css` directo, ni acá ni en ningún
+ * componente — regla de `tokens/index.css`): la mitad de `--ag-color-accent`
+ * (el acento de marca, ya usado crudo por `encargado_operaciones`) y la
+ * mitad de `--ag-color-bg-rail-active` (neutro oscuro de marca — olive-900,
+ * hoy fondo del ítem activo del riel de módulos) da un bronce/ocre oscuro —
+ * distinto a simple vista del ámbar vivo de `encargado_operaciones` y de los
+ * otros seis, y constante entre temas (los dos semánticos que se mezclan ya
+ * resuelven al MISMO primitivo en `theme-light.css` y `theme-dark.css`, no
+ * se reasignan por `[data-bs-theme]`). Contraste con texto blanco ≈6.1:1, AA
+ * de sobra.
+ *
+ * Memoria del proyecto (`color-estado-seleccion-vs-etiquetas`,
+ * `tonos-de-estado-no-se-reeligen`): acá NO hay eje de "seleccionado" en
+ * disputa (el hover/foco de `.ag-cambiar-vista__opcion` usa
+ * `--ag-color-bg-row-hover`, neutro, no verde) — el ámbar de
+ * `encargado_operaciones` no compite con ninguna señal de selección de
+ * este modal, a diferencia del caso ya descartado en `role-card__perm`. */
+.ag-cambiar-vista__opcion-avatar {
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ag-color-primary);
+    color: var(--ag-color-primary-contrast);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+/* admin_plataforma: rara vez aparece como candidato (es quien ya opera),
+ * cubierto igual — mismo verde que el default de arriba, a propósito: es el
+ * rol "base"/plataforma, coincide con lo que ya se veía antes de esta
+ * vuelta. */
+.ag-cambiar-vista__opcion-avatar--admin-plataforma {
+    background: var(--ag-color-primary);
+    color: var(--ag-color-primary-contrast);
+}
+
+/* dueno: rol de NEGOCIO (dueño real de Agrocom SRL), distinto de
+ * admin_plataforma (rol técnico) — no puede compartir su verde. Bronce/ocre
+ * oscuro armado con color-mix() de dos tokens semánticos de marca (ver el
+ * comentario extenso arriba de `.ag-cambiar-vista__opcion-avatar`), no un
+ * semantic único existente: los ocho semánticos ya estaban repartidos o
+ * cargados de estado. */
+.ag-cambiar-vista__opcion-avatar--dueno {
+    background: color-mix(in srgb, var(--ag-color-accent) 50%, var(--ag-color-bg-rail-active) 50%);
+    color: var(--ag-color-gray-0);
+}
+
+/* encargado_operaciones: ámbar de marca — el segundo color de identidad de
+ * Agrocom, para el rol de mayor jerarquía operativa. Texto con el token
+ * pensado específicamente para relleno sólido de acento (blanco puro falla
+ * AA contra ámbar-700, ver theme-light.css), no `--ag-color-gray-0`. */
+.ag-cambiar-vista__opcion-avatar--encargado-operaciones {
+    background: var(--ag-color-accent);
+    color: var(--ag-color-accent-contrast-fill);
+}
+
+/* jefe_campo: violeta — tono categórico, sin carga de estado en ninguna
+ * máquina de estados del sistema hoy. */
+.ag-cambiar-vista__opcion-avatar--jefe-campo {
+    background: var(--ag-color-distintivo-1-contrast-fill);
+    color: var(--ag-color-gray-0);
+}
+
+/* piloto: azul acero — mismo criterio que jefe_campo (tono sin carga de
+ * estado real todavía). */
+.ag-cambiar-vista__opcion-avatar--piloto {
+    background: var(--ag-color-primary-2-contrast-fill);
+    color: var(--ag-color-gray-0);
+}
+
+/* auxiliar ("Ayudante" en el panel, la clave interna sigue siendo
+ * `auxiliar`): magenta — único de los seis con un uso de estado real
+ * (`finalizado` de Contrato), aceptado por no convivir nunca con este
+ * modal en la misma pantalla. */
+.ag-cambiar-vista__opcion-avatar--auxiliar {
+    background: var(--ag-color-distintivo-2-contrast-fill);
+    color: var(--ag-color-gray-0);
+}
+
+/* Portal (cliente): sin cambios de esta vuelta — mismo tono `info` que ya
+ * distinguía este caso antes del pedido de color por rol. */
+.ag-cambiar-vista__opcion-avatar--portal {
+    background: var(--ag-color-info-contrast-fill);
+    color: var(--ag-color-gray-0);
+}
+
+.ag-cambiar-vista__opcion-texto {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.ag-cambiar-vista__opcion-nombre {
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text);
+}
+
+.ag-cambiar-vista__opcion-username {
+    color: var(--ag-color-text-muted);
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
+}
+
+.ag-cambiar-vista__opcion-detalle {
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+}
+
+/* Puntos 1 y 4: forms que nunca se ven (solo llevan el token CSRF o, cuando
+ * corresponde, el rol_id oculto) — display:none los saca del flujo de
+ * `.ag-dash` (flex en columna con gap), que si no cuenta cada uno como
+ * item y acumula el hueco vacío reportado el 23/9/2026. El botón los sigue
+ * enviando igual: el atributo HTML `form` no depende de que el form sea
+ * visible. */
+.ag-cambiar-vista__form-envio {
+    display: none;
+}

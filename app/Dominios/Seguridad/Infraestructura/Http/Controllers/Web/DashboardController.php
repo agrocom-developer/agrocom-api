@@ -3,6 +3,7 @@
 namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Seguridad\Aplicacion\ArmarDashboard;
+use App\Dominios\Seguridad\Aplicacion\ListarCandidatosVerComo;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
@@ -31,11 +32,14 @@ final class DashboardController
 {
     private const PERMISO_VER = 'seguridad.dashboard.ver';
 
+    private const PERMISO_VER_COMO = 'seguridad.usuario.ver_como';
+
     public function index(
         Request $request,
         AutorizacionPanelWeb $autorizacion,
         CascaraPanel $cascara,
         ArmarDashboard $armarDashboard,
+        ListarCandidatosVerComo $listarCandidatosVerComo,
     ): View {
         abort_unless($autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
@@ -55,11 +59,19 @@ final class DashboardController
         $rolActivo = $roles->firstWhere('id', $idRolActivo);
         $rolClave = $rolActivo->name ?? '';
 
+        // Acceso directo a «ver como» (botón junto al chip de rol activo del
+        // encabezado): mismo permiso reservado que ya gatea el flujo desde
+        // Seguridad → Usuarios, revalidado acá porque el chip es otra
+        // pantalla — nunca se confía en el estado de una vista anterior.
+        $puedeVerComo = $autorizacion->tienePermiso($request, self::PERMISO_VER_COMO);
+
         return view('seguridad::pages.dashboard', [
             ...$datosCascara,
             ...$armarDashboard->ejecutar($usuario, $idRolActivo),
             'tabs' => $armarDashboard->tabsPara($rolClave),
             'tecnico' => $armarDashboard->esTecnico($rolClave),
+            'puedeVerComo' => $puedeVerComo,
+            'candidatosVerComo' => $puedeVerComo ? $listarCandidatosVerComo->ejecutar($usuario) : null,
         ]);
     }
 }

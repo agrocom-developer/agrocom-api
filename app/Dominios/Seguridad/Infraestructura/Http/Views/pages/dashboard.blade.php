@@ -19,7 +19,12 @@
     agrupamiento en pestañas, ya resuelto por rol activo — acá solo se decide
     si cada tab tiene contenido (alguna de sus claves cayó en `visibles`).
     `tecnico` (bool, tarea 139): el rol activo no es del negocio, así que el
-    encabezado no habla de operación ni de planilla.
+    encabezado no habla de operación ni de planilla. `puedeVerComo` (bool) y
+    `candidatosVerComo` (array|null, forma de ListarCandidatosVerComo::ejecutar()):
+    el botón «Cambiar vista» del encabezado y su modal solo se pintan con el
+    permiso `seguridad.usuario.ver_como` — mismo permiso reservado del flujo
+    ya existente en Seguridad → Usuarios, este es otro punto de entrada al
+    mismo POST, no una función nueva.
 --}}
 @php
     $tabs = collect($tabs)
@@ -42,7 +47,15 @@
         :vista-actual="__('seguridad.dashboard.tab_resumen')"
     >
         <div class="ag-dash">
-            @include('seguridad::pages.dashboard._encabezado', ['rol' => $activeRoleLabel, 'tecnico' => $tecnico])
+            @include('seguridad::pages.dashboard._encabezado', [
+                'rol' => $activeRoleLabel,
+                'tecnico' => $tecnico,
+                'puedeVerComo' => $puedeVerComo,
+            ])
+
+            @if ($puedeVerComo && $candidatosVerComo !== null)
+                @include('seguridad::pages.dashboard._modal-cambiar-vista', ['candidatos' => $candidatosVerComo])
+            @endif
 
             @if ($tabs->isEmpty())
                 @include('seguridad::pages.dashboard._sin-secciones')
