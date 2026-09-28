@@ -791,7 +791,7 @@ return [
 
         'accion' => 'Ver como',
         'modal_titulo' => 'Ver como :nombre',
-        'modal_mensaje_interno' => 'Verás el panel tal como lo ve esta cuenta con el rol que elijas. Es solo lectura: no podrás crear, editar ni eliminar nada, y la entrada y la salida quedan en la bitácora.',
+        'modal_mensaje_interno' => 'Verás el panel tal como lo ve esta cuenta. Es solo lectura: no podrás crear, editar ni eliminar nada, y la entrada y la salida quedan en la bitácora.',
         'modal_mensaje_portal' => 'Verás el portal tal como lo ve esta cuenta, solo con su contrato. Es solo lectura, y la entrada y la salida quedan en la bitácora.',
         'modal_confirmar' => 'Ver como esta cuenta',
         'campo_rol' => 'Rol con el que verla',

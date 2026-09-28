@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Aplicacion;
 
+use App\Dominios\Comercial\Contratos\LecturaContrato;
 use App\Dominios\Seguridad\Dominio\TipoUsuario;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use Illuminate\Support\Collection;
@@ -21,11 +22,15 @@ use Illuminate\Support\Facades\Lang;
  */
 final class ListarCandidatosVerComo
 {
+    public function __construct(
+        private readonly LecturaContrato $lecturaContrato,
+    ) {}
+
     /**
      * @return array{
-     *     grupos: list<array{clave: string, nombre: string, usuarioIds: list<int>}>,
+     *     grupos: list<array{clave: string, nombre: string, idRol: int, usuarioIds: list<int>}>,
      *     portalIds: list<int>,
-     *     usuarios: array<int, array{nombre: string, username: string, esPortal: bool, roles: array<int, string>}>,
+     *     usuarios: array<int, array{nombre: string, username: string, esPortal: bool, roles: array<int, string>, detalle: string|null}>,
      * }
      */
     public function ejecutar(SecUser $admin): array
@@ -43,7 +48,7 @@ final class ListarCandidatosVerComo
             ->whereNotNull('contrato_id')
             ->where('id', '!=', $admin->id)
             ->orderBy('name')
-            ->get(['id', 'name', 'username']);
+            ->get(['id', 'name', 'username', 'contrato_id']);
 
         $rolesPorUsuario = $this->rolesVivosPorUsuario($internos->pluck('id')->all());
 
@@ -63,6 +68,7 @@ final class ListarCandidatosVerComo
                 'username' => $usuario->username,
                 'esPortal' => false,
                 'roles' => $roles,
+                'detalle' => null,
             ];
         }
 
@@ -74,6 +80,9 @@ final class ListarCandidatosVerComo
                 'username' => $cuenta->username,
                 'esPortal' => true,
                 'roles' => [],
+                'detalle' => $cuenta->contrato_id !== null
+                    ? $this->lecturaContrato->obtenerResumen($cuenta->contrato_id)?->clienteNombre
+                    : null,
             ];
         }
 
@@ -124,7 +133,7 @@ final class ListarCandidatosVerComo
      * roles cuenta en cada uno).
      *
      * @param  array<int, array<int, string>>  $rolesPorUsuario  `id de usuario => [id de rol => nombre legible]`
-     * @return list<array{clave: string, nombre: string, usuarioIds: list<int>}>
+     * @return list<array{clave: string, nombre: string, idRol: int, usuarioIds: list<int>}>
      */
     private function gruposDeRoles(array $rolesPorUsuario): array
     {
@@ -157,6 +166,7 @@ final class ListarCandidatosVerComo
             $grupos[] = [
                 'clave' => $rol->name,
                 'nombre' => $this->nombreLegibleRol($rol->name),
+                'idRol' => (int) $rol->id,
                 'usuarioIds' => $usuarioIds,
             ];
         }

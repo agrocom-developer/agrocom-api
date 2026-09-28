@@ -3,8 +3,10 @@
  * vista» del dashboard (resources/views/components/../pages/dashboard/
  * _modal-cambiar-vista.blade.php). No abre la vista por sí mismo: eso lo
  * hace el form+confirm-modal por cuenta que ya existe, POST a
- * `panel.usuarios.ver-como` — este archivo solo filtra la lista y encadena
- * el cierre de este modal con la apertura del de confirmación elegido.
+ * `panel.usuarios.ver-como` — este archivo filtra la lista, escribe en el
+ * campo oculto `rol_id` del modal de confirmación el rol del grupo que se
+ * clickeó (cuando la cuenta tiene más de uno) y encadena el cierre de este
+ * modal con la apertura del de confirmación elegido.
  *
  * Dos modales de Bootstrap abiertos a la vez duplican backdrop y foco, así
  * que el encadenamiento espera a que este termine de cerrar
@@ -92,6 +94,16 @@ document.addEventListener('click', (evento) => {
 
     if (!elementoDestino || !modalSelector || !Modal) {
         return;
+    }
+
+    // El selector ya agrupó por rol: la fila que se clickeó dice CUÁL, así
+    // que el modal de confirmación no vuelve a preguntarlo (23/9/2026). Sin
+    // `data-ag-cambiar-vista-rol-id` (cuenta de un solo rol, o de portal) no
+    // hay campo oculto que llenar — `IniciarVistaComo` resuelve el rol solo.
+    const campoRol = elementoDestino.querySelector('[data-ag-cambiar-vista-rol-input]');
+
+    if (campoRol) {
+        campoRol.value = disparador.dataset.agCambiarVistaRolId ?? '';
     }
 
     modalSelector.addEventListener(
