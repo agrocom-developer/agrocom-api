@@ -131,7 +131,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'altura_vuelo_m', description: 'Efectivo. Sin default del sistema: null si la Orden de Trabajo no lo trae.', type: 'string', example: '3.00', nullable: true),
         new OA\Property(property: 'velocidad_vuelo_kmh', description: 'Efectivo. Sin default del sistema: null si la Orden de Trabajo no lo trae.', type: 'string', example: '18.00', nullable: true),
         new OA\Property(property: 'ancho_pasada_m', description: 'Efectivo. Sin default del sistema: null si la Orden de Trabajo no lo trae.', type: 'string', example: '7.00', nullable: true),
-        new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2026-09-13T12:00:00+00:00'),
+        new OA\Property(property: 'updated_at', description: 'Última modificación del trabajo O de su Orden de Trabajo, la más reciente: editar (o dar de baja) la Orden de Trabajo cambia los límites efectivos y vuelve a entregar sus trabajos en el pull incremental siguiente. Es la posición del cursor de esta sección.', type: 'string', format: 'date-time', example: '2026-09-13T12:00:00+00:00'),
     ],
     type: 'object',
 )]
