@@ -401,7 +401,7 @@ paths:
       tags:
         - Operaciones
       summary: 'Descarga el reporte técnico de un trabajo'
-      description: 'Descarga el reporte técnico de un trabajo, ya generado por la firma de su acta de conformidad (HU-17/HU-18) — nunca lo regenera. `404` si el trabajo no existe o todavía no tiene reporte (acta sin firmar).'
+      description: 'Descarga el reporte técnico de un trabajo, ya generado por la firma de su acta de conformidad (HU-17/HU-18) — nunca crea la fila. `404` si el trabajo no existe o todavía no tiene reporte (acta sin firmar). Si el archivo físico se perdió, lo reconstruye antes de responder.'
       operationId: descargarReporteTecnico
       parameters:
         -
@@ -858,7 +858,7 @@ components:
       type: object
     OrdenAplicacion:
       title: 'Orden de aplicación'
-      description: 'Orden de aplicación emitida por el cliente, cubriendo uno o varios lotes de la propiedad (espec §4.3, ampliada HU-92 tarea 107). Los valores DECIMAL (dosis, límites climáticos y de vuelo) viajan como string. Los límites en null heredan del contrato o del parámetro por defecto del sistema (RF-60).'
+      description: 'Una aplicación completa de un contrato: cubre TODOS los lotes del contrato (espec §4.3, ADR 0022). Los valores DECIMAL (dosis) viajan como string. Los límites climáticos y parámetros de vuelo ya no viajan acá: son del trabajo (equipo↔lote), ver el catálogo de sincronización.'
       required:
         - id
         - contrato_id
@@ -866,14 +866,6 @@ components:
         - nro_aplicacion
         - litros_ha
         - kilos_por_vuelo
-        - humedad_min_pct
-        - viento_max_kmh
-        - temperatura_max_c
-        - humedad_max_pct
-        - velocidad_max_kmh
-        - altura_vuelo_m
-        - velocidad_vuelo_kmh
-        - ancho_pasada_m
         - observaciones
         - emitida_por_contacto_id
         - fecha_emision
@@ -890,12 +882,12 @@ components:
           type: integer
           example: 1
         lotes:
-          description: 'Lotes que cubre la orden (módulo Comercial, solo ID) con las hectáreas solicitadas a cada uno. Desde ADR 0022 es la copia automática, tomada al emitir la orden, de TODOS los lotes del contrato.'
+          description: 'Lotes que cubre la orden (módulo Comercial, solo ID): copia automática, tomada al emitirla, de todos los lotes del contrato con las hectáreas completas de cada uno.'
           type: array
           items:
             $ref: '#/components/schemas/LoteDeOrdenCatalogo'
         nro_aplicacion:
-          description: 'Número de aplicación dentro del contrato (1..n): correlativo, lo calcula el servidor (ADR 0022).'
+          description: 'Número de aplicación dentro del contrato (1..n), correlativo y calculado por el servidor: una cancelada por fuerza mayor no consume su número.'
           type: integer
           example: 1
         litros_ha:
@@ -907,46 +899,6 @@ components:
           description: 'Dosis en kilos por vuelo (insumo sólido). DECIMAL como string; null si la categoría de insumo es líquida (HU-79, tarea 110).'
           type: string
           example: '8.50'
-          nullable: true
-        humedad_min_pct:
-          description: 'Humedad relativa mínima para aplicar (%). DECIMAL como string; null hereda.'
-          type: string
-          example: '60.00'
-          nullable: true
-        viento_max_kmh:
-          description: 'Viento máximo para aplicar (km/h). DECIMAL como string; null hereda.'
-          type: string
-          example: '15.00'
-          nullable: true
-        temperatura_max_c:
-          description: 'Temperatura máxima para aplicar (°C). DECIMAL como string; null hereda.'
-          type: string
-          example: '32.00'
-          nullable: true
-        humedad_max_pct:
-          description: 'Humedad relativa máxima para aplicar (%). DECIMAL como string; null hereda.'
-          type: string
-          example: '90.00'
-          nullable: true
-        velocidad_max_kmh:
-          description: 'Velocidad máxima del equipo (km/h). DECIMAL como string; null hereda.'
-          type: string
-          example: '25.00'
-          nullable: true
-        altura_vuelo_m:
-          description: 'Altura de vuelo indicada (m). DECIMAL como string; null hereda.'
-          type: string
-          example: '3.00'
-          nullable: true
-        velocidad_vuelo_kmh:
-          description: 'Velocidad de vuelo indicada (km/h). DECIMAL como string; null hereda.'
-          type: string
-          example: '18.00'
-          nullable: true
-        ancho_pasada_m:
-          description: 'Ancho de pasada indicado (m). DECIMAL como string; null hereda.'
-          type: string
-          example: '7.00'
           nullable: true
         observaciones:
           description: 'Observaciones libres del emisor.'
@@ -964,7 +916,7 @@ components:
           format: date
           example: '2026-08-26'
         estado:
-          description: 'Estado de la orden (espec §5, ADR 0022: emitida → vigente; vigente → pausada | consumida | cancelada; pausada → vigente | cancelada; consumida, cancelada y vencida sin salida). La app de campo nunca pausa, cierra ni cancela una orden: son transiciones exclusivas del panel.'
+          description: 'Estado de la orden (espec §5, ADR 0022): emitida → vigente ⇄ pausada; vigente → consumida (cierre manual) o cancelada (con causa y motivo, decisión del panel). La app de campo solo recibe las vigentes y nunca pausa, cierra ni cancela.'
           type: string
           enum:
             - emitida
@@ -1072,7 +1024,7 @@ components:
       type: object
     LoteDeOrdenCatalogo:
       title: 'Lote de una orden (catálogo)'
-      description: 'Uno de los lotes que cubre una orden, con las hectáreas que le pidió a ESE lote (HU-92, tarea 107 — una orden puede cubrir varios lotes de la propiedad). Desde ADR 0022 (19/9/2026) la lista `lotes` de una orden es la copia automática, tomada al emitirla, de TODOS los lotes del contrato, y `hectareas_solicitadas` son las hectáreas completas de cada lote; ya no se eligen lotes ni hectáreas por orden. DECIMAL como string (invariante 6).'
+      description: 'Uno de los lotes que cubre una orden, con las hectáreas que le pidió a ESE lote (HU-92, tarea 107 — una orden puede cubrir varios lotes de la propiedad). DECIMAL como string (invariante 6).'
       required:
         - lote_id
         - hectareas_solicitadas
@@ -1088,7 +1040,7 @@ components:
       type: object
     OrdenCatalogo:
       title: 'Orden de aplicación (catálogo)'
-      description: 'Orden vigente para el pull de catálogo (espec §4.3, ampliada HU-92 tarea 107: `lotes` reemplaza el `lote_id` único de antes, y desde ADR 0022 es la copia automática de todos los lotes del contrato; HU-79 tarea 110: `litros_ha`/`kilos_por_vuelo` son mutuamente excluyentes según la categoría de insumo). Solo se entregan órdenes `vigente`: la app no se entera de una orden pausada, cancelada o cerrada (pendiente conocido, ADR 0022). Los DECIMAL viajan como string (invariante 6).'
+      description: 'Orden vigente para el pull de catálogo (espec §4.3, ampliada HU-92 tarea 107: `lotes` reemplaza el `lote_id` único de antes; HU-79 tarea 110: `litros_ha`/`kilos_por_vuelo` son mutuamente excluyentes según la categoría de insumo). Los DECIMAL viajan como string (invariante 6). Los límites climáticos y parámetros de vuelo YA NO viajan acá (migración `2026_09_18_100001_mueve_clima_vuelo_de_ordenes_a_trabajos_table`): son del trabajo (equipo↔lote), ver `TrabajoCatalogo`.'
       required:
         - id
         - contrato_id
@@ -1096,14 +1048,6 @@ components:
         - nro_aplicacion
         - litros_ha
         - kilos_por_vuelo
-        - humedad_min_pct
-        - viento_max_kmh
-        - temperatura_max_c
-        - humedad_max_pct
-        - velocidad_max_kmh
-        - altura_vuelo_m
-        - velocidad_vuelo_kmh
-        - ancho_pasada_m
         - observaciones
         - emitida_por_contacto_id
         - fecha_emision
@@ -1132,38 +1076,6 @@ components:
           description: 'Dosis en kilos por vuelo (insumo sólido); null si la categoría es líquida.'
           type: string
           example: '8.50'
-          nullable: true
-        humedad_min_pct:
-          type: string
-          example: '60.00'
-          nullable: true
-        viento_max_kmh:
-          type: string
-          example: '15.00'
-          nullable: true
-        temperatura_max_c:
-          type: string
-          example: '32.00'
-          nullable: true
-        humedad_max_pct:
-          type: string
-          example: '90.00'
-          nullable: true
-        velocidad_max_kmh:
-          type: string
-          example: '25.00'
-          nullable: true
-        altura_vuelo_m:
-          type: string
-          example: '3.00'
-          nullable: true
-        velocidad_vuelo_kmh:
-          type: string
-          example: '18.00'
-          nullable: true
-        ancho_pasada_m:
-          type: string
-          example: '7.00'
           nullable: true
         observaciones:
           type: string
@@ -1256,7 +1168,7 @@ components:
       type: object
     TrabajoCatalogo:
       title: 'Trabajo asignado desde el panel (catálogo)'
-      description: 'Trabajo abierto por el jefe de campo al repartir una orden vigente entre equipos (HU-70, tarea 85) — nunca los que nacen por sync (`equipo_trabajo_id` siempre presente acá). `uuid_cliente` es el que generó el panel al confirmar la asignación: la app lo usa TAL CUAL para abrir sesiones sobre este trabajo. `hectareas_declaradas` es DECIMAL como string (invariante 6).'
+      description: 'Trabajo abierto por el jefe de campo al repartir una orden vigente entre equipos (HU-70, tarea 85) — nunca los que nacen por sync (`equipo_trabajo_id` siempre presente acá). `uuid_cliente` es el que generó el panel al confirmar la asignación: la app lo usa TAL CUAL para abrir sesiones sobre este trabajo. `hectareas_declaradas` es DECIMAL como string (invariante 6). Los 7 campos de límites climáticos y parámetros de vuelo llegaron acá desde `OrdenCatalogo` (migración `2026_09_18_100001_mueve_clima_vuelo_de_ordenes_a_trabajos_table`): son condiciones de la tanda (Orden de Trabajo) de ESTE equipo, y viajan con su valor EFECTIVO ya resuelto (`Operaciones\Dominio\LimitesEfectivos`): el de la Orden de Trabajo o, si quedó en blanco, el parámetro por defecto del sistema. El contrato no es un nivel de esa herencia (HU-91). `viento_max_kmh`, `temperatura_max_c` y `humedad_max_pct` siempre traen valor (defaults 17.00, 30.00 y 90.00). `humedad_min_pct`, `altura_vuelo_m`, `velocidad_vuelo_kmh` y `ancho_pasada_m` no tienen default del sistema: llegan `null` si la Orden de Trabajo no los trae, y la app no debe aplicar ese límite.'
       required:
         - id
         - uuid_cliente
@@ -1264,6 +1176,13 @@ components:
         - lote_id
         - hectareas_declaradas
         - equipo_trabajo_id
+        - humedad_min_pct
+        - viento_max_kmh
+        - temperatura_max_c
+        - humedad_max_pct
+        - altura_vuelo_m
+        - velocidad_vuelo_kmh
+        - ancho_pasada_m
         - updated_at
       properties:
         id:
@@ -1284,6 +1203,38 @@ components:
         equipo_trabajo_id:
           type: integer
           example: 7
+        humedad_min_pct:
+          description: 'Efectivo. Sin default del sistema: null si la Orden de Trabajo no lo trae.'
+          type: string
+          example: '60.00'
+          nullable: true
+        viento_max_kmh:
+          description: 'Efectivo: el de la Orden de Trabajo o el default del sistema (17.00). Nunca null.'
+          type: string
+          example: '15.00'
+        temperatura_max_c:
+          description: 'Efectivo: el de la Orden de Trabajo o el default del sistema (30.00). Nunca null.'
+          type: string
+          example: '32.00'
+        humedad_max_pct:
+          description: 'Efectivo: el de la Orden de Trabajo o el default del sistema (90.00). Nunca null.'
+          type: string
+          example: '90.00'
+        altura_vuelo_m:
+          description: 'Efectivo. Sin default del sistema: null si la Orden de Trabajo no lo trae.'
+          type: string
+          example: '3.00'
+          nullable: true
+        velocidad_vuelo_kmh:
+          description: 'Efectivo. Sin default del sistema: null si la Orden de Trabajo no lo trae.'
+          type: string
+          example: '18.00'
+          nullable: true
+        ancho_pasada_m:
+          description: 'Efectivo. Sin default del sistema: null si la Orden de Trabajo no lo trae.'
+          type: string
+          example: '7.00'
+          nullable: true
         updated_at:
           type: string
           format: date-time

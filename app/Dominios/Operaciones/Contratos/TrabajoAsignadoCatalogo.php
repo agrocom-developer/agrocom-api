@@ -17,9 +17,12 @@ namespace App\Dominios\Operaciones\Contratos;
  * (`humedadMinPct`...`anchoPasadaM`) llegaron acá desde
  * `OrdenAplicacionCatalogo` (migración
  * `2026_09_18_100001_mueve_clima_vuelo_de_ordenes_a_trabajos_table`):
- * describen el vuelo que ejecuta ESTE equipo, no la orden completa — todos
- * `?string` (`nullable`, invariante 6 de CLAUDE.md), `null` cuando el jefe
- * de campo no los completó al asignar. Coherente con que esta clase ya
+ * describen el vuelo que ejecuta ESTE equipo, no la orden completa. Viajan
+ * EFECTIVOS (`Dominio/LimitesEfectivos`, 1/10/2026): el de la Orden de
+ * Trabajo o, en blanco, el default del sistema. Viento, temperatura y
+ * humedad máxima siempre tienen valor; humedad mínima, altura, velocidad y
+ * ancho de pasada no tienen default y quedan `null` si la Orden de Trabajo
+ * no los trae. DECIMAL como string (invariante 6). Coherente con que esta clase ya
  * filtra `whereNotNull('equipo_trabajo_id')` (solo los `Trabajo` nacidos de
  * `abrirPorAsignacion()`): son los únicos que tiene sentido mostrarle al
  * piloto antes del vuelo.
@@ -34,9 +37,9 @@ final readonly class TrabajoAsignadoCatalogo
         public string $hectareasDeclaradas,
         public int $equipoTrabajoId,
         public ?string $humedadMinPct,
-        public ?string $vientoMaxKmh,
-        public ?string $temperaturaMaxC,
-        public ?string $humedadMaxPct,
+        public string $vientoMaxKmh,
+        public string $temperaturaMaxC,
+        public string $humedadMaxPct,
         public ?string $alturaVueloM,
         public ?string $velocidadVueloKmh,
         public ?string $anchoPasadaM,

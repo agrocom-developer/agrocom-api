@@ -4,6 +4,7 @@ namespace App\Dominios\Operaciones\Infraestructura;
 
 use App\Dominios\Operaciones\Contratos\LecturaTrabajosAsignados;
 use App\Dominios\Operaciones\Contratos\TrabajoAsignadoCatalogo;
+use App\Dominios\Operaciones\Dominio\LimitesEfectivos;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
@@ -40,22 +41,44 @@ final class LecturaTrabajosAsignadosEloquent implements LecturaTrabajosAsignados
             ->orderBy('id')
             ->limit($limite)
             ->get()
-            ->map(fn (Trabajo $trabajo): TrabajoAsignadoCatalogo => new TrabajoAsignadoCatalogo(
-                id: $trabajo->id,
-                uuidCliente: $trabajo->uuid_cliente,
-                ordenId: $trabajo->orden_id,
-                loteId: $trabajo->lote_id,
-                hectareasDeclaradas: $trabajo->hectareas_declaradas,
-                equipoTrabajoId: (int) $trabajo->equipo_trabajo_id,
-                humedadMinPct: $trabajo->ordenTrabajo?->humedad_min_pct,
-                vientoMaxKmh: $trabajo->ordenTrabajo?->viento_max_kmh,
-                temperaturaMaxC: $trabajo->ordenTrabajo?->temperatura_max_c,
-                humedadMaxPct: $trabajo->ordenTrabajo?->humedad_max_pct,
-                alturaVueloM: $trabajo->ordenTrabajo?->altura_vuelo_m,
-                velocidadVueloKmh: $trabajo->ordenTrabajo?->velocidad_vuelo_kmh,
-                anchoPasadaM: $trabajo->ordenTrabajo?->ancho_pasada_m,
-                updatedAt: $trabajo->updated_at->toIso8601String(),
-            ))
+            ->map(fn (Trabajo $trabajo): TrabajoAsignadoCatalogo => $this->aCatalogo($trabajo))
             ->all();
+    }
+
+    /**
+     * Los 7 límites viajan EFECTIVOS ({@see LimitesEfectivos}): la app es
+     * offline y no puede resolver la herencia Orden de Trabajo → default del
+     * sistema por su cuenta.
+     */
+    private function aCatalogo(Trabajo $trabajo): TrabajoAsignadoCatalogo
+    {
+        $ordenTrabajo = $trabajo->ordenTrabajo;
+
+        $limites = LimitesEfectivos::resolver(
+            humedadMinPct: $ordenTrabajo?->humedad_min_pct,
+            humedadMaxPct: $ordenTrabajo?->humedad_max_pct,
+            vientoMaxKmh: $ordenTrabajo?->viento_max_kmh,
+            temperaturaMaxC: $ordenTrabajo?->temperatura_max_c,
+            alturaVueloM: $ordenTrabajo?->altura_vuelo_m,
+            velocidadVueloKmh: $ordenTrabajo?->velocidad_vuelo_kmh,
+            anchoPasadaM: $ordenTrabajo?->ancho_pasada_m,
+        );
+
+        return new TrabajoAsignadoCatalogo(
+            id: $trabajo->id,
+            uuidCliente: $trabajo->uuid_cliente,
+            ordenId: $trabajo->orden_id,
+            loteId: $trabajo->lote_id,
+            hectareasDeclaradas: $trabajo->hectareas_declaradas,
+            equipoTrabajoId: (int) $trabajo->equipo_trabajo_id,
+            humedadMinPct: $limites->humedadMinPct,
+            vientoMaxKmh: $limites->vientoMaxKmh,
+            temperaturaMaxC: $limites->temperaturaMaxC,
+            humedadMaxPct: $limites->humedadMaxPct,
+            alturaVueloM: $limites->alturaVueloM,
+            velocidadVueloKmh: $limites->velocidadVueloKmh,
+            anchoPasadaM: $limites->anchoPasadaM,
+            updatedAt: $trabajo->updated_at->toIso8601String(),
+        );
     }
 }
