@@ -4,6 +4,8 @@ namespace App\Dominios\Operaciones\Infraestructura;
 
 use App\Dominios\Operaciones\Contratos\LecturaTrabajosAsignados;
 use App\Dominios\Operaciones\Contratos\TrabajoAsignadoCatalogo;
+use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
+use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
@@ -39,7 +41,16 @@ final class LecturaTrabajosAsignadosEloquent implements LecturaTrabajosAsignados
             ->leftJoin('ope_ordenes_trabajo as ot', 'ot.id', '=', 'ope_trabajos.orden_trabajo_id')
             ->select('ope_trabajos.*')
             ->selectRaw("{$version} as ".self::VERSION)
+            ->leftJoin('ope_ordenes_aplicacion as oa', 'oa.id', '=', 'ope_trabajos.orden_id')
             ->whereIn('ope_trabajos.equipo_trabajo_id', $equipoTrabajoIds)
+            // Un trabajo cerrado, o abierto pero de una orden ya cerrada, va en
+            // `trabajos_retirados` (`LecturaRetirosCatalogoEloquent`), nunca
+            // también acá: si no, un cambio posterior de su Orden de Trabajo
+            // lo volvería a entregar como asignado después de retirado.
+            ->where('ope_trabajos.estado', EstadoTrabajo::Abierto->value)
+            ->where(fn (Builder $consulta) => $consulta
+                ->whereNull('oa.estado')
+                ->orWhereNotIn('oa.estado', EstadoOrdenAplicacion::valoresCerrados()))
             ->with('ordenTrabajo')
             ->when(
                 $cursorActualizadoEn !== null && $cursorId !== null,

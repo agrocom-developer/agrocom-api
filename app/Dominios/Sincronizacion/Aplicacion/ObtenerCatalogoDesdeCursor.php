@@ -4,6 +4,7 @@ namespace App\Dominios\Sincronizacion\Aplicacion;
 
 use App\Dominios\Comercial\Contratos\LecturaLotes;
 use App\Dominios\Operaciones\Contratos\LecturaOrdenesVigentes;
+use App\Dominios\Operaciones\Contratos\LecturaRetirosCatalogo;
 use App\Dominios\Operaciones\Contratos\LecturaTrabajosAsignados;
 use App\Dominios\Personal\Contratos\LecturaEquipoTrabajo;
 use App\Dominios\Personal\Contratos\LecturaPersonas;
@@ -42,6 +43,7 @@ final class ObtenerCatalogoDesdeCursor
         private readonly LecturaPersonas $personas,
         private readonly LecturaTrabajosAsignados $trabajos,
         private readonly LecturaEquipoTrabajo $equipos,
+        private readonly LecturaRetirosCatalogo $retiros,
     ) {}
 
     /**
@@ -49,7 +51,9 @@ final class ObtenerCatalogoDesdeCursor
      *                                       (`Seguridad\Contratos\IdentidadOperarioToken`).
      *                                       `trabajos` solo trae los de los
      *                                       equipos en los que está vigente
-     *                                       HOY; sin persona, ninguno.
+     *                                       HOY, y `trabajos_retirados` solo
+     *                                       los que tuvo; sin persona,
+     *                                       ninguno.
      * @return array<string, mixed>
      */
     public function ejecutar(?string $cursor, ?int $operarioPersonaId): array
@@ -95,11 +99,52 @@ final class ObtenerCatalogoDesdeCursor
             $posicionTrabajos?->actualizadoEn,
             $posicionTrabajos?->id,
             self::LIMITE_POR_SECCION,
-            $this->equiposDelOperario($operarioPersonaId),
+            $equiposVigentes = $this->equiposDelOperario($operarioPersonaId),
         );
         if ($trabajos !== []) {
             $ultima = $trabajos[array_key_last($trabajos)];
             $saliente = $saliente->conPosicion(CursorCatalogo::TRABAJOS, new PosicionCursor($ultima->updatedAt, $ultima->id));
+        }
+
+        // Retirados (opción B de la propuesta de #312). Un dispositivo sin
+        // ninguna posición no tiene nada que retirar: no recibe retirados y
+        // sus dos posiciones arrancan en "ahora", así el pull siguiente trae
+        // solo lo que se retire desde este momento. Un cursor que ya tiene
+        // otras secciones pero no estas (anterior a este cambio) las trae
+        // desde el principio, paginadas: ese dispositivo puede tener órdenes
+        // o trabajos viejos que limpiar.
+        $ordenesRetiradas = [];
+        $trabajosRetirados = [];
+
+        if ($entrante->esVacio()) {
+            $ahora = new PosicionCursor(Carbon::now()->toIso8601String(), 0);
+            $saliente = $saliente
+                ->conPosicion(CursorCatalogo::ORDENES_RETIRADAS, $ahora)
+                ->conPosicion(CursorCatalogo::TRABAJOS_RETIRADOS, $ahora);
+        } else {
+            $posicionOrdenesRetiradas = $entrante->posicion(CursorCatalogo::ORDENES_RETIRADAS);
+            $ordenesRetiradas = $this->retiros->ordenesRetiradasDesde(
+                $posicionOrdenesRetiradas?->actualizadoEn,
+                $posicionOrdenesRetiradas?->id,
+                self::LIMITE_POR_SECCION,
+            );
+            if ($ordenesRetiradas !== []) {
+                $ultima = $ordenesRetiradas[array_key_last($ordenesRetiradas)];
+                $saliente = $saliente->conPosicion(CursorCatalogo::ORDENES_RETIRADAS, new PosicionCursor($ultima->updatedAt, $ultima->id));
+            }
+
+            $posicionTrabajosRetirados = $entrante->posicion(CursorCatalogo::TRABAJOS_RETIRADOS);
+            $trabajosRetirados = $this->retiros->trabajosRetiradosDesde(
+                $posicionTrabajosRetirados?->actualizadoEn,
+                $posicionTrabajosRetirados?->id,
+                self::LIMITE_POR_SECCION,
+                $equiposVigentes,
+                $this->equiposHistoricosDelOperario($operarioPersonaId),
+            );
+            if ($trabajosRetirados !== []) {
+                $ultima = $trabajosRetirados[array_key_last($trabajosRetirados)];
+                $saliente = $saliente->conPosicion(CursorCatalogo::TRABAJOS_RETIRADOS, new PosicionCursor($ultima->updatedAt, $ultima->id));
+            }
         }
 
         return [
@@ -107,8 +152,26 @@ final class ObtenerCatalogoDesdeCursor
             'lotes' => array_map(static fn ($lote) => $lote->toArray(), $lotes),
             'personas' => array_map(static fn ($persona) => $persona->toArray(), $personas),
             'trabajos' => array_map(static fn ($trabajo) => $trabajo->toArray(), $trabajos),
+            'ordenes_retiradas' => array_map(static fn ($orden) => $orden->toArray(), $ordenesRetiradas),
+            'trabajos_retirados' => array_map(static fn ($trabajo) => $trabajo->toArray(), $trabajosRetirados),
             'cursor' => $saliente->serializar(),
         ];
+    }
+
+    /**
+     * Todos los equipos que la persona integró alguna vez: con ellos se
+     * reconocen, en la bitácora, los trabajos que tuvo y le reasignaron a
+     * otro equipo. Sin persona operativa, ninguno.
+     *
+     * @return list<int>
+     */
+    private function equiposHistoricosDelOperario(?int $operarioPersonaId): array
+    {
+        if ($operarioPersonaId === null) {
+            return [];
+        }
+
+        return $this->equipos->equiposHistoricosDePersona($operarioPersonaId);
     }
 
     /**

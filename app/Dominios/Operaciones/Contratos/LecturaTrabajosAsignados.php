@@ -20,6 +20,10 @@ interface LecturaTrabajosAsignados
      * `$cursorActualizadoEn`/`$cursorId` en `null` (ambos, siempre juntos)
      * significa "sin posición": trae desde el principio.
      *
+     * Solo trabajos `abierto` de una orden que no esté cerrada (`consumida`,
+     * `cancelada`, `vencida`): los demás los entrega `LecturaRetirosCatalogo`
+     * como retirados, nunca las dos secciones a la vez.
+     *
      * Solo los trabajos asignados a alguno de `$equipoTrabajoIds` — los
      * equipos del operario del token, que resuelve el consumidor
      * (`Sincronizacion`) con `Personal\Contratos\LecturaEquipoTrabajo`. Lista
