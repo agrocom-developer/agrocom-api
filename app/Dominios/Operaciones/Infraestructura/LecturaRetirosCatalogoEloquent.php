@@ -11,6 +11,7 @@ use App\Dominios\Operaciones\Dominio\MotivoRetiroTrabajo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\PostgresConnection;
 use Illuminate\Database\Query\Builder as Consulta;
 use Illuminate\Support\Carbon;
 
@@ -175,7 +176,7 @@ final class LecturaRetirosCatalogoEloquent implements LecturaRetirosCatalogo
     {
         $gramatica = $bitacora->getGrammar();
         $despues = $gramatica->wrap('plt_bitacoras.despues');
-        $equipoDespues = $bitacora->getConnection()->getDriverName() === 'pgsql'
+        $equipoDespues = $bitacora->getConnection() instanceof PostgresConnection
             ? "CAST({$despues}->>'equipo_trabajo_id' AS BIGINT)"
             : "CAST(json_extract({$despues}, '$.equipo_trabajo_id') AS INTEGER)";
         $marcadores = implode(', ', array_fill(0, count($equipos), '?'));
