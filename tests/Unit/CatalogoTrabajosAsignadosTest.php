@@ -1,10 +1,13 @@
 <?php
 
+use App\Dominios\Operaciones\Aplicacion\ActualizarOrdenTrabajo;
 use App\Dominios\Operaciones\Contratos\LecturaTrabajosAsignados;
 use App\Dominios\Operaciones\Contratos\RegistroCondiciones;
 use App\Dominios\Operaciones\Contratos\TrabajoAsignadoCatalogo;
 use App\Dominios\Operaciones\Dominio\LimitesEfectivos;
+use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenTrabajo;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -20,6 +23,9 @@ use Tests\TestCase;
  *   1. Los 7 límites viajan EFECTIVOS: el de la Orden de Trabajo y, si quedó en
  *      blanco, el default del sistema (`RegistroCondiciones`). Los 4 sin default
  *      quedan `null`. El contrato no es un nivel de la herencia (HU-91).
+ *   2. Editar los límites de la Orden de Trabajo después de un pull vuelve a
+ *      bajar sus trabajos en el pull incremental siguiente, con el valor nuevo
+ *      — sin tocar `ope_trabajos` (invariante 2) — y solo los de esa tanda.
  */
 
 uses(TestCase::class);
@@ -32,6 +38,8 @@ function catalogoTrabajosEsquema(): void
         'create_plt_bitacoras_table',
         'create_ope_ordenes_trabajo_table',
         'create_ope_trabajos_table',
+        'create_ope_sesiones_table',
+        'create_ope_orden_trabajo_equipos_table',
     ];
 
     // Cada archivo se incluye una sola vez por proceso: la migración es una clase anónima.
@@ -86,18 +94,39 @@ function catalogoTrabajo(?int $ordenTrabajoId, int $equipoTrabajoId = 7): int
     ]);
 }
 
+/**
+ * Un pull de la sección `trabajos`, desde `$cursor` (`null`: el primero), como
+ * lo hace `ObtenerCatalogoDesdeCursor`: el cursor siguiente es (`updated_at`,
+ * `id`) del último entregado.
+ *
+ * @param  array{0: string, 1: int}|null  $cursor
+ * @return array{trabajos: array<int, array<string, mixed>>, cursor: array{0: string, 1: int}|null} trabajos por id
+ */
+function catalogoPull(?array $cursor = null): array
+{
+    $trabajos = app(LecturaTrabajosAsignados::class)->listarModificadosDesde($cursor[0] ?? null, $cursor[1] ?? null, 100);
+    $ultimo = $trabajos === [] ? null : $trabajos[array_key_last($trabajos)];
+
+    return [
+        'trabajos' => collect($trabajos)
+            ->mapWithKeys(fn (TrabajoAsignadoCatalogo $trabajo): array => [$trabajo->id => $trabajo->toArray()])
+            ->all(),
+        'cursor' => $ultimo === null ? $cursor : [$ultimo->updatedAt, $ultimo->id],
+    ];
+}
+
 /** @return array<int, array<string, mixed>> por id de trabajo */
 function catalogoTrabajosPorId(): array
 {
-    $trabajos = app(LecturaTrabajosAsignados::class)->listarModificadosDesde(null, null, 100);
-
-    return collect($trabajos)
-        ->mapWithKeys(fn (TrabajoAsignadoCatalogo $trabajo): array => [$trabajo->id => $trabajo->toArray()])
-        ->all();
+    return catalogoPull()['trabajos'];
 }
 
 beforeEach(function () {
     catalogoTrabajosEsquema();
+});
+
+afterEach(function () {
+    Carbon::setTestNow();
 });
 
 // ── 1. Límites efectivos ────────────────────────────────────────────────────────
@@ -163,4 +192,59 @@ test('un límite propio cadena vacía cuenta como en blanco', function () {
     expect($limites->vientoMaxKmh)->toBe('17.00')
         ->and($limites->humedadMinPct)->toBeNull()
         ->and($limites->anchoPasadaM)->toBeNull();
+});
+
+// ── 2. Editar los límites re-baja el trabajo ───────────────────────────────────
+
+test('editar un límite de la Orden de Trabajo después de un pull vuelve a bajar el trabajo con el valor nuevo', function () {
+    Carbon::setTestNow('2026-10-01 10:00:00');
+    $ordenTrabajo = catalogoOrdenTrabajo(['viento_max_kmh' => '12.00']);
+    $trabajo = catalogoTrabajo($ordenTrabajo);
+    $otraTanda = catalogoTrabajo(catalogoOrdenTrabajo(['viento_max_kmh' => '14.00']));
+
+    $primero = catalogoPull();
+    expect($primero['trabajos'])->toHaveKeys([$trabajo, $otraTanda])
+        ->and($primero['trabajos'][$trabajo]['viento_max_kmh'])->toBe('12.00')
+        ->and(catalogoPull($primero['cursor'])['trabajos'])->toBe([]);
+
+    Carbon::setTestNow('2026-10-01 11:00:00');
+    $trabajoAntes = DB::table('ope_trabajos')->where('id', $trabajo)->value('updated_at');
+    app(ActualizarOrdenTrabajo::class)->ejecutar(
+        OrdenTrabajo::query()->findOrFail($ordenTrabajo),
+        ['viento_max_kmh' => '9.00', 'temperatura_max_c' => '25.00'],
+        [],
+    );
+
+    $segundo = catalogoPull($primero['cursor']);
+
+    expect(array_keys($segundo['trabajos']))->toBe([$trabajo])
+        ->and($segundo['trabajos'][$trabajo])->toMatchArray([
+            'viento_max_kmh' => '9.00',
+            'temperatura_max_c' => '25.00',
+            'updated_at' => Carbon::parse('2026-10-01 11:00:00')->toIso8601String(),
+        ])
+        ->and(DB::table('ope_trabajos')->where('id', $trabajo)->value('updated_at'))->toBe($trabajoAntes)
+        ->and(catalogoPull($segundo['cursor'])['trabajos'])->toBe([]);
+});
+
+test('dar de baja la Orden de Trabajo vuelve a bajar el trabajo con los defaults del sistema', function () {
+    Carbon::setTestNow('2026-10-01 10:00:00');
+    $ordenTrabajo = catalogoOrdenTrabajo(['viento_max_kmh' => '12.00']);
+    $trabajo = catalogoTrabajo($ordenTrabajo);
+    $primero = catalogoPull();
+
+    Carbon::setTestNow('2026-10-01 11:00:00');
+    OrdenTrabajo::query()->findOrFail($ordenTrabajo)->delete();
+
+    expect(catalogoPull($primero['cursor'])['trabajos'][$trabajo]['viento_max_kmh'])->toBe('17.00');
+});
+
+test('un cambio del propio trabajo posterior a su Orden de Trabajo también avanza el cursor', function () {
+    Carbon::setTestNow('2026-10-01 10:00:00');
+    $trabajo = catalogoTrabajo(catalogoOrdenTrabajo());
+    $primero = catalogoPull();
+
+    DB::table('ope_trabajos')->where('id', $trabajo)->update(['updated_at' => '2026-10-01 12:00:00']);
+
+    expect(array_keys(catalogoPull($primero['cursor'])['trabajos']))->toBe([$trabajo]);
 });

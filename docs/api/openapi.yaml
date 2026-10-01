@@ -1236,6 +1236,7 @@ components:
           example: '7.00'
           nullable: true
         updated_at:
+          description: 'Última modificación del trabajo O de su Orden de Trabajo, la más reciente: editar (o dar de baja) la Orden de Trabajo cambia los límites efectivos y vuelve a entregar sus trabajos en el pull incremental siguiente. Es la posición del cursor de esta sección.'
           type: string
           format: date-time
           example: '2026-09-13T12:00:00+00:00'
