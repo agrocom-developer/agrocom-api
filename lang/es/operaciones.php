@@ -571,7 +571,7 @@ return [
         'campo_orden_ayuda' => 'Al elegirla se cargan su calda, sus equipos y sus lotes. Solo figuran las órdenes vigentes con hectáreas por repartir.',
         'seccion_clima' => 'Límites climáticos',
         'seccion_vuelo' => 'Parámetros de vuelo',
-        'seccion_parametros_ayuda' => 'Un límite en blanco hereda el valor del contrato o el parámetro por defecto del sistema.',
+        'seccion_parametros_ayuda' => 'Un límite en blanco usa el parámetro por defecto del sistema; si no lo hay, queda sin límite.',
         'campos_contador' => ':cantidad campos',
 
         // Calda.
@@ -1025,7 +1025,7 @@ return [
         'seccion_lotes' => 'Lotes de la orden',
         'seccion_equipos' => 'Equipos asignados',
         'seccion_condiciones_vuelo' => 'Condiciones de vuelo',
-        'seccion_condiciones_vuelo_ayuda' => 'Los límites en blanco heredan el valor del contrato o del parámetro por defecto del sistema.',
+        'seccion_condiciones_vuelo_ayuda' => 'Los límites en blanco usan el parámetro por defecto del sistema; si no lo hay, quedan sin límite.',
         'equipos_vacio_titulo' => 'Sin equipos asignados todavía',
         'equipos_vacio' => 'Todavía no se asignó ningún equipo a esta orden.',
         'campo_equipo' => 'Cuadrilla',

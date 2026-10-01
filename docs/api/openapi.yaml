@@ -1168,7 +1168,7 @@ components:
       type: object
     TrabajoCatalogo:
       title: 'Trabajo asignado desde el panel (catálogo)'
-      description: 'Trabajo abierto por el jefe de campo al repartir una orden vigente entre equipos (HU-70, tarea 85) — nunca los que nacen por sync (`equipo_trabajo_id` siempre presente acá). `uuid_cliente` es el que generó el panel al confirmar la asignación: la app lo usa TAL CUAL para abrir sesiones sobre este trabajo. `hectareas_declaradas` es DECIMAL como string (invariante 6). Los 7 campos de límites climáticos y parámetros de vuelo llegaron acá desde `OrdenCatalogo` (migración `2026_09_18_100001_mueve_clima_vuelo_de_ordenes_a_trabajos_table`): son condiciones del vuelo de ESTE equipo, cargadas al asignar (ver `AsignarEquipoOrdenRequest`) — nullable, `null` cuando el jefe de campo no las completó en ese paso.'
+      description: 'Trabajo abierto por el jefe de campo al repartir una orden vigente entre equipos (HU-70, tarea 85) — nunca los que nacen por sync (`equipo_trabajo_id` siempre presente acá). `uuid_cliente` es el que generó el panel al confirmar la asignación: la app lo usa TAL CUAL para abrir sesiones sobre este trabajo. `hectareas_declaradas` es DECIMAL como string (invariante 6). Los 7 campos de límites climáticos y parámetros de vuelo llegaron acá desde `OrdenCatalogo` (migración `2026_09_18_100001_mueve_clima_vuelo_de_ordenes_a_trabajos_table`): son condiciones de la tanda (Orden de Trabajo) de ESTE equipo, y viajan con su valor EFECTIVO ya resuelto (`Operaciones\Dominio\LimitesEfectivos`): el de la Orden de Trabajo o, si quedó en blanco, el parámetro por defecto del sistema. El contrato no es un nivel de esa herencia (HU-91). `viento_max_kmh`, `temperatura_max_c` y `humedad_max_pct` siempre traen valor (defaults 17.00, 30.00 y 90.00). `humedad_min_pct`, `altura_vuelo_m`, `velocidad_vuelo_kmh` y `ancho_pasada_m` no tienen default del sistema: llegan `null` si la Orden de Trabajo no los trae, y la app no debe aplicar ese límite.'
       required:
         - id
         - uuid_cliente
@@ -1204,30 +1204,34 @@ components:
           type: integer
           example: 7
         humedad_min_pct:
+          description: 'Efectivo. Sin default del sistema: null si la Orden de Trabajo no lo trae.'
           type: string
           example: '60.00'
           nullable: true
         viento_max_kmh:
+          description: 'Efectivo: el de la Orden de Trabajo o el default del sistema (17.00). Nunca null.'
           type: string
           example: '15.00'
-          nullable: true
         temperatura_max_c:
+          description: 'Efectivo: el de la Orden de Trabajo o el default del sistema (30.00). Nunca null.'
           type: string
           example: '32.00'
-          nullable: true
         humedad_max_pct:
+          description: 'Efectivo: el de la Orden de Trabajo o el default del sistema (90.00). Nunca null.'
           type: string
           example: '90.00'
-          nullable: true
         altura_vuelo_m:
+          description: 'Efectivo. Sin default del sistema: null si la Orden de Trabajo no lo trae.'
           type: string
           example: '3.00'
           nullable: true
         velocidad_vuelo_kmh:
+          description: 'Efectivo. Sin default del sistema: null si la Orden de Trabajo no lo trae.'
           type: string
           example: '18.00'
           nullable: true
         ancho_pasada_m:
+          description: 'Efectivo. Sin default del sistema: null si la Orden de Trabajo no lo trae.'
           type: string
           example: '7.00'
           nullable: true
