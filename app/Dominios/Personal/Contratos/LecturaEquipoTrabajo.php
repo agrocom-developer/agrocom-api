@@ -42,6 +42,18 @@ interface LecturaEquipoTrabajo
     /** @return list<DatosIntegranteEquipo> integrantes del equipo cuya vigencia contiene `$fecha`. */
     public function integrantesAFecha(int $equipoTrabajoId, string $fecha): array;
 
+    /**
+     * Ids de TODOS los equipos en los que `$personaId` es integrante vigente
+     * a `$fecha` (`per_equipo_integrantes`: `desde <= $fecha` y `hasta` nulo
+     * o `>= $fecha`), sin repetir. Una persona puede estar en varios equipos
+     * a la vez — no hay unicidad que lo impida — y se devuelven todos
+     * (decisión del dueño del 1/10/2026, filtro de `trabajos[]` del catálogo
+     * de la app de campo).
+     *
+     * @return list<int>
+     */
+    public function equiposDePersonaAFecha(int $personaId, string $fecha): array;
+
     /** @return list<DatosRecursoEquipo> recursos del equipo cuya vigencia contiene `$fecha`. */
     public function recursosAFecha(int $equipoTrabajoId, string $fecha): array;
 }

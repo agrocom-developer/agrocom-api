@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Sincronizacion\Infraestructura\Http\Controllers\Api;
 
+use App\Dominios\Seguridad\Contratos\IdentidadOperarioToken;
 use App\Dominios\Sincronizacion\Aplicacion\ObtenerCatalogoDesdeCursor;
 use App\Dominios\Sincronizacion\Infraestructura\Http\Requests\ObtenerCatalogoRequest;
 use Illuminate\Http\JsonResponse;
@@ -101,6 +102,12 @@ use OpenApi\Attributes as OA;
     title: 'Trabajo asignado desde el panel (catálogo)',
     description: 'Trabajo abierto por el jefe de campo al repartir una orden vigente entre equipos '
         .'(HU-70, tarea 85) — nunca los que nacen por sync (`equipo_trabajo_id` siempre presente acá). '
+        .'FILTRADO por el operario del token: solo llegan los trabajos de los equipos en los que su '
+        .'persona es integrante vigente HOY (`per_equipo_integrantes`: `desde` <= hoy y `hasta` nulo '
+        .'o >= hoy) — todos ellos, si está en varios; nunca los de otro equipo. Una cuenta sin persona '
+        .'operativa recibe `trabajos` vacío. Límite conocido del cursor: si la persona entra a un '
+        .'equipo nuevo, los trabajos de ese equipo que no cambiaron desde el último pull no llegan '
+        .'en el incremental; los trae un pull completo (`desde` vacío). '
         .'`uuid_cliente` es el que generó el panel al confirmar la asignación: la app lo usa TAL CUAL '
         .'para abrir sesiones sobre este trabajo. `hectareas_declaradas` es DECIMAL como string (invariante 6). '
         .'Los 7 campos de límites climáticos y parámetros de vuelo llegaron acá desde `OrdenCatalogo` '
@@ -141,7 +148,8 @@ final class CatalogoController
         path: '/api/sync/catalogo',
         operationId: 'obtenerCatalogoSincronizacion',
         description: 'Baja el catálogo de órdenes vigentes, lotes, personas y trabajos asignados '
-            .'desde el panel modificados desde la posición del cursor recibido, con paginación por '
+            .'desde el panel (solo los de los equipos vigentes hoy del operario del token, ver '
+            .'`TrabajoCatalogo`) modificados desde la posición del cursor recibido, con paginación por '
             .'cursor (`updated_at`, `id`) — nunca por número de página, para no perder ni repetir '
             .'registros entre pulls. `desde` vacío o ausente trae todo lo vigente (primera '
             .'sincronización). Un `desde` no decodificable se trata igual que vacío, nunca como '
@@ -200,12 +208,14 @@ final class CatalogoController
     public function index(
         ObtenerCatalogoRequest $request,
         ObtenerCatalogoDesdeCursor $obtenerCatalogo,
+        IdentidadOperarioToken $identidadOperario,
     ): JsonResponse {
         /** @var array<string, mixed> $filtros */
         $filtros = $request->validated();
 
         return response()->json($obtenerCatalogo->ejecutar(
             isset($filtros['desde']) ? (string) $filtros['desde'] : null,
+            $identidadOperario->personaId($request),
         ));
     }
 }

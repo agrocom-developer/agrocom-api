@@ -20,7 +20,13 @@ interface LecturaTrabajosAsignados
      * `$cursorActualizadoEn`/`$cursorId` en `null` (ambos, siempre juntos)
      * significa "sin posición": trae desde el principio.
      *
+     * Solo los trabajos asignados a alguno de `$equipoTrabajoIds` — los
+     * equipos del operario del token, que resuelve el consumidor
+     * (`Sincronizacion`) con `Personal\Contratos\LecturaEquipoTrabajo`. Lista
+     * vacía: ningún trabajo.
+     *
+     * @param  list<int>  $equipoTrabajoIds
      * @return list<TrabajoAsignadoCatalogo>
      */
-    public function listarModificadosDesde(?string $cursorActualizadoEn, ?int $cursorId, int $limite): array;
+    public function listarModificadosDesde(?string $cursorActualizadoEn, ?int $cursorId, int $limite, array $equipoTrabajoIds): array;
 }

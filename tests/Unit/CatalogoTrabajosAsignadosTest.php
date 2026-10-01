@@ -1,11 +1,15 @@
 <?php
 
+use App\Dominios\Comercial\Contratos\LecturaLotes;
 use App\Dominios\Operaciones\Aplicacion\ActualizarOrdenTrabajo;
+use App\Dominios\Operaciones\Contratos\LecturaOrdenesVigentes;
 use App\Dominios\Operaciones\Contratos\LecturaTrabajosAsignados;
 use App\Dominios\Operaciones\Contratos\RegistroCondiciones;
 use App\Dominios\Operaciones\Contratos\TrabajoAsignadoCatalogo;
 use App\Dominios\Operaciones\Dominio\LimitesEfectivos;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenTrabajo;
+use App\Dominios\Personal\Contratos\LecturaPersonas;
+use App\Dominios\Sincronizacion\Aplicacion\ObtenerCatalogoDesdeCursor;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +30,10 @@ use Tests\TestCase;
  *   2. Editar los límites de la Orden de Trabajo después de un pull vuelve a
  *      bajar sus trabajos en el pull incremental siguiente, con el valor nuevo
  *      — sin tocar `ope_trabajos` (invariante 2) — y solo los de esa tanda.
+ *   3. Cada operario recibe solo los trabajos de los equipos en los que está
+ *      vigente hoy (todos ellos); nunca los de otro equipo, y ninguno si su
+ *      cuenta no tiene persona (exposición de datos entre usuarios, CLAUDE.md
+ *      §Testing).
  */
 
 uses(TestCase::class);
@@ -40,6 +48,7 @@ function catalogoTrabajosEsquema(): void
         'create_ope_trabajos_table',
         'create_ope_sesiones_table',
         'create_ope_orden_trabajo_equipos_table',
+        'create_per_equipo_integrantes_table',
     ];
 
     // Cada archivo se incluye una sola vez por proceso: la migración es una clase anónima.
@@ -95,7 +104,8 @@ function catalogoTrabajo(?int $ordenTrabajoId, int $equipoTrabajoId = 7): int
 }
 
 /**
- * Un pull de la sección `trabajos`, desde `$cursor` (`null`: el primero), como
+ * Un pull de la sección `trabajos`, desde `$cursor` (`null`: el primero), para
+ * todos los equipos que tienen trabajos (el filtro por equipo va en la sección 3), como
  * lo hace `ObtenerCatalogoDesdeCursor`: el cursor siguiente es (`updated_at`,
  * `id`) del último entregado.
  *
@@ -104,7 +114,8 @@ function catalogoTrabajo(?int $ordenTrabajoId, int $equipoTrabajoId = 7): int
  */
 function catalogoPull(?array $cursor = null): array
 {
-    $trabajos = app(LecturaTrabajosAsignados::class)->listarModificadosDesde($cursor[0] ?? null, $cursor[1] ?? null, 100);
+    $equipos = DB::table('ope_trabajos')->distinct()->pluck('equipo_trabajo_id')->map(fn ($id): int => (int) $id)->all();
+    $trabajos = app(LecturaTrabajosAsignados::class)->listarModificadosDesde($cursor[0] ?? null, $cursor[1] ?? null, 100, $equipos);
     $ultimo = $trabajos === [] ? null : $trabajos[array_key_last($trabajos)];
 
     return [
@@ -247,4 +258,89 @@ test('un cambio del propio trabajo posterior a su Orden de Trabajo también avan
     DB::table('ope_trabajos')->where('id', $trabajo)->update(['updated_at' => '2026-10-01 12:00:00']);
 
     expect(array_keys(catalogoPull($primero['cursor'])['trabajos']))->toBe([$trabajo]);
+});
+
+// ── 3. Filtro por equipo del operario ──────────────────────────────────────────
+
+function catalogoIntegrante(int $personaId, int $equipoTrabajoId, string $desde, ?string $hasta = null): void
+{
+    DB::table('per_equipo_integrantes')->insert([
+        'equipo_trabajo_id' => $equipoTrabajoId,
+        'persona_id' => $personaId,
+        'rol_equipo' => 'piloto',
+        'desde' => $desde,
+        'hasta' => $hasta,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+}
+
+/**
+ * `trabajos[]` del catálogo para el operario `$personaId`, por el caso de uso
+ * real; las otras tres secciones (de otros módulos) quedan vacías: no son lo
+ * que se prueba acá.
+ *
+ * @return list<int> ids de trabajo
+ */
+function catalogoTrabajosDelOperario(?int $personaId): array
+{
+    foreach ([LecturaOrdenesVigentes::class, LecturaLotes::class, LecturaPersonas::class] as $contrato) {
+        test()->mock($contrato)->shouldReceive('listarModificadosDesde')->andReturn([]);
+    }
+
+    $catalogo = app(ObtenerCatalogoDesdeCursor::class)->ejecutar(null, $personaId);
+
+    return array_column($catalogo['trabajos'], 'id');
+}
+
+test('el operario recibe solo los trabajos de su equipo, nunca los de otro', function () {
+    Carbon::setTestNow('2026-10-01 10:00:00');
+    catalogoIntegrante(personaId: 5, equipoTrabajoId: 7, desde: '2026-09-01');
+    catalogoIntegrante(personaId: 6, equipoTrabajoId: 8, desde: '2026-09-01');
+    $deSuEquipo = catalogoTrabajo(catalogoOrdenTrabajo(), equipoTrabajoId: 7);
+    $deOtroEquipo = catalogoTrabajo(catalogoOrdenTrabajo(), equipoTrabajoId: 8);
+
+    expect(catalogoTrabajosDelOperario(5))->toBe([$deSuEquipo])
+        ->and(catalogoTrabajosDelOperario(6))->toBe([$deOtroEquipo]);
+});
+
+test('una persona vigente en varios equipos recibe los trabajos de todos', function () {
+    Carbon::setTestNow('2026-10-01 10:00:00');
+    catalogoIntegrante(personaId: 5, equipoTrabajoId: 7, desde: '2026-09-01');
+    catalogoIntegrante(personaId: 5, equipoTrabajoId: 8, desde: '2026-09-15', hasta: '2026-10-31');
+    $delPrimero = catalogoTrabajo(catalogoOrdenTrabajo(), equipoTrabajoId: 7);
+    $delSegundo = catalogoTrabajo(catalogoOrdenTrabajo(), equipoTrabajoId: 8);
+    catalogoTrabajo(catalogoOrdenTrabajo(), equipoTrabajoId: 9);
+
+    expect(catalogoTrabajosDelOperario(5))->toBe([$delPrimero, $delSegundo]);
+});
+
+test('una integración que no está vigente hoy no da trabajos', function () {
+    Carbon::setTestNow('2026-10-01 10:00:00');
+    catalogoIntegrante(personaId: 5, equipoTrabajoId: 7, desde: '2026-08-01', hasta: '2026-09-30');
+    catalogoIntegrante(personaId: 5, equipoTrabajoId: 8, desde: '2026-10-02');
+    catalogoIntegrante(personaId: 5, equipoTrabajoId: 9, desde: '2026-10-01', hasta: '2026-10-01');
+    catalogoTrabajo(catalogoOrdenTrabajo(), equipoTrabajoId: 7);
+    catalogoTrabajo(catalogoOrdenTrabajo(), equipoTrabajoId: 8);
+    $hoy = catalogoTrabajo(catalogoOrdenTrabajo(), equipoTrabajoId: 9);
+
+    expect(catalogoTrabajosDelOperario(5))->toBe([$hoy]);
+});
+
+test('una integración dada de baja no da trabajos', function () {
+    Carbon::setTestNow('2026-10-01 10:00:00');
+    catalogoIntegrante(personaId: 5, equipoTrabajoId: 7, desde: '2026-09-01');
+    DB::table('per_equipo_integrantes')->update(['deleted_at' => now()]);
+    catalogoTrabajo(catalogoOrdenTrabajo(), equipoTrabajoId: 7);
+
+    expect(catalogoTrabajosDelOperario(5))->toBe([]);
+});
+
+test('una cuenta sin persona operativa recibe trabajos vacío', function () {
+    Carbon::setTestNow('2026-10-01 10:00:00');
+    catalogoIntegrante(personaId: 5, equipoTrabajoId: 7, desde: '2026-09-01');
+    catalogoTrabajo(catalogoOrdenTrabajo(), equipoTrabajoId: 7);
+
+    expect(catalogoTrabajosDelOperario(null))->toBe([])
+        ->and(catalogoTrabajosDelOperario(99))->toBe([]);
 });
