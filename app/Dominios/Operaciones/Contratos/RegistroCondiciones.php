@@ -2,6 +2,8 @@
 
 namespace App\Dominios\Operaciones\Contratos;
 
+use App\Dominios\Operaciones\Dominio\LimitesEfectivos;
+
 /**
  * DTO primitivo de entrada del contrato de escritura de `Operaciones` (ADR
  * 0003, regla 2; HU-06, tarea 17): la forma de un registro `condiciones` en
@@ -33,8 +35,11 @@ final readonly class RegistroCondiciones
     private const array MOMENTOS = ['inicio_sesion'];
 
     /**
-     * Rangos que autorizan sin intervención del agrónomo (espec §5, tabla de
-     * transiciones: "condiciones dentro de rango").
+     * Defaults del sistema de los límites que autorizan sin intervención del
+     * agrónomo (espec §5, tabla de transiciones: "condiciones dentro de
+     * rango"). Son la ÚNICA fuente de ese default; el límite que de verdad se
+     * aplica es el efectivo del trabajo de la sesión — el de su Orden de
+     * Trabajo, y estos solo si quedó en blanco ({@see LimitesEfectivos}).
      */
     public const float VIENTO_MAX_KMH = 17.0;
 
@@ -81,12 +86,15 @@ final readonly class RegistroCondiciones
         );
     }
 
-    /** Espec §5: "condiciones dentro de rango" — autoriza sin observación. */
-    public function dentroDeRango(): bool
+    /**
+     * Espec §5: "condiciones dentro de rango" — autoriza sin observación.
+     * Contra los límites EFECTIVOS del trabajo de la sesión (los de su Orden
+     * de Trabajo o, en blanco, los defaults de arriba), los mismos que la app
+     * de campo recibe en el catálogo.
+     */
+    public function dentroDeRango(LimitesEfectivos $limites): bool
     {
-        return (float) $this->vientoKmh <= self::VIENTO_MAX_KMH
-            && (float) $this->temperaturaC <= self::TEMPERATURA_MAX_C
-            && (float) $this->humedadPct <= self::HUMEDAD_MAX_PCT;
+        return $limites->admiteCondiciones($this->vientoKmh, $this->temperaturaC, $this->humedadPct);
     }
 
     /**

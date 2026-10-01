@@ -7,6 +7,7 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
 use App\Dominios\Operaciones\Dominio\EstadoTableroTrabajo;
 use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
+use App\Dominios\Operaciones\Dominio\LimitesEfectivos;
 use App\Dominios\Operaciones\Dominio\Turno;
 use Brick\Math\BigDecimal;
 use Carbon\CarbonImmutable;
@@ -142,6 +143,27 @@ class Trabajo extends ModeloDominio
     public function ordenTrabajo(): BelongsTo
     {
         return $this->belongsTo(OrdenTrabajo::class, 'orden_trabajo_id');
+    }
+
+    /**
+     * Límites efectivos de ESTE trabajo: los de su Orden de Trabajo o, en
+     * blanco (o sin Orden de Trabajo), el default del sistema
+     * ({@see LimitesEfectivos}). Lo leen el catálogo de la app y la
+     * validación de `condiciones` del sync — nunca cada uno por su lado.
+     */
+    public function limitesEfectivos(): LimitesEfectivos
+    {
+        $ordenTrabajo = $this->ordenTrabajo;
+
+        return LimitesEfectivos::resolver(
+            humedadMinPct: $ordenTrabajo?->humedad_min_pct,
+            humedadMaxPct: $ordenTrabajo?->humedad_max_pct,
+            vientoMaxKmh: $ordenTrabajo?->viento_max_kmh,
+            temperaturaMaxC: $ordenTrabajo?->temperatura_max_c,
+            alturaVueloM: $ordenTrabajo?->altura_vuelo_m,
+            velocidadVueloKmh: $ordenTrabajo?->velocidad_vuelo_kmh,
+            anchoPasadaM: $ordenTrabajo?->ancho_pasada_m,
+        );
     }
 
     /** @return HasMany<Sesion, $this> */

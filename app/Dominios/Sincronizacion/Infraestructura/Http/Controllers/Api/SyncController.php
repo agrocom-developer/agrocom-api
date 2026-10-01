@@ -129,7 +129,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'humedad_pct', description: '`condiciones`.', type: 'string', example: '65.00'),
         new OA\Property(
             property: 'observacion_agronomo',
-            description: '`condiciones`: obligatoria junto con `firma_observacion` cuando alguna medición cae fuera de rango (viento > 17 km/h, temperatura > 30°C o humedad > 90%) — sin ambas, el registro se rechaza.',
+            description: '`condiciones`: obligatoria junto con `firma_observacion` cuando alguna medición cae fuera de los límites EFECTIVOS del trabajo de la sesión (los mismos que entrega `TrabajoCatalogo`: los de su Orden de Trabajo o, en blanco, el default del sistema — viento > 17 km/h, temperatura > 30°C, humedad > 90%; la humedad mínima solo si la Orden de Trabajo la fija) — sin ambas, el registro se rechaza.',
             type: 'string',
             nullable: true,
             example: null,

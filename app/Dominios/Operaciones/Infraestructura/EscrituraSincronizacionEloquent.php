@@ -25,6 +25,7 @@ use App\Dominios\Operaciones\Dominio\EstadoSesion;
 use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
 use App\Dominios\Operaciones\Dominio\Excepciones\TransicionSesionNoPermitida;
 use App\Dominios\Operaciones\Dominio\Excepciones\TransicionTrabajoNoPermitida;
+use App\Dominios\Operaciones\Dominio\LimitesEfectivos;
 use App\Dominios\Operaciones\Dominio\TipoEvidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Condiciones;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\EstadiaHacienda;
@@ -166,13 +167,20 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
      */
     public function registrarCondiciones(RegistroCondiciones $datos): ResultadoSincronizacion
     {
-        $sesion = Sesion::query()->where('uuid_cliente', $datos->sesionUuidCliente)->first();
+        $sesion = Sesion::query()->with('trabajo.ordenTrabajo')->where('uuid_cliente', $datos->sesionUuidCliente)->first();
 
         if ($sesion === null) {
             return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.sesion_no_existe_aun'));
         }
 
-        $dentroDeRango = $datos->dentroDeRango();
+        // Límites efectivos del trabajo de la sesión (los de su Orden de
+        // Trabajo o, en blanco, el default del sistema): los mismos que la
+        // app recibió en el catálogo, para que lo que muestra y lo que se
+        // exige acá nunca se contradigan. Un trabajo dado de baja ya no
+        // resuelve por la relación: quedan los defaults, como antes.
+        $dentroDeRango = $datos->dentroDeRango(
+            $sesion->trabajo?->limitesEfectivos() ?? LimitesEfectivos::porDefecto(),
+        );
 
         if (! $dentroDeRango && ! $datos->tieneObservacionFirmada()) {
             return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.condiciones_fuera_de_rango'));

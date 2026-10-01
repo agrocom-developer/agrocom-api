@@ -4,7 +4,6 @@ namespace App\Dominios\Operaciones\Infraestructura;
 
 use App\Dominios\Operaciones\Contratos\LecturaTrabajosAsignados;
 use App\Dominios\Operaciones\Contratos\TrabajoAsignadoCatalogo;
-use App\Dominios\Operaciones\Dominio\LimitesEfectivos;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
@@ -46,23 +45,13 @@ final class LecturaTrabajosAsignadosEloquent implements LecturaTrabajosAsignados
     }
 
     /**
-     * Los 7 límites viajan EFECTIVOS ({@see LimitesEfectivos}): la app es
+     * Los 7 límites viajan EFECTIVOS (`Trabajo::limitesEfectivos()`): la app es
      * offline y no puede resolver la herencia Orden de Trabajo → default del
      * sistema por su cuenta.
      */
     private function aCatalogo(Trabajo $trabajo): TrabajoAsignadoCatalogo
     {
-        $ordenTrabajo = $trabajo->ordenTrabajo;
-
-        $limites = LimitesEfectivos::resolver(
-            humedadMinPct: $ordenTrabajo?->humedad_min_pct,
-            humedadMaxPct: $ordenTrabajo?->humedad_max_pct,
-            vientoMaxKmh: $ordenTrabajo?->viento_max_kmh,
-            temperaturaMaxC: $ordenTrabajo?->temperatura_max_c,
-            alturaVueloM: $ordenTrabajo?->altura_vuelo_m,
-            velocidadVueloKmh: $ordenTrabajo?->velocidad_vuelo_kmh,
-            anchoPasadaM: $ordenTrabajo?->ancho_pasada_m,
-        );
+        $limites = $trabajo->limitesEfectivos();
 
         return new TrabajoAsignadoCatalogo(
             id: $trabajo->id,
