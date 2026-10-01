@@ -5,9 +5,11 @@ namespace App\Dominios\Sincronizacion\Aplicacion;
 use App\Dominios\Comercial\Contratos\LecturaLotes;
 use App\Dominios\Operaciones\Contratos\LecturaOrdenesVigentes;
 use App\Dominios\Operaciones\Contratos\LecturaTrabajosAsignados;
+use App\Dominios\Personal\Contratos\LecturaEquipoTrabajo;
 use App\Dominios\Personal\Contratos\LecturaPersonas;
 use App\Dominios\Sincronizacion\Dominio\CursorCatalogo;
 use App\Dominios\Sincronizacion\Dominio\PosicionCursor;
+use Illuminate\Support\Carbon;
 
 /**
  * Caso de uso de `GET /api/sync/catalogo` (espec §2.1, punto 6; TE-06
@@ -39,10 +41,18 @@ final class ObtenerCatalogoDesdeCursor
         private readonly LecturaLotes $lotes,
         private readonly LecturaPersonas $personas,
         private readonly LecturaTrabajosAsignados $trabajos,
+        private readonly LecturaEquipoTrabajo $equipos,
     ) {}
 
-    /** @return array<string, mixed> */
-    public function ejecutar(?string $cursor): array
+    /**
+     * @param  int|null  $operarioPersonaId  persona dueña del token
+     *                                       (`Seguridad\Contratos\IdentidadOperarioToken`).
+     *                                       `trabajos` solo trae los de los
+     *                                       equipos en los que está vigente
+     *                                       HOY; sin persona, ninguno.
+     * @return array<string, mixed>
+     */
+    public function ejecutar(?string $cursor, ?int $operarioPersonaId): array
     {
         $entrante = CursorCatalogo::desde($cursor);
         $saliente = $entrante;
@@ -85,6 +95,7 @@ final class ObtenerCatalogoDesdeCursor
             $posicionTrabajos?->actualizadoEn,
             $posicionTrabajos?->id,
             self::LIMITE_POR_SECCION,
+            $this->equiposDelOperario($operarioPersonaId),
         );
         if ($trabajos !== []) {
             $ultima = $trabajos[array_key_last($trabajos)];
@@ -98,5 +109,23 @@ final class ObtenerCatalogoDesdeCursor
             'trabajos' => array_map(static fn ($trabajo) => $trabajo->toArray(), $trabajos),
             'cursor' => $saliente->serializar(),
         ];
+    }
+
+    /**
+     * Equipos en los que el operario del token está vigente hoy (petición de
+     * agrocom-field del 1/10/2026, decisión del dueño): sin este filtro cada
+     * dispositivo recibía los trabajos de TODOS los equipos y el piloto podía
+     * cargar sesiones en el de otro. Un usuario sin persona operativa no
+     * tiene equipo: `trabajos` va vacío.
+     *
+     * @return list<int>
+     */
+    private function equiposDelOperario(?int $operarioPersonaId): array
+    {
+        if ($operarioPersonaId === null) {
+            return [];
+        }
+
+        return $this->equipos->equiposDePersonaAFecha($operarioPersonaId, Carbon::today()->toDateString());
     }
 }

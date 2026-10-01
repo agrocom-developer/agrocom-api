@@ -25,8 +25,12 @@ final class LecturaTrabajosAsignadosEloquent implements LecturaTrabajosAsignados
      */
     private const string VERSION = 'catalogo_actualizado_en';
 
-    public function listarModificadosDesde(?string $cursorActualizadoEn, ?int $cursorId, int $limite): array
+    public function listarModificadosDesde(?string $cursorActualizadoEn, ?int $cursorId, int $limite, array $equipoTrabajoIds): array
     {
+        if ($equipoTrabajoIds === []) {
+            return [];
+        }
+
         $consulta = Trabajo::query();
         $version = $this->expresionVersion($consulta);
         $id = $consulta->getQuery()->getGrammar()->wrap('ope_trabajos.id');
@@ -35,7 +39,7 @@ final class LecturaTrabajosAsignadosEloquent implements LecturaTrabajosAsignados
             ->leftJoin('ope_ordenes_trabajo as ot', 'ot.id', '=', 'ope_trabajos.orden_trabajo_id')
             ->select('ope_trabajos.*')
             ->selectRaw("{$version} as ".self::VERSION)
-            ->whereNotNull('ope_trabajos.equipo_trabajo_id')
+            ->whereIn('ope_trabajos.equipo_trabajo_id', $equipoTrabajoIds)
             ->with('ordenTrabajo')
             ->when(
                 $cursorActualizadoEn !== null && $cursorId !== null,

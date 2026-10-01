@@ -80,6 +80,20 @@ final class LecturaEquipoTrabajoEloquent implements LecturaEquipoTrabajo
             ->all();
     }
 
+    public function equiposDePersonaAFecha(int $personaId, string $fecha): array
+    {
+        return EquipoIntegrante::query()
+            ->where('persona_id', $personaId)
+            ->where('desde', '<=', $fecha)
+            ->where(fn ($consulta) => $consulta->whereNull('hasta')->orWhere('hasta', '>=', $fecha))
+            ->orderBy('equipo_trabajo_id')
+            ->distinct()
+            ->pluck('equipo_trabajo_id')
+            ->map(fn ($id): int => (int) $id)
+            ->values()
+            ->all();
+    }
+
     public function recursosAFecha(int $equipoTrabajoId, string $fecha): array
     {
         return EquipoRecurso::query()
