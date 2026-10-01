@@ -17,6 +17,7 @@ use App\Dominios\Operaciones\Contratos\LecturaRecargasPorBateria;
 use App\Dominios\Operaciones\Contratos\LecturaReporteTecnico;
 use App\Dominios\Operaciones\Contratos\LecturaResumenCuadrilla;
 use App\Dominios\Operaciones\Contratos\LecturaResumenOrdenesContrato;
+use App\Dominios\Operaciones\Contratos\LecturaRetirosCatalogo;
 use App\Dominios\Operaciones\Contratos\LecturaSesionesPorPersona;
 use App\Dominios\Operaciones\Contratos\LecturaSesionValidada;
 use App\Dominios\Operaciones\Contratos\LecturaTrabajos;
@@ -43,6 +44,7 @@ final class OperacionesServiceProvider extends ServiceProvider
     {
         $this->app->bind(LecturaOrdenesVigentes::class, LecturaOrdenesVigentesEloquent::class);
         $this->app->bind(LecturaTrabajosAsignados::class, LecturaTrabajosAsignadosEloquent::class);
+        $this->app->bind(LecturaRetirosCatalogo::class, LecturaRetirosCatalogoEloquent::class);
         $this->app->bind(LecturaUsoDeTarifa::class, LecturaUsoDeTarifaEloquent::class);
         $this->app->bind(EscrituraSincronizacion::class, EscrituraSincronizacionEloquent::class);
         $this->app->bind(LecturaSesionValidada::class, LecturaSesionValidadaEloquent::class);

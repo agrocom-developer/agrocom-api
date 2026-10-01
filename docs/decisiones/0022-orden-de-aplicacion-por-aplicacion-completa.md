@@ -99,7 +99,7 @@ Columnas nuevas en `ope_ordenes_aplicacion`: `motivo_pausa`, `pausada_at`, `rean
 
 **En contra, y asumido**
 
-- **La app de campo no se entera** de que una orden fue cancelada, pausada o cerrada: el catálogo solo entrega órdenes `vigente` y el sync no tiene forma de retirar registros. *Pendiente, no resuelto.*
+- **La app de campo no se entera** de que una orden fue cancelada, pausada o cerrada: el catálogo solo entrega órdenes `vigente` y el sync no tiene forma de retirar registros. *Resuelto el 1/10/2026 (opción B de la propuesta de #312, decisión del dueño): `GET /api/sync/catalogo` suma `ordenes_retiradas` (id, estado, updated_at) y `trabajos_retirados`; `ordenes[]` sigue entregando solo `vigente`, y una `pausada` que se reanuda vuelve a llegar ahí.*
 - **Las sesiones ya abiertas en el campo no se frenan** al pausar o cancelar la orden. *Pendiente, no resuelto.*
 - **Un lote agregado al contrato mientras hay una aplicación abierta no entra en esa aplicación** (la siguiente sí): el conjunto de lotes de una orden ya emitida no cambia. *Pendiente, no resuelto.*
 - **Las migraciones frenan** si la base ya trae números repetidos o varias abiertas por contrato: hay que resolver esos datos a mano antes de migrar.

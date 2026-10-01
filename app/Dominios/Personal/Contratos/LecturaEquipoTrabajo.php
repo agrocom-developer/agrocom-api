@@ -54,6 +54,17 @@ interface LecturaEquipoTrabajo
      */
     public function equiposDePersonaAFecha(int $personaId, string $fecha): array;
 
+    /**
+     * Ids de TODOS los equipos en los que `$personaId` fue integrante alguna
+     * vez, con cualquier vigencia (pasada, actual o futura) y sin repetir;
+     * las integraciones dadas de baja no cuentan. Lo usa el catálogo de la
+     * app de campo para retirar trabajos que la persona tuvo y ya no son de
+     * sus equipos, sin exponer los de equipos que nunca integró.
+     *
+     * @return list<int>
+     */
+    public function equiposHistoricosDePersona(int $personaId): array;
+
     /** @return list<DatosRecursoEquipo> recursos del equipo cuya vigencia contiene `$fecha`. */
     public function recursosAFecha(int $equipoTrabajoId, string $fecha): array;
 }

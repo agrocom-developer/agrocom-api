@@ -102,6 +102,8 @@ use OpenApi\Attributes as OA;
     title: 'Trabajo asignado desde el panel (catálogo)',
     description: 'Trabajo abierto por el jefe de campo al repartir una orden vigente entre equipos '
         .'(HU-70, tarea 85) — nunca los que nacen por sync (`equipo_trabajo_id` siempre presente acá). '
+        .'Solo trabajos `abierto` cuya orden no esté cerrada (`consumida`, `cancelada`, `vencida`): '
+        .'los cerrados, dados de baja o de una orden cerrada llegan en `trabajos_retirados`. '
         .'FILTRADO por el operario del token: solo llegan los trabajos de los equipos en los que su '
         .'persona es integrante vigente HOY (`per_equipo_integrantes`: `desde` <= hoy y `hasta` nulo '
         .'o >= hoy) — todos ellos, si está en varios; nunca los de otro equipo. Una cuenta sin persona '
@@ -142,6 +144,44 @@ use OpenApi\Attributes as OA;
     ],
     type: 'object',
 )]
+#[OA\Schema(
+    schema: 'OrdenRetiradaCatalogo',
+    title: 'Orden retirada (catálogo)',
+    description: 'Orden que dejó de estar `vigente` desde la posición del cursor (opción B de la propuesta de #312): '
+        .'`pausada`, `consumida`, `cancelada` o `vencida` (ADR 0022). La app la OCULTA, no la borra. Si una `pausada` '
+        .'se reanuda, vuelve a llegar en `ordenes[]` en el pull siguiente con `estado: vigente`. Las `emitida` nunca '
+        .'salen acá: nunca llegaron al catálogo, y son las únicas que se dan de baja. Órdenes y trabajos solo se dan '
+        .'de baja lógicamente (ADR 0007), así que no hay borrados físicos que perseguir.',
+    required: ['id', 'estado', 'updated_at'],
+    properties: [
+        new OA\Property(property: 'id', type: 'integer', example: 1),
+        new OA\Property(property: 'estado', type: 'string', enum: ['pausada', 'consumida', 'cancelada', 'vencida'], example: 'pausada'),
+        new OA\Property(property: 'updated_at', description: 'Posición del cursor de esta sección.', type: 'string', format: 'date-time', example: '2026-10-01T11:00:00+00:00'),
+    ],
+    type: 'object',
+)]
+#[OA\Schema(
+    schema: 'TrabajoRetiradoCatalogo',
+    title: 'Trabajo retirado (catálogo)',
+    description: 'Trabajo que el operario del token TUVO como asignado y ya no debe tener (opción B de la propuesta '
+        .'de #312). "Lo tuvo": es de uno de sus equipos vigentes hoy, o la bitácora de auditoría muestra que alguna '
+        .'vez estuvo asignado a un equipo que la persona integró — nunca llega el `uuid_cliente` de un trabajo de un '
+        .'equipo ajeno. Un trabajo nunca viaja a la vez en `trabajos[]` y acá: `trabajos[]` solo trae trabajos '
+        .'`abierto` de órdenes no cerradas. `motivo` (si aplican varios, gana el primero): `dado_de_baja` (baja '
+        .'lógica desde el panel), `reasignado` (su equipo ya no es uno en el que la persona esté vigente hoy, o quedó '
+        .'sin equipo), `cerrado` (el trabajo se cerró), `orden_cerrada` (su orden pasó a `consumida`, `cancelada` o '
+        .'`vencida` con el trabajo abierto). Una orden `pausada` NO retira sus trabajos: la app la oculta por '
+        .'`ordenes_retiradas`. Límite conocido: un trabajo que sigue en el mismo equipo cuando la PERSONA deja ese '
+        .'equipo no se detecta por cursor (no cambia ninguna fila del trabajo); lo resuelve un pull completo.',
+    required: ['id', 'uuid_cliente', 'motivo', 'updated_at'],
+    properties: [
+        new OA\Property(property: 'id', type: 'integer', example: 42),
+        new OA\Property(property: 'uuid_cliente', type: 'string', example: '9a1b7e3e-2f7a-4b3d-8c1e-6f2a1d9c4b0a'),
+        new OA\Property(property: 'motivo', type: 'string', enum: ['dado_de_baja', 'reasignado', 'cerrado', 'orden_cerrada'], example: 'reasignado'),
+        new OA\Property(property: 'updated_at', description: 'Última modificación del trabajo O de su orden de aplicación, la más reciente. Posición del cursor de esta sección.', type: 'string', format: 'date-time', example: '2026-10-01T11:00:00+00:00'),
+    ],
+    type: 'object',
+)]
 final class CatalogoController
 {
     #[OA\Get(
@@ -153,8 +193,16 @@ final class CatalogoController
             .'cursor (`updated_at`, `id`) — nunca por número de página, para no perder ni repetir '
             .'registros entre pulls. `desde` vacío o ausente trae todo lo vigente (primera '
             .'sincronización). Un `desde` no decodificable se trata igual que vacío, nunca como '
-            .'error de validación.',
-        summary: 'Pull de catálogo con cursor (órdenes, lotes, personas, trabajos)',
+            .'error de validación. Compatible hacia atrás: `ordenes_retiradas` y `trabajos_retirados` '
+            .'(opción B de la propuesta de #312) son secciones nuevas que una app que no las lee puede '
+            .'ignorar. Cada sección, retirados incluidos, avanza su propia posición dentro del mismo '
+            .'cursor opaco y entrega como máximo 200 filas por pull; no hay flag "hay más": la sección '
+            .'que llenó su página se completa en el pull siguiente con el cursor devuelto. Con cursor '
+            .'vacío las dos secciones de retirados vienen vacías y su posición arranca en el momento '
+            .'del pull (un retiro en ese mismo segundo puede llegar en el pull siguiente aunque el '
+            .'dispositivo nunca haya tenido la fila: se prefiere repetir a perder). Un cursor anterior '
+            .'a estas secciones las trae desde el principio, paginadas.',
+        summary: 'Pull de catálogo con cursor (órdenes, lotes, personas, trabajos y sus retirados)',
         security: [['tokenDispositivo' => []]],
         tags: ['Sincronizacion'],
         parameters: [
@@ -171,7 +219,7 @@ final class CatalogoController
                 response: 200,
                 description: 'Catálogo modificado desde el cursor, y el cursor de continuación para el próximo pull.',
                 content: new OA\JsonContent(
-                    required: ['ordenes', 'lotes', 'personas', 'trabajos', 'cursor'],
+                    required: ['ordenes', 'lotes', 'personas', 'trabajos', 'ordenes_retiradas', 'trabajos_retirados', 'cursor'],
                     properties: [
                         new OA\Property(
                             property: 'ordenes',
@@ -192,6 +240,20 @@ final class CatalogoController
                             property: 'trabajos',
                             type: 'array',
                             items: new OA\Items(ref: '#/components/schemas/TrabajoCatalogo'),
+                        ),
+                        new OA\Property(
+                            property: 'ordenes_retiradas',
+                            description: 'Órdenes que dejaron de estar vigentes desde el cursor. Vacía en el primer pull (cursor vacío).',
+                            type: 'array',
+                            items: new OA\Items(ref: '#/components/schemas/OrdenRetiradaCatalogo'),
+                            example: [['id' => 1, 'estado' => 'pausada', 'updated_at' => '2026-10-01T11:00:00+00:00']],
+                        ),
+                        new OA\Property(
+                            property: 'trabajos_retirados',
+                            description: 'Trabajos que el operario tuvo y ya no debe tener como asignados, desde el cursor. Vacía en el primer pull (cursor vacío) y sin persona operativa.',
+                            type: 'array',
+                            items: new OA\Items(ref: '#/components/schemas/TrabajoRetiradoCatalogo'),
+                            example: [['id' => 42, 'uuid_cliente' => '9a1b7e3e-2f7a-4b3d-8c1e-6f2a1d9c4b0a', 'motivo' => 'reasignado', 'updated_at' => '2026-10-01T11:00:00+00:00']],
                         ),
                         new OA\Property(
                             property: 'cursor',

@@ -20,6 +20,11 @@ namespace App\Dominios\Sincronizacion\Dominio;
  * `TRABAJOS` (HU-70, tarea 85): trabajos abiertos por asignación de equipo
  * desde el panel — ver `Operaciones\Contratos\LecturaTrabajosAsignados`.
  *
+ * `ORDENES_RETIRADAS` y `TRABAJOS_RETIRADOS` (opción B de la propuesta de
+ * #312): lo que el dispositivo ya no debe mostrar — ver
+ * `Operaciones\Contratos\LecturaRetirosCatalogo`. Mismo formato que las
+ * demás; un cursor de antes de que existieran simplemente no las trae.
+ *
  * Clase pura: sin Eloquent, sin `Illuminate\Database` (verificado por
  * `tests/Unit/ArquitecturaModulosTest.php`).
  */
@@ -33,8 +38,17 @@ final readonly class CursorCatalogo
 
     public const string TRABAJOS = 'trabajos';
 
+    /** Opción B de la propuesta de #312: órdenes que dejaron de estar vigentes. */
+    public const string ORDENES_RETIRADAS = 'ordenes_retiradas';
+
+    /** Opción B de la propuesta de #312: trabajos que el operario ya no tiene asignados. */
+    public const string TRABAJOS_RETIRADOS = 'trabajos_retirados';
+
     /** @var list<string> */
-    private const array SECCIONES = [self::ORDENES, self::LOTES, self::PERSONAS, self::TRABAJOS];
+    private const array SECCIONES = [
+        self::ORDENES, self::LOTES, self::PERSONAS, self::TRABAJOS,
+        self::ORDENES_RETIRADAS, self::TRABAJOS_RETIRADOS,
+    ];
 
     /** @param array<string, PosicionCursor|null> $posiciones */
     private function __construct(private array $posiciones) {}
@@ -87,6 +101,22 @@ final readonly class CursorCatalogo
         }
 
         return new PosicionCursor((string) $fila['u'], (int) $fila['id']);
+    }
+
+    /**
+     * ¿Ninguna sección tiene posición? Es la primera sincronización del
+     * dispositivo (o una resincronización completa): no tiene nada que
+     * retirar.
+     */
+    public function esVacio(): bool
+    {
+        foreach ($this->posiciones as $posicion) {
+            if ($posicion !== null) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public function posicion(string $seccion): ?PosicionCursor

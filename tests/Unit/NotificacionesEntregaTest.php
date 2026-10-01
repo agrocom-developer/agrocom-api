@@ -458,6 +458,13 @@ test('el equipo asignado alcanza a los integrantes con cuenta de una orden de tr
             return [];
         }
 
+        public function equiposHistoricosDePersona(int $personaId): array
+        {
+
+            return [];
+
+        }
+
         public function recursosAFecha(int $equipoTrabajoId, string $fecha): array
         {
             return [];
@@ -573,6 +580,13 @@ test('un equipo con datos rotos se reporta y no anula el aviso de los otros equi
         public function equiposDePersonaAFecha(int $personaId, string $fecha): array
         {
             return [];
+        }
+
+        public function equiposHistoricosDePersona(int $personaId): array
+        {
+
+            return [];
+
         }
 
         public function recursosAFecha(int $equipoTrabajoId, string $fecha): array

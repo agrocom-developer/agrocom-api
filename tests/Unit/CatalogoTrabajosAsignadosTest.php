@@ -44,6 +44,7 @@ function catalogoTrabajosEsquema(): void
 
     $migraciones = [
         'create_plt_bitacoras_table',
+        'create_ope_ordenes_aplicacion_table',
         'create_ope_ordenes_trabajo_table',
         'create_ope_trabajos_table',
         'create_ope_sesiones_table',

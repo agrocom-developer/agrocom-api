@@ -193,6 +193,13 @@ function resolvedorConFakes(array $cuentasPorRol, array $cuentaPorPersona, array
             return [];
         }
 
+        public function equiposHistoricosDePersona(int $personaId): array
+        {
+
+            return [];
+
+        }
+
         public function recursosAFecha(int $equipoTrabajoId, string $fecha): array
         {
             return [];

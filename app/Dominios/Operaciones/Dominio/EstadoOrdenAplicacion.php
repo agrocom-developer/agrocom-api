@@ -35,6 +35,20 @@ enum EstadoOrdenAplicacion: string
     }
 
     /**
+     * Valores de los estados cerrados (`consumida`, `cancelada`, `vencida`),
+     * listos para un `whereIn`: una orden así no vuelve a abrirse.
+     *
+     * @return list<string>
+     */
+    public static function valoresCerrados(): array
+    {
+        return array_values(array_map(
+            fn (self $estado): string => $estado->value,
+            array_filter(self::cases(), fn (self $estado): bool => ! $estado->estaAbierta()),
+        ));
+    }
+
+    /**
      * Valores de los estados abiertos, listos para un `whereIn`.
      *
      * @return list<string>
