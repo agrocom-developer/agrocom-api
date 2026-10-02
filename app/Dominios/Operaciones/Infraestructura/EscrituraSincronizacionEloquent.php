@@ -167,7 +167,15 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
      */
     public function registrarCondiciones(RegistroCondiciones $datos): ResultadoSincronizacion
     {
-        $sesion = Sesion::query()->with('trabajo.ordenTrabajo')->where('uuid_cliente', $datos->sesionUuidCliente)->first();
+        // `withTrashed()` en el trabajo (decisión del dueño del 2/10/2026):
+        // una sesión que ya existía cuando el panel dio de baja su trabajo
+        // sigue registrando lo volado, contra los límites de la Orden de
+        // Trabajo con los que el equipo salió a volar — no contra los
+        // defaults.
+        $sesion = Sesion::query()
+            ->with(['trabajo' => fn ($trabajo) => $trabajo->withTrashed(), 'trabajo.ordenTrabajo'])
+            ->where('uuid_cliente', $datos->sesionUuidCliente)
+            ->first();
 
         if ($sesion === null) {
             return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.sesion_no_existe_aun'));
@@ -176,8 +184,8 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
         // Límites efectivos del trabajo de la sesión (los de su Orden de
         // Trabajo o, en blanco, el default del sistema): los mismos que la
         // app recibió en el catálogo, para que lo que muestra y lo que se
-        // exige acá nunca se contradigan. Un trabajo dado de baja ya no
-        // resuelve por la relación: quedan los defaults, como antes.
+        // exige acá nunca se contradigan. Los defaults quedan solo para una
+        // sesión sin trabajo resoluble (no debería pasar: la FK lo impide).
         $dentroDeRango = $datos->dentroDeRango(
             $sesion->trabajo?->limitesEfectivos() ?? LimitesEfectivos::porDefecto(),
         );
@@ -469,10 +477,18 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
      * garantía real contra la condición de carrera de dos trabajos DISTINTOS
      * cerrándose a la vez con la misma evidencia — el `lockForUpdate()` de
      * este método solo serializa cierres del MISMO trabajo.
+     *
+     * Trabajo dado de baja (decisión del dueño del 2/10/2026): se resuelve
+     * con `withTrashed()`. Si el panel lo dio de baja mientras el equipo lo
+     * volaba sin señal, lo ya volado se registra igual — imagen de campo,
+     * litros sobrantes y el cierre —, pero el trabajo SIGUE dado de baja: el
+     * `save()` del cierre no toca `deleted_at` y no vuelve a `trabajos[]`.
+     * Un trabajo dado de baja no admite trabajo nuevo: `abrirSesion()` lo
+     * sigue rechazando.
      */
     public function cerrarTrabajo(CierreTrabajo $datos, ?int $operarioPersonaId): ResultadoSincronizacion
     {
-        $trabajoId = Trabajo::query()->where('uuid_cliente', $datos->trabajoUuidCliente)->value('id');
+        $trabajoId = Trabajo::withTrashed()->where('uuid_cliente', $datos->trabajoUuidCliente)->value('id');
 
         if ($trabajoId === null) {
             return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.trabajo_no_existe'));
@@ -481,7 +497,7 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
         try {
             return DB::transaction(function () use ($trabajoId, $datos, $operarioPersonaId): ResultadoSincronizacion {
                 /** @var Trabajo $trabajo */
-                $trabajo = Trabajo::query()->whereKey($trabajoId)->lockForUpdate()->firstOrFail();
+                $trabajo = Trabajo::withTrashed()->whereKey($trabajoId)->lockForUpdate()->firstOrFail();
 
                 if ($trabajo->estado === EstadoTrabajo::Cerrado) {
                     return $trabajo->cierre_uuid_cliente === $datos->uuidCliente
@@ -618,11 +634,16 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
      * (`lockForUpdate`, mismo criterio que `cerrarTrabajo()`/`cerrarSesion()`)
      * para que dos cierres de sesión concurrentes del mismo trabajo no
      * pisen la suma del otro con una lectura desactualizada.
+     *
+     * `withTrashed()`: el cierre de una sesión que ya existía cuando el panel
+     * dio de baja su trabajo se registra igual (decisión del dueño del
+     * 2/10/2026). Sin esto, `firstOrFail()` lanzaba `ModelNotFoundException`
+     * fuera de los `catch` de `cerrarSesion()` y el lote ENTERO respondía 404.
      */
     private function recalcularHectareasTrabajo(int $trabajoId): void
     {
         /** @var Trabajo $trabajo */
-        $trabajo = Trabajo::query()->whereKey($trabajoId)->lockForUpdate()->firstOrFail();
+        $trabajo = Trabajo::withTrashed()->whereKey($trabajoId)->lockForUpdate()->firstOrFail();
         $trabajo->hectareas_declaradas = $this->sumaHectareasSesiones($trabajoId);
         $trabajo->save();
 
