@@ -11,7 +11,14 @@ final class LecturaSesionValidadaEloquent implements LecturaSesionValidada
 {
     public function obtener(int $sesionId): ?DatosSesionValidada
     {
-        $sesion = Sesion::query()->with('trabajo')->find($sesionId);
+        // `withTrashed()` en el trabajo (decisión del dueño del 2/10/2026,
+        // opción a): una sesión volada sobre un trabajo que el panel dio de
+        // baja después se valida y se paga con la condición de pago de SU
+        // equipo en la Orden de Trabajo (ADR 0023), nunca con la tarifa
+        // predeterminada por no encontrar el trabajo.
+        $sesion = Sesion::query()
+            ->with(['trabajo' => fn ($trabajo) => $trabajo->withTrashed()])
+            ->find($sesionId);
 
         if ($sesion === null) {
             return null;

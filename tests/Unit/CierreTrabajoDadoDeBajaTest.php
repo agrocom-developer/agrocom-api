@@ -2,6 +2,7 @@
 
 use App\Dominios\Comercial\Contratos\LecturaLotes;
 use App\Dominios\Operaciones\Aplicacion\EliminarTrabajo;
+use App\Dominios\Operaciones\Contratos\LecturaSesionValidada;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use App\Dominios\Sincronizacion\Aplicacion\SincronizarLote;
@@ -28,6 +29,9 @@ use Tests\TestCase;
  *   3. Una sesión NUEVA después de la baja se sigue rechazando.
  *   4. Reenviar los mismos registros no duplica nada (idempotencia por
  *      `uuid_cliente`, invariante 1).
+ *   5. Al validar esa sesión, el devengo recibe la condición de pago de SU
+ *      equipo en la Orden de Trabajo (ADR 0023), no la tarifa predeterminada
+ *      (decisión del dueño del 2/10/2026, opción a).
  */
 
 uses(TestCase::class);
@@ -44,6 +48,7 @@ function bajaEsquema(): void
         'create_ope_condiciones_table',
         'create_ope_evidencias_table',
         'create_ope_incidencias_table',
+        'create_ope_orden_trabajo_equipos_table',
     ];
 
     // Cada archivo se incluye una sola vez por proceso: la migración es una clase anónima.
@@ -309,4 +314,31 @@ test('un cierre de trabajo distinto sobre el trabajo ya cerrado tras la baja se 
 
     expect($resultados[0]['estado'])->toBe('rechazado')
         ->and($resultados[0]['motivo'])->toBe(__('operaciones.sync.trabajo_ya_cerrado'));
+});
+
+// ── 5. Pago con la condición del equipo ───────────────────────────────────────
+
+test('la sesión cerrada sobre un trabajo dado de baja se paga con la condición de pago de su equipo', function () {
+    $enCurso = bajaTrabajoConSesionAbierta();
+    DB::table('ope_orden_trabajo_equipos')->insert([
+        'orden_trabajo_id' => $enCurso['trabajo']->orden_trabajo_id,
+        'equipo_trabajo_id' => 7,
+        'modalidad_pago' => 'por_ha',
+        'monto_piloto' => '25.00',
+        'monto_auxiliar' => '12.50',
+        'negociado' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+    app(EliminarTrabajo::class)->ejecutar($enCurso['trabajo']);
+    bajaSync(bajaRegistrosDeCierre($enCurso));
+
+    $sesion = app(LecturaSesionValidada::class)->obtener($enCurso['sesion']->id);
+
+    expect($sesion)->not->toBeNull()
+        ->and($sesion?->condicionPago)->not->toBeNull()
+        ->and($sesion?->condicionPago?->montoPiloto)->toBe('25.00')
+        ->and($sesion?->condicionPago?->montoAuxiliar)->toBe('12.50')
+        ->and($sesion?->condicionPago?->negociada)->toBeTrue()
+        ->and($sesion?->hectareasDeclaradas)->toBe('40.50');
 });
