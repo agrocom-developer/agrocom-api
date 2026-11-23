@@ -1,0 +1,32 @@
+# Dueños de las rutas sensibles. Un cambio en estas rutas pide la revisión del
+# dueño del repositorio en cuanto se active la regla "Require review from Code
+# Owners" (ver docs/seguridad/rulesets.md). El patrón de abajo gana por ser el
+# último que coincide.
+
+# Integración y despliegue
+/.github/                                        @agrocom-developer
+
+# Guardarraíles de los agentes y configuración de Claude Code
+/.claude/                                        @agrocom-developer
+
+# Configuración de la aplicación y secretos
+/config/                                         @agrocom-developer
+
+# Esquema de base de datos
+/database/migrations/                            @agrocom-developer
+
+# Contenedores y despliegue
+/Dockerfile*                                     @agrocom-developer
+/docker/                                         @agrocom-developer
+/docker-compose*.yml                             @agrocom-developer
+/.dockerignore                                   @agrocom-developer
+
+# Seguridad: autenticación, autorización, rutas de entrada
+/app/Dominios/Seguridad/                         @agrocom-developer
+/routes/                                         @agrocom-developer
+/bootstrap/app.php                               @agrocom-developer
+/app/Providers/                                  @agrocom-developer
+/SECURITY.md                                     @agrocom-developer
+/docs/seguridad/                                 @agrocom-developer
+/composer.json                                   @agrocom-developer
+/composer.lock                                   @agrocom-developer

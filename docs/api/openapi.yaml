@@ -491,7 +491,7 @@ paths:
       tags:
         - Seguridad
       summary: 'Emite el token de un dispositivo de campo'
-      description: 'Autentica al operario y emite el token con el que ese dispositivo opera sin volver a loguearse. El token no caduca por tiempo (sesión persistente offline): deja de valer cuando se lo revoca desde el panel. Reintentar desde el mismo `uuid_dispositivo` revoca el token anterior y emite uno nuevo — nunca acumula credenciales vivas. El valor en claro se devuelve UNA sola vez.'
+      description: 'Autentica al operario y emite el token con el que ese dispositivo opera sin volver a loguearse. El token caduca a los 30 días por defecto (configurable) y deja de valer antes si se lo revoca desde el panel. Limita los intentos por usuario e IP: superado el límite responde 429. Reintentar desde el mismo `uuid_dispositivo` revoca el token anterior y emite uno nuevo — nunca acumula credenciales vivas. El valor en claro se devuelve UNA sola vez.'
       operationId: emitirTokenDispositivo
       requestBody:
         required: true
@@ -578,6 +578,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorValidacion'
+        429:
+          description: 'Demasiados intentos; reintentar tras `Retry-After` segundos.'
     delete:
       tags:
         - Seguridad
@@ -1648,7 +1650,7 @@ components:
   securitySchemes:
     tokenDispositivo:
       type: http
-      description: 'Token por dispositivo emitido por `POST /api/auth/token` (HU-03). Se envía como `Authorization: Bearer {token}`. No caduca por tiempo: vale hasta que se lo revoque desde el panel, o hasta que la cuenta o el rol con el que se emitió dejen de estar vigentes.'
+      description: 'Token por dispositivo emitido por `POST /api/auth/token` (HU-03). Se envía como `Authorization: Bearer {token}`. Caduca a los `SANCTUM_EXPIRATION` minutos de emitido (30 días por defecto), o antes si se lo revoca desde el panel o si la cuenta o el rol con el que se emitió dejan de estar vigentes.'
       scheme: bearer
 tags:
   -

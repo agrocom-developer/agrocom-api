@@ -5,6 +5,7 @@ namespace App\Dominios\Seguridad\Aplicacion;
 use App\Dominios\Seguridad\Dominio\Excepciones\RolNoAsignado;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecTokenDispositivo;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -79,10 +80,11 @@ final class EmitirTokenDispositivo
                 'uuid_dispositivo' => $uuidDispositivo,
                 'nombre_dispositivo' => $nombreDispositivo,
                 'token' => hash('sha256', $secreto),
-                // El token no caduca por tiempo: la app de campo puede estar
-                // días sin señal y tiene que seguir operando (CA "sesión
-                // persistente offline"). Deja de valer cuando lo revocan.
-                'expires_at' => null,
+                // Vigencia configurable (`sanctum.expiration`, minutos): lo
+                // bastante larga para una campaña sin señal en el lote, lo
+                // bastante corta para acotar un token robado. Sin valor, no
+                // caduca por tiempo y vale hasta que lo revocan.
+                'expires_at' => $this->vencimiento(),
             ]);
 
             // La emisión ocurre en el login de la app, donde todavía no hay
@@ -112,6 +114,13 @@ final class EmitirTokenDispositivo
         $entropia = Str::random(40);
 
         return sprintf('%s%s%s', config('sanctum.token_prefix', ''), $entropia, hash('crc32b', $entropia));
+    }
+
+    private function vencimiento(): ?Carbon
+    {
+        $minutos = config('sanctum.expiration');
+
+        return is_numeric($minutos) && (int) $minutos > 0 ? now()->addMinutes((int) $minutos) : null;
     }
 
     private function revocarTokenVivoDelDispositivo(SecUser $usuario, string $uuidDispositivo): void

@@ -14,6 +14,10 @@ on:
     branches: [develop, master]
   workflow_dispatch: {}
 
+# Permisos mínimos por defecto: cada job que necesite más los declara él.
+permissions:
+  contents: read
+
 jobs:
   detect-laravel:
     name: detect-laravel
@@ -21,7 +25,9 @@ jobs:
     outputs:
       exists: ${{ steps.check.outputs.exists }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
       - id: check
         run: |
           if [ -f composer.json ]; then
@@ -36,10 +42,12 @@ jobs:
     if: needs.detect-laravel.outputs.exists == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: '8.3'
           extensions: pgsql, pdo_pgsql
@@ -54,7 +62,7 @@ jobs:
       # abajo es el resultado ya instalado — con `cache-hit`, `composer
       # install` ni se ejecuta. El primero acelera el miss del segundo.
       - name: Caché de Composer (descarga)
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.cache/composer/files
           key: composer-${{ hashFiles('composer.lock') }}
@@ -62,7 +70,7 @@ jobs:
 
       - name: Caché de vendor (instalado)
         id: cache-vendor
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: vendor
           key: vendor-php8.3-${{ hashFiles('composer.lock') }}
@@ -72,7 +80,7 @@ jobs:
         run: composer install --no-interaction --prefer-dist
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: '22'
           cache: npm
@@ -83,7 +91,7 @@ jobs:
       # `node_modules/` y saltear el paso entero en el hit lo hace.
       - name: Caché de node_modules (instalado)
         id: cache-node-modules
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: node_modules
           key: node-modules-node22-${{ hashFiles('package-lock.json') }}
@@ -102,7 +110,7 @@ jobs:
       # no se toca para acelerar una compuerta. La clave lleva el SHA para que
       # cada corrida escriba la suya y restore-keys recupere la más reciente.
       - name: Caché de Larastan
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: /tmp/phpstan
           key: larastan-${{ github.sha }}
@@ -125,3 +133,48 @@ jobs:
       # leía nadie. Eran 25 s de "Initialize containers" por corrida.
       - name: Tests (Pest, en paralelo)
         run: php artisan test --parallel
+
+  # Auditoría de dependencias. Falla ante una vulnerabilidad de severidad alta
+  # o crítica; las bajas y medias se ven en el log y las propone Dependabot.
+  # No es un check requerido de auto-merge (ese espera solo `laravel-tests`):
+  # un advisory nuevo sobre una dependencia no debe bloquear un PR ajeno, pero
+  # sí queda en rojo y visible en la pestaña de checks.
+  seguridad:
+    name: seguridad
+    needs: detect-laravel
+    if: needs.detect-laravel.outputs.exists == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.3'
+          coverage: none
+
+      # `composer audit` consulta los advisories de packagist contra
+      # composer.lock; no necesita instalar vendor/. Sale con código distinto
+      # de cero ante cualquier advisory, así que se filtra por severidad:
+      # el JSON se evalúa y solo alta/crítica hacen fallar el job.
+      - name: Auditar dependencias de Composer
+        run: |
+          composer audit --locked --no-interaction --format=plain || true
+          composer audit --locked --no-interaction --format=json > composer-audit.json || true
+          ALTAS=$(jq '[.advisories // {} | to_entries[].value[] | select((.severity // "" | ascii_downcase) == "high" or (.severity // "" | ascii_downcase) == "critical")] | length' composer-audit.json)
+          echo "Advisories de severidad alta o crítica: $ALTAS"
+          if [ "$ALTAS" -gt 0 ]; then
+            exit 1
+          fi
+
+      - name: Setup Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: '22'
+
+      # Solo dependencias de producción: lo que viaja al build final. Las de
+      # desarrollo (Vite, herramientas) no llegan a producción.
+      - name: Auditar dependencias de npm
+        run: npm audit --omit=dev --audit-level=high

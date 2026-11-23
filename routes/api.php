@@ -30,9 +30,11 @@ use Illuminate\Support\Facades\Route;
 
 // Emisión del token: es el login de la app, así que va sin autenticación —
 // pero con throttle, porque un endpoint de credenciales sin límite es un
-// oráculo de fuerza bruta. 6 intentos por minuto y por IP.
+// oráculo de fuerza bruta. Limitador `login-campo` (SeguridadServiceProvider):
+// 6 intentos por minuto por usuario + IP y 60 por IP. No es solo por IP porque
+// los dispositivos del lote comparten la IP del enlace satelital.
 Route::post('/auth/token', [SesionCampoController::class, 'store'])
-    ->middleware('throttle:6,1')
+    ->middleware('throttle:login-campo')
     ->name('api.auth.token.emitir');
 
 // HU-20: la app todavía no tiene token cuando consulta esto — es lo primero

@@ -31,15 +31,18 @@ return [
     'guard' => [],
 
     /*
-    | Minutos de vigencia de un token. `null` = no caduca por tiempo.
+    | Minutos de vigencia de un token, contados desde que se emite. `null` = no
+    | caduca por tiempo.
     |
-    | Es el CA "sesión persistente offline" de HU-03: un piloto puede pasar
-    | días sin señal y su sesión tiene que seguir viva al volver. El token
-    | deja de valer cuando se lo revoca desde el panel, no cuando se cumple un
-    | plazo. Ojo: este valor pisa el `expires_at` de cada fila, así que
-    | cambiarlo caduca de golpe todos los tokens emitidos.
+    | Por defecto 43200 (30 días): cubre una campaña larga sin señal en el lote
+    | y limita la ventana de un token robado. Al vencer, la app pide el login
+    | de nuevo en cuanto recupera conexión; lo registrado sin conexión queda en
+    | el outbox y se envía con el token nuevo. Se ajusta con
+    | `SANCTUM_EXPIRATION` (vacío o `null` desactiva la caducidad). Ojo: este
+    | valor se aplica a cada token según su fecha de emisión, así que bajarlo
+    | caduca de golpe los tokens ya emitidos más viejos que el nuevo plazo.
     */
-    'expiration' => null,
+    'expiration' => is_numeric(env('SANCTUM_EXPIRATION', 43200)) ? (int) env('SANCTUM_EXPIRATION', 43200) : null,
 
     /*
     | Prefijo de los tokens emitidos. Un prefijo reconocible permite que los
