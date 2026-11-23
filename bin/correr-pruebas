@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+#
+# Corre Pest y publica el resumen de tiempos (ver docs/gestion/ci-por-impacto.md).
+#
+#   bin/correr-pruebas                          # toda la suite
+#   bin/correr-pruebas --shard 2/4              # un fragmento de la suite completa
+#   bin/correr-pruebas --pruebas "a.php b.php"  # solo esas pruebas (lista de bin/tests-afectados)
+#
+# Variables: CI_PRESUPUESTO_SEG (aviso si la corrida lo supera; no falla),
+# GITHUB_STEP_SUMMARY (si existe, el resumen se agrega ahí; si no, a la terminal).
+#
+set -uo pipefail
+cd "$(dirname "$0")/.." || exit 1
+
+PRUEBAS=""
+SHARD=""
+TITULO=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --pruebas) PRUEBAS="$2"; shift 2 ;;
+        --shard) SHARD="$2"; shift 2 ;;
+        --titulo) TITULO="$2"; shift 2 ;;
+        *) echo "Argumento desconocido: $1" >&2; exit 2 ;;
+    esac
+done
+
+CARPETA="$(mktemp -d)"
+JUNIT="$CARPETA/junit.xml"
+ARGS=(--parallel --log-junit "$JUNIT")
+MODO="suite completa"
+
+if [ -n "$PRUEBAS" ]; then
+    CONFIG="$CARPETA/phpunit.xml"
+    # Las rutas del XML son relativas a su ubicación: se escribe en la raíz del repo.
+    CONFIG="$PWD/phpunit.afectadas.xml"
+    php bin/tests-afectados --pruebas="$PRUEBAS" --xml="$CONFIG" || exit 1
+    ARGS+=(--configuration "$CONFIG")
+    MODO="solo pruebas afectadas ($(wc -w <<<"$PRUEBAS" | tr -d ' ') archivos)"
+fi
+if [ -n "$SHARD" ]; then
+    ARGS+=("--shard=$SHARD")
+    MODO="$MODO, fragmento $SHARD"
+fi
+
+INICIO=$(date +%s)
+php artisan config:clear >/dev/null 2>&1 || true
+vendor/bin/pest "${ARGS[@]}"
+CODIGO=$?
+DURACION=$(( $(date +%s) - INICIO ))
+[ -n "$PRUEBAS" ] && rm -f "$PWD/phpunit.afectadas.xml"
+
+if [ -f "$JUNIT" ]; then
+    RESUMEN=$(php bin/resumen-ci "$JUNIT" --titulo="${TITULO:-Pruebas}" --duracion="$DURACION" --modo="$MODO")
+    if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+        printf '%s\n\n' "$RESUMEN" >> "$GITHUB_STEP_SUMMARY"
+    else
+        printf '\n%s\n' "$RESUMEN"
+    fi
+fi
+rm -rf "$CARPETA"
+exit "$CODIGO"

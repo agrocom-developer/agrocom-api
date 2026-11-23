@@ -40,3 +40,4 @@ runs/
 # adentro) y se regenera con el helper de la skill `design`.
 /docs/diseno/canvas/*.html
 !/docs/diseno/canvas/*.dc.html
+phpunit.afectadas.xml

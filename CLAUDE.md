@@ -29,6 +29,8 @@ Este repo es el backend (Laravel + PostgreSQL) y el panel web (AdminLTE + Blade/
 
 No hay suite de tests funcionales (`tests/Feature/`): a partir del 15/9/2026 el desarrollador prueba cada cambio a mano, en vivo, contra el compose real — dejó de confiar en que una suite automática de caja negra/blanca sobre la API reflejara que el sistema hace lo que se pide. `tests/Unit/` se mantiene (arquitectura de módulos, máquinas de estado, bitácora de auditoría, reglas de dominio puras — nada que ejercite HTTP) y sigue corriendo en `bin/verify`.
 
+**Se verifica lo afectado, no la suite entera.** `./bin/verify` corre Pint sobre lo tocado, Larastan y las pruebas que el selector de impacto (`bin/tests-afectados`) elige para el diff, más un humo mínimo que corre siempre (arquitectura de módulos y contrato de API). Ni personas ni agentes corren la suite completa por defecto: `./bin/verify --todo` es para cuando el selector ya lo exige, un release o reproducir una falla nocturna. En CI un PR a `develop` corre lo afectado y la suite completa corre en el release a `master`, de noche y con la etiqueta `full-ci`. El selector falla siempre hacia más pruebas, nunca hacia menos. Detalle en `docs/gestion/ci-por-impacto.md`.
+
 Lo que sí hay que escribir y mantener es una suite de **no funcionales de seguridad**: inyección, y exposición de datos entre usuarios (un usuario logueado viendo o alcanzando por ID un recurso que no le corresponde — el caso del portal del invariante 5 es el ejemplo central). Esa es la categoría de prueba que se valida hoy, no el flujo funcional completo.
 
 ## Qué no delegar sin revisión línea por línea

@@ -1,0 +1,116 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/*
+ * Calcula qué pruebas corren para un diff (ver docs/gestion/ci-por-impacto.md).
+ *
+ *   bin/tests-afectados                      # diff contra origin/develop (+ cambios locales)
+ *   bin/tests-afectados --base=origin/master
+ *   bin/tests-afectados --archivos=a.php,b.php
+ *   bin/tests-afectados --stdin              # un archivo por línea
+ *   bin/tests-afectados --json               # salida estructurada (todo, motivo, pruebas, razones)
+ *   bin/tests-afectados --explicar           # agrega la razón de cada prueba
+ *   bin/tests-afectados --xml=ruta.xml       # escribe un phpunit.xml con solo esas pruebas
+ *   bin/tests-afectados --pruebas="a b"      # con --xml: usa esta lista en vez del diff
+ *
+ * Sin --json imprime una prueba por línea; si el diff obliga a correr todo,
+ * imprime `TODO` seguido del motivo (en una sola línea) y nada más.
+ */
+
+require __DIR__.'/lib/SelectorImpacto.php';
+
+$raiz = dirname(__DIR__);
+$opciones = [];
+foreach (array_slice($argv, 1) as $arg) {
+    if (preg_match('/^--([\w-]+)(?:=(.*))?$/s', $arg, $m) !== 1) {
+        fwrite(STDERR, "Argumento desconocido: {$arg}\n");
+        exit(2);
+    }
+    $opciones[$m[1]] = $m[2] ?? true;
+}
+
+/** @return list<string> */
+function archivosCambiados(string $raiz, string $base): array
+{
+    $git = static function (string $args) use ($raiz): ?array {
+        $salida = [];
+        $codigo = 0;
+        exec('git -C '.escapeshellarg($raiz).' '.$args.' 2>/dev/null', $salida, $codigo);
+
+        return $codigo === 0 ? $salida : null;
+    };
+
+    $ancestro = $git('merge-base '.escapeshellarg($base).' HEAD');
+    if ($ancestro === null || ($ancestro[0] ?? '') === '') {
+        // Sin base comparable no se puede acotar nada: se devuelve un archivo que obliga a correr todo.
+        return ['.github/sin-base-de-comparacion'];
+    }
+
+    $cambiados = $git('diff --name-only --no-renames '.escapeshellarg($ancestro[0])) ?? [];
+    $nuevos = $git('ls-files --others --exclude-standard') ?? [];
+
+    return array_values(array_unique([...$cambiados, ...$nuevos]));
+}
+
+$selector = new SelectorImpacto($raiz);
+
+if (isset($opciones['pruebas']) && is_string($opciones['pruebas'])) {
+    $lista = preg_split('/[\s,]+/', trim($opciones['pruebas']), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+    $resultado = ['todo' => false, 'motivo' => null, 'pruebas' => $lista, 'razones' => []];
+    $cambiados = [];
+} else {
+    if (isset($opciones['stdin'])) {
+        $cambiados = preg_split('/\R/', trim((string) stream_get_contents(STDIN)), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+    } elseif (isset($opciones['archivos']) && is_string($opciones['archivos'])) {
+        $cambiados = array_values(array_filter(explode(',', $opciones['archivos'])));
+    } else {
+        $cambiados = archivosCambiados($raiz, is_string($opciones['base'] ?? null) ? $opciones['base'] : 'origin/develop');
+    }
+    $resultado = $selector->seleccionar($cambiados);
+}
+
+if (isset($opciones['xml']) && is_string($opciones['xml'])) {
+    $origen = new DOMDocument;
+    $origen->preserveWhiteSpace = false;
+    $origen->load($raiz.'/phpunit.xml');
+    $suites = $origen->getElementsByTagName('testsuites')->item(0);
+    if ($suites === null) {
+        fwrite(STDERR, "phpunit.xml no tiene <testsuites>\n");
+        exit(1);
+    }
+    while ($suites->firstChild !== null) {
+        $suites->removeChild($suites->firstChild);
+    }
+    $suite = $origen->createElement('testsuite');
+    $suite->setAttribute('name', 'Afectadas');
+    foreach ($resultado['pruebas'] as $prueba) {
+        $suite->appendChild($origen->createElement('file', $prueba));
+    }
+    $suites->appendChild($suite);
+    $origen->formatOutput = true;
+    $origen->save($opciones['xml']);
+
+    exit(0);
+}
+
+if (isset($opciones['json'])) {
+    $resultado['cambiados'] = $cambiados;
+    $resultado['total_pruebas'] = count($selector->todasLasPruebas());
+    echo json_encode($resultado, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), "\n";
+    exit(0);
+}
+
+if ($resultado['todo']) {
+    echo 'TODO ', $resultado['motivo'], "\n";
+    exit(0);
+}
+
+foreach ($resultado['pruebas'] as $prueba) {
+    echo $prueba;
+    if (isset($opciones['explicar'])) {
+        echo '  <- ', implode('; ', $resultado['razones'][$prueba] ?? ['indicada a mano']);
+    }
+    echo "\n";
+}

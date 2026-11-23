@@ -1,18 +1,40 @@
 name: CI
 
-# Solo `pull_request`: todo lo que llega a develop/master pasa por PR (ver
-# CONTRIBUTING.md), y auto-merge.yml ya espera este mismo check sobre el SHA
-# de cabecera del PR antes de mergear. Un `push` a develop/master ocurre
-# siempre como consecuencia de ese merge (squash o merge commit, según
-# auto-merge.yml) — repetir la corrida ahí vuelve a probar el mismo árbol de
-# archivos que el `pull_request` ya validó momentos antes, así que duplicaba
-# ~1600 tests + reinstalar todo por cada cambio, chico o grande, sin agregar
-# cobertura real (no hay branch protection que dependa de este segundo run,
-# y deploy.yml dispara por tag, no por este push).
+# CI por impacto (docs/gestion/ci-por-impacto.md). Qué corre depende de qué
+# cambia y hacia dónde va:
+#
+#   PR hacia develop      -> calidad + SOLO las pruebas afectadas por el diff
+#                            (más el humo mínimo). Meta: < 10 min.
+#   PR hacia master       -> suite completa en fragmentos paralelos (release).
+#   workflow_dispatch,
+#   etiqueta `full-ci`    -> suite completa.
+#   schedule (noche)      -> suite completa sobre develop; si falla abre un issue.
+#
+# El selector (bin/tests-afectados) falla siempre hacia MÁS pruebas: si el diff
+# toca algo que no puede acotar (lockfiles, config, migraciones, .github/, bin/,
+# pruebas compartidas…) el modo pasa a completo solo.
+#
+# El check requerido por auto-merge.yml es `laravel-tests`: es el job agregador
+# del final, que falla si cualquier parte falla y nunca queda en `skipped` cuando
+# debió correr. Los jobs de adentro tienen otros nombres a propósito.
+#
+# Solo `pull_request`, sin `push`: todo lo que llega a develop/master pasa por
+# PR (ver CONTRIBUTING.md), y auto-merge.yml ya espera el check sobre el SHA de
+# cabecera del PR; repetir la corrida tras el merge probaría el mismo árbol.
 on:
   pull_request:
     branches: [develop, master]
+    # labeled/unlabeled: poner o sacar `full-ci` re-evalúa el modo.
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
   workflow_dispatch: {}
+  schedule:
+    # 07:00 UTC (03:00 en Bolivia): red de seguridad sobre develop.
+    - cron: '0 7 * * *'
+
+# Una corrida nueva del mismo PR cancela la anterior; las nocturnas y manuales no se pisan.
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # Permisos mínimos por defecto: cada job que necesite más los declara él.
 permissions:
@@ -36,72 +58,101 @@ jobs:
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
-  laravel-tests:
-    name: laravel-tests
+  # Decide el modo y calcula las pruebas afectadas. No instala dependencias: el
+  # selector es PHP puro.
+  detectar:
+    name: detectar
     needs: detect-laravel
     if: needs.detect-laravel.outputs.exists == 'true'
     runs-on: ubuntu-latest
+    outputs:
+      modo: ${{ steps.decidir.outputs.modo }}
+      pruebas: ${{ steps.decidir.outputs.pruebas }}
+      assets: ${{ steps.decidir.outputs.assets }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
+          # Historia completa: el selector compara contra la base del PR.
+          fetch-depth: 0
           persist-credentials: false
+          # El nocturno corre sobre develop aunque el workflow viva en la rama por defecto.
+          ref: ${{ github.event_name == 'schedule' && 'develop' || '' }}
 
       - name: Setup PHP
         uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: '8.3'
-          extensions: pgsql, pdo_pgsql
           coverage: none
 
-      - name: Crear .env
-        run: cp .env.example .env
+      - name: Decidir modo y pruebas
+        id: decidir
+        env:
+          EVENTO: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          ETIQUETAS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+        run: |
+          # Fuera del árbol del repo: un archivo nuevo en la raíz cuenta como cambio.
+          SALIDA="$RUNNER_TEMP/afectados.json"
+          MODO=afectados
+          MOTIVO=""
+          if [ "$EVENTO" != "pull_request" ]; then
+            MODO=completo; MOTIVO="evento $EVENTO"
+          elif [ "$BASE_REF" = "master" ]; then
+            MODO=completo; MOTIVO="PR hacia master (release)"
+          elif echo "$ETIQUETAS" | jq -e 'index("full-ci")' >/dev/null; then
+            MODO=completo; MOTIVO="etiqueta full-ci"
+          fi
 
-      # Dos cachés de Composer, cada uno resuelve algo distinto: el de
-      # ~/.cache/composer/files es la descarga (siempre corre `composer
-      # install`, pero sin volver a bajar cada paquete); el de `vendor/` de
-      # abajo es el resultado ya instalado — con `cache-hit`, `composer
-      # install` ni se ejecuta. El primero acelera el miss del segundo.
-      - name: Caché de Composer (descarga)
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+          BASE="origin/${BASE_REF:-develop}"
+          php bin/tests-afectados --base="$BASE" --json > "$SALIDA"
+          if [ "$(jq -r .todo "$SALIDA")" = "true" ] && [ "$MODO" = "afectados" ]; then
+            MODO=completo; MOTIVO="el diff obliga a correr todo: $(jq -r .motivo "$SALIDA")"
+          fi
+
+          PRUEBAS=$(jq -r '.pruebas | join(" ")' "$SALIDA")
+          # Los assets solo se compilan si el diff toca resources/ o dependencias de npm (o en modo completo).
+          ASSETS=false
+          if [ "$MODO" = "completo" ] || jq -e '.cambiados | any(test("^(resources/|package(-lock)?\\.json$|vite\\.config\\.js$)"))' "$SALIDA" >/dev/null; then
+            ASSETS=true
+          fi
+
+          {
+            echo "modo=$MODO"
+            echo "pruebas=$PRUEBAS"
+            echo "assets=$ASSETS"
+          } >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### Selección de pruebas"
+            echo
+            echo "- Modo: **$MODO**${MOTIVO:+ ($MOTIVO)}"
+            echo "- Archivos cambiados: $(jq '.cambiados | length' "$SALIDA")"
+            if [ "$MODO" = "afectados" ]; then
+              echo "- Pruebas elegidas: **$(jq '.pruebas | length' "$SALIDA")** de $(jq .total_pruebas "$SALIDA") archivos"
+              echo
+              echo "<details><summary>Por qué se eligió cada una</summary>"
+              echo
+              jq -r '.razones | to_entries[] | "- `\(.key)`: \(.value | join("; ") | .[0:300])"' "$SALIDA"
+              echo
+              echo "</details>"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # Estilo y análisis estático (y assets si el diff los toca). En un PR hacia
+  # develop Pint revisa solo los .php que el PR cambió; en modo completo, todo.
+  laravel-calidad:
+    name: laravel-calidad
+    needs: [detect-laravel, detectar]
+    if: needs.detect-laravel.outputs.exists == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
-          path: ~/.cache/composer/files
-          key: composer-${{ hashFiles('composer.lock') }}
-          restore-keys: composer-
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event_name == 'schedule' && 'develop' || '' }}
 
-      - name: Caché de vendor (instalado)
-        id: cache-vendor
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-        with:
-          path: vendor
-          key: vendor-php8.3-${{ hashFiles('composer.lock') }}
-
-      - name: Instalar dependencias
-        if: steps.cache-vendor.outputs.cache-hit != 'true'
-        run: composer install --no-interaction --prefer-dist
-
-      - name: Setup Node
-        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        with:
-          node-version: '22'
-          cache: npm
-
-      # Mismo criterio que `vendor/`: `npm ci` borra `node_modules` y
-      # reinstala siempre por diseño, así que el caché de descarga de `npm`
-      # (arriba) no evita esa reinstalación — solo cachear el propio
-      # `node_modules/` y saltear el paso entero en el hit lo hace.
-      - name: Caché de node_modules (instalado)
-        id: cache-node-modules
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-        with:
-          path: node_modules
-          key: node-modules-node22-${{ hashFiles('package-lock.json') }}
-
-      - name: Instalar dependencias de Node
-        if: steps.cache-node-modules.outputs.cache-hit != 'true'
-        run: npm ci
-
-      - name: Compilar assets (Vite)
-        run: npm run build
+      - uses: ./.github/actions/preparar-php
 
       # El result cache de PHPStan sirve entre corridas: solo reanaliza los
       # archivos que cambiaron. Se cachea su directorio por defecto
@@ -116,23 +167,177 @@ jobs:
           key: larastan-${{ github.sha }}
           restore-keys: larastan-
 
+      # Siempre completo: el análisis de un archivo depende de todo lo que usa.
       - name: Análisis estático (Larastan)
         run: composer larastan --no-interaction || vendor/bin/phpstan analyse
 
       - name: Estilo de código (Pint)
-        run: vendor/bin/pint --test
+        env:
+          MODO: ${{ needs.detectar.outputs.modo }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ "$MODO" = "completo" ]; then
+            vendor/bin/pint --test
+          else
+            mapfile -t ARCHIVOS < <(git diff --name-only --diff-filter=d "origin/${BASE_REF:-develop}...HEAD" -- '*.php')
+            if [ "${#ARCHIVOS[@]}" -eq 0 ]; then
+              echo "Ningún .php tocado: nada que formatear."
+            else
+              echo "Pint sobre ${#ARCHIVOS[@]} archivos tocados."
+              vendor/bin/pint --test "${ARCHIVOS[@]}"
+            fi
+          fi
 
-      # Las 1001 pruebas siguen corriendo TODAS en cada CI: lo que cambia es
-      # que se reparten entre los núcleos del runner en vez de ir en fila.
-      # Bajar la cobertura para ganar minutos no es una opción — de noche la
-      # suite es el único revisor despierto.
-      #
-      # Sin servicio de Postgres, y no es un olvido: tests/bootstrap.php fija
-      # sqlite en memoria en $_ENV/$_SERVER antes de que arranque Laravel, así
-      # que el contenedor de Postgres y las credenciales que había acá no los
-      # leía nadie. Eran 25 s de "Initialize containers" por corrida.
-      - name: Tests (Pest, en paralelo)
-        run: php artisan test --parallel
+      - name: Setup Node
+        if: needs.detectar.outputs.assets == 'true'
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: '22'
+          cache: npm
+
+      # Mismo criterio que `vendor/`: `npm ci` borra `node_modules` y
+      # reinstala siempre por diseño, así que el caché de descarga de `npm`
+      # no evita esa reinstalación — solo cachear el propio `node_modules/` y
+      # saltear el paso entero en el hit lo hace.
+      - name: Caché de node_modules (instalado)
+        if: needs.detectar.outputs.assets == 'true'
+        id: cache-node-modules
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: node_modules
+          key: node-modules-node22-${{ hashFiles('package-lock.json') }}
+
+      - name: Instalar dependencias de Node
+        if: needs.detectar.outputs.assets == 'true' && steps.cache-node-modules.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Compilar assets (Vite)
+        if: needs.detectar.outputs.assets == 'true'
+        run: npm run build
+
+  # PR hacia develop: solo las pruebas que el selector eligió (más el humo).
+  laravel-tests-afectados:
+    name: laravel-tests-afectados
+    needs: [detect-laravel, detectar]
+    if: needs.detectar.outputs.modo == 'afectados'
+    runs-on: ubuntu-latest
+    env:
+      # Presupuesto de tiempo (s): si la corrida lo supera, el resumen del job
+      # lo avisa. Se ajusta con la variable de repo CI_PRESUPUESTO_AFECTADAS_SEG.
+      CI_PRESUPUESTO_SEG: ${{ vars.CI_PRESUPUESTO_AFECTADAS_SEG || '600' }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/preparar-php
+
+      - name: Tests afectados (Pest, en paralelo)
+        env:
+          PRUEBAS: ${{ needs.detectar.outputs.pruebas }}
+        run: bin/correr-pruebas --pruebas "$PRUEBAS" --titulo "Pruebas afectadas"
+
+  # Release (PR hacia master), dispatch, etiqueta full-ci, nocturno o diff que
+  # obliga a todo: la suite completa, sin filtros, repartida en fragmentos.
+  # Bajar la cobertura para ganar minutos no es una opción — de noche la suite
+  # es el único revisor despierto.
+  #
+  # Sin servicio de Postgres, y no es un olvido: tests/bootstrap.php fija
+  # sqlite en memoria en $_ENV/$_SERVER antes de que arranque Laravel.
+  laravel-tests-completo:
+    name: laravel-tests-completo (${{ matrix.shard }})
+    needs: [detect-laravel, detectar]
+    if: needs.detectar.outputs.modo == 'completo'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ['1/3', '2/3', '3/3']
+    env:
+      # Presupuesto de tiempo (s) por fragmento; variable de repo CI_PRESUPUESTO_COMPLETO_SEG.
+      CI_PRESUPUESTO_SEG: ${{ vars.CI_PRESUPUESTO_COMPLETO_SEG || '900' }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+          ref: ${{ github.event_name == 'schedule' && 'develop' || '' }}
+
+      - uses: ./.github/actions/preparar-php
+
+      - name: Tests completos (Pest, fragmento ${{ matrix.shard }})
+        run: bin/correr-pruebas --shard "${{ matrix.shard }}" --titulo "Suite completa, fragmento ${{ matrix.shard }}"
+
+  # El check requerido por auto-merge.yml. Reúne el resultado de todo lo que
+  # tenía que correr: falla si cualquier parte falla, y también si una parte
+  # que debió correr quedó `skipped` o `cancelled`. `if: always()` evita que
+  # un fallo previo lo deje en `skipped` (que auto-merge no distinguiría de un
+  # verde).
+  laravel-tests:
+    name: laravel-tests
+    needs: [detect-laravel, detectar, laravel-calidad, laravel-tests-afectados, laravel-tests-completo]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Agregar resultados
+        env:
+          EXISTE: ${{ needs.detect-laravel.outputs.exists }}
+          MODO: ${{ needs.detectar.outputs.modo }}
+          R_DETECTAR: ${{ needs.detectar.result }}
+          R_CALIDAD: ${{ needs.laravel-calidad.result }}
+          R_AFECTADOS: ${{ needs.laravel-tests-afectados.result }}
+          R_COMPLETO: ${{ needs.laravel-tests-completo.result }}
+        run: |
+          echo "existe=$EXISTE modo=$MODO detectar=$R_DETECTAR calidad=$R_CALIDAD afectados=$R_AFECTADOS completo=$R_COMPLETO"
+          if [ "$EXISTE" = "false" ]; then
+            echo "Sin composer.json: no hay proyecto Laravel que probar."
+            exit 0
+          fi
+
+          FALLO=0
+          [ "$R_DETECTAR" = "success" ] || { echo "::error::detectar: $R_DETECTAR"; FALLO=1; }
+          [ "$R_CALIDAD" = "success" ] || { echo "::error::laravel-calidad: $R_CALIDAD"; FALLO=1; }
+          case "$MODO" in
+            afectados)
+              [ "$R_AFECTADOS" = "success" ] || { echo "::error::laravel-tests-afectados: $R_AFECTADOS"; FALLO=1; }
+              [ "$R_COMPLETO" = "skipped" ] || { echo "::error::laravel-tests-completo debía omitirse: $R_COMPLETO"; FALLO=1; }
+              ;;
+            completo)
+              [ "$R_COMPLETO" = "success" ] || { echo "::error::laravel-tests-completo: $R_COMPLETO"; FALLO=1; }
+              [ "$R_AFECTADOS" = "skipped" ] || { echo "::error::laravel-tests-afectados debía omitirse: $R_AFECTADOS"; FALLO=1; }
+              ;;
+            *)
+              echo "::error::modo desconocido ('$MODO'): detectar no produjo salida"
+              FALLO=1
+              ;;
+          esac
+          exit "$FALLO"
+
+  # Red de seguridad nocturna: si la suite completa de develop falla, abre (o
+  # actualiza) un issue para que no se pierda entre los checks.
+  issue-nocturno:
+    name: issue-nocturno
+    needs: [laravel-tests]
+    if: always() && github.event_name == 'schedule' && needs.laravel-tests.result != 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Abrir o actualizar el issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh label create ci-nocturno --repo "$REPO" --color B60205 --description "Falla de la suite nocturna sobre develop" 2>/dev/null || true
+          TITULO="CI nocturno: la suite completa de develop falló"
+          CUERPO="La corrida nocturna sobre \`develop\` falló: $RUN_URL"
+          EXISTENTE=$(gh issue list --repo "$REPO" --label ci-nocturno --state open --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTENTE" ]; then
+            gh issue comment "$EXISTENTE" --repo "$REPO" --body "$CUERPO"
+          else
+            gh issue create --repo "$REPO" --title "$TITULO" --label ci-nocturno --body "$CUERPO"
+          fi
 
   # Auditoría de dependencias. Falla ante una vulnerabilidad de severidad alta
   # o crítica; las bajas y medias se ven en el log y las propone Dependabot.

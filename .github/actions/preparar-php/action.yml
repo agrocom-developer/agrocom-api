@@ -1,0 +1,43 @@
+name: Preparar PHP y dependencias
+description: >
+  PHP 8.3, .env de ejemplo y vendor/ (con caché). Lo comparten los jobs de
+  calidad y de pruebas para no repetir la preparación. El checkout lo hace
+  cada job antes de invocar esta acción.
+
+runs:
+  using: composite
+  steps:
+    - name: Setup PHP
+      uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+      with:
+        php-version: '8.3'
+        extensions: pgsql, pdo_pgsql
+        coverage: none
+
+    - name: Crear .env
+      shell: bash
+      run: cp .env.example .env
+
+    # Dos cachés de Composer, cada uno resuelve algo distinto: el de
+    # ~/.cache/composer/files es la descarga (siempre corre `composer
+    # install`, pero sin volver a bajar cada paquete); el de `vendor/` de
+    # abajo es el resultado ya instalado — con `cache-hit`, `composer
+    # install` ni se ejecuta. El primero acelera el miss del segundo.
+    - name: Caché de Composer (descarga)
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: ~/.cache/composer/files
+        key: composer-${{ hashFiles('composer.lock') }}
+        restore-keys: composer-
+
+    - name: Caché de vendor (instalado)
+      id: cache-vendor
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: vendor
+        key: vendor-php8.3-${{ hashFiles('composer.lock') }}
+
+    - name: Instalar dependencias
+      if: steps.cache-vendor.outputs.cache-hit != 'true'
+      shell: bash
+      run: composer install --no-interaction --prefer-dist
