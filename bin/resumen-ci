@@ -37,7 +37,7 @@ $porCarpeta = [];
 $casos = [];
 foreach ($xml->xpath('//testcase') ?: [] as $caso) {
     $archivo = explode('::', (string) ($caso['file'] ?? ''))[0];
-    $carpeta = $archivo !== '' && preg_match('#/(tests/.+)/[^/]+$#', $archivo, $m) === 1 ? $m[1] : 'tests';
+    $carpeta = $archivo !== '' && preg_match('#(?:^|/)(tests/.+)/[^/]+$#', $archivo, $m) === 1 ? $m[1] : 'tests';
     $tiempo = (float) $caso['time'];
     $porCarpeta[$carpeta]['segundos'] = ($porCarpeta[$carpeta]['segundos'] ?? 0.0) + $tiempo;
     $porCarpeta[$carpeta]['pruebas'] = ($porCarpeta[$carpeta]['pruebas'] ?? 0) + 1;
