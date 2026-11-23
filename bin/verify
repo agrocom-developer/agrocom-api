@@ -6,23 +6,44 @@
 # que un cambio necesita cumplir para poder commitearse sin revisión
 # humana previa (ver docs/gestion/automatizacion_desarrollo.md).
 #
+# Por defecto verifica solo lo AFECTADO por tu diff contra origin/develop
+# (Pint sobre los archivos tocados, Larastan completo —usa caché—, las
+# pruebas que el selector de impacto elige y los assets si los tocaste).
+# La suite completa es para el release a master y para la red de seguridad
+# nocturna, no para iterar: ver docs/gestion/ci-por-impacto.md.
+#
+#   bin/verify                  # lo afectado por el diff (meta: < 3 min)
+#   bin/verify --todo           # TODO: Pint completo + Larastan + toda la suite + assets
+#   bin/verify --sin-assets     # no compila assets, aunque el diff los toque
+#   bin/verify --base=<ref>     # compara contra otra base (por defecto origin/develop)
+#   VERIFY_EN_HOST=1 bin/verify # fuerza PHP del host aunque haya Docker
+#
 # El grueso corre DENTRO del contenedor `app` (PHP 8.3, igual que CI —
 # el PHP del host puede ser otra versión). Los assets se compilan en el
 # host porque la imagen no trae Node.
-#
-#   bin/verify                # cascada completa
-#   bin/verify --sin-assets   # solo PHP (más rápido, para iterar)
 #
 set -uo pipefail
 
 cd "$(dirname "$0")/.." || exit 1
 
+TODO=0
 CON_ASSETS=1
-[ "${1:-}" = "--sin-assets" ] && CON_ASSETS=0
+BASE="origin/develop"
+for arg in "$@"; do
+    case "$arg" in
+        --todo) TODO=1 ;;
+        --sin-assets) CON_ASSETS=0 ;;
+        --base=*) BASE="${arg#--base=}" ;;
+        *) echo "Argumento desconocido: $arg (usos: --todo, --sin-assets, --base=<ref>)" >&2; exit 2 ;;
+    esac
+done
 
 # --- Dónde corre PHP -------------------------------------------------
 # Preferencia: contenedor ya levantado > contenedor efímero > host.
-if docker compose ps --services --filter status=running 2>/dev/null | grep -qx app; then
+if [ "${VERIFY_EN_HOST:-0}" = "1" ]; then
+    ENTORNO="host (VERIFY_EN_HOST=1)"
+    php_en() { "$@"; }
+elif docker compose ps --services --filter status=running 2>/dev/null | grep -qx app; then
     ENTORNO="contenedor app (en ejecución)"
     php_en() { docker compose exec -T app "$@"; }
 elif docker info >/dev/null 2>&1; then
@@ -34,6 +55,7 @@ else
 fi
 
 FALLO=""
+INICIO=$(date +%s)
 
 etapa() {
     local nombre="$1"; shift
@@ -47,14 +69,91 @@ etapa() {
     fi
 }
 
+# --- Qué cambió ------------------------------------------------------
+# Archivos del diff contra el ancestro común con la base, más lo que está
+# sin commitear y los archivos nuevos. Si no hay base comparable, se corre todo
+# (el selector falla siempre hacia MÁS pruebas, nunca hacia menos).
+cambios() {
+    local ancestro
+    ancestro=$(git merge-base "$BASE" HEAD 2>/dev/null) || return 1
+    { git diff --name-only --no-renames "$ancestro"; git ls-files --others --exclude-standard; } | sort -u
+}
+
+SELECCION=""
+CAMBIADOS=""
+if [ "$TODO" = "0" ]; then
+    if CAMBIADOS=$(cambios); then
+        # El selector es PHP puro (sin dependencias): corre en el host si hay PHP,
+        # para no pagar el arranque de un contenedor solo para listar archivos.
+        if command -v php >/dev/null 2>&1; then
+            SELECCION=$(printf '%s\n' "$CAMBIADOS" | php bin/tests-afectados --stdin 2>/dev/null) || SELECCION=""
+        else
+            SELECCION=$(printf '%s\n' "$CAMBIADOS" | php_en php bin/tests-afectados --stdin 2>/dev/null) || SELECCION=""
+        fi
+    fi
+    if [ -z "$SELECCION" ] && [ -n "$CAMBIADOS" ]; then
+        SELECCION="TODO no se pudo calcular el diff"
+    fi
+    if [ -z "$CAMBIADOS" ] && ! git merge-base "$BASE" HEAD >/dev/null 2>&1; then
+        printf '\033[33m  No existe la base %s (¿git fetch origin?); se corre todo.\033[0m\n' "$BASE"
+        TODO=1
+    fi
+fi
+case "$SELECCION" in TODO*) TODO=1 ;; esac
+
 printf '\033[1mVerificación de agrocom-api\033[0m — PHP: %s\n' "$ENTORNO"
+if [ "$TODO" = "1" ]; then
+    printf 'Alcance: \033[1mTODO\033[0m'
+    [ -n "$SELECCION" ] && printf ' (%s)' "${SELECCION#TODO }"
+    printf '\n'
+else
+    printf 'Alcance: lo afectado por el diff contra %s (%s archivos cambiados)\n' "$BASE" "$(printf '%s\n' "$CAMBIADOS" | grep -c . || true)"
+fi
 
-# Pint, Larastan y Pest en un solo paso: `composer verify` ya los encadena
-# y se detiene en el primero que falle.
-etapa "Estilo, análisis estático y tests (composer verify)" php_en composer verify || true
+# --- Pint -------------------------------------------------------------
+if [ "$TODO" = "1" ]; then
+    etapa "Estilo (Pint, todo el repo)" php_en vendor/bin/pint --test || true
+else
+    # Solo los .php tocados que todavía existen (los borrados no se formatean).
+    PHP_TOCADOS=()
+    while IFS= read -r f; do
+        [ -f "$f" ] && PHP_TOCADOS+=("$f")
+    done < <(printf '%s\n' "$CAMBIADOS" | grep -E '\.php$' || true)
+    if [ "${#PHP_TOCADOS[@]}" -gt 0 ]; then
+        etapa "Estilo (Pint, ${#PHP_TOCADOS[@]} archivos tocados)" php_en vendor/bin/pint --test "${PHP_TOCADOS[@]}" || true
+    else
+        printf '\n\033[2m▸ Estilo (Pint): ningún .php tocado\033[0m\n'
+    fi
+fi
 
-if [ -z "$FALLO" ] && [ "$CON_ASSETS" = "1" ]; then
+# --- Larastan ---------------------------------------------------------
+# Siempre completo: el análisis de un archivo depende de todos los que usa y
+# el result cache de PHPStan ya lo hace barato (segundos si casi nada cambió).
+if [ -z "$FALLO" ]; then
+    etapa "Análisis estático (Larastan nivel 6)" php_en vendor/bin/phpstan analyse --memory-limit=512M || true
+fi
+
+# --- Pruebas ----------------------------------------------------------
+if [ -z "$FALLO" ]; then
+    php_en php artisan config:clear >/dev/null 2>&1 || true
+    if [ "$TODO" = "1" ]; then
+        etapa "Pruebas (Pest, suite completa)" php_en bin/correr-pruebas --titulo "bin/verify --todo" || true
+    else
+        LISTA=$(printf '%s\n' "$SELECCION" | tr '\n' ' ')
+        etapa "Pruebas (Pest, $(wc -w <<<"$LISTA" | tr -d ' ') de $(find tests -name '*Test.php' | wc -l | tr -d ' ') archivos: las afectadas + humo)" \
+            php_en bin/correr-pruebas --pruebas "$LISTA" --titulo "bin/verify" || true
+    fi
+fi
+
+# --- Assets -----------------------------------------------------------
+TOCA_ASSETS=0
+if [ "$TODO" = "1" ] || printf '%s\n' "$CAMBIADOS" | grep -qE '^(resources/|package(-lock)?\.json$|vite\.config\.js$)'; then
+    TOCA_ASSETS=1
+fi
+if [ -z "$FALLO" ] && [ "$CON_ASSETS" = "1" ] && [ "$TOCA_ASSETS" = "1" ]; then
     etapa "Compilación de assets (Vite, en el host)" npm run build || true
+elif [ "$TOCA_ASSETS" = "0" ]; then
+    printf '\n\033[2m▸ Assets: el diff no toca resources/ ni package.json\033[0m\n'
 fi
 
 # No hay etapa de regresión visual: se sacó de la cascada el 14/9/2026 (nunca
@@ -65,11 +164,16 @@ fi
 # `panel-design-ui`, "Verificación visual").
 
 echo
+printf 'Duración total: %ss\n' "$(( $(date +%s) - INICIO ))"
 if [ -n "$FALLO" ]; then
     printf '\033[31m✗ La cascada falló en: %s\033[0m\n' "$FALLO"
     printf '  El cambio NO está listo para commitear.\n'
     exit 1
 fi
 
-printf '\033[32m✓ Cascada completa en verde.\033[0m\n'
+if [ "$TODO" = "1" ]; then
+    printf '\033[32m✓ Cascada completa (TODO) en verde.\033[0m\n'
+else
+    printf '\033[32m✓ Cascada de lo afectado en verde.\033[0m (la suite completa corre en el release y de noche)\n'
+fi
 exit 0

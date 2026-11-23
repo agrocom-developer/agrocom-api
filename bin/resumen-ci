@@ -1,0 +1,80 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/*
+ * Resumen de tiempos de una corrida de pruebas, en Markdown (para
+ * $GITHUB_STEP_SUMMARY o la terminal), a partir de un JUnit de Pest.
+ *
+ *   bin/resumen-ci <junit.xml> [--titulo=...] [--duracion=SEG] [--presupuesto=SEG] [--modo=...]
+ *
+ * Publica tiempo total, tiempo por carpeta de pruebas y las 10 pruebas más
+ * lentas, y avisa si la duración supera el presupuesto. Nunca falla la
+ * corrida por el presupuesto: es un aviso, no una compuerta.
+ */
+
+$ruta = $argv[1] ?? '';
+$opciones = [];
+foreach (array_slice($argv, 2) as $arg) {
+    if (preg_match('/^--([\w-]+)=(.*)$/s', $arg, $m) === 1) {
+        $opciones[$m[1]] = $m[2];
+    }
+}
+
+if ($ruta === '' || ! is_file($ruta)) {
+    fwrite(STDERR, "Uso: bin/resumen-ci <junit.xml> [--titulo=...] [--duracion=SEG] [--presupuesto=SEG]\n");
+    exit(2);
+}
+
+$xml = simplexml_load_file($ruta);
+if ($xml === false) {
+    fwrite(STDERR, "JUnit ilegible: {$ruta}\n");
+    exit(2);
+}
+
+$porCarpeta = [];
+$casos = [];
+foreach ($xml->xpath('//testcase') ?: [] as $caso) {
+    $archivo = explode('::', (string) ($caso['file'] ?? ''))[0];
+    $carpeta = $archivo !== '' && preg_match('#/(tests/.+)/[^/]+$#', $archivo, $m) === 1 ? $m[1] : 'tests';
+    $tiempo = (float) $caso['time'];
+    $porCarpeta[$carpeta]['segundos'] = ($porCarpeta[$carpeta]['segundos'] ?? 0.0) + $tiempo;
+    $porCarpeta[$carpeta]['pruebas'] = ($porCarpeta[$carpeta]['pruebas'] ?? 0) + 1;
+    $casos[] = ['nombre' => (string) $caso['name'], 'clase' => basename($archivo), 'segundos' => $tiempo];
+}
+uasort($porCarpeta, static fn (array $a, array $b): int => $b['segundos'] <=> $a['segundos']);
+usort($casos, static fn (array $a, array $b): int => $b['segundos'] <=> $a['segundos']);
+
+$sumaPruebas = array_sum(array_column($porCarpeta, 'segundos'));
+$total = isset($opciones['duracion']) ? (float) $opciones['duracion'] : $sumaPruebas;
+$presupuesto = isset($opciones['presupuesto']) ? (float) $opciones['presupuesto'] : (float) (getenv('CI_PRESUPUESTO_SEG') ?: 0);
+$titulo = $opciones['titulo'] ?? 'Pruebas';
+
+$linea = static fn (float $s): string => $s >= 60 ? sprintf('%dm %02ds', intdiv((int) $s, 60), (int) $s % 60) : sprintf('%.1fs', $s);
+
+echo "### {$titulo}\n\n";
+echo '- Pruebas ejecutadas: **', count($casos), "**\n";
+echo '- Tiempo total (reloj): **', $linea($total), "**\n";
+echo '- Suma de tiempos de prueba (CPU, sin paralelismo): ', $linea($sumaPruebas), "\n";
+if (isset($opciones['modo'])) {
+    echo '- Modo: ', $opciones['modo'], "\n";
+}
+if ($presupuesto > 0) {
+    $estado = $total > $presupuesto ? '⚠️ **supera el presupuesto**' : 'dentro del presupuesto';
+    echo '- Presupuesto: ', $linea($presupuesto), " — {$estado}\n";
+    if ($total > $presupuesto) {
+        echo "\n> ⚠️ La corrida tardó más que el presupuesto configurado (`CI_PRESUPUESTO_SEG`). Revisar las pruebas más lentas de abajo.\n";
+    }
+}
+
+echo "\n#### Tiempo por carpeta\n\n| Carpeta | Pruebas | Tiempo |\n|---|---:|---:|\n";
+foreach ($porCarpeta as $carpeta => $d) {
+    echo "| `{$carpeta}` | {$d['pruebas']} | ", $linea($d['segundos']), " |\n";
+}
+
+echo "\n#### 10 pruebas más lentas\n\n| Prueba | Archivo | Tiempo |\n|---|---|---:|\n";
+foreach (array_slice($casos, 0, 10) as $c) {
+    $nombre = str_replace('|', '\|', mb_strimwidth($c['nombre'], 0, 90, '…'));
+    echo "| {$nombre} | `{$c['clase']}` | ", $linea($c['segundos']), " |\n";
+}
