@@ -15,8 +15,11 @@ use App\Dominios\Seguridad\Infraestructura\Http\AutorizacionPortalClienteSesion;
 use App\Dominios\Seguridad\Infraestructura\Http\IdentidadOperarioTokenSanctum;
 use App\Dominios\Seguridad\Infraestructura\Http\Middleware\ResolverRolActivo;
 use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\PermisoVista;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\Events\TokenAuthenticated;
@@ -94,6 +97,31 @@ final class SeguridadServiceProvider extends ServiceProvider
         Blade::if('puede', fn (string $codigo): bool => PermisoVista::puede($codigo));
 
         $this->configurarTokensDeDispositivo();
+        $this->configurarLimitesDeLogin();
+    }
+
+    /**
+     * Límite del login de la app de campo (`POST /api/auth/token`).
+     *
+     * Dos cubos, no uno. Los dispositivos del lote comparten una sola IP
+     * (el enlace satelital), así que limitar solo por IP bloquearía a todo el
+     * equipo por los errores de uno. Y limitar solo por usuario permitiría
+     * probar miles de usuarios distintos desde una sola IP:
+     * - por usuario + IP: 6 intentos por minuto. Frena la fuerza bruta contra
+     *   una cuenta sin afectar a los compañeros de la misma IP.
+     * - por IP: 60 intentos por minuto. Techo amplio contra el barrido de
+     *   usuarios; un lote real con decenas de dispositivos no lo alcanza.
+     */
+    private function configurarLimitesDeLogin(): void
+    {
+        RateLimiter::for('login-campo', function (Request $request): array {
+            $usuario = mb_strtolower(trim((string) $request->input('username')));
+
+            return [
+                Limit::perMinute(6)->by('login-campo|usuario|'.sha1($usuario).'|'.$request->ip()),
+                Limit::perMinute(60)->by('login-campo|ip|'.$request->ip()),
+            ];
+        });
     }
 
     /**

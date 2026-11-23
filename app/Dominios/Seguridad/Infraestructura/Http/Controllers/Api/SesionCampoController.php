@@ -33,8 +33,9 @@ use OpenApi\Attributes as OA;
     securityScheme: 'tokenDispositivo',
     type: 'http',
     description: 'Token por dispositivo emitido por `POST /api/auth/token` (HU-03). Se envía como '
-        .'`Authorization: Bearer {token}`. No caduca por tiempo: vale hasta que se lo revoque desde '
-        .'el panel, o hasta que la cuenta o el rol con el que se emitió dejen de estar vigentes.',
+        .'`Authorization: Bearer {token}`. Caduca a los `SANCTUM_EXPIRATION` minutos de emitido '
+        .'(30 días por defecto), o antes si se lo revoca desde el panel o si la cuenta o el rol con '
+        .'el que se emitió dejan de estar vigentes.',
     scheme: 'bearer',
 )]
 #[OA\Tag(
@@ -52,8 +53,9 @@ final class SesionCampoController
         path: '/api/auth/token',
         operationId: 'emitirTokenDispositivo',
         description: 'Autentica al operario y emite el token con el que ese dispositivo opera sin '
-            .'volver a loguearse. El token no caduca por tiempo (sesión persistente offline): deja '
-            .'de valer cuando se lo revoca desde el panel. Reintentar desde el mismo '
+            .'volver a loguearse. El token caduca a los 30 días por defecto (configurable) y '
+            .'deja de valer antes si se lo revoca desde el panel. Limita los intentos por usuario e '
+            .'IP: superado el límite responde 429. Reintentar desde el mismo '
             .'`uuid_dispositivo` revoca el token anterior y emite uno nuevo — nunca acumula '
             .'credenciales vivas. El valor en claro se devuelve UNA sola vez.',
         summary: 'Emite el token de un dispositivo de campo',
@@ -110,6 +112,7 @@ final class SesionCampoController
                 description: 'Credenciales incorrectas, cuenta deshabilitada, o payload inválido.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion'),
             ),
+            new OA\Response(response: 429, description: 'Demasiados intentos; reintentar tras `Retry-After` segundos.'),
         ],
     )]
     public function store(EmitirTokenDispositivoRequest $request): JsonResponse
