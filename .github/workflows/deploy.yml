@@ -8,22 +8,44 @@ on:
     tags:
       - 'v*.*.*'
 
+# Permisos mínimos por defecto; el deploy solo lee el repositorio.
+permissions:
+  contents: read
+
+# Un solo despliegue a la vez: dos tags seguidos no deben migrar en paralelo.
+concurrency:
+  group: deploy-produccion-beta
+  cancel-in-progress: false
+
 jobs:
   deploy:
     name: deploy-produccion-beta
     # Corre en el runner self-hosted registrado en el contenedor 119.
     # El runner hace polling saliente hacia GitHub (no expone puertos de entrada).
+    #
+    # Un runner self-hosted nunca debe correr código de un fork: este workflow
+    # solo dispara por push de tag (los forks no pueden pushear tags acá) y
+    # ningún workflow del repo usa `pull_request_target`; CI (el único que
+    # corre en `pull_request`) usa solo `ubuntu-latest`. La guarda de abajo es
+    # defensa en profundidad si el repo se duplica o el disparador cambia.
+    if: github.repository == 'agrocom-developer/agrocom-api'
     runs-on: [self-hosted]
+    # El environment `produccion-beta` lleva "Required reviewers" configurado
+    # en la web (docs/seguridad/rulesets.md): el job queda en espera hasta que
+    # el dueño apruebe el despliegue.
     environment: produccion-beta
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
+          persist-credentials: false
           # Checkout del tag exacto que disparó el workflow.
           ref: ${{ github.ref }}
 
       - name: Info del despliegue
+        env:
+          TAG: ${{ github.ref_name }}
         run: |
-          echo "Tag: ${{ github.ref_name }}"
+          echo "Tag: $TAG"
           echo "SHA: ${{ github.sha }}"
           echo "Timestamp: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
@@ -46,9 +68,47 @@ jobs:
         run: |
           docker compose -f docker-compose.prod.yml up -d --build
 
+      # Respaldo previo a migrar. Vive en $HOME del runner, fuera del checkout
+      # (actions/checkout limpia el workspace en cada corrida). Si el volcado
+      # falla, el job se detiene ANTES de tocar el esquema. Se conservan los
+      # últimos 14 respaldos. Las credenciales se leen dentro del contenedor
+      # de la base: no se exportan ni se imprimen en el log.
+      - name: Respaldar la base de datos (pg_dump)
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          DIR="$HOME/agrocom-backups"
+          mkdir -p "$DIR"
+          chmod 700 "$DIR"
+          ARCHIVO="$DIR/pre-${TAG}-$(date -u +%Y%m%dT%H%M%SZ).dump"
+          docker compose -f docker-compose.prod.yml exec -T db \
+            sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --format=custom --no-owner' > "$ARCHIVO"
+          chmod 600 "$ARCHIVO"
+          # Verificación: el respaldo no está vacío y su tabla de contenido se lee.
+          test -s "$ARCHIVO"
+          docker compose -f docker-compose.prod.yml exec -T db pg_restore --list < "$ARCHIVO" > /dev/null
+          echo "Respaldo verificado: $ARCHIVO ($(du -h "$ARCHIVO" | cut -f1))"
+          ls -1t "$DIR"/pre-*.dump | tail -n +15 | xargs -r rm --
+          echo "BACKUP_FILE=$ARCHIVO" >> "$GITHUB_ENV"
+
+      # ROLLBACK (manual, ver docs/seguridad/despliegue.md):
+      #   1. Volver al tag anterior: re-ejecutar este workflow sobre el tag previo
+      #      (o `git checkout <tag-anterior> && docker compose -f
+      #      docker-compose.prod.yml up -d --build`).
+      #   2. Si la migración alteró datos o esquema de forma incompatible,
+      #      restaurar el respaldo del paso anterior:
+      #        docker compose -f docker-compose.prod.yml exec -T db sh -c \
+      #          'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists' \
+      #          < "$HOME/agrocom-backups/<archivo>.dump"
       - name: Ejecutar migraciones
         run: |
           docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
+          # Verificación: no queda ninguna migración pendiente.
+          if docker compose -f docker-compose.prod.yml exec -T app php artisan migrate:status --pending 2>&1 | grep -q "Pending"; then
+            echo "Quedaron migraciones pendientes tras migrate --force"
+            exit 1
+          fi
 
       - name: Esperar readiness del servicio
         run: |
