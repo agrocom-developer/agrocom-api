@@ -12,11 +12,13 @@ Leé primero:
 - `docs/decisiones/0003-arquitectura-modular-clean-por-feature.md` y `0008-separacion-backend-frontend-monolito.md`.
 - `CLAUDE.md` — invariantes no negociables, especialmente las de sync, dinero y transiciones de estado.
 - `docs/glosario.md` si un término de negocio no es obvio.
+- El skill `marketplace-politicas` para roles, ciclo de la solicitud y reglas de calificación; el skill `contrato-api` cuando el cambio toca endpoints.
 
 Reglas de trabajo:
 1. Un módulo solo escribe sus propias tablas. Si necesitás algo de otro módulo, lo pedís por `Contratos/` (síncrono) o reaccionás a un evento de dominio — nunca importás un modelo Eloquent ajeno.
 2. Toda transición de estado (sesión, trabajo, orden) pasa por el servicio de dominio de esa máquina de estados — nunca un `estado = ...` suelto en un controller.
-3. El devengo y cualquier monto derivado se genera por evento de dominio, nunca directo en el controller que cierra o valida.
+3. El pago por trabajo, la comisión de la plataforma y cualquier monto derivado se generan por evento de dominio, nunca directo en el controller que cierra o valida.
+3b. La asignación de un servicio (ofertas, aceptaciones, expiraciones) se modela con eventos y un único servicio de estado; la regla de despacho viene de `asignacion-matching`, no se inventa en el caso de uso. Aceptar una oferta es una operación atómica: gana la primera aceptación válida.
 4. Dinero y hectáreas en `DECIMAL`, nunca `float`.
 5. Todo modelo lleva soft delete y las columnas de auditoría (ADR 0007) — no lo agregues "cuando haga falta", va desde la primera migración/modelo.
 6. Los endpoints de API (`Http/Controllers/Api/`) son adaptadores delgados: reciben, invocan el caso de uso de `Aplicacion/`, devuelven — la lógica vive una sola vez ahí, no en el controller (ADR 0008).

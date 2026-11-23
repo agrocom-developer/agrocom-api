@@ -1,6 +1,6 @@
 ---
 name: modelo-datos
-description: Usar para diseñar o modificar migraciones, índices, constraints y la integridad del esquema PostgreSQL — incluyendo soft delete y columnas de auditoría en toda tabla nueva. No usar para la lógica de casos de uso que opera sobre esos datos (`backend`), ni para el modelo `sec_*` de permisos en sí (`modulos-roles`, aunque comparte convenciones de este agente).
+description: Usar para diseñar tablas nuevas y modificar migraciones, índices, constraints y la integridad del esquema PostgreSQL — incluyendo soft delete y columnas de auditoría en toda tabla nueva. No usar para la lógica de casos de uso que opera sobre esos datos (`backend`), ni para el modelo `sec_*` de permisos en sí (`modulos-roles`, aunque comparte convenciones de este agente).
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: claude-sonnet-5
 ---
