@@ -3,7 +3,7 @@
 namespace App\Dominios\Personal\Contratos;
 
 /**
- * Forma de dato primitiva de un recurso (dron/vehículo/generador) asignado a
+ * Forma de dato primitiva de un recurso (dron/batería) asignado a
  * un equipo, vigente en una fecha dada (ADR 0003, regla 2). `recursoTipo` +
  * `recursoId` viajan crudos, igual que en `per_equipo_recursos`: resolver el
  * identificador legible (`DRN-01`, la placa, etc.) es responsabilidad de

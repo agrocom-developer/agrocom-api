@@ -19,10 +19,9 @@ use Illuminate\View\View;
 /**
  * `GET/POST /panel/pausas*` (HU-44, tarea 58): "como jefe de campo, quiero
  * registrar las pausas con su causa atribuible (DS-01), para saber qué
- * tiempo se pierde y por qué". Mismo molde que `GastosController` — alta y
- * listado, sin edición: una pausa mal cargada no se corrige, se registra de
- * nuevo (no hay caso de uso de edición ni de baja, a diferencia de `Gasto`
- * — sin dinero de por medio que proteger de una rendición en curso).
+ * tiempo se pierde y por qué". Alta y listado, sin edición: una pausa mal
+ * cargada no se corrige, se registra de nuevo (no hay caso de uso de edición
+ * ni de baja).
  *
  * Dos permisos de grano fino (`operaciones.pausa.ver`/`.registrar`),
  * verificados DENTRO del controlador contra el ROL ACTIVO vía
@@ -93,8 +92,7 @@ final class PausasController
     }
 
     /**
-     * Últimas 100 sesiones, mismo criterio de acotar el select que
-     * `GastosController::trabajosDisponibles()`: el CA esencial es poder
+     * Últimas 100 sesiones, para acotar el select: el CA esencial es poder
      * ligar la pausa a una sesión, no navegar el historial completo desde
      * este formulario.
      *

@@ -9,8 +9,8 @@ use Illuminate\Validation\Rule;
 /**
  * `POST /panel/cuadrillas/{equipoTrabajo}/recursos` (tarea 72, HU-49).
  * Sin `Rule::exists` para `recurso_id`: la tabla de destino depende de
- * `recurso_tipo` (`ope_drones`/`man_vehiculos`/`man_generadores`, tres
- * tablas de dos módulos distintos) y esta clase no resuelve esa
+ * `recurso_tipo` (`ope_drones`/`man_baterias`, dos tablas de dos
+ * módulos distintos) y esta clase no resuelve esa
  * indirección — la existencia y el estado activo del recurso se verifican
  * en `AsignarRecursoEquipo::existeYActivo()`, DENTRO del caso de uso, que es
  * donde el prompt de la tarea pide que se rechace (ver acceptance

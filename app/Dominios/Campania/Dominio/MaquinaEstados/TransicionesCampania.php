@@ -8,7 +8,7 @@ use App\Dominios\Campania\Dominio\EstadoCampania;
  * Tabla de transiciones permitidas para `campania` (invariante 7 de
  * CLAUDE.md; ADR 0015 punto 1): `planificada → abierta → cerrada`, sin
  * vuelta atrás desde `cerrada` — reabrir una campaña cerrada es el agujero
- * por el que se cuelan gastos e imputaciones retroactivas que descuadran un
+ * por el que se cuelan imputaciones retroactivas que descuadran un
  * cierre ya presentado (ADR 0015). Reglas puras, sin Eloquent ni
  * `Illuminate\Database` (verificado por `tests/Unit/ArquitecturaModulosTest.php`).
  *

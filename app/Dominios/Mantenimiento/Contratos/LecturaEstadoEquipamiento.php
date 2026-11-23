@@ -9,18 +9,19 @@ namespace App\Dominios\Mantenimiento\Contratos;
  * recurso (su identificador) y cuáles se pueden asignar; este resuelve CÓMO
  * está, en lote, para pintarlo junto a una orden o a una cuadrilla.
  *
- * Los cuatro tipos son los de `per_equipo_recursos.recurso_tipo`: los tres de
- * {@see LecturaEquipamiento} más el dron, cuyo estado sale de sus órdenes de
- * mantenimiento (`equipo_tipo = 'dron'`) porque `ope_drones` no lo guarda.
+ * Los dos tipos son los de `per_equipo_recursos.recurso_tipo` que tienen
+ * estado: la batería ({@see LecturaEquipamiento::TIPO_BATERIA}) y el dron,
+ * que no guarda ninguno — `ope_drones` es de Operaciones — y figura como
+ * operativo.
  */
 interface LecturaEstadoEquipamiento
 {
     public const TIPO_DRON = 'dron';
 
     /**
-     * Estado de los recursos pedidos, sea cual sea: un vehículo dado de baja
-     * sigue figurando, con su estado. `$tipo` es `self::TIPO_DRON` o uno de
-     * `LecturaEquipamiento::TIPO_*`.
+     * Estado de los recursos pedidos, sea cual sea: una batería dada de baja
+     * sigue figurando, con su estado. `$tipo` es `self::TIPO_DRON` o
+     * `LecturaEquipamiento::TIPO_BATERIA`.
      *
      * @param  list<int>  $ids
      * @return array<int, EstadoRecursoPanel> indexado por id; un id que no existe

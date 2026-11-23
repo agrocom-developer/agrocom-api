@@ -33,12 +33,9 @@ return [
     ],
 
     // Tipo de recurso asignable a un equipo de trabajo (RecursoTipoEquipo,
-    // tarea 72; `bateria` agregada por la tarea "cuadrillas-estadias",
-    // 19/9/2026).
+    // tarea 72).
     'recurso_tipo' => [
         'dron' => 'Dron',
-        'vehiculo' => 'Vehículo',
-        'generador' => 'Generador',
         'bateria' => 'Batería',
     ],
 
@@ -103,24 +100,14 @@ return [
         'aside_cuadrillas_accion_ver' => 'Ver cuadrillas',
         'aside_cuadrillas_accion_crear' => 'Nueva cuadrilla',
         'aside_equipamiento_titulo' => 'Equipamiento',
-        'aside_equipamiento_vehiculos' => 'Vehículos',
-        'aside_equipamiento_generadores' => 'Generadores',
         'aside_equipamiento_baterias' => 'Baterías',
         'aside_equipamiento_vacio_titulo' => 'Sin equipamiento asignado',
-        'aside_equipamiento_vacio_detalle' => 'Elige esta base al registrar un vehículo, un generador o una batería para que aparezca aquí.',
-        'aside_stock_titulo' => 'Stock',
-        'aside_stock_repuestos' => 'Repuestos',
-        'aside_stock_bajo_minimo' => 'Bajo el mínimo',
-        'aside_stock_vacio_titulo' => 'Sin stock registrado',
-        'aside_stock_vacio_detalle' => 'Todavía no hay repuestos con existencias en esta base. Se cargan al registrar un movimiento de stock.',
-        'aside_stock_accion_ver' => 'Ver stock',
-        'aside_stock_accion_registrar' => 'Registrar movimiento',
+        'aside_equipamiento_vacio_detalle' => 'Elige esta base al registrar una batería para que aparezca aquí.',
     ],
 
     // HU-26 (tarea 37): alta y mantenimiento de personas operativas, con su
     // puesto y base. `base_id` es opcional — mismo criterio de select nativo
-    // que `cliente_id` en comercial.campos. La tarifa ya no es de la persona
-    // (ADR 0023): vive en Financiero → Tarifas y en cada Orden de Trabajo.
+    // que `cliente_id` en comercial.campos.
     'personas' => [
         'creado' => 'La persona se dio de alta correctamente.',
         'actualizado' => 'Los datos de la persona se actualizaron correctamente.',
@@ -217,21 +204,13 @@ return [
         'aside_sesiones_vacio_titulo' => 'Sin sesiones',
         'aside_sesiones_vacio_detalle' => 'Esta persona todavía no participó en ninguna sesión de vuelo, ni como piloto ni como ayudante.',
         'aside_sesiones_accion_desempenio' => 'Ver desempeño',
-        'aside_anticipos_titulo' => 'Anticipos',
-        'aside_anticipos_cantidad' => 'Registrados',
-        'aside_anticipos_total' => 'Monto total',
-        'aside_anticipos_valor' => 'Bs :monto',
-        'aside_anticipos_vacio_titulo' => 'Sin anticipos',
-        'aside_anticipos_vacio_detalle' => 'Todavía no se registró ningún anticipo a esta persona.',
-        'aside_anticipos_accion_ver' => 'Ver anticipos',
-        'aside_anticipos_accion_registrar' => 'Registrar anticipo',
     ],
 
     // Tarea 72 (HU-49, ADR 0015 punto 3), pasada a «cuadrilla» y ampliada con
     // alta de una sola vez, máquina de estados y accesorios por la tarea
     // "cuadrillas-estadias" (pedido del dueño, 19/9/2026): la cuadrilla es el
     // piloto, su ayudante (con posible segundo) y su equipamiento (dron,
-    // vehículo, generador, baterías, accesorios). Sin campaña (la cuadrilla
+    // baterías, accesorios). Sin campaña (la cuadrilla
     // es de Agrocom, trabaja para varias a la vez) — la vigencia es la de la
     // cuadrilla y la de cada integrante/recurso, no un período de campaña.
     //
@@ -287,7 +266,7 @@ return [
         'filtro_vacio_titulo' => 'Sin resultados',
         'filtro_vacio_detalle' => 'Ninguna cuadrilla coincide con esta búsqueda. Prueba con otro término o quita los filtros.',
         'vacio_titulo' => 'Todavía no hay cuadrillas',
-        'vacio_detalle' => 'Una cuadrilla se arma con su piloto, su ayudante y su equipamiento (dron, vehículo, generador, baterías) desde un único formulario de alta.',
+        'vacio_detalle' => 'Una cuadrilla se arma con su piloto, su ayudante y su equipamiento (dron, baterías) desde un único formulario de alta.',
         'col_codigo' => 'Código',
         'col_nombre' => 'Nombre',
         'col_integrantes' => 'Integrantes',
@@ -345,7 +324,7 @@ return [
             'activo' => 'Activar',
             'inactivo' => 'Inactivar',
         ],
-        'campo_codigo_ayuda' => 'Corto y único, como C1 o NORTE-2. Es lo que se ve en órdenes, gastos y estadías.',
+        'campo_codigo_ayuda' => 'Corto y único, como C1 o NORTE-2. Es lo que se ve en órdenes y estadías.',
         'campo_nombre_ayuda' => 'Opcional. Un nombre para reconocerla más fácil.',
         'campo_base_ayuda' => 'La base de la que sale la cuadrilla.',
         'campo_desde_ayuda' => 'Desde cuándo trabaja esta formación. Sus integrantes y su equipamiento nacen con esta misma fecha.',
@@ -354,19 +333,13 @@ return [
         'campo_piloto_ayuda' => 'Quien vuela el dron. Solo figura el personal con puesto de piloto.',
         'campo_ayudante' => 'Ayudante',
         'campo_ayudante_placeholder' => 'Elige al ayudante…',
-        'campo_ayudante_ayuda' => 'Quien prepara el tanque, rota las baterías y atiende el generador.',
+        'campo_ayudante_ayuda' => 'Quien prepara el tanque y rota las baterías.',
         'campo_ayudante2' => 'Segundo ayudante',
         'campo_ayudante2_placeholder' => 'Elige al segundo ayudante…',
         'campo_ayudante2_ayuda' => 'Opcional. Para cuadrillas que salen con dos ayudantes.',
         'campo_dron' => 'Dron',
         'campo_dron_placeholder' => 'Elige el dron…',
         'campo_dron_ayuda' => 'El dron con el que trabaja la cuadrilla.',
-        'campo_vehiculo' => 'Camioneta o vehículo',
-        'campo_vehiculo_placeholder' => 'Elige el vehículo…',
-        'campo_vehiculo_ayuda' => 'Opcional. Se reconoce por su placa.',
-        'campo_generador' => 'Generador',
-        'campo_generador_placeholder' => 'Elige el generador…',
-        'campo_generador_ayuda' => 'Opcional. El que carga las baterías en el campo.',
         'campo_baterias' => 'Baterías',
         'baterias_vacio_titulo' => 'Sin baterías disponibles',
         'baterias_vacio_detalle' => 'No hay baterías activas en el catálogo. Puedes asignarlas después, desde la ficha de la cuadrilla.',
@@ -375,8 +348,6 @@ return [
         'accion_nuevo_personal' => 'Dar de alta a una persona nueva',
         'accion_nueva_base' => 'Dar de alta una base nueva',
         'accion_nuevo_dron' => 'Dar de alta un dron nuevo',
-        'accion_nuevo_vehiculo' => 'Dar de alta un vehículo nuevo',
-        'accion_nuevo_generador' => 'Dar de alta un generador nuevo',
         'volver_a_formulario_origen' => 'Volver al formulario de origen',
 
         // Tablas de detalle de la ficha de edición y sus diálogos.
@@ -399,7 +370,7 @@ return [
         'detalle_hasta_ayuda' => 'Déjalo vacío si sigue vigente.',
         'detalle_agregar_equipamiento' => 'Agregar equipamiento',
         'detalle_agregar_equipamiento_mensaje' => 'Elige el tipo y después el recurso, entre los que ya existen en el sistema.',
-        'detalle_equipamiento_vacio_detalle' => 'Agrega el dron, las baterías, el generador y la camioneta con los que sale la cuadrilla.',
+        'detalle_equipamiento_vacio_detalle' => 'Agrega el dron y las baterías con los que sale la cuadrilla.',
         'detalle_equipamiento_paginacion' => 'Paginación de equipamiento',
         'detalle_col_recurso' => 'Recurso',
         'detalle_recurso_ayuda' => 'Cada batería se agrega por separado: la cantidad es cuántas tenga vigentes.',
@@ -528,7 +499,6 @@ return [
         // Aside "Relacionado" (arquetipo Detalle, tarea 125).
         'aside_relacionado_titulo' => 'Relacionado',
         'vinculo_persona' => 'Ficha de la persona',
-        'vinculo_devengos' => 'Ver mis devengos',
 
         'filtro_desde' => 'Desde',
         'filtro_hasta' => 'Hasta',

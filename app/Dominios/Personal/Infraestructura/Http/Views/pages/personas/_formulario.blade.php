@@ -14,7 +14,7 @@
     Homogeneizado con el patrón de Clientes y Cuadrillas (tarea 112): el
     cuerpo va en `molecules/form-layout` y, SOLO en edición, el aside con el
     resumen relacionado (§6.3.1) — una persona recién creada no puede tener
-    todavía cuadrillas, usuario, sesiones ni anticipos.
+    todavía cuadrillas, usuario ni sesiones.
 
     Espera:
     - $persona (PerPersona|null): null en alta; el modelo en edición.

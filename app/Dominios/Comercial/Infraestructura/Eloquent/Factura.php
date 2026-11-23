@@ -18,8 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * Operaciones).
  *
  * `acta_id` referencia `ope_actas` solo por FK + entero plano — sin
- * `belongsTo` cross-módulo, mismo criterio que `fin_devengos_personal.sesion_id`
- * y `Finanzas\Infraestructura\Eloquent\Anticipo.persona_id`.
+ * `belongsTo` cross-módulo (ADR 0003, regla 3).
  *
  * `hectareas_facturadas`/`precio_ha`/`monto` son una copia congelada al
  * emitir, nunca recalculada contra el contrato o el acta actuales

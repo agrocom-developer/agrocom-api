@@ -8,7 +8,7 @@
     Homogeneizado con el patrón de Clientes y Bases (tarea 113): el cuerpo va
     en `molecules/form-layout` y, SOLO en edición, el aside con el resumen
     relacionado (§6.3.1) — un dron recién creado no puede tener todavía ficha
-    de inventario, órdenes de mantenimiento, cuadrillas ni sesiones.
+    técnica, cuadrillas ni sesiones.
 
     Espera:
     - $dron (Dron|null): null en alta; el modelo en edición.

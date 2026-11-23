@@ -64,8 +64,8 @@ test('cada acceso lleva ícono, etiqueta y módulo del menú, sin traducir', fun
 });
 
 test('no pasa de seis accesos', function () {
-    $rutas = ['panel.contratos.index', 'panel.clientes.index', 'panel.ordenes.index', 'panel.planillas.index', 'panel.reportes.comercial.index', 'panel.facturas.index'];
-    $menu = [moduloMenu('todo', [...array_map(itemMenu(...), $rutas), itemMenu('panel.gastos.index')])];
+    $rutas = ['panel.contratos.index', 'panel.clientes.index', 'panel.ordenes.index', 'panel.campanias.index', 'panel.reportes.comercial.index', 'panel.facturas.index'];
+    $menu = [moduloMenu('todo', [...array_map(itemMenu(...), $rutas), itemMenu('panel.trabajos.index')])];
 
     expect(AccesosRapidos::para('dueno', $menu))->toHaveCount(AccesosRapidos::MAXIMO)
         ->and(rutasDe(AccesosRapidos::para('dueno', $menu)))->toBe($rutas);
@@ -87,14 +87,13 @@ test('un rol con lista propia pero sin ninguna de sus pantallas también cae en 
     expect(rutasDe(AccesosRapidos::para('dueno', $menu)))->toBe(['panel.bases.index']);
 });
 
-test('el piloto y el ayudante ven su tablero y sus devengos, que es todo su menú', function () {
+test('el piloto y el ayudante ven su tablero, que es todo su menú', function () {
     $menu = [
         moduloMenu('operacion', [itemMenu('panel.dashboard')]),
-        moduloMenu('financiero', [itemMenu('panel.devengos.index')]),
     ];
 
-    expect(rutasDe(AccesosRapidos::para('piloto', $menu)))->toBe(['panel.dashboard', 'panel.devengos.index'])
-        ->and(rutasDe(AccesosRapidos::para('auxiliar', $menu)))->toBe(['panel.dashboard', 'panel.devengos.index']);
+    expect(rutasDe(AccesosRapidos::para('piloto', $menu)))->toBe(['panel.dashboard'])
+        ->and(rutasDe(AccesosRapidos::para('auxiliar', $menu)))->toBe(['panel.dashboard']);
 });
 
 test('encuentra las pantallas anidadas a cualquier profundidad y una pantalla suelta en la raíz', function () {

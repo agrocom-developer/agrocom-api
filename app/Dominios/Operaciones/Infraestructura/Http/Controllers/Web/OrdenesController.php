@@ -269,8 +269,8 @@ final class OrdenesController
      * ahora no quedaba ningún lugar del panel para volver a ver sus datos
      * completos — solo la fila resumida del listado. Mismo permiso que
      * `index()`/`edit()` (`PERMISO_VER`), sin permiso nuevo — mismo criterio
-     * que las 5 pantallas `.show` ya homogeneizadas del panel (Trabajos,
-     * Devengos, Planillas, Rendiciones, EquiposTrabajo).
+     * que las pantallas `.show` ya homogeneizadas del panel (Trabajos,
+     * EquiposTrabajo).
      */
     public function show(Request $request, OrdenAplicacion $orden, ResumenDeOrdenes $resumenOrdenes, LecturaEquipoTrabajo $equipos): View
     {
@@ -382,10 +382,7 @@ final class OrdenesController
      * enlace filtrado ahí se vería vacío la mayor parte del tiempo (en
      * cuanto se validan, salen de la cola) y prometería un seguimiento que
      * esa pantalla no da todavía (mismo criterio ya documentado para el
-     * título de esa pantalla, no se repite acá). Tampoco hay vínculo a
-     * Finanzas: `Gastos` solo filtra por `trabajo_id` (`ListarGastos`), no
-     * por `orden_id`, y una orden puede tener varios trabajos — un enlace
-     * a un solo trabajo sería arbitrario.
+     * título de esa pantalla, no se repite acá).
      *
      * @return list<array{href: string, icon: string, title: string, meta: ?string, tone: string}>
      */
@@ -828,8 +825,7 @@ final class OrdenesController
     /**
      * Nombre visible de un autor (`created_by`/`updated_by`, FK plana a
      * `sec_user` — ningún modelo de dominio tiene relación Eloquent hacia
-     * `Seguridad`). Mismo patrón que `PlanillasController::show()`:
-     * `sec_user.name` es texto libre propio del usuario (lo setea
+     * `Seguridad`). `sec_user.name` es texto libre propio del usuario (lo setea
      * `AsignarRolesUsuario`), no se deriva de `per_personas`. No existe hoy
      * ningún trait/caso de uso compartido para esta resolución — cada
      * pantalla que lo necesita repite este mismo `DB::table`.

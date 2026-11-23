@@ -13,10 +13,8 @@ use Brick\Math\RoundingMode;
  * La vista solo formatea (invariante 6 de CLAUDE.md): el valor llega como el
  * texto que guarda la base ("1234.5") y se redondea y agrupa sobre
  * `BigDecimal`, sin pasar nunca por `float`, así que lo que se ve es
- * exactamente lo guardado. Es el mismo criterio que `FormatoMonto` de
- * Finanzas y `FormatoCantidad` de Inventario, pero cada módulo formatea con
- * lo suyo: llegar a la infraestructura de otro módulo es justo lo que ADR
- * 0003 prohíbe.
+ * exactamente lo guardado. Cada módulo formatea con lo suyo: llegar a la
+ * infraestructura de otro módulo es justo lo que ADR 0003 prohíbe.
  */
 final class FormatoMonto
 {

@@ -48,17 +48,16 @@ use Illuminate\Support\Collection;
  *
  * El permiso responde «¿este rol puede ver esta clase de cosa?». Las
  * pantallas de «lo mío» hacen además una segunda pregunta, sobre el usuario
- * y no sobre su rol: «¿de quién?». `GET /panel/devengos` (HU-28) redirige a
- * los devengos de la persona del usuario autenticado y hace `abort(404)` si
- * ese usuario no tiene `persona_id` — cosa perfectamente posible, porque
- * vincular una cuenta a una persona es opcional en el ABM de usuarios
- * (HU-45). Sin este chequeo, un usuario interno sin persona con el permiso
- * `finanzas.devengo.ver` (lo tienen `piloto`, `auxiliar` y `dueno`) ve
- * «Devengos» en el sidebar y recibe un 404 al hacer clic.
+ * y no sobre su rol: «¿de quién?». Una pantalla que resuelve por la persona
+ * del usuario autenticado hace `abort(404)` si ese usuario no tiene
+ * `persona_id` — cosa perfectamente posible, porque vincular una cuenta a una
+ * persona es opcional en el ABM de usuarios (HU-45). Sin este chequeo, un
+ * usuario interno sin persona con el permiso de esa pantalla la ve en el
+ * sidebar y recibe un 404 al hacer clic.
  *
  * Un ítem con `requiere_persona` sigue siendo un ítem gobernado por su
  * permiso: la bandera solo agrega una condición, nunca reemplaza ni relaja
- * la del permiso. Y ocultar el ítem NO es autorizar: `DevengosController`
+ * la del permiso. Y ocultar el ítem NO es autorizar: el controlador
  * mantiene su propio `abort_if`, porque un ítem oculto no protege una URL
  * tipeada a mano (invariante 2 del modelo de seguridad).
  */

@@ -26,8 +26,7 @@ use Illuminate\View\View;
 /**
  * `GET/POST/PUT/DELETE /panel/baterias*` (HU-39, tarea 51): alta y
  * mantenimiento del catálogo de baterías, con sus ciclos acumulados, estado
- * y asignación a base. Mismo molde que `VehiculosController`, sin
- * sub-entidad.
+ * y asignación a base. Sin sub-entidad.
  *
  * Cuatro permisos de grano fino
  * (`mantenimiento.bateria.ver`/`.crear`/`.editar`/`.eliminar`), verificados
@@ -37,8 +36,7 @@ use Illuminate\View\View;
  * retiro que calcula `ListarBaterias`.
  *
  * El select de `base_id` se arma con `DB::table('per_bases')` (ADR 0003
- * regla 3, mismo criterio que `VehiculosController`), sin importar el
- * modelo Eloquent `PerBase` de `Personal`.
+ * regla 3), sin importar el modelo Eloquent `PerBase` de `Personal`.
  */
 final class BateriasController
 {
@@ -200,13 +198,8 @@ final class BateriasController
      * LO QUE MUESTRA contra el ROL ACTIVO (invariante 10), no por
      * `mantenimiento.bateria.*`.
      *
-     * No hay órdenes de mantenimiento ni planes: `man_ordenes_mantenimiento`
-     * solo admite `dron` y `vehiculo` como equipo (CHECK de la migración) y los
-     * planes se cruzan por el modelo de un dron. Inventar esas tarjetas sería
-     * mostrar una relación que el esquema no tiene.
-     *
-     * Las cuadrillas llegan por el contrato de Personal (compartido con el
-     * generador y el vehículo, ver `ResumenRelacionadoDeEquipo`); las recargas
+     * Las cuadrillas llegan por el contrato de Personal (ver
+     * `ResumenRelacionadoDeEquipo`); las recargas
      * por el de Operaciones, que las cruza por el TEXTO del identificador
      * (`ope_recargas.bateria_saliente_id`, sin FK). Las recargas no tienen
      * atajo de alta: llegan desde la app de campo cuando el piloto cambia la

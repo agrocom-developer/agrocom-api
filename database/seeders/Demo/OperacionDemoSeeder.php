@@ -8,8 +8,6 @@ use App\Dominios\Comercial\Infraestructura\Eloquent\ClienteContacto;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Contrato;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Lote;
 use App\Dominios\Comercial\Infraestructura\Eloquent\Propiedad;
-use App\Dominios\Finanzas\Infraestructura\Eloquent\Tarifa;
-use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Vehiculo;
 use App\Dominios\Operaciones\Aplicacion\AtenderAlerta;
 use App\Dominios\Operaciones\Aplicacion\CrearOrdenTrabajo;
 use App\Dominios\Operaciones\Aplicacion\FirmarActa;
@@ -59,14 +57,14 @@ use Illuminate\Support\Facades\Storage;
  * | Orden | Contrato        | Estado    | Qué cuelga                                             |
  * |-------|-----------------|-----------|--------------------------------------------------------|
  * | A1    | San Marcos      | consumida | OT con EQ3, dos trabajos cerrados, actas firmadas      |
- * | A2    | San Marcos      | vigente   | OT con EQ3 (por día) y EQ4 (negociado por hectárea)    |
+ * | A2    | San Marcos      | vigente   | OT con EQ3 y EQ4                                       |
  * | B1    | El Carmen       | pausada   | OT con EQ4, un trabajo cerrado y acta firmada          |
  * | C1    | Santa Rosa      | emitida   | sin reparto todavía                                    |
  * | D1    | Valle Esperanza | cancelada | causa cliente                                          |
  *
  * ### Sesiones (todos los estados)
  *
- * Validadas (con sus devengos, invariante 3), cerradas sin validar (para la
+ * Validadas, cerradas sin validar (para la
  * bandeja de seguimiento), una rechazada (anulada con motivo) y una abierta
  * en curso. Con condiciones, recargas (una con la batería caliente), pausas,
  * incidencias, recepciones de caldo, mezclas, evidencias de equipo, actas
@@ -190,8 +188,6 @@ class OperacionDemoSeeder extends Seeder
     /** @var array<string, Sesion> */
     private array $sesiones = [];
 
-    private ?int $tarifaPredeterminadaId = null;
-
     /** @var array<string, string> hectáreas acumuladas por dron, en orden de vuelo */
     private array $acumuladoPorDron = [];
 
@@ -271,10 +267,8 @@ class OperacionDemoSeeder extends Seeder
 
         $this->equipos = EquipoTrabajo::query()->pluck('id', 'codigo')->all();
         $this->drones = Dron::query()->pluck('id', 'identificador')->all();
-        $this->tarifaPredeterminadaId = Tarifa::query()->where('predeterminada', true)->value('id');
 
-        return isset($this->equipos[CuadrillasDemoSeeder::CODIGO_PAILON], $this->equipos[CuadrillasDemoSeeder::CODIGO_SAN_JULIAN], $this->drones['AG-07'], $this->drones['AG-02'])
-            && $this->tarifaPredeterminadaId !== null;
+        return isset($this->equipos[CuadrillasDemoSeeder::CODIGO_PAILON], $this->equipos[CuadrillasDemoSeeder::CODIGO_SAN_JULIAN], $this->drones['AG-07'], $this->drones['AG-02']);
     }
 
     // ------------------------------------------------------------------
@@ -344,7 +338,6 @@ class OperacionDemoSeeder extends Seeder
         ], [
             [
                 'equipo_trabajo_id' => $this->equipos[CuadrillasDemoSeeder::CODIGO_PAILON],
-                'pago' => $this->pagoConTarifa(),
                 'lotes' => [
                     ['lote_id' => $this->lotes['SM-01']->id, 'hectareas' => '80.00', 'turno' => 'manana', 'turno_hora_inicio' => '06:00', 'turno_hora_fin' => '10:30'],
                     ['lote_id' => $this->lotes['SM-02']->id, 'hectareas' => '60.00', 'turno' => 'manana', 'turno_hora_inicio' => '06:00', 'turno_hora_fin' => '10:30'],
@@ -389,21 +382,12 @@ class OperacionDemoSeeder extends Seeder
         ], [
             [
                 'equipo_trabajo_id' => $this->equipos[CuadrillasDemoSeeder::CODIGO_PAILON],
-                'pago' => $this->pagoConTarifa(),
                 'lotes' => [
                     ['lote_id' => $this->lotes['SM-03']->id, 'hectareas' => '70.00', 'turno' => 'manana', 'turno_hora_inicio' => '06:00', 'turno_hora_fin' => '10:30'],
                 ],
             ],
             [
                 'equipo_trabajo_id' => $this->equipos[CuadrillasDemoSeeder::CODIGO_SAN_JULIAN],
-                'pago' => [
-                    'tarifa_id' => null,
-                    'negociado' => true,
-                    'modalidad' => 'por_ha',
-                    'monto_piloto' => '14.50',
-                    'monto_auxiliar' => '9.00',
-                    'motivo' => 'Lotes con obstáculos y turno nocturno: la cuadrilla pidió cobrar por hectárea.',
-                ],
                 'lotes' => [
                     ['lote_id' => $this->lotes['SM-04']->id, 'hectareas' => '50.00', 'turno' => 'noche', 'turno_hora_inicio' => '17:30', 'turno_hora_fin' => '20:30'],
                     ['lote_id' => $this->lotes['SM-05']->id, 'hectareas' => '60.00', 'turno' => 'todo_el_dia', 'turno_hora_inicio' => '06:00', 'turno_hora_fin' => '18:00'],
@@ -449,7 +433,6 @@ class OperacionDemoSeeder extends Seeder
         ], [
             [
                 'equipo_trabajo_id' => $this->equipos[CuadrillasDemoSeeder::CODIGO_SAN_JULIAN],
-                'pago' => $this->pagoConTarifa(),
                 'lotes' => [
                     ['lote_id' => $this->lotes['EC-01']->id, 'hectareas' => '90.00', 'turno' => 'manana', 'turno_hora_inicio' => '05:30', 'turno_hora_fin' => '10:00'],
                 ],
@@ -481,21 +464,6 @@ class OperacionDemoSeeder extends Seeder
         );
         $this->maquinaOrden->activar($orden);
         $this->maquinaOrden->cancelar($orden, CausaCancelacionOrden::Cliente, 'El cliente pausó el contrato por las lluvias antes de que saliera la cuadrilla.');
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function pagoConTarifa(): array
-    {
-        return [
-            'tarifa_id' => $this->tarifaPredeterminadaId,
-            'negociado' => false,
-            'modalidad' => null,
-            'monto_piloto' => null,
-            'monto_auxiliar' => null,
-            'motivo' => null,
-        ];
     }
 
     /**
@@ -691,8 +659,7 @@ class OperacionDemoSeeder extends Seeder
             $this->incidencia($sesion, $clave);
 
             match ($destino) {
-                // Validar es lo que genera el devengo (invariante 3); el
-                // validador nunca es el piloto de la sesión (invariante 4).
+                // El validador nunca es el piloto de la sesión (invariante 4).
                 'validar' => $this->validarSesion->ejecutar($sesion, $jefeCampo),
                 'rechazar' => $this->rechazarSesion->ejecutar($sesion, 'Las hectáreas declaradas (25,00) no coinciden con la captura del RC (18,40 ha). Se repite el vuelo.', $jefeCampo),
                 default => null,
@@ -925,7 +892,6 @@ class OperacionDemoSeeder extends Seeder
     {
         $sanMarcos = Propiedad::query()->where('nombre', 'San Marcos')->value('id');
         $elCarmen = Propiedad::query()->where('nombre', 'El Carmen')->value('id');
-        $vehiculos = Vehiculo::query()->pluck('id', 'identificador')->all();
 
         if ($sanMarcos === null || $elCarmen === null) {
             return;
@@ -934,11 +900,11 @@ class OperacionDemoSeeder extends Seeder
         $pailon = $this->equipos[CuadrillasDemoSeeder::CODIGO_PAILON];
         $sanJulian = $this->equipos[CuadrillasDemoSeeder::CODIGO_SAN_JULIAN];
 
-        $this->registrarEstadia->ejecutar($pailon, (int) $sanMarcos, '2026-08-02 22:00:00', TipoAlojamiento::Hacienda, $vehiculos['CAM-01'] ?? null, 'Primera aplicación de San Marcos. Dormimos en el casco de la hacienda.', '2026-08-06 16:00:00');
-        $this->registrarEstadia->ejecutar($sanJulian, (int) $elCarmen, '2026-08-19 20:00:00', TipoAlojamiento::Pueblo, $vehiculos['CAM-03'] ?? null, 'Alojamiento en Pailón, a 9 km del campo.', '2026-08-21 17:30:00');
-        $this->registrarEstadia->ejecutar($pailon, (int) $sanMarcos, '2026-09-07 22:00:00', TipoAlojamiento::Hacienda, $vehiculos['CAM-01'] ?? null, null, '2026-09-09 15:00:00');
+        $this->registrarEstadia->ejecutar($pailon, (int) $sanMarcos, '2026-08-02 22:00:00', TipoAlojamiento::Hacienda, 'Primera aplicación de San Marcos. Dormimos en el casco de la hacienda.', '2026-08-06 16:00:00');
+        $this->registrarEstadia->ejecutar($sanJulian, (int) $elCarmen, '2026-08-19 20:00:00', TipoAlojamiento::Pueblo, 'Alojamiento en Pailón, a 9 km del campo.', '2026-08-21 17:30:00');
+        $this->registrarEstadia->ejecutar($pailon, (int) $sanMarcos, '2026-09-07 22:00:00', TipoAlojamiento::Hacienda, null, '2026-09-09 15:00:00');
         // Abierta: la cuadrilla de San Julián sigue en San Marcos.
-        $this->registrarEstadia->ejecutar($sanJulian, (int) $sanMarcos, '2026-09-21 22:00:00', TipoAlojamiento::Camping, $vehiculos['CAM-03'] ?? null, 'Carpa junto al lote SM-05 para arrancar de madrugada.', null);
+        $this->registrarEstadia->ejecutar($sanJulian, (int) $sanMarcos, '2026-09-21 22:00:00', TipoAlojamiento::Camping, 'Carpa junto al lote SM-05 para arrancar de madrugada.', null);
     }
 
     // ------------------------------------------------------------------

@@ -1577,11 +1577,6 @@ components:
           format: date-time
           example: null
           nullable: true
-        vehiculo_id:
-          description: '`estadia_entrada`, opcional: id de servidor del vehículo declarado.'
-          type: integer
-          example: null
-          nullable: true
         observacion:
           description: '`estadia_entrada`, opcional: texto libre.'
           type: string

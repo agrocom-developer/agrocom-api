@@ -23,7 +23,7 @@ use Illuminate\Support\Carbon;
  *
  * `RegistraBitacora` (invariante 9 de CLAUDE.md): alta, edición y baja de un
  * equipo es una mutación de negocio auditable, mismo criterio que
- * `PerPersona`/`Generador`.
+ * `PerPersona`/`Bateria`.
  *
  * @property int $id
  * @property string $codigo

@@ -6,7 +6,7 @@
     Datos esperados (ver CuadrillasController::create()): la cáscara de
     CascaraPanel, más $basesDisponibles y las opciones de la alta de una sola
     vez ($pilotosDisponibles, $ayudantesDisponibles, $dronesDisponibles,
-    $vehiculosDisponibles, $generadoresDisponibles, $bateriasDisponibles,
+    $bateriasDisponibles,
     $puedeCrear*, $volverA — ver el docblock del controlador).
 
     Gateada por `personal.equipo_trabajo.crear`, verificado server-side en el

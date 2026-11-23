@@ -8,7 +8,7 @@ use RuntimeException;
 /**
  * Guarda de `Aplicacion/ActualizarEstadiaHacienda` y `Aplicacion/FinalizarEstadiaHacienda`
  * (invariante 7 de CLAUDE.md, vía `Dominio\MaquinaEstados\TransicionesEstadia`):
- * una estadía `finalizada` ya cuenta días para justificar gastos, así que no
+ * una estadía `finalizada` ya es historia, así que no
  * se edita ni se vuelve a finalizar — se da de baja y, si corresponde, se
  * vuelve a registrar. Cubre las dos guardas con la misma excepción porque el
  * motivo de fondo es el mismo: la estadía ya dejó de estar en curso.

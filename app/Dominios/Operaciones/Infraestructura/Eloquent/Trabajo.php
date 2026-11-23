@@ -235,8 +235,7 @@ class Trabajo extends ModeloDominio
      * `sum()` sin filas devuelve el entero `0` (no `'0.00'`) — se normaliza
      * con `BigDecimal::toScale(2, ...)` para que los tres campos tengan
      * siempre el mismo formato de `DECIMAL`, se hayan sumado filas o no.
-     * `cuadra` compara con `Brick\Math\BigDecimal` (no `float`), mismo
-     * criterio que `Finanzas\Aplicacion\GenerarDevengosSesion::calcularMonto()`.
+     * `cuadra` compara con `Brick\Math\BigDecimal` (no `float`).
      *
      * No bloquea ni valida nada (a propósito, ver el prompt de la tarea 18):
      * el desvío se alerta recién en HU-19 (bandeja de alertas, sprint 5) —

@@ -13,8 +13,8 @@ use Illuminate\Database\Seeder;
  * 28/8/2026): 7 módulos raíz (riel de nivel 1) con sus ítems hijos (sidebar
  * de nivel 2), según §4 de
  * `docs/especificacion/especificacion_funcional_tecnica.md` — Comercial
- * (4.1), Recursos (4.2), Operación (4.3), Financiero (4.4), Mantenimiento e
- * inventario (4.5), Seguridad (4.6) — más Reportes (cap. 9/10).
+ * (4.1), Recursos (4.2), Operación (4.3), Financiero (4.4), Seguridad (4.6) —
+ * más Reportes (cap. 9/10).
  *
  * Corre en todos los entornos, producción incluida — igual que
  * `SeguridadSeeder`, del que depende (necesita `sec_permission` sembrado).
@@ -90,10 +90,32 @@ class SecMenuSeeder extends Seeder
             ->where('label', 'menu.operacion.items.pausas')
             ->delete();
 
+        // El marketplace no lleva planilla, contabilidad interna, inventario
+        // ni mantenimiento de flota (ADR 0029, punto 4): las entradas de
+        // esos módulos salen del árbol. Soft delete (invariante 8), por la
+        // misma razón que las bajas de arriba: `Seeder::run()` nunca borra lo
+        // que ya no siembra. Idempotente: lo ya dado de baja no vuelve a
+        // aparecer en `SecMenu::query()`.
+        $this->retirarEntradas([
+            'menu.recursos.items.vehiculos',
+            'menu.recursos.items.generadores',
+            'menu.mantenimiento.items.ordenes',
+            'menu.mantenimiento.items.planes',
+            'menu.mantenimiento.items.repuestos',
+            'menu.mantenimiento.items.stock',
+            'menu.financiero.items.gastos',
+            'menu.financiero.items.combustible',
+            'menu.financiero.items.rendiciones',
+            'menu.financiero.items.devengos',
+            'menu.financiero.items.planilla',
+            'menu.financiero.items.anticipos',
+            'menu.financiero.items.tarifas',
+            'menu.mantenimiento.label',
+        ]);
+
         $operacion = $this->modulo('operacion', 'flight_takeoff', 1);
         $comercial = $this->modulo('comercial', 'handshake', 2);
         $recursos = $this->modulo('recursos', 'precision_manufacturing', 3);
-        $mantenimiento = $this->modulo('mantenimiento', 'inventory_2', 4);
         $financiero = $this->modulo('financiero', 'payments', 5);
         $reportes = $this->modulo('reportes', 'lab_profile', 6);
         $seguridad = $this->modulo('seguridad', 'admin_panel_settings', 7);
@@ -192,7 +214,7 @@ class SecMenuSeeder extends Seeder
         // compartido, sin dueño; el vínculo con el cliente vive en
         // `com_contratos`, no en `cpn_campanias`. Sigue agrupada bajo
         // Comercial (agrupación de layout, no una frontera de módulo — mismo
-        // caso que `vehiculos`, que vive en `Mantenimiento` y se muestra bajo
+        // caso que `baterias`, que vive en `Mantenimiento` y se muestra bajo
         // Recursos, ADR 0011 extensión del 26/8/2026 punto 3), pero pasa a la
         // CABEZA del grupo: en el flujo de alta la campaña ya existe antes
         // que el contrato que la referencia. El permiso no cambia
@@ -260,30 +282,12 @@ class SecMenuSeeder extends Seeder
         // activa el ítem que ya estaba sembrado como "botón sin link" (ver
         // docblock de `item()`).
         $this->item($recursos, 'recursos', 'baterias', 'battery_charging_full', 2, ruta: 'panel.baterias.index', codigoPermiso: 'mantenimiento.bateria.ver');
-        // HU-40 (tarea 50): administración de la flota de vehículos — activa
-        // el ítem que ya estaba sembrado como "botón sin link" (ver
-        // docblock de `item()`). El backend vive en `Mantenimiento`
-        // (`man_vehiculos`) aunque el ítem quede agrupado bajo "Recursos" en
-        // el sidebar: esa agrupación es solo layout (ADR 0011, extensión
-        // 26/8/2026, punto 3), no una frontera de módulo.
-        $this->item($recursos, 'recursos', 'vehiculos', 'local_shipping', 3, ruta: 'panel.vehiculos.index', codigoPermiso: 'mantenimiento.vehiculo.ver');
-
-        // Tarea 72 (HU-49, ADR 0015 punto 3): catálogo de generadores. ABM
-        // mínimo nuevo, sin placeholder previo — a diferencia de
-        // drones/baterías/vehículos arriba (que activan un ítem ya sembrado
-        // como "botón sin link"), acá se siembra completo desde el vamos. El
-        // backend vive en `Mantenimiento` (`man_generadores`) aunque el ítem
-        // quede agrupado bajo "Recursos": misma agrupación de layout que
-        // `vehiculos` (ADR 0011, extensión 26/8/2026, punto 3).
-        $this->item($recursos, 'recursos', 'generadores', 'bolt', 6, ruta: 'panel.generadores.index', codigoPermiso: 'mantenimiento.generador.ver');
-
         // Los equipos de trabajo (tarea 72, HU-49) ya no se siembran acá: el
         // ítem se movió a Operación como "Cuadrillas" (19/9/2026, ver arriba).
 
         // HU-82 (tarea 97): ficha de inventario del dron (serie, chasis,
         // versión de software, región, serie del control, accesorios). ABM
-        // mínimo nuevo, sin placeholder previo, mismo criterio que
-        // `generadores`/`equipos_trabajo` arriba. El backend vive en
+        // mínimo nuevo, sin placeholder previo. El backend vive en
         // `Mantenimiento` (`man_drones`) aunque el ítem quede agrupado bajo
         // "Recursos": misma agrupación de layout que el resto de este bloque
         // (ADR 0011, extensión 26/8/2026, punto 3). Icono `memory`, distinto
@@ -302,69 +306,11 @@ class SecMenuSeeder extends Seeder
         $this->renombrar($recursos, 'menu.recursos.items.personas', 'menu.recursos.items.personal');
         $this->item($recursos, 'recursos', 'personal', 'badge', 5, ruta: 'panel.personas.index', codigoPermiso: 'personal.persona.ver');
 
-        // Mantenimiento e inventario (§4.5)
-        // HU-37 (tarea 53): órdenes de mantenimiento con su propia máquina de
-        // estados (abierta → cerrada) — activa el ítem que ya estaba
-        // sembrado como "botón sin link" (ver docblock de `item()`).
-        $this->item($mantenimiento, 'mantenimiento', 'ordenes', 'build', 1, ruta: 'panel.ordenes-mantenimiento.index', codigoPermiso: 'mantenimiento.orden.ver');
-        // HU-38 (tarea 54): planes de mantenimiento preventivo por horas de
-        // vuelo — activa el ítem que ya estaba sembrado como "botón sin
-        // link" (ver docblock de `item()`).
-        $this->item($mantenimiento, 'mantenimiento', 'planes', 'checklist', 2, ruta: 'panel.planes-mantenimiento.index', codigoPermiso: 'mantenimiento.plan.ver');
-        // HU-36 (tarea 52): catálogo de repuestos con stock por base y
-        // alerta de mínimo — activa los dos ítems que ya estaban sembrados
-        // como "botón sin link" (ver docblock de `item()`). El backend vive
-        // en el módulo nuevo `Inventario` (`inv_*`) aunque el ítem quede
-        // agrupado bajo "Mantenimiento" en el sidebar: esa agrupación es
-        // solo layout (ADR 0011, extensión 3/9/2026, punto 15), no una
-        // frontera de módulo — mismo criterio que `vehiculos`/`baterias`
-        // bajo "Recursos" arriba.
-        $this->item($mantenimiento, 'mantenimiento', 'repuestos', 'construction', 3, ruta: 'panel.repuestos.index', codigoPermiso: 'inventario.repuesto.ver');
-        $this->item($mantenimiento, 'mantenimiento', 'stock', 'warehouse', 4, ruta: 'panel.stock.index', codigoPermiso: 'inventario.movimiento.ver');
-
         // Financiero (§4.4 + cap. 11)
-        // HU-33 (tarea 47): "como encargado, quiero cargar gastos con su
-        // categoría y comprobante" — activa el ítem que ya estaba sembrado
-        // como "botón sin link" (ver docblock de `item()`).
-        $this->item($financiero, 'financiero', 'gastos', 'receipt_long', 1, ruta: 'panel.gastos.index', codigoPermiso: 'finanzas.gasto.ver');
-        // HU-35 (tarea 49): "como encargado, quiero registrar el
-        // combustible del generador y de los vehículos, para imputarlo a la
-        // campaña" — activa el ítem que ya estaba sembrado como "botón sin
-        // link" (ver docblock de `item()`).
-        $this->item($financiero, 'financiero', 'combustible', 'local_gas_station', 2, ruta: 'panel.combustible.index', codigoPermiso: 'finanzas.combustible.ver');
-        // HU-34 (tarea 48): "como jefe de campo, quiero rendir los gastos que
-        // hice en campo; el encargado los aprueba para reponer el fondo" —
-        // activa el ítem que ya estaba sembrado como "botón sin link" (ver
-        // docblock de `item()`). Icono y orden se mantienen tal cual estaban.
-        $this->item($financiero, 'financiero', 'rendiciones', 'fact_check', 3, ruta: 'panel.rendiciones.index', codigoPermiso: 'finanzas.rendicion.ver');
-        // HU-28 (tarea 40): "como piloto o auxiliar, quiero ver mis devengos
-        // por período" — activa el ítem que ya estaba sembrado como "botón
-        // sin link" (ver docblock de `item()`).
-        // `requierePersona`: el permiso lo tienen `piloto`, `auxiliar` y
-        // `dueno`, pero la pantalla es de «lo mío» — resuelve por PERSONA, no
-        // por rol, y hace 404 si el usuario no tiene una vinculada. Único
-        // ítem del catálogo con la bandera; ver el docblock de
-        // `ObtenerMenuPorRolActivo`, sección `requiere_persona`.
-        $this->item($financiero, 'financiero', 'devengos', 'request_quote', 4, ruta: 'panel.devengos.index', codigoPermiso: 'finanzas.devengo.ver', requierePersona: true);
-        // HU-30 (tarea 44): "como dueño, quiero generar la planilla del
-        // período desde los devengos y aprobarla" — activa el ítem que ya
-        // estaba sembrado como "botón sin link" (ver docblock de `item()`).
-        $this->item($financiero, 'financiero', 'planilla', 'event_note', 5, ruta: 'panel.planillas.index', codigoPermiso: 'finanzas.planilla.ver');
         // HU-31 (tarea 45): "como encargado, quiero emitir la factura de un
         // trabajo desde su acta conformada" — activa el ítem que ya estaba
         // sembrado como "botón sin link" (ver docblock de `item()`).
         $this->item($financiero, 'financiero', 'facturas', 'receipt', 6, ruta: 'panel.facturas.index', codigoPermiso: 'comercial.factura.ver');
-        // HU-29 (tarea 41): "como encargado, quiero registrar anticipos
-        // validando el tope" — a diferencia de los demás ítems de este
-        // grupo, no había ítem "anticipos" sembrado como "botón sin link":
-        // esta tarea lo crea y lo activa en el mismo paso. Orden 7 (al
-        // final del grupo) para no reordenar los ítems ya sembrados.
-        $this->item($financiero, 'financiero', 'anticipos', 'payments', 7, ruta: 'panel.anticipos.index', codigoPermiso: 'finanzas.anticipo.ver');
-        // ADR 0023 (22/9/2026): tarifas de pago al personal — la configuración
-        // de pago base (por día o por hectárea, montos por puesto) de la que
-        // parte cada Orden de Trabajo. Orden 8, al final del grupo.
-        $this->item($financiero, 'financiero', 'tarifas', 'price_change', 8, ruta: 'panel.tarifas.index', codigoPermiso: 'finanzas.tarifa.ver');
-
         // Reportes (cap. 9 y 10)
         // HU-43 (tarea 57): "como encargado, quiero listar y descargar los
         // reportes técnicos generados, para reenviarlos al agrónomo" —
@@ -417,6 +363,21 @@ class SecMenuSeeder extends Seeder
         // `seguridad.bitacora.ver` (dueño y encargado de operaciones, ver
         // `SeguridadSeeder`).
         $this->item($seguridad, 'seguridad', 'bitacora', 'history', 8, ruta: 'panel.bitacora.index', codigoPermiso: 'seguridad.bitacora.ver');
+    }
+
+    /**
+     * Da de baja (soft delete) las entradas del menú con esas claves de
+     * `lang/es/menu.php`, una por una para que cada `delete()` pase por el
+     * observer de bitácora.
+     *
+     * @param  list<string>  $labels
+     */
+    private function retirarEntradas(array $labels): void
+    {
+        SecMenu::query()
+            ->whereIn('label', $labels)
+            ->get()
+            ->each(fn (SecMenu $entrada) => $entrada->delete());
     }
 
     private function modulo(string $clave, string $icono, int $orden): SecMenu

@@ -10,8 +10,7 @@ use Illuminate\Support\Carbon;
 /**
  * Alta de una pausa con causa atribuible (HU-44, tarea 58). Alta manual desde
  * el panel (ver docblock de la migración `ope_pausas`): sin idempotencia por
- * `uuid_cliente` que proteger, mismo criterio que `Finanzas/Aplicacion/CrearGasto`
- * — un alta humana del panel no se reintenta sola.
+ * `uuid_cliente` que proteger — un alta humana del panel no se reintenta sola.
  *
  * `->utc()`: mismo mecanismo (y mismo fix) que `MaquinaEstadosSesion` aplica a
  * `ope_sesiones.inicio`/`fin` (columnas `dateTime` sin tz, tarea 29) — sin él,

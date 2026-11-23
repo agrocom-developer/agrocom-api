@@ -22,9 +22,9 @@ Doble nivel, estilo WordPress:
    | Operaciones | `ope_` |
    | Mezclas | `mez_` |
    | Personal | `per_` |
-   | Finanzas | `fin_` |
-   | Inventario | `inv_` |
-   | Mantenimiento | `man_` |
+   | Finanzas | `fin_` (retirado, ADR 0035) |
+   | Inventario | `inv_` (retirado, ADR 0035) |
+   | Mantenimiento | `man_` (solo baterías y ficha técnica del dron, ADR 0035) |
    | Vistas de solo lectura | `vw_` (ver ADR 0012) |
    | Compartido (tablas transversales de plataforma) | `plt_` (asignado en la extensión 31/8/2026, tarea 06 — ver `plt_bitacoras`, ADR 0007) |
    | Distribucion | `dis_` (asignado en la extensión 1/9/2026, tarea 10 — ver `dis_versiones_apk`, HU-20) |

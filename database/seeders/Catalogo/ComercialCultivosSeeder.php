@@ -23,8 +23,7 @@ use Illuminate\Database\Seeder;
  * especie sino un nombre genérico que cubre varias (Brachiaria, Panicum,
  * etc.) — forzar una sola sería inexacto.
  *
- * Corre en todos los entornos, producción incluida — mismo criterio que
- * `FinanzasRubrosSeeder`. `created_by`/`updated_by` NULL: dato de catálogo,
+ * Corre en todos los entornos, producción incluida. `created_by`/`updated_by` NULL: dato de catálogo,
  * sin autor humano. Idempotente por nombre común — a diferencia del
  * `firstOrCreate` original, también refresca los atributos agronómicos de
  * los cultivos ya sembrados, pero sin tocar `activo`: si el dueño desactivó

@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Auth;
  * `updated_by` se fija a mano ANTES del `delete()`: el soft delete de
  * Eloquent hace un `UPDATE` por query builder que no dispara el evento
  * `updating` (el que completa `updated_by` vía `RegistraAutoria`), mismo
- * criterio que `EliminarGenerador`.
+ * criterio que `EliminarBateria`.
  */
 final class EliminarEquipoTrabajo
 {

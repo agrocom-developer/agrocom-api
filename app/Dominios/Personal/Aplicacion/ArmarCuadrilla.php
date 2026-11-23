@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * Alta de una cuadrilla completa en un solo paso (pedido del dueño,
  * 19/9/2026): un piloto, un ayudante (con posible segundo) y su dron —
- * obligatorios— y, opcionalmente, vehículo, generador y baterías. Reutiliza
+ * obligatorios— y, opcionalmente, baterías. Reutiliza
  * los casos de uso ya existentes ({@see CrearEquipoTrabajo},
  * {@see AsignarIntegranteEquipo}, {@see AsignarRecursoEquipo}) — ninguna
  * regla nueva, solo orquestación dentro de UNA transacción (ADR 0003): si
@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\DB;
  *
  * Un aviso de solapamiento (una persona o un recurso vigente en OTRA
  * cuadrilla, ADR 0015 punto 3) NO frena el alta — se guarda igual, con aviso
- * — así que se acumulan los de las siete asignaciones posibles y se
+ * — así que se acumulan los de las asignaciones posibles y se
  * devuelven juntos en {@see ResultadoArmarCuadrilla}.
  */
 final class ArmarCuadrilla
@@ -37,7 +37,7 @@ final class ArmarCuadrilla
      * @param  list<int>  $bateriaIds  sin repetidos (lo valida `CrearEquipoTrabajoRequest`).
      *
      * @throws EquipoTrabajoDuplicado si el código ya pertenece a otro equipo activo.
-     * @throws RecursoEquipoInvalido si el dron, el vehículo, el generador o alguna batería no existe o no está disponible.
+     * @throws RecursoEquipoInvalido si el dron o alguna batería no existe o no está disponible.
      * @throws VigenciaEquipoSolapada si la misma persona o el mismo recurso se repite dentro de esta alta (no debería
      *                                pasar: `CrearEquipoTrabajoRequest` ya exige personas distintas y baterías sin repetir).
      */
@@ -51,14 +51,12 @@ final class ArmarCuadrilla
         int $ayudanteId,
         ?int $ayudante2Id,
         int $dronId,
-        ?int $vehiculoId,
-        ?int $generadorId,
         array $bateriaIds,
     ): ResultadoArmarCuadrilla {
         return DB::transaction(function () use (
             $codigo, $nombre, $baseId, $desde, $hasta,
             $pilotoId, $ayudanteId, $ayudante2Id,
-            $dronId, $vehiculoId, $generadorId, $bateriaIds,
+            $dronId, $bateriaIds,
         ): ResultadoArmarCuadrilla {
             $equipo = $this->crearEquipoTrabajo->ejecutar($codigo, $nombre, $baseId, $desde, $hasta);
 
@@ -75,14 +73,6 @@ final class ArmarCuadrilla
             }
 
             $acumular($this->asignarRecursoEquipo->ejecutar($equipo, RecursoTipoEquipo::Dron, $dronId, $desde, null));
-
-            if ($vehiculoId !== null) {
-                $acumular($this->asignarRecursoEquipo->ejecutar($equipo, RecursoTipoEquipo::Vehiculo, $vehiculoId, $desde, null));
-            }
-
-            if ($generadorId !== null) {
-                $acumular($this->asignarRecursoEquipo->ejecutar($equipo, RecursoTipoEquipo::Generador, $generadorId, $desde, null));
-            }
 
             foreach ($bateriaIds as $bateriaId) {
                 $acumular($this->asignarRecursoEquipo->ejecutar($equipo, RecursoTipoEquipo::Bateria, (int) $bateriaId, $desde, null));

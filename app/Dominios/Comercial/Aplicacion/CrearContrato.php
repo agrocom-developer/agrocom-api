@@ -171,9 +171,8 @@ final class CrearContrato
      * `monto_total` NUNCA es input libre (invariante 6 de CLAUDE.md): el
      * comentario de la migración lo dice explícito — "Recalculable:
      * hectareas_contratadas × aplicaciones_previstas × precio_ha". Con
-     * `Brick\Math\BigDecimal` en vez de `bcmath` (no instalado en este repo,
-     * ver `Finanzas\Aplicacion\GenerarDevengosSesion::calcularMonto()` para
-     * el precedente y el porqué) y redondeo al centavo con `HalfUp`: truncar
+     * `Brick\Math\BigDecimal` en vez de `bcmath` (`ext-bcmath` no está
+     * instalada) y redondeo al centavo con `HalfUp`: truncar
      * en vez de redondear sesgaría el monto sistemáticamente hacia abajo.
      */
     private function calcularMontoTotal(string $hectareas, int $aplicaciones, string $precioHa): string

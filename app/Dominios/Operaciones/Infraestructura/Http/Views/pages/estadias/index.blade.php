@@ -10,7 +10,7 @@
     CascaraPanel, más:
     - $estadias (LengthAwarePaginator<EstadiaHacienda>, más reciente primero).
     - $filtros (array{q, desde, hasta, equipo_trabajo_id, propiedad_id, estado, tipo_alojamiento}).
-    - $etiquetasEquipo, $etiquetasPropiedad, $etiquetasVehiculo (array<int,string>).
+    - $etiquetasEquipo, $etiquetasPropiedad (array<int,string>).
     - $equiposDisponibles, $propiedadesDisponibles (array<int,string>).
     - $estadosFiltro, $tiposAlojamientoFiltro (enum cases).
     - $tonoPorEstado (array<string,string>).

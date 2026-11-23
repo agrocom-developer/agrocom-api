@@ -16,7 +16,7 @@
  * Este test NO implementa la máquina de estados: solo fija dónde puede vivir.
  *
  * ── La convención que este test establece (la que siguen las tareas del
- *    Sprint 2, cuando aparezcan `sesion`, `devengo` y compañía) ─────────────
+ *    Sprint 2, cuando aparezcan `sesion` y compañía) ─────────────
  *
  *     app/Dominios/<Modulo>/Aplicacion/MaquinaEstados/MaquinaEstados<Entidad>.php
  *
@@ -81,16 +81,15 @@
  * tendría que cambiar de carpeta para pasar: le alcanzaría con cambiar de
  * sintaxis, sin que el diff lo delate. Las tres se vigilan juntas.
  *
- * ── Segunda excepción: estado DESCRIPTIVO sin máquina, no gobernado (HU-40,
- *    tarea 50) ───────────────────────────────────────────────────────────
+ * ── Segunda excepción: estado DESCRIPTIVO sin máquina, no gobernado (HU-39,
+ *    tarea 51) ───────────────────────────────────────────────────────────
  *
- * Hasta la tarea 50, toda columna literalmente llamada `estado`/`*_estado` en
- * `app/` correspondía a una máquina gobernada (Contrato, OrdenAplicacion,
- * Sesion, Trabajo, Acta, Alerta, VersionApk) — la invariante 7 aplicaba sin
- * matices. `man_vehiculos.estado` (`activo`/`taller`/`de_baja`) es el primer
- * caso real de lo contrario: un campo descriptivo libre, sin tabla de
- * transiciones ni guarda de dominio — cualquier valor puede pasar a cualquier
- * otro. La invariante 7 ("toda TRANSICIÓN de estado pasa por el servicio de
+ * Toda columna literalmente llamada `estado`/`*_estado` en `app/` corresponde
+ * a una máquina gobernada (Contrato, OrdenAplicacion, Sesion, Trabajo, Acta,
+ * Alerta, VersionApk) — la invariante 7 aplica sin matices. La excepción es
+ * `man_baterias.estado` (`activa`/`retirada`/`mantenimiento`): un campo
+ * descriptivo libre, sin tabla de transiciones ni guarda de dominio —
+ * cualquier valor puede pasar a cualquier otro. La invariante 7 ("toda TRANSICIÓN de estado pasa por el servicio de
  * la máquina") no aplica por definición cuando no hay transición gobernada
  * que vigilar, no por excepción a la regla.
  *
@@ -109,15 +108,8 @@
  * nueva certifica a mano, leyendo el caso de uso, que de verdad no hay
  * transición gobernada detrás.
  *
- * Zona gris para HU-37/38 (planes/órdenes de mantenimiento) y HU-39
- * (baterías): antes de sumar una ruta nueva a esa lista hay que clasificar el
- * campo contra el mismo criterio — un `estado` de orden de mantenimiento
- * (abierta → cerrada, con costo asociado) probablemente SÍ sea gobernado, a
- * diferencia de `man_vehiculos.estado`. Esta clasificación quedó anotada para
- * revisión posterior en `runs/revision-pendiente.txt` (mismo patrón que
- * CLAUDE.md fija para "el servicio de estados": revisión posterior a la
- * integración, no un PR retenido esperándola — ver la sección "Qué no
- * delegar sin revisión línea por línea" de CLAUDE.md).
+ * Antes de sumar una ruta nueva a esa lista hay que clasificar el campo
+ * contra el mismo criterio.
  */
 
 $raizProyecto = dirname(__DIR__, 2);
@@ -185,19 +177,11 @@ function estadosEsServicioDeEstados(string $rutaRelativa): bool
  * @var list<string>
  */
 const RUTAS_ESTADO_DESCRIPTIVO_SIN_MAQUINA = [
-    'app/Dominios/Mantenimiento/Aplicacion/CrearVehiculo.php',
-    'app/Dominios/Mantenimiento/Aplicacion/ActualizarVehiculo.php',
-    // HU-39, tarea 51: mismo criterio que Vehiculo arriba — `man_baterias.estado`
+    // HU-39, tarea 51: `man_baterias.estado`
     // es descriptivo (`activa`/`retirada`), sin tabla de transiciones ni guarda
     // de dominio (ver docblock de la migración y `EstadoBateria`).
     'app/Dominios/Mantenimiento/Aplicacion/CrearBateria.php',
     'app/Dominios/Mantenimiento/Aplicacion/ActualizarBateria.php',
-    // Tarea 72 (HU-49, ADR 0015 punto 3): mismo criterio que Vehiculo/Bateria
-    // arriba — `man_generadores.estado` es descriptivo
-    // (`activo`/`taller`/`de_baja`), sin tabla de transiciones ni guarda de
-    // dominio (ver docblock de la migración y `EstadoGenerador`).
-    'app/Dominios/Mantenimiento/Aplicacion/CrearGenerador.php',
-    'app/Dominios/Mantenimiento/Aplicacion/ActualizarGenerador.php',
     // `per_equipos_trabajo.estado` DEJÓ de ser descriptivo sin máquina el
     // 19/9/2026 (tarea "cuadrillas-estadias", pedido del dueño): ahora es una
     // máquina real `activo ⇄ inactivo`, gobernada por
@@ -532,13 +516,13 @@ test('ninguna asignación de estado fuera del servicio de máquina de estados (C
 });
 
 test('la excepción de estado descriptivo es angosta: rige solo para las rutas exactas listadas', function () {
-    expect(estadosEsExcepcionDescriptiva('app/Dominios/Mantenimiento/Aplicacion/CrearVehiculo.php'))->toBeTrue()
-        ->and(estadosEsExcepcionDescriptiva('app/Dominios/Mantenimiento/Aplicacion/ActualizarVehiculo.php'))->toBeTrue()
+    expect(estadosEsExcepcionDescriptiva('app/Dominios/Mantenimiento/Aplicacion/CrearBateria.php'))->toBeTrue()
+        ->and(estadosEsExcepcionDescriptiva('app/Dominios/Mantenimiento/Aplicacion/ActualizarBateria.php'))->toBeTrue()
         // Ni el resto del módulo Mantenimiento, ni un archivo parecido, quedan
         // habilitados por estar "cerca": la lista es de rutas exactas.
-        ->and(estadosEsExcepcionDescriptiva('app/Dominios/Mantenimiento/Aplicacion/EliminarVehiculo.php'))->toBeFalse()
-        ->and(estadosEsExcepcionDescriptiva('app/Dominios/Mantenimiento/Infraestructura/Http/Controllers/Web/VehiculosController.php'))->toBeFalse()
-        ->and(estadosEsExcepcionDescriptiva('app/Dominios/Operaciones/Aplicacion/CrearVehiculo.php'))->toBeFalse();
+        ->and(estadosEsExcepcionDescriptiva('app/Dominios/Mantenimiento/Aplicacion/EliminarBateria.php'))->toBeFalse()
+        ->and(estadosEsExcepcionDescriptiva('app/Dominios/Mantenimiento/Infraestructura/Http/Controllers/Web/BateriasController.php'))->toBeFalse()
+        ->and(estadosEsExcepcionDescriptiva('app/Dominios/Operaciones/Aplicacion/CrearBateria.php'))->toBeFalse();
 });
 
 test('la única excepción es el servicio de máquina de estados del módulo', function () {

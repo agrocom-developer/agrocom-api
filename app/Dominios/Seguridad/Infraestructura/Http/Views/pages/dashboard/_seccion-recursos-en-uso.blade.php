@@ -1,7 +1,7 @@
 {{--
     Parcial: recursos en uso ahora (tab "Recursos" del jefe de campo, tarea
     138). Una tarjeta por cuadrilla con algún trabajo abierto: cuánto tiene en
-    marcha, quiénes la integran hoy y qué lleva —dron, vehículo, generador,
+    marcha, quiénes la integran hoy y qué lleva —dron y
     baterías— con el estado de cada pieza.
 
     El estado se dice con punto + texto (no con un chip relleno por pieza: una

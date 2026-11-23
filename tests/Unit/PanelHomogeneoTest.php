@@ -30,7 +30,7 @@ $raizProyecto = dirname(__DIR__, 2);
 /**
  * Todo `.blade.php` bajo `app/Dominios/<Módulo>/Infraestructura/Http/Views/pages`.
  * `ruta` es la forma en que se nombra en la lista de pendientes:
- * `<Módulo>/<carpeta>/<archivo>` (p. ej. `Finanzas/gastos/index.blade.php`).
+ * `<Módulo>/<carpeta>/<archivo>` (p. ej. `Mantenimiento/baterias/index.blade.php`).
  *
  * @return list<array{ruta: string, modulo: string, directorio: string, archivo: string, absoluta: string}>
  */
@@ -171,7 +171,6 @@ function panelHomogeneoMaquinasConFicha(): array
         'TransicionesOrden' => 'Operaciones/ordenes',
         'TransicionesEstadia' => 'Operaciones/estadias',
         'TransicionesEquipoTrabajo' => 'Personal/cuadrillas',
-        'TransicionesOrdenMantenimiento' => 'Mantenimiento/ordenes',
         'TransicionesTrabajo' => 'Operaciones/trabajos',
     ];
 }
@@ -184,8 +183,6 @@ function panelHomogeneoMaquinasConFicha(): array
 function panelHomogeneoMaquinasSinFicha(): array
 {
     return [
-        'TransicionesPlanilla' => 'listado + detalle; solo badge y acciones de fila con el tono del estado',
-        'TransicionesRendicion' => 'listado + detalle; solo badge y acciones de fila con el tono del estado',
         'TransicionesVersionApk' => 'solo listado; badge y acciones de fila con el tono del estado',
         'TransicionesActa' => 'se valida desde pantallas propias',
         'TransicionesSesion' => 'se valida desde pantallas propias',
@@ -777,7 +774,7 @@ test('el descubrimiento encuentra las pantallas de referencia y deja afuera las 
         ->toContain('Comercial/clientes/index.blade.php')
         ->toContain('Comercial/clientes/_formulario.blade.php')
         ->toContain('Operaciones/ordenes-trabajo/create.blade.php')
-        ->toContain('Mantenimiento/ordenes/_formulario.blade.php')
+        ->toContain('Mantenimiento/baterias/_formulario.blade.php')
         ->toContain('Operaciones/trabajos/edit.blade.php')
         ->toContain('Operaciones/ordenes/show.blade.php')
         ->toContain('Personal/personas/desempeno.blade.php')

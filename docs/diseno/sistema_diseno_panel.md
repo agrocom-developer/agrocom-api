@@ -649,8 +649,8 @@ pantalla ya hecha, se anota acá.
     dejó de tener gate automático: `.ag-filtros`/`components/filter-bar.css`
     —el archivo contra el que `tests/Unit/PulidoNavegacionPanelTest.php`
     comparaba cada átomo— se borró al quedar sin una sola pantalla que lo
-    usara (Desempeño de persona y el detalle de Devengos, las dos últimas,
-    pasaron a `filter-panel`). `filter-panel` apila sus campos verticalmente
+    usara (Desempeño de persona, la última,
+    pasó a `filter-panel`). `filter-panel` apila sus campos verticalmente
     dentro del desplegable, así que el margen de apilado ahí es el
     comportamiento CORRECTO, no el bug — no hay un archivo equivalente que
     proteger con una compuerta general. Un campo nuevo en una fila en línea
@@ -1437,9 +1437,8 @@ panel) y migra las 88+ apariciones reales encontradas.
 
 ### 16.3. Selects dependientes (cliente→campaña, rubro→subrubro): el mapeo ya no va por `<option data-*>`
 
-Dos pantallas (`contratos/_formulario.blade.php`, `gastos/create.blade.php`)
-ya filtraban un `<select>` según el valor elegido en otro (`contratos-form.js`,
-`gastos-form.js`, patrón preexistente a esta tarea). Antes el mapeo hijo→padre
+La pantalla `contratos/_formulario.blade.php` filtra un `<select>` según el
+valor elegido en otro (`contratos-form.js`). Antes el mapeo hijo→padre
 viajaba como un atributo `data-*` en cada `<option>` del `<select>` hijo. Con
 `atoms/select`, el `<select>` nativo deja de ser el único elemento visible —
 `resources/js/atoms/select.js` arma un combobox al lado y no sabe leer
@@ -1475,8 +1474,7 @@ hoy.
   mismo criterio que dejar `resources/views/components/atoms/select.blade.php`
   fuera del grep de `<select>`.
 
-`type="month"` (dos filtros de listado, `anticipos/index.blade.php` y
-`gastos/index.blade.php`) tampoco se tocó: es un tipo de input distinto a
+`type="month"` (los filtros de período de los listados) tampoco se tocó: es un tipo de input distinto a
 `date` (selector de año-mes, no de día), fuera del diagnóstico de la tarea
 (11 `type="date"`) y sin átomo propio en el catálogo — queda para cuando
 haga falta un `atoms/month` real.
@@ -1528,14 +1526,9 @@ responsable de:
   (`disabled` en el `change` de la casilla hermana) — a diferencia del
   reveal visual, esto no tiene equivalente en CSS puro.
 
-Consumidor: el selector de repuestos por casillas de `ordenes/edit.blade.php`
-(ver `_repuesto-campos.blade.php` y `resources/js/pages/
-ordenes-mantenimiento-form.js`) — cantidad, disponibilidad de stock y un
-override de base opcional por línea, todo colgando de la misma casilla.
-Ningún consumidor existente de `checkbox-group` (roles de
+Ningún consumidor de `checkbox-group` (roles de
 `usuarios/_formulario.blade.php`, §16.5) pasa `extraPorOpcion`, así que su
-`isset()` siempre da falso para ellos: comportamiento idéntico al de antes
-de esta tarea.
+`isset()` siempre da falso para ellos.
 
 ## 18. Décima vuelta (9/9/2026) — el header se queda sin contexto de negocio
 
@@ -1635,9 +1628,9 @@ buscó pero no hubo coincidencias (sugiere acortar).
 
 ### 19.3. Qué encuentra, y con qué reglas
 
-Trece entidades, todas las que tienen un nombre o un identificador propio:
+Diez entidades, todas las que tienen un nombre o un identificador propio:
 clientes, personas, propiedades, drones, lotes, campañas, cultivos, equipos de
-trabajo, bases, baterías, vehículos, generadores y repuestos.
+trabajo, bases y baterías.
 
 El motor parte la consulta en palabras y exige **todas**, cada una en
 **cualquier posición** y **sin importar acentos ni mayúsculas**. "peranza"

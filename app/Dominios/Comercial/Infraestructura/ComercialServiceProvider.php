@@ -32,8 +32,8 @@ use Illuminate\Support\ServiceProvider;
  *
  * También cablea el oyente real de `AplicacionCerrada` (ADR 0022): al cerrarse
  * la última aplicación del contrato, este pasa a `finalizado` y libera sus
- * lotes. Mismo patrón que `FinanzasServiceProvider` con `SesionValidada`: un
- * closure resuelto por el contenedor, sin clase de listener aparte.
+ * lotes. Es un closure resuelto por el contenedor, sin clase de listener
+ * aparte.
  */
 final class ComercialServiceProvider extends ServiceProvider
 {

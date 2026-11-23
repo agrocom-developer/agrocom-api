@@ -58,8 +58,8 @@ use Illuminate\View\View;
  * `GET/POST/PUT/DELETE /panel/cuadrillas*` (tarea 72, HU-49, ADR 0015 punto
  * 3; alta de una sola vez y máquina de estados agregadas por la tarea
  * "cuadrillas-estadias", pedido del dueño 19/9/2026): alta y mantenimiento de
- * cuadrillas, con su ficha de integrantes, equipamiento (dron, vehículo,
- * generador, baterías) y accesorios.
+ * cuadrillas, con su ficha de integrantes, equipamiento (dron, baterías) y
+ * accesorios.
  *
  * Cuatro permisos de grano fino
  * (`personal.equipo_trabajo.ver`/`.crear`/`.editar`/`.eliminar`), verificados
@@ -70,7 +70,7 @@ use Illuminate\View\View;
  * acá: los casos de uso de `Aplicacion/` hacen el trabajo, incluida la
  * evaluación del solapamiento de vigencias y la máquina de estados.
  *
- * Los catálogos de otros módulos (drones, vehículos, generadores, baterías)
+ * Los catálogos de otros módulos (drones, baterías)
  * se resuelven SIEMPRE por los contratos de lectura ({@see LecturaDrones},
  * {@see LecturaEquipamiento}, ADR 0003 regla 2) — nunca por `DB::table`
  * directo. `DB::table('per_equipos_trabajo')` en `codigosDeEquipos()` es la
@@ -150,14 +150,10 @@ final class CuadrillasController
             'pilotosDisponibles' => $this->pilotosDisponibles(),
             'ayudantesDisponibles' => $this->ayudantesDisponibles(),
             'dronesDisponibles' => $this->dronesDisponibles(),
-            'vehiculosDisponibles' => $this->vehiculosDisponibles(),
-            'generadoresDisponibles' => $this->generadoresDisponibles(),
             'bateriasDisponibles' => $this->bateriasDisponibles(),
             'puedeCrearBase' => $this->autorizacion->tienePermiso($request, 'personal.base.crear'),
             'puedeCrearPersona' => $this->autorizacion->tienePermiso($request, 'personal.persona.crear'),
             'puedeCrearDron' => $this->autorizacion->tienePermiso($request, 'operaciones.dron.crear'),
-            'puedeCrearVehiculo' => $this->autorizacion->tienePermiso($request, 'mantenimiento.vehiculo.crear'),
-            'puedeCrearGenerador' => $this->autorizacion->tienePermiso($request, 'mantenimiento.generador.crear'),
             'puedeCrearBateria' => $this->autorizacion->tienePermiso($request, 'mantenimiento.bateria.crear'),
             // Memento de navegación (llegada desde «Crear cuadrilla» del alta
             // de Orden de Trabajo, u otro origen encadenado): ver
@@ -183,8 +179,6 @@ final class CuadrillasController
                 (int) $datos['ayudante_id'],
                 $this->enteroONull($datos['ayudante2_id'] ?? null),
                 (int) $datos['dron_id'],
-                $this->enteroONull($datos['vehiculo_id'] ?? null),
-                $this->enteroONull($datos['generador_id'] ?? null),
                 array_map('intval', $datos['bateria_ids'] ?? []),
             );
         } catch (EquipoTrabajoDuplicado $excepcion) {
@@ -275,8 +269,6 @@ final class CuadrillasController
             'puedeCrearPersona' => $this->autorizacion->tienePermiso($request, 'personal.persona.crear'),
             'opcionesEquipamiento' => [
                 RecursoTipoEquipo::Dron->value => $this->dronesDisponibles()->all(),
-                RecursoTipoEquipo::Vehiculo->value => $this->vehiculosDisponibles()->all(),
-                RecursoTipoEquipo::Generador->value => $this->generadoresDisponibles()->all(),
                 RecursoTipoEquipo::Bateria->value => $this->bateriasDisponibles()->all(),
             ],
             'pasosEstado' => $pasosEstado,
@@ -627,8 +619,6 @@ final class CuadrillasController
         }
 
         $tiposMantenimiento = [
-            RecursoTipoEquipo::Vehiculo->value => LecturaEquipamiento::TIPO_VEHICULO,
-            RecursoTipoEquipo::Generador->value => LecturaEquipamiento::TIPO_GENERADOR,
             RecursoTipoEquipo::Bateria->value => LecturaEquipamiento::TIPO_BATERIA,
         ];
 
@@ -1076,20 +1066,6 @@ final class CuadrillasController
     {
         return collect($this->lecturaDrones->disponibles())
             ->mapWithKeys(fn (DronCatalogo $dron): array => [$dron->id => $dron->etiqueta()]);
-    }
-
-    /** @return Collection<int, string> */
-    private function vehiculosDisponibles(): Collection
-    {
-        return collect($this->lecturaEquipamiento->vehiculosDisponibles())
-            ->mapWithKeys(fn (RecursoCatalogo $recurso): array => [$recurso->id => $recurso->etiqueta()]);
-    }
-
-    /** @return Collection<int, string> */
-    private function generadoresDisponibles(): Collection
-    {
-        return collect($this->lecturaEquipamiento->generadoresDisponibles())
-            ->mapWithKeys(fn (RecursoCatalogo $recurso): array => [$recurso->id => $recurso->etiqueta()]);
     }
 
     /** @return Collection<int, string> */

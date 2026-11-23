@@ -14,7 +14,7 @@ use App\Dominios\Operaciones\Infraestructura\Eloquent\Dron;
  * exige), y esta clase no es un modelo.
  *
  * `Dron` no tiene columna de estado/activo propia (ver su docblock: "sin
- * ciclo de vida propio"), a diferencia de `Vehiculo`/`Generador`/`Bateria`
+ * ciclo de vida propio"), a diferencia de `Bateria`
  * (`LecturaEquipamientoEloquent`) — "disponible" acá es solo "no dado de baja"
  * (soft delete, filtrado por defecto por `ModeloDominio`).
  */

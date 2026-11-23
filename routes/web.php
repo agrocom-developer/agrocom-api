@@ -14,21 +14,8 @@ use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ReportesComercia
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\SiembraController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\SiembraLoteController;
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
-use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\AnticiposController;
-use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\CombustibleController;
-use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\DevengosController;
-use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\GastosController;
-use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\PlanillasController;
-use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\RendicionesController;
-use App\Dominios\Finanzas\Infraestructura\Http\Controllers\Web\TarifasController;
-use App\Dominios\Inventario\Infraestructura\Http\Controllers\Web\RepuestosController;
-use App\Dominios\Inventario\Infraestructura\Http\Controllers\Web\StockController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\BateriasController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\FichasDronController;
-use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\GeneradoresController;
-use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\OrdenesMantenimientoController;
-use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\PlanesMantenimientoController;
-use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\VehiculosController;
 use App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Web\NotificacionesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\DronesController;
@@ -819,35 +806,9 @@ Route::middleware('auth:interno')->group(function () {
         Route::get('/panel/personas/{persona}/desempeno', [PersonasController::class, 'desempenio'])
             ->name('panel.personas.desempenio');
 
-        // HU-40 (tarea 50): administración de la flota de vehículos, con su
-        // asignación a base y estado. Primer ABM del módulo `Mantenimiento`
-        // (ADR 0011, extensión 3/9/2026). Sin sub-entidad, mismo molde que
-        // `drones` arriba. Cuatro permisos de grano fino
-        // (`mantenimiento.vehiculo.ver`/`.crear`/`.editar`/`.eliminar`)
-        // verificados DENTRO del controlador contra el ROL ACTIVO, mismo
-        // criterio que `clientes`/`campos`/`drones`/`bases`/`personas` arriba.
-        Route::get('/panel/vehiculos', [VehiculosController::class, 'index'])
-            ->name('panel.vehiculos.index');
-
-        Route::get('/panel/vehiculos/crear', [VehiculosController::class, 'create'])
-            ->name('panel.vehiculos.create');
-
-        Route::post('/panel/vehiculos', [VehiculosController::class, 'store'])
-            ->name('panel.vehiculos.store');
-
-        Route::get('/panel/vehiculos/{vehiculo}/editar', [VehiculosController::class, 'edit'])
-            ->name('panel.vehiculos.edit');
-
-        Route::put('/panel/vehiculos/{vehiculo}', [VehiculosController::class, 'update'])
-            ->name('panel.vehiculos.update');
-
-        Route::delete('/panel/vehiculos/{vehiculo}', [VehiculosController::class, 'destroy'])
-            ->name('panel.vehiculos.destroy');
-
         // HU-39 (tarea 51): catálogo de baterías con sus ciclos acumulados y
-        // estado, para retirarlas antes de que fallen en vuelo. Segundo ABM
-        // de `Mantenimiento`, mismo molde que `vehiculos` arriba. Cuatro
-        // permisos de grano fino
+        // estado, para retirarlas antes de que fallen en vuelo. ABM de
+        // `Mantenimiento`. Cuatro permisos de grano fino
         // (`mantenimiento.bateria.ver`/`.crear`/`.editar`/`.eliminar`)
         // verificados DENTRO del controlador contra el ROL ACTIVO, mismo
         // criterio que el resto del panel.
@@ -868,31 +829,6 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::delete('/panel/baterias/{bateria}', [BateriasController::class, 'destroy'])
             ->name('panel.baterias.destroy');
-
-        // Tarea 72 (HU-49, ADR 0015 punto 3): catálogo de generadores, ABM
-        // mínimo — no es una HU propia, es la tabla que hace falta para
-        // poder asignar un generador como equipamiento de un equipo de
-        // trabajo. Mismo molde que `vehiculos`/`baterias` arriba. Cuatro
-        // permisos de grano fino
-        // (`mantenimiento.generador.ver`/`.crear`/`.editar`/`.eliminar`)
-        // verificados DENTRO del controlador contra el ROL ACTIVO.
-        Route::get('/panel/generadores', [GeneradoresController::class, 'index'])
-            ->name('panel.generadores.index');
-
-        Route::get('/panel/generadores/crear', [GeneradoresController::class, 'create'])
-            ->name('panel.generadores.create');
-
-        Route::post('/panel/generadores', [GeneradoresController::class, 'store'])
-            ->name('panel.generadores.store');
-
-        Route::get('/panel/generadores/{generador}/editar', [GeneradoresController::class, 'edit'])
-            ->name('panel.generadores.edit');
-
-        Route::put('/panel/generadores/{generador}', [GeneradoresController::class, 'update'])
-            ->name('panel.generadores.update');
-
-        Route::delete('/panel/generadores/{generador}', [GeneradoresController::class, 'destroy'])
-            ->name('panel.generadores.destroy');
 
         // Tarea 72 (HU-49, ADR 0015 punto 3): equipos de trabajo — el piloto
         // y su auxiliar, con el equipamiento asignado, cada uno con su
@@ -950,105 +886,9 @@ Route::middleware('auth:interno')->group(function () {
         Route::delete('/panel/cuadrillas/{equipoTrabajo}/accesorios/{accesorio}', [CuadrillasController::class, 'quitarAccesorio'])
             ->name('panel.cuadrillas.accesorios.destroy');
 
-        // HU-36 (tarea 52): catálogo de repuestos con stock por base y
-        // alerta de mínimo. Módulo nuevo `Inventario` (ADR 0011, extensión
-        // 3/9/2026, punto 15) — no comparte tablas con `Mantenimiento`.
-        // Cuatro permisos de grano fino
-        // (`inventario.repuesto.ver`/`.crear`/`.editar`/`.eliminar`) para el
-        // catálogo, verificados DENTRO del controlador contra el ROL ACTIVO,
-        // mismo criterio que el resto del panel.
-        Route::get('/panel/repuestos', [RepuestosController::class, 'index'])
-            ->name('panel.repuestos.index');
-
-        Route::get('/panel/repuestos/crear', [RepuestosController::class, 'create'])
-            ->name('panel.repuestos.create');
-
-        Route::post('/panel/repuestos', [RepuestosController::class, 'store'])
-            ->name('panel.repuestos.store');
-
-        Route::get('/panel/repuestos/{repuesto}/editar', [RepuestosController::class, 'edit'])
-            ->name('panel.repuestos.edit');
-
-        Route::put('/panel/repuestos/{repuesto}', [RepuestosController::class, 'update'])
-            ->name('panel.repuestos.update');
-
-        Route::delete('/panel/repuestos/{repuesto}', [RepuestosController::class, 'destroy'])
-            ->name('panel.repuestos.destroy');
-
-        // Stock agregado por (repuesto, base) y alta de movimientos
-        // (compra/salida/ajuste/traslado). Sin edit/destroy: `inv_stock` es
-        // un agregado derivado, toda mutación pasa por
-        // `RegistrarMovimientoStock`. Dos permisos de grano fino
-        // (`inventario.movimiento.ver`/`.crear`).
-        Route::get('/panel/stock', [StockController::class, 'index'])
-            ->name('panel.stock.index');
-
-        // Listado de solo lectura de los asientos (tarea 133): antes del
-        // alta, mismo criterio de orden que las demás rutas con prefijo
-        // compartido (ver ordenes-trabajo).
-        Route::get('/panel/stock/movimientos', [StockController::class, 'movimientos'])
-            ->name('panel.stock.movimientos.index');
-
-        Route::get('/panel/stock/movimientos/crear', [StockController::class, 'create'])
-            ->name('panel.stock.movimientos.create');
-
-        Route::post('/panel/stock/movimientos', [StockController::class, 'store'])
-            ->name('panel.stock.movimientos.store');
-
-        // HU-37 (tarea 53): "como encargado, quiero abrir órdenes de
-        // mantenimiento y cerrarlas consumiendo repuestos, para que el costo
-        // quede imputado". Sin `update`/`destroy` de negocio libre: `edit` es
-        // la pantalla de detalle desde la que se dispara `cerrar`, el único
-        // cambio de `estado` posible (invariante 7 de CLAUDE.md). Tres
-        // permisos de grano fino
-        // (`mantenimiento.orden.ver`/`.crear`/`.cerrar`), verificados DENTRO
-        // del controlador contra el ROL ACTIVO, mismo criterio que el resto
-        // del panel.
-        Route::get('/panel/ordenes-mantenimiento', [OrdenesMantenimientoController::class, 'index'])
-            ->name('panel.ordenes-mantenimiento.index');
-
-        Route::get('/panel/ordenes-mantenimiento/crear', [OrdenesMantenimientoController::class, 'create'])
-            ->name('panel.ordenes-mantenimiento.create');
-
-        Route::post('/panel/ordenes-mantenimiento', [OrdenesMantenimientoController::class, 'store'])
-            ->name('panel.ordenes-mantenimiento.store');
-
-        Route::get('/panel/ordenes-mantenimiento/{orden}/editar', [OrdenesMantenimientoController::class, 'edit'])
-            ->name('panel.ordenes-mantenimiento.edit');
-
-        Route::post('/panel/ordenes-mantenimiento/{orden}/cerrar', [OrdenesMantenimientoController::class, 'cerrar'])
-            ->name('panel.ordenes-mantenimiento.cerrar');
-
-        // HU-38 (tarea 54): "como encargado, quiero planes de mantenimiento
-        // preventivo por horas de vuelo, para que el sistema me avise antes
-        // de la falla" — cierra Sprint 11. Cuatro permisos de grano fino
-        // (`mantenimiento.plan.ver`/`.crear`/`.editar`/`.eliminar`),
-        // verificados DENTRO del controlador contra el ROL ACTIVO, mismo
-        // criterio que el resto del panel. Nombre de ruta
-        // `planes-mantenimiento` (no `planes`, a secas) por el mismo motivo
-        // que `ordenes-mantenimiento` arriba: evitar cualquier ambigüedad de
-        // nombre entre módulos, aunque hoy no exista colisión real.
-        Route::get('/panel/planes-mantenimiento', [PlanesMantenimientoController::class, 'index'])
-            ->name('panel.planes-mantenimiento.index');
-
-        Route::get('/panel/planes-mantenimiento/crear', [PlanesMantenimientoController::class, 'create'])
-            ->name('panel.planes-mantenimiento.create');
-
-        Route::post('/panel/planes-mantenimiento', [PlanesMantenimientoController::class, 'store'])
-            ->name('panel.planes-mantenimiento.store');
-
-        Route::get('/panel/planes-mantenimiento/{plan}/editar', [PlanesMantenimientoController::class, 'edit'])
-            ->name('panel.planes-mantenimiento.edit');
-
-        Route::put('/panel/planes-mantenimiento/{plan}', [PlanesMantenimientoController::class, 'update'])
-            ->name('panel.planes-mantenimiento.update');
-
-        Route::delete('/panel/planes-mantenimiento/{plan}', [PlanesMantenimientoController::class, 'destroy'])
-            ->name('panel.planes-mantenimiento.destroy');
-
         // HU-82 (tarea 97): ficha de inventario del dron — serie, chasis,
         // versión de software, región, serie del control y accesorios. ABM
-        // nuevo sin máquina de estados, mismo molde que `baterias` arriba.
+        // sin máquina de estados, mismo molde que `baterias` arriba.
         // Cuatro permisos de grano fino
         // (`mantenimiento.ficha_dron.ver`/`.crear`/`.editar`/`.eliminar`)
         // verificados DENTRO del controlador contra el ROL ACTIVO, mismo
@@ -1073,176 +913,6 @@ Route::middleware('auth:interno')->group(function () {
         Route::delete('/panel/fichas-dron/{fichaDron}', [FichasDronController::class, 'destroy'])
             ->name('panel.fichas-dron.destroy');
 
-        // HU-28 (tarea 40): "como piloto o auxiliar, quiero ver mis devengos
-        // por período" — primer permiso de panel para esos dos roles
-        // (`finanzas.devengo.ver`), verificado DENTRO del controlador contra
-        // el ROL ACTIVO, mismo criterio que las rutas de arriba. `index`
-        // redirige a `show` con la persona del usuario autenticado; `show`
-        // hace 404 ante cualquier `persona_id` que no sea la propia,
-        // acceso cruzado incluido — no solo sin permiso.
-        Route::get('/panel/devengos', [DevengosController::class, 'index'])
-            ->name('panel.devengos.index');
-
-        Route::get('/panel/devengos/{persona}', [DevengosController::class, 'show'])
-            ->name('panel.devengos.show');
-
-        // HU-29 (tarea 41): "como encargado, quiero registrar anticipos
-        // validando el tope, para no adelantar más de lo devengado" — ABM
-        // acotado (sin edición ni máquina de estados), gateado por tres
-        // permisos de grano fino (`finanzas.anticipo.ver`/`.crear`/
-        // `.eliminar`), verificados DENTRO del controlador contra el ROL
-        // ACTIVO, mismo criterio que las rutas de arriba.
-        Route::get('/panel/anticipos', [AnticiposController::class, 'index'])
-            ->name('panel.anticipos.index');
-
-        Route::get('/panel/anticipos/crear', [AnticiposController::class, 'create'])
-            ->name('panel.anticipos.create');
-
-        Route::post('/panel/anticipos', [AnticiposController::class, 'store'])
-            ->name('panel.anticipos.store');
-
-        Route::delete('/panel/anticipos/{anticipo}', [AnticiposController::class, 'destroy'])
-            ->name('panel.anticipos.destroy');
-
-        // ADR 0023 (22/9/2026): tarifas de pago al personal — catálogo de
-        // Finanzas (la configuración de pago base). Cuatro permisos de grano
-        // fino (`finanzas.tarifa.ver`/`.crear`/`.editar`/`.eliminar`),
-        // verificados DENTRO del controlador contra el ROL ACTIVO.
-        Route::get('/panel/tarifas', [TarifasController::class, 'index'])
-            ->name('panel.tarifas.index');
-
-        Route::get('/panel/tarifas/crear', [TarifasController::class, 'create'])
-            ->name('panel.tarifas.create');
-
-        Route::post('/panel/tarifas', [TarifasController::class, 'store'])
-            ->name('panel.tarifas.store');
-
-        Route::get('/panel/tarifas/{tarifa}/editar', [TarifasController::class, 'edit'])
-            ->name('panel.tarifas.edit');
-
-        Route::put('/panel/tarifas/{tarifa}', [TarifasController::class, 'update'])
-            ->name('panel.tarifas.update');
-
-        Route::delete('/panel/tarifas/{tarifa}', [TarifasController::class, 'destroy'])
-            ->name('panel.tarifas.destroy');
-
-        // HU-33 (tarea 47): "como encargado, quiero cargar gastos con su
-        // categoría y comprobante, para que la campaña tenga costo real" —
-        // gateado por tres permisos de grano fino (`finanzas.gasto.ver`/
-        // `.crear`/`.eliminar`), verificados DENTRO del controlador contra
-        // el ROL ACTIVO, mismo criterio que las rutas de arriba. Edición
-        // agregada en la tarea 134 (reusa `.eliminar`, no existe `.editar`):
-        // se corrige mientras su rendición asociada, si tiene una, siga
-        // `abierta` (`Dominio/PoliticaEdicionGasto`).
-        Route::get('/panel/gastos', [GastosController::class, 'index'])
-            ->name('panel.gastos.index');
-
-        Route::get('/panel/gastos/crear', [GastosController::class, 'create'])
-            ->name('panel.gastos.create');
-
-        Route::post('/panel/gastos', [GastosController::class, 'store'])
-            ->name('panel.gastos.store');
-
-        Route::get('/panel/gastos/{gasto}/editar', [GastosController::class, 'edit'])
-            ->name('panel.gastos.edit');
-
-        Route::put('/panel/gastos/{gasto}', [GastosController::class, 'update'])
-            ->name('panel.gastos.update');
-
-        Route::delete('/panel/gastos/{gasto}', [GastosController::class, 'destroy'])
-            ->name('panel.gastos.destroy');
-
-        Route::get('/panel/gastos/{gasto}/comprobante', [GastosController::class, 'comprobante'])
-            ->name('panel.gastos.comprobante');
-
-        // HU-30 (tarea 44): "como dueño, quiero generar la planilla del
-        // período desde los devengos y aprobarla, para pagar con un respaldo
-        // que cuadre" — cierra el Sprint 8. Tres permisos de grano fino
-        // (`finanzas.planilla.ver`/`.generar`/`.aprobar`), verificados
-        // DENTRO del controlador contra el ROL ACTIVO, mismo criterio que
-        // las rutas de arriba. `.aprobar` es exclusivo del rol `dueno`
-        // (`SeguridadSeeder`).
-        Route::get('/panel/planillas', [PlanillasController::class, 'index'])
-            ->name('panel.planillas.index');
-
-        Route::get('/panel/planillas/{planilla}', [PlanillasController::class, 'show'])
-            ->name('panel.planillas.show');
-
-        Route::post('/panel/planillas', [PlanillasController::class, 'store'])
-            ->name('panel.planillas.store');
-
-        Route::post('/panel/planillas/{planilla}/aprobar', [PlanillasController::class, 'aprobar'])
-            ->name('panel.planillas.aprobar');
-
-        Route::get('/panel/planillas/{planilla}/detalles/{detalle}/recibo', [PlanillasController::class, 'recibo'])
-            ->name('panel.planillas.recibo');
-
-        // HU-34 (tarea 48): "como jefe de campo, quiero rendir los gastos que
-        // hice en campo; el encargado los aprueba para reponer el fondo" —
-        // máquina de estados propia (abierta → presentada → aprobada), a
-        // diferencia de `AnticiposController`. Cuatro permisos de grano fino
-        // (`finanzas.rendicion.ver`/`.crear`/`.presentar`/`.aprobar`),
-        // verificados DENTRO del controlador contra el ROL ACTIVO, mismo
-        // criterio que las rutas de arriba. El aprobador nunca puede ser el
-        // mismo jefe de campo que rindió (invariante 4 de CLAUDE.md,
-        // `PoliticaAprobacionRendicion`) — eso lo resuelve el caso de uso,
-        // no el permiso. Edición de CABECERA agregada en la tarea 134 (reusa
-        // `.presentar`, no existe `.editar`): solo mientras sigue `abierta`
-        // (`Dominio/PoliticaEdicionRendicion`) — nunca `estado`/`monto`.
-        Route::get('/panel/rendiciones', [RendicionesController::class, 'index'])
-            ->name('panel.rendiciones.index');
-
-        Route::get('/panel/rendiciones/crear', [RendicionesController::class, 'create'])
-            ->name('panel.rendiciones.create');
-
-        Route::post('/panel/rendiciones', [RendicionesController::class, 'store'])
-            ->name('panel.rendiciones.store');
-
-        Route::get('/panel/rendiciones/{rendicion}', [RendicionesController::class, 'show'])
-            ->name('panel.rendiciones.show');
-
-        Route::get('/panel/rendiciones/{rendicion}/editar', [RendicionesController::class, 'edit'])
-            ->name('panel.rendiciones.edit');
-
-        Route::put('/panel/rendiciones/{rendicion}', [RendicionesController::class, 'update'])
-            ->name('panel.rendiciones.update');
-
-        Route::post('/panel/rendiciones/{rendicion}/gastos/{gasto}', [RendicionesController::class, 'asociarGasto'])
-            ->name('panel.rendiciones.asociar_gasto');
-
-        Route::post('/panel/rendiciones/{rendicion}/presentar', [RendicionesController::class, 'presentar'])
-            ->name('panel.rendiciones.presentar');
-
-        Route::post('/panel/rendiciones/{rendicion}/aprobar', [RendicionesController::class, 'aprobar'])
-            ->name('panel.rendiciones.aprobar');
-
-        // HU-35 (tarea 49): "como encargado, quiero registrar el
-        // combustible del generador y de los vehículos, para imputarlo a la
-        // campaña" — cierra Sprint 10. Gateado por tres permisos de grano
-        // fino (`finanzas.combustible.ver`/`.crear`/`.eliminar`), verificados
-        // DENTRO del controlador contra el ROL ACTIVO, mismo criterio que
-        // las rutas de arriba. Entidad independiente de
-        // `ope_recargas.litros_combustible_generador` — ver el docblock de
-        // la migración. Edición agregada en la tarea 134 (reusa `.eliminar`,
-        // no existe `.editar`): sin `rendicion_id`, siempre se corrige.
-        Route::get('/panel/combustible', [CombustibleController::class, 'index'])
-            ->name('panel.combustible.index');
-
-        Route::get('/panel/combustible/crear', [CombustibleController::class, 'create'])
-            ->name('panel.combustible.create');
-
-        Route::post('/panel/combustible', [CombustibleController::class, 'store'])
-            ->name('panel.combustible.store');
-
-        Route::get('/panel/combustible/{combustible}/editar', [CombustibleController::class, 'edit'])
-            ->name('panel.combustible.edit');
-
-        Route::put('/panel/combustible/{combustible}', [CombustibleController::class, 'update'])
-            ->name('panel.combustible.update');
-
-        Route::delete('/panel/combustible/{combustible}', [CombustibleController::class, 'destroy'])
-            ->name('panel.combustible.destroy');
-
         // HU-31 (tarea 45): "como encargado, quiero emitir la factura de un
         // trabajo desde su acta conformada, para cobrar sobre hectáreas ya
         // firmadas" — abre Sprint 9. Dos permisos de grano fino
@@ -1262,8 +932,8 @@ Route::middleware('auth:interno')->group(function () {
         // HU-52 (tarea 75, espec §9.1): informe de avance de contratos, por
         // cultivo y por cliente — reemplaza en la misma ruta a la pantalla
         // plana de HU-32 (tarea 46). Un único permiso (`comercial.reporte.ver`),
-        // exclusivo del dueño (no entra en `PERMISOS_ENCARGADO_OPERACIONES`,
-        // mismo criterio que `finanzas.planilla.aprobar`), verificado DENTRO
+        // exclusivo del dueño (no entra en `PERMISOS_ENCARGADO_OPERACIONES`),
+        // verificado DENTRO
         // del controlador contra el ROL ACTIVO. Sin `exportar`: el CSV plano
         // de HU-32 no tiene una forma razonable para un informe agrupado en
         // dos niveles — fuera de alcance de esta tarea.

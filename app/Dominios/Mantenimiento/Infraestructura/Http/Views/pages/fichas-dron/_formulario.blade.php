@@ -17,10 +17,8 @@
       FichasDronController::resumenRelacionado(). `null`/ausente en alta.
 
     `identificador_dron` no es un select: viaja como texto libre y el
-    Request lo valida contra `ope_drones` (`Rule::exists()`) — mismo
-    criterio que `equipo_id`/`equipo_tipo` en
-    `ordenes/_formulario.blade.php` para el resto de las FK cross-módulo,
-    solo que acá no hay catálogo cargado en el propio formulario.
+    Request lo valida contra `ope_drones` (`Rule::exists()`): no hay catálogo
+    cargado en el propio formulario.
 
     Los únicos controles escritos a mano son los tres `hidden` de los
     accesorios: cada uno manda el `0` cuando su casilla queda sin marcar (un

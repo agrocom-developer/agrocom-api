@@ -75,9 +75,8 @@ class SeguridadSeeder extends Seeder
         'seguridad.rol.asignar_permiso' => 'Otorgar y quitar permisos a un rol',
         // Tarea 62 (fuga 2): dashboard y organización eran visibles para
         // cualquier rol activo sin ningún permiso que lo gatee — un
-        // `auxiliar` (un único permiso en todo el catálogo,
-        // `finanzas.devengo.ver`) veía el tablero completo y la ficha de la
-        // compañía. `dueno` los recibe igual que todo el catálogo (sin
+        // `auxiliar` (con un único permiso de panel) veía el tablero completo
+        // y la ficha de la compañía. `dueno` los recibe igual que todo el catálogo (sin
         // excepción, diseño §2); `encargado_operaciones` y `jefe_campo` los
         // reciben explícitos abajo.
         //
@@ -288,36 +287,6 @@ class SeguridadSeeder extends Seeder
         'personal.equipo_trabajo.crear' => 'Dar de alta un equipo de trabajo',
         'personal.equipo_trabajo.editar' => 'Editar un equipo de trabajo y asignar o finalizar sus integrantes y recursos',
         'personal.equipo_trabajo.eliminar' => 'Dar de baja (lógica) un equipo de trabajo',
-        // HU-28 (tarea 40): "como piloto o auxiliar, quiero ver mis devengos
-        // por período" — primer permiso de panel para piloto y auxiliar, que
-        // hasta esta tarea no tenían ninguno (piloto: solo
-        // PERMISOS_PILOTO/acta.*; auxiliar: ninguno). Un único permiso de
-        // lectura, con el scoping por PERSONA (no por rol) resuelto dentro de
-        // DevengosController.
-        'finanzas.devengo.ver' => 'Ver los propios devengos por período',
-        // HU-29 (tarea 41): "como encargado, quiero registrar anticipos
-        // validando el tope, para no adelantar más de lo devengado". Grano
-        // fino sin `.editar`: un anticipo, una vez creado, es inmutable
-        // salvo baja (ver `Aplicacion/RegistrarAnticipo`).
-        // ADR 0023 (22/9/2026): tarifas de pago al personal — la configuración
-        // de pago base de Finanzas (por día o por hectárea, montos por
-        // puesto). Grano fino completo: es un catálogo que se edita.
-        'finanzas.tarifa.ver' => 'Ver el catálogo de tarifas de pago al personal',
-        'finanzas.tarifa.crear' => 'Crear una tarifa de pago',
-        'finanzas.tarifa.editar' => 'Editar una tarifa de pago',
-        'finanzas.tarifa.eliminar' => 'Dar de baja (lógica) una tarifa de pago',
-        'finanzas.anticipo.ver' => 'Ver el listado de anticipos',
-        'finanzas.anticipo.crear' => 'Registrar un anticipo, validado contra el tope del mes',
-        'finanzas.anticipo.eliminar' => 'Dar de baja (lógica) un anticipo registrado por error',
-        // HU-30 (tarea 44): "como dueño, quiero generar la planilla del
-        // período desde los devengos y aprobarla, para pagar con un
-        // respaldo que cuadre" — cierra el Sprint 8. `.aprobar` NO entra en
-        // PERMISOS_ENCARGADO_OPERACIONES (ver más abajo): el dueño lo recibe
-        // solo por ser "todos los permisos del catálogo, sin excepción"
-        // (diseño §2), ningún otro rol lo tiene.
-        'finanzas.planilla.ver' => 'Ver el listado y detalle de planillas del período',
-        'finanzas.planilla.generar' => 'Generar la planilla de un período desde sus devengos y anticipos',
-        'finanzas.planilla.aprobar' => 'Aprobar una planilla en borrador (exclusivo del dueño)',
         // HU-31 (tarea 45): "como encargado, quiero emitir la factura de un
         // trabajo desde su acta conformada, para cobrar sobre hectáreas ya
         // firmadas" — abre Sprint 9. Grano fino sin `.editar` ni
@@ -328,59 +297,11 @@ class SeguridadSeeder extends Seeder
         // HU-32 (tarea 46): "como dueño, quiero un reporte comercial de
         // avance por cliente, contrato y campaña" — la HU lo dice literal.
         // NO entra en PERMISOS_ENCARGADO_OPERACIONES (ver más abajo):
-        // exclusivo del dueño, mismo criterio que `finanzas.planilla.aprobar`.
+        // exclusivo del dueño.
         'comercial.reporte.ver' => 'Ver el reporte comercial de avance por contrato (exclusivo del dueño)',
-        // HU-33 (tarea 47): "como encargado, quiero cargar gastos con su
-        // categoría y comprobante, para que la campaña tenga costo real" —
-        // abre Sprint 10. Sin `.editar` propio: la tarea 134 agregó edición
-        // reusando `.eliminar` (mientras la rendición asociada, si tiene
-        // una, siga abierta — ver `Dominio/PoliticaEdicionGasto`), mismo
-        // criterio que `finanzas.rendicion.presentar` para su cabecera.
-        'finanzas.gasto.ver' => 'Ver el listado de gastos de campaña',
-        'finanzas.gasto.crear' => 'Cargar un gasto con su categoría y comprobante',
-        'finanzas.gasto.eliminar' => 'Dar de baja (lógica) o editar un gasto registrado por error (tarea 134)',
-        // HU-34 (tarea 48): "como jefe de campo, quiero rendir los gastos que
-        // hice en campo; el encargado los aprueba para reponer el fondo".
-        // Grano fino con máquina de estados propia (abierta → presentada →
-        // aprobada, a diferencia de gasto/anticipo arriba, sin ninguna).
-        // `.aprobar` SÍ entra en PERMISOS_ENCARGADO_OPERACIONES (ver más
-        // abajo) — a diferencia de `finanzas.planilla.aprobar`, que es
-        // exclusivo del dueño: acá la guarda real de que el aprobador nunca
-        // sea quien rindió ya la resuelve `PoliticaAprobacionRendicion`/la
-        // máquina de estados por PERSONA, no el permiso. Sin `.editar`
-        // propio: la tarea 134 agregó edición de CABECERA reusando
-        // `.presentar` (solo mientras sigue `abierta`).
-        'finanzas.rendicion.ver' => 'Ver el listado y detalle de rendiciones de campo',
-        'finanzas.rendicion.crear' => 'Crear una rendición de campo y asociarle gastos',
-        'finanzas.rendicion.presentar' => 'Presentar una rendición de campo para su aprobación, o editar su cabecera mientras siga abierta (tarea 134)',
-        'finanzas.rendicion.aprobar' => 'Aprobar una rendición de campo presentada, para reponer el fondo',
-        // HU-35 (tarea 49): "como encargado, quiero registrar el
-        // combustible del generador y de los vehículos, para imputarlo a la
-        // campaña" — cierra Sprint 10. Sin `.editar` propio: la tarea 134
-        // agregó edición reusando `.eliminar` — sin `rendicion_id` que la
-        // bloquee (a diferencia de gasto), siempre se corrige.
-        'finanzas.combustible.ver' => 'Ver el listado de cargas de combustible',
-        'finanzas.combustible.crear' => 'Cargar combustible del generador o de un vehículo',
-        'finanzas.combustible.eliminar' => 'Dar de baja (lógica) o editar una carga de combustible registrada por error (tarea 134)',
-        // HU-40 (tarea 50): "como encargado, quiero administrar los
-        // vehículos con su asignación a base" — abre Sprint 11 y el módulo
-        // `Mantenimiento` (ADR 0011, extensión 3/9/2026). Grano fino, mismo
-        // criterio que `operaciones.dron.*`.
-        'mantenimiento.vehiculo.ver' => 'Ver el listado de vehículos',
-        'mantenimiento.vehiculo.crear' => 'Dar de alta un vehículo',
-        'mantenimiento.vehiculo.editar' => 'Editar los datos de un vehículo',
-        'mantenimiento.vehiculo.eliminar' => 'Dar de baja (lógica) un vehículo',
-        // Tarea 72 (HU-49, ADR 0015 punto 3): catálogo de generadores, ABM
-        // mínimo — no es una HU propia, es la tabla que hace falta para
-        // poder asignar un generador como equipamiento de un equipo de
-        // trabajo. Grano fino, mismo criterio que `mantenimiento.vehiculo.*`.
-        'mantenimiento.generador.ver' => 'Ver el listado de generadores',
-        'mantenimiento.generador.crear' => 'Dar de alta un generador',
-        'mantenimiento.generador.editar' => 'Editar los datos de un generador',
-        'mantenimiento.generador.eliminar' => 'Dar de baja (lógica) un generador',
         // HU-39 (tarea 51): "como encargado, quiero seguir las baterías con
         // sus ciclos y estado, para retirarlas antes de que fallen en
-        // vuelo". Grano fino, mismo criterio que `mantenimiento.vehiculo.*`.
+        // vuelo". Grano fino, mismo criterio que `operaciones.dron.*`.
         'mantenimiento.bateria.ver' => 'Ver el listado de baterías',
         'mantenimiento.bateria.crear' => 'Dar de alta una batería',
         'mantenimiento.bateria.editar' => 'Editar los datos de una batería, incluidos sus ciclos acumulados',
@@ -394,40 +315,6 @@ class SeguridadSeeder extends Seeder
         'mantenimiento.ficha_dron.crear' => 'Dar de alta una ficha de inventario de dron',
         'mantenimiento.ficha_dron.editar' => 'Editar los datos de una ficha de inventario de dron',
         'mantenimiento.ficha_dron.eliminar' => 'Dar de baja (lógica) una ficha de inventario de dron',
-        // HU-36 (tarea 52): "como encargado, quiero llevar stock de
-        // repuestos por base con alerta de mínimo, para reponer antes de
-        // quedarme sin" — cierra Sprint 11 y abre el módulo `Inventario`
-        // (ADR 0011, extensión 3/9/2026, punto 15), separado de
-        // `Mantenimiento`. Catálogo de repuestos: grano fino, mismo criterio
-        // que `mantenimiento.bateria.*`.
-        'inventario.repuesto.ver' => 'Ver el catálogo de repuestos',
-        'inventario.repuesto.crear' => 'Dar de alta un repuesto',
-        'inventario.repuesto.editar' => 'Editar los datos de un repuesto',
-        'inventario.repuesto.eliminar' => 'Dar de baja (lógica) un repuesto',
-        // Stock por base y sus movimientos (compra/salida/ajuste/traslado).
-        // Sin `.editar`/`.eliminar`: un movimiento, una vez registrado, es un
-        // asiento inmutable (ver `RegistrarMovimientoStock`), mismo criterio
-        // que `finanzas.gasto.*` sin `.editar`.
-        'inventario.movimiento.ver' => 'Ver el stock por base y sus movimientos',
-        'inventario.movimiento.crear' => 'Registrar un movimiento de stock (compra, salida, ajuste o traslado)',
-        // HU-37 (tarea 53): "como encargado, quiero abrir órdenes de
-        // mantenimiento y cerrarlas consumiendo repuestos, para que el costo
-        // quede imputado". Grano fino, mismo criterio que
-        // `mantenimiento.vehiculo.*`; `.cerrar` aparte de `.editar` porque el
-        // cierre no es una edición libre — dispara la máquina de estados que
-        // consume stock y genera el gasto (invariante 7 de CLAUDE.md).
-        'mantenimiento.orden.ver' => 'Ver el listado de órdenes de mantenimiento',
-        'mantenimiento.orden.crear' => 'Abrir una orden de mantenimiento',
-        'mantenimiento.orden.editar' => 'Editar los datos de una orden de mantenimiento',
-        'mantenimiento.orden.cerrar' => 'Cerrar una orden de mantenimiento consumiendo repuestos',
-        // HU-38 (tarea 54): "como encargado, quiero planes de mantenimiento
-        // preventivo por horas de vuelo, para que el sistema me avise antes
-        // de la falla" — cierra Sprint 11. Grano fino, mismo criterio que
-        // `mantenimiento.vehiculo.*`/`mantenimiento.bateria.*`.
-        'mantenimiento.plan.ver' => 'Ver el listado de planes de mantenimiento preventivo',
-        'mantenimiento.plan.crear' => 'Dar de alta un plan de mantenimiento preventivo',
-        'mantenimiento.plan.editar' => 'Editar los datos de un plan de mantenimiento preventivo',
-        'mantenimiento.plan.eliminar' => 'Dar de baja (lógica) un plan de mantenimiento preventivo',
         // HU-46 (tarea 69, ADR 0015 punto 1): la campaña como eje transversal
         // del sistema. Grano fino, mismo criterio que `comercial.contrato.*`
         // — `.cambiar_estado` y `.eliminar` separados de `.editar`. A
@@ -460,32 +347,28 @@ class SeguridadSeeder extends Seeder
 
     /**
      * Piloto: lo que ejecuta desde `agrocom-field` (HU-17, tarea 24) más su
-     * primer permiso de panel (HU-28, tarea 40) — ver sus propios devengos.
+     * tablero.
      *
      * @var list<string>
      */
     private const PERMISOS_PILOTO = [
         'operaciones.acta.generar',
         'operaciones.acta.firmar',
-        'finanzas.devengo.ver',
         // Tarea 67: el dashboard dejó de ser un tablero único de gerencia y
-        // pasó a componerse por rol. Para el piloto son DOS secciones —sus
-        // sesiones y su liquidación del mes—, ambas acotadas a su
-        // `persona_id`, no a la operación entera. Sin este permiso aterrizaba
+        // pasó a componerse por rol. Para el piloto son sus sesiones y sus
+        // equipos, acotados a su `persona_id`, no a la operación entera. Sin este permiso aterrizaba
         // en la primera pantalla suelta que el menú le dejara ver.
         'seguridad.dashboard.ver',
     ];
 
     /**
-     * Auxiliar: hasta HU-28 (tarea 40) no tenía ningún permiso de panel — ver
-     * sus propios devengos es el primero.
+     * Auxiliar: solo su tablero.
      *
      * @var list<string>
      */
     private const PERMISOS_AUXILIAR = [
-        'finanzas.devengo.ver',
         // Tarea 67, mismo motivo que el piloto: ve sus propias sesiones (como
-        // auxiliar de ellas) y su liquidación, nada de la operación global.
+        // auxiliar de ellas), nada de la operación global.
         'seguridad.dashboard.ver',
     ];
 
@@ -632,71 +515,16 @@ class SeguridadSeeder extends Seeder
         'personal.equipo_trabajo.crear',
         'personal.equipo_trabajo.editar',
         'personal.equipo_trabajo.eliminar',
-        // HU-29 (tarea 41): "como encargado, quiero registrar anticipos
-        // validando el tope" — la HU lo dice literal, mismo criterio que
-        // clientes, contratos, campos, drones, bases y personas arriba.
-        'finanzas.anticipo.ver',
-        'finanzas.anticipo.crear',
-        'finanzas.anticipo.eliminar',
-        // ADR 0023: el encargado arma las órdenes de trabajo y mantiene el
-        // catálogo de tarifas del que parten.
-        'finanzas.tarifa.ver',
-        'finanzas.tarifa.crear',
-        'finanzas.tarifa.editar',
-        'finanzas.tarifa.eliminar',
-        // HU-30 (tarea 44): "como dueño, quiero generar la planilla..." — el
-        // encargado genera y consulta, pero NO aprueba: `.aprobar` queda
-        // fuera de esta lista a propósito (exclusivo del rol `dueno`, ver
-        // el comentario en PERMISOS de arriba).
-        'finanzas.planilla.ver',
-        'finanzas.planilla.generar',
         // HU-31 (tarea 45): "como encargado, quiero emitir la factura de un
         // trabajo desde su acta conformada" — la HU lo dice literal, mismo
-        // criterio que clientes, contratos, campos, drones, bases, personas
-        // y anticipos arriba.
+        // criterio que clientes, contratos, campos, drones, bases y personas
+        // arriba.
         'comercial.factura.ver',
         'comercial.factura.crear',
-        // HU-33 (tarea 47): "como encargado, quiero cargar gastos con su
-        // categoría y comprobante" — la HU lo dice literal, mismo criterio
-        // que clientes, contratos, campos, drones, bases, personas,
-        // anticipos y facturas arriba.
-        'finanzas.gasto.ver',
-        'finanzas.gasto.crear',
-        'finanzas.gasto.eliminar',
-        // HU-34 (tarea 48): "como jefe de campo, quiero rendir los gastos que
-        // hice en campo; el encargado los aprueba para reponer el fondo" —
-        // la HU lo dice literal, incluido `.aprobar`: a diferencia de
-        // `finanzas.planilla.aprobar` (exclusivo del dueño), acá el
-        // encargado SÍ aprueba (ver el comentario en PERMISOS de arriba).
-        'finanzas.rendicion.ver',
-        'finanzas.rendicion.crear',
-        'finanzas.rendicion.presentar',
-        'finanzas.rendicion.aprobar',
-        // HU-35 (tarea 49): "como encargado, quiero registrar el
-        // combustible del generador y de los vehículos" — la HU lo dice
-        // literal, mismo criterio que clientes, contratos, campos, drones,
-        // bases, personas, anticipos, facturas y gastos arriba.
-        'finanzas.combustible.ver',
-        'finanzas.combustible.crear',
-        'finanzas.combustible.eliminar',
-        // HU-40 (tarea 50): "como encargado, quiero administrar los
-        // vehículos con su asignación a base" — la HU lo dice literal, mismo
-        // criterio que clientes, contratos, campos, drones, bases, personas,
-        // anticipos, facturas, gastos y combustible arriba.
-        'mantenimiento.vehiculo.ver',
-        'mantenimiento.vehiculo.crear',
-        'mantenimiento.vehiculo.editar',
-        'mantenimiento.vehiculo.eliminar',
-        // Tarea 72 (HU-49, ADR 0015 punto 3): catálogo de generadores — mismo
-        // criterio que vehículos arriba.
-        'mantenimiento.generador.ver',
-        'mantenimiento.generador.crear',
-        'mantenimiento.generador.editar',
-        'mantenimiento.generador.eliminar',
         // HU-39 (tarea 51): "como encargado, quiero seguir las baterías con
         // sus ciclos y estado" — la HU lo dice literal, mismo criterio que
-        // clientes, contratos, campos, drones, bases, personas, anticipos,
-        // facturas, gastos, combustible y vehículos arriba.
+        // clientes, contratos, campos, drones, bases, personas y facturas
+        // arriba.
         'mantenimiento.bateria.ver',
         'mantenimiento.bateria.crear',
         'mantenimiento.bateria.editar',
@@ -708,22 +536,6 @@ class SeguridadSeeder extends Seeder
         'mantenimiento.ficha_dron.crear',
         'mantenimiento.ficha_dron.editar',
         'mantenimiento.ficha_dron.eliminar',
-        // HU-37 (tarea 53): "como encargado, quiero abrir órdenes de
-        // mantenimiento y cerrarlas consumiendo repuestos" — la HU lo dice
-        // literal, mismo criterio que el resto de este rol arriba.
-        // (HU-36/HU-38 daban acceso completo a repuestos, stock y planes de
-        // mantenimiento; HU-88, tarea 103, se lo saca: los usa poco y le
-        // ensucian el menú del día a día. Se retira el catálogo entero de
-        // cada uno —ver/crear/editar/eliminar— y no solo `.ver`: dejar
-        // `.crear`/`.editar`/`.eliminar` sin `.ver` abría un hueco raro
-        // —podría crear un repuesto o un plan sin poder listarlo después—
-        // y agregar `.ver` de vuelta habría revertido el pedido de la HU de
-        // sacarlo del menú. Sigue disponible para `dueno`, que recibe el
-        // catálogo completo sin excepción.)
-        'mantenimiento.orden.ver',
-        'mantenimiento.orden.crear',
-        'mantenimiento.orden.editar',
-        'mantenimiento.orden.cerrar',
         // HU-46 (tarea 69, ADR 0015 punto 1): arma la campaña (código,
         // nombre, fechas) — sin `.cambiar_estado`, exclusivo del dueño (ver
         // el comentario en PERMISOS de arriba).
@@ -788,16 +600,19 @@ class SeguridadSeeder extends Seeder
         // con el permiso de su pantalla completa (tarea 62), así que sin estos
         // tres el jefe no vería esas pestañas. Sin `.crear`/`.editar` de ninguno.
         'operaciones.orden.ver',
-        'inventario.movimiento.ver',
         'personal.equipo_trabajo.ver',
     ];
 
     /**
-     * ADR 0020 (15/9/2026) retira `Campo` como entidad; los cuatro permisos
-     * `comercial.campo.*` que administraban su ABM quedan huérfanos. Se
-     * retiran acá, antes de la siembra normal de abajo — el orden no
-     * importa, porque opera sobre datos que ya existen (o no existen) en la
-     * base, no sobre lo que la siembra está por crear.
+     * Permisos retirados del catálogo. Una base ya sembrada conserva la fila y
+     * sus asignaciones, así que `run()` las da de baja de forma explícita
+     * antes de sembrar:
+     *
+     * - `comercial.campo.*`: `Campo` deja de ser una entidad (ADR 0020).
+     * - `finanzas.*`, `inventario.*` y `mantenimiento.(vehiculo|generador|orden|plan).*`:
+     *   el marketplace no lleva planilla, contabilidad interna, inventario ni
+     *   mantenimiento de flota (ADR 0029, punto 4). Del mantenimiento solo
+     *   quedan las baterías y la ficha técnica del dron.
      *
      * @var list<string>
      */
@@ -806,6 +621,49 @@ class SeguridadSeeder extends Seeder
         'comercial.campo.crear',
         'comercial.campo.editar',
         'comercial.campo.eliminar',
+        'finanzas.anticipo.crear',
+        'finanzas.anticipo.eliminar',
+        'finanzas.anticipo.ver',
+        'finanzas.combustible.crear',
+        'finanzas.combustible.eliminar',
+        'finanzas.combustible.ver',
+        'finanzas.devengo.ver',
+        'finanzas.gasto.crear',
+        'finanzas.gasto.eliminar',
+        'finanzas.gasto.ver',
+        'finanzas.planilla.aprobar',
+        'finanzas.planilla.generar',
+        'finanzas.planilla.ver',
+        'finanzas.rendicion.aprobar',
+        'finanzas.rendicion.crear',
+        'finanzas.rendicion.presentar',
+        'finanzas.rendicion.ver',
+        'finanzas.tarifa.crear',
+        'finanzas.tarifa.editar',
+        'finanzas.tarifa.eliminar',
+        'finanzas.tarifa.ver',
+        'inventario.movimiento.crear',
+        'inventario.movimiento.ver',
+        'inventario.repuesto.crear',
+        'inventario.repuesto.editar',
+        'inventario.repuesto.eliminar',
+        'inventario.repuesto.ver',
+        'mantenimiento.generador.crear',
+        'mantenimiento.generador.editar',
+        'mantenimiento.generador.eliminar',
+        'mantenimiento.generador.ver',
+        'mantenimiento.orden.cerrar',
+        'mantenimiento.orden.crear',
+        'mantenimiento.orden.editar',
+        'mantenimiento.orden.ver',
+        'mantenimiento.plan.crear',
+        'mantenimiento.plan.editar',
+        'mantenimiento.plan.eliminar',
+        'mantenimiento.plan.ver',
+        'mantenimiento.vehiculo.crear',
+        'mantenimiento.vehiculo.editar',
+        'mantenimiento.vehiculo.eliminar',
+        'mantenimiento.vehiculo.ver',
     ];
 
     public function run(): void
@@ -844,7 +702,7 @@ class SeguridadSeeder extends Seeder
         );
 
         // piloto (HU-17, tarea 24): ejecuta desde `agrocom-field`; en el
-        // panel solo ve lo suyo (devengos y, desde la tarea 67, su tablero).
+        // panel solo ve su tablero.
         $this->asignar($roles['piloto'], $permisos->only(self::PERMISOS_PILOTO)->values()->all());
 
         // jefe_campo: solo lo suyo (diseño §2) — antes ninguno, ahora ver
@@ -855,8 +713,7 @@ class SeguridadSeeder extends Seeder
         );
 
         // auxiliar: a diferencia del piloto (arriba), no genera ni firma
-        // actas. HU-28 (tarea 40) le dio su primer permiso de panel —ver sus
-        // propios devengos— y la tarea 67 su tablero, acotado a su persona.
+        // actas. Solo ve su tablero, acotado a su persona.
         $this->asignar(
             $roles['auxiliar'],
             $permisos->only(self::PERMISOS_AUXILIAR)->values()->all(),

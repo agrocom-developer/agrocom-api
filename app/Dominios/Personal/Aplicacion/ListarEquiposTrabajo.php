@@ -9,7 +9,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 /**
  * Caso de uso: listado de equipos de trabajo con búsqueda y filtro por
  * estado/base (tarea 72, HU-49). Solo lectura — mismo patrón de paginación
- * que `ListarGeneradores`.
+ * que `ListarBaterias`.
  */
 final class ListarEquiposTrabajo
 {

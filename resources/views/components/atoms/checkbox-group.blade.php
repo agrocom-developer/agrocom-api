@@ -2,8 +2,7 @@
     Atom: checkbox-group
     Selección MÚLTIPLE dentro de una lista de opciones, con
     `<input type="checkbox">` reales agrupados en un `<fieldset>`/`<legend>`
-    — dimensionado para listas largas (repuestos, personas, lotes: lo
-    consume la tarea 80, repuestos por casillas). Sin lógica de negocio: no
+    — dimensionado para listas largas (roles, personas, lotes). Sin lógica de negocio: no
     valida, no resuelve el catálogo de opciones — el llamador ya le pasa
     `options` como `id => etiqueta`, traducida (ADR 0013).
 
@@ -42,8 +41,7 @@
     - extraPorOpcion (array, default []): `valor => HTML ya armado` (string,
       típicamente `view(...)->render()` del llamador), inyectado dentro del
       `<li>` de esa opción, después de la etiqueta. Pensado para un control
-      asociado a la opción marcada (p. ej. la cantidad de la tarea 80,
-      repuestos por casillas) — el átomo no sabe qué es ese contenido ni
+      asociado a la opción marcada (p. ej. una cantidad por casilla) — el átomo no sabe qué es ese contenido ni
       cuándo mostrarse/ocultarse: mostrarlo (CSS `:has(:checked)` o JS del
       llamador) y habilitar sus campos (`disabled` cuando la casilla está
       sin marcar, para que no viajen en el POST) es responsabilidad de quien

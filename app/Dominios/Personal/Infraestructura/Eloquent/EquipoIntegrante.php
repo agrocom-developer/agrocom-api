@@ -12,7 +12,7 @@ use Illuminate\Support\Carbon;
 /**
  * Integrante de un equipo de trabajo, con vigencia (tarea 72, HU-49, ADR 0015
  * punto 3): quién era el piloto o el auxiliar en una fecha dada, no quién lo
- * es hoy — un gasto de marzo se atribuye a la formación de marzo.
+ * es hoy — el trabajo de marzo se atribuye a la formación de marzo.
  *
  * Sin bloqueo de solapamiento entre equipos distintos —
  * {@see ValidadorSolapamientoVigencias}—: la

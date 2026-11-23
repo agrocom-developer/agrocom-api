@@ -124,8 +124,8 @@ Saberlo importa para no confiar de más en un verde:
   procedimiento de captura ad-hoc (claro/oscuro) que ya se usa para revisión
   humana.
 - **Invariantes 2 y 3 de CLAUDE.md no tienen gate automático todavía** (no
-  sobrescribir un registro validado, devengo solo al validar una sesión):
-  vigilan tablas que aún no existen (`sesion`, `devengo`, la máquina de
+  sobrescribir un registro validado, sesión validada una sola vez):
+  vigilan tablas que aún no existen (`sesion`, la máquina de
   estados operativos), así que su gate se escribe recién cuando ese dominio
   se implemente — antes, una aduana sobre algo inexistente pasaría siempre y
   simularía una cobertura que no hay.

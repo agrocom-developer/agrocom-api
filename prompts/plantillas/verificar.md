@@ -33,7 +33,7 @@ Cargá los skills `verificacion` y los que correspondan al área que se tocó
    no cuenta como cobertura — decilo si lo ves.
 4. **Invariantes de `CLAUDE.md`**: las once, pero mirá con lupa las que toca el
    cambio. Las que más caro salen: 2 (nunca se sobrescribe un registro
-   validado), 3 (devengo solo al validar), 5 (scoping desde el contrato o el
+   validado), 3 (sesión validada una sola vez), 5 (scoping desde el contrato o el
    usuario autenticado, nunca un `where` agregado después), 7 (transiciones por
    el servicio de estados), 8 (soft delete), 9 (bitácora), 10 (rol activo, no
    la unión de roles), 11 (ningún color hardcodeado).

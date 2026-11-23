@@ -8,7 +8,7 @@
     /* Ancestro posicionado de `.ag-file-field__native` (visually-hidden, más
        abajo): sin él, el `position: absolute` del input toma como bloque
        contenedor el inicial y, con el campo bajo el pliegue de un formulario
-       largo (el comprobante de un gasto), estira el documento y la ventana
+       largo (un adjunto), estira el documento y la ventana
        scrollea (guía §4.1). */
     position: relative;
     display: flex;

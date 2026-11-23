@@ -33,17 +33,11 @@
         @include('seguridad::pages.dashboard._seccion-avance-clientes', ['avances' => $secciones['avance_clientes']])
     @endisset
 
-    @if (isset($secciones['pausas']) || isset($secciones['stock']))
+    @isset($secciones['pausas'])
         <div class="ag-dash__grid ag-dash__grid--par">
-            @isset($secciones['pausas'])
-                @include('seguridad::pages.dashboard._seccion-pausas', ['pausas' => $secciones['pausas']])
-            @endisset
-
-            @isset($secciones['stock'])
-                @include('seguridad::pages.dashboard._seccion-stock', ['stock' => $secciones['stock']])
-            @endisset
+            @include('seguridad::pages.dashboard._seccion-pausas', ['pausas' => $secciones['pausas']])
         </div>
-    @endif
+    @endisset
 
     @isset($secciones['dias_en_hacienda'])
         @include('seguridad::pages.dashboard._seccion-dias-hacienda', ['diasHacienda' => $secciones['dias_en_hacienda']])
@@ -53,7 +47,7 @@
          Suelto arriba, un "0 sesiones del mes" del dueño —que no vuela— se
          leía como si la operación entera estuviera parada. Para un piloto,
          que no tiene ninguna sección global, este bloque queda arriba solo. --}}
-    @if (isset($secciones['mis_sesiones']) || isset($secciones['mis_equipos']) || isset($secciones['mi_liquidacion']))
+    @if (isset($secciones['mis_sesiones']) || isset($secciones['mis_equipos']))
         @include('seguridad::pages.dashboard._grupo-mi-actividad', ['secciones' => $secciones])
     @endif
 </div>

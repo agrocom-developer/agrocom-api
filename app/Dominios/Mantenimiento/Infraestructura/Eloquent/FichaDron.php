@@ -19,7 +19,7 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
  *
  * `RegistraBitacora` (invariante 9 de CLAUDE.md): el alta, edición y baja de
  * una ficha desde el panel es una mutación de negocio con autor y momento
- * auditables, mismo criterio que `Bateria`/`Vehiculo`.
+ * auditables, mismo criterio que `Bateria`.
  *
  * @property int $id
  * @property string $identificador_dron

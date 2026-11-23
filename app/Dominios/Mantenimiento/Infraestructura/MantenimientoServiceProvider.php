@@ -8,10 +8,7 @@ use App\Dominios\Mantenimiento\Contratos\LecturaEquipamiento;
 use App\Dominios\Mantenimiento\Contratos\LecturaEquipamientoPorBase;
 use App\Dominios\Mantenimiento\Contratos\LecturaEstadoEquipamiento;
 use App\Dominios\Mantenimiento\Contratos\LecturaMantenimientoPorDron;
-use App\Dominios\Mantenimiento\Contratos\LecturaResumenOrdenesMantenimiento;
 use App\Dominios\Mantenimiento\Infraestructura\Busqueda\BusquedaBaterias;
-use App\Dominios\Mantenimiento\Infraestructura\Busqueda\BusquedaGeneradores;
-use App\Dominios\Mantenimiento\Infraestructura\Busqueda\BusquedaVehiculos;
 use App\Dominios\Operaciones\Contratos\Eventos\RecargaRegistrada;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\View;
@@ -31,8 +28,7 @@ use Illuminate\Support\ServiceProvider;
  * `boot()` registra el namespace de vista `mantenimiento::` (mismo patrón
  * que `operaciones::`/`personal::`): las páginas Blade del módulo viven bajo
  * `Infraestructura/Http/Views/`, no bajo `resources/views/`. También cablea
- * el oyente real de `RecargaRegistrada` (HU-87, tarea 102), mismo molde que
- * `FinanzasServiceProvider::boot()` con `SesionValidada`: un closure
+ * el oyente real de `RecargaRegistrada` (HU-87, tarea 102): un closure
  * resuelto por el contenedor, no una clase de listener registrada por
  * convención.
  */
@@ -45,14 +41,11 @@ final class MantenimientoServiceProvider extends ServiceProvider
         $this->app->bind(LecturaEstadoEquipamiento::class, LecturaEstadoEquipamientoEloquent::class);
         $this->app->bind(LecturaEquipamientoPorBase::class, LecturaEquipamientoPorBaseEloquent::class);
         $this->app->bind(LecturaMantenimientoPorDron::class, LecturaMantenimientoPorDronEloquent::class);
-        $this->app->bind(LecturaResumenOrdenesMantenimiento::class, LecturaResumenOrdenesMantenimientoEloquent::class);
 
         // Buscador global (`busqueda.proveedores`): el agregador de Seguridad
         // no conoce estas clases, las recibe por tag. Sumar una entidad al
         // buscador es escribir su proveedor y taggearlo acá.
         $this->app->tag(BusquedaBaterias::class, 'busqueda.proveedores');
-        $this->app->tag(BusquedaVehiculos::class, 'busqueda.proveedores');
-        $this->app->tag(BusquedaGeneradores::class, 'busqueda.proveedores');
     }
 
     public function boot(): void

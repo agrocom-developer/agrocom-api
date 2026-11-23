@@ -49,7 +49,7 @@ final class CrearEquipoTrabajo
     }
 
     /**
-     * Mismo criterio que `CrearGenerador::relanzarComoDuplicado`: el mensaje
+     * Mismo criterio que `CrearBateria::relanzarComoDuplicado`: el mensaje
      * difiere por driver (Postgres nombra el índice; SQLite, tabla.columna).
      *
      * @throws EquipoTrabajoDuplicado si la violación corresponde al código.

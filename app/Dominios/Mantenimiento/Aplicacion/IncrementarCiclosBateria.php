@@ -9,8 +9,8 @@ use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Bateria;
  * batería — cada recarga real de vuelo suma un ciclo a la que volvió del
  * vuelo, nunca a mano (ver la guarda nueva de {@see ActualizarBateria}).
  *
- * Cableado en `MantenimientoServiceProvider::boot()`, mismo molde que
- * `FinanzasServiceProvider::boot()` con `SesionValidada`/`GenerarDevengosSesion`.
+ * Cableado en `MantenimientoServiceProvider::boot()`: un closure resuelto
+ * por el contenedor.
  *
  * La correlación `bateriaSalienteId` → `man_baterias.identificador` es
  * blanda (texto libre, sin FK — ver el docblock de `RegistroRecarga`): si no

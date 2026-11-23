@@ -34,7 +34,7 @@ use Illuminate\Support\Facades\DB;
  * `validar()` (HU-14, tarea 14) es la contraparte de `cerrar()`: mismo
  * patrón de guarda vía {@see TransicionesSesion}, pero además idempotente
  * (ver su docblock) y dispara `SesionValidada` — el evento de dominio que
- * HU-16 escuchará para generar el devengo.
+ * anuncia que la sesión quedó validada.
  */
 final class MaquinaEstadosSesion
 {
@@ -87,19 +87,11 @@ final class MaquinaEstadosSesion
      * ese caso) sigue el camino normal de {@see TransicionesSesion} y lanza
      * {@see TransicionSesionNoPermitida} si no está permitido.
      *
-     * La mutación y el disparo del evento van dentro de una transacción
-     * (HU-16, tarea 16): el oyente real de `SesionValidada`
-     * (`Finanzas\Aplicacion\GenerarDevengosSesion`) corre síncrono, dentro de
-     * ese `event()`, y puede lanzar
-     * `Finanzas\Dominio\Excepciones\TrabajoSinCondicionDePago` si ni el
-     * trabajo ni el catálogo dan una condición de pago. Sin la transacción, esa
-     * excepción dejaría la sesión ya guardada como `validado` pero sin su
-     * devengo — exactamente el estado a medias que la invariante 6 de
-     * CLAUDE.md prohíbe. Con ella, la validación entera se revierte: la
-     * sesión sigue `cerrado`, y quien la validó puede reintentar una vez
-     * definida la tarifa predeterminada. Esta clase no importa nada de `Finanzas` (no
-     * hace falta: no atrapa la excepción, solo se asegura de que su efecto
-     * sea atómico).
+     * La mutación y el disparo del evento van dentro de una transacción: los
+     * oyentes de `SesionValidada` corren síncronos, dentro de ese `event()`, y
+     * si alguno lanza una excepción la validación entera se revierte — la
+     * sesión sigue `cerrado` y quien la validó puede reintentar, sin dejar un
+     * estado a medias.
      *
      * @throws TransicionSesionNoPermitida si `$sesion` no está `cerrado` ni `validado`.
      */

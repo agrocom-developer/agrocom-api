@@ -2,29 +2,22 @@
     Page: ordenes-trabajo/edit (GET/PUT /panel/trabajos/{ordenTrabajo}/editar,
     panel.trabajos.edit/update). Edición de la cabecera de una Orden de
     Trabajo —indicaciones compartidas: calda, límites climáticos, parámetros
-    de vuelo— y, por equipo, su condición de pago (tarea 127, ADR 0023).
+    de vuelo—.
 
     El REPARTO (equipos, lotes, hectáreas, turno) NO se edita acá: sigue
-    siendo por `Trabajo`, desde la ficha («Editar» de cada fila). Un aviso
-    corto en la sección de equipos lo dice y enlaza a la ficha.
+    siendo por `Trabajo`, desde la ficha («Editar» de cada fila).
 
     Comparte las secciones de indicaciones con `create.blade.php` vía
     `_indicaciones.blade.php` —mismas reglas de validación
-    (`Concerns\ValidaIndicacionesOrdenTrabajo`)— y la condición de pago de
-    cada equipo con `_equipo-condicion.blade.php`.
+    (`Concerns\ValidaIndicacionesOrdenTrabajo`)—.
 
     Datos esperados (ver OrdenesTrabajoController::edit()): la cáscara de
     CascaraPanel, más:
     - $ordenTrabajo (OrdenTrabajo, con `orden.categoriaInsumo`,
-      `trabajos.sesiones`, `equipos`).
-    - $equiposParaFormulario (list<array{equipo_trabajo_id, etiqueta,
-      admiteCondicion, condicion}>): la condición se edita solo si TODOS los
-      trabajos de ese equipo siguen `abierto` (`PoliticaEdicionOrdenTrabajo::admiteCondicion()`);
-      para los demás se muestra de solo lectura con el porqué.
+      `trabajos.sesiones`).
     - $exigeMotivo (bool): algún trabajo ya `cerrado` — la corrección pide
       motivo (`PoliticaEdicionOrdenTrabajo::exigeMotivo()`).
     - $esLiquido (bool): tipo de insumo de la orden, para la sección de calda.
-    - $tarifasDisponibles, $modalidadesPago: catálogo de Finanzas (ADR 0023).
     - $resumenRelacionado (list): tarjetas del aside (trabajos por estado,
       orden de aplicación, cuadrillas).
 
@@ -121,28 +114,6 @@
                     'esLiquido' => $esLiquido,
                     'parametrosAntiguos' => $parametrosAntiguos,
                 ])
-
-                <x-molecules.form-section
-                    accent="warning"
-                    :title="__('operaciones.ordenes_trabajo.seccion_equipos')"
-                    :count="trans_choice('operaciones.ordenes_trabajo.equipos_contador', count($equiposParaFormulario), ['cantidad' => count($equiposParaFormulario)])"
-                >
-                    <div class="ag-form-section__field--full">
-                        <x-molecules.alert-strip variant="info" icon="info">
-                            {{ __('operaciones.ordenes_trabajo.reparto_no_editable_aviso') }}
-                        </x-molecules.alert-strip>
-                    </div>
-
-                    <div class="ag-form-section__field--full ag-ordenes-trabajo-form__equipos">
-                        @foreach ($equiposParaFormulario as $equipo)
-                            @include('operaciones::pages.ordenes-trabajo._equipo-condicion', [
-                                'equipo' => $equipo,
-                                'tarifasDisponibles' => $tarifasDisponibles,
-                                'modalidadesPago' => $modalidadesPago,
-                            ])
-                        @endforeach
-                    </div>
-                </x-molecules.form-section>
 
                 @if ($exigeMotivo)
                     <x-molecules.form-section :title="__('operaciones.ordenes_trabajo.campo_motivo_correccion')">

@@ -3,17 +3,13 @@
 namespace Database\Seeders\Demo;
 
 use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Bateria;
-use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Generador;
-use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Vehiculo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Dron;
 use App\Dominios\Personal\Aplicacion\AgregarAccesorioEquipo;
 use App\Dominios\Personal\Aplicacion\ArmarCuadrilla;
-use App\Dominios\Personal\Aplicacion\AsignarRecursoEquipo;
 use App\Dominios\Personal\Aplicacion\CambiarEstadoEquipoTrabajo;
 use App\Dominios\Personal\Aplicacion\DesasignarIntegranteEquipo;
 use App\Dominios\Personal\Aplicacion\DesasignarRecursoEquipo;
 use App\Dominios\Personal\Dominio\EstadoEquipoTrabajo;
-use App\Dominios\Personal\Dominio\RecursoTipoEquipo;
 use App\Dominios\Personal\Infraestructura\Eloquent\Accesorio;
 use App\Dominios\Personal\Infraestructura\Eloquent\EquipoTrabajo;
 use Illuminate\Database\Seeder;
@@ -23,12 +19,12 @@ use Illuminate\Database\Seeder;
  *
  * - EQ3 «Cuadrilla Pailón»: la que vuela San Marcos desde julio.
  * - EQ4 «Cuadrilla San Julián»: la de El Carmen y la segunda aplicación de
- *   San Marcos, con la condición de pago negociada por hectárea.
+ *   San Marcos.
  * - EQ5 «Cuadrilla de invierno»: ya cerrada (vigencia hasta el 30/6 e
  *   inactiva), para que el listado muestre los dos estados.
  *
- * A las cuadrillas del dueño (EQ1, EQ2) se les suman vehículo, generador y
- * accesorios, sin tocar sus integrantes ni su dron.
+ * A las cuadrillas del dueño (EQ1, EQ2) se les suman accesorios, sin tocar
+ * sus integrantes ni su dron.
  *
  * Centinela: el código `EQ3`.
  */
@@ -44,7 +40,6 @@ class CuadrillasDemoSeeder extends Seeder
 
     public function __construct(
         private readonly ArmarCuadrilla $armarCuadrilla,
-        private readonly AsignarRecursoEquipo $asignarRecurso,
         private readonly AgregarAccesorioEquipo $agregarAccesorio,
         private readonly DesasignarIntegranteEquipo $desasignarIntegrante,
         private readonly DesasignarRecursoEquipo $desasignarRecurso,
@@ -61,8 +56,6 @@ class CuadrillasDemoSeeder extends Seeder
         $sanJulian = $this->basePorNombre(PersonalDemoSeeder::BASE_SAN_JULIAN);
         $central = $this->basePorNombre(PersonalDemoSeeder::BASE_CENTRAL);
         $drones = Dron::query()->pluck('id', 'identificador')->all();
-        $vehiculos = Vehiculo::query()->pluck('id', 'identificador')->all();
-        $generadores = Generador::query()->pluck('id', 'identificador')->all();
         $baterias = Bateria::query()->pluck('id', 'identificador')->all();
 
         if ($pailon === null || $sanJulian === null || $central === null || ! isset($drones['AG-07'], $drones['AG-02'])) {
@@ -79,8 +72,6 @@ class CuadrillasDemoSeeder extends Seeder
             ayudanteId: $this->personaIdPorCi(PersonalDemoSeeder::CI_AUXILIAR_LUIS),
             ayudante2Id: $this->personaIdPorCi(PersonalDemoSeeder::CI_AUXILIAR_WILDER),
             dronId: $drones['AG-07'],
-            vehiculoId: $vehiculos['CAM-01'] ?? null,
-            generadorId: $generadores['GEN-01'] ?? null,
             bateriaIds: array_values(array_filter([$baterias['BAT-01'] ?? null, $baterias['BAT-02'] ?? null, $baterias['BAT-03'] ?? null])),
         )->equipo;
 
@@ -94,8 +85,6 @@ class CuadrillasDemoSeeder extends Seeder
             ayudanteId: $this->personaIdPorCi(PersonalDemoSeeder::CI_AUXILIAR_DANIELA),
             ayudante2Id: null,
             dronId: $drones['AG-02'],
-            vehiculoId: $vehiculos['CAM-03'] ?? null,
-            generadorId: $generadores['GEN-02'] ?? null,
             bateriaIds: array_values(array_filter([$baterias['BAT-04'] ?? null, $baterias['BAT-05'] ?? null, $baterias['BAT-06'] ?? null])),
         )->equipo;
 
@@ -108,17 +97,15 @@ class CuadrillasDemoSeeder extends Seeder
             pilotoId: $this->personaIdPorCi(PersonalDemoSeeder::CI_JEFE_CAMPO),
             ayudanteId: $this->personaIdPorCi(PersonalDemoSeeder::CI_AUXILIAR_PEDRO),
             ayudante2Id: null,
-            // Sin vehículo, generador ni baterías: los que usó ya están en
-            // taller, de baja o retirados, y solo se asigna lo activo.
+            // Sin baterías: las que usó ya están retiradas y solo se asigna lo
+            // activo.
             dronId: $drones['AG-09'],
-            vehiculoId: null,
-            generadorId: null,
             bateriaIds: [],
         )->equipo;
 
         $this->cerrarCuadrillaDeInvierno($cuadrillaInvierno);
         $this->accesorios($cuadrillaPailon, $cuadrillaSanJulian);
-        $this->completarCuadrillasDelDueno($vehiculos);
+        $this->completarCuadrillasDelDueno();
     }
 
     /**
@@ -160,16 +147,12 @@ class CuadrillasDemoSeeder extends Seeder
         }
     }
 
-    /**
-     * @param  array<string, int>  $vehiculos
-     */
-    private function completarCuadrillasDelDueno(array $vehiculos): void
+    private function completarCuadrillasDelDueno(): void
     {
         $eq1 = EquipoTrabajo::query()->where('codigo', 'EQ1')->first();
         $eq2 = EquipoTrabajo::query()->where('codigo', 'EQ2')->first();
 
         if ($eq1 !== null) {
-            $this->recursoSiFalta($eq1, RecursoTipoEquipo::Vehiculo, $vehiculos['MOT-01'] ?? null);
             $this->agregarAccesorio->ejecutar($eq1, null, 'Bidón de 20 L', 3, null);
             $this->agregarAccesorio->ejecutar($eq1, null, 'Radio handy', 2, null);
         }
@@ -177,22 +160,6 @@ class CuadrillasDemoSeeder extends Seeder
         if ($eq2 !== null) {
             $this->agregarAccesorio->ejecutar($eq2, null, 'Embudo con filtro', 1, null);
             $this->agregarAccesorio->ejecutar($eq2, null, 'Botiquín', 1, null);
-        }
-    }
-
-    private function recursoSiFalta(EquipoTrabajo $equipo, RecursoTipoEquipo $tipo, ?int $recursoId): void
-    {
-        if ($recursoId === null) {
-            return;
-        }
-
-        $yaAsignado = $equipo->recursos()
-            ->where('recurso_tipo', $tipo->value)
-            ->where('recurso_id', $recursoId)
-            ->exists();
-
-        if (! $yaAsignado) {
-            $this->asignarRecurso->ejecutar($equipo, $tipo, $recursoId, $equipo->desde->toDateString(), null);
         }
     }
 }

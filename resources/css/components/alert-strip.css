@@ -77,7 +77,7 @@
     font-weight: var(--ag-font-weight-bold);
 }
 
-/* Verde (confirmaciones — p. ej. corte de planilla cerrado sin pendientes). */
+/* Verde (confirmaciones — p. ej. cola de validación sin pendientes). */
 .ag-alert-strip--success {
     background: var(--ag-color-success-subtle);
     border-left-color: var(--ag-color-success);

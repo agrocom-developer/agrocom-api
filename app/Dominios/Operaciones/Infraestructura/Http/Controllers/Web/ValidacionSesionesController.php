@@ -66,8 +66,8 @@ final class ValidacionSesionesController
             'sesiones' => $sesiones,
             'personaId' => $personaId,
             // Tarea 131: nombre real del piloto, nunca `PerPersona` directo desde
-            // Operaciones — mismo contrato cruzado de módulos que ya usan
-            // Inventario/Seguridad para resolver `ope_sesiones.piloto_id`.
+            // Operaciones — mismo contrato cruzado de módulos que ya usa
+            // Seguridad para resolver `ope_sesiones.piloto_id`.
             'etiquetasPiloto' => $lecturaPersonal->nombresDePersonas(
                 $sesiones->pluck('piloto_id')->unique()->values()->all()
             ),

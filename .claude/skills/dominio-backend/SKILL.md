@@ -20,8 +20,9 @@ Este skill dice dónde va cada cosa; el porqué está en `docs/decisiones/0003-a
 | `Compartido` | — | plataforma: `ModeloDominio`, `RegistraAutoria`, middleware transversal |
 
 Prefijos ya reservados para módulos que aún no existen (ADR 0011): `syn_` Sync,
-`mez_` Mezclas, `fin_` Finanzas, `inv_` Inventario, `man_` Mantenimiento,
-`vw_` vistas de solo lectura. Un módulo nuevo registra su prefijo en el ADR 0011
+`mez_` Mezclas, `vw_` vistas de solo lectura. `man_` es Mantenimiento
+(solo baterías y ficha técnica del dron); `fin_` e `inv_` están retirados
+(ADR 0035). Un módulo nuevo registra su prefijo en el ADR 0011
 **antes** de su primera migración.
 
 ## Las cuatro capas
@@ -48,8 +49,8 @@ y `Personal` hoy son solo `Dominio` + `Infraestructura/Eloquent`.
   de base de datos + atributo entero plano. Ejemplo vigente: `sec_user.persona_id`
   apunta a `per_personas.id` por FK, sin `belongsTo`.
 - **Eventos de dominio vigentes entre módulos** (viven en `Operaciones/Contratos/Eventos/`,
-  el oyente en el módulo que reacciona): `SesionValidada` (Operaciones → Finanzas,
-  genera el devengo) y `AplicacionCerrada` (Operaciones → Comercial, finaliza el
+  el oyente en el módulo que reacciona): `SesionValidada` (Operaciones, anuncia que la
+  sesión quedó validada) y `AplicacionCerrada` (Operaciones → Comercial, finaliza el
   contrato al cerrarse su última aplicación).
 - **Avisos de la campana (ADR 0025, tarea 141):** `ContratoCreado` (Comercial),
   `OrdenTrabajoCreada` y `TrabajoCerrado` (Operaciones) los escucha UN solo

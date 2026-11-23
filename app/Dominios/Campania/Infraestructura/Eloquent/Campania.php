@@ -12,8 +12,7 @@ use Carbon\CarbonImmutable;
  * catálogo COMPARTIDO — la temporada ("Verano 2026-2027"), no la de un
  * cliente en particular. El vínculo con el cliente vive en
  * `com_contratos.campania_id` + `com_contratos.cliente_id`, nunca acá.
- * Es el eje transversal del que cuelgan `com_contratos.campania_id` y
- * `fin_gastos.campania_id`. Las transiciones de `estado` pasan por
+ * Es el eje transversal del que cuelga `com_contratos.campania_id`. Las transiciones de `estado` pasan por
  * `Aplicacion/MaquinaEstados/MaquinaEstadosCampania` (invariante 7 de
  * CLAUDE.md) y afectan a TODOS los contratos que la usan a la vez.
  *

@@ -3,7 +3,7 @@
     estado de las órdenes de aplicación con las haciendas que cubren y el
     equipamiento de las cuadrillas que las trabajan. Cruza `Operaciones` (estado
     y cuadrillas de la orden), `Comercial` (haciendas, por los lotes) y
-    `Mantenimiento` (estado de dron, vehículo, generador y baterías).
+    `Mantenimiento` (estado de dron y baterías).
 
     Solo las órdenes abiertas llevan equipamiento: el estado de una batería HOY
     no dice nada de una orden ya consumida o cancelada. De cada cuadrilla se

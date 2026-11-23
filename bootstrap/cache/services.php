@@ -44,12 +44,10 @@
     40 => 'App\\Dominios\\Mezclas\\Infraestructura\\MezclasServiceProvider',
     41 => 'App\\Dominios\\Personal\\Infraestructura\\PersonalServiceProvider',
     42 => 'App\\Dominios\\Distribucion\\Infraestructura\\DistribucionServiceProvider',
-    43 => 'App\\Dominios\\Finanzas\\Infraestructura\\FinanzasServiceProvider',
-    44 => 'App\\Dominios\\Mantenimiento\\Infraestructura\\MantenimientoServiceProvider',
-    45 => 'App\\Dominios\\Inventario\\Infraestructura\\InventarioServiceProvider',
-    46 => 'App\\Dominios\\Portal\\Infraestructura\\PortalServiceProvider',
-    47 => 'App\\Dominios\\Campania\\Infraestructura\\CampaniaServiceProvider',
-    48 => 'App\\Dominios\\Notificaciones\\Infraestructura\\NotificacionesServiceProvider',
+    43 => 'App\\Dominios\\Mantenimiento\\Infraestructura\\MantenimientoServiceProvider',
+    44 => 'App\\Dominios\\Portal\\Infraestructura\\PortalServiceProvider',
+    45 => 'App\\Dominios\\Campania\\Infraestructura\\CampaniaServiceProvider',
+    46 => 'App\\Dominios\\Notificaciones\\Infraestructura\\NotificacionesServiceProvider',
   ),
   'eager' => 
   array (
@@ -81,12 +79,10 @@
     25 => 'App\\Dominios\\Mezclas\\Infraestructura\\MezclasServiceProvider',
     26 => 'App\\Dominios\\Personal\\Infraestructura\\PersonalServiceProvider',
     27 => 'App\\Dominios\\Distribucion\\Infraestructura\\DistribucionServiceProvider',
-    28 => 'App\\Dominios\\Finanzas\\Infraestructura\\FinanzasServiceProvider',
-    29 => 'App\\Dominios\\Mantenimiento\\Infraestructura\\MantenimientoServiceProvider',
-    30 => 'App\\Dominios\\Inventario\\Infraestructura\\InventarioServiceProvider',
-    31 => 'App\\Dominios\\Portal\\Infraestructura\\PortalServiceProvider',
-    32 => 'App\\Dominios\\Campania\\Infraestructura\\CampaniaServiceProvider',
-    33 => 'App\\Dominios\\Notificaciones\\Infraestructura\\NotificacionesServiceProvider',
+    28 => 'App\\Dominios\\Mantenimiento\\Infraestructura\\MantenimientoServiceProvider',
+    29 => 'App\\Dominios\\Portal\\Infraestructura\\PortalServiceProvider',
+    30 => 'App\\Dominios\\Campania\\Infraestructura\\CampaniaServiceProvider',
+    31 => 'App\\Dominios\\Notificaciones\\Infraestructura\\NotificacionesServiceProvider',
   ),
   'deferred' => 
   array (

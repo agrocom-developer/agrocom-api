@@ -161,7 +161,6 @@ return [
         'campo_orden_aplicacion' => 'Orden de aplicación',
         'campo_orden_trabajo' => 'Orden de trabajo',
         'campo_horario' => 'Horario',
-        'campo_pago' => 'Condición de pago',
         'col_dron' => 'Dron',
         'col_motivo_cierre' => 'Motivo de cierre',
         'col_motivo_rechazo' => 'Motivo del rechazo',
@@ -307,7 +306,7 @@ return [
         'rechazar' => 'Rechazar',
         'estado_cambio_de_a' => 'Cambio de estado: de :desde a :hacia',
         'confirmar_validar_titulo' => 'Validar sesión',
-        'confirmar_validar' => '¿Confirmas la sesión #:id? Al validarla se registra el devengo del piloto y ya no admite cambios.',
+        'confirmar_validar' => '¿Confirmas la sesión #:id? Al validarla ya no admite cambios.',
         'confirmar_rechazar_titulo' => 'Rechazar sesión',
         'confirmar_rechazar' => 'La sesión #:id vuelve al piloto con el motivo que indiques. Es obligatorio.',
         'motivo_label' => 'Motivo del rechazo',
@@ -480,12 +479,6 @@ return [
         'aside_ficha_vacio_detalle' => 'Registra la ficha del dron con el identificador :identificador para que aparezca aquí.',
         'aside_ficha_accion_ver' => 'Ver ficha',
         'aside_ficha_accion_crear' => 'Crear ficha',
-        'aside_ordenes_titulo' => 'Órdenes de mantenimiento',
-        'aside_ordenes_abiertas' => 'Abiertas',
-        'aside_ordenes_total' => 'En total',
-        'aside_ordenes_vacio_titulo' => 'Sin órdenes de mantenimiento',
-        'aside_ordenes_vacio_detalle' => 'Todavía no se abrió ninguna orden de mantenimiento para este dron.',
-        'aside_ordenes_accion_abrir' => 'Abrir orden',
         'aside_cuadrillas_titulo' => 'Cuadrillas',
         'aside_cuadrillas_vigentes' => 'Vigentes',
         'aside_cuadrillas_historial' => 'En el historial',
@@ -506,30 +499,6 @@ return [
     // parámetros compartidos (clima/vuelo, Ph, calda). El detalle de cada
     // trabajo puntual (equipo×lote) sigue en `operaciones.trabajos.*`.
     'ordenes_trabajo' => [
-        // Condición de pago por equipo (ADR 0023): tarifa del catálogo o
-        // negociación para este trabajo puntual.
-        'pago_titulo' => 'Pago del equipo',
-        'campo_tarifa' => 'Tarifa',
-        'campo_tarifa_placeholder' => 'Selecciona una tarifa',
-        'campo_tarifa_opcion' => ':nombre · :modalidad · piloto Bs :piloto · ayudante Bs :auxiliar',
-        'campo_tarifa_sin_catalogo' => 'No hay tarifas cargadas en Financiero → Tarifas: negocia la condición de pago de este equipo.',
-        'campo_pago_negociado' => 'Negociar otra condición para este trabajo',
-        'campo_pago_negociado_ayuda' => 'Cuando la cuadrilla no acepta la tarifa (terreno difícil, voleo…). Lo negociado vale solo para esta orden.',
-        'campo_pago_modalidad' => 'Modalidad',
-        'campo_pago_modalidad_placeholder' => 'Selecciona la modalidad',
-        'campo_pago_monto_piloto' => 'Monto para el piloto',
-        'campo_pago_monto_auxiliar' => 'Monto para el ayudante',
-        'campo_pago_motivo' => 'Motivo de la negociación',
-        'campo_pago_motivo_placeholder' => 'Por qué se pactó otra condición',
-        'pago_resumen' => ':modalidad · piloto Bs :piloto · ayudante Bs :auxiliar',
-        'pago_negociado' => 'Negociado',
-        'pago_negociado_motivo' => 'Motivo: :motivo',
-        'pago_sin_condicion' => 'Sin condición propia: se paga con la tarifa predeterminada vigente al validar.',
-        'error_tarifa_requerida' => 'Elige una tarifa o negocia la condición de pago del equipo.',
-        'error_tarifa_no_disponible' => 'La tarifa elegida ya no está disponible.',
-        'error_pago_modalidad_requerida' => 'Elige la modalidad del pago negociado.',
-        'error_pago_monto_requerido' => 'Ingresa el monto negociado.',
-        'error_pago_motivo_requerido' => 'Explica el motivo de la negociación.',
         'titulo' => 'Orden de Trabajo',
         'subtitulo' => 'Las indicaciones de cada aplicación —calda, clima y vuelo— y los trabajos de los equipos que la ejecutan.',
         'vacio_titulo' => 'Todavía no se creó ninguna Orden de Trabajo',
@@ -659,15 +628,13 @@ return [
         // Edición de la cabecera (tarea 127; `panel.trabajos.editar`).
         'editar' => 'Editar',
         'titulo_editar' => 'Editar Orden de Trabajo #:id',
-        'editar_subtitulo' => 'Indicaciones compartidas y condición de pago por equipo.',
+        'editar_subtitulo' => 'Indicaciones compartidas de la tanda: calda, límites climáticos y parámetros de vuelo.',
         'estado_form_edicion' => 'Los cambios se guardan al confirmar.',
         'actualizada' => 'Orden de Trabajo actualizada correctamente.',
         'campo_motivo_correccion' => 'Motivo de la corrección',
         'campo_motivo_correccion_placeholder' => 'Describe qué corriges y por qué…',
         'error_motivo_correccion_requerido' => 'Escribe el motivo de la corrección.',
         'correccion_aviso' => 'Esta tanda ya tiene algún trabajo cerrado. Indica el motivo: queda en la bitácora junto con lo que cambia.',
-        'reparto_no_editable_aviso' => 'El reparto (equipos, lotes, hectáreas, turno) no se edita acá: cada trabajo se corrige desde la ficha de la Orden de Trabajo.',
-        'condicion_bloqueada_ayuda' => 'Este equipo ya tiene algún trabajo cerrado o validado: su condición de pago no se puede tocar.',
         'resumen_trabajos_titulo' => 'Trabajos de esta tanda',
         'resumen_orden_titulo' => 'Orden de aplicación',
         'resumen_cuadrillas_titulo' => 'Cuadrillas',
@@ -1187,9 +1154,6 @@ return [
         'campo_alojamiento' => 'Tipo de alojamiento',
         'campo_alojamiento_placeholder' => 'Elige dónde se alojó…',
         'campo_alojamiento_ayuda' => 'Dónde duerme la cuadrilla esos días: explica el viático de la estadía.',
-        'campo_vehiculo' => 'Vehículo',
-        'campo_vehiculo_placeholder' => 'Elige un vehículo…',
-        'campo_vehiculo_ayuda' => 'Camioneta con la que llegó.',
         'campo_observacion' => 'Observación',
         'campo_observacion_placeholder' => 'Nombre del pueblo u hospedaje, comidas incluidas…',
         'campo_observacion_ayuda' => 'Detalles sobre dónde se alojó la cuadrilla.',
@@ -1222,7 +1186,6 @@ return [
         'error_entrada_requerida' => 'Indica la fecha y hora de entrada.',
         'error_alojamiento_requerido' => 'Elige dónde se alojó la cuadrilla.',
         'error_alojamiento_invalido' => 'El tipo de alojamiento elegido no existe.',
-        'error_vehiculo_invalido' => 'El vehículo elegido no existe.',
         'error_salida_requerida' => 'Indica la fecha y hora de salida.',
         'eliminada' => 'Estadía eliminada correctamente.',
 
@@ -1235,7 +1198,7 @@ return [
         ],
         'estado_ayuda' => [
             'en_curso' => 'La estadía está en curso: la cuadrilla sigue en la propiedad. Puedes corregir sus datos, y cuando se retire, regístrale la salida para pasarla a «:paso».',
-            'finalizada' => 'La estadía está finalizada: sus días ya cuentan para justificar gastos, así que no admite más cambios. Si hay un error, dala de baja y regístrala de nuevo.',
+            'finalizada' => 'La estadía está finalizada: ya es historia, así que no admite más cambios. Si hay un error, dala de baja y regístrala de nuevo.',
         ],
 
         // Dónde se aloja la cuadrilla (`Dominio\TipoAlojamiento`).
@@ -1272,7 +1235,6 @@ return [
 
     // Mensajes de error.
     'errores' => [
-        'tarifa_no_disponible' => 'La tarifa #:tarifa_id ya no está disponible: elige otra o negocia la condición de pago.',
         'dron_duplicado' => "Ya existe un dron activo con el identificador ':identificador'.",
         'equipo_trabajo_no_vigente' => 'La cuadrilla #:id no está vigente hoy.',
         'estadia_abierta_existente' => 'La cuadrilla #:id ya tiene una estadía en curso. Finalízala antes de registrar una nueva.',

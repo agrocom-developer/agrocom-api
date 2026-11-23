@@ -24,10 +24,9 @@
     Datos esperados (ver TrabajosController::show()): la cáscara de
     CascaraPanel, más:
     - $trabajo (Trabajo, con `sesiones.rechazo`, `sesiones.dron`, `acta`,
-      `reporteTecnico` y `ordenTrabajo.equipos` precargadas).
+      `reporteTecnico` precargadas).
     - $loteLabel (string), $cuadrillaLabel (?string, null si no tiene equipo
-      asignado), $pagoEquipo (array{modalidad, monto_piloto, monto_auxiliar,
-      negociado, motivo}|null — misma forma que arma la ficha de la OT).
+      asignado).
     - $hectareasAplicadas (string, ya formateada), $porcentajeCobertura (int,
       0-100), $sesionesValidadas / $sesionesTotal (int).
     - $puedeEditar / $puedeEliminar (bool, ya cruzados con "no validado"),
@@ -196,27 +195,6 @@
                         <p class="ag-detalle__campo-label">{{ __('operaciones.trabajos.campo_horario') }}</p>
                         <p class="ag-detalle__campo-valor">{{ $horarioTexto ?? __('operaciones.ordenes_trabajo.sin_dato') }}</p>
                     </div>
-
-                    @if ($pagoEquipo !== null)
-                        <div class="ag-form-section__field--full ag-detalle__campo">
-                            <p class="ag-detalle__campo-label">{{ __('operaciones.trabajos.campo_pago') }}</p>
-                            <p class="ag-detalle__campo-valor">
-                                {{ __('operaciones.ordenes_trabajo.pago_resumen', [
-                                    'modalidad' => $pagoEquipo['modalidad'],
-                                    'piloto' => number_format((float) $pagoEquipo['monto_piloto'], 2, ',', '.'),
-                                    'auxiliar' => number_format((float) $pagoEquipo['monto_auxiliar'], 2, ',', '.'),
-                                ]) }}
-                                @if ($pagoEquipo['negociado'])
-                                    · {{ __('operaciones.ordenes_trabajo.pago_negociado') }}
-                                @endif
-                            </p>
-                        </div>
-                    @elseif ($trabajo->ordenTrabajo !== null)
-                        <div class="ag-form-section__field--full ag-detalle__campo">
-                            <p class="ag-detalle__campo-label">{{ __('operaciones.trabajos.campo_pago') }}</p>
-                            <p class="ag-detalle__campo-valor">{{ __('operaciones.ordenes_trabajo.pago_sin_condicion') }}</p>
-                        </div>
-                    @endif
                 </x-molecules.form-section>
 
                 <x-molecules.form-section accent="info" :title="__('operaciones.trabajos.detalle_sesiones_titulo')" :count="(string) $trabajo->sesiones->count()">

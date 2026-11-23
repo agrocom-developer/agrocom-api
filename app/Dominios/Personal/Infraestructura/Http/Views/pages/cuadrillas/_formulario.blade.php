@@ -15,8 +15,8 @@
     rutas y casos de uso de accesorios quedan, sin pantalla que los use.)
 
     - ALTA: la cuadrilla se arma de una sola vez (`ArmarCuadrilla`). Piloto,
-      ayudante y dron son obligatorios; segundo ayudante, camioneta, generador
-      y baterías, opcionales. Cada select de persona o de recurso es un
+      ayudante y dron son obligatorios; segundo ayudante y baterías,
+      opcionales. Cada select de persona o de recurso es un
       input-group: lleva pegado el acceso rápido «Nuevo» (props `action*` de
       `atoms/select`) para dar de alta lo que falte sin perder lo ya escrito
       (`shared/borrador-formulario.js` guarda el borrador). Las baterías son
@@ -36,8 +36,8 @@
     - $equipo (EquipoTrabajo|null): null en alta; el modelo, en edición.
     - $basesDisponibles (Collection<int, string>).
     - Alta: $pilotosDisponibles, $ayudantesDisponibles, $dronesDisponibles,
-      $vehiculosDisponibles, $generadoresDisponibles, $bateriasDisponibles,
-      $puedeCrearPersona/Dron/Vehiculo/Generador, $volverA.
+      $bateriasDisponibles,
+      $puedeCrearPersona/Dron, $volverA.
     - Edición: $pasosEstado, $ayudaEstado, paginadores $integrantes y
       $equipamiento, contadores, $tonoPorEstado y
       $resumenRelacionado (aside, §6.3.1).
@@ -67,7 +67,7 @@
     $puedeCrearBase = $puedeCrearBase ?? false;
     $puedeCrearPersona = $puedeCrearPersona ?? false;
 
-    $iconoPorTipo = ['dron' => 'flight', 'bateria' => 'battery_charging_full', 'generador' => 'bolt', 'vehiculo' => 'local_shipping'];
+    $iconoPorTipo = ['dron' => 'flight', 'bateria' => 'battery_charging_full'];
 @endphp
 
 <form method="POST" action="{{ $accion }}" class="ag-cuadrillas-form" novalidate data-ag-cuadrillas-form
@@ -224,12 +224,10 @@
 
             <x-molecules.form-section
                 :title="__('personal.equipos_trabajo.seccion_equipamiento')"
-                :count="__('personal.equipos_trabajo.campos_contador', ['cantidad' => 4])"
+                :count="__('personal.equipos_trabajo.campos_contador', ['cantidad' => 2])"
             >
                 @foreach ([
                     ['dron_id', 'dron', $dronesDisponibles, true, $puedeCrearDron ?? false, 'panel.drones.create'],
-                    ['vehiculo_id', 'vehiculo', $vehiculosDisponibles, false, $puedeCrearVehiculo ?? false, 'panel.vehiculos.create'],
-                    ['generador_id', 'generador', $generadoresDisponibles, false, $puedeCrearGenerador ?? false, 'panel.generadores.create'],
                 ] as [$campo, $tipo, $opciones, $obligatorio, $puedeCrearRecurso, $rutaCrear])
                     <x-atoms.select
                         :name="$campo"
@@ -330,7 +328,7 @@
                 </div>
             </x-molecules.form-section>
 
-            {{-- EQUIPAMIENTO: dron, baterías, generador y camioneta, con su vigencia. --}}
+            {{-- EQUIPAMIENTO: dron y baterías, con su vigencia. --}}
             <x-molecules.form-section
                 :title="__('personal.equipos_trabajo.seccion_equipamiento')"
                 :count="trans_choice('personal.equipos_trabajo.contador_baterias', $contadorBateriasVigentes, ['cantidad' => $contadorBateriasVigentes])"

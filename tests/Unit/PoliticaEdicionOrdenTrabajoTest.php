@@ -40,15 +40,3 @@ test('exigeMotivo: algún trabajo ya no abierto pide motivo; todos abiertos no',
         EstadoTableroTrabajo::Abierto,
     ]))->toBeFalse();
 });
-
-test('admiteCondicion: solo si TODOS los trabajos del equipo siguen abiertos', function () {
-    expect(PoliticaEdicionOrdenTrabajo::admiteCondicion([
-        EstadoTableroTrabajo::Abierto,
-        EstadoTableroTrabajo::Abierto,
-    ]))->toBeTrue();
-
-    expect(PoliticaEdicionOrdenTrabajo::admiteCondicion([
-        EstadoTableroTrabajo::Abierto,
-        EstadoTableroTrabajo::Cerrado,
-    ]))->toBeFalse();
-});

@@ -8,8 +8,8 @@ use Illuminate\Support\Carbon;
 
 /**
  * Caso de uso: listado de pausas, filtrable por período (HU-44, tarea 58).
- * Solo lectura — mismo patrón de paginación y de período (`YYYY-MM`, formato
- * inválido se ignora sin filtrar) que `Finanzas/Aplicacion/ListarGastos`.
+ * Solo lectura — paginación y período (`YYYY-MM`, formato inválido se ignora
+ * sin filtrar).
  */
 final class ListarPausas
 {

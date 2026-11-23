@@ -2,7 +2,7 @@
     Partial: «estado actual → estado destino» del acceso de una cuenta, con los
     mismos badges (y colores) del listado. Va dentro del modal de confirmación
     de bloquear/desbloquear para que se vea, antes de confirmar, a cuál estado
-    se pasa. Mismo criterio que `finanzas::pages.rendiciones._estado-transicion`.
+    se pasa.
 
     Espera:
     - $desde, $hacia (string): `activo` o `bloqueado`.

@@ -1,8 +1,7 @@
 {{--
     Partial: «estado actual → estado destino» de una versión del APK, con los
     mismos badges (y colores) del listado. Va dentro del modal de confirmación
-    para que se vea, antes de confirmar, a cuál estado se pasa. Mismo criterio
-    que `finanzas::pages.rendiciones._estado-transicion`.
+    para que se vea, antes de confirmar, a cuál estado se pasa.
 
     Espera:
     - $desde, $hacia (string): valores de `EstadoVersionApk` (`pendiente`,

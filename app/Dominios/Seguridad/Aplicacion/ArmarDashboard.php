@@ -10,9 +10,6 @@ use App\Dominios\Comercial\Contratos\LecturaPropiedades;
 use App\Dominios\Comercial\Contratos\LotePanel;
 use App\Dominios\Distribucion\Contratos\LecturaVersionesApk;
 use App\Dominios\Distribucion\Contratos\VersionApkPanel;
-use App\Dominios\Finanzas\Contratos\LecturaPanelFinanzas;
-use App\Dominios\Inventario\Contratos\LecturaPanelInventario;
-use App\Dominios\Inventario\Contratos\StockPanel;
 use App\Dominios\Operaciones\Contratos\AlertaPanel;
 use App\Dominios\Operaciones\Contratos\EquipoPersonaPanel;
 use App\Dominios\Operaciones\Contratos\EvidenciaPanel;
@@ -62,15 +59,9 @@ final class ArmarDashboard
 
     private const EVIDENCIAS_GALERIA = 8;
 
-    private const STOCK_CRITICO = 5;
-
     private const CONTRATOS_AVANCE = 5;
 
     private const ALERTAS = 5;
-
-    private const DEVENGOS = 10;
-
-    private const ANTICIPOS = 5;
 
     private const ESTADO_CUENTAS = 5;
 
@@ -91,8 +82,6 @@ final class ArmarDashboard
     public function __construct(
         private readonly LecturaPanelOperaciones $operaciones,
         private readonly LecturaPanelComercial $comercial,
-        private readonly LecturaPanelInventario $inventario,
-        private readonly LecturaPanelFinanzas $finanzas,
         private readonly LecturaCampania $campania,
         private readonly CatalogoNombresPanel $nombres,
         private readonly ArmarMapaOperativo $mapa,
@@ -164,12 +153,10 @@ final class ArmarDashboard
             SeccionDashboard::Multimedia => $this->multimedia(),
             SeccionDashboard::Pausas => $this->pausas(),
             SeccionDashboard::DiasEnHacienda => $this->diasEnHacienda(),
-            SeccionDashboard::Stock => $this->stock(),
             SeccionDashboard::AvanceClientes => $this->avanceClientes(),
             SeccionDashboard::Alertas => $this->alertas(),
             SeccionDashboard::MisSesiones => $this->misSesiones($personaId),
             SeccionDashboard::MisEquipos => $this->misEquipos($personaId),
-            SeccionDashboard::MiLiquidacion => $this->miLiquidacion($personaId),
             SeccionDashboard::EstadoCuentas => $this->estadoCuentas(),
             SeccionDashboard::TrabajosPorEquipo => $this->trabajosPorEquipo(),
             SeccionDashboard::ProgresoCampania => $this->progresoCampania(),
@@ -247,11 +234,6 @@ final class ArmarDashboard
             ],
             'piloto', 'auxiliar' => [
                 [
-                    'id' => 'mis-devengos',
-                    'label' => __('seguridad.dashboard.tab_mis_devengos'),
-                    'claves' => [SeccionDashboard::MiLiquidacion->value],
-                ],
-                [
                     'id' => 'mis-trabajos',
                     'label' => __('seguridad.dashboard.tab_mis_trabajos'),
                     'claves' => [SeccionDashboard::MisSesiones->value, SeccionDashboard::MisEquipos->value],
@@ -265,7 +247,7 @@ final class ArmarDashboard
                 [
                     'id' => 'recursos',
                     'label' => __('seguridad.dashboard.tab_recursos'),
-                    'claves' => [SeccionDashboard::RecursosEnUso->value, SeccionDashboard::Stock->value],
+                    'claves' => [SeccionDashboard::RecursosEnUso->value],
                 ],
                 [
                     'id' => 'ordenes-cuadrillas',
@@ -281,8 +263,8 @@ final class ArmarDashboard
             // El administrador de plataforma es un rol técnico, no del negocio
             // del cliente (tarea 139): solo ve lo que administra el sistema en
             // sí — cuentas y accesos, bitácora y configuración. Tiene todos los
-            // permisos del catálogo, así que lo operativo y lo financiero quedan
-            // fuera por lo que esta tabla NO nombra, no por falta de permiso.
+            // permisos del catálogo, así que lo operativo queda fuera por lo que
+            // esta tabla NO nombra, no por falta de permiso.
             'admin_plataforma' => [
                 [
                     'id' => 'usuarios-accesos',
@@ -309,8 +291,7 @@ final class ArmarDashboard
                         SeccionDashboard::Alertas->value, SeccionDashboard::DistribucionSesiones->value,
                         SeccionDashboard::HectareasPorDia->value, SeccionDashboard::ColaValidacion->value,
                         SeccionDashboard::MisSesiones->value, SeccionDashboard::MisEquipos->value,
-                        SeccionDashboard::MiLiquidacion->value, SeccionDashboard::Pausas->value,
-                        SeccionDashboard::Stock->value, SeccionDashboard::AvanceClientes->value,
+                        SeccionDashboard::Pausas->value, SeccionDashboard::AvanceClientes->value,
                         SeccionDashboard::DiasEnHacienda->value,
                     ],
                 ],
@@ -324,7 +305,7 @@ final class ArmarDashboard
     /**
      * Si el tablero del rol es técnico y no del negocio (tarea 139): solo el
      * administrador de plataforma. Su encabezado no habla de operación de hoy
-     * ni de corte de planilla — copy pensado para los roles que sí la operan.
+     * ni del día — copy pensado para los roles que sí la operan.
      */
     public function esTecnico(string $rolClave): bool
     {
@@ -477,32 +458,6 @@ final class ArmarDashboard
     }
 
     /**
-     * Liquidación del mes: lo devengado, los anticipos ya cobrados a cuenta y
-     * el saldo entre ambos.
-     *
-     * Las dos mitades van juntas a propósito: el devengado solo no es lo que
-     * la persona va a recibir, y mostrarlo suelto invita a un reclamo que el
-     * saldo responde de antemano.
-     *
-     * @return array<string, mixed>|null
-     */
-    private function miLiquidacion(?int $personaId): ?array
-    {
-        if ($personaId === null) {
-            return null;
-        }
-
-        $liquidacion = $this->finanzas->devengosDelMes($personaId, self::DEVENGOS);
-        $anticipos = $this->finanzas->anticiposDelMes($personaId, self::ANTICIPOS);
-
-        if ($liquidacion['devengos'] === [] && $anticipos['anticipos'] === []) {
-            return null;
-        }
-
-        return [...$liquidacion, 'anticipos' => $anticipos];
-    }
-
-    /**
      * Enriquecimiento común de una lista de sesiones: le pega el lote (de
      * Comercial) y el piloto (de Personal) a lo que Operaciones devolvió con
      * ids pelados. Precarga los nombres antes del bucle — de a uno serían
@@ -647,29 +602,6 @@ final class ArmarDashboard
         ];
     }
 
-    /** @return list<array<string, mixed>>|null */
-    private function stock(): ?array
-    {
-        $filas = $this->inventario->stockBajoMinimo(self::STOCK_CRITICO);
-
-        if ($filas === []) {
-            return null;
-        }
-
-        $this->nombres->precargarBases(array_values(array_filter(
-            array_map(fn (StockPanel $fila) => $fila->baseId, $filas),
-            fn (?int $id) => $id !== null,
-        )));
-
-        return array_map(fn (StockPanel $fila) => [
-            'codigo' => $fila->codigo,
-            'descripcion' => $fila->descripcion,
-            'cantidad' => $fila->cantidad,
-            'stockMinimo' => $fila->stockMinimo,
-            'base' => $this->nombres->base($fila->baseId),
-        ], $filas);
-    }
-
     /** @return list<AvanceClientePanel>|null */
     private function avanceClientes(): ?array
     {
@@ -777,7 +709,7 @@ final class ArmarDashboard
     /**
      * Qué recursos están ocupados AHORA (tab del jefe de campo, tarea 138): las
      * cuadrillas con algún trabajo abierto, con quiénes salen y con qué equipo
-     * —dron, vehículo, generador, baterías— y en qué estado está cada pieza.
+     * —dron y baterías— y en qué estado está cada pieza.
      * La carga la da `Operaciones`, las personas `Personal` y el equipamiento
      * {@see CatalogoEquipamientoPanel}. Sin ningún trabajo abierto se omite.
      *
@@ -871,7 +803,7 @@ final class ArmarDashboard
      * (tab del jefe de campo, tarea 138). El estado y las cuadrillas de cada
      * orden los da `Operaciones`; las haciendas y el cliente salen de los
      * lotes que la orden copió del contrato (`Comercial`); y el estado de
-     * dron, vehículo, generador y baterías de cada cuadrilla, de `Mantenimiento`
+     * dron y baterías de cada cuadrilla, de `Mantenimiento`
      * vía {@see CatalogoEquipamientoPanel}.
      *
      * Solo las órdenes abiertas llevan equipamiento: el estado de una batería

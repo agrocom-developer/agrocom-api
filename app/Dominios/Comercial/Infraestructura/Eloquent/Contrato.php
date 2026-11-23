@@ -27,8 +27,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * `tests/Unit/BitacoraAuditoriaTest.php`), pero es "dinero" y "estados
  * operativos" — las otras dos categorías que el ADR 0007 nombra — y esta es
  * la tarea que instrumenta su máquina de estados, así que se adopta igual
- * (mismo criterio que {@see Cliente}
- * en Finanzas/`DevengoPersonal`).
+ * (mismo criterio que {@see Cliente}).
  *
  * `campania_id` (ADR 0015 punto 1): obligatorio de negocio, pero el tipo PHP
  * queda `int|null` porque el `NOT NULL` de la migración solo se aplica en

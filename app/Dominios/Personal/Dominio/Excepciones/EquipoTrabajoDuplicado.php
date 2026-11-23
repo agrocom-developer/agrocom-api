@@ -12,7 +12,7 @@ use RuntimeException;
  * bloquea el re-alta con el mismo código). El caso de uso que persiste
  * `EquipoTrabajo` captura la `QueryException` y la relanza como esta
  * excepción — nunca deja propagarse el 500 crudo del motor de base de datos.
- * Mismo criterio que `GeneradorDuplicado` en Mantenimiento.
+ * Mismo criterio que `BateriaDuplicada` en Mantenimiento.
  */
 final class EquipoTrabajoDuplicado extends RuntimeException
 {

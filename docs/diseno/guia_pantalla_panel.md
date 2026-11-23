@@ -166,14 +166,14 @@ Hasta el 15/9/2026 eran dos piezas (`alert-strip` para "el filtro no trae nada",
 @if ($hayFiltrosActivos)
     <x-molecules.empty-state
         icon="search_off"
-        :title="__('finanzas.combustible.filtro_vacio_titulo')"
-        :detail="__('finanzas.combustible.filtro_vacio_detalle')"
+        :title="__('mantenimiento.baterias.filtro_vacio_titulo')"
+        :detail="__('mantenimiento.baterias.filtro_vacio_detalle')"
     />
 @else
     <x-molecules.empty-state
-        icon="local_gas_station"
-        :title="__('finanzas.combustible.vacio_titulo')"
-        :detail="__('finanzas.combustible.vacio_detalle')"
+        icon="battery_charging_full"
+        :title="__('mantenimiento.baterias.vacio_titulo')"
+        :detail="__('mantenimiento.baterias.vacio_detalle')"
     />
 @endif
 ```
@@ -470,7 +470,7 @@ Reglas fijas:
 1. **Nunca se inventa una acción que no existe.** Las del `actions` slot son exactamente las que ya ofrece el listado de esa entidad (Editar/Activar/Eliminar, con el mismo `confirm-modal` — nunca `confirm()` nativo). Un mockup de referencia puede traer botones como "Duplicar"/"Anular" que no son funciones reales del sistema — no se agregan solo porque estaban dibujados.
 2. **Nunca se muestra un valor calculado que el sistema no sabe calcular todavía.** Si una especificación menciona una herencia/default (p. ej. "hereda del contrato o del valor por defecto del sistema") pero no hay código que la resuelva, el campo nulo se muestra como "Sin definir" — no se inventa el número.
 3. **Una "Actividad"/timeline solo lista eventos reconstruibles desde columnas reales** (`created_at`/`created_by` de la entidad y de sus hijas) — nunca una bitácora antes/después que todavía no existe (invariante 9 de CLAUDE.md, pendiente).
-4. **Mismo permiso que `index()`/`edit()`**, nunca uno de grano más fino solo para el detalle (5 de 6 pantallas `.show` ya homogeneizadas del panel — Trabajos, Devengos, Planillas, Rendiciones, EquiposTrabajo — confirman este criterio).
+4. **Mismo permiso que `index()`/`edit()`**, nunca uno de grano más fino solo para el detalle (las pantallas `.show` ya homogeneizadas del panel — Trabajos, EquiposTrabajo — confirman este criterio).
 5. **"Ver" es la primera row-action del listado**, antes de "Editar" — a diferencia de "Editar" (solo para el estado editable), "Ver" se ofrece siempre.
 
 #### Estado del catálogo para este arquetipo

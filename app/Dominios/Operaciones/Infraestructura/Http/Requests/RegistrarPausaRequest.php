@@ -10,7 +10,7 @@ use Illuminate\Validation\Rules\Enum;
 /**
  * `POST /panel/pausas` (HU-44, tarea 58). La autorización (permiso
  * `operaciones.pausa.registrar`) se verifica en el controlador, contra el
- * rol activo — no acá, mismo criterio que `CrearGastoRequest`.
+ * rol activo — no acá.
  *
  * `causa` valida contra el catálogo cerrado {@see CausaPausa} — así un
  * intento con una causa fuera de catálogo recibe un 422 estándar de Laravel,

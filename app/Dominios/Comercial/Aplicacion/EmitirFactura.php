@@ -22,8 +22,8 @@ use Illuminate\Support\Facades\DB;
  *
  * Dos guardas de negocio, ambas en {@see ActaNoFacturable}: el acta debe
  * existir y estar `firmada`; no puede existir ya una factura viva para esa
- * `acta_id`. A diferencia de `GenerarActaTrabajo`/`GenerarPlanilla` (que son
- * idempotentes y devuelven la fila existente ante un reintento), acá un
+ * `acta_id`. A diferencia de `GenerarActaTrabajo` (que es
+ * idempotente y devuelven la fila existente ante un reintento), acá un
  * segundo pedido se RECHAZA explícito: el criterio de aceptación pide "no
  * permite facturar dos veces el mismo trabajo", no "un segundo pedido no
  * hace nada".
@@ -32,7 +32,7 @@ use Illuminate\Support\Facades\DB;
  * `lockForUpdate()`) resuelve el caso común; el `catch (QueryException)` de
  * abajo es la defensa real contra la carrera de dos pedidos concurrentes
  * sobre la MISMA acta, que solo puede resolverse en el `UNIQUE` de
- * `acta_id` — mismo patrón de doble defensa que `GenerarPlanilla`.
+ * `acta_id` — doble defensa.
  *
  * `monto` se calcula con `Brick\Math\BigDecimal` (invariante 6 de
  * CLAUDE.md, nunca `float`) y se persiste congelado junto con
