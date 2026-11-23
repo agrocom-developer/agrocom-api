@@ -6,7 +6,7 @@ Este repo es el backend (Laravel + PostgreSQL) y el panel web (AdminLTE + Blade/
 
 1. **Idempotencia por UUID.** Todo registro que nace en la app de campo trae su `uuid_cliente` generado en el dispositivo. El servidor lo hace único (`UNIQUE (uuid_cliente)`) y responde `duplicado` ante un reintento — nunca duplica hectáreas.
 2. **El servidor nunca sobrescribe un registro validado.** Las correcciones son registros nuevos con `anula_a_id`, motivo y autor — nunca un `UPDATE` sobre lo validado.
-3. **El devengo se genera solo al validar una sesión, nunca al cerrarla.** Es un evento de dominio (`SesionValidada`), idempotente por `UNIQUE (sesion_id, persona_id)`.
+3. **Una sesión se valida una sola vez, nunca al cerrarla.** Validar es una transición de estado que anuncia el evento de dominio `SesionValidada`; validar de nuevo una sesión ya validada no hace nada y no repite el aviso.
 4. **Validador ≠ piloto de esa sesión, a nivel de persona — no de rol.** Un jefe de campo que también es piloto no valida sus propias sesiones (ver `docs/decisiones/0004-modelo-seguridad-sec-multirol.md`).
 5. **El portal del cliente siempre consulta desde el `contrato` del usuario autenticado**, nunca desde la tabla global con un `where` agregado después. La garantía es de código (scoping en el repositorio/query), no de un test de endpoint — ver §Testing.
 6. **Dinero y hectáreas en `DECIMAL`, jamás `float`.** Todo monto derivado debe poder recalcularse desde los registros de origen y cuadrar exacto.
@@ -33,6 +33,6 @@ Lo que sí hay que escribir y mantener es una suite de **no funcionales de segur
 
 ## Qué no delegar sin revisión línea por línea
 
-El motor de sync, el servicio de estados, los listeners que generan dinero (devengos, planilla), y el scoping del portal del cliente. El resto (CRUDs, pantallas no críticas, recursos de listado, plantillas PDF) se revisa por diff en el PR y por prueba manual del usuario.
+El motor de sync, el servicio de estados y el scoping del portal del cliente. El resto (CRUDs, pantallas no críticas, recursos de listado, plantillas PDF) se revisa por diff en el PR y por prueba manual del usuario.
 
 **Esa revisión es posterior a la integración, no previa.** Se hace sobre `develop`, con el cambio ya mergeado, y queda anotada en `runs/revision-pendiente.txt`. Retener el PR en borrador hasta que una persona lo mirara fue peor que el problema que resolvía: el PR #46 (motor de sync) quedó esperando, y como toda rama nueva sale de `develop`, bloqueó doce HU de los sprints 2 a 5 hasta que el ciclo se quedó sin trabajo y se detuvo solo. Un cambio crítico sin revisar es un riesgo acotado y visible; una rama que no entra bloquea todo lo que viene detrás.

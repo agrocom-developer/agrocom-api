@@ -4,13 +4,13 @@
 
 Este sistema existe para tres cosas:
 
-1. **Que cada persona cobre exactamente lo que trabajó.** Pilotos y auxiliares ganan por hectárea validada; el registro por sesión garantiza que nadie cobre hectáreas de otro ni pierda las suyas al entregar un lote a medias.
+1. **Que cada hectárea quede registrada a nombre de quien la voló.** El registro por sesión garantiza que nadie se atribuya hectáreas de otro ni pierda las suyas al entregar un lote a medias.
 2. **Que el cliente reciba exactamente lo que se le factura.** Cada hectárea se reconstruye de punta a punta: qué se aplicó, dónde, cuándo, en qué condiciones, con qué mezcla y con qué prueba (la captura del control remoto y el acta firmada).
-3. **Que el dueño vea dónde se gana y se pierde la plata.** Gastos por rubro, costo por hectárea, repuestos, pausas explicadas — lo que hoy vive en WhatsApp, Excel y la memoria.
+3. **Que el dueño vea cómo avanza la operación.** Hectáreas por contrato, pausas explicadas, estadías y alertas — lo que hoy vive en WhatsApp, Excel y la memoria.
 
 ## Cómo trabaja Agrocom (y qué registra el sistema)
 
-El agrónomo del cliente emite la **orden de aplicación** (producto, dosis, litros por hectárea). El jefe de campo planifica el día: qué lotes, qué pareja piloto/auxiliar. En el lote, el piloto mapea la misión y vuela en tandas de 10–12 minutos, mientras el auxiliar sostiene el ritmo: cambia baterías, recarga caldo, alimenta el generador. Al cerrar cada lote, el piloto captura la pantalla del control — la evidencia que hoy ya zanja toda discusión de hectáreas. El jefe **valida** lo volado, el agrónomo **firma el acta**, y de ahí salen el reporte, la factura y la planilla de pagos.
+El agrónomo del cliente emite la **orden de aplicación** (producto, dosis, litros por hectárea). El jefe de campo planifica el día: qué lotes, qué pareja piloto/auxiliar. En el lote, el piloto mapea la misión y vuela en tandas de 10–12 minutos, mientras el auxiliar sostiene el ritmo: cambia baterías y recarga caldo. Al cerrar cada lote, el piloto captura la pantalla del control — la evidencia que hoy ya zanja toda discusión de hectáreas. El jefe **valida** lo volado, el agrónomo **firma el acta**, y de ahí salen el reporte y la factura.
 
 El flujo completo con sus excepciones reales (lluvia, caldo cortado, dron caído, demoras del cliente) está en [`docs/negocio/flujo_base_y_excepciones.md`](docs/negocio/flujo_base_y_excepciones.md).
 
@@ -19,10 +19,10 @@ El flujo completo con sus excepciones reales (lluvia, caldo cortado, dron caído
 | Quién | Dónde | Para qué |
 |---|---|---|
 | **Piloto** | App en el control remoto del dron | Ver órdenes y lotes, cerrar sesiones con evidencia, registrar pausas e incidencias — siempre con el dron en tierra |
-| **Auxiliar** | App en su celular | Mezclas, recargas, baterías, combustible del generador |
-| **Jefe de campo** | Panel web | Planificar el día, validar lo volado, rendir la caja chica |
-| **Encargado de operaciones** | Panel web | Gastos, repuestos, reportes al cliente |
-| **Dueño** | Panel web | Aprobar anticipos y planilla, ver el estado de resultados |
+| **Auxiliar** | App en su celular | Mezclas, recargas, baterías |
+| **Jefe de campo** | Panel web | Planificar el día, validar lo volado |
+| **Encargado de operaciones** | Panel web | Órdenes, validación de sesiones, reportes al cliente |
+| **Dueño** | Panel web | Contratos, facturas y avance por cliente |
 | **Cliente** (dueño del campo y su agrónomo) | Portal de solo lectura | Reportes, actas firmadas, historial de sus aplicaciones |
 
 En el lote no hay señal (la conectividad Starlink está en el campamento base), así que las apps de campo funcionan **sin internet** y sincronizan al volver a cobertura — sin duplicar jamás una hectárea.

@@ -324,8 +324,8 @@ En orden de dependencia:
    integra con ese verde. Encolado como tareas 04 y 05 en
    [cola_tareas.md](cola_tareas.md).
 
-   Las invariantes 2 y 3 (no sobrescribir un registro validado, devengo solo al
-   validar) vigilan tablas que todavía no existen; su gate se escribe en la
+   Las invariantes 2 y 3 (no sobrescribir un registro validado, sesión validada
+   una sola vez) vigilan tablas que todavía no existen; su gate se escribe en la
    misma tarea que cree ese dominio, no antes: una aduana sobre un dominio
    inexistente pasa siempre y simula una cobertura que no hay.
 
@@ -344,7 +344,7 @@ En orden de dependencia:
 ## Nota sobre el orden
 
 Los puntos 1 y 2 pagan solos aunque nunca se llegue al turno noche: son deuda
-que hay que saldar antes de tocar devengos y planilla. El 3 solo vale la pena
+que hay que saldar antes de tocar la sincronización de sesiones. El 3 solo vale la pena
 cuando el backlog tenga volumen mecánico y varias tareas independientes a la
 vez — hoy la cola es una fila de tareas cargadas de decisión, y una fila la
 corre bien un solo ciclo.
