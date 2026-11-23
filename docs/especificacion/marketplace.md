@@ -8,7 +8,7 @@ Este documento define el producto. Las decisiones que lo sostienen están en `do
 
 ## 1. Principios
 
-1. **Solicitud por solicitud.** Toda relación comercial es una solicitud de servicio. No hay contratos marco ni campañas.
+1. **Solicitud por solicitud.** Toda relación comercial es una solicitud de servicio.
 2. **Propios primero.** La asignación ofrece el trabajo primero a los pilotos y drones propios de Agrocom y solo después a terceros (ADR 0030).
 3. **Confianza verificable.** Ningún proveedor opera sin aprobación de un administrador; ningún dron vuela sin aprobación (ADR 0032).
 4. **Offline en el lote, online en el resto.** El lote no tiene señal, así que lo que ocurre durante la ejecución (sesión de vuelo, mezcla, evidencias) se captura sin conexión y se sincroniza después. Todo lo demás (pedir, ofertar, aceptar, calificar) requiere red (ADR 0028).

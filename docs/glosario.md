@@ -2,106 +2,67 @@
 
 **Agrocom SRL · Documento oficial vigente**
 
-Referencia rápida de vocabulario — de negocio y técnico — para que cualquier persona o agente de IA nuevo en el proyecto entienda un término sin tener que leer toda la especificación. Cuando un término tiene definición formal en otro documento, se referencia en vez de repetirla completa.
+Referencia rápida de vocabulario, de negocio y técnico, para que cualquier persona o agente de IA entienda un término sin leer toda la especificación. Cuando un término tiene definición formal en otro documento, se referencia en vez de repetirla.
 
-## Negocio y operación
-
-| Término | Definición | Referencia |
-|---|---|---|
-| **Campaña** | Ciclo productivo de **un cliente** (`2025-2026`): Agrocom no corre campañas propias, aplica dentro de la del cliente. Única por `(cliente_id, código)`, varias abiertas a la vez y solapadas — un cliente cosechando mientras otro siembra. **No hay campaña activa de sesión**: se elige dentro del cliente o del contrato (corrección del 8/9/2026). Se escribe `campania` en código — `campana` es el ícono de notificaciones | especificación §4.0, §5; ADR 0015 |
-| **Propiedad** | Nivel de negocio (`com_propiedades`) por encima de **campo**: un cliente tiene varias propiedades, y una propiedad puede tener uno o más campos físicos (ej. dos mitades separadas por una carretera, cada una con su propia campaña — caso "Gamelera"). El contrato puede pactarse por propiedad entera, por campo, o mixto | especificación §4.1; ADR 0018 |
-| **Hacienda** | Como la nombra el negocio, la **propiedad** del cliente (`com_propiedades`) a la que llega la cuadrilla y donde se registran las estadías. Desde ADR 0020 no hay nivel intermedio: el lote cuelga directo de la propiedad, así que «hacienda» y «propiedad» son el mismo registro | especificación §4.1, §4.3; ADR 0020 |
-| **Personal** | Rótulo del menú para las personas operativas (`per_personas`). El personal es **móvil**: puede trabajar en propiedades, campañas, equipos y lotes distintos — si falta gente, se acopla la disponible | ADR 0015 |
-| **Día completo** | Contrato sin ninguna ventana horaria cargada: se aplica a cualquier hora. Es el valor por defecto, y las horas desde/hasta nunca son obligatorias | especificación §4.1; ADR 0015 |
-| **Estadía** | Registro de entrada y salida de una cuadrilla en una hacienda: dice cuántos días efectivos estuvo cada cuadrilla en cada propiedad y **dónde se alojó** (en la hacienda, en el pueblo más cercano o acampando en la propiedad). Es un hecho con fechas —«en curso» mientras no tenga salida, «finalizada» después—; la registra la cuadrilla desde la app de campo o la oficina desde el panel. No confundir con **base**: la base es un lugar fijo de Agrocom, la estadía es el paso de una cuadrilla por el campo de un cliente | especificación §4.3; ADR 0015 (adenda 19/9/2026) |
-| **Cuadrilla** | El grupo que sale junto al campo: un piloto, su ayudante (con posibilidad de un segundo) y su dron — **no** dónde están trabajando. Lleva además su equipamiento (baterías, generador, camioneta) y sus accesorios (machete, palas, linternas…), y es la unidad a la que se imputa el gasto que no pertenece a ningún trabajo concreto. Es el término visible en todo el panel desde el 19/9/2026 (antes «equipo de trabajo», y por unas horas «escuadra»); **en el código sigue siendo `equipo_trabajo`** (`per_equipos_trabajo`, `EquipoTrabajo`, `equipo_trabajo_id` del sync). No confundir con los casilleros «Equipo 1», «Equipo 2» de una orden de trabajo —cada uno se cubre con una cuadrilla— ni con `equipos` de la especificación §4.5, la vista unificada de maquinaria | especificación §4.2; ADR 0015 |
-| **Gestión** | Como la usa el dueño, sinónimo de **campaña**: el período que se abre, se imputa y se cierra. El sistema la nombra "campaña"; "gestión" queda como la palabra contable equivalente | ADR 0015 |
-| **Campaña activa** | La campaña bajo la que opera la sesión del panel, elegida igual que el rol activo y visible en el chip del header. **Filtra, no autoriza**: cambiarla no da acceso a nada nuevo | ADR 0015 |
-| **Equipo de trabajo** | Nombre anterior de la **cuadrilla** y el que conserva en el código (`equipo_trabajo`). En pantalla ya no se usa | ADR 0015 |
-| **Equipamiento asignado** | Los recursos (dron, vehículo, generador) que tiene asignado un equipo de trabajo, con vigencia. Es lo que permite saber qué unidad consumió el combustible que se imputó al equipo | especificación §4.2 |
-| **Generador** | Grupo electrógeno del campamento; alimenta la carga rápida de baterías y consume combustible propio, imputable al equipo que lo tiene asignado | especificación §4.2, §4.4 |
-| **Parámetros de vuelo** | Altura, velocidad y ancho de pasada acordados para volar. Hoy se pactan a voz entre piloto y agrónomo; el contrato fija los del cliente y la orden puede afinarlos | especificación §4.1, §4.3 |
-| **Barbecho / presiembra** | Momento previo a sembrar, cuando se aplica para limpiar el terreno; es el `tipo_aplicacion = siembra` | especificación §4.3 |
-| **Desecante** | Aplicación previa a la cosecha que seca el cultivo para poder cosecharlo parejo; es el `tipo_aplicacion = cosecha` | especificación §4.3 |
-| **A aplicar** | Hectáreas pactadas menos hectáreas aplicadas: lo que falta cumplir de un contrato. Es la columna que totaliza el informe de avance | especificación §9.1 |
-| **Cultivo** | Qué se sembró en un lote en una campaña (soya, maíz, girasol…). Es dimensión de la dupla lote-campaña, no atributo del lote: el lote no "es" de soya, se siembra de soya esta campaña | especificación §4.1 |
-| **Etapa del cultivo** | En qué momento de su ciclo está el cultivo de un lote en la campaña: preparación del terreno, germinación, crecimiento vegetativo, floración, fructificación, cosecha o madurez. Es del lote, no del cultivo: en la caña una misma propiedad tiene todas a la vez. Un contrato junta lotes del mismo cultivo y la misma etapa | `docs/negocio/observaciones_siembra_etapas_2026-09-21.md` |
-| **Tipo de aplicación** | Momento del ciclo en que se fumiga: `siembra` (barbecho o presiembra), `desarrollo` (el grueso de las 6-8 aplicaciones) o `cosecha` (desecante previo a cosechar) | especificación §4.3 |
-| **Lote** | Superficie física dentro de un campo, con hectáreas y geometría propias, unidad sobre la que se aplica una orden | `docs/especificacion/...` §4.1 |
-| **Lote retenido** | Lote de un contrato `vigente` ("En Ejecución") o `pausado`: queda bloqueado para cualquier otro contrato de la **misma campaña** hasta que ese contrato pase a `finalizado` ("Ejecutado") o `cancelado`. La pausa no lo libera. Un contrato en `borrador` ("En Aprobación") no retiene nada: el mismo lote puede repetirse en varios contratos aún no aprobados | especificación §4.1, §5; ADR 0021 |
-| **Conflicto (contrato)** | Estado `conflicto` ("En conflicto"): un contrato en `borrador` que comparte al menos un lote con otro contrato de la misma campaña que se acaba de aprobar. No se puede aprobar; vuelve solo a `borrador` cuando ya no comparte ningún lote con un contrato que retenga lotes, y también puede cancelarse. Lo fija y lo levanta solo el sistema, nunca un usuario desde el panel | especificación §4.1, §5; ADR 0021 |
-| **Trabajo** | Un lote en una aplicación concreta; agrupa una o más sesiones hasta cubrir sus hectáreas | especificación §4.3 |
-| **Sesión** | Unidad de trabajo continua de un piloto con un dron dentro de un trabajo; se abre, se ejecuta, se cierra y se valida | especificación §4.3, §5 |
-| **Orden de aplicación** | Instrucción del agrónomo (producto, dosis, L/ha) que habilita abrir un trabajo; sin orden vigente no se vuela. Es **una aplicación completa del contrato** —todas sus hectáreas y lotes, sin elegir lotes ni hectáreas por orden—, con número correlativo, y un contrato solo tiene una abierta a la vez. Estados: `emitida`, `vigente`, `pausada`, `consumida`, `cancelada`, `vencida` | especificación §4.3, §5; ADR 0022 |
-| **Aplicación abierta** | Aplicación (orden de aplicación) que sigue en curso: estado `emitida`, `vigente` o `pausada`. Un contrato admite una sola a la vez —la siguiente se emite cuando esta se cierra o se cancela— y no se puede cancelar ni finalizar mientras tenga una | especificación §5; ADR 0022 |
-| **Número de aplicación (correlativo)** | Posición de la orden dentro de las aplicaciones del contrato (1, 2, 3…, hasta `aplicaciones_previstas`); lo calcula el servidor, no se elige. Una aplicación cancelada por fuerza mayor no consume su número (se rehace con el mismo); una cancelada por causa del cliente sí | especificación §4.3, §5; ADR 0022 |
-| **Consumida** | Estado de la orden de aplicación cumplida: el encargado la cierra a mano (`vigente → consumida`) con el informe del equipo a la vista. Cerrar la última aplicación del contrato lo pasa a `finalizado` ("Ejecutado") y libera sus lotes | especificación §5; ADR 0022 |
-| **Receta de mezcla** | Secuencia de incorporación de productos definida por el agrónomo para una orden; Agrocom la ejecuta y documenta, no la modifica | especificación §4.3, §7 |
-| **Mezcla** | Un tanque de caldo preparado según la receta; cada mezcla queda ligada a una sesión y a las hectáreas que cubrió | especificación §4.3, §7 |
-| **Recarga** | Evento de reabastecimiento de caldo y cambio de batería durante una sesión | especificación §4.3 |
-| **Incidencia** | Evento anómalo registrado durante una sesión (caldo, ESC, batería, mecánica, clima) con evidencia | especificación §4.3 |
-| **Acta (de conformidad)** | Documento firmado por el agrónomo, por lote, que certifica lo aplicado — habilita la factura | especificación §4.3, §9 |
-| **Devengo** | Monto que un piloto o auxiliar gana por una sesión validada; se genera solo al validar, nunca al cerrar | especificación §4.4, §5 |
-| **Validación** | Acto de un jefe de campo o encargado (nunca el propio piloto de esa sesión) que confirma una sesión y dispara el devengo | especificación §5 |
-| **Rendición** | Registro de gastos de campo con comprobante, presentado por el jefe de campo | especificación §4.4 |
-| **Planilla** | Liquidación mensual de pagos para los cuatro roles operativos | especificación §11 |
-| **Base** | Punto físico de operación de Agrocom (campamento, conectividad Starlink) desde donde se despliega al lote. Es un **catálogo fijo** (`per_bases`): a una base pertenecen personas, cuadrillas, vehículos, baterías, generadores y el stock de repuestos, y a ella se imputan gastos. No confundir con **estadía**, que es el paso —con fecha de entrada y de salida— de una cuadrilla por la hacienda de un cliente | `docs/negocio/ventana_al_negocio.md` §3; especificación §4.2 |
-| **Hectárea acumulada (de partida)** | Valor que registra el piloto entrante en un relevo — evita el doble conteo cuando la misión de DJI se retoma | especificación §5 |
-| **Solape** | Superposición real entre pasadas de vuelo; tolerado hasta un parámetro configurable antes de disparar `observado` | especificación §5, §16 |
-| **EPP** | Equipo de protección personal del auxiliar (guantes, respirador, antiparras, ropa impermeable); se confirma al iniciar cada mezcla | especificación §7.3 |
-
-## Vocabulario de campo (capturado en las encuestas del 25/8/2026)
-
-Jerga real del equipo, registrada al procesar las respuestas del banco de preguntas (`docs/gestion/respuestas_campo/`). El detalle por rol vive en `docs/negocio/politicas/`.
+## Marketplace
 
 | Término | Definición | Referencia |
 |---|---|---|
-| **Chaco** | El campo/terreno del cliente donde se fumiga (uso regional cruceño) | negocio/politicas/rol_piloto.md |
-| **Caldo / calda** | La mezcla líquida de agua + productos que aplica el dron; "calda" es la forma habitual del equipo | especificación §7 |
-| **Tanque de mezcla** | Recipiente en tierra (200–1.000 L) donde se prepara la calda; de ahí se recarga el dron. Cuando se habla de "tanque" hay que especificar cuál de los tres | especificación §7 |
-| **Tanque del dron** | Depósito líquido del dron que se llena de caldo en cada vuelo (T30 20–26 L, T50 30–36 L, T70 ~50 L, T100 ~60 L); no se carga al máximo para cuidar las baterías | especificación §7.1 |
-| **Tolva / boleadora** | Depósito de sólidos del dron para el boleo (esparcido de semilla/fertilizante); es un accesorio distinto del tanque líquido, con volumen propio | negocio/politicas/rol_jefe_campo.md |
-| **Mapeo** | Planificación de la misión de vuelo sobre el lote en el RC; solo se hace con luz de día; los obstáculos marcados quedan registrados y el dron los rodea | negocio/flujo_base_y_excepciones.md |
-| **Cortinas** | Bordes arbolados del lote; ahí se aplica ("repaca") el sobrante del último tanque | negocio/politicas/rol_auxiliar.md |
-| **Sereno** | Humedad nocturna que hace resbalar la gota de la planta; límite natural del vuelo nocturno | negocio/politicas/rol_piloto.md |
-| **Ventana horaria de aplicación** | Franjas típicas 6:00–10:00 y 16:00–20:00: con sol fuerte la gota se pulveriza antes de caer; modulable por cliente y clima | negocio/flujo_base_y_excepciones.md §3 |
-| **Pausa atribuible** | Interrupción de la operación con causa registrada (clima / imprevisto del cliente / falla / logística); hoy no se registra y es la información que "falta siempre" | especificación (pendiente §4.3) |
-| **Encargado de la propiedad** | Persona del cliente en campo: indica lotes, prepara el caldo, ordena pausas y recoge envases; opera mucho, no firma nada | negocio/politicas/rol_cliente.md |
-| **Anemómetro ("medidor del tiempo")** | Instrumento con que el equipo mide el viento para decidir pausas y reanudaciones | negocio/politicas/rol_jefe_campo.md |
-| **Captura del RC** | Foto de la pantalla del control remoto al cerrar un lote: hectáreas, tiempo, caudal, altura — la evidencia que hoy zanja toda disputa | especificación §4.3 |
-| **Carta de confirmación de efecto laboral** | Pantalla de DJI al terminar un vuelo/misión: área de trabajo, pendiente, plan, margen, obstáculo, tiempo, litros y L/ha — el "reporte" que los pilotos fotografían | especificacion/analisis_capturas_rc.md |
-| **Nube DJI** | Respaldo en línea de las misiones del RC; de ahí se descarga hoy el PDF para el reporte al cliente | negocio/politicas/rol_encargado_operaciones.md |
-| **Inicio de sesión (RC)** | Registro de quién operó el control; junto a las capturas, prueba quién voló qué | negocio/politicas/rol_jefe_campo.md |
-| **Pines** | Contactos eléctricos de batería y dron; su limpieza evita el "ciclo de daños" (pines sucios → placa del dron → daña las demás baterías) | negocio/politicas/rol_auxiliar.md |
-| **RPM de bombas y centrífugas** | Indicador de salud del sistema de aspersión; una caída delata grumos en el tanque ("el enemigo silencioso") | negocio/politicas/rol_auxiliar.md |
-| **Carga rápida** | Carga de batería en ~8 min con el generador DJI — menos que un vuelo (10–12 min): con 3 baterías el dron no espera | negocio/politicas/rol_auxiliar.md |
-| **Boleo** | Aplicación de sólidos al voleo con dron (esparcido); línea de servicio adicional a la fumigación líquida | negocio/politicas/rol_jefe_campo.md |
-| **Zona GEO** | Geocerca de DJI donde el dron no puede volar; exclusión técnica, no decisión del agrónomo | negocio/politicas/rol_agronomo.md |
-| **Papel hidrosensible** | Tarjeta que revela la cobertura de gota; verificación de calidad deseada por el agrónomo | negocio/politicas/rol_agronomo.md |
-| **Deriva** | Arrastre de la gota fuera del lote por viento; riesgo con vecinos y colmenas, y motivo de pausa | negocio/ventana_al_negocio.md §7 |
-| **Lote bueno / lote feo** | Bueno: plano, recto, sin obstáculos. Feo: desniveles, árboles, bordes irregulares — menos ha/hora a igual tarifa; su reparto equitativo es la regla abierta de `ventana_al_negocio.md` §6.3 | negocio/politicas/rol_piloto.md |
-| **Día volable / día perdido** | Día con ventana de aplicación aprovechable vs. día comido por lluvia o viento (≈1 de cada 4; 15–16 volables/mes) | negocio/politicas/rol_jefe_campo.md |
-| **Trufi / encomienda** | Transporte interurbano usado para enviar repuestos al campo (4–48 h según distancia) | negocio/politicas/rol_encargado_operaciones.md |
-| **QR (pago por)** | Medio de pago bancario usado para pagar al personal y respaldar rendiciones con capturas | negocio/politicas/rol_encargado_operaciones.md |
-| **Aplicación de emergencia** | Trabajo spot para otro cliente, negociado por el encargado fuera del contrato residente | negocio/politicas/rol_encargado_operaciones.md |
-| **Chata** | Carro de arrastre donde viaja el dron cuando no va en la camioneta | negocio/politicas/rol_piloto.md |
-| **Ración seca** | Víveres de respaldo del equipo para cuando el cliente no provee alimentación | negocio/politicas/rol_jefe_campo.md |
+| **Marketplace** | Plataforma donde clientes solicitan servicios de fumigación con drones y proveedores los ejecutan. Agrocom capta clientes, es el nexo y también proveedor | `especificacion/marketplace.md` |
+| **Cliente** | Quien solicita el servicio, firma la conformidad y califica | especificación §2 |
+| **Solicitud de servicio** | Pedido del cliente sobre un terreno: hectáreas, tipo de aplicación, producto, ventana de fechas y tarifa. Es la unidad de negocio | especificación §4.2; ADR 0027 |
+| **Terreno** | Superficie del cliente con geometría y hectáreas, sobre la que se pide un servicio | especificación §4.1 |
+| **Proveedor** | Entidad que presta el servicio: propio, independiente o tercero | ADR 0028 |
+| **Proveedor propio** | Agrocom como proveedor, con sus pilotos y drones; recibe la primera oferta | ADR 0028, 0030 |
+| **Proveedor independiente** | Piloto que es su propio proveedor; se registra solo y lo aprueba un administrador | ADR 0028, 0032 |
+| **Proveedor tercero** | Empresa o dueño de drones con pilotos y auxiliares a su cargo | ADR 0028 |
+| **Piloto** | Persona que opera el dron y escribe la sesión de vuelo | especificación §2 |
+| **Auxiliar** | Persona que prepara la mezcla y asiste en el lote; lo registra el piloto o el proveedor y lo aprueba un administrador | ADR 0032 |
+| **Dron (vehículo)** | Activo que presta el servicio, con dueño y operador; requiere aprobación | ADR 0029 |
+| **Dueño del dron** | Proveedor que posee el dron, aunque lo opere otro | ADR 0029 |
+| **Equipo** | Combinación operativa de piloto, dron y auxiliar opcional que ejecuta una solicitud | especificación §4.4 |
+| **En línea** | Estado en que un proveedor declara estar disponible para recibir ofertas | especificación §4.4 |
+| **Oferta** | Propuesta de una solicitud a un proveedor, con vencimiento; se acepta o se rechaza | especificación §4.5, §5.3 |
+| **Ronda** | Tanda de ofertas a un grupo de proveedores (propios primero, luego terceros por radio) | ADR 0030 |
+| **Escalado** | Ampliación del radio y del grupo de proveedores cuando una ronda no consigue aceptación | ADR 0030 |
+| **Sin proveedor** | Estado de la solicitud cuando se agotaron las rondas | especificación §5.1 |
+| **Tarifa por hectárea** | Precio del servicio por hectárea, con recargos explícitos y congelado al publicar | ADR 0027 |
+| **Comisión** | Porcentaje del monto final que Agrocom devenga por solicitud completada | ADR 0034 |
+| **Acta de conformidad** | Documento que el cliente firma para confirmar la ejecución; el silencio durante el plazo equivale a conformidad | especificación §4.6, §5.1 |
+| **Sesión de vuelo** | Unidad continua de trabajo de un equipo en el lote con hectáreas, litros, condiciones y evidencias; se registra sin conexión | especificación §4.6, §5.4 |
+| **Mezcla (caldo)** | Tanque de caldo preparado por el auxiliar según la receta de la solicitud, ligado a una sesión | especificación §4.6 |
+| **Condición forzada** | Vuelo realizado fuera de los límites de clima, con motivo registrado y visible | `politicas/seguridad.md` |
+| **Evidencia** | Foto o registro comprimido (menos de 300 KB) que respalda una sesión, incidencia o disputa | especificación §4.6 |
+| **Calificación** | Valoración de 1 a 5 estrellas con etiquetas que el cliente da a un proveedor; el proveedor la ve y un administrador la modera | ADR 0031 |
+| **Moderación** | Ocultamiento con motivo y autor de una calificación que incumple la política | `politicas/calificacion.md` |
+| **Disputa** | Reclamo sobre un servicio ejecutado, resuelto por un administrador con evidencia | ADR 0033 |
+| **Incidencia** | Evento anómalo (deriva, caída, lesión, derrame, conflicto) reportado durante o tras un servicio | `politicas/seguridad.md` |
+| **SOS** | Botón de emergencia que avisa a soporte con la ubicación | `politicas/seguridad.md` |
+| **Tasa de aceptación y de cancelación** | Proporción de ofertas aceptadas y de solicitudes canceladas por el proveedor; entran en la puntuación y en las restricciones | especificación §6 |
+| **Suspensión** | Retiro temporal de ofertas por calificación, documentos vencidos, incidencia grave o comisión vencida | `politicas/verificacion_proveedores.md` |
+| **Ciclos de batería** | Contador conservado dentro del dron | ADR 0029 |
+| **Deriva** | Arrastre de la gota fuera del lote por viento; riesgo para vecinos y colmenas | `politicas/seguridad.md` |
+| **Caldo / calda** | Mezcla líquida de agua y productos que aplica el dron | especificación §4.6 |
+| **Tanque del dron** | Depósito líquido del dron; su capacidad entra en la elegibilidad | especificación §4.4 |
+| **Boleo** | Aplicación de sólidos al voleo con dron | especificación §4.2 |
+| **Captura del RC** | Foto de la pantalla del control remoto al cerrar el lote: hectáreas, tiempo, caudal y altura | especificación §4.6 |
+| **Zona GEO** | Geocerca donde el dron no puede volar | `politicas/seguridad.md` |
 
 ## Técnico
 
 | Término | Definición | Referencia |
 |---|---|---|
-| **`campania` vs. `campana`** | **`campania` (con `i`) es el ciclo productivo; `campana` es el ícono de notificaciones.** No son variantes de lo mismo y ya convivieron a una letra de distancia en `CascaraPanel`. Si vas a escribir `campana`, es porque estás tocando notificaciones | ADR 0015 |
-| **Configuración del sistema** | `/panel/configuracion`: llaves y tokens con que el sistema funciona (mapas, correo, integraciones), cifrados en reposo y nunca devueltos al navegador. **Distinta** de `/panel/organizacion`, que son los datos de la empresa | ADR 0016 |
-| **`campania_id`** | Obligatorio donde alguien elige la campaña explícitamente: `contratos` (de la campaña de su propio cliente) y `lote_campania`. **Nullable** en `gastos` y `cargas_combustible`, donde significa en qué campaña se **consumió** — atribución de costo interno, nunca un cargo al cliente, que paga por hectárea. No lo llevan órdenes, trabajos, sesiones, actas ni facturas (lo heredan por contrato), ni `equipos_trabajo` ni `estadias_hacienda` | ADR 0015 |
-| **`uuid_cliente`** | Identificador único generado en el dispositivo de campo antes de sincronizar; garantiza idempotencia | especificación §2.1 |
-| **Outbox** | Patrón de cola local (`cola_sync`) donde toda escritura offline se encola antes de sincronizar | especificación §2.1 |
-| **Idempotencia** | Propiedad de que reintentar la misma operación no cambia el resultado; se logra con `UNIQUE (uuid_cliente)` en base, no en el código | ADR 0001, especificación §2.1 |
-| **`sec_permission`** | Código de permiso abstracto (`operaciones.sesion.validar`) que el menú referencia — no al revés | ADR 0004 |
-| **Policy** | Clase de Laravel que responde "¿puede este usuario, sobre ESTE registro?" — complementa a `sec_permission`, que responde "¿puede en general?" | ADR 0004 |
-| **ADR** (Architecture Decision Record) | Documento corto en `docs/decisiones/` que registra una decisión de arquitectura: contexto, decisión, alternativas descartadas, consecuencias | `docs/README.md` |
-| **`feature/*`** | Rama de GitFlow simplificado para una historia de usuario o tarea técnica; nace y muere en `develop` | ADR 0006 |
-| **Soft delete** | Borrado lógico (`deleted_at`); ningún módulo hace `DELETE` físico salvo excepción justificada | ADR 0007 |
-| **Bitácora (de auditoría)** | Registro transversal de quién hizo qué, cuándo, sobre qué entidad — no limitado a un módulo | ADR 0007 |
-| **Atomic Design** | Metodología de componentes del panel: atoms/molecules/organisms/templates/pages en Blade | ADR 0002 |
-| **Token (de diseño)** | Variable CSS (custom property) que representa un color/espaciado/tipografía — nunca se hardcodea un valor literal | ADR 0002 |
+| **`uuid_cliente`** | Identificador único generado en el dispositivo antes de sincronizar; garantiza idempotencia | especificación §10.3 |
+| **Outbox** | Cola local donde toda escritura offline se encola antes de sincronizar | especificación §13 |
+| **Idempotencia** | Reintentar la misma operación no cambia el resultado; se logra con `UNIQUE (uuid_cliente)` | ADR 0001 |
+| **`secuencia`** | Contador local de cada dispositivo que ordena sus registros; el orden causal no usa el reloj | especificación §4.6 |
+| **Flavor** | Variante de la app móvil: `cliente`, `piloto` o `auxiliar` | especificación §13 |
+| **`sec_permission`** | Código de permiso abstracto que el menú referencia | ADR 0004 |
+| **Policy** | Clase de Laravel que responde si un usuario puede actuar sobre un registro concreto | ADR 0004 |
+| **ADR** | Documento corto en `docs/decisiones/` con contexto, decisión, alternativas y consecuencias | `README.md` |
+| **Parámetro** | Valor de negocio configurable sin desplegar | ADR 0016 |
+| **`feature/*`** | Rama de GitFlow simplificado para una tarea | ADR 0006 |
+| **Soft delete** | Borrado lógico (`deleted_at`) | ADR 0007 |
+| **Bitácora (de auditoría)** | Registro transversal de quién hizo qué, cuándo y sobre qué | ADR 0007 |
+| **Atomic Design** | Metodología de componentes del panel Blade | ADR 0002 |
+| **Token (de diseño)** | Variable CSS que representa un color, espaciado o tipografía; nunca se hardcodea un valor | ADR 0002 |
