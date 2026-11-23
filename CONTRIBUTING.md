@@ -28,9 +28,12 @@ git push -u origin feature/nombre-de-la-hu
 ./bin/verify
 ```
 
-Es la misma cascada que corre CI (Pint + Larastan + Pest en el contenedor con PHP
-8.3, más la compilación de assets en el host) y devuelve 0 solo si todo pasa.
-Detalle en `docs/gestion/automatizacion_desarrollo.md`.
+Verifica lo afectado por tu diff contra `origin/develop` (Pint sobre lo tocado,
+Larastan, las pruebas que el selector elige más el humo mínimo, y los assets si el
+diff los toca) en el contenedor con PHP 8.3, y devuelve 0 solo si todo pasa. La suite
+completa es `./bin/verify --todo` y corre sola en CI en el release a `master` y de
+noche. Detalle en `docs/gestion/ci-por-impacto.md` y
+`docs/gestion/automatizacion_desarrollo.md`.
 
 El PR es el punto de revisión — propio y del agente de IA — antes de integrar, aunque el desarrollo sea en solitario. Se mergea cuando: la suite está en verde, el criterio de aceptación de la HU/TE tiene test, y (si toca sync, estados o dinero) se revisó línea por línea.
 

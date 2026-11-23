@@ -6,30 +6,50 @@ description: La compuerta de calidad de agrocom-api — cómo correr la cascada 
 # Verificación — la compuerta de agrocom-api
 
 Un cambio está terminado cuando `bin/verify` devuelve 0. No cuando "se ve bien",
-no cuando el test que escribiste pasa: cuando la cascada completa pasa.
+no cuando el test que escribiste pasa: cuando la cascada pasa.
 
 ## Cómo se corre
 
 ```
-./bin/verify                # cascada completa (PHP en el contenedor + assets en el host)
-./bin/verify --sin-assets   # solo PHP, para iterar rápido
+./bin/verify                # lo afectado por tu diff contra origin/develop (meta: < 3 min)
+./bin/verify --todo         # TODO: Pint completo + Larastan + suite entera + assets
+./bin/verify --sin-assets   # no compila assets, aunque el diff los toque
 ```
+
+**Por defecto se verifica solo lo afectado.** Nadie —persona ni agente— corre la suite
+entera para iterar ni para cerrar una tarea: ni `php artisan test`, ni `pest`, ni
+`composer verify` sin filtro. El selector (`bin/tests-afectados`) elige las pruebas que
+pueden verse afectadas por el diff y siempre suma el humo mínimo (arquitectura de módulos
+y contrato de API); ante la duda elige más, nunca menos, y si el diff toca algo que no puede
+acotar (lockfiles, `config/`, migraciones, `.github/`, `bin/`, pruebas compartidas…) la
+cascada pasa sola a `TODO` e imprime el motivo. `--todo` se usa cuando el selector ya lo
+manda, para un release o para reproducir una falla nocturna. Detalle completo en
+`docs/gestion/ci-por-impacto.md`.
+
+`bin/tests-afectados --explicar` muestra qué pruebas elige y por qué. Una prueba nueva no
+se registra en ningún lado: el selector la descubre por su contenido.
 
 El grueso corre **dentro del contenedor `app`** (PHP 8.3, igual que CI). El PHP del
 host puede ser otra versión y dar resultados distintos a los del CI — por eso el
 script prefiere el contenedor y solo cae al host si Docker no está disponible.
 Los assets se compilan en el host porque la imagen no trae Node.
 
-Dentro del contenedor, `composer verify` encadena las tres etapas de PHP y se
-detiene en la primera que falla.
+La cascada se detiene en la primera etapa que falla. En modo afectado Pint revisa solo los
+`.php` tocados; Larastan es siempre completo (usa su caché y el análisis de un archivo depende
+de todo lo que usa).
+
+En CI el mismo criterio reparte el trabajo: un PR a `develop` corre lo afectado; el PR de
+release a `master`, el disparo manual, la etiqueta `full-ci` y la corrida nocturna corren la
+suite completa en fragmentos. El check requerido sigue llamándose `laravel-tests` (es el job
+agregador).
 
 ## Las etapas, en orden, y qué significa que fallen
 
 | Etapa | Herramienta | Qué mide | Cómo se corrige |
 |---|---|---|---|
-| Estilo | `vendor/bin/pint --test` | Formato PSR-12 + preset Laravel | `vendor/bin/pint` (sin `--test`) lo arregla solo |
+| Estilo | `vendor/bin/pint --test` (solo lo tocado en modo afectado) | Formato PSR-12 + preset Laravel | `vendor/bin/pint` (sin `--test`) lo arregla solo |
 | Análisis estático | Larastan **nivel 6** (`phpstan.neon`) | Tipos, propiedades inexistentes, retornos | Se corrige tipando de verdad — no con `@phpstan-ignore` |
-| Tests | Pest 4 | `tests/Unit`: arquitectura de módulos, máquinas de estado, bitácora y reglas de dominio puras — sin base de datos | Ver abajo |
+| Tests | Pest 4 (las afectadas + humo; todas con `--todo`) | `tests/Unit`: arquitectura de módulos, máquinas de estado, bitácora y reglas de dominio puras — sin base de datos | Ver abajo |
 | Assets | `npm run build` (Vite) | Que el CSS/JS compile | Suele ser un import o un token CSS inexistente |
 
 Nivel 6 es exigente: exige tipos en parámetros y retornos, y detecta accesos a

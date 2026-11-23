@@ -22,8 +22,9 @@ califica, por mucho que la suite esté en verde.
 Un solo comando con exit code honesto:
 
 ```
-./bin/verify                # cascada completa
-./bin/verify --sin-assets   # solo PHP, para iterar
+./bin/verify                # lo afectado por el diff contra origin/develop
+./bin/verify --todo         # cascada completa: toda la suite
+./bin/verify --sin-assets   # sin compilar assets
 ```
 
 Encadena, deteniéndose en la primera falla:
@@ -35,9 +36,11 @@ Encadena, deteniéndose en la primera falla:
 | Pest (SQLite en memoria) | contenedor `app` |
 | Vite (`npm run build`) | host (la imagen no trae Node) |
 
-Las tres etapas de PHP están además en `composer verify`, que es lo que el script
-ejecuta dentro del contenedor. Es la misma cascada que corre `laravel-tests` en
-`.github/workflows/ci.yml`, así que un verde local predice el verde de CI.
+En modo afectado Pint revisa los `.php` tocados y Pest corre las pruebas que elige el
+selector de impacto más el humo mínimo; `--todo` corre Pint y Pest completos
+(`composer verify` encadena esas tres etapas de PHP sobre todo el repo). Es el mismo
+criterio que aplica `laravel-tests` en `.github/workflows/ci.yml`, así que un verde local
+predice el verde de CI. Ver `docs/gestion/ci-por-impacto.md`.
 
 ### 2. El merge: `auto-merge.yml`
 
