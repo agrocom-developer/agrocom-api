@@ -19,8 +19,8 @@ use Illuminate\View\View;
 /**
  * `GET/POST /panel/facturas*` (HU-31, tarea 45): "como encargado, quiero
  * emitir la factura de un trabajo desde su acta conformada, para cobrar
- * sobre hectáreas ya firmadas". Mismo molde que `AnticiposController` — ABM
- * acotado sin edición ni baja: una factura emitida es un snapshot
+ * sobre hectáreas ya firmadas". ABM acotado sin edición
+ * ni baja: una factura emitida es un snapshot
  * inmutable.
  *
  * Dos permisos de grano fino (`comercial.factura.ver`/`.crear`), verificados

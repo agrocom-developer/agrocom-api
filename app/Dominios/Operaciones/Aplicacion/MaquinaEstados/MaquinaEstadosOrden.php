@@ -141,7 +141,7 @@ final class MaquinaEstadosOrden
      * por decisión del panel. Exige causa (`cliente` | `dueno` | `factor_externo`) y motivo.
      * La causa decide si la aplicación consume su número correlativo
      * ({@see CausaCancelacionOrden::consumeNumero()}). Cancelar no toca los
-     * trabajos ya cargados: son horas de campo reales, con sus devengos.
+     * trabajos ya cargados: son horas de campo reales.
      *
      * @throws MotivoRequerido si el motivo viene vacío.
      * @throws TransicionOrdenNoPermitida si `$orden` no está `vigente` ni `pausada`.

@@ -16,9 +16,9 @@ namespace App\Dominios\Seguridad\Dominio;
  * resumen de pausas acá. Lo contrario sería una fuga por la ventana del
  * dashboard, que es exactamente el hallazgo que cerró la tarea 62.
  *
- * `requierePersona`: las secciones "mías" (mis sesiones, mi liquidación)
+ * `requierePersona`: las secciones "mías" (mis sesiones, mis equipos)
  * necesitan que la cuenta tenga `persona_id`. Un usuario administrativo sin
- * persona asociada no las ve — no son un dato de la empresa, son su recibo.
+ * persona asociada no las ve — no son un dato de la empresa, son los suyos.
  */
 enum SeccionDashboard: string
 {
@@ -30,12 +30,10 @@ enum SeccionDashboard: string
     case Multimedia = 'multimedia';
     case Pausas = 'pausas';
     case DiasEnHacienda = 'dias_en_hacienda';
-    case Stock = 'stock';
     case AvanceClientes = 'avance_clientes';
     case Alertas = 'alertas';
     case MisSesiones = 'mis_sesiones';
     case MisEquipos = 'mis_equipos';
-    case MiLiquidacion = 'mi_liquidacion';
     case EstadoCuentas = 'estado_cuentas';
     case TrabajosPorEquipo = 'trabajos_por_equipo';
     case ProgresoCampania = 'progreso_campania';
@@ -80,7 +78,6 @@ enum SeccionDashboard: string
             self::ColaValidacion => 'operaciones.sesion.validar',
             self::Pausas => 'operaciones.pausa.ver',
             self::DiasEnHacienda => 'operaciones.estadia.ver',
-            self::Stock => 'inventario.movimiento.ver',
             // Mismo permiso que AvanceClientes: ambas resumen contratos de
             // Comercial, una en hectáreas y otra en plata.
             self::AvanceClientes,
@@ -104,7 +101,6 @@ enum SeccionDashboard: string
             self::BitacoraReciente => 'seguridad.bitacora.ver',
             self::AccesoConfiguracion => 'seguridad.configuracion.ver',
             self::AccesoOrganizacion => 'seguridad.organizacion.ver',
-            self::MiLiquidacion => 'finanzas.devengo.ver',
             // Sin permiso propio: son las sesiones y los drones de quien
             // mira, derivados de su `persona_id`. No hay nada que gatear que
             // `requierePersona()` no gatee ya.
@@ -114,6 +110,6 @@ enum SeccionDashboard: string
 
     public function requierePersona(): bool
     {
-        return in_array($this, [self::MisSesiones, self::MisEquipos, self::MiLiquidacion], true);
+        return in_array($this, [self::MisSesiones, self::MisEquipos], true);
     }
 }

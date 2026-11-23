@@ -20,7 +20,7 @@ use Illuminate\Validation\Rules\Enum;
  * `inicio`/`fin`: la comparación real la hace el caso de uso sobre los
  * valores ya normalizados a UTC.
  *
- * `equipo_trabajo_id`/`propiedad_id`/`vehiculo_id` validan existencia contra
+ * `equipo_trabajo_id`/`propiedad_id` validan existencia contra
  * la tabla física del módulo dueño (mismo criterio que `RegistrarPausaRequest`
  * con `sesion_id`) — la vigencia de la cuadrilla a la fecha de entrada la
  * revalida `Aplicacion/RegistrarEstadiaHacienda` vía `Contratos/`, no esta regla.
@@ -36,7 +36,6 @@ final class RegistrarEstadiaRequest extends FormRequest
             'entrada' => ['required', 'date'],
             'salida' => ['nullable', 'date'],
             'tipo_alojamiento' => ['required', new Enum(TipoAlojamiento::class)],
-            'vehiculo_id' => ['nullable', 'integer', Rule::exists('man_vehiculos', 'id')->whereNull('deleted_at')],
             'observacion' => ['nullable', 'string'],
         ];
     }
@@ -52,7 +51,6 @@ final class RegistrarEstadiaRequest extends FormRequest
             'entrada.required' => __('operaciones.estadias.error_entrada_requerida'),
             'tipo_alojamiento.required' => __('operaciones.estadias.error_alojamiento_requerido'),
             'tipo_alojamiento.enum' => __('operaciones.estadias.error_alojamiento_invalido'),
-            'vehiculo_id.exists' => __('operaciones.estadias.error_vehiculo_invalido'),
         ];
     }
 }

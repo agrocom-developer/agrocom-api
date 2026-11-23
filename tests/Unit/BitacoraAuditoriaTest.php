@@ -25,8 +25,7 @@
  * (`com_contratos`, `com_lotes`) y "estados operativos"
  * (`com_contratos.estado`, `ope_ordenes_aplicacion.estado`) YA tienen tablas
  * reales hoy, deliberadamente fuera de esta regla: instrumentarlas es
- * trabajo de la tarea que implemente la máquina de estados/devengos —la
- * siguiente en la cola—, que de todos modos va a tocar esos modelos. Ampliar
+ * trabajo de la tarea que implemente la máquina de estados, que de todos modos va a tocar esos modelos. Ampliar
  * la regla de abajo para incluirlas es el primer paso natural de esa tarea,
  * no una laguna escondida de esta.
  *

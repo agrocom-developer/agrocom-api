@@ -517,8 +517,7 @@ function inicializar(root) {
     // mismo combobox ya la refresca arriba; repetirlo acá es inofensivo.
     nativo.addEventListener('change', actualizarValorMostrado);
 
-    // Selects dependientes (p. ej. campaña según cliente en contratos-form.js,
-    // subrubro según rubro en gastos-form.js) filtran el nativo marcando
+    // Selects dependientes (p. ej. campaña según cliente en contratos-form.js) filtran el nativo marcando
     // `<option>` disabled/hidden desde afuera. `opciones` es una foto tomada
     // acá arriba: sin este observer, esa foto queda vieja y el combobox
     // mostraría opciones que el formulario ya descartó.

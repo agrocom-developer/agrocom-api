@@ -11,8 +11,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
  * código, nombre, estado y estación (filtros agregados en la ronda de
  * homogeneización del 17/9/2026). Solo lectura — mismo patrón de paginación
  * que `ListarBases`. Orden por `fecha_inicio` descendente: la campaña más
- * reciente encabeza el listado, mismo criterio de "lo último primero" que
- * `ListarGastos` con `fecha`.
+ * reciente encabeza el listado.
  *
  * Sin filtro por cliente (ADR 0015, corregido el 15/9/2026): la campaña es
  * un catálogo compartido, no de un cliente — quién la usa se ve desde el

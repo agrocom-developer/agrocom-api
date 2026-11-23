@@ -11,7 +11,7 @@ use App\Dominios\Operaciones\Dominio\EstadoEstadia;
  * `tests/Unit/ArquitecturaModulosTest.php`).
  *
  * Un solo camino: `en_curso → finalizada`, sin vuelta atrás — una estadía ya
- * finalizada cuenta días para justificar gastos, no se reabre (ver docblock
+ * finalizada no se reabre (ver docblock
  * de `Aplicacion/ActualizarEstadiaHacienda`).
  */
 final class TransicionesEstadia

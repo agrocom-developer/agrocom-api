@@ -18,7 +18,7 @@
     container: ag-cultivos / inline-size;
 }
 
-/* Franja de KPI bajo la cabecera: mismo patrón que `gastos.css` (la
+/* Franja de KPI bajo la cabecera (la
    @container consulta el wrapper, no la propia grilla). */
 .ag-cultivos__kpis {
     display: grid;

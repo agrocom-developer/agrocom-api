@@ -4,8 +4,8 @@ namespace App\Dominios\Personal\Contratos;
 
 /**
  * Frontera de lectura de equipos de trabajo hacia otros módulos (ADR 0003,
- * regla 2; ADR 0015 punto 3) — las tareas 73 (gasto/combustible) y 74
- * (estadía) necesitan saber qué equipos existen, quién los integraba y qué
+ * regla 2; ADR 0015 punto 3)— la estadía
+ * necesita saber qué equipos existen, quién los integraba y qué
  * recursos tenían, sin importar los modelos Eloquent de `Personal`.
  *
  * `vigentesAFecha()` reemplaza a "equipos vigentes de una campaña" (la forma
@@ -14,7 +14,7 @@ namespace App\Dominios\Personal\Contratos;
  * dueño del 8/9/2026, ADR 0015 punto 3, "el equipo es de Agrocom y trabaja
  * para varias campañas" — así que no existe un recorte por campaña que
  * hacer acá. Lo que sí existe, y es lo que el consumidor necesita para
- * poblar un selector al registrar un gasto o una estadía en una fecha dada,
+ * poblar un selector al registrar una estadía en una fecha dada,
  * es el recorte por vigencia del equipo en sí (`desde`/`hasta`).
  *
  * `integrantesAFecha()`/`recursosAFecha()` comparten la misma forma —fecha

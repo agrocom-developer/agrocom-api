@@ -10,8 +10,8 @@ use Illuminate\Database\QueryException;
  * Edición de los datos descriptivos de un equipo de trabajo (tarea 72,
  * HU-49). No toca integrantes ni recursos — esos se editan con sus propios
  * casos de uso, cada asignación es una fila con su propia vigencia (ADR 0015
- * punto 3: un gasto de marzo se atribuye a la formación de marzo, editar acá
- * no puede reescribir esa historia).
+ * punto 3: el trabajo de marzo se atribuye a la formación de marzo, editar
+ * acá no puede reescribir esa historia).
  *
  * Ya NO recibe `estado` (corrección 19/9/2026, invariante 7 de CLAUDE.md):
  * editar los datos de una cuadrilla nunca toca su estado — el cambio de

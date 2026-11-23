@@ -19,9 +19,7 @@ use Illuminate\Support\Facades\Auth;
  * - Idempotente: cada seeder mira un centinela (un NIT, un CI, un
  *   `uuid_cliente` determinista) y si ya está, no vuelve a sembrar.
  * - Los estados pasan por las máquinas de estado y los casos de uso reales
- *   (invariantes 3 y 7): validar una sesión genera el devengo, firmar un
- *   acta genera el reporte técnico, cerrar una orden de mantenimiento
- *   consume stock y registra el gasto.
+ *   (invariante 7): firmar un acta genera el reporte técnico.
  * - La autoría y la bitácora salen solas: se deja autenticado al admin de
  *   plataforma durante la siembra, así `RegistraAutoria` y
  *   `BitacoraObserver` completan `created_by` y `plt_bitacoras` como en una
@@ -56,8 +54,6 @@ class DemoSeeder extends Seeder
         $this->call(FlotaDemoSeeder::class);
         $this->call(CuadrillasDemoSeeder::class);
         $this->call(CarteraDemoSeeder::class);
-        $this->call(TarifasDemoSeeder::class);
         $this->call(OperacionDemoSeeder::class);
-        $this->call(FinanzasDemoSeeder::class);
     }
 }

@@ -9,8 +9,8 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
  * Catálogo mínimo de dron (HU-07, tarea 20; ver docblock de
  * `database/migrations/2026_09_01_100013_create_ope_drones_table.php` y
  * runs/20.md). Sin ciclo de vida propio (sin uso acumulado, sin historial de
- * mantenimiento) — cuando exista el módulo `Mantenimiento`/`Inventario`
- * (ADR 0011 punto 3), esa es la tabla que absorbe esta.
+ * mantenimiento): la ficha técnica y los ciclos de batería viven en
+ * `Mantenimiento`.
  *
  * `modelo`/`capacidad_l` (HU-27, tarea 36): ver docblock de
  * `2026_09_02_100004_add_modelo_capacidad_a_ope_drones_table.php`.

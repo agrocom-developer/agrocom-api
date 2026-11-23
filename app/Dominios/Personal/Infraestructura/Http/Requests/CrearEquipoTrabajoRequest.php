@@ -10,7 +10,7 @@ use Illuminate\Validation\Rule;
  * `POST /panel/cuadrillas` (tarea 72, HU-49; pedido del dueño 19/9/2026,
  * tarea "cuadrillas-estadias"): el alta arma la cuadrilla COMPLETA de una
  * sola vez — datos del equipo más piloto, ayudante (con posible segundo) y su
- * dron —obligatorios— y, opcionalmente, vehículo, generador y baterías.
+ * dron —obligatorios— y, opcionalmente, baterías.
  * `Aplicacion/ArmarCuadrilla` hace el trabajo, dentro de una única
  * transacción.
  *
@@ -19,7 +19,7 @@ use Illuminate\Validation\Rule;
  * `MaquinaEstadosEquipoTrabajo::crear()`, nunca quien completa el
  * formulario.
  *
- * `dron_id`/`vehiculo_id`/`generador_id`/`bateria_ids.*` no llevan
+ * `dron_id`/`bateria_ids.*` no llevan
  * `Rule::exists`: sus tablas cruzan a `Operaciones`/`Mantenimiento` (ADR 0003
  * regla 3) — la existencia y la disponibilidad se verifican DENTRO de
  * `AsignarRecursoEquipo::existeYActivo()`, contra los contratos de lectura de
@@ -58,8 +58,6 @@ final class CrearEquipoTrabajoRequest extends FormRequest
             ],
 
             'dron_id' => ['required', 'integer', 'min:1'],
-            'vehiculo_id' => ['nullable', 'integer', 'min:1'],
-            'generador_id' => ['nullable', 'integer', 'min:1'],
             'bateria_ids' => ['nullable', 'array'],
             'bateria_ids.*' => ['integer', 'min:1', 'distinct'],
         ];

@@ -15,8 +15,7 @@
       (ver BateriasController::basesDisponibles()).
     - $estados (list<EstadoBateria>): opciones del select de estado (ver
       BateriasController) — la vista no importa el enum de dominio, solo
-      recorre `->value`/`->name`, mismo criterio que `$estados` en
-      `vehiculos/_formulario.blade.php`.
+      recorre `->value`/`->name`.
     - $resumenRelacionado (list<array{...}>|null): solo en edición, ver
       BateriasController::resumenRelacionado(). `null`/ausente en alta.
 

@@ -10,8 +10,7 @@ namespace App\Dominios\Comercial\Contratos;
  * no por campaña — evita que `Campania` tenga que conocer esa cadena de FKs.
  *
  * `facturado`/`hectareasContratadas` como `string` decimal (invariante 6 de
- * CLAUDE.md: dinero y hectáreas nunca `float`), mismo criterio que
- * `Finanzas\Contratos\DevengoPanel`.
+ * CLAUDE.md: dinero y hectáreas nunca `float`).
  */
 final readonly class DatosResumenComercialCampania
 {

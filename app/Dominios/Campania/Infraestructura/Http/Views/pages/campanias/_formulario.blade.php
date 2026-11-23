@@ -34,7 +34,7 @@
     — mismo criterio en alta y en edición.
 
     Aside pegajoso (§6.3.1 de la guía de pantalla, 15/9/2026): SOLO en
-    edición — una campaña recién creada no puede tener contratos, gastos ni
+    edición — una campaña recién creada no puede tener contratos ni
     trabajos todavía. Dos `summary-card` de solo lectura (Financiero,
     Trabajo), sin alternar con `empty-state`: a diferencia del resumen
     relacionado de cliente, acá el "dato" es una magnitud que siempre existe

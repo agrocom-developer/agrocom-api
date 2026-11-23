@@ -10,14 +10,12 @@ use Illuminate\Support\Carbon;
 
 /**
  * Equipamiento asignado a un equipo de trabajo, con vigencia (tarea 72,
- * HU-49, ADR 0015 punto 3): qué dron, vehículo o generador tenía asignado un
- * equipo en una fecha dada — resuelve hasta la unidad concreta un gasto que
- * antes no se podía imputar a nada.
+ * HU-49, ADR 0015 punto 3): qué dron o batería tenía asignado un equipo en una
+ * fecha dada.
  *
  * `recurso_tipo` + `recurso_id` es polimórfico A PROPÓSITO y SIN FK: el
  * destino depende del tipo y cruza dos módulos ajenos a Personal
- * (`ope_drones` en Operaciones; `man_vehiculos`/`man_generadores` en
- * Mantenimiento). Es la única excepción declarada a "FK real" de todo el ADR
+ * (`ope_drones` en Operaciones; `man_baterias` en Mantenimiento). Es la única excepción declarada a "FK real" de todo el ADR
  * 0015 (punto 3). La integridad la sostiene el caso de uso que asigna el
  * recurso —verificando que existe y está activo en su propia tabla antes de
  * guardar—, no un constraint de base; un test la cubre. Ver el docblock de

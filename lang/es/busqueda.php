@@ -40,9 +40,6 @@ return [
         'equipos_trabajo' => 'Cuadrillas',
         'bases' => 'Bases',
         'baterias' => 'Baterías',
-        'vehiculos' => 'Vehículos',
-        'generadores' => 'Generadores',
-        'repuestos' => 'Repuestos',
     ],
 
     'detalle' => [

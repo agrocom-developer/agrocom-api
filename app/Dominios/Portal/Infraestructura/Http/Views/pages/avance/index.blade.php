@@ -2,7 +2,7 @@
     Page: portal/avance/index (GET /portal/avance, portal.avance.index)
     HU-41 (tarea 55): avance comercial del contrato del cliente autenticado
     — hectáreas contratadas, aplicadas y monto facturado, SIN desglose de
-    costo (espec §13, "no ve": costos/márgenes/personal/gastos/inventario).
+    costo (espec §13, "no ve": costos/márgenes/personal).
 
     Datos esperados (ver AvancePortalController::index()): $userName, $tema
     (cáscara mínima de AutorizacionPortalCliente::cascara()) más:

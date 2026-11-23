@@ -38,8 +38,8 @@ return [
                 'subheadline' => 'Sesiones, mezclas y áreas cubiertas, trazables en tiempo real.',
             ],
             [
-                'headline' => 'Del campo a la planilla, sin perder un dato.',
-                'subheadline' => 'Los devengos se generan solos al validar cada sesión.',
+                'headline' => 'Del campo al acta, sin perder un dato.',
+                'subheadline' => 'Cada sesión validada deja sus hectáreas y su evidencia trazables.',
             ],
         ],
         'galeria_aria_label' => 'Elige qué imagen mostrar',
@@ -200,8 +200,8 @@ return [
         'meta' => [
             'dueno' => [
                 'nombre' => 'Dueño',
-                'descripcion' => 'Acceso total: finanzas, personas, contratos y gestión de otros dueños.',
-                'permisos' => ['Todos los módulos', 'Aprobar devengos', 'Ver costos'],
+                'descripcion' => 'Acceso total: personas, contratos y gestión de otros dueños.',
+                'permisos' => ['Todos los módulos', 'Validar sesiones', 'Ver contratos'],
             ],
             'piloto' => [
                 'nombre' => 'Piloto de dron',
@@ -220,7 +220,7 @@ return [
             ],
             'encargado_operaciones' => [
                 'nombre' => 'Encargado de operaciones',
-                'descripcion' => 'Administra usuarios, órdenes, stock y la planificación de la base.',
+                'descripcion' => 'Administra usuarios, órdenes y la planificación de la base.',
                 'permisos' => ['Operación', 'Recursos', 'Usuarios'],
             ],
             'admin_plataforma' => [
@@ -240,7 +240,7 @@ return [
     // vistas de carrusel/tabla de multimedia) se retiraron con ella.
     'dashboard' => [
         'titulo' => 'Operación de hoy',
-        'bajada' => ':fecha · lo que falta cerrar antes del corte de planilla.',
+        'bajada' => ':fecha · lo que falta cerrar hoy.',
         'viendo_como' => 'Viendo como :rol',
         'tabs_aria' => 'Vistas del dashboard',
         'tab_resumen' => 'Resumen',
@@ -290,18 +290,6 @@ return [
         'equipos_col_sesiones' => 'Sesiones',
         'equipos_col_ultimo' => 'Último vuelo',
 
-        'liquidacion_titulo' => 'Mi liquidación · :periodo',
-        'liquidacion_total' => 'Bs :monto',
-        'liquidacion_devengado' => 'Devengado',
-        'liquidacion_anticipos' => 'Anticipos',
-        'liquidacion_saldo' => 'Saldo',
-        'liquidacion_anticipos_detalle' => 'Anticipos del período',
-        'liquidacion_col_fecha' => 'Fecha',
-        'liquidacion_col_modalidad' => 'Pago',
-        'liquidacion_col_tarifa' => 'Tarifa',
-        'liquidacion_absorbido' => 'Cubierto por el jornal',
-        'liquidacion_col_monto' => 'Monto',
-
         'seccion_sesiones_estado' => 'Sesiones por estado',
         'seccion_hectareas_periodo' => 'Hectáreas aplicadas por día',
 
@@ -319,10 +307,6 @@ return [
         'dias_hacienda_valor' => ':dias días',
         'dias_hacienda_en_curso' => '{0} ninguna en curso|{1} :cantidad en curso|[2,*] :cantidad en curso',
         'dias_hacienda_solo_en_curso' => '{1} Hay :cantidad estadía en curso; sus días se suman al finalizarla.|[2,*] Hay :cantidad estadías en curso; sus días se suman al finalizarlas.',
-
-        'stock_titulo' => 'Stock bajo mínimo',
-        'stock_nivel' => ':cantidad / :minimo',
-        'stock_accion' => 'Ver inventario',
 
         // Vocabulario compartido por la leyenda del mapa y los badges del
         // resumen por lote: son los mismos estados operativos.
@@ -384,9 +368,6 @@ return [
         'tab_proceso_trabajos' => 'Proceso de los trabajos',
         'tab_resumen_vuelos' => 'Resumen de vuelos',
 
-        // Tabs del piloto y del ayudante (tarea 137): lo que devengan y el
-        // trabajo que hicieron.
-        'tab_mis_devengos' => 'Mis devengos',
         'tab_mis_trabajos' => 'Mis trabajos',
 
         // Tabs del jefe de campo (tarea 138): los recursos que se ocupan o
@@ -446,7 +427,7 @@ return [
         'vuelos_nota_semana' => 'Cada punto es una semana, de lunes a domingo; la fecha es la del lunes.',
 
         // Tablero del administrador de plataforma (tarea 139): el título y la
-        // bajada no hablan de operación ni de planilla; y sus dos tabs, las
+        // bajada no hablan de operación; y sus dos tabs, las
         // cuentas y los accesos, y la bitácora con los atajos a la
         // configuración.
         'titulo_tecnico' => 'Estado de la plataforma',
@@ -587,7 +568,7 @@ return [
         'aside_persona_sin_base' => 'Sin base',
         'aside_persona_accion' => 'Ver en Personas',
         'aside_persona_vacio_titulo' => 'Sin persona vinculada',
-        'aside_persona_vacio_detalle' => 'Sin persona, la cuenta no puede hacer lo que exige una persona, como aprobar una rendición. Vincúlala en «Persona y roles».',
+        'aside_persona_vacio_detalle' => 'Sin persona, la cuenta no puede hacer lo que exige una persona, como validar una sesión. Vincúlala en «Persona y roles».',
         'aside_persona_baja_titulo' => 'La persona ya no existe',
         'aside_persona_baja_detalle' => 'La persona vinculada fue dada de baja. Elige otra en «Persona y roles».',
         'aside_dispositivos_titulo' => 'Dispositivos',
@@ -967,7 +948,6 @@ return [
         'badge_contratos_en_ejecucion' => ':cantidad en ejecución',
         'badge_sesiones_pendientes' => ':cantidad sin validar',
         'badge_pausas_mes' => ':cantidad este mes',
-        'badge_stock_bajo_minimo' => ':cantidad bajo mínimo',
     ],
 
 ];

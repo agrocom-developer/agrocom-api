@@ -10,10 +10,10 @@ use Illuminate\Database\QueryException;
 
 /**
  * Edición de una batería del catálogo (HU-39, tarea 51), incluidos sus
- * ciclos acumulados: a diferencia de un monto ya validado (p. ej.
- * `fin_gastos`), acá SÍ se espera actualizar el contador con el uso — es el
+ * ciclos acumulados: a diferencia de un registro ya validado, acá SÍ
+ * se espera actualizar el contador con el uso — es el
  * dato que dispara la alerta de retiro (ver `ListarBaterias`). Mismo
- * criterio que `ActualizarVehiculo` para la traducción de la violación del
+ * criterio que `ActualizarFichaDron` para la traducción de la violación del
  * índice único parcial.
  *
  * `ciclos_inicial` (HU-83, tarea 98) NO se recibe acá a propósito: es

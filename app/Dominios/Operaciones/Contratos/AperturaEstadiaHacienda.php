@@ -5,9 +5,9 @@ namespace App\Dominios\Operaciones\Contratos;
 /**
  * DTO primitivo de entrada del contrato de escritura de `Operaciones` (ADR
  * 0003, regla 2; HU-51, tarea 74): la forma de un registro `estadia_entrada`
- * en el lote de `POST /api/sync`. `equipo_trabajo_id`, `propiedad_id` y
- * `vehiculo_id` ya vienen resueltos a id de servidor (el cliente los trae del
- * pull de catálogo), mismo criterio que `AperturaTrabajo::$ordenId`/`$loteId`.
+ * en el lote de `POST /api/sync`. `equipo_trabajo_id` y `propiedad_id`
+ * ya vienen resueltos a id de servidor (el cliente los trae del pull de
+ * catálogo), mismo criterio que `AperturaTrabajo::$ordenId`/`$loteId`.
  *
  * El constructor es privado a propósito, mismo motivo que `AperturaTrabajo`:
  * la única forma de obtener una instancia es `intentarDesdeArreglo()`, que
@@ -20,6 +20,9 @@ namespace App\Dominios\Operaciones\Contratos;
  * `propiedad_id` (ADR 0020): contrato externo con `agrocom-field`, renombrado
  * de `campo_id` en conjunto con esa app (rama `feature/sync-propiedad`) — sin
  * APK distribuido todavía, sin ventana de compatibilidad que cuidar.
+ *
+ * Una clave `vehiculo_id` que mande una app de campo anterior se ignora: la
+ * estadía no registra vehículo.
  *
  * `tipo_alojamiento` (19/9/2026, ver el docblock de
  * `Infraestructura/Eloquent/EstadiaHacienda`): OPCIONAL — una app de campo
@@ -39,7 +42,6 @@ final readonly class AperturaEstadiaHacienda
         public int $equipoTrabajoId,
         public int $propiedadId,
         public string $entrada,
-        public ?int $vehiculoId,
         public ?string $observacion,
         public ?string $tipoAlojamiento,
     ) {}
@@ -51,7 +53,6 @@ final readonly class AperturaEstadiaHacienda
             || ! self::esEntero($datos['equipo_trabajo_id'] ?? null)
             || ! self::esEntero($datos['propiedad_id'] ?? null)
             || ! self::esStringNoVacio($datos['entrada'] ?? null)
-            || ! self::esEnteroOAusente($datos['vehiculo_id'] ?? null)
             || ! self::esStringOAusente($datos['observacion'] ?? null)
             || ! self::esTipoAlojamientoOAusente($datos['tipo_alojamiento'] ?? null)
         ) {
@@ -63,7 +64,6 @@ final readonly class AperturaEstadiaHacienda
             equipoTrabajoId: (int) $datos['equipo_trabajo_id'],
             propiedadId: (int) $datos['propiedad_id'],
             entrada: (string) $datos['entrada'],
-            vehiculoId: isset($datos['vehiculo_id']) ? (int) $datos['vehiculo_id'] : null,
             observacion: isset($datos['observacion']) ? (string) $datos['observacion'] : null,
             tipoAlojamiento: isset($datos['tipo_alojamiento']) ? (string) $datos['tipo_alojamiento'] : null,
         );
@@ -87,10 +87,5 @@ final readonly class AperturaEstadiaHacienda
     private static function esEntero(mixed $valor): bool
     {
         return is_int($valor) || (is_string($valor) && ctype_digit($valor));
-    }
-
-    private static function esEnteroOAusente(mixed $valor): bool
-    {
-        return $valor === null || self::esEntero($valor);
     }
 }

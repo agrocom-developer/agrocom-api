@@ -8,11 +8,10 @@ use Illuminate\Validation\Rule;
 /**
  * `POST /panel/facturas` (HU-31, tarea 45). La autorización (permiso
  * `comercial.factura.crear`) se verifica en el controlador, contra el rol
- * activo — no acá, mismo criterio que `CrearAnticipoRequest`.
+ * activo — no acá.
  *
  * `acta_id` se valida por `exists:` contra la tabla física `ope_actas`, sin
- * importar el modelo Eloquent de `Operaciones` (ADR 0003, regla 3, mismo
- * criterio que `persona_id` en `CrearAnticipoRequest`) — es solo un chequeo
+ * importar el modelo Eloquent de `Operaciones` (ADR 0003, regla 3) — es solo un chequeo
  * de existencia por ID, no lógica cruzada. Que esté `firmada` y sin factura
  * previa son reglas de negocio reales, las valida `Aplicacion/EmitirFactura`
  * vía `ActaNoFacturable`.

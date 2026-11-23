@@ -27,7 +27,7 @@
  *    16px por debajo del campo en las 29 pantallas con filtros a la vez
  *    (reportado con captura por el usuario el 8/9/2026). Retirada el
  *    22/9/2026 (tarea 126): la última pantalla con `.ag-filtros`
- *    (Devengos) pasó a `filter-panel`, `components/filter-bar.css` quedó
+ *    pasó a `filter-panel`, `components/filter-bar.css` quedó
  *    sin uso y se borró — `filter-panel` apila sus campos, así que ese
  *    margen ahí es el comportamiento correcto, no el bug. Regla vigente
  *    para una fila de controles en línea nueva, documentada en

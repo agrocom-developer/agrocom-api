@@ -3,7 +3,7 @@
 namespace App\Dominios\Personal\Contratos;
 
 /**
- * Lo que Personal sabe de un recurso (dron, vehículo, generador o batería), en
+ * Lo que Personal sabe de un recurso (dron o batería), en
  * datos primitivos, para el resumen relacionado de su ficha en otro módulo
  * (ADR 0003, regla 2): cuántas cuadrillas lo tienen hoy, cuántas lo tuvieron
  * alguna vez y los códigos de las vigentes.

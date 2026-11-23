@@ -455,8 +455,7 @@ return [
 
         // Acomodaciones logísticas (HU-74, tarea 90): lo que Agrocom cubre
         // para el equipo de campo durante la ejecución del contrato. Solo se
-        // registra el dato — el costeo en Finanzas es alcance de una tarea
-        // futura.
+        // registra el dato.
         'seccion_logistica' => 'Logística',
         'campo_brinda_alimentacion' => 'Brinda alimentación',
         'campo_brinda_hospedaje' => 'Brinda hospedaje',

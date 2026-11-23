@@ -683,7 +683,6 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
                     'equipo_trabajo_id' => $datos->equipoTrabajoId,
                     'propiedad_id' => $datos->propiedadId,
                     'entrada' => self::normalizarUtc($datos->entrada),
-                    'vehiculo_id' => $datos->vehiculoId,
                     'tipo_alojamiento' => $datos->tipoAlojamiento,
                     'observacion' => $datos->observacion,
                 ]);

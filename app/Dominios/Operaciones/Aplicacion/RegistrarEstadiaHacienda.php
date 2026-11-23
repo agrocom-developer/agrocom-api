@@ -55,7 +55,6 @@ final class RegistrarEstadiaHacienda
         int $propiedadId,
         string $entrada,
         TipoAlojamiento $tipoAlojamiento,
-        ?int $vehiculoId,
         ?string $observacion,
         ?string $salida,
     ): EstadiaHacienda {
@@ -82,7 +81,6 @@ final class RegistrarEstadiaHacienda
             'propiedad_id' => $propiedadId,
             'entrada' => $entradaUtc,
             'salida' => $salidaUtc,
-            'vehiculo_id' => $vehiculoId,
             'tipo_alojamiento' => $tipoAlojamiento,
             'observacion' => $observacion,
             'cierre_uuid_cliente' => $salidaUtc !== null ? (string) Str::uuid() : null,

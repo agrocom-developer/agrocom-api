@@ -8,7 +8,7 @@
 
     Tres secciones, cada una con un propósito: QUIÉN y DÓNDE (cuadrilla y
     propiedad), CUÁNDO (entrada, y salida solo en el alta) y CÓMO (alojamiento,
-    vehículo, observación).
+    observación).
 
     La salida NO es un campo de la edición: una estadía en curso se cierra con
     el paso «Finalizada» de `molecules/step-arrow`, que abre el modal de
@@ -20,7 +20,7 @@
     - $estadia (EstadiaHacienda|null): null en alta; el modelo, en edición.
     - $equiposDisponibles (array<int, string>): cuadrillas para elegir; en
       edición trae solo la de la estadía (no se cambia).
-    - $propiedadesDisponibles, $vehiculosDisponibles (array<int, string>).
+    - $propiedadesDisponibles (array<int, string>).
     - $tiposAlojamiento (list<TipoAlojamiento>).
     - $equipoTrabajoIdPreseleccionado, $propiedadIdPreseleccionado (int|null,
       solo alta): accesos directos desde la ficha de la cuadrilla o de la
@@ -46,7 +46,6 @@
     $entrada = old('entrada', $estadia?->entrada?->format('Y-m-d\TH:i') ?? '');
     $salida = old('salida', '');
     $tipoAlojamiento = old('tipo_alojamiento', $estadia?->tipo_alojamiento?->value ?? '');
-    $vehiculoId = old('vehiculo_id', $estadia?->vehiculo_id ?? '');
     $observacion = old('observacion', $estadia?->observacion ?? '');
 
     $opcionesAlojamiento = collect($tiposAlojamiento)->mapWithKeys(fn ($tipo) => [
@@ -192,19 +191,6 @@
                 required
                 :disabled="$soloLectura"
                 :error="$errors->first('tipo_alojamiento')"
-            />
-
-            <x-atoms.select
-                name="vehiculo_id"
-                id="vehiculo_id"
-                icon="local_shipping"
-                :label="__('operaciones.estadias.campo_vehiculo')"
-                :options="$vehiculosDisponibles"
-                :value="$vehiculoId"
-                :placeholder="__('operaciones.estadias.campo_vehiculo_placeholder')"
-                :help="__('operaciones.estadias.campo_vehiculo_ayuda')"
-                :disabled="$soloLectura"
-                :error="$errors->first('vehiculo_id')"
             />
 
             <div class="ag-form-section__field--full">

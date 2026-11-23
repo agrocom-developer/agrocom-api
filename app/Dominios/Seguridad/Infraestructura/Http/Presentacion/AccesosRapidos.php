@@ -29,7 +29,7 @@ final class AccesosRapidos
             'panel.contratos.index',
             'panel.clientes.index',
             'panel.ordenes.index',
-            'panel.planillas.index',
+            'panel.campanias.index',
             'panel.reportes.comercial.index',
             'panel.facturas.index',
         ],
@@ -51,11 +51,9 @@ final class AccesosRapidos
         ],
         'piloto' => [
             'panel.dashboard',
-            'panel.devengos.index',
         ],
         'auxiliar' => [
             'panel.dashboard',
-            'panel.devengos.index',
         ],
         'admin_plataforma' => [
             'panel.usuarios.index',

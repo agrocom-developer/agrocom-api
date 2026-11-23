@@ -13,8 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * `RegistraBitacora` (invariante 9 de CLAUDE.md, HU-22): el alta, edición y
  * baja de un cliente es una mutación de negocio con autor y momento
  * auditables, aunque el esquema no la marque como catálogo de rol/permiso
- * (`tests/Unit/BitacoraAuditoriaTest.php` no la exige — se adopta igual,
- * mismo criterio que `DevengoPersonal` en Finanzas).
+ * (`tests/Unit/BitacoraAuditoriaTest.php` no la exige — se adopta igual).
  *
  * `tipo_persona` (ADR 0018, punto 3): física (unipersonal) o jurídica
  * (sociedad) — {@see TipoPersonaCliente}.

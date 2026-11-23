@@ -10,8 +10,8 @@
  * Los módulos y su vocabulario salen de la ESPECIFICACIÓN, no del mockup
  * (pedido explícito del 28/8/2026): §4 de
  * `docs/especificacion/especificacion_funcional_tecnica.md` — Comercial
- * (4.1), Recursos (4.2), Operación (4.3), Financiero (4.4), Mantenimiento e
- * inventario (4.5), Seguridad (4.6) — más Reportes (cap. 9/10). El mockup
+ * (4.1), Recursos (4.2), Operación (4.3), Financiero (4.4), Seguridad (4.6) —
+ * más Reportes (cap. 9/10). El mockup
  * aprobado fija el LAYOUT (riel + sidebar + badges); los nombres "Flota",
  * "Insumos", "Personas" y "Finanzas" que ese mockup inventaba se reemplazan
  * por las áreas reales del documento.
@@ -51,41 +51,21 @@ return [
 
     'recursos' => [
         'label' => 'Recursos',
-        'descripcion' => 'Drones, baterías, vehículos, generadores, bases, personal y fichas de inventario de dron.',
+        'descripcion' => 'Drones, baterías, bases, personal y fichas técnicas de dron.',
         'items' => [
             'drones' => 'Drones',
             'baterias' => 'Baterías',
-            'vehiculos' => 'Vehículos',
-            'generadores' => 'Generadores',
             'bases' => 'Bases',
             'personal' => 'Personal',
             'fichas_dron' => 'Fichas de dron',
         ],
     ],
 
-    'mantenimiento' => [
-        'label' => 'Mantenimiento',
-        'descripcion' => 'Planes, órdenes de mantenimiento, repuestos y stock por base.',
-        'items' => [
-            'ordenes' => 'Órdenes de mantenimiento',
-            'planes' => 'Planes de mantenimiento',
-            'repuestos' => 'Repuestos',
-            'stock' => 'Stock por base',
-        ],
-    ],
-
     'financiero' => [
         'label' => 'Financiero',
-        'descripcion' => 'Gastos, combustible, devengos, anticipos, planilla, tarifas de pago y facturación.',
+        'descripcion' => 'Facturación.',
         'items' => [
-            'gastos' => 'Gastos',
-            'combustible' => 'Combustible',
-            'rendiciones' => 'Rendiciones',
-            'devengos' => 'Devengos',
-            'planilla' => 'Planilla de pagos',
             'facturas' => 'Facturas y cobranzas',
-            'anticipos' => 'Anticipos',
-            'tarifas' => 'Tarifas de pago',
         ],
     ],
 

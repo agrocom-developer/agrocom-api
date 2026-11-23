@@ -18,7 +18,6 @@ use App\Dominios\Campania\Infraestructura\Http\Requests\CrearCampaniaRequest;
 use App\Dominios\Comercial\Contratos\LecturaResumenComercialCampania;
 use App\Dominios\Compartido\Infraestructura\Http\PasosDeEstado;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
-use App\Dominios\Finanzas\Contratos\LecturaGastoPorCampania;
 use App\Dominios\Operaciones\Contratos\LecturaTrabajosPorContrato;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Brick\Math\BigDecimal;
@@ -135,7 +134,6 @@ final class CampaniasController
         Request $request,
         Campania $campania,
         LecturaResumenComercialCampania $lecturaComercial,
-        LecturaGastoPorCampania $lecturaGasto,
         LecturaTrabajosPorContrato $lecturaTrabajos,
     ): View {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
@@ -156,12 +154,12 @@ final class CampaniasController
             'pasosEstado' => $pasosEstado,
             'ayudaEstado' => PasosDeEstado::ayuda($pasosEstado, 'campania.campania.estado_ayuda'),
             // `null` mientras la campaña sigue `planificada`: todavía no
-            // admite contratos ni gastos (invariante de negocio, no falta de
+            // admite contratos (invariante de negocio, no falta de
             // datos), así que el resumen financiero/de trabajo no tiene nada
             // real que mostrar — el formulario lo cambia por un empty-state.
             'resumenCampania' => $campania->estado === EstadoCampania::Planificada
                 ? null
-                : $this->resumenCampania($campania, $lecturaComercial, $lecturaGasto, $lecturaTrabajos),
+                : $this->resumenCampania($campania, $lecturaComercial, $lecturaTrabajos),
         ]);
     }
 
@@ -236,65 +234,43 @@ final class CampaniasController
 
     /**
      * Resumen financiero y de trabajo de la campaña, para el aside de
-     * `edit.blade.php` (§6.3.1 de docs/diseno/guia_pantalla_panel.md,
-     * pedido directo del 15/9/2026: "campaña va más con la parte financiera
-     * — cuándo se recaudó, cuánto se gastó — otro vínculo es cuánto trabajo
-     * se realizó, cuyo nexo son los contratos"). A diferencia de
-     * `ClientesController::resumenRelacionado()`, estas dos tarjetas no
-     * alternan con `empty-state`: son magnitudes que siempre tienen un
-     * valor (aunque sea cero), no un listado de registros con atajo de
-     * alta — por eso el shape es más chico (sin `tieneDatos`; `accion` acá
+     * `edit.blade.php` (§6.3.1 de docs/diseno/guia_pantalla_panel.md): cuánto
+     * se recaudó y cuánto trabajo se realizó, cuyo nexo son los contratos. A
+     * diferencia de `ClientesController::resumenRelacionado()`, estas dos
+     * tarjetas no alternan con `empty-state`: son magnitudes que siempre
+     * tienen un valor (aunque sea cero), no un listado de registros con atajo
+     * de alta — por eso el shape es más chico (sin `tieneDatos`; `accion` acá
      * es "ver detalle" en el listado real, no "crear").
      *
-     * Cross-módulo vía `Contratos/` (ADR 0003 regla 2), corregido el
-     * 16/9/2026 — la versión original de esta tarea hacía `DB::table`
-     * directo sobre `com_facturas`/`com_contratos`/`fin_gastos`/
-     * `fin_combustibles`/`ope_trabajos`/`ope_ordenes_aplicacion` con joins
-     * crudos entre tablas de tres módulos ajenos: pasaba el arch test
-     * (`ArquitecturaModulosTest`) porque `DB::table` no deja rastro de
-     * `Node\Name` para el analizador AST, pero violaba la frontera igual.
-     * Ahora {@see LecturaResumenComercialCampania} (Comercial: facturado,
-     * contratos, hectáreas contratadas y los `contratoIds` que necesita
-     * Operaciones), {@see LecturaGastoPorCampania} (Finanzas: gasto +
-     * combustible) y {@see LecturaTrabajosPorContrato} (Operaciones: cuenta
-     * de trabajos por la cadena contrato→orden→trabajo, resuelta DENTRO de
-     * Operaciones) hacen cada una lo suyo sin que Campania conozca sus
-     * tablas ni modelos Eloquent. "Trabajo realizado" sigue siendo una
-     * CUENTA de filas, no una suma de hectáreas filtrada por validación: esa
-     * regla es de `Operaciones`/`Comercial` (`ObtenerAvanceComercial`) y no
-     * se invoca desde acá sin ampliar esa frontera — pendiente si hace falta
-     * más precisión que un conteo.
+     * Cross-módulo vía `Contratos/` (ADR 0003 regla 2):
+     * {@see LecturaResumenComercialCampania} (Comercial: facturado, contratos,
+     * hectáreas contratadas y los `contratoIds` que necesita Operaciones) y
+     * {@see LecturaTrabajosPorContrato} (Operaciones: cuenta de trabajos por la
+     * cadena contrato→orden→trabajo, resuelta DENTRO de Operaciones) hacen
+     * cada una lo suyo sin que Campania conozca sus tablas ni modelos
+     * Eloquent. "Trabajo realizado" es una CUENTA de filas, no una suma de
+     * hectáreas filtrada por validación.
      *
      * Sumas en `Brick\Math\BigDecimal` (invariante 6 de CLAUDE.md) — cada
      * contrato ya devuelve sus montos como `string` decimal, nunca `float`;
      * el cast a float (`aMoneda()`) es solo para `number_format()`, mismo
      * criterio de presentación que ya usa `contratos/index.blade.php`.
      *
-     * Color y acción de "ver detalle" (pedido directo del 15/9/2026, mismo
-     * criterio que la tarjeta "Suscripción" de `panel/organizacion`): el
-     * balance y el conteo de contratos van con `variant` (success/danger/
-     * neutral, nunca ámbar — regla fija de `sistema_diseno_panel.md` §8)
-     * SIN `badge` — texto plano coloreado (`molecules/summary-card`,
-     * corregido el mismo día), no la píldora: un badge tiene padding propio
-     * que corre el dígito a la izquierda del resto de la columna de cifras
-     * de la tarjeta, aunque la píldora en sí calce con el borde derecho
-     * (bug real, visto en el panel andando). Cada tarjeta enlaza al listado
-     * real ya filtrable por `campania_id` (`GastosController`/
-     * `ContratosController` — `panel.facturas.index` NO tiene ese filtro
-     * todavía, así que "Recaudado" queda sin acción propia).
+     * Cada tarjeta enlaza al listado real: `panel.facturas.index` para lo
+     * recaudado y `panel.contratos.index`, ya filtrable por `campania_id`, para
+     * el trabajo. El conteo de contratos va con `variant` (success/neutral,
+     * nunca ámbar — regla fija de `sistema_diseno_panel.md` §8) SIN `badge`:
+     * texto plano coloreado (`molecules/summary-card`), no la píldora.
      *
      * @return list<array{titulo: string, items: list<array{label: string, value: string, mono?: bool, badge?: bool, variant?: string}>, accion: array{label: string, href: string}}>
      */
     private function resumenCampania(
         Campania $campania,
         LecturaResumenComercialCampania $lecturaComercial,
-        LecturaGastoPorCampania $lecturaGasto,
         LecturaTrabajosPorContrato $lecturaTrabajos,
     ): array {
         $resumenComercial = $lecturaComercial->resumen($campania->id);
         $montoFacturado = BigDecimal::of($resumenComercial->facturado);
-        $montoGastado = BigDecimal::of($lecturaGasto->totalGastado($campania->id));
-        $balance = $montoFacturado->minus($montoGastado);
 
         $totalContratos = $resumenComercial->totalContratos;
         $hectareasContratadas = BigDecimal::of($resumenComercial->hectareasContratadas);
@@ -305,17 +281,10 @@ final class CampaniasController
                 'titulo' => __('campania.campanias.aside_financiero_titulo'),
                 'items' => [
                     ['label' => __('campania.campanias.aside_recaudado'), 'value' => $this->aMoneda($montoFacturado), 'mono' => true],
-                    ['label' => __('campania.campanias.aside_gastado'), 'value' => $this->aMoneda($montoGastado), 'mono' => true],
-                    [
-                        'label' => __('campania.campanias.aside_balance'),
-                        'value' => $this->aMoneda($balance),
-                        'mono' => true,
-                        'variant' => $balance->isNegative() ? 'danger' : ($balance->isZero() ? 'neutral' : 'success'),
-                    ],
                 ],
                 'accion' => [
                     'label' => __('campania.campanias.aside_financiero_accion'),
-                    'href' => route('panel.gastos.index', ['campania_id' => $campania->id]),
+                    'href' => route('panel.facturas.index'),
                 ],
             ],
             [

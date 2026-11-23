@@ -19,7 +19,7 @@
     agrupamiento en pestañas, ya resuelto por rol activo — acá solo se decide
     si cada tab tiene contenido (alguna de sus claves cayó en `visibles`).
     `tecnico` (bool, tarea 139): el rol activo no es del negocio, así que el
-    encabezado no habla de operación ni de planilla. `puedeVerComo` (bool) y
+    encabezado no habla de operación. `puedeVerComo` (bool) y
     `candidatosVerComo` (array|null, forma de ListarCandidatosVerComo::ejecutar()):
     el botón «Cambiar vista» del encabezado y su modal solo se pintan con el
     permiso `seguridad.usuario.ver_como` — mismo permiso reservado del flujo

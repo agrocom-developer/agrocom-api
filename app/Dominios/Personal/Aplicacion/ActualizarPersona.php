@@ -6,7 +6,7 @@ use App\Dominios\Personal\Infraestructura\Eloquent\PerPersona;
 
 /**
  * Edición de una persona operativa (HU-26, tarea 37). Sin ninguna regla de
- * dinero: la tarifa dejó de ser de la persona (ADR 0023).
+ * dinero.
  */
 final class ActualizarPersona
 {

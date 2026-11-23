@@ -25,7 +25,6 @@ final class ActualizarEstadiaRequest extends FormRequest
             'propiedad_id' => ['required', 'integer', Rule::exists('com_propiedades', 'id')->whereNull('deleted_at')],
             'entrada' => ['required', 'date'],
             'tipo_alojamiento' => ['required', new Enum(TipoAlojamiento::class)],
-            'vehiculo_id' => ['nullable', 'integer', Rule::exists('man_vehiculos', 'id')->whereNull('deleted_at')],
             'observacion' => ['nullable', 'string'],
         ];
     }
@@ -39,7 +38,6 @@ final class ActualizarEstadiaRequest extends FormRequest
             'entrada.required' => __('operaciones.estadias.error_entrada_requerida'),
             'tipo_alojamiento.required' => __('operaciones.estadias.error_alojamiento_requerido'),
             'tipo_alojamiento.enum' => __('operaciones.estadias.error_alojamiento_invalido'),
-            'vehiculo_id.exists' => __('operaciones.estadias.error_vehiculo_invalido'),
         ];
     }
 }

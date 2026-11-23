@@ -3,8 +3,7 @@
     Alta de una pausa con causa atribuible (HU-44, tarea 58) — arquetipo
     Formulario, §6.3 de docs/diseno/guia_pantalla_panel.md. Sin partial
     `_formulario` compartido con una edición: no existe caso de uso de
-    edición — este archivo ES el formulario completo (mismo criterio que
-    `gastos/create.blade.php`).
+    edición — este archivo ES el formulario completo.
 
     Homogeneizado con el patrón de Estadías (tarea 113): `form-layout` sin
     aside (no hay ficha de edición, así que no hay resumen relacionado),

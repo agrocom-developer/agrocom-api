@@ -6,8 +6,6 @@ use App\Dominios\Comercial\Contratos\LecturaPropiedades;
 use App\Dominios\Comercial\Contratos\PropiedadCatalogo;
 use App\Dominios\Compartido\Infraestructura\Http\PasosDeEstado;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
-use App\Dominios\Mantenimiento\Contratos\LecturaEquipamiento;
-use App\Dominios\Mantenimiento\Contratos\RecursoCatalogo;
 use App\Dominios\Operaciones\Aplicacion\ActualizarEstadiaHacienda;
 use App\Dominios\Operaciones\Aplicacion\EliminarEstadiaHacienda;
 use App\Dominios\Operaciones\Aplicacion\FinalizarEstadiaHacienda;
@@ -46,11 +44,10 @@ use Illuminate\View\View;
  * regla de negocio acá: los casos de uso de `Aplicacion/` hacen el trabajo,
  * y la transición de estado la resuelve `TransicionesEstadia` (invariante 7).
  *
- * Los selects de `equipo_trabajo_id`/`propiedad_id`/`vehiculo_id` (y las
+ * Los selects de `equipo_trabajo_id`/`propiedad_id` (y las
  * etiquetas de la tabla) se arman por `Contratos/` (ADR 0003 regla 2) —
- * `Personal\Contratos\LecturaEquipoTrabajo`, `Comercial\Contratos\LecturaPropiedades`
- * y `Mantenimiento\Contratos\LecturaEquipamiento` — nunca `DB::table` directo
- * sobre tablas de otro módulo (como hacía la versión anterior de esta clase).
+ * `Personal\Contratos\LecturaEquipoTrabajo` y `Comercial\Contratos\LecturaPropiedades`
+ * — nunca `DB::table` directo sobre tablas de otro módulo.
  *
  * `LecturaEquipoTrabajo` no ofrece "listar todas las cuadrillas" ni "buscar
  * por texto" (solo `vigentesAFecha()`, `porIds()`, `integrantesAFecha()`) —
@@ -91,7 +88,6 @@ final class EstadiasHaciendaController
         private readonly AutorizacionPanelWeb $autorizacion,
         private readonly LecturaEquipoTrabajo $equipos,
         private readonly LecturaPropiedades $propiedades,
-        private readonly LecturaEquipamiento $equipamiento,
     ) {}
 
     public function index(Request $request, ListarEstadiasHacienda $listarEstadias): View
@@ -124,7 +120,6 @@ final class EstadiasHaciendaController
 
         $equipoIdsPagina = $estadias->pluck('equipo_trabajo_id')->unique()->values()->all();
         $propiedadIdsPagina = $estadias->pluck('propiedad_id')->unique()->values()->all();
-        $vehiculoIdsPagina = $estadias->pluck('vehiculo_id')->filter()->unique()->values()->all();
 
         return view('operaciones::pages.estadias.index', [
             ...$this->autorizacion->cascara($request),
@@ -133,7 +128,6 @@ final class EstadiasHaciendaController
             // pantalla): nunca el catálogo entero para pintar una tabla de 15 filas.
             'etiquetasEquipo' => $this->etiquetasEquipoPorIds($equipoIdsPagina),
             'etiquetasPropiedad' => $this->etiquetasPropiedadPorIds($propiedadIdsPagina),
-            'etiquetasVehiculo' => $this->etiquetasVehiculoPorIds($vehiculoIdsPagina),
             'equiposDisponibles' => $this->equiposDisponibles(),
             'propiedadesDisponibles' => $this->propiedadesDisponiblesMapa(),
             'resumen' => $listarEstadias->resumen($desde, $hasta, $equipoTrabajoId, $propiedadId, $estado, $tipoAlojamiento, $busqueda, $equipoIdsCoincidentes, $propiedadIdsCoincidentes),
@@ -170,7 +164,6 @@ final class EstadiasHaciendaController
             ...$this->autorizacion->cascara($request),
             'equiposDisponibles' => $this->equiposDisponibles(),
             'propiedadesDisponibles' => $this->propiedadesDisponiblesMapa(),
-            'vehiculosDisponibles' => $this->vehiculosDisponiblesMapa(),
             'tiposAlojamiento' => TipoAlojamiento::cases(),
             'equipoTrabajoIdPreseleccionado' => $request->integer('equipo_trabajo_id') ?: null,
             'propiedadIdPreseleccionado' => $request->integer('propiedad_id') ?: null,
@@ -193,7 +186,6 @@ final class EstadiasHaciendaController
                 (int) $datos['propiedad_id'],
                 (string) $datos['entrada'],
                 TipoAlojamiento::from((string) $datos['tipo_alojamiento']),
-                $this->enteroONull($datos['vehiculo_id'] ?? null),
                 $this->cadenaONull($datos['observacion'] ?? null),
                 $this->cadenaONull($datos['salida'] ?? null),
             );
@@ -240,7 +232,6 @@ final class EstadiasHaciendaController
             // deshabilitado y solo necesita la etiqueta de la suya.
             'equiposDisponibles' => $this->etiquetasEquipoPorIds([$estadia->equipo_trabajo_id]),
             'propiedadesDisponibles' => $this->propiedadesDisponiblesMapa(),
-            'vehiculosDisponibles' => $this->vehiculosDisponiblesMapa(),
             'tiposAlojamiento' => TipoAlojamiento::cases(),
             'resumenRelacionado' => $this->resumenRelacionado($estadia, $request),
         ]);
@@ -258,7 +249,6 @@ final class EstadiasHaciendaController
                 (int) $datos['propiedad_id'],
                 (string) $datos['entrada'],
                 TipoAlojamiento::from((string) $datos['tipo_alojamiento']),
-                $this->enteroONull($datos['vehiculo_id'] ?? null),
                 $this->cadenaONull($datos['observacion'] ?? null),
             );
         } catch (EstadiaYaFinalizada $excepcion) {
@@ -476,17 +466,6 @@ final class EstadiasHaciendaController
     }
 
     /**
-     * @param  list<int>  $ids
-     * @return array<int, string>
-     */
-    private function etiquetasVehiculoPorIds(array $ids): array
-    {
-        return collect($this->equipamiento->porIds(LecturaEquipamiento::TIPO_VEHICULO, $ids))
-            ->map(fn (RecursoCatalogo $vehiculo): string => $vehiculo->etiqueta())
-            ->all();
-    }
-
-    /**
      * Cuadrillas que puede ofrecer el filtro y el select de alta: vigentes
      * HOY (pueden recibir una estadía nueva) ∪ las que ya tienen alguna
      * estadía registrada (para poder filtrar el histórico aunque la
@@ -511,14 +490,6 @@ final class EstadiasHaciendaController
     {
         return collect($this->propiedades->disponibles())
             ->mapWithKeys(fn (PropiedadCatalogo $propiedad): array => [$propiedad->id => $propiedad->etiqueta()])
-            ->all();
-    }
-
-    /** @return array<int, string> */
-    private function vehiculosDisponiblesMapa(): array
-    {
-        return collect($this->equipamiento->vehiculosDisponibles())
-            ->mapWithKeys(fn (RecursoCatalogo $vehiculo): array => [$vehiculo->id => $vehiculo->etiqueta()])
             ->all();
     }
 
@@ -555,11 +526,6 @@ final class EstadiasHaciendaController
             ->pluck('equipo_trabajo_id')
             ->map(fn (int|string $id): int => (int) $id)
             ->all();
-    }
-
-    private function enteroONull(mixed $valor): ?int
-    {
-        return $valor === null || $valor === '' ? null : (int) $valor;
     }
 
     private function cadenaONull(mixed $valor): ?string

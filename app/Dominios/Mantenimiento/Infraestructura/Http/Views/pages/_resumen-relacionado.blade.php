@@ -1,6 +1,6 @@
 {{--
     Partial: resumen relacionado del aside de una ficha de edición de
-    Mantenimiento (batería, generador, vehículo, ficha de dron) — §6.3.1 de
+    Mantenimiento (batería, ficha de dron) — §6.3.1 de
     docs/diseno/guia_pantalla_panel.md.
 
     Recorre las tarjetas que arma el controlador (ver

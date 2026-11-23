@@ -3,8 +3,6 @@
 namespace App\Dominios\Seguridad\Infraestructura\Http\Presentacion;
 
 use App\Dominios\Comercial\Contratos\LecturaContadoresPanel as LecturaContadoresPanelComercial;
-use App\Dominios\Finanzas\Contratos\LecturaContadoresPanel as LecturaContadoresPanelFinanzas;
-use App\Dominios\Inventario\Contratos\LecturaContadoresPanel as LecturaContadoresPanelInventario;
 use App\Dominios\Notificaciones\Contratos\AlertasDeCuenta;
 use App\Dominios\Notificaciones\Contratos\LecturaNotificaciones;
 use App\Dominios\Notificaciones\Contratos\NotificacionPanel;
@@ -55,8 +53,6 @@ final class CascaraPanel
         private readonly LecturaContadoresPanelOperaciones $contadoresOperaciones,
         private readonly LecturaContadoresPanelComercial $contadoresComercial,
         private readonly LecturaPanelOperaciones $panelOperaciones,
-        private readonly LecturaContadoresPanelInventario $contadoresInventario,
-        private readonly LecturaContadoresPanelFinanzas $contadoresFinanzas,
         private readonly LecturaNotificaciones $notificacionesDelMotor,
     ) {}
 
@@ -143,25 +139,6 @@ final class CascaraPanel
                 'numero' => (string) $sesionesPendientes,
                 'texto' => __('seguridad.respuestas.badge_sesiones_pendientes', ['cantidad' => $sesionesPendientes]),
             ];
-        }
-
-        $stockBajoMinimo = $this->contadoresInventario->stockBajoMinimo();
-        if ($stockBajoMinimo > 0) {
-            $badges['menu.mantenimiento.items.stock'] = [
-                'numero' => (string) $stockBajoMinimo,
-                'texto' => __('seguridad.respuestas.badge_stock_bajo_minimo', ['cantidad' => $stockBajoMinimo]),
-            ];
-        }
-
-        if ($usuario->persona_id !== null) {
-            $devengado = $this->contadoresFinanzas->devengadoDelMes($usuario->persona_id);
-            if ((float) $devengado > 0) {
-                $devengadoFormateado = number_format((float) $devengado, 0, ',', '.');
-                $badges['menu.financiero.items.devengos'] = [
-                    'numero' => $devengadoFormateado,
-                    'texto' => __('seguridad.dashboard.liquidacion_total', ['monto' => $devengadoFormateado]),
-                ];
-            }
         }
 
         return $badges;

@@ -46,7 +46,7 @@ final class CrearBateria
     /**
      * Traduce la violación del índice único parcial a una excepción de
      * dominio legible — mismo criterio que
-     * `CrearVehiculo::relanzarComoDuplicado`. El formato del mensaje
+     * `CrearFichaDron::relanzarComoDuplicado`. El formato del mensaje
      * difiere por driver: Postgres nombra el índice
      * (`man_baterias_identificador_unico`); SQLite (motor de los tests)
      * nombra tabla.columna (`man_baterias.identificador`).

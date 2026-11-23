@@ -74,7 +74,7 @@ final class EntregarNotificacion
         try {
             // Transacción propia: dentro de una mayor es un SAVEPOINT, así una
             // violación de unicidad atrapada no deja abortada la de afuera en
-            // Postgres (mismo recurso que el devengo, ADR 0023).
+            // Postgres.
             DB::transaction(static fn (): Notificacion => Notificacion::create([
                 'usuario_id' => $usuarioId,
                 'tipo' => $armada->tipo,

@@ -15,8 +15,8 @@ use Illuminate\Database\Eloquent\Builder;
  *
  * Una sesión cuenta si la persona es su piloto o su auxiliar (`piloto_id` /
  * `auxiliar_id`); el soft delete de `ModeloDominio` deja afuera las dadas de
- * baja. «Validada» es `EstadoSesion::Validado`, el único estado que dispara el
- * devengo (invariante 3): una sesión rechazada sigue `Cerrado`.
+ * baja. «Validada» es `EstadoSesion::Validado`: una sesión rechazada sigue
+ * `Cerrado`.
  */
 final class LecturaSesionesPorPersonaEloquent implements LecturaSesionesPorPersona
 {

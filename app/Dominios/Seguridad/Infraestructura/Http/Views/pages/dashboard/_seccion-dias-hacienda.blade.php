@@ -1,7 +1,7 @@
 {{--
     Partial del dashboard: días efectivos en hacienda del mes, por cuadrilla y
-    por propiedad (HU-102, 19/9/2026). Es la cuenta que justifica el gasto
-    imputado a cada cuadrilla — cuántos días estuvo y dónde —, y vive ACÁ y no
+    por propiedad (HU-102, 19/9/2026). Es la cuenta de cuántos días estuvo
+    cada cuadrilla y dónde, y vive ACÁ y no
     en el listado de estadías: esa pantalla es para operar (registrar,
     finalizar), y un total de todo el mes debajo de una tabla paginada queda
     escondido y se lee como si fuera de esa página.

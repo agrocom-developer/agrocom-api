@@ -4,7 +4,6 @@ namespace App\Dominios\Personal\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Compartido\Aplicacion\ResolverProveedorMapa;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
-use App\Dominios\Inventario\Contratos\LecturaStockPorBase;
 use App\Dominios\Mantenimiento\Contratos\LecturaEquipamientoPorBase;
 use App\Dominios\Personal\Aplicacion\ActualizarBase;
 use App\Dominios\Personal\Aplicacion\CrearBase;
@@ -90,7 +89,6 @@ final class BasesController
         Request $request,
         PerBase $base,
         LecturaEquipamientoPorBase $lecturaEquipamiento,
-        LecturaStockPorBase $lecturaStock,
         ResolverProveedorMapa $resolverProveedorMapa,
     ): View {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
@@ -98,7 +96,7 @@ final class BasesController
         return view('personal::pages.bases.edit', [
             ...$this->autorizacion->cascara($request),
             'base' => $base,
-            'resumenRelacionado' => $this->resumenRelacionado($base, $request, $lecturaEquipamiento, $lecturaStock),
+            'resumenRelacionado' => $this->resumenRelacionado($base, $request, $lecturaEquipamiento),
             'proveedorMapa' => $resolverProveedorMapa->ejecutar(),
         ]);
     }
@@ -137,7 +135,7 @@ final class BasesController
     /**
      * Resumen relacionado del aside de `edit()` (solo edición, §6.3.1 de la
      * guía de pantalla): una base recién creada no puede tener todavía
-     * personas, cuadrillas, equipamiento ni stock. Cuatro tarjetas, cada una
+     * personas, cuadrillas ni equipamiento. Tres tarjetas, cada una
      * gateada por el permiso de LO QUE MUESTRA contra el ROL ACTIVO
      * (invariante 10), no por `personal.base.*`: ver cuántas personas tiene la
      * base es ver personas. Una categoría sin `.ver` NI `.crear` se omite
@@ -145,8 +143,8 @@ final class BasesController
      * conteos.
      *
      * Personas y Cuadrillas son del mismo módulo (Eloquent directo).
-     * Equipamiento y Stock son de Mantenimiento e Inventario: llegan por sus
-     * contratos de lectura (ADR 0003, regla 2), nunca por sus tablas.
+     * Equipamiento es de Mantenimiento: llega por su contrato de lectura
+     * (ADR 0003, regla 2), nunca por sus tablas.
      *
      * @return list<array{titulo: string, icono: string, tieneDatos: bool, items: list<array<string, mixed>>, vacioTitulo: string, vacioDetalle: string, acciones: list<array{label: string, href: string, icono?: string}>}>
      */
@@ -154,7 +152,6 @@ final class BasesController
         PerBase $base,
         Request $request,
         LecturaEquipamientoPorBase $lecturaEquipamiento,
-        LecturaStockPorBase $lecturaStock,
     ): array {
         $resumen = [];
 
@@ -235,78 +232,21 @@ final class BasesController
             ];
         }
 
-        // 3) Equipamiento con esta base (Mantenimiento, por contrato). Un
-        // permiso por tipo: cada fila del resumen solo aparece si el rol
-        // puede ver ese catálogo; sin ninguno, la tarjeta se omite.
-        $tiposVisibles = collect([
-            'vehiculos' => 'mantenimiento.vehiculo.ver',
-            'generadores' => 'mantenimiento.generador.ver',
-            'baterias' => 'mantenimiento.bateria.ver',
-        ])->filter(fn (string $permiso): bool => $this->autorizacion->tienePermiso($request, $permiso));
-
-        if ($tiposVisibles->isNotEmpty()) {
-            $equipamiento = $lecturaEquipamiento->deBase($base->id);
-            $cifras = ['vehiculos' => $equipamiento->vehiculos, 'generadores' => $equipamiento->generadores, 'baterias' => $equipamiento->baterias];
-            $items = [];
-
-            foreach ($tiposVisibles->keys() as $tipo) {
-                $items[] = ['label' => __('personal.bases.aside_equipamiento_'.$tipo), 'value' => (string) $cifras[$tipo], 'mono' => true];
-            }
+        // 3) Baterías con esta base (Mantenimiento, por contrato). Solo
+        // aparece si el rol puede ver el catálogo de baterías.
+        if ($this->autorizacion->tienePermiso($request, 'mantenimiento.bateria.ver')) {
+            $baterias = $lecturaEquipamiento->deBase($base->id)->baterias;
 
             $resumen[] = [
                 'titulo' => __('personal.bases.aside_equipamiento_titulo'),
-                'icono' => 'local_shipping',
-                'tieneDatos' => $tiposVisibles->keys()->sum(fn (string $tipo): int => $cifras[$tipo]) > 0,
-                'items' => $items,
+                'icono' => 'battery_charging_full',
+                'tieneDatos' => $baterias > 0,
+                'items' => [
+                    ['label' => __('personal.bases.aside_equipamiento_baterias'), 'value' => (string) $baterias, 'mono' => true],
+                ],
                 'vacioTitulo' => __('personal.bases.aside_equipamiento_vacio_titulo'),
                 'vacioDetalle' => __('personal.bases.aside_equipamiento_vacio_detalle'),
                 'acciones' => [],
-            ];
-        }
-
-        // 4) Stock de repuestos en la base (Inventario, por contrato).
-        $puedeVerStock = $this->autorizacion->tienePermiso($request, 'inventario.movimiento.ver');
-        $puedeRegistrarStock = $this->autorizacion->tienePermiso($request, 'inventario.movimiento.crear');
-
-        if ($puedeVerStock || $puedeRegistrarStock) {
-            $stock = $puedeVerStock ? $lecturaStock->deBase($base->id) : null;
-            $repuestos = $stock->repuestos ?? 0;
-            $bajoMinimo = $stock->bajoMinimo ?? 0;
-
-            $acciones = [];
-
-            if ($puedeVerStock && $repuestos > 0) {
-                $acciones[] = [
-                    'label' => __('personal.bases.aside_stock_accion_ver'),
-                    'href' => route('panel.stock.index', ['base_id' => $base->id]),
-                    'icono' => 'list',
-                ];
-            }
-
-            if ($puedeRegistrarStock) {
-                $acciones[] = [
-                    'label' => __('personal.bases.aside_stock_accion_registrar'),
-                    'href' => route('panel.stock.movimientos.create', $origenNavegacion),
-                    'icono' => 'add',
-                ];
-            }
-
-            $resumen[] = [
-                'titulo' => __('personal.bases.aside_stock_titulo'),
-                'icono' => 'warehouse',
-                'tieneDatos' => $repuestos > 0,
-                'items' => [
-                    ['label' => __('personal.bases.aside_stock_repuestos'), 'value' => (string) $repuestos, 'mono' => true],
-                    [
-                        'label' => __('personal.bases.aside_stock_bajo_minimo'),
-                        'value' => (string) $bajoMinimo,
-                        'mono' => true,
-                        'variant' => $bajoMinimo > 0 ? 'warning' : 'neutral',
-                    ],
-                ],
-                'vacioTitulo' => __('personal.bases.aside_stock_vacio_titulo'),
-                'vacioDetalle' => __('personal.bases.aside_stock_vacio_detalle'),
-                'acciones' => $acciones,
             ];
         }
 

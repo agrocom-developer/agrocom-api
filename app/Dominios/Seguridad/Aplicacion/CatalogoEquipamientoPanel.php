@@ -12,8 +12,8 @@ use App\Dominios\Personal\Contratos\LecturaEquipoTrabajo;
  * Resuelve el EQUIPAMIENTO de una cuadrilla para el dashboard (tarea 138): qué
  * recursos tiene asignados hoy, cómo se llaman y en qué estado están. Ningún
  * módulo lo tiene entero — la asignación es de `Personal`, el dron es de
- * `Operaciones` y el vehículo, el generador, las baterías y el estado de todos
- * son de `Mantenimiento` (ADR 0003, regla 3) —, así que se arma acá, cada
+ * `Operaciones` y las baterías y el estado de ambos son de `Mantenimiento`
+ * (ADR 0003, regla 3) —, así que se arma acá, cada
  * parte por su contrato.
  *
  * Mismo criterio que {@see CatalogoNombresPanel}: se instancia por request,
@@ -26,8 +26,6 @@ final class CatalogoEquipamientoPanel
     /** Orden en que se listan los recursos de una cuadrilla: lo que vuela primero. */
     private const TIPOS = [
         LecturaEstadoEquipamiento::TIPO_DRON,
-        LecturaEquipamiento::TIPO_VEHICULO,
-        LecturaEquipamiento::TIPO_GENERADOR,
         LecturaEquipamiento::TIPO_BATERIA,
     ];
 

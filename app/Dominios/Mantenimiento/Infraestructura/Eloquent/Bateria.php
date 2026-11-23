@@ -12,15 +12,14 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
  * para el detalle de columnas y constraints.
  *
  * `base_id` es un entero plano — sin `belongsTo(PerBase::class)`: es una FK
- * hacia otro módulo (`Personal`), prohibido por ADR 0003 regla 3, mismo
- * criterio que `Vehiculo::base_id`.
+ * hacia otro módulo (`Personal`), prohibido por ADR 0003 regla 3.
  *
  * `estado` no es una máquina de estados de negocio (CLAUDE.md invariante 7
  * no aplica a este campo, ver docblock de la migración y `EstadoBateria`).
  *
  * `RegistraBitacora` (invariante 9 de CLAUDE.md): el alta, edición y baja
  * de una batería desde el panel es una mutación de negocio con autor y
- * momento auditables, mismo criterio que `Vehiculo`.
+ * momento auditables.
  *
  * @property int $id
  * @property string $identificador

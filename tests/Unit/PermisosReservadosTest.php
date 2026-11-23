@@ -18,7 +18,7 @@ use Tests\TestCase;
  * Tarea 140 (cierre de la decisión abierta) — `seguridad.usuario.ver_como` es un
  * permiso de plataforma: solo el rol `admin_plataforma` puede tenerlo. Sin esto,
  * el propio administrador de plataforma podía delegárselo desde la matriz de
- * permisos a un rol de negocio, que entonces vería como un dueño y leería finanzas.
+ * permisos a un rol de negocio, que entonces vería como un dueño y leería sus contratos.
  *
  * Contra el ESQUEMA REAL (las migraciones de seguridad y de la bitácora, en SQLite
  * en memoria) y el caso de uso real:

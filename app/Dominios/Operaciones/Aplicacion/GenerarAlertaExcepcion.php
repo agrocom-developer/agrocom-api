@@ -25,8 +25,7 @@ use Illuminate\Database\QueryException;
  *
  * Idempotente por el índice único parcial correspondiente de `ope_alertas`
  * (uno por `tipo`, ver la migración): cada método intenta el `INSERT`
- * directo y trata la violación de unicidad como "ya aplicada" — mismo patrón
- * que `Finanzas\Aplicacion\GenerarDevengosSesion::generarPara()`, nunca un
+ * directo y trata la violación de unicidad como "ya aplicada" — nunca un
  * `SELECT` previo (invariante 1 de CLAUDE.md, extendida a esta tabla).
  */
 final class GenerarAlertaExcepcion

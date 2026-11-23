@@ -23,8 +23,7 @@
     - $filtros (array{desde,hasta,cliente_id,campania_id}): valores
       aplicados, para dejar el formulario con el estado tras el submit.
     - $vinculos (list): aside "Relacionado" — ficha de la persona, cuadrillas
-      que integra hoy y, solo si es la propia persona del usuario
-      autenticado, sus devengos. Sin timeline: no hay bitácora antes/después
+      que integra hoy. Sin timeline: no hay bitácora antes/después
       todavía (invariante 9, pendiente) que reconstruir para esta ficha.
 
     Gateada por `personal.persona.desempenio` — permiso PROPIO, separado de

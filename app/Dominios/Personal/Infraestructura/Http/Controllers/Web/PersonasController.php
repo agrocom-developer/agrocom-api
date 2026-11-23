@@ -3,7 +3,6 @@
 namespace App\Dominios\Personal\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
-use App\Dominios\Finanzas\Contratos\LecturaAnticiposPorPersona;
 use App\Dominios\Operaciones\Contratos\LecturaSesionesPorPersona;
 use App\Dominios\Personal\Aplicacion\ActualizarPersona;
 use App\Dominios\Personal\Aplicacion\CrearPersona;
@@ -34,8 +33,7 @@ use Illuminate\View\View;
  * (`personal.persona.ver`/`.crear`/`.editar`/`.eliminar`), verificados
  * DENTRO del controlador contra el ROL ACTIVO vía {@see AutorizacionPanelWeb}
  * — mismo criterio que el resto del panel. Ninguna regla de negocio acá: los
- * casos de uso de `Aplicacion/` hacen el trabajo. La tarifa ya no se edita
- * acá (ADR 0023): es del trabajo, no de la persona.
+ * casos de uso de `Aplicacion/` hacen el trabajo.
  */
 final class PersonasController
 {
@@ -48,9 +46,6 @@ final class PersonasController
     private const PERMISO_ELIMINAR = 'personal.persona.eliminar';
 
     private const PERMISO_DESEMPENIO = 'personal.persona.desempenio';
-
-    /** Del módulo Finanzas (ADR 0003 regla 2): solo para decidir si se ofrece el enlace "sus devengos" del aside de `desempenio()`. */
-    private const PERMISO_DEVENGO = 'finanzas.devengo.ver';
 
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
@@ -109,7 +104,6 @@ final class PersonasController
         PerPersona $persona,
         LecturaUsuarioDePersona $lecturaUsuario,
         LecturaSesionesPorPersona $lecturaSesiones,
-        LecturaAnticiposPorPersona $lecturaAnticipos,
     ): View {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
 
@@ -119,7 +113,7 @@ final class PersonasController
             'rolesOperativos' => RolOperativoPersona::cases(),
             'basesDisponibles' => $this->basesActivas(),
             'volverA' => session('volverA'),
-            'resumenRelacionado' => $this->resumenRelacionado($persona, $request, $lecturaUsuario, $lecturaSesiones, $lecturaAnticipos),
+            'resumenRelacionado' => $this->resumenRelacionado($persona, $request, $lecturaUsuario, $lecturaSesiones),
         ]);
     }
 
@@ -185,14 +179,7 @@ final class PersonasController
 
     /**
      * "Relacionado" del aside de `desempenio()` (arquetipo Detalle, tarea
-     * 125): la ficha de la persona, las cuadrillas que integra hoy y, solo
-     * si `$persona` ES la propia persona del usuario autenticado, sus
-     * devengos — `DevengosController::show()` hace 404 ante cualquier otra
-     * `persona_id`, sin importar el permiso del actor (identidad, no
-     * permiso — ver su docblock). No se inventa un contrato de lectura
-     * cruzado para ver los devengos de OTRA persona: `AutorizacionPanelWeb::personaId()`
-     * (ya usado en el resto del panel) es suficiente para decidir si
-     * corresponde ofrecer el enlace.
+     * 125): la ficha de la persona y las cuadrillas que integra hoy.
      *
      * @return list<array{href: string, icon: string, title: string, meta: ?string, tone: string}>
      */
@@ -228,39 +215,22 @@ final class PersonasController
             }
         }
 
-        $personaIdAutenticada = $this->autorizacion->personaId($request);
-
-        if ($personaIdAutenticada === $persona->id && $this->autorizacion->tienePermiso($request, self::PERMISO_DEVENGO)) {
-            $vinculos[] = [
-                'href' => route('panel.devengos.show', $persona->id),
-                'icon' => 'payments',
-                'title' => __('personal.desempenio.vinculo_devengos'),
-                'meta' => null,
-                'tone' => 'success',
-            ];
-        }
-
         return $vinculos;
     }
 
     /**
      * Resumen relacionado del aside de `edit()` (solo edición, §6.3.1 de la
      * guía de pantalla): una persona recién creada no puede tener todavía
-     * cuadrillas, usuario, sesiones ni anticipos. Cuatro tarjetas, cada una
+     * cuadrillas, usuario ni sesiones. Tres tarjetas, cada una
      * gateada por el permiso de LO QUE MUESTRA contra el ROL ACTIVO
-     * (invariante 10), no por `personal.persona.*`: ver los anticipos de una
-     * persona es ver anticipos. Una categoría sin `.ver` NI `.crear` se omite
-     * del todo; con `.crear` pero sin `.ver` se ofrece el atajo sin revelar
-     * cifras. Cuadrillas y sesiones no tienen atajo de alta: una persona entra
-     * a una cuadrilla desde la ficha de la cuadrilla y las sesiones llegan por
-     * la app de campo.
+     * (invariante 10), no por `personal.persona.*`. Una categoría sin `.ver`
+     * se omite del todo. Cuadrillas y sesiones no tienen atajo de alta: una
+     * persona entra a una cuadrilla desde la ficha de la cuadrilla y las
+     * sesiones llegan por la app de campo.
      *
-     * Cuadrillas es del mismo módulo (Eloquent directo). Usuario, sesiones y
-     * anticipos son de Seguridad, Operaciones y Finanzas: llegan por sus
-     * contratos de lectura (ADR 0003, regla 2), nunca por sus tablas. Los
-     * devengos NO se muestran: cada persona ve los suyos
-     * (`finanzas.devengo.ver`) y no existe un permiso para verlos desde otra
-     * ficha.
+     * Cuadrillas es del mismo módulo (Eloquent directo). Usuario y sesiones
+     * son de Seguridad y Operaciones: llegan por sus contratos de lectura
+     * (ADR 0003, regla 2), nunca por sus tablas.
      *
      * @return list<array{titulo: string, icono: string, tieneDatos: bool, items: list<array<string, mixed>>, vacioTitulo: string, vacioDetalle: string, acciones: list<array{label: string, href: string, icono?: string}>}>
      */
@@ -269,7 +239,6 @@ final class PersonasController
         Request $request,
         LecturaUsuarioDePersona $lecturaUsuario,
         LecturaSesionesPorPersona $lecturaSesiones,
-        LecturaAnticiposPorPersona $lecturaAnticipos,
     ): array {
         $resumen = [];
 
@@ -395,49 +364,6 @@ final class PersonasController
                     'href' => route('panel.personas.desempenio', $persona),
                     'icono' => 'insights',
                 ]] : [],
-            ];
-        }
-
-        // 4) Anticipos (Finanzas, por contrato).
-        $puedeVerAnticipos = $this->autorizacion->tienePermiso($request, 'finanzas.anticipo.ver');
-        $puedeCrearAnticipos = $this->autorizacion->tienePermiso($request, 'finanzas.anticipo.crear');
-
-        if ($puedeVerAnticipos || $puedeCrearAnticipos) {
-            $anticipos = $puedeVerAnticipos ? $lecturaAnticipos->dePersona($persona->id) : null;
-            $cantidad = $anticipos->cantidad ?? 0;
-            $acciones = [];
-
-            if ($puedeVerAnticipos && $cantidad > 0) {
-                $acciones[] = [
-                    'label' => __('personal.personas.aside_anticipos_accion_ver'),
-                    'href' => route('panel.anticipos.index', ['persona_id' => $persona->id]),
-                    'icono' => 'list',
-                ];
-            }
-
-            if ($puedeCrearAnticipos) {
-                $acciones[] = [
-                    'label' => __('personal.personas.aside_anticipos_accion_registrar'),
-                    'href' => route('panel.anticipos.create', ['persona_id' => $persona->id, ...$origenNavegacion]),
-                    'icono' => 'add',
-                ];
-            }
-
-            $resumen[] = [
-                'titulo' => __('personal.personas.aside_anticipos_titulo'),
-                'icono' => 'payments',
-                'tieneDatos' => $cantidad > 0,
-                'items' => [
-                    ['label' => __('personal.personas.aside_anticipos_cantidad'), 'value' => (string) $cantidad, 'mono' => true],
-                    [
-                        'label' => __('personal.personas.aside_anticipos_total'),
-                        'value' => __('personal.personas.aside_anticipos_valor', ['monto' => $anticipos->montoTotal ?? '0.00']),
-                        'mono' => true,
-                    ],
-                ],
-                'vacioTitulo' => __('personal.personas.aside_anticipos_vacio_titulo'),
-                'vacioDetalle' => __('personal.personas.aside_anticipos_vacio_detalle'),
-                'acciones' => $acciones,
             ];
         }
 

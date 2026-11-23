@@ -1,8 +1,8 @@
 <?php
 
 /*
- * Copy de vocabulario del dominio Mantenimiento (HU-40, tarea 50: flota de
- * vehículos; HU-39, tarea 51: catálogo de baterías). Mismo criterio que
+ * Copy de vocabulario del dominio Mantenimiento (HU-39, tarea 51: catálogo
+ * de baterías; HU-82, tarea 97: ficha técnica del dron). Mismo criterio que
  * lang/es/operaciones.php: las claves de estado nunca se hardcodean en la
  * vista, se resuelven acá contra el valor crudo que viaja como dato (ADR
  * 0013).
@@ -10,36 +10,21 @@
 
 return [
 
-    // Estado descriptivo de un vehículo (EstadoVehiculo) — compartido por el
-    // filtro, el badge del listado y el select del formulario. 'pausa'
-    // (HU-84, tarea 99): baja temporal, distinta de 'taller' (en reparación)
-    // y de 'de_baja' (definitiva).
-    'estado' => [
-        'activo' => 'Activo',
-        'taller' => 'En taller',
-        'de_baja' => 'De baja',
-        'pausa' => 'En pausa',
-    ],
-
-    // Estado descriptivo de una batería (EstadoBateria) — mismo patrón que
-    // 'estado' arriba, namespace propio para no confundir "activo"
-    // (vehículo) con "activa" (batería) aunque hoy no colisionen.
+    // Estado descriptivo de una batería (EstadoBateria): compartido por el
+    // filtro, el badge del listado y el select del formulario.
     'estado_bateria' => [
         'activa' => 'Activa',
         'retirada' => 'Retirada',
         'mantenimiento' => 'En mantenimiento',
     ],
 
-    // Estado de un dron. No tiene uno propio: se deduce de sus órdenes de
-    // mantenimiento (con alguna abierta está en mantenimiento).
+    // Estado de un dron. No tiene uno propio: figura siempre operativo.
     'estado_dron' => [
         'operativo' => 'Operativo',
-        'en_mantenimiento' => 'En mantenimiento',
     ],
 
-    // Tarjetas del resumen relacionado que comparten batería, generador y
-    // vehículo: las cuadrillas que lo tienen asignado y el combustible que se
-    // le cargó.
+    // Tarjeta del resumen relacionado de una batería: las cuadrillas que la
+    // tienen asignada.
     'aside' => [
         'cuadrillas_titulo' => 'Cuadrillas',
         'cuadrillas_vigentes' => 'Vigentes',
@@ -47,192 +32,12 @@ return [
         'cuadrillas_actual' => 'Actual',
         'cuadrillas_vacio_titulo' => 'Sin cuadrillas',
         'cuadrillas_accion_ver' => 'Ver cuadrillas',
-        'combustible_titulo' => 'Combustible',
-        'combustible_cargas' => 'Cargas registradas',
-        'combustible_litros' => 'Litros cargados',
-        'litros_valor' => ':cantidad L',
-        'combustible_vacio_titulo' => 'Sin cargas de combustible',
-        'combustible_accion_ver' => 'Ver cargas',
-        'combustible_accion_cargar' => 'Cargar combustible',
-        'monto_valor' => 'Bs :monto',
-
-        // Resumen de una orden de mantenimiento cerrada.
-        'orden_equipo_titulo_dron' => 'Dron intervenido',
-        'orden_equipo_titulo_vehiculo' => 'Vehículo intervenido',
-        'orden_equipo_identificador' => 'Identificador',
-        'orden_equipo_detalle' => 'Modelo',
-        'orden_equipo_ordenes' => 'Órdenes del equipo',
-        'orden_equipo_abiertas' => 'Todavía abiertas',
-        'orden_equipo_vacio_titulo' => 'Equipo dado de baja',
-        'orden_equipo_vacio_detalle' => 'El equipo de esta orden ya no está en el catálogo. La orden conserva su registro igual, pero no hay ficha a la que ir.',
-        'orden_equipo_accion_dron' => 'Ver el dron',
-        'orden_equipo_accion_vehiculo' => 'Ver el vehículo',
-        'orden_repuestos_titulo' => 'Repuestos consumidos',
-        'orden_repuestos_lineas' => 'Repuestos distintos',
-        'orden_repuestos_unidades' => 'Unidades',
-        'orden_repuestos_costo' => 'Costo',
-        'orden_repuestos_vacio_titulo' => 'Sin repuestos consumidos',
-        'orden_repuestos_vacio_detalle' => 'El cierre de esta orden no descontó ningún repuesto del stock.',
-        'orden_repuestos_accion' => 'Ver el stock',
-        'orden_gasto_titulo' => 'Gasto generado',
-        'orden_gasto_numero' => 'Gasto',
-        'orden_gasto_monto' => 'Monto',
-        'orden_gasto_vacio_titulo' => 'Sin gasto imputado',
-        'orden_gasto_vacio_detalle' => 'El cierre de esta orden no generó ningún gasto, porque no consumió repuestos.',
-        'orden_gasto_accion' => 'Ver los gastos',
-
-        // Resumen de un plan de mantenimiento.
-        'plan_drones_titulo' => 'Drones del modelo',
-        'plan_drones_total' => 'Drones',
-        'plan_drones_con_horas' => 'Con horas registradas',
-        'plan_drones_en_umbral' => 'En el umbral o pasados',
-        'plan_drones_vacio_titulo' => 'Ningún dron de este modelo',
-        'plan_drones_vacio_detalle' => 'Todavía no hay drones cargados con este modelo, así que el plan no alerta por nadie. El modelo se compara por texto exacto con el de cada dron.',
-        'plan_drones_accion' => 'Ver los drones',
-        'plan_ordenes_titulo' => 'Mantenimiento de esos drones',
-        'plan_ordenes_total' => 'Órdenes',
-        'plan_ordenes_abiertas' => 'Abiertas',
-        'plan_ordenes_vacio_titulo' => 'Sin órdenes para esos drones',
-        'plan_ordenes_vacio_detalle' => 'Ningún dron de este modelo tiene órdenes de mantenimiento. El sistema no abre órdenes solo por la alerta del plan: se abren a mano desde Órdenes de mantenimiento.',
-        'plan_ordenes_accion' => 'Ver las órdenes',
-    ],
-
-    // Pantalla de panel "Recursos › Vehículos" (HU-40, tarea 50): alta y
-    // mantenimiento de la flota de vehículos, con su asignación a base y
-    // estado. Ficha completa (marca, modelo, año, combustible, 4x4,
-    // kilometraje inicial y actual) y estado 'pausa': HU-84, tarea 99. Tipo
-    // de vehículo (catálogo cerrado, incluye 'chata'): HU-90, tarea 105.
-    'vehiculos' => [
-        'titulo' => 'Vehículos',
-        'subtitulo' => 'Flota de vehículos registrada, con su base asignada y estado.',
-        'nuevo' => 'Nuevo vehículo',
-        'filtro_busqueda_placeholder' => 'Identificador…',
-        'filtro_base' => 'Base',
-        'filtro_estado' => 'Estado',
-        'filtro_todos' => 'Todos',
-        'vacio_titulo' => 'Todavía no hay vehículos registrados',
-        'vacio_detalle' => 'Este catálogo se completa a medida que se dan de alta vehículos nuevos a la flota. En cuanto se registre el primer vehículo, vas a verlo acá.',
-        'filtro_vacio_titulo' => 'Sin resultados para estos filtros',
-        'filtro_vacio_detalle' => 'Ningún vehículo coincide con la búsqueda o los filtros elegidos. Prueba con otro identificador o quita un filtro.',
-        'col_identificador' => 'Identificador',
-        'col_base' => 'Base',
-        'col_estado' => 'Estado',
-        'sin_base' => '—',
-        'editar' => 'Editar',
-        'eliminar_accion' => 'Eliminar',
-        'confirmar_eliminar_titulo' => 'Eliminar vehículo',
-        'confirmar_baja' => '¿Confirmas la baja de este vehículo?',
-        'paginacion_aria' => 'Paginación de vehículos',
-        'titulo_crear' => 'Nuevo vehículo',
-        'titulo_editar' => 'Editar vehículo',
-        'subtitulo_form' => 'Identificador, ficha de inventario, base asignada y estado del vehículo.',
-        'seccion_datos' => 'Datos del vehículo',
-        'seccion_ficha' => 'Ficha del vehículo',
-        'seccion_kilometraje' => 'Kilometraje',
-        'unidad_km' => 'km',
-        'campos_contador' => ':cantidad campos',
-        'campo_identificador' => 'Identificador',
-        'campo_tipo' => 'Tipo',
-        'campo_tipo_placeholder' => 'Sin especificar',
-        'campo_marca' => 'Marca',
-        'campo_modelo' => 'Modelo',
-        'campo_anio' => 'Año',
-        'campo_combustible' => 'Combustible',
-        'campo_combustible_placeholder' => 'Sin especificar',
-        'campo_es_4x4' => 'Es 4x4',
-        'campo_kilometraje_inicial' => 'Kilometraje inicial',
-        'campo_kilometraje_inicial_ayuda' => 'Con cuántos kilómetros entró el vehículo a la flota.',
-        'campo_kilometraje_actual' => 'Kilometraje actual',
-        'campo_base' => 'Base',
-        'campo_base_placeholder' => 'Sin asignar',
-        'campo_estado' => 'Estado',
-        'combustible' => [
-            'gasolina' => 'Gasolina',
-            'diesel' => 'Diésel',
-        ],
-        'tipo' => [
-            'camioneta' => 'Camioneta',
-            'camion' => 'Camión',
-            'moto' => 'Moto',
-            'chata' => 'Chata',
-        ],
-        'estado_form' => 'Los cambios se guardan al confirmar.',
-        'creado' => 'Vehículo creado correctamente.',
-        'actualizado' => 'Vehículo actualizado correctamente.',
-        'eliminado' => 'Vehículo dado de baja correctamente.',
-        'volver' => 'Volver a vehículos',
-        'aside_ordenes_titulo' => 'Órdenes de mantenimiento',
-        'aside_ordenes_abiertas' => 'Abiertas',
-        'aside_ordenes_total' => 'En total',
-        'aside_ordenes_vacio_titulo' => 'Sin órdenes de mantenimiento',
-        'aside_ordenes_vacio_detalle' => 'Todavía no se abrió ninguna orden de mantenimiento para este vehículo. Al abrir una, elige este vehículo como equipo.',
-        'aside_ordenes_accion_abrir' => 'Abrir orden',
-        'aside_cuadrillas_vacio_detalle' => 'Ninguna cuadrilla tiene asignado este vehículo. Se asigna desde la ficha de la cuadrilla.',
-        'aside_estadias_titulo' => 'Estadías en hacienda',
-        'aside_estadias_en_curso' => 'En curso',
-        'aside_estadias_total' => 'En total',
-        'aside_estadias_vacio_titulo' => 'Sin estadías',
-        'aside_estadias_vacio_detalle' => 'Este vehículo todavía no se usó en una estadía en hacienda. Al registrar una, elígelo como vehículo.',
-        'aside_estadias_accion_ver' => 'Ver estadías',
-        'aside_estadias_accion_registrar' => 'Registrar estadía',
-        'aside_combustible_vacio_detalle' => 'Ninguna carga de combustible se imputó a este vehículo. Al registrar una, elígelo como recurso.',
-    ],
-
-    // Pantalla de panel "Recursos › Generadores" (tarea 72, HU-49, ADR 0015
-    // punto 3): ABM mínimo del catálogo de generadores. Mismo molde de
-    // claves que 'vehiculos' arriba, con campos extra opcionales (modelo,
-    // horas inicial y actual).
-    'generadores' => [
-        'titulo' => 'Generadores',
-        'subtitulo' => 'Catálogo de generadores registrado, con su modelo, base asignada, estado y horas inicial/actual.',
-        'nuevo' => 'Nuevo generador',
-        'filtro_busqueda_placeholder' => 'Identificador…',
-        'filtro_base' => 'Base',
-        'filtro_estado' => 'Estado',
-        'filtro_todos' => 'Todos',
-        'vacio_titulo' => 'Todavía no hay generadores registrados',
-        'vacio_detalle' => 'Este catálogo se completa a medida que se dan de alta generadores nuevos. En cuanto se registre el primer generador, vas a verlo acá.',
-        'filtro_vacio_titulo' => 'Sin resultados para estos filtros',
-        'filtro_vacio_detalle' => 'Ningún generador coincide con la búsqueda o los filtros elegidos. Prueba con otro identificador o quita un filtro.',
-        'col_identificador' => 'Identificador',
-        'col_modelo' => 'Modelo',
-        'col_base' => 'Base',
-        'col_estado' => 'Estado',
-        'sin_modelo' => '—',
-        'sin_base' => '—',
-        'editar' => 'Editar',
-        'eliminar_accion' => 'Eliminar',
-        'confirmar_eliminar_titulo' => 'Eliminar generador',
-        'confirmar_baja' => '¿Confirmas la baja de este generador?',
-        'paginacion_aria' => 'Paginación de generadores',
-        'titulo_crear' => 'Nuevo generador',
-        'titulo_editar' => 'Editar generador',
-        'subtitulo_form' => 'Identificador, modelo, base asignada, estado y horas inicial/actual del generador.',
-        'seccion_datos' => 'Datos del generador',
-        'seccion_horas' => 'Horas de uso',
-        'unidad_horas' => 'h',
-        'campos_contador' => ':cantidad campos',
-        'campo_identificador' => 'Identificador',
-        'campo_modelo' => 'Modelo',
-        'campo_base' => 'Base',
-        'campo_base_placeholder' => 'Sin asignar',
-        'campo_estado' => 'Estado',
-        'campo_horas_inicial' => 'Horas inicial',
-        'campo_horas_inicial_ayuda' => 'Con cuántas horas entró el generador a la flota.',
-        'campo_horas_actual' => 'Horas actual',
-        'estado_form' => 'Los cambios se guardan al confirmar.',
-        'creado' => 'Generador creado correctamente.',
-        'actualizado' => 'Generador actualizado correctamente.',
-        'eliminado' => 'Generador dado de baja correctamente.',
-        'volver' => 'Volver a generadores',
-        'aside_cuadrillas_vacio_detalle' => 'Ninguna cuadrilla tiene asignado este generador. Se asigna desde la ficha de la cuadrilla.',
-        'aside_combustible_vacio_detalle' => 'Ninguna carga de combustible se imputó a este generador. Al registrar una, elígelo como recurso.',
     ],
 
     // Pantalla de panel "Recursos › Baterías" (HU-39, tarea 51): ABM del
     // catálogo de baterías, con sus ciclos acumulados, estado, base
     // asignada y la alerta de retiro calculada por fila (ver
-    // ListarBaterias). Mismo molde de claves que 'vehiculos' arriba.
+    // ListarBaterias).
     'baterias' => [
         'titulo' => 'Baterías',
         'subtitulo' => 'Catálogo de baterías registrado, con sus ciclos acumulados, estado y base asignada.',
@@ -351,239 +156,24 @@ return [
         'aside_dron_vacio_detalle' => 'No hay un dron activo con el identificador :identificador. Regístralo en el catálogo de drones con ese mismo identificador.',
         'aside_dron_accion_ver' => 'Ver dron',
         'aside_dron_accion_crear' => 'Crear dron',
-        'aside_ordenes_titulo' => 'Órdenes de mantenimiento',
-        'aside_ordenes_abiertas' => 'Abiertas',
-        'aside_ordenes_total' => 'En total',
-        'aside_ordenes_vacio_titulo' => 'Sin órdenes de mantenimiento',
-        'aside_ordenes_vacio_detalle' => 'Todavía no se abrió ninguna orden de mantenimiento para el dron :identificador. Al abrir una, elígelo como equipo.',
-        'aside_ordenes_accion_abrir' => 'Abrir orden',
-        'aside_planes_titulo' => 'Planes preventivos',
-        'aside_planes_total' => 'Planes del modelo',
-        'aside_planes_vacio_titulo' => 'Sin planes preventivos',
-        'aside_planes_vacio_detalle' => 'Ningún plan de mantenimiento preventivo aplica al modelo de este dron. Los planes se definen por modelo de dron.',
-        'aside_planes_accion_ver' => 'Ver planes',
-        'aside_planes_accion_crear' => 'Crear plan',
-    ],
-
-    // La orden de mantenimiento como objeto: los dos estados de su máquina y
-    // qué significa cada uno. Lo comparten el badge del listado, los pasos de
-    // la ficha y el modal de cierre.
-    'orden' => [
-        'estado' => [
-            'abierta' => 'Abierta',
-            'cerrada' => 'Cerrada',
-        ],
-
-        'estado_ayuda' => [
-            'abierta' => 'La orden está abierta: el trabajo sobre el equipo todavía no se dio por terminado. Al cerrarla se descuenta el stock de los repuestos que se usaron y se genera el gasto con lo que costaron.',
-            'cerrada' => 'La orden está cerrada: quedó registrado qué se hizo, se descontó el stock de los repuestos y se generó el gasto. Una orden cerrada no se reabre; si aparece algo nuevo, abre otra orden para el mismo equipo.',
-        ],
-    ],
-
-    // Tipo de orden de mantenimiento (man_ordenes_mantenimiento.tipo).
-    'tipo_orden' => [
-        'preventivo' => 'Preventivo',
-        'correctivo' => 'Correctivo',
-    ],
-
-    // Tipo de equipo de una orden (man_ordenes_mantenimiento.equipo_tipo) —
-    // sin 'generador': no existe catálogo de generadores en este alcance.
-    'equipo_tipo' => [
-        'dron' => 'Dron',
-        'vehiculo' => 'Vehículo',
-    ],
-
-    // Pantalla de panel "Mantenimiento › Órdenes" (HU-37, tarea 53): apertura
-    // y cierre de órdenes de mantenimiento, con la máquina de estados que
-    // consume repuestos e imputa el gasto. Mismo molde de claves que
-    // 'vehiculos'/'baterias' arriba para listado/alta; el detalle/cierre
-    // ('edit') suma sus propias claves al final.
-    'ordenes' => [
-        'titulo' => 'Órdenes de mantenimiento',
-        'subtitulo' => 'Órdenes abiertas y cerradas, con el equipo, el tipo y el estado de cada una.',
-        'nuevo' => 'Nueva orden',
-        'filtro_estado' => 'Estado',
-        'filtro_equipo_tipo' => 'Equipo',
-        'filtro_todos' => 'Todos',
-        'filtro_busqueda_placeholder' => 'Busca por equipo o descripción',
-        'kpi_abiertas' => 'Abiertas',
-        'kpi_cerradas' => 'Cerradas',
-        'kpi_correctivas' => 'Correctivas',
-        'kpi_correctivas_pie' => 'Trabajo que no estaba previsto',
-        'kpi_demora' => 'Espera más larga',
-        'kpi_demora_sufijo' => 'días',
-        'kpi_demora_pie' => 'De la orden abierta más antigua',
-        'vacio_titulo' => 'Todavía no hay órdenes de mantenimiento',
-        'vacio_detalle' => 'Las órdenes de mantenimiento se crean para registrar el trabajo realizado en drones y vehículos. En cuanto se abra la primera orden, vas a verla acá.',
-        'filtro_vacio_titulo' => 'Ninguna orden coincide con la búsqueda',
-        'filtro_vacio_detalle' => 'Prueba con otro equipo, otro estado o menos palabras.',
-        'col_equipo' => 'Equipo',
-        'col_tipo' => 'Tipo',
-        'col_estado' => 'Estado',
-        'col_fecha_apertura' => 'Apertura',
-        'col_fecha_cierre' => 'Cierre',
-        'sin_fecha_cierre' => '—',
-        'ver_accion' => 'Ver',
-        'aviso_cierre_titulo' => 'El cierre se completa en la ficha',
-        'aviso_cierre_mensaje' => 'Para cerrar una orden hace falta la descripción final del trabajo y los repuestos que se consumieron. Abre la ficha y completa el cierre ahí.',
-        'aviso_cierre_accion' => 'Abrir la ficha',
-        'paginacion_aria' => 'Paginación de órdenes de mantenimiento',
-
-        'titulo_crear' => 'Nueva orden de mantenimiento',
-        'subtitulo_form' => 'Equipo, tipo y descripción de la orden.',
-        'titulo_ficha' => 'Orden de mantenimiento',
-        'subtitulo_ficha' => 'Datos con los que se abrió la orden y, si sigue abierta, su cierre consumiendo repuestos.',
-        'seccion_datos' => 'Datos de la orden',
-        'campos_contador' => ':cantidad campos',
-        'campo_equipo' => 'Equipo',
-        'campo_equipo_tipo' => 'Tipo de equipo',
-        'campo_equipo_tipo_placeholder' => 'Selecciona un tipo de equipo',
-        'campo_equipo_dron' => 'Dron',
-        'campo_equipo_dron_placeholder' => 'Selecciona un dron',
-        'campo_equipo_vehiculo' => 'Vehículo',
-        'campo_equipo_vehiculo_placeholder' => 'Selecciona un vehículo',
-        'campo_tipo' => 'Tipo de orden',
-        'campo_tipo_placeholder' => 'Selecciona un tipo de orden',
-        'campo_descripcion' => 'Descripción',
-        'campo_descripcion_ayuda' => 'Qué hay que revisar o reparar. Es lo que verá quien tome la orden.',
-        'campo_descripcion_lectura_ayuda' => 'Así se registró al abrir la orden. Los datos de apertura no se editan: si algo cambió, se cierra esta orden y se abre otra.',
-        'estado_form' => 'Los cambios se guardan al confirmar.',
-        'estado_ficha' => 'El cierre descuenta stock y genera el gasto. No se deshace.',
-        'creada' => 'Orden de mantenimiento creada correctamente.',
-        'detalle_fecha_apertura' => 'Fecha de apertura',
-        'detalle_fecha_cierre' => 'Fecha de cierre',
-        'detalle_gasto_valor' => 'Gasto #:id',
-
-        // Pasos de la máquina de estados en la ficha (tarea 116).
-        'estado_pasos_aria' => 'Estado de la orden de mantenimiento',
-        'estado_cambio_de_a' => 'Cambio de estado: de :desde a :hacia',
-
-        // Repuestos: el selector del cierre mientras la orden está abierta, y
-        // lo que se consumió de verdad una vez cerrada.
-        'seccion_repuestos' => 'Repuestos',
-        'repuestos_contador' => ':cantidad en el catálogo',
-        'repuestos_consumidos_contador' => ':cantidad consumidos',
-        'col_repuesto' => 'Repuesto',
-        'col_disponible' => 'Disponible',
-        'col_cantidad' => 'Cantidad',
-        'col_base' => 'Base',
-        'col_costo' => 'Costo',
-        'campo_base_orden' => 'Base de la orden',
-        'campo_base_orden_placeholder' => 'Elige una base para ver la disponibilidad',
-        'campo_base_orden_ayuda' => 'Se aplica a todos los repuestos elegidos. Puedes cambiarla para uno en particular.',
-        'campo_base_placeholder' => 'Selecciona una base',
-        'campo_cantidad_aria' => 'Cantidad de :repuesto',
-        'campo_base_aria' => 'Base de :repuesto',
-        'repuesto_sin_base' => 'Elige una base.',
-        'repuesto_disponible' => 'Disponible: :cantidad',
-        'repuesto_aviso_stock' => 'La cantidad supera el stock disponible (:disponible).',
-        'resumen_vacio' => 'Todavía no elegiste ningún repuesto.',
-        'resumen_contador' => ':cantidad repuestos elegidos',
-        'paginacion_repuestos' => 'Paginación de repuestos consumidos',
-        'catalogo_vacio_titulo' => 'Todavía no hay repuestos en el catálogo',
-        'catalogo_vacio_detalle' => 'Sin repuestos cargados no hay nada que consumir. Puedes cerrar la orden igual: el cierre no exige repuestos.',
-        'repuestos_sin_permiso_titulo' => 'Solo quien cierra la orden elige los repuestos',
-        'repuestos_sin_permiso_detalle' => 'Con tu rol puedes mirar la orden, pero no cerrarla ni descontar repuestos del stock.',
-        'consumos_vacio_titulo' => 'Sin repuestos consumidos',
-        'consumos_vacio_detalle' => 'El cierre de esta orden no descontó ningún repuesto del stock.',
-
-        'seccion_cierre' => 'Cierre de la orden',
-        'seccion_cierre_ayuda' => 'El cierre descuenta el stock de cada repuesto y genera el gasto correspondiente. Si el stock de algún repuesto no alcanza, la orden no se cierra y no se descuenta ni se imputa nada.',
-        'campo_descripcion_final' => 'Descripción final',
-        'campo_descripcion_final_ayuda' => 'Qué se hizo realmente al cerrar la orden — no reemplaza la descripción de apertura.',
-        'cierre_sin_permiso_titulo' => 'No puedes cerrar esta orden',
-        'cierre_sin_permiso_detalle' => 'El cierre lo registra quien tiene el permiso de cerrar órdenes de mantenimiento. Mientras tanto, la orden queda abierta.',
-        'boton_cerrar' => 'Cerrar orden',
-        'confirmar_cierre_titulo' => 'Cerrar la orden de mantenimiento',
-        'confirmar_cierre' => 'El cierre descuenta del stock los repuestos elegidos y genera el gasto con lo que costaron. No se deshace.',
-        'cerrada' => 'Orden de mantenimiento cerrada correctamente.',
-        'aside_abierta_titulo' => 'Todavía no hay nada que resumir',
-        'aside_abierta_detalle' => 'Los repuestos consumidos y el gasto de esta orden los registra el propio cierre. En cuanto la cierres, vas a verlos acá junto al equipo intervenido.',
-        'volver' => 'Volver a órdenes',
-    ],
-
-    // Pantalla de panel "Mantenimiento › Planes" (HU-38, tarea 54): ABM de
-    // planes de mantenimiento preventivo por horas de vuelo de dron, con la
-    // alerta calculada por fila (ver ListarPlanesMantenimiento). Mismo
-    // molde de claves que 'vehiculos'/'baterias' arriba, sin filtros (la
-    // lista completa de planes suele ser corta) ni columna de estado (no es
-    // una máquina de estados).
-    'planes' => [
-        'titulo' => 'Planes de mantenimiento',
-        'subtitulo' => 'Planes de mantenimiento preventivo por horas de vuelo, con la alerta activada cuando algún dron del modelo cruza el umbral.',
-        'nuevo' => 'Nuevo plan',
-        'filtro_busqueda_placeholder' => 'Busca por modelo o tarea',
-        'vacio_titulo' => 'Todavía no hay planes de mantenimiento',
-        'vacio_detalle' => 'Los planes de mantenimiento preventivo definen las tareas por horas de vuelo en cada modelo de dron. En cuanto se registre el primer plan, vas a verlo acá.',
-        'filtro_vacio_titulo' => 'Ningún plan coincide con la búsqueda',
-        'filtro_vacio_detalle' => 'Prueba con otro modelo, otra tarea o menos palabras.',
-        'col_modelo' => 'Modelo',
-        'col_tarea' => 'Tarea',
-        'col_horas_umbral' => 'Umbral (horas)',
-        'col_alerta' => 'Alerta',
-        'sin_alerta' => '—',
-        'alerta_activa' => 'Alerta',
-        'alerta_titulo' => 'Algún dron de este modelo alcanzó o superó el umbral de horas de vuelo.',
-        'editar' => 'Editar',
-        'eliminar_accion' => 'Eliminar',
-        'confirmar_baja' => '¿Confirmas la baja de este plan de mantenimiento?',
-        'confirmar_baja_titulo' => 'Dar de baja el plan',
-        'paginacion_aria' => 'Paginación de planes de mantenimiento',
-        'titulo_crear' => 'Nuevo plan de mantenimiento',
-        'titulo_editar' => 'Editar plan de mantenimiento',
-        'subtitulo_form' => 'Modelo de dron, tarea preventiva y umbral de horas de vuelo.',
-        'seccion_datos' => 'Datos del plan',
-        'campos_contador' => ':cantidad campos',
-        'campo_modelo' => 'Modelo de dron',
-        'campo_modelo_ayuda' => 'Texto libre: se compara contra el modelo cargado en cada dron.',
-        'campo_tarea' => 'Tarea preventiva',
-        'campo_horas_umbral' => 'Umbral de horas de vuelo',
-        'estado_form' => 'Los cambios se guardan al confirmar.',
-        'creado' => 'Plan de mantenimiento creado correctamente.',
-        'actualizado' => 'Plan de mantenimiento actualizado correctamente.',
-        'eliminado' => 'Plan de mantenimiento dado de baja correctamente.',
-        'volver' => 'Volver a planes',
     ],
 
     // Mensajes de error.
     'errores' => [
         'bateria_duplicada' => "Ya existe una batería activa con el identificador ':identificador'.",
         'correccion_ciclos_no_autorizada' => "La batería ':identificador' tiene :actual ciclos acumulados; bajar a :propuesto requiere un motivo de corrección.",
-        'descripcion_final_requerida' => 'El cierre de una orden de mantenimiento requiere una descripción final.',
         'ficha_dron_duplicada' => "Ya existe una ficha activa para el dron con identificador ':identificador_dron'.",
-        'generador_duplicado' => "Ya existe un generador activo con el identificador ':identificador'.",
-        'repuestos_insuficientes' => 'No se puede cerrar la orden: stock insuficiente para el repuesto #:repuesto_id (:mensaje_original).',
-        'transicion_orden_no_permitida' => "No se puede pasar una orden de mantenimiento de ':desde' a ':hasta'.",
-        'vehiculo_duplicado' => "Ya existe un vehículo activo con el identificador ':identificador'.",
     ],
 
     // Mensajes de los formularios.
     'validacion' => [
         'base_invalida' => 'La base seleccionada no es válida.',
         'dron_invalido' => 'El dron seleccionado no es válido.',
-        'horas_actual_menor' => 'Las horas actuales no pueden ser menores que las horas iniciales.',
-        'equipo_invalido' => 'El equipo seleccionado no es válido.',
-        'orden_repuestos_requeridos' => 'La orden necesita al menos un repuesto consumido para cerrarse.',
-        'orden_descripcion_requerida' => 'El cierre necesita una descripción de qué se hizo realmente.',
         'bateria_identificador_requerido' => 'Ingresa el identificador de la batería.',
-        'generador_identificador_requerido' => 'Ingresa el identificador del generador.',
-        'vehiculo_identificador_requerido' => 'Ingresa el identificador del vehículo.',
         'identificador_dron_requerido' => 'Ingresa el identificador del dron.',
         'ciclos_inicial_requerido' => 'Ingresa los ciclos iniciales de la batería.',
         'ciclos_acumulados_requerido' => 'Ingresa los ciclos acumulados de la batería.',
         'bateria_estado_requerido' => 'Elige el estado de la batería.',
-        'generador_estado_requerido' => 'Elige el estado del generador.',
-        'vehiculo_estado_requerido' => 'Elige el estado del vehículo.',
-        'modelo_requerido' => 'Ingresa el modelo de dron.',
-        'tarea_requerida' => 'Ingresa la tarea preventiva.',
-        'horas_umbral_requerido' => 'Ingresa el umbral de horas de vuelo.',
-        'equipo_tipo_requerido' => 'Elige el tipo de equipo.',
-        'equipo_requerido' => 'Elige el equipo.',
-        'tipo_orden_requerido' => 'Elige el tipo de orden.',
-        'descripcion_orden_requerida' => 'Ingresa la descripción de la orden.',
-        'repuesto_linea_requerido' => 'Elige el repuesto de esta línea.',
-        'base_linea_requerida' => 'Elige la base de este repuesto.',
-        'cantidad_linea_requerida' => 'Ingresa la cantidad de este repuesto.',
     ],
 
 ];

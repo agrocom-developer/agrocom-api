@@ -20,8 +20,7 @@ use Illuminate\Validation\Rule;
  *
  * `base_id` es opcional (FK nullable) — una batería sin base asignada es un
  * caso válido. Cuando viene, tiene que apuntar a una base VIVA
- * (`whereNull('deleted_at')`), mismo criterio que `base_id` en
- * `CrearVehiculoRequest`.
+ * (`whereNull('deleted_at')`).
  */
 final class CrearBateriaRequest extends FormRequest
 {

@@ -135,7 +135,7 @@
 }
 
 /* Encabezado de un bloque DENTRO de una tarjeta que ya tiene título (p. ej.
-   "Anticipos del período" bajo "Mi liquidación"). */
+   "Pendientes" bajo "Versión vigente" en la tarjeta de versiones del APK). */
 .ag-card__subtitle {
     margin: 0 0 var(--ag-space-2);
     font-size: var(--ag-font-size-xs);
@@ -189,16 +189,6 @@
 .ag-table--clientes .ag-table__row {
     grid-template-columns: 1.8fr 1.2fr 110px 120px;
     min-width: 620px;
-}
-
-/* Liquidación del mes (tablero de piloto/auxiliar): fecha + tres columnas
-   numéricas alineadas a la derecha. Sin variante angosta (tarea 137): bajo
-   1200 mantiene su grilla y scrollea horizontal dentro de `.ag-table-scroll`
-   (ver la regla del breakpoint). */
-.ag-table--liquidacion .ag-table__head,
-.ag-table--liquidacion .ag-table__row {
-    grid-template-columns: 1fr 90px minmax(0, 1fr) 110px 120px;
-    min-width: 600px;
 }
 
 /* Equipos operados por la persona en el mes. Misma excepción de tablet. */
@@ -506,48 +496,6 @@
     font-weight: var(--ag-font-weight-regular);
 }
 
-/* ---------- Liquidación del mes (tablero de piloto/auxiliar) ---------- */
-
-.ag-liquidacion__resumen {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--ag-space-3);
-    padding: var(--ag-space-4);
-    border-bottom: 1px solid var(--ag-color-border);
-}
-
-.ag-liquidacion__cifra dt {
-    font-size: var(--ag-font-size-xs);
-    color: var(--ag-color-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.ag-liquidacion__cifra dd {
-    margin: 0;
-    font-family: var(--ag-font-family-mono);
-    font-size: var(--ag-font-size-lg);
-    color: var(--ag-color-text);
-}
-
-.ag-liquidacion__cifra--saldo dd {
-    color: var(--ag-color-success-strong);
-    font-weight: var(--ag-font-weight-bold);
-}
-
-.ag-liquidacion__anticipos {
-    padding: var(--ag-space-4);
-    border-top: 1px solid var(--ag-color-border);
-}
-
-.ag-liquidacion__anticipo {
-    display: grid;
-    grid-template-columns: 100px 1fr 120px;
-    gap: var(--ag-space-2);
-    align-items: center;
-    padding: var(--ag-space-2) 0;
-}
-
 /* Barra de ejecución de un contrato, dentro de su celda. */
 .ag-dash__avance {
     display: flex;
@@ -560,7 +508,7 @@
     min-width: 48px;
 }
 
-/* Par de tarjetas de igual peso (pausas + stock): a diferencia de
+/* Par de tarjetas de igual peso: a diferencia de
    .ag-dash__grid (2fr/1fr, tabla + aside) acá ninguna manda. */
 .ag-dash__grid--par {
     grid-template-columns: 1fr 1fr;
@@ -850,52 +798,6 @@
     font-size: 0.8125rem;
 }
 
-/* ---------- Stock bajo mínimo ---------- */
-
-.ag-dash__stock {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-2);
-}
-
-.ag-dash__stock-title {
-    display: flex;
-    align-items: center;
-    gap: var(--ag-space-2);
-}
-
-.ag-dash__stock-icon {
-    color: var(--ag-color-danger);
-}
-
-.ag-dash__stock-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--ag-space-3);
-    font-size: 0.78rem;
-    color: var(--ag-color-text-muted);
-}
-
-.ag-dash__stock-nivel {
-    font-family: var(--ag-font-family-mono);
-    font-size: 0.71875rem;
-    font-weight: var(--ag-font-weight-bold);
-    white-space: nowrap;
-}
-
-.ag-dash__stock-nivel--danger {
-    color: var(--ag-color-danger);
-}
-
-.ag-dash__stock-nivel--accent {
-    color: var(--ag-color-warning-strong);
-}
-
-.ag-dash__stock-accion {
-    align-self: flex-start;
-}
-
 /* ---------- Bloque "Hoy" (solo móvil) ---------- */
 
 .ag-dash__hoy {
@@ -925,7 +827,7 @@
        mantiene con scroll horizontal (ver .ag-table-scroll arriba). Mismo
        criterio para las dos tablas nuevas del dueño (tarea 135): estado de
        cuentas y trabajos por equipo; y para las dos del piloto y el auxiliar
-       (tarea 137): detalle de la liquidación y equipos del mes; y para las
+       (tarea 137): equipos del mes; y para las
        dos del jefe de campo (tarea 138): órdenes de trabajo por cuadrilla y
        órdenes con su equipamiento; y para las tres del administrador de
        plataforma (tarea 139): usuarios por rol, dispositivos y bitácora.
@@ -934,7 +836,6 @@
     .ag-table.ag-table--clientes,
     .ag-table.ag-table--cuentas,
     .ag-table.ag-table--trabajos-equipo,
-    .ag-table.ag-table--liquidacion,
     .ag-table.ag-table--equipos,
     .ag-table.ag-table--tandas,
     .ag-table.ag-table--ordenes-equipo,

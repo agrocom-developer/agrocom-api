@@ -7,7 +7,7 @@
     Homogeneizado con el patrón de Clientes y Cuadrillas (tarea 112): el
     cuerpo va en `molecules/form-layout` y, SOLO en edición, el aside con el
     resumen relacionado (§6.3.1) — una base recién creada no puede tener
-    todavía personas, cuadrillas, equipos ni stock.
+    todavía personas, cuadrillas ni baterías.
 
     Espera:
     - $base (PerBase|null): null en alta; el modelo en edición.

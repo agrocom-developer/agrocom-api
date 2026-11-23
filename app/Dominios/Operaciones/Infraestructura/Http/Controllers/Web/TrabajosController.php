@@ -18,7 +18,6 @@ use App\Dominios\Operaciones\Dominio\Excepciones\TrabajoValidadoNoEliminable;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenTrabajo;
-use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenTrabajoEquipo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use App\Dominios\Operaciones\Infraestructura\Http\PasosDeOrden;
 use App\Dominios\Operaciones\Infraestructura\Http\PasosDeTrabajo;
@@ -94,10 +93,9 @@ final class TrabajosController
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO), 403);
 
-        $trabajo->load(['sesiones.rechazo', 'sesiones.dron', 'acta', 'reporteTecnico', 'ordenTrabajo.equipos']);
+        $trabajo->load(['sesiones.rechazo', 'sesiones.dron', 'acta', 'reporteTecnico']);
         $sesionesVigentes = $trabajo->sesiones->whereNull('anulada_en');
         $editable = $trabajo->estadoTablero() !== EstadoTableroTrabajo::Validado;
-        $condicionPago = $trabajo->ordenTrabajo?->equipos->firstWhere('equipo_trabajo_id', $trabajo->equipo_trabajo_id);
 
         $hectareasDeclaradas = BigDecimal::of((string) $trabajo->hectareas_declaradas);
         $hectareasAplicadas = BigDecimal::of($this->hectareasAplicadas($trabajo));
@@ -112,7 +110,6 @@ final class TrabajosController
             'cuadrillaLabel' => $trabajo->equipo_trabajo_id !== null
                 ? ($this->etiquetasEquipo([$trabajo->equipo_trabajo_id])[$trabajo->equipo_trabajo_id] ?? "#{$trabajo->equipo_trabajo_id}")
                 : null,
-            'pagoEquipo' => $this->pagoDeEquipo($condicionPago),
             'hectareasAplicadas' => (string) $hectareasAplicadas,
             'porcentajeCobertura' => min(100, $porcentajeCobertura),
             'sesionesValidadas' => $sesionesVigentes->where('estado', EstadoSesion::Validado)->count(),
@@ -128,29 +125,6 @@ final class TrabajosController
                 $trabajo->sesiones->pluck('piloto_id')->unique()->values()->all()
             ),
         ]);
-    }
-
-    /**
-     * Condición de pago del equipo de ESTE trabajo (ADR 0023), leída como la
-     * ficha de la OT (`OrdenesTrabajoController::pagoDeEquipo()`, misma
-     * forma): `null` si el trabajo no tiene OT o su equipo no tiene
-     * condición registrada (OT anterior a la reforma de pago).
-     *
-     * @return array{modalidad: string, monto_piloto: string, monto_auxiliar: string, negociado: bool, motivo: ?string}|null
-     */
-    private function pagoDeEquipo(?OrdenTrabajoEquipo $condicion): ?array
-    {
-        if ($condicion === null) {
-            return null;
-        }
-
-        return [
-            'modalidad' => $condicion->modalidad_pago->etiqueta(),
-            'monto_piloto' => (string) $condicion->monto_piloto,
-            'monto_auxiliar' => (string) $condicion->monto_auxiliar,
-            'negociado' => $condicion->negociado,
-            'motivo' => $condicion->motivo_negociacion,
-        ];
     }
 
     /**

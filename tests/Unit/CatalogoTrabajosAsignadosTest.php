@@ -48,7 +48,6 @@ function catalogoTrabajosEsquema(): void
         'create_ope_ordenes_trabajo_table',
         'create_ope_trabajos_table',
         'create_ope_sesiones_table',
-        'create_ope_orden_trabajo_equipos_table',
         'create_per_equipo_integrantes_table',
     ];
 
@@ -224,7 +223,6 @@ test('editar un límite de la Orden de Trabajo después de un pull vuelve a baja
     app(ActualizarOrdenTrabajo::class)->ejecutar(
         OrdenTrabajo::query()->findOrFail($ordenTrabajo),
         ['viento_max_kmh' => '9.00', 'temperatura_max_c' => '25.00'],
-        [],
     );
 
     $segundo = catalogoPull($primero['cursor']);

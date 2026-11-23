@@ -12,7 +12,7 @@ use Illuminate\Support\Collection;
  * 74; reforma 19/9/2026). Ya NO es de solo lectura — el panel también
  * registra, edita, finaliza y da de baja estadías (ver `Aplicacion/RegistrarEstadiaHacienda`
  * y compañía) — pero esta clase sigue siendo puro filtro/paginado, mismo
- * molde que `ListarTrabajos`/`ListarGastos`.
+ * molde que `ListarTrabajos`.
  *
  * El rango de fechas filtra sobre `entrada` (cuándo ocurrió el hecho), no
  * sobre `salida`: una estadía en curso (`salida` nula) sigue apareciendo si

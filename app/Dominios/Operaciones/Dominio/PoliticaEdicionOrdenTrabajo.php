@@ -16,15 +16,10 @@ namespace App\Dominios\Operaciones\Dominio;
  *   quede algún trabajo `abierto` o `cerrado` sin validar, la cabecera se
  *   sigue corrigiendo — cambiarla no sobrescribe ningún `Trabajo` ni
  *   `Sesion` validado (invariante 2 de CLAUDE.md: esos registros no se
- *   tocan). Lo que sí queda cerrado por trabajo es la CONDICIÓN DE PAGO de
- *   su equipo, más abajo.
+ *   tocan).
  * - Si algún trabajo ya no está `abierto` (está `cerrado` o `validado`), la
  *   corrección exige un motivo — mismo criterio que
  *   `PoliticaEdicionOrden::exigeMotivo()` para una orden ya publicada.
- * - La condición de pago de un equipo (ADR 0023) solo se toca si TODOS sus
- *   trabajos siguen `abierto`: un trabajo cerrado ya tiene sesiones que se
- *   van a devengar con la condición vigente al validar, y una condición que
- *   cambiara después la correría por debajo.
  *
  * Reglas puras, sin Eloquent (verificado por `tests/Unit/ArquitecturaModulosTest`).
  * Las lee quien aplica la edición (`Aplicacion/ActualizarOrdenTrabajo`) y
@@ -66,22 +61,5 @@ final class PoliticaEdicionOrdenTrabajo
         }
 
         return false;
-    }
-
-    /**
-     * ¿Se puede tocar la condición de pago de ESE equipo? Solo si TODOS sus
-     * trabajos dentro de esta tanda siguen `abierto`.
-     *
-     * @param  list<EstadoTableroTrabajo>  $estadosEquipo  de los trabajos de ESE equipo dentro de la tanda.
-     */
-    public static function admiteCondicion(array $estadosEquipo): bool
-    {
-        foreach ($estadosEquipo as $estado) {
-            if ($estado !== EstadoTableroTrabajo::Abierto) {
-                return false;
-            }
-        }
-
-        return $estadosEquipo !== [];
     }
 }

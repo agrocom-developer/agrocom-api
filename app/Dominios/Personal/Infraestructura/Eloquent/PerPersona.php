@@ -10,13 +10,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * Persona operativa de campo (espec §4.2, tabla per_personas), alcance
  * mínimo para HU-01 (ADR 0011, extensión 26/8/2026, punto 6): id, nombre,
- * rol, base_id, activo. `sueldo_mensual` (jefe/encargado) sigue diferido a
- * planilla — fuera de alcance de HU-16.
+ * rol, base_id, activo.
  *
- * Sin tarifa (ADR 0023, 22/9/2026): `tarifa_ha` vivió acá desde HU-16 y se
- * retiró — lo que cobra una persona depende del trabajo (condición de pago
- * por equipo en la Orden de Trabajo, tarifas del catálogo de Finanzas), no
- * de quién es.
+ * Sin datos de pago: el marketplace no lleva planilla ni condición de pago al
+ * personal (ADR 0029, punto 4).
  *
  * `PerBase` es del mismo módulo (Personal), así que el `belongsTo` es
  * legítimo — lo que está prohibido es cruzar hacia modelos Eloquent de

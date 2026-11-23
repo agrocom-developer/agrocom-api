@@ -91,8 +91,8 @@ foreach ($modulos as $modulo) {
 // 0003): Comercial no conoce la lógica interna de Operaciones (Aplicacion,
 // Dominio, Infraestructura — sus modelos Eloquent ya están cubiertos arriba
 // por la regla genérica), pero sí puede leer su Contratos/, el mismo cruce
-// síncrono sancionado por ADR 0003 regla 2 que ya usan Sincronizacion y
-// Finanzas para leer Operaciones (HU-31, tarea 45: `Comercial\Aplicacion\EmitirFactura`
+// síncrono sancionado por ADR 0003 regla 2 que ya usa Sincronizacion
+// para leer Operaciones (HU-31, tarea 45: `Comercial\Aplicacion\EmitirFactura`
 // consume `Operaciones\Contratos\LecturaActaConformada`).
 arch('Comercial no usa la lógica interna de Operaciones, solo su Contratos/ (ADR 0003, regla 2)')
     ->expect('App\Dominios\Comercial')

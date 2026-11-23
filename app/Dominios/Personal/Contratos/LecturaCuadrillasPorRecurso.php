@@ -4,8 +4,7 @@ namespace App\Dominios\Personal\Contratos;
 
 /**
  * Frontera de lectura de Personal hacia otros módulos (ADR 0003, regla 2): la
- * ficha de un dron —y mañana la de un vehículo, un generador o una batería—
- * muestra, en su resumen relacionado, qué cuadrillas lo tienen asignado sin
+ * ficha de un dron o de una batería muestra, en su resumen relacionado, qué cuadrillas lo tienen asignado sin
  * importar los modelos `EquipoRecurso` ni `EquipoTrabajo`. Es la pregunta
  * inversa de {@see LecturaEquipoTrabajo::recursosAFecha()} (qué recursos tenía
  * un equipo): acá se parte del recurso y se llega a sus equipos.
@@ -16,10 +15,6 @@ namespace App\Dominios\Personal\Contratos;
 interface LecturaCuadrillasPorRecurso
 {
     public const TIPO_DRON = 'dron';
-
-    public const TIPO_VEHICULO = 'vehiculo';
-
-    public const TIPO_GENERADOR = 'generador';
 
     public const TIPO_BATERIA = 'bateria';
 

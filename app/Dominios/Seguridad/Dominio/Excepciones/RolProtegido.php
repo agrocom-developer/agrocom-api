@@ -63,7 +63,7 @@ final class RolProtegido extends DomainException
     /**
      * Permiso de plataforma (`PermisosReservados`) que se quiere otorgar a un
      * rol que no es el de administrador de plataforma: quien lo tuviera
-     * podría, por ejemplo, ver como un dueño y leer finanzas.
+     * podría, por ejemplo, ver como un dueño y leer sus contratos.
      */
     public static function porPermisoReservado(string $codigoPermiso, string $nombreRol): self
     {

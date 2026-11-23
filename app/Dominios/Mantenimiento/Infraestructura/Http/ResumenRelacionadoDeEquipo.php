@@ -2,24 +2,20 @@
 
 namespace App\Dominios\Mantenimiento\Infraestructura\Http;
 
-use App\Dominios\Finanzas\Contratos\LecturaCombustiblePorRecurso;
 use App\Dominios\Personal\Contratos\LecturaCuadrillasPorRecurso;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\Request;
 
 /**
- * Tarjetas del resumen relacionado (aside de la ficha de edición, §6.3.1 de
- * la guía de pantalla) que comparten la batería, el generador y el vehículo:
- * las cuadrillas que lo tienen asignado (Personal) y el combustible que se le
- * cargó (Finanzas). Ambas llegan por el `Contratos/` del módulo dueño (ADR
- * 0003, regla 2) — Mantenimiento no toca `per_equipo_recursos` ni
- * `fin_combustibles`.
+ * Tarjeta del resumen relacionado (aside de la ficha de edición, §6.3.1 de la
+ * guía de pantalla) de una batería: las cuadrillas que la tienen asignada
+ * (Personal). Llega por el `Contratos/` del módulo dueño (ADR 0003, regla 2) —
+ * Mantenimiento no toca `per_equipo_recursos`.
  *
- * Cada tarjeta se gatea por el permiso de LO QUE MUESTRA contra el ROL ACTIVO
+ * La tarjeta se gatea por el permiso de LO QUE MUESTRA contra el ROL ACTIVO
  * (invariante 10), no por el permiso de la entidad que se edita: ver las
- * cuadrillas de una batería es ver cuadrillas. Una categoría sin `.ver` NI
- * `.crear` se omite del todo (devuelve `null`); con `.crear` pero sin `.ver`
- * se ofrece el atajo sin revelar cifras.
+ * cuadrillas de una batería es ver cuadrillas. Sin `.ver` se omite del todo
+ * (devuelve `null`).
  *
  * Vive junto al controlador y no en el catálogo de componentes: arma datos, no
  * pinta. La forma del arreglo es la que recorre
@@ -32,7 +28,6 @@ final class ResumenRelacionadoDeEquipo
     public function __construct(
         private readonly AutorizacionPanelWeb $autorizacion,
         private readonly LecturaCuadrillasPorRecurso $lecturaCuadrillas,
-        private readonly LecturaCombustiblePorRecurso $lecturaCombustible,
     ) {}
 
     /**
@@ -41,7 +36,7 @@ final class ResumenRelacionadoDeEquipo
      * desde la ficha de la cuadrilla.
      *
      * @param  LecturaCuadrillasPorRecurso::TIPO_*  $recursoTipo
-     * @param  string  $vacioDetalle  frase del vacío, con el género del objeto («esta batería», «este vehículo»).
+     * @param  string  $vacioDetalle  frase del vacío, con el género del objeto («esta batería»).
      * @return Tarjeta|null
      */
     public function cuadrillas(Request $request, string $recursoTipo, int $recursoId, string $vacioDetalle): ?array
@@ -82,59 +77,6 @@ final class ResumenRelacionadoDeEquipo
                 'href' => route('panel.cuadrillas.index'),
                 'icono' => 'list',
             ]] : [],
-        ];
-    }
-
-    /**
-     * Cargas de combustible imputadas al recurso: cuántas y cuántos litros
-     * suman. El alta de una carga no acepta el recurso precargado, así que el
-     * atajo lleva al formulario y el vacío dice qué elegir.
-     *
-     * @param  LecturaCombustiblePorRecurso::TIPO_*  $recursoTipo
-     * @param  array<string, string>  $origenNavegacion  memento `volver_a`/`volver_texto` de la ficha desde la que se sale.
-     * @return Tarjeta|null
-     */
-    public function combustible(Request $request, string $recursoTipo, int $recursoId, array $origenNavegacion, string $vacioDetalle): ?array
-    {
-        $puedeVer = $this->autorizacion->tienePermiso($request, 'finanzas.combustible.ver');
-        $puedeCargar = $this->autorizacion->tienePermiso($request, 'finanzas.combustible.crear');
-
-        if (! $puedeVer && ! $puedeCargar) {
-            return null;
-        }
-
-        $combustible = $puedeVer ? $this->lecturaCombustible->deRecurso($recursoTipo, $recursoId) : null;
-        $cargas = $combustible->cargas ?? 0;
-
-        $acciones = [];
-
-        if ($cargas > 0) {
-            $acciones[] = ['label' => __('mantenimiento.aside.combustible_accion_ver'), 'href' => route('panel.combustible.index'), 'icono' => 'list'];
-        }
-
-        if ($puedeCargar) {
-            $acciones[] = [
-                'label' => __('mantenimiento.aside.combustible_accion_cargar'),
-                'href' => route('panel.combustible.create', $origenNavegacion),
-                'icono' => 'add',
-            ];
-        }
-
-        return [
-            'titulo' => __('mantenimiento.aside.combustible_titulo'),
-            'icono' => 'local_gas_station',
-            'tieneDatos' => $cargas > 0,
-            'items' => [
-                ['label' => __('mantenimiento.aside.combustible_cargas'), 'value' => (string) $cargas, 'mono' => true],
-                [
-                    'label' => __('mantenimiento.aside.combustible_litros'),
-                    'value' => __('mantenimiento.aside.litros_valor', ['cantidad' => number_format((float) ($combustible->litros ?? '0'), 2, ',', '.')]),
-                    'mono' => true,
-                ],
-            ],
-            'vacioTitulo' => __('mantenimiento.aside.combustible_vacio_titulo'),
-            'vacioDetalle' => $vacioDetalle,
-            'acciones' => $acciones,
         ];
     }
 }

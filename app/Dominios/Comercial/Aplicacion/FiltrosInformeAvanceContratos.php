@@ -12,8 +12,7 @@ use App\Dominios\Comercial\Dominio\SaldoContrato;
  * el request y, como guarda de dominio, {@see ObtenerInformeAvanceContratos}).
  * El resto son los filtros de la pantalla aparte (espec §9.1, punto 2).
  *
- * `fechaDesde`/`fechaHasta` viajan como `Y-m-d` (mismo criterio permisivo que
- * `ListarGastos::$periodo`): las compone el request, no hace falta un value
+ * `fechaDesde`/`fechaHasta` viajan como `Y-m-d` (criterio permisivo): las compone el request, no hace falta un value
  * object de fecha para comparar contra columnas `date` de Postgres/SQLite.
  */
 final readonly class FiltrosInformeAvanceContratos

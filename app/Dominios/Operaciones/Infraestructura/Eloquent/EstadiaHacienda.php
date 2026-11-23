@@ -16,13 +16,13 @@ use Carbon\CarbonImmutable;
  * propio `uuid_cliente` — nunca por id de servidor (ver
  * `EscrituraSincronizacionEloquent::cerrarEstadia()`).
  *
- * `equipo_trabajo_id`, `propiedad_id` y `vehiculo_id` referencian tablas de otros
- * módulos (`Personal`, `Comercial`, `Mantenimiento` respectivamente) solo por
+ * `equipo_trabajo_id` y `propiedad_id` referencian tablas de otros
+ * módulos (`Personal` y `Comercial` respectivamente) solo por
  * FK + entero plano (ADR 0003, regla 3) — sin relaciones Eloquent cruzadas.
  *
  * Sin columna `estado`: `salida === null` significa "en curso" (ver docblock
  * de la migración) — no hay máquina de estados FÍSICA acá (mismo criterio
- * descriptivo que `man_vehiculos.estado`, sin CHECK ni columna propia). Desde
+ * descriptivo, sin CHECK ni columna propia). Desde
  * la reforma del 19/9/2026 (la oficina también registra/edita/finaliza/da de
  * baja estadías desde el panel, no solo la app de campo) SÍ hay una máquina
  * de estados de NEGOCIO sobre ese valor derivado — invariante 7 de
@@ -53,7 +53,6 @@ use Carbon\CarbonImmutable;
  * @property int $propiedad_id
  * @property CarbonImmutable $entrada
  * @property CarbonImmutable|null $salida
- * @property int|null $vehiculo_id
  * @property TipoAlojamiento|null $tipo_alojamiento
  * @property string|null $observacion
  * @property string|null $cierre_uuid_cliente
@@ -72,7 +71,6 @@ class EstadiaHacienda extends ModeloDominio
         'propiedad_id',
         'entrada',
         'salida',
-        'vehiculo_id',
         'tipo_alojamiento',
         'observacion',
         'cierre_uuid_cliente',

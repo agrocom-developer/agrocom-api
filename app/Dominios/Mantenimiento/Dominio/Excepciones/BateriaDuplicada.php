@@ -12,7 +12,7 @@ use RuntimeException;
  * no bloquea el re-alta con el mismo identificador). El caso de uso que
  * persiste `Bateria` captura la `QueryException` y la relanza como esta
  * excepción — nunca deja propagarse el 500 crudo del motor de base de
- * datos. Mismo criterio que `VehiculoDuplicado` en este mismo módulo.
+ * datos. Mismo criterio que `FichaDronDuplicada` en este mismo módulo.
  */
 final class BateriaDuplicada extends RuntimeException
 {
