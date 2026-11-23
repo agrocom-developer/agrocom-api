@@ -1,41 +1,51 @@
 # Agentes especializados de `agrocom-api`
 
-Doce subagentes, dos grupos según el tipo de trabajo — para no gastar tokens de un modelo grande en tareas mecánicas.
+Diecisiete subagentes del motor y el panel web del marketplace de fumigación con drones. Tres grupos según el tipo de trabajo, para no gastar tokens de un modelo grande en tareas mecánicas.
 
-Ningún agente usa Fable: decisión del usuario. El mismo criterio se aplica a las sesiones que lanza `bin/ciclo`, fase por fase (ver `docs/gestion/automatizacion_desarrollo.md`).
+La decisión de modelo vive en el frontmatter de cada agente. Ninguno fija un modelo superior a `claude-sonnet-5` salvo decisión explícita del dueño. El mismo criterio rige las sesiones que lanza `bin/ciclo`, fase por fase (ver `docs/gestion/automatizacion_desarrollo.md`).
 
-## Ejecución / instrucciones (modelo económico: `claude-haiku-4-5-20251001`)
+Skills que los agentes cargan: `marketplace-politicas`, `contrato-api`, `ciclo-segundo-plano`, `dominio-backend`, `modelo-datos`, `seguridad-roles`, `panel-design-ui`, `redaccion-neutra`, `verificacion` y `flujo-git-pr`.
 
-Trabajo que sigue un patrón ya definido en un ADR o convención — no requiere decidir nada nuevo, solo aplicarlo correctamente.
+## Producto y confianza (modelo mediano: `claude-sonnet-5`)
 
-| Agente | Por qué es "ejecución" |
+| Agente | Cuándo usarlo |
 |---|---|
-| `frontend` | Ensambla pantallas con el catálogo de componentes que `design-ui` ya definió (ADR 0002) |
-| `estandares-programacion` | Verifica estilo/convención/tests contra reglas ya fijas en `CLAUDE.md` |
-| `distribucion` | Configura CI/CD siguiendo los patrones ya establecidos en `.github/workflows/` |
-| `memoria-contexto` | Lee y actualiza `docs/gestion/estado_proyecto.md`, tarea mecánica de snapshot |
+| `producto-marketplace` | Reglas del marketplace: roles, solicitud, calificaciones, comisión, aprobaciones, backlog |
+| `asignacion-matching` | Despacho: propios primero, terceros por radio y calificación, ofertas y tiempos |
+| `confianza-seguridad` | Verificación de proveedores, abuso, privacidad, seguridad de API, panel y apps |
+| `negocio` | Operación de campo, banco de preguntas, economía del piloto |
 
-## Juicio / diseño / coordinación (modelo mediano: `claude-sonnet-5`)
+## Juicio técnico (modelo mediano: `claude-sonnet-5`)
 
-Trabajo que implica decidir algo nuevo, evaluar trade-offs, o coordinar entre partes.
-
-Antes heredaban el modelo de la sesión. El problema no era la calidad sino que el costo
-quedaba atado a con qué modelo estuviera abierta la ventana: la misma tarea salía barata o
-cara según el día. Declararlo lo vuelve predecible.
-
-| Agente | Por qué necesita más criterio |
+| Agente | Cuándo usarlo |
 |---|---|
-| `arquitectura` | Decide encaje de código nuevo y redacta ADRs — decisiones que se congelan y cuesta revertir |
-| `backend` | Implementa reglas de negocio reales (dinero, estados, sync) — errores acá cuestan caro |
-| `design-ui` | Define el sistema de diseño en sí (tokens, mezcla Bootstrap/Material) — lo que `frontend` después ejecuta |
-| `modelo-datos` | Integridad del esquema, decisiones que son costosas de deshacer una vez hay datos reales |
-| `modulos-roles` | Seguridad — un error de criterio acá es un agujero de permisos |
-| `negocio` | Clasificar respuestas de campo (CONFIRMADO/CORREGIDO/DESCUBIERTO) requiere criterio, no solo lectura |
-| `orquestador` | Decide qué agentes delegar y en qué orden para una tarea que cruza capas |
-| `validador` | Revisa el trabajo de los demás contra `CLAUDE.md`/ADRs antes de cerrar un cambio |
+| `arquitectura` | Encaje de código nuevo y redacción de ADRs |
+| `backend` | Casos de uso, eventos, endpoints: reglas con dinero, estados y asignación |
+| `modelo-datos` | Esquema PostgreSQL, índices e integridad |
+| `migracion-esquema` | Migraciones destructivas: respaldo, `down`, prueba con datos reales |
+| `modulos-roles` | Seguridad `sec_*`: permisos, roles, policies |
+| `design-ui` | Sistema de diseño del panel |
+| `orquestador` | Decide qué agentes delegar y en qué orden |
+| `validador` | Revisa el trabajo contra `CLAUDE.md` y los ADRs antes de cerrar |
 
-## Cuándo usar `orquestador` vs. ir directo al agente
+## Ejecución (modelo económico: `claude-haiku-4-5-20251001`)
 
-- Tarea claramente de una sola capa (ej. "agregá un índice a la tabla X"): invocá el agente correspondiente directo (`modelo-datos`).
-- Tarea que cruza capas (ej. "implementá la HU de validación cruzada", que toca `modelo-datos` + `backend` + `modulos-roles` + `frontend`): pasá primero por `orquestador` para que ordene la delegación.
-- Después de que cualquier agente termine un cambio no trivial, antes de darlo por cerrado: `validador`.
+| Agente | Cuándo usarlo |
+|---|---|
+| `frontend` | Ensambla pantallas con el catálogo de componentes ya definido |
+| `qa-visual` | Capturas, contraste y estados de las pantallas del panel |
+| `estandares-programacion` | Estilo, convenciones y tests |
+| `distribucion` | CI/CD, entornos y versionado coordinado con las apps |
+| `memoria-contexto` | Estado de continuidad entre sesiones |
+
+## Cómo delegar entre ellos
+
+- Tarea de una sola capa: agente directo (un índice nuevo va a `modelo-datos`).
+- Tarea que cruza capas: pasá primero por `orquestador`, que arma la cadena. Una HU típica recorre `producto-marketplace` → `modulos-roles` → `modelo-datos` → `backend` → `frontend` → `qa-visual` → `confianza-seguridad` → `validador`.
+- Migración con borrado o transformación: `modelo-datos` y `migracion-esquema` juntos, antes de integrar.
+- Todo cambio no trivial termina en `validador`; todo cambio visual, además, en `qa-visual`; todo cambio que toca datos personales, autorización o archivos, en `confianza-seguridad`.
+- Un cambio de API se publica con el skill `contrato-api` y se coordina con `agrocom-field`.
+
+## Lo que estos agentes nunca deciden solos
+
+Una regla de negocio nueva (cómo se asigna un servicio, qué calificación ve quién, cuánto cobra la plataforma) la propone `producto-marketplace` como decisión revisable y se documenta; ningún agente de implementación la inventa. Lo mismo vale para el despacho (`asignacion-matching`).

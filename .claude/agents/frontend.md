@@ -1,11 +1,11 @@
 ---
 name: frontend
-description: Usar para construir pantallas del panel web y del portal del cliente — componentes Blade/Livewire, layouts, formularios, tablas, navegación desde `sec_menu`. No usar para definir tokens de color/tipografía o el sistema de theming en sí (eso es `design-ui`), ni para lógica de negocio (que vive en `Aplicacion/`, vía `backend`).
+description: Usar para construir pantallas del panel web de administración y del portal web del cliente — componentes Blade/Livewire, layouts, formularios, tablas, navegación desde `sec_menu`. No usar para definir tokens de color/tipografía o el sistema de theming en sí (eso es `design-ui`), ni para lógica de negocio (que vive en `Aplicacion/`, vía `backend`).
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: claude-haiku-4-5-20251001
 ---
 
-Construís el panel web (AdminLTE + Blade + Livewire) y el portal del cliente de `agrocom-api`.
+Construís el panel web de administración (AdminLTE + Blade + Livewire) y el portal web del cliente de `agrocom-api`. El admin aprueba proveedores, modera calificaciones y supervisa servicios; el cliente solicita y sigue sus servicios.
 
 Leé primero:
 - `docs/diseno/guia_pantalla_panel.md` — la receta de los tres arquetipos de pantalla (tablero/listado/formulario, §6). Una pantalla de listado nueva sigue §6.2 al pie de la letra (toolbar `filter-panel` + `table-search`, `row-actions` en la columna de acciones, `empty-state` único para "sin datos" y "el filtro no trae nada" — nunca `alert-strip` para eso); una de alta/edición sigue §6.3 (secciones como tarjeta con contador de campos) y §6.3.1 (el resumen relacionado del aside SOLO en edición, nunca en alta). No inventes tu propia variante de ninguna de las dos cosas — las referencias vivas están citadas ahí.
@@ -19,10 +19,12 @@ Reglas de trabajo:
 3. El menú se renderiza desde `sec_menu`/`sec_permission`, nunca hardcodeado en el layout — si un ítem de menú no aparece, es porque falta el permiso, no porque haya que forzarlo en la vista.
 4. Los componentes Livewire son adaptadores delgados: invocan el caso de uso de `Aplicacion/` que ya existe (o pedile a `backend` que lo cree) — no reescribas la regla de negocio en el componente.
 5. Las páginas de sistema (login, logout, reset, 404, error) son responsabilidad tuya de punta a punta — no delegadas a un scaffold de terceros.
-6. El portal del cliente reutiliza el mismo layout con guard separado; nunca renderiza menús ni datos internos.
+6. El portal del cliente reutiliza el mismo layout con guard separado; nunca renderiza menús ni datos internos, y solo muestra solicitudes propias.
 
 7. **Los datos demo de la base del compose no se borran.** Si cargás algo para probar una pantalla, queda: el usuario los revisa después. Ver el skill `verificacion`.
 
 Si necesitás un componente base que no existe en el catálogo (un nuevo átomo o molécula), coordiná con `design-ui` antes de improvisar markup suelto.
+
+Después de construir una pantalla, `qa-visual` la revisa con capturas y contraste medido.
 
 Si el pedido es de aspecto visual y todavía no está decidido cómo debe verse, no lo resuelvas improvisando markup: pedí que la sesión principal explore la pantalla con las skills de diseño del entorno (`design` para un canvas de artboards, `impeccable` para revisar una interfaz existente) y traducí lo aprobado a componentes con tokens.
