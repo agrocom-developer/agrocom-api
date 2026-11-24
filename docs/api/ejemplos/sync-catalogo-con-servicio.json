@@ -16,7 +16,7 @@
                     "rol": "dueno",
                     "base_id": 1,
                     "activo": true,
-                    "updated_at": "2026-11-24T18:50:11+00:00"
+                    "updated_at": "2026-11-24T18:56:28+00:00"
                 },
                 {
                     "id": 2,
@@ -24,7 +24,7 @@
                     "rol": "encargado_operaciones",
                     "base_id": 1,
                     "activo": true,
-                    "updated_at": "2026-11-24T18:50:12+00:00"
+                    "updated_at": "2026-11-24T18:56:28+00:00"
                 },
                 {
                     "id": 3,
@@ -32,7 +32,7 @@
                     "rol": "jefe_campo",
                     "base_id": 2,
                     "activo": true,
-                    "updated_at": "2026-11-24T18:50:12+00:00"
+                    "updated_at": "2026-11-24T18:56:28+00:00"
                 },
                 {
                     "id": 4,
@@ -40,7 +40,7 @@
                     "rol": "piloto",
                     "base_id": 2,
                     "activo": true,
-                    "updated_at": "2026-11-24T18:50:13+00:00"
+                    "updated_at": "2026-11-24T18:56:29+00:00"
                 },
                 {
                     "id": 5,
@@ -48,7 +48,7 @@
                     "rol": "piloto",
                     "base_id": 3,
                     "activo": true,
-                    "updated_at": "2026-11-24T18:50:13+00:00"
+                    "updated_at": "2026-11-24T18:56:29+00:00"
                 },
                 {
                     "id": 6,
@@ -56,7 +56,7 @@
                     "rol": "auxiliar",
                     "base_id": 2,
                     "activo": true,
-                    "updated_at": "2026-11-24T18:50:14+00:00"
+                    "updated_at": "2026-11-24T18:56:29+00:00"
                 },
                 {
                     "id": 7,
@@ -64,7 +64,7 @@
                     "rol": "auxiliar",
                     "base_id": 2,
                     "activo": true,
-                    "updated_at": "2026-11-24T18:50:14+00:00"
+                    "updated_at": "2026-11-24T18:56:29+00:00"
                 },
                 {
                     "id": 8,
@@ -72,7 +72,7 @@
                     "rol": "auxiliar",
                     "base_id": 3,
                     "activo": true,
-                    "updated_at": "2026-11-24T18:50:14+00:00"
+                    "updated_at": "2026-11-24T18:56:29+00:00"
                 },
                 {
                     "id": 9,
@@ -80,7 +80,7 @@
                     "rol": "auxiliar",
                     "base_id": 1,
                     "activo": false,
-                    "updated_at": "2026-11-24T18:50:15+00:00"
+                    "updated_at": "2026-11-24T18:56:30+00:00"
                 },
                 {
                     "id": 10,
@@ -88,7 +88,7 @@
                     "rol": "piloto",
                     "base_id": null,
                     "activo": true,
-                    "updated_at": "2026-11-24T18:50:28+00:00"
+                    "updated_at": "2026-11-24T18:56:35+00:00"
                 },
                 {
                     "id": 11,
@@ -96,7 +96,7 @@
                     "rol": "piloto",
                     "base_id": null,
                     "activo": true,
-                    "updated_at": "2026-11-24T18:50:28+00:00"
+                    "updated_at": "2026-11-24T18:56:35+00:00"
                 },
                 {
                     "id": 12,
@@ -104,7 +104,7 @@
                     "rol": "auxiliar",
                     "base_id": null,
                     "activo": true,
-                    "updated_at": "2026-11-24T18:50:28+00:00"
+                    "updated_at": "2026-11-24T18:56:35+00:00"
                 },
                 {
                     "id": 13,
@@ -112,7 +112,7 @@
                     "rol": "piloto",
                     "base_id": null,
                     "activo": true,
-                    "updated_at": "2026-11-24T18:50:28+00:00"
+                    "updated_at": "2026-11-24T18:56:35+00:00"
                 },
                 {
                     "id": 14,
@@ -120,7 +120,7 @@
                     "rol": "auxiliar",
                     "base_id": null,
                     "activo": true,
-                    "updated_at": "2026-11-24T18:50:28+00:00"
+                    "updated_at": "2026-11-24T18:56:35+00:00"
                 },
                 {
                     "id": 15,
@@ -128,7 +128,7 @@
                     "rol": "piloto",
                     "base_id": null,
                     "activo": true,
-                    "updated_at": "2026-11-24T18:50:28+00:00"
+                    "updated_at": "2026-11-24T18:56:35+00:00"
                 },
                 {
                     "id": 16,
@@ -136,7 +136,7 @@
                     "rol": "piloto",
                     "base_id": null,
                     "activo": true,
-                    "updated_at": "2026-11-24T18:50:28+00:00"
+                    "updated_at": "2026-11-24T18:56:35+00:00"
                 },
                 {
                     "id": 17,
@@ -144,7 +144,7 @@
                     "rol": "auxiliar",
                     "base_id": null,
                     "activo": true,
-                    "updated_at": "2026-11-24T18:50:28+00:00"
+                    "updated_at": "2026-11-24T18:56:35+00:00"
                 }
             ],
             "servicios_asignados": [
@@ -204,7 +204,7 @@
                         "nombre": "Agropecuaria San Rafael SRL",
                         "telefono": "+591 76543210"
                     },
-                    "updated_at": "2026-11-24T16:50:28+00:00"
+                    "updated_at": "2026-11-24T16:56:35+00:00"
                 }
             ],
             "servicios_retirados": [],
@@ -217,7 +217,7 @@
                 "velocidad_vuelo_kmh": null,
                 "ancho_pasada_m": null
             },
-            "cursor": "eyJwZXJzb25hcyI6eyJ1IjoiMjAyNi0xMS0yNFQxODo1MDoyOCswMDowMCIsImlkIjoxN30sInNlcnZpY2lvc19hc2lnbmFkb3MiOnsidSI6IjIwMjYtMTEtMjRUMTY6NTA6MjgrMDA6MDAiLCJpZCI6MTB9LCJzZXJ2aWNpb3NfcmV0aXJhZG9zIjp7InUiOiIyMDI2LTExLTI0VDE4OjUwOjUyKzAwOjAwIiwiaWQiOjB9fQ=="
+            "cursor": "eyJwZXJzb25hcyI6eyJ1IjoiMjAyNi0xMS0yNFQxODo1NjozNSswMDowMCIsImlkIjoxN30sInNlcnZpY2lvc19hc2lnbmFkb3MiOnsidSI6IjIwMjYtMTEtMjRUMTY6NTY6MzUrMDA6MDAiLCJpZCI6MTB9LCJzZXJ2aWNpb3NfcmV0aXJhZG9zIjp7InUiOiIyMDI2LTExLTI0VDE4OjU2OjQzKzAwOjAwIiwiaWQiOjB9fQ=="
         }
     }
 }

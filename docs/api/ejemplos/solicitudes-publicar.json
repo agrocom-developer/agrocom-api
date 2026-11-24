@@ -30,9 +30,9 @@
                 "monto_final": null,
                 "estado": "abierta",
                 "oferta_adjudicada_id": null,
-                "vence_en": "2026-12-01T18:50:49+00:00",
+                "vence_en": "2026-12-01T18:56:42+00:00",
                 "proveedor_id": null,
-                "publicada_en": "2026-11-24T18:50:49+00:00",
+                "publicada_en": "2026-11-24T18:56:42+00:00",
                 "motivo_cancelacion": null,
                 "cancelada_por": null,
                 "terreno": {
@@ -52,14 +52,14 @@
                         "estado_nuevo": "borrador",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-24T18:50:48+00:00"
+                        "creado_en": "2026-11-24T18:56:42+00:00"
                     },
                     {
                         "estado_anterior": "borrador",
                         "estado_nuevo": "abierta",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-24T18:50:49+00:00"
+                        "creado_en": "2026-11-24T18:56:42+00:00"
                     }
                 ]
             }

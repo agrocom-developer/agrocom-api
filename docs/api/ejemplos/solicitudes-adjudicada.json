@@ -30,9 +30,9 @@
                 "monto_final": null,
                 "estado": "adjudicada",
                 "oferta_adjudicada_id": 18,
-                "vence_en": "2026-12-01T18:50:49+00:00",
+                "vence_en": "2026-12-01T18:56:42+00:00",
                 "proveedor_id": 2,
-                "publicada_en": "2026-11-24T18:50:49+00:00",
+                "publicada_en": "2026-11-24T18:56:42+00:00",
                 "motivo_cancelacion": null,
                 "cancelada_por": null,
                 "terreno": {
@@ -49,7 +49,7 @@
                         {
                             "id": 1,
                             "descripcion": "Borde norte con maleza alta",
-                            "url": "/api/terrenos/fotos/1/archivo?expires=1795547157&signature=a4fdf4d6de864aa685d08e1ae9f96cce83fac015e06f8b50a4527362f02e92f7"
+                            "url": "/api/terrenos/fotos/1/archivo?expires=1795547505&signature=6e60024b1b8b13317c6608b0b84acea8a01ba5feaffee16fd91c20bd3aac6bfd"
                         }
                     ]
                 },
@@ -59,28 +59,28 @@
                         "estado_nuevo": "borrador",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-24T18:50:48+00:00"
+                        "creado_en": "2026-11-24T18:56:42+00:00"
                     },
                     {
                         "estado_anterior": "borrador",
                         "estado_nuevo": "abierta",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-24T18:50:49+00:00"
+                        "creado_en": "2026-11-24T18:56:42+00:00"
                     },
                     {
                         "estado_anterior": "abierta",
                         "estado_nuevo": "con_ofertas",
                         "origen": "sistema",
                         "motivo": null,
-                        "creado_en": "2026-11-24T18:50:56+00:00"
+                        "creado_en": "2026-11-24T18:56:44+00:00"
                     },
                     {
                         "estado_anterior": "con_ofertas",
                         "estado_nuevo": "adjudicada",
                         "origen": "proveedor",
                         "motivo": null,
-                        "creado_en": "2026-11-24T18:50:57+00:00"
+                        "creado_en": "2026-11-24T18:56:45+00:00"
                     }
                 ]
             }

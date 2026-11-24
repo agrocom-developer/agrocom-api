@@ -26,9 +26,9 @@
                     "nota": "Podemos ir la semana próxima.",
                     "oferta_anterior_id": null,
                     "distancia_km": null,
-                    "vence_en": "2026-11-26T18:50:56+00:00",
+                    "vence_en": "2026-11-26T18:56:44+00:00",
                     "respondida_en": null,
-                    "creada_en": "2026-11-24T18:50:56+00:00"
+                    "creada_en": "2026-11-24T18:56:44+00:00"
                 },
                 {
                     "id": 16,
@@ -46,9 +46,9 @@
                     "nota": null,
                     "oferta_anterior_id": null,
                     "distancia_km": "22.52",
-                    "vence_en": "2026-11-25T08:50:28+00:00",
-                    "respondida_en": "2026-11-23T12:50:28+00:00",
-                    "creada_en": "2026-11-23T08:50:28+00:00"
+                    "vence_en": "2026-11-25T08:56:35+00:00",
+                    "respondida_en": "2026-11-23T12:56:35+00:00",
+                    "creada_en": "2026-11-23T08:56:35+00:00"
                 },
                 {
                     "id": 13,
@@ -66,9 +66,9 @@
                     "nota": null,
                     "oferta_anterior_id": null,
                     "distancia_km": "3.91",
-                    "vence_en": "2026-11-23T00:50:28+00:00",
-                    "respondida_en": "2026-11-21T04:50:28+00:00",
-                    "creada_en": "2026-11-21T00:50:28+00:00"
+                    "vence_en": "2026-11-23T00:56:35+00:00",
+                    "respondida_en": "2026-11-21T04:56:35+00:00",
+                    "creada_en": "2026-11-21T00:56:35+00:00"
                 },
                 {
                     "id": 10,
@@ -86,9 +86,9 @@
                     "nota": null,
                     "oferta_anterior_id": null,
                     "distancia_km": "2.34",
-                    "vence_en": "2026-11-25T18:50:28+00:00",
-                    "respondida_en": "2026-11-23T22:50:28+00:00",
-                    "creada_en": "2026-11-23T18:50:28+00:00"
+                    "vence_en": "2026-11-25T18:56:35+00:00",
+                    "respondida_en": "2026-11-23T22:56:35+00:00",
+                    "creada_en": "2026-11-23T18:56:35+00:00"
                 },
                 {
                     "id": 7,
@@ -106,9 +106,9 @@
                     "nota": null,
                     "oferta_anterior_id": null,
                     "distancia_km": "3.91",
-                    "vence_en": "2026-11-26T00:50:28+00:00",
+                    "vence_en": "2026-11-26T00:56:35+00:00",
                     "respondida_en": null,
-                    "creada_en": "2026-11-24T00:50:28+00:00"
+                    "creada_en": "2026-11-24T00:56:35+00:00"
                 },
                 {
                     "id": 6,
@@ -126,9 +126,9 @@
                     "nota": null,
                     "oferta_anterior_id": 2,
                     "distancia_km": "49.64",
-                    "vence_en": "2026-11-26T10:50:28+00:00",
+                    "vence_en": "2026-11-26T10:56:35+00:00",
                     "respondida_en": null,
-                    "creada_en": "2026-11-24T10:50:28+00:00"
+                    "creada_en": "2026-11-24T10:56:35+00:00"
                 },
                 {
                     "id": 2,
@@ -146,9 +146,9 @@
                     "nota": null,
                     "oferta_anterior_id": null,
                     "distancia_km": "49.64",
-                    "vence_en": "2026-11-25T20:50:28+00:00",
-                    "respondida_en": "2026-11-24T10:50:28+00:00",
-                    "creada_en": "2026-11-23T20:50:28+00:00"
+                    "vence_en": "2026-11-25T20:56:35+00:00",
+                    "respondida_en": "2026-11-24T10:56:35+00:00",
+                    "creada_en": "2026-11-23T20:56:35+00:00"
                 }
             ]
         }
