@@ -7,7 +7,7 @@ use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Bateria;
 /**
  * Oyente de `RecargaRegistrada` (HU-87, tarea 102): el "odómetro" de la
  * batería — cada recarga real de vuelo suma un ciclo a la que volvió del
- * vuelo, nunca a mano (ver la guarda nueva de {@see ActualizarBateria}).
+ * vuelo, nunca a mano.
  *
  * Cableado en `MantenimientoServiceProvider::boot()`: un closure resuelto
  * por el contenedor.

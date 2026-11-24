@@ -2,7 +2,6 @@
 
 namespace App\Dominios\Personal\Infraestructura;
 
-use App\Dominios\Personal\Contratos\LecturaCuadrillasPorRecurso;
 use App\Dominios\Personal\Contratos\LecturaDatosPersonales;
 use App\Dominios\Personal\Contratos\LecturaEquipoTrabajo;
 use App\Dominios\Personal\Contratos\LecturaFichaPersona;
@@ -30,6 +29,5 @@ final class PersonalServiceProvider extends ServiceProvider
         $this->app->bind(LecturaDatosPersonales::class, LecturaDatosPersonalesEloquent::class);
         $this->app->bind(LecturaPanelPersonal::class, LecturaPanelPersonalEloquent::class);
         $this->app->bind(LecturaEquipoTrabajo::class, LecturaEquipoTrabajoEloquent::class);
-        $this->app->bind(LecturaCuadrillasPorRecurso::class, LecturaCuadrillasPorRecursoEloquent::class);
     }
 }

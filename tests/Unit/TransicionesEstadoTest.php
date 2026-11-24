@@ -181,15 +181,14 @@ const RUTAS_ESTADO_DESCRIPTIVO_SIN_MAQUINA = [
     // es descriptivo (`activa`/`retirada`), sin tabla de transiciones ni guarda
     // de dominio (ver docblock de la migración y `EstadoBateria`).
     'app/Dominios/Mantenimiento/Aplicacion/CrearBateria.php',
-    'app/Dominios/Mantenimiento/Aplicacion/ActualizarBateria.php',
     // `per_equipos_trabajo.estado` DEJÓ de ser descriptivo sin máquina el
     // 19/9/2026 (tarea "cuadrillas-estadias", pedido del dueño): ahora es una
     // máquina real `activo ⇄ inactivo`, gobernada por
     // `Personal\Aplicacion\MaquinaEstados\MaquinaEstadosEquipoTrabajo` (que ya
     // cae en la PRIMERA excepción, `estadosEsServicioDeEstados()`, por vivir
-    // en `Aplicacion/MaquinaEstados/`). `CrearEquipoTrabajo`/
-    // `ActualizarEquipoTrabajo` ya no escriben `estado` en absoluto, así que
-    // no necesitan (ni les corresponde) esta segunda excepción.
+    // en `Aplicacion/MaquinaEstados/`). `CrearEquipoTrabajo`
+    // ya no escribe `estado` en absoluto, así que
+    // no necesita (ni le corresponde) esta segunda excepción.
     // Marketplace (ADR 0036): `sol_clientes.estado` nace `activo` y en la v1 no
     // tiene ninguna transición (`suspendido` aún no lo escribe ningún caso de
     // uso). Cuando exista suspender un cliente, pasa a una máquina propia.
@@ -498,7 +497,7 @@ function estadosArchivosVigilados(string $raizProyecto): array
 test('el descubrimiento encuentra el código de dominio de app/', function () use ($raizProyecto) {
     expect(estadosArchivosVigilados($raizProyecto))
         ->toContain('app/Dominios/Solicitudes/Infraestructura/Eloquent/SolicitudServicio.php')
-        ->toContain('app/Dominios/Operaciones/Aplicacion/ListarAlertas.php');
+        ->toContain('app/Dominios/Operaciones/Aplicacion/ValidarSesion.php');
 });
 
 test('ninguna asignación de estado fuera del servicio de máquina de estados (CLAUDE.md invariante 7)', function () use ($raizProyecto) {
@@ -521,10 +520,9 @@ test('ninguna asignación de estado fuera del servicio de máquina de estados (C
 
 test('la excepción de estado descriptivo es angosta: rige solo para las rutas exactas listadas', function () {
     expect(estadosEsExcepcionDescriptiva('app/Dominios/Mantenimiento/Aplicacion/CrearBateria.php'))->toBeTrue()
-        ->and(estadosEsExcepcionDescriptiva('app/Dominios/Mantenimiento/Aplicacion/ActualizarBateria.php'))->toBeTrue()
         // Ni el resto del módulo Mantenimiento, ni un archivo parecido, quedan
         // habilitados por estar "cerca": la lista es de rutas exactas.
-        ->and(estadosEsExcepcionDescriptiva('app/Dominios/Mantenimiento/Aplicacion/EliminarBateria.php'))->toBeFalse()
+        ->and(estadosEsExcepcionDescriptiva('app/Dominios/Mantenimiento/Aplicacion/IncrementarCiclosBateria.php'))->toBeFalse()
         ->and(estadosEsExcepcionDescriptiva('app/Dominios/Mantenimiento/Infraestructura/Http/Controllers/Web/BateriasController.php'))->toBeFalse()
         ->and(estadosEsExcepcionDescriptiva('app/Dominios/Operaciones/Aplicacion/CrearBateria.php'))->toBeFalse();
 });

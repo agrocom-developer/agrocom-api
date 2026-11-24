@@ -11,7 +11,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
  * Caso de uso: listado de cuentas del panel (internas Y de portal), con
  * búsqueda opcional por nombre o username y filtro opcional por tipo
  * (HU-45, tarea 39; tarea 65 le agrega las cuentas `cliente`). Solo lectura
- * — mismo patrón de paginación que `ListarPersonas`/`ListarBases`.
+ *  con paginación.
  *
  * Ya NO filtra `type: Interno` a propósito (tarea 65, HU-41): sin ABM del
  * panel, una cuenta de portal solo podía crearse por seeder/factory — el

@@ -24,14 +24,10 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
  * @property int $id
  * @property string $identificador
  * @property int $ciclos_inicial punto de partida del historial (HU-83, tarea
- *                               98), fijado al alta e inmutable después —
- *                               ver docblock de `ActualizarBateria`.
+ *                               98), fijado al alta e inmutable después.
  * @property int $ciclos_acumulados
  * @property string $estado
  * @property int|null $base_id
- * @property bool $alerta atributo NO persistido, calculado y asignado por
- *                        `ListarBaterias` — ausente fuera de ese caso de uso.
- * @property string|null $alerta_motivo atributo NO persistido, ídem `alerta`.
  */
 class Bateria extends ModeloDominio
 {

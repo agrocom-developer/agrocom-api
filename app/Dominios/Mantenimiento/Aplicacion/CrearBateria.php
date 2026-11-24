@@ -15,7 +15,7 @@ use Illuminate\Database\QueryException;
  * `ciclosInicial` (HU-83, tarea 98) es el punto de partida del historial,
  * independiente de `ciclosAcumulados`: una batería puede entrar con uso
  * previo en ambos, iguales o distintos si ya se usó desde que se detectó.
- * Fijado al alta, inmutable después — `ActualizarBateria` no lo recibe.
+ * Fijado al alta, inmutable después.
  */
 final class CrearBateria
 {
