@@ -2,24 +2,22 @@
 
 use App\Dominios\Solicitudes\Aplicacion\AvanceDeSolicitud;
 use App\Dominios\Solicitudes\Aplicacion\MaquinaEstados\MaquinaEstadosSolicitud;
-use App\Dominios\Solicitudes\Contratos\Eventos\SolicitudEjecutada;
 use App\Dominios\Solicitudes\Dominio\ActorSolicitud;
 use App\Dominios\Solicitudes\Dominio\EstadoSolicitud;
 use App\Dominios\Solicitudes\Dominio\Excepciones\TransicionSolicitudNoPermitida;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\SolicitudServicio;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
 /*
- * La ejecución en el lote hace avanzar la solicitud por su máquina de estados
- * (invariante 7 de CLAUDE.md; ADR 0037): primer trabajo → `en_ejecucion`, recorriendo
- * `asignada → en_camino` si hace falta; lo cubierto por los trabajos cerrados →
- * `ejecutada`. Cada paso deja su fila de historial. Contra el ESQUEMA REAL (las
- * migraciones, en SQLite en memoria).
+ * El trabajo del lote y la máquina de estados de la solicitud (invariante 7 de CLAUDE.md;
+ * `negociacion-contrato.md` §4, «Compatibilidad»): el primer trabajo del equipo inicia la
+ * ejecución de una solicitud adjudicada; lo cubierto por los trabajos NO la finaliza (el cierre es el
+ * registro `cierre` de la negociación). Cada paso deja su fila de historial. Contra el ESQUEMA REAL
+ * (las migraciones, en SQLite en memoria).
  */
 
 uses(TestCase::class);
@@ -33,6 +31,7 @@ function avanceEsquema(): void
         'create_sol_clientes_table',
         'create_sol_solicitudes_servicio_table',
         'create_sol_solicitud_historial_table',
+        'agrega_negociacion_a_sol_solicitudes_servicio',
     ];
 
     static $instancias = [];
@@ -100,86 +99,63 @@ beforeEach(function () {
     DB::table('sol_solicitud_historial')->delete();
 });
 
-test('el primer trabajo pasa una solicitud asignada por en camino hasta en ejecución, con su historial', function () {
-    $solicitud = avanceSolicitud(EstadoSolicitud::Asignada);
+test('el primer trabajo pasa una solicitud adjudicada a en ejecución, con su historial', function () {
+    $solicitud = avanceSolicitud(EstadoSolicitud::Adjudicada);
 
     app(AvanceDeSolicitud::class)->iniciarEjecucion($solicitud->id);
 
     expect($solicitud->fresh()->estado)->toBe(EstadoSolicitud::EnEjecucion)
-        ->and(avanceHistorial($solicitud->id))->toBe(['en_camino', 'en_ejecucion'])
-        ->and(DB::table('sol_solicitud_historial')->where('solicitud_id', $solicitud->id)->pluck('origen')->unique()->all())->toBe(['sistema']);
-});
-
-test('una solicitud que ya salió en camino solo da el último paso', function () {
-    $solicitud = avanceSolicitud(EstadoSolicitud::EnCamino);
-
-    app(AvanceDeSolicitud::class)->iniciarEjecucion($solicitud->id);
-
-    expect(avanceHistorial($solicitud->id))->toBe(['en_ejecucion']);
-});
-
-test('una suspendida por clima se reprograma, sale y entra a ejecución', function () {
-    $solicitud = avanceSolicitud(EstadoSolicitud::SuspendidaPorClima);
-
-    app(AvanceDeSolicitud::class)->iniciarEjecucion($solicitud->id);
-
-    expect($solicitud->fresh()->estado)->toBe(EstadoSolicitud::EnEjecucion)
-        ->and(avanceHistorial($solicitud->id))->toBe(['asignada', 'en_camino', 'en_ejecucion']);
+        ->and($solicitud->fresh()->iniciada_en)->not->toBeNull()
+        ->and(avanceHistorial($solicitud->id))->toBe(['en_ejecucion']);
 });
 
 test('iniciar la ejecución es idempotente y no toca una solicitud que no corresponde', function () {
-    $enEjecucion = avanceSolicitud(EstadoSolicitud::EnEjecucion);
-    $cancelada = avanceSolicitud(EstadoSolicitud::Cancelada);
+    $adjudicada = avanceSolicitud(EstadoSolicitud::Adjudicada);
+    $abierta = avanceSolicitud(EstadoSolicitud::Abierta);
+    $finalizada = avanceSolicitud(EstadoSolicitud::Finalizada);
 
-    app(AvanceDeSolicitud::class)->iniciarEjecucion($enEjecucion->id);
-    app(AvanceDeSolicitud::class)->iniciarEjecucion($enEjecucion->id);
-    app(AvanceDeSolicitud::class)->iniciarEjecucion($cancelada->id);
+    foreach ([1, 2, 3] as $vez) {
+        app(AvanceDeSolicitud::class)->iniciarEjecucion($adjudicada->id);
+        app(AvanceDeSolicitud::class)->iniciarEjecucion($abierta->id);
+        app(AvanceDeSolicitud::class)->iniciarEjecucion($finalizada->id);
+    }
+    app(AvanceDeSolicitud::class)->iniciarEjecucion(999999);
 
-    expect(avanceHistorial($enEjecucion->id))->toBe([])
-        ->and($cancelada->fresh()->estado)->toBe(EstadoSolicitud::Cancelada)
-        ->and(avanceHistorial($cancelada->id))->toBe([]);
+    expect($adjudicada->fresh()->estado)->toBe(EstadoSolicitud::EnEjecucion)
+        ->and(avanceHistorial($adjudicada->id))->toBe(['en_ejecucion'])
+        ->and($abierta->fresh()->estado)->toBe(EstadoSolicitud::Abierta)
+        ->and($finalizada->fresh()->estado)->toBe(EstadoSolicitud::Finalizada)
+        ->and(DB::table('sol_solicitud_historial')->count())->toBe(1);
 });
 
-test('lo cubierto pasa la solicitud a ejecutada solo desde el porcentaje mínimo, y lo anuncia', function () {
-    Event::fake([SolicitudEjecutada::class]);
-    config(['solicitudes.cobertura_minima_pct' => '95']);
-    $solicitud = avanceSolicitud(EstadoSolicitud::EnEjecucion, '100.0000');
+test('lo cubierto por los trabajos cerrados no finaliza la solicitud', function () {
+    $solicitud = avanceSolicitud(EstadoSolicitud::EnEjecucion);
 
-    app(AvanceDeSolicitud::class)->registrarCobertura($solicitud->id, '94.9999');
+    app(AvanceDeSolicitud::class)->registrarCobertura($solicitud->id, '100.0000');
 
-    expect($solicitud->fresh()->estado)->toBe(EstadoSolicitud::EnEjecucion);
-    Event::assertNotDispatched(SolicitudEjecutada::class);
-
-    app(AvanceDeSolicitud::class)->registrarCobertura($solicitud->id, '95.0000');
-
-    expect($solicitud->fresh()->estado)->toBe(EstadoSolicitud::Ejecutada)
-        ->and(avanceHistorial($solicitud->id))->toBe(['ejecutada']);
-    Event::assertDispatched(SolicitudEjecutada::class, fn (SolicitudEjecutada $evento): bool => $evento->solicitudId === $solicitud->id && $evento->clienteUsuarioId === 55);
+    expect($solicitud->fresh()->estado)->toBe(EstadoSolicitud::EnEjecucion)->and(DB::table('sol_solicitud_historial')->count())->toBe(0);
 });
 
-test('la cobertura de una solicitud que ya no está en ejecución no la cambia', function () {
-    $cancelada = avanceSolicitud(EstadoSolicitud::Cancelada);
-    $ejecutada = avanceSolicitud(EstadoSolicitud::Ejecutada);
+test('la app de campo recibe el servicio solo desde la adjudicación', function () {
+    $adjudicada = avanceSolicitud(EstadoSolicitud::Adjudicada);
+    $abierta = avanceSolicitud(EstadoSolicitud::Abierta);
 
-    app(AvanceDeSolicitud::class)->registrarCobertura($cancelada->id, '100.0000');
-    app(AvanceDeSolicitud::class)->registrarCobertura($ejecutada->id, '100.0000');
-
-    expect($cancelada->fresh()->estado)->toBe(EstadoSolicitud::Cancelada)
-        ->and($ejecutada->fresh()->estado)->toBe(EstadoSolicitud::Ejecutada)
-        ->and(DB::table('sol_solicitud_historial')->count())->toBe(0);
+    expect(app(AvanceDeSolicitud::class)->datos($adjudicada->id)->admiteTrabajo)->toBeTrue()
+        ->and(app(AvanceDeSolicitud::class)->datos($abierta->id)->admiteTrabajo)->toBeFalse()
+        ->and(app(AvanceDeSolicitud::class)->datos(999999))->toBeNull();
 });
 
 test('la máquina de estados rechaza una transición que la tabla no permite y no escribe nada', function () {
-    $solicitud = avanceSolicitud(EstadoSolicitud::Completada);
+    $solicitud = avanceSolicitud(EstadoSolicitud::Calificada);
 
-    expect(fn () => app(MaquinaEstadosSolicitud::class)->transicionar($solicitud, EstadoSolicitud::Publicada, ActorSolicitud::Administrador, 1))
+    expect(fn () => app(MaquinaEstadosSolicitud::class)->transicionar($solicitud, EstadoSolicitud::Abierta, ActorSolicitud::Administrador, 1))
         ->toThrow(TransicionSolicitudNoPermitida::class)
-        ->and($solicitud->fresh()->estado)->toBe(EstadoSolicitud::Completada)
+        ->and($solicitud->fresh()->estado)->toBe(EstadoSolicitud::Calificada)
         ->and(DB::table('sol_solicitud_historial')->count())->toBe(0);
 });
 
 test('cancelar guarda quién, por qué y deja el historial con el motivo', function () {
-    $solicitud = avanceSolicitud(EstadoSolicitud::Asignada);
+    $solicitud = avanceSolicitud(EstadoSolicitud::Adjudicada);
 
     app(MaquinaEstadosSolicitud::class)->transicionar(
         $solicitud,
@@ -196,7 +172,7 @@ test('cancelar guarda quién, por qué y deja el historial con el motivo', funct
     expect($fila->estado)->toBe('cancelada')
         ->and($fila->cancelada_por)->toBe('cliente')
         ->and($fila->motivo_cancelacion)->toBe('Cambió la fecha de siembra')
-        ->and($paso->estado_anterior)->toBe('asignada')
+        ->and($paso->estado_anterior)->toBe('adjudicada')
         ->and($paso->origen)->toBe('cliente')
         ->and($paso->motivo)->toBe('Cambió la fecha de siembra');
 });

@@ -4,16 +4,43 @@ use App\Dominios\Solicitudes\Dominio\EstadoSolicitud;
 use App\Dominios\Solicitudes\Dominio\TransicionesSolicitud;
 
 /*
- * Ciclo de la solicitud de servicio (especificación del marketplace §5.1, ADR
- * 0027, invariante 7 de CLAUDE.md). Pura, sin Eloquent ni base: la tabla de
- * transiciones y las propiedades de cada estado.
+ * Máquina de estados de la solicitud de servicio (`negociacion-contrato.md` §1, invariante 7
+ * de CLAUDE.md). Pura, sin Eloquent ni base: la tabla COMPLETA de transiciones permitidas y
+ * prohibidas, y las propiedades de cada estado.
  */
+
+/** @return array<string, list<string>> */
+function transicionesEsperadas(): array
+{
+    return [
+        'borrador' => ['abierta', 'cancelada'],
+        'abierta' => ['con_ofertas', 'adjudicada', 'expirada', 'cancelada'],
+        'con_ofertas' => ['abierta', 'adjudicada', 'expirada', 'cancelada'],
+        'adjudicada' => ['en_ejecucion', 'abierta', 'cancelada'],
+        'en_ejecucion' => ['finalizada'],
+        'finalizada' => ['calificada', 'disputada'],
+        'calificada' => ['disputada'],
+        'disputada' => ['finalizada', 'calificada', 'cancelada'],
+        'expirada' => ['abierta'],
+        'cancelada' => [],
+    ];
+}
+
+test('la tabla de transiciones permite exactamente lo que dice la especificación y nada más', function () {
+    $esperadas = transicionesEsperadas();
+
+    foreach (EstadoSolicitud::cases() as $desde) {
+        foreach (EstadoSolicitud::cases() as $hacia) {
+            expect(TransicionesSolicitud::permitida($desde, $hacia))
+                ->toBe(in_array($hacia->value, $esperadas[$desde->value], true), "{$desde->value} -> {$hacia->value}");
+        }
+    }
+});
 
 test('el camino feliz recorre el ciclo de punta a punta', function () {
     $camino = [
-        EstadoSolicitud::Borrador, EstadoSolicitud::Publicada, EstadoSolicitud::EnAsignacion,
-        EstadoSolicitud::Asignada, EstadoSolicitud::EnCamino, EstadoSolicitud::EnEjecucion,
-        EstadoSolicitud::Ejecutada, EstadoSolicitud::Completada,
+        EstadoSolicitud::Borrador, EstadoSolicitud::Abierta, EstadoSolicitud::ConOfertas, EstadoSolicitud::Adjudicada,
+        EstadoSolicitud::EnEjecucion, EstadoSolicitud::Finalizada, EstadoSolicitud::Calificada,
     ];
 
     foreach (array_slice($camino, 0, -1) as $indice => $desde) {
@@ -21,49 +48,19 @@ test('el camino feliz recorre el ciclo de punta a punta', function () {
     }
 });
 
-test('completada y cancelada son terminales', function () {
-    foreach ([EstadoSolicitud::Completada, EstadoSolicitud::Cancelada] as $terminal) {
-        expect($terminal->esTerminal())->toBeTrue()
-            ->and(TransicionesSolicitud::destinosDesde($terminal))->toBe([]);
+test('calificada, cancelada y expirada son terminales para la lista de activas', function () {
+    foreach ([EstadoSolicitud::Calificada, EstadoSolicitud::Cancelada, EstadoSolicitud::Expirada] as $terminal) {
+        expect($terminal->esTerminal())->toBeTrue();
     }
 
-    $noTerminales = array_filter(EstadoSolicitud::cases(), fn (EstadoSolicitud $e) => ! $e->esTerminal());
-    expect($noTerminales)->toHaveCount(10);
+    expect(TransicionesSolicitud::destinosDesde(EstadoSolicitud::Cancelada))->toBe([])
+        ->and(EstadoSolicitud::EnEjecucion->esTerminal())->toBeFalse();
 });
 
-test('un borrador solo se publica o se cancela', function () {
-    expect(TransicionesSolicitud::destinosDesde(EstadoSolicitud::Borrador))
-        ->toBe([EstadoSolicitud::Publicada, EstadoSolicitud::Cancelada]);
-});
-
-test('sin proveedor el cliente puede republicar o cancelar', function () {
-    expect(TransicionesSolicitud::permitida(EstadoSolicitud::SinProveedor, EstadoSolicitud::Publicada))->toBeTrue()
-        ->and(TransicionesSolicitud::permitida(EstadoSolicitud::SinProveedor, EstadoSolicitud::Cancelada))->toBeTrue()
-        ->and(TransicionesSolicitud::permitida(EstadoSolicitud::SinProveedor, EstadoSolicitud::Asignada))->toBeFalse();
-});
-
-test('si el proveedor cancela, la solicitud vuelve a asignación', function () {
-    expect(TransicionesSolicitud::permitida(EstadoSolicitud::Asignada, EstadoSolicitud::EnAsignacion))->toBeTrue()
-        ->and(TransicionesSolicitud::permitida(EstadoSolicitud::EnCamino, EstadoSolicitud::EnAsignacion))->toBeTrue()
-        ->and(TransicionesSolicitud::permitida(EstadoSolicitud::EnEjecucion, EstadoSolicitud::EnAsignacion))->toBeFalse();
-});
-
-test('en ejecución solo se termina o se suspende por clima, y no se cancela', function () {
-    expect(TransicionesSolicitud::destinosDesde(EstadoSolicitud::EnEjecucion))
-        ->toBe([EstadoSolicitud::Ejecutada, EstadoSolicitud::SuspendidaPorClima])
-        ->and(EstadoSolicitud::EnEjecucion->admiteCancelacion())->toBeFalse();
-});
-
-test('suspendida por clima se reprograma como asignada o se cancela', function () {
-    expect(TransicionesSolicitud::destinosDesde(EstadoSolicitud::SuspendidaPorClima))
-        ->toBe([EstadoSolicitud::Asignada, EstadoSolicitud::Cancelada]);
-});
-
-test('ejecutada pasa a completada o a disputa; una disputa se cierra completada o cancelada', function () {
-    expect(TransicionesSolicitud::destinosDesde(EstadoSolicitud::Ejecutada))
-        ->toBe([EstadoSolicitud::Completada, EstadoSolicitud::EnDisputa])
-        ->and(TransicionesSolicitud::destinosDesde(EstadoSolicitud::EnDisputa))
-        ->toBe([EstadoSolicitud::Completada, EstadoSolicitud::Cancelada]);
+test('no existe cancelación desde en_ejecucion: lo no ejecutado se cierra y, si hay desacuerdo, se disputa', function () {
+    expect(TransicionesSolicitud::permitida(EstadoSolicitud::EnEjecucion, EstadoSolicitud::Cancelada))->toBeFalse()
+        ->and(TransicionesSolicitud::destinosDesde(EstadoSolicitud::EnEjecucion))->toBe([EstadoSolicitud::Finalizada])
+        ->and(TransicionesSolicitud::permitida(EstadoSolicitud::Finalizada, EstadoSolicitud::Disputada))->toBeTrue();
 });
 
 test('ningún estado vuelve a borrador y nadie se transiciona a sí mismo', function () {
@@ -74,16 +71,27 @@ test('ningún estado vuelve a borrador y nadie se transiciona a sí mismo', func
 });
 
 test('solo los estados con equipo fijado llegan a la app de campo', function () {
-    expect(EstadoSolicitud::conEquipo())->toBe([
-        EstadoSolicitud::Asignada, EstadoSolicitud::EnCamino, EstadoSolicitud::EnEjecucion, EstadoSolicitud::SuspendidaPorClima,
-    ])->and(EstadoSolicitud::Publicada->tieneEquipo())->toBeFalse()
+    expect(EstadoSolicitud::conEquipo())->toBe([EstadoSolicitud::Adjudicada, EstadoSolicitud::EnEjecucion])
+        ->and(EstadoSolicitud::Abierta->tieneEquipo())->toBeFalse()
         ->and(EstadoSolicitud::EnEjecucion->tieneEquipo())->toBeTrue();
 });
 
-test('el cliente cancela mientras no haya un servicio en el lote', function () {
+test('solo abierta y con_ofertas están en el mercado de los pilotos', function () {
+    $enMercado = array_filter(EstadoSolicitud::cases(), fn (EstadoSolicitud $e) => $e->enMercado());
+
+    expect(array_map(fn (EstadoSolicitud $e) => $e->value, array_values($enMercado)))->toBe(['abierta', 'con_ofertas']);
+});
+
+test('el cliente cancela mientras la solicitud no esté en ejecución', function () {
     $cancelables = array_filter(EstadoSolicitud::cases(), fn (EstadoSolicitud $e) => $e->admiteCancelacion());
 
     expect(array_map(fn (EstadoSolicitud $e) => $e->value, array_values($cancelables)))->toBe([
-        'borrador', 'publicada', 'en_asignacion', 'sin_proveedor', 'asignada', 'en_camino', 'suspendida_por_clima', 'en_disputa',
+        'borrador', 'abierta', 'con_ofertas', 'adjudicada', 'disputada',
     ]);
+});
+
+test('toda transición apunta a un estado que existe y cada estado tiene fila en la tabla', function () {
+    $esperadas = transicionesEsperadas();
+
+    expect(array_keys($esperadas))->toEqualCanonicalizing(array_map(fn (EstadoSolicitud $e) => $e->value, EstadoSolicitud::cases()));
 });

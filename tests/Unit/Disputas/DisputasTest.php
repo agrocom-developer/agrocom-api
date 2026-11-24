@@ -60,6 +60,8 @@ function dspMundo(): void
         'create_sol_clientes_table',
         'create_sol_terrenos_table',
         'create_sol_solicitudes_servicio_table',
+        'agrega_negociacion_a_sol_solicitudes_servicio',
+        'create_neg_tablas_de_negociacion',
         'create_sol_solicitud_historial_table',
         'agrega_reputacion_a_sol_clientes',
         'create_dsp_disputas_table',
@@ -100,9 +102,9 @@ function dspSolicitud(string $estado, ?Carbon $enElEstadoDesde = null, ?string $
         'hectareas_solicitadas' => '100.0000', 'producto_indicado' => 'Glifosato', 'aporta_producto' => 'cliente',
         'ventana_desde' => '2026-12-01', 'ventana_hasta' => '2026-12-10', 'urgente' => false,
         'monto_estimado' => '12000.00', 'estado' => $estado, 'proveedor_id' => 7, 'equipo_id' => 70,
-        'monto_final' => $estado === 'completada' ? '12000.00' : null,
-        'comision_porcentaje' => $estado === 'completada' ? '15.00' : null,
-        'comision_monto' => $estado === 'completada' ? $comision : null,
+        'monto_final' => in_array($estado, ['finalizada', 'calificada'], true) ? '12000.00' : null,
+        'precio_ha_acordado' => '120.0000',
+        'finalizada_en' => in_array($estado, ['finalizada', 'calificada'], true) ? ($enElEstadoDesde ?? Carbon::now()->subHours(2)) : null,
         'created_at' => now(), 'updated_at' => now(),
     ]);
 
@@ -181,7 +183,7 @@ test('los plazos de la política se miden desde el momento correcto', function (
 test('el cliente abre una disputa sobre un servicio ejecutado: la solicitud pasa a en disputa y se avisa a la contraparte', function () {
     Event::fake([DisputaAbierta::class]);
     dspMundo();
-    $solicitud = dspSolicitud('ejecutada');
+    $solicitud = dspSolicitud('finalizada');
 
     $disputa = dspAbrirComoCliente($solicitud);
 
@@ -190,7 +192,7 @@ test('el cliente abre una disputa sobre un servicio ejecutado: la solicitud pasa
         ->and($disputa->movio_solicitud)->toBeTrue()
         ->and($disputa->proveedor_id)->toBe(7)
         ->and($disputa->responde_antes_de)->not->toBeNull()
-        ->and(dspEstadoDeSolicitud($solicitud))->toBe('en_disputa')
+        ->and(dspEstadoDeSolicitud($solicitud))->toBe('disputada')
         ->and(DB::table('dsp_historial')->where('disputa_id', $disputa->id)->count())->toBe(1)
         ->and(DB::table('sol_solicitud_historial')->where('solicitud_id', $solicitud)->orderByDesc('id')->value('origen'))->toBe('cliente');
     Event::assertDispatched(DisputaAbierta::class, fn (DisputaAbierta $e): bool => $e->abiertaPor === 'cliente' && $e->usuariosContraparte === [DSP_TITULAR, DSP_PILOTO]);
@@ -198,7 +200,7 @@ test('el cliente abre una disputa sobre un servicio ejecutado: la solicitud pasa
 
 test('el monto en disputa no pasa del monto del servicio', function () {
     dspMundo();
-    $solicitud = dspSolicitud('ejecutada');
+    $solicitud = dspSolicitud('finalizada');
 
     expect(fn () => dspAbrirComoCliente($solicitud, 'cobertura_incompleta', '12000.01'))->toRechazarCon(DisputaInvalida::class, 'disputas.errores.monto_invalido')
         ->and(fn () => dspAbrirComoCliente($solicitud, 'cobertura_incompleta', '0'))->toRechazarCon(DisputaInvalida::class, 'disputas.errores.monto_invalido')
@@ -207,7 +209,7 @@ test('el monto en disputa no pasa del monto del servicio', function () {
 
 test('hay una sola disputa por solicitud', function () {
     dspMundo();
-    $solicitud = dspSolicitud('ejecutada');
+    $solicitud = dspSolicitud('finalizada');
     dspAbrirComoCliente($solicitud);
 
     try {
@@ -223,22 +225,20 @@ test('hay una sola disputa por solicitud', function () {
 test('el cliente solo alega los motivos suyos y solo sobre su servicio ejecutado dentro del plazo', function () {
     dspMundo();
     $enEjecucion = dspSolicitud('en_ejecucion');
-    $completada = dspSolicitud('completada');
-    $vencida = dspSolicitud('ejecutada', Carbon::now()->subHours(73));
-    $buena = dspSolicitud('ejecutada');
+    $vencida = dspSolicitud('finalizada', Carbon::now()->subHours(73));
+    $buena = dspSolicitud('finalizada');
 
     expect(fn () => dspAbrirComoCliente($buena, 'cobro_pendiente'))->toRechazarCon(DisputaInvalida::class, 'disputas.errores.motivo_invalido')
         ->and(fn () => dspAbrirComoCliente($enEjecucion))->toRechazarCon(DisputaInvalida::class, 'disputas.errores.servicio_no_disputable')
-        ->and(fn () => dspAbrirComoCliente($completada))->toRechazarCon(DisputaInvalida::class, 'disputas.errores.servicio_no_disputable')
         ->and(fn () => dspAbrirComoCliente($vencida))->toRechazarCon(DisputaInvalida::class, 'disputas.errores.plazo_vencido')
         ->and(fn () => app(AbrirDisputa::class)->ejecutar(DSP_CLIENTE, ParteDeDisputa::Cliente, $buena, 'cobertura_incompleta', '  '))->toRechazarCon(DisputaInvalida::class, 'disputas.errores.texto_requerido')
         ->and(Disputa::query()->count())->toBe(0)
-        ->and(dspEstadoDeSolicitud($buena))->toBe('ejecutada');
+        ->and(dspEstadoDeSolicitud($buena))->toBe('finalizada');
 });
 
 test('el servicio de otro cliente responde como si no existiera', function () {
     dspMundo();
-    $solicitud = dspSolicitud('ejecutada');
+    $solicitud = dspSolicitud('finalizada');
 
     try {
         app(AbrirDisputa::class)->ejecutar(DSP_OTRO_CLIENTE, ParteDeDisputa::Cliente, $solicitud, 'cobertura_incompleta', 'Detalle');
@@ -248,43 +248,44 @@ test('el servicio de otro cliente responde como si no existiera', function () {
     }
 });
 
-test('el proveedor reclama un cobro pendiente sobre un servicio completado sin mover la solicitud', function () {
+test('el proveedor reclama un cobro pendiente sobre un servicio calificado y la solicitud pasa a disputada', function () {
     Event::fake([DisputaAbierta::class]);
     dspMundo();
-    $solicitud = dspSolicitud('completada');
+    $solicitud = dspSolicitud('calificada');
 
     $disputa = app(AbrirDisputa::class)->ejecutar(DSP_PILOTO, ParteDeDisputa::Proveedor, $solicitud, 'cobro_pendiente', 'El cliente no pagó');
 
     expect($disputa->abierta_por_rol)->toBe(ParteDeDisputa::Proveedor)
-        ->and($disputa->movio_solicitud)->toBeFalse()
-        ->and(dspEstadoDeSolicitud($solicitud))->toBe('completada');
+        ->and($disputa->movio_solicitud)->toBeTrue()
+        ->and(dspEstadoDeSolicitud($solicitud))->toBe('disputada');
     Event::assertDispatched(DisputaAbierta::class, fn (DisputaAbierta $e): bool => $e->usuariosContraparte === [DSP_CLIENTE]);
 });
 
 test('el proveedor que disputa un servicio ejecutado lo pasa a en disputa', function () {
     dspMundo();
-    $solicitud = dspSolicitud('ejecutada');
+    $solicitud = dspSolicitud('finalizada');
 
     $disputa = app(AbrirDisputa::class)->ejecutar(DSP_TITULAR, ParteDeDisputa::Proveedor, $solicitud, 'cobro_pendiente', 'El cliente no paga');
 
-    expect($disputa->movio_solicitud)->toBeTrue()->and(dspEstadoDeSolicitud($solicitud))->toBe('en_disputa');
+    expect($disputa->movio_solicitud)->toBeTrue()->and(dspEstadoDeSolicitud($solicitud))->toBe('disputada');
 });
 
 test('el proveedor solo alega sus motivos, en los estados que corresponden y dentro de su ventana', function () {
     dspMundo();
-    $enCamino = dspSolicitud('en_camino');
-    $ejecutada = dspSolicitud('ejecutada');
-    $antigua = dspSolicitud('completada', Carbon::now()->subDays(31));
+    $enCamino = dspSolicitud('adjudicada');
+    $ejecutada = dspSolicitud('finalizada');
+    $enMarcha = dspSolicitud('en_ejecucion');
+    $antigua = dspSolicitud('calificada', Carbon::now()->subDays(31));
 
     expect(app(AbrirDisputa::class)->ejecutar(DSP_TITULAR, ParteDeDisputa::Proveedor, $enCamino, 'acceso_negado', 'Portón cerrado')->movio_solicitud)->toBeFalse()
-        ->and(fn () => app(AbrirDisputa::class)->ejecutar(DSP_TITULAR, ParteDeDisputa::Proveedor, $ejecutada, 'calificacion_abusiva', 'Insultos'))->toRechazarCon(DisputaInvalida::class, 'disputas.errores.servicio_no_disputable')
+        ->and(fn () => app(AbrirDisputa::class)->ejecutar(DSP_TITULAR, ParteDeDisputa::Proveedor, $enMarcha, 'calificacion_abusiva', 'Insultos'))->toRechazarCon(DisputaInvalida::class, 'disputas.errores.servicio_no_disputable')
         ->and(fn () => app(AbrirDisputa::class)->ejecutar(DSP_TITULAR, ParteDeDisputa::Proveedor, $ejecutada, 'cobertura_incompleta', 'No es mío'))->toRechazarCon(DisputaInvalida::class, 'disputas.errores.motivo_invalido')
         ->and(fn () => app(AbrirDisputa::class)->ejecutar(DSP_TITULAR, ParteDeDisputa::Proveedor, $antigua, 'cobro_pendiente', 'Hace mucho'))->toRechazarCon(DisputaInvalida::class, 'disputas.errores.plazo_vencido');
 });
 
 test('un proveedor que no prestó el servicio no abre la disputa', function () {
     dspMundo();
-    $solicitud = dspSolicitud('completada');
+    $solicitud = dspSolicitud('calificada');
 
     try {
         app(AbrirDisputa::class)->ejecutar(DSP_OTRO_PROVEEDOR, ParteDeDisputa::Proveedor, $solicitud, 'cobro_pendiente', 'No fue mío');
@@ -298,7 +299,7 @@ test('un proveedor que no prestó el servicio no abre la disputa', function () {
 
 test('las partes y soporte escriben mientras la disputa está viva, y nadie ajeno entra', function () {
     dspMundo();
-    $disputa = dspAbrirComoCliente(dspSolicitud('ejecutada'));
+    $disputa = dspAbrirComoCliente(dspSolicitud('finalizada'));
 
     app(AgregarMensajeDeDisputa::class)->comoParte(DSP_PILOTO, ParteDeDisputa::Proveedor, $disputa->id, 'El vuelo cubrió todo');
     app(AgregarMensajeDeDisputa::class)->comoSoporte(DSP_ADMIN, $disputa->id, '¿Tienen el registro del dron?', true);
@@ -317,7 +318,7 @@ test('las partes y soporte escriben mientras la disputa está viva, y nadie ajen
 
 test('soporte toma la disputa una sola vez y queda registrado quién la atiende', function () {
     dspMundo();
-    $disputa = dspAbrirComoCliente(dspSolicitud('ejecutada'));
+    $disputa = dspAbrirComoCliente(dspSolicitud('finalizada'));
 
     $tomada = app(TomarDisputa::class)->ejecutar(DSP_ADMIN, $disputa->id);
     $otraVez = app(TomarDisputa::class)->ejecutar(DSP_ADMIN, $disputa->id);
@@ -330,10 +331,10 @@ test('soporte toma la disputa una sola vez y queda registrado quién la atiende'
 
 // --- Resolución -----------------------------------------------------------
 
-test('un reembolso parcial completa la solicitud, congela su comisión y ajusta la comisión en proporción', function () {
+test('un reembolso parcial devuelve la solicitud a finalizada con el reembolso registrado', function () {
     Event::fake([DisputaResuelta::class]);
     dspMundo();
-    $solicitud = dspSolicitud('ejecutada');
+    $solicitud = dspSolicitud('finalizada');
     $disputa = dspAbrirComoCliente($solicitud);
 
     $resuelta = app(ResolverDisputa::class)->ejecutar(DSP_ADMIN, $disputa->id, ResultadoDisputa::Parcial, 'Faltó cubrir la franja norte', '3000');
@@ -341,10 +342,8 @@ test('un reembolso parcial completa la solicitud, congela su comisión y ajusta 
     $resolucion = DB::table('dsp_resoluciones')->where('disputa_id', $disputa->id)->first();
     expect($resuelta->estado)->toBe(EstadoDisputa::Resuelta)
         ->and($resuelta->apelable_hasta)->not->toBeNull()
-        ->and(dspEstadoDeSolicitud($solicitud))->toBe('completada')
-        ->and(DB::table('sol_solicitudes_servicio')->where('id', $solicitud)->value('comision_monto'))->toEqual('1800.00')
+        ->and(dspEstadoDeSolicitud($solicitud))->toBe('finalizada')
         ->and($resolucion->monto_reembolso)->toEqual('3000.00')
-        ->and($resolucion->comision_ajuste)->toEqual('450.00')
         ->and($resolucion->resuelta_por)->toBe(DSP_ADMIN)
         ->and(DB::table('dsp_historial')->where('disputa_id', $disputa->id)->pluck('estado_nuevo')->all())->toBe(['abierta', 'en_revision', 'resuelta']);
     Event::assertDispatched(DisputaResuelta::class, fn (DisputaResuelta $e): bool => $e->resultado === 'parcial' && $e->montoReembolso === '3000.00' && $e->usuariosDestinatarios === [DSP_CLIENTE, DSP_TITULAR, DSP_PILOTO]);
@@ -352,7 +351,7 @@ test('un reembolso parcial completa la solicitud, congela su comisión y ajusta 
 
 test('un reembolso total a favor del cliente cancela la solicitud sin comisión que ajustar', function () {
     dspMundo();
-    $solicitud = dspSolicitud('ejecutada');
+    $solicitud = dspSolicitud('finalizada');
     $disputa = dspAbrirComoCliente($solicitud, 'equipo_ausente');
 
     app(ResolverDisputa::class)->ejecutar(DSP_ADMIN, $disputa->id, ResultadoDisputa::AFavorCliente, 'El equipo nunca se presentó', '12000.00', malaFeCliente: true);
@@ -365,16 +364,16 @@ test('un reembolso total a favor del cliente cancela la solicitud sin comisión 
 
 test('a favor del proveedor o sin lugar completa la solicitud sin reembolso, y la mala fe solo se registra sin lugar', function () {
     dspMundo();
-    $primera = dspSolicitud('ejecutada');
-    $segunda = dspSolicitud('ejecutada');
+    $primera = dspSolicitud('finalizada');
+    $segunda = dspSolicitud('finalizada');
     $a = dspAbrirComoCliente($primera);
     $b = dspAbrirComoCliente($segunda, 'trato_inadecuado');
 
     app(ResolverDisputa::class)->ejecutar(DSP_ADMIN, $a->id, ResultadoDisputa::AFavorProveedor, 'El registro prueba la cobertura', '0', malaFeCliente: true);
     app(ResolverDisputa::class)->ejecutar(DSP_ADMIN, $b->id, ResultadoDisputa::SinLugar, 'No hay prueba del reclamo', '', malaFeCliente: true);
 
-    expect(dspEstadoDeSolicitud($primera))->toBe('completada')
-        ->and(dspEstadoDeSolicitud($segunda))->toBe('completada')
+    expect(dspEstadoDeSolicitud($primera))->toBe('finalizada')
+        ->and(dspEstadoDeSolicitud($segunda))->toBe('finalizada')
         ->and((bool) DB::table('dsp_resoluciones')->where('disputa_id', $a->id)->value('mala_fe_cliente'))->toBeFalse()
         ->and((bool) DB::table('dsp_resoluciones')->where('disputa_id', $b->id)->value('mala_fe_cliente'))->toBeTrue()
         ->and(DB::table('dsp_resoluciones')->where('disputa_id', $b->id)->value('monto_reembolso'))->toEqual('0.00');
@@ -382,7 +381,7 @@ test('a favor del proveedor o sin lugar completa la solicitud sin reembolso, y l
 
 test('un daño probado se deriva al seguro del proveedor', function () {
     dspMundo();
-    $disputa = dspAbrirComoCliente(dspSolicitud('ejecutada'), 'dano_a_cultivos_o_terceros');
+    $disputa = dspAbrirComoCliente(dspSolicitud('finalizada'), 'dano_a_cultivos_o_terceros');
 
     app(ResolverDisputa::class)->ejecutar(DSP_ADMIN, $disputa->id, ResultadoDisputa::AFavorCliente, 'Daño comprobado en el lote vecino', '5000', derivadaASeguro: true);
 
@@ -391,13 +390,13 @@ test('un daño probado se deriva al seguro del proveedor', function () {
 
 test('resolver exige un reembolso que corresponda al resultado y un motivo, y una disputa se resuelve una sola vez por ronda', function () {
     dspMundo();
-    $solicitud = dspSolicitud('ejecutada');
+    $solicitud = dspSolicitud('finalizada');
     $disputa = dspAbrirComoCliente($solicitud);
 
     expect(fn () => app(ResolverDisputa::class)->ejecutar(DSP_ADMIN, $disputa->id, ResultadoDisputa::SinLugar, 'Motivo', '100'))->toRechazarCon(DisputaInvalida::class, 'disputas.errores.reembolso.sin_reembolso')
         ->and(fn () => app(ResolverDisputa::class)->ejecutar(DSP_ADMIN, $disputa->id, ResultadoDisputa::AFavorCliente, 'Motivo', '13000'))->toRechazarCon(DisputaInvalida::class, 'disputas.errores.reembolso.excede_monto')
         ->and(fn () => app(ResolverDisputa::class)->ejecutar(DSP_ADMIN, $disputa->id, ResultadoDisputa::SinLugar, ' ', '0'))->toRechazarCon(DisputaInvalida::class, 'disputas.errores.motivo_requerido')
-        ->and(dspEstadoDeSolicitud($solicitud))->toBe('en_disputa')
+        ->and(dspEstadoDeSolicitud($solicitud))->toBe('disputada')
         ->and(Disputa::query()->find($disputa->id)->estado)->toBe(EstadoDisputa::Abierta);
 
     app(ResolverDisputa::class)->ejecutar(DSP_ADMIN, $disputa->id, ResultadoDisputa::SinLugar, 'No procede', '0');
@@ -410,17 +409,17 @@ test('resolver exige un reembolso que corresponda al resultado y un motivo, y un
     }
 
     expect(DB::table('dsp_resoluciones')->where('disputa_id', $disputa->id)->count())->toBe(1)
-        ->and(dspEstadoDeSolicitud($solicitud))->toBe('completada');
+        ->and(dspEstadoDeSolicitud($solicitud))->toBe('finalizada');
 });
 
-test('una disputa del proveedor sobre un servicio ya completado se resuelve sin mover la solicitud', function () {
+test('una disputa del proveedor sobre un servicio calificado se resuelve y la solicitud vuelve a calificada', function () {
     dspMundo();
-    $solicitud = dspSolicitud('completada');
+    $solicitud = dspSolicitud('calificada');
     $disputa = app(AbrirDisputa::class)->ejecutar(DSP_TITULAR, ParteDeDisputa::Proveedor, $solicitud, 'cobro_pendiente', 'No pagó');
 
     app(ResolverDisputa::class)->ejecutar(DSP_ADMIN, $disputa->id, ResultadoDisputa::AFavorProveedor, 'El cliente debe pagar', '0');
 
-    expect(dspEstadoDeSolicitud($solicitud))->toBe('completada')
+    expect(dspEstadoDeSolicitud($solicitud))->toBe('calificada')
         ->and(Disputa::query()->find($disputa->id)->estado)->toBe(EstadoDisputa::Resuelta);
 });
 
@@ -429,21 +428,21 @@ test('una disputa del proveedor sobre un servicio ya completado se resuelve sin 
 test('quien abrió la disputa la retira y la solicitud se completa; es idempotente', function () {
     Event::fake([DisputaResuelta::class]);
     dspMundo();
-    $solicitud = dspSolicitud('ejecutada');
+    $solicitud = dspSolicitud('finalizada');
     $disputa = dspAbrirComoCliente($solicitud);
 
     $retirada = app(RetirarDisputa::class)->ejecutar(DSP_CLIENTE, ParteDeDisputa::Cliente, $disputa->id);
     app(RetirarDisputa::class)->ejecutar(DSP_CLIENTE, ParteDeDisputa::Cliente, $disputa->id);
 
     expect($retirada->estado)->toBe(EstadoDisputa::Retirada)
-        ->and(dspEstadoDeSolicitud($solicitud))->toBe('completada');
+        ->and(dspEstadoDeSolicitud($solicitud))->toBe('finalizada');
     Event::assertDispatchedTimes(DisputaResuelta::class, 1);
     Event::assertDispatched(DisputaResuelta::class, fn (DisputaResuelta $e): bool => $e->resultado === 'retirada');
 });
 
 test('la contraparte no retira una disputa ajena y una resuelta no se retira', function () {
     dspMundo();
-    $disputa = dspAbrirComoCliente(dspSolicitud('ejecutada'));
+    $disputa = dspAbrirComoCliente(dspSolicitud('finalizada'));
 
     expect(fn () => app(RetirarDisputa::class)->ejecutar(DSP_TITULAR, ParteDeDisputa::Proveedor, $disputa->id))->toRechazarCon(DisputaInvalida::class, 'disputas.errores.solo_quien_la_abrio');
 
@@ -455,7 +454,7 @@ test('la contraparte no retira una disputa ajena y una resuelta no se retira', f
 test('las partes apelan una sola vez dentro de siete días y la segunda resolución no mueve la solicitud', function () {
     Event::fake([DisputaApelada::class]);
     dspMundo();
-    $solicitud = dspSolicitud('ejecutada');
+    $solicitud = dspSolicitud('finalizada');
     $disputa = dspAbrirComoCliente($solicitud);
     app(ResolverDisputa::class)->ejecutar(DSP_ADMIN, $disputa->id, ResultadoDisputa::SinLugar, 'No procede', '0');
 
@@ -470,15 +469,15 @@ test('las partes apelan una sola vez dentro de siete días y la segunda resoluci
     app(ResolverDisputa::class)->ejecutar(DSP_ADMIN, $disputa->id, ResultadoDisputa::Parcial, 'La prueba nueva lo justifica', '2000');
 
     expect(DB::table('dsp_resoluciones')->where('disputa_id', $disputa->id)->orderBy('ronda')->pluck('resultado')->all())->toBe(['sin_lugar', 'parcial'])
-        ->and(DB::table('dsp_resoluciones')->where('disputa_id', $disputa->id)->where('ronda', 2)->value('comision_ajuste'))->toEqual('300.00')
-        ->and(dspEstadoDeSolicitud($solicitud))->toBe('completada')
+        ->and(DB::table('dsp_resoluciones')->where('disputa_id', $disputa->id)->where('ronda', 2)->value('comision_ajuste'))->toEqual('0.00')
+        ->and(dspEstadoDeSolicitud($solicitud))->toBe('finalizada')
         ->and(Disputa::query()->find($disputa->id)->apelable_hasta)->toBeNull()
         ->and(fn () => app(ApelarResolucion::class)->ejecutar(DSP_TITULAR, ParteDeDisputa::Proveedor, $disputa->id, 'Apelo yo también'))->toRechazarCon(DisputaInvalida::class, 'disputas.errores.no_se_apela');
 });
 
 test('no se apela fuera de plazo, sin pruebas ni una disputa que no está resuelta', function () {
     dspMundo();
-    $disputa = dspAbrirComoCliente(dspSolicitud('ejecutada'));
+    $disputa = dspAbrirComoCliente(dspSolicitud('finalizada'));
 
     expect(fn () => app(ApelarResolucion::class)->ejecutar(DSP_CLIENTE, ParteDeDisputa::Cliente, $disputa->id, 'Pruebas'))->toRechazarCon(DisputaInvalida::class, 'disputas.errores.no_se_apela');
 
@@ -495,7 +494,7 @@ test('no se apela fuera de plazo, sin pruebas ni una disputa que no está resuel
 
 test('cada lado ve solo sus disputas y una ajena responde como si no existiera', function () {
     dspMundo();
-    $propia = dspAbrirComoCliente(dspSolicitud('ejecutada'));
+    $propia = dspAbrirComoCliente(dspSolicitud('finalizada'));
     $consulta = app(ConsultarDisputas::class);
 
     expect($consulta->propias(DSP_CLIENTE, ParteDeDisputa::Cliente)->total())->toBe(1)

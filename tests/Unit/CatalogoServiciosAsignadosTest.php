@@ -35,8 +35,11 @@ function catalogoEsquema(): void
     Schema::disableForeignKeyConstraints();
 
     $migraciones = [
+        'create_sol_zonas_table',
+        'create_sol_clientes_table',
         'create_sol_terrenos_table',
         'create_sol_solicitudes_servicio_table',
+        'agrega_negociacion_a_sol_solicitudes_servicio',
     ];
 
     static $instancias = [];
@@ -76,6 +79,8 @@ function catalogoTerreno(): int
 
 function catalogoSolicitud(string $estado, ?int $equipoId, ?Carbon $modificada = null): int
 {
+    DB::table('sol_clientes')->insertOrIgnore(['id' => 1, 'usuario_id' => 55, 'tipo' => 'persona', 'razon_social' => 'Cliente Ana', 'telefono' => '70011122', 'estado' => 'activo', 'created_at' => now(), 'updated_at' => now()]);
+
     return DB::table('sol_solicitudes_servicio')->insertGetId([
         'uuid_cliente' => (string) Str::uuid(),
         'cliente_id' => 1,
@@ -117,14 +122,12 @@ afterEach(function () {
 });
 
 test('entrega los servicios en ejecución del equipo del operario, con su terreno', function () {
-    $asignada = catalogoSolicitud('asignada', 7);
-    catalogoSolicitud('en_camino', 7);
+    $asignada = catalogoSolicitud('adjudicada', 7);
     catalogoSolicitud('en_ejecucion', 7);
-    catalogoSolicitud('suspendida_por_clima', 7);
 
     $catalogo = catalogoPull(null);
 
-    expect($catalogo['servicios_asignados'])->toHaveCount(4)
+    expect($catalogo['servicios_asignados'])->toHaveCount(2)
         ->and($catalogo['servicios_asignados'][0]['id'])->toBe($asignada)
         ->and($catalogo['servicios_asignados'][0]['equipo_id'])->toBe(7)
         ->and($catalogo['servicios_asignados'][0]['hectareas_solicitadas'])->toBe('80.0000')
@@ -135,7 +138,7 @@ test('entrega los servicios en ejecución del equipo del operario, con su terren
 });
 
 test('nunca entrega el servicio de otro equipo ni uno que todavía no tiene proveedor', function () {
-    catalogoSolicitud('asignada', 99);
+    catalogoSolicitud('adjudicada', 99);
     catalogoSolicitud('publicada', null);
     catalogoSolicitud('en_asignacion', null);
     catalogoSolicitud('borrador', null);
@@ -144,7 +147,7 @@ test('nunca entrega el servicio de otro equipo ni uno que todavía no tiene prov
 });
 
 test('el cursor avanza: el pull siguiente no repite lo entregado y trae lo nuevo', function () {
-    catalogoSolicitud('asignada', 7);
+    catalogoSolicitud('adjudicada', 7);
     $primero = catalogoPull(null);
 
     expect($primero['servicios_asignados'])->toHaveCount(1);
@@ -154,16 +157,16 @@ test('el cursor avanza: el pull siguiente no repite lo entregado y trae lo nuevo
     expect($sinNovedad['servicios_asignados'])->toBe([]);
 
     Carbon::setTestNow('2026-12-02 11:00:00');
-    $nueva = catalogoSolicitud('en_camino', 7);
+    $nueva = catalogoSolicitud('en_ejecucion', 7);
 
     expect(array_column(catalogoPull($sinNovedad['cursor'])['servicios_asignados'], 'id'))->toBe([$nueva]);
 });
 
 test('lo que dejó de estar en ejecución viaja en retirados y no en asignados', function () {
     $cancelada = catalogoSolicitud('cancelada', 7);
-    $ejecutada = catalogoSolicitud('ejecutada', 7);
-    $reasignada = catalogoSolicitud('en_asignacion', 7);
-    $viva = catalogoSolicitud('asignada', 7);
+    $ejecutada = catalogoSolicitud('finalizada', 7);
+    $reasignada = catalogoSolicitud('abierta', 7);
+    $viva = catalogoSolicitud('adjudicada', 7);
 
     // Un pull con cursor previo (el dispositivo ya tenía algo): trae los retirados desde el principio.
     $catalogo = catalogoPull(base64_encode((string) json_encode(['personas' => ['u' => '2026-01-01T00:00:00+00:00', 'id' => 0]])));
@@ -197,7 +200,7 @@ test('un servicio de un equipo que el operario tuvo pero ya no integra se retira
 });
 
 test('una cuenta sin equipo recibe todo vacío', function () {
-    catalogoSolicitud('asignada', 7);
+    catalogoSolicitud('adjudicada', 7);
 
     $catalogo = catalogoPull(null, usuarioId: null);
 

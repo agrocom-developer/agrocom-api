@@ -1,9 +1,8 @@
 <?php
 
-use App\Dominios\Asignacion\Contratos\Eventos\EquipoEnCamino;
-use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaEquipoEnCamino;
+use App\Dominios\Negociacion\Contratos\Eventos\AvisoDeNegociacion;
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaAvisoDeNegociacion;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaProveedorRegistrado;
-use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaSolicitudEjecutada;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaTrabajoCerrado;
 use App\Dominios\Notificaciones\Aplicacion\ReglasDeNotificacion;
 use App\Dominios\Notificaciones\Aplicacion\ResolverDestinatarios;
@@ -19,7 +18,6 @@ use App\Dominios\Personal\Contratos\LecturaEquipoTrabajo;
 use App\Dominios\Seguridad\Contratos\DatosUsuarioDePersona;
 use App\Dominios\Seguridad\Contratos\LecturaUsuarioDePersona;
 use App\Dominios\Seguridad\Contratos\LecturaUsuariosPorRol;
-use App\Dominios\Solicitudes\Contratos\Eventos\SolicitudEjecutada;
 use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 use Illuminate\Support\Carbon;
 
@@ -255,7 +253,7 @@ test('cada tipo de aviso tiene su texto en lang/es/notificaciones.php y usa solo
         'documento_por_vencer' => ['documento', 'sujeto', 'fecha', 'dias'],
         'documento_vencido' => ['documento', 'sujeto', 'fecha'],
         'proveedor_registrado' => ['tipo', 'nombre'],
-        // Asignación (ADR 0030 y 0038).
+        // Avisos del modelo anterior (se conservan para leer los ya entregados).
         'oferta_creada' => ['solicitud', 'hectareas', 'hora'],
         'oferta_vencida' => ['solicitud'],
         'oferta_retirada' => ['solicitud', 'motivo'],
@@ -272,9 +270,19 @@ test('cada tipo de aviso tiene su texto en lang/es/notificaciones.php y usa solo
         'disputa_apelada' => ['solicitud'],
         'cliente_con_aviso' => ['promedio'],
         'publicacion_limitada' => ['cliente', 'promedio'],
-        // Avance del servicio hacia el cliente.
         'equipo_en_camino' => ['solicitud'],
         'solicitud_ejecutada' => ['solicitud'],
+        // Negociación (ADR 0030, 0038 y 0041).
+        'nueva_solicitud_abierta' => ['solicitud', 'hectareas', 'zona', 'precio'],
+        'oferta_recibida' => ['proveedor', 'precio', 'solicitud'],
+        'precio_cambiado' => ['solicitud', 'precio'],
+        'solicitud_adjudicada' => ['solicitud', 'proveedor', 'precio'],
+        'solicitud_reabierta' => ['solicitud'],
+        'solicitud_expirada' => ['solicitud'],
+        'ejecucion_iniciada' => ['solicitud'],
+        'avance_registrado' => ['solicitud', 'porcentaje'],
+        'solicitud_finalizada' => ['solicitud', 'monto'],
+        'mensaje_nuevo' => ['solicitud'],
     ];
 
     foreach (TipoNotificacion::cases() as $tipo) {
@@ -328,18 +336,15 @@ test('cada regla atiende un evento y todas las reglas del proveedor tienen un ev
     expect(array_unique($eventos))->toHaveCount(2);
 });
 
-test('el equipo en camino y el servicio ejecutado avisan solo al cliente, con la solicitud como clave', function () {
-    $enCamino = (new ReglaEquipoEnCamino)->armar(new EquipoEnCamino(41, 7, 3, 9));
-    $ejecutada = (new ReglaSolicitudEjecutada)->armar(new SolicitudEjecutada(41, 2, 7, 3));
+test('el aviso de negociación se arma con el tipo, la clave y los destinatarios que trae el evento', function () {
+    $evento = new AvisoDeNegociacion('mensaje_nuevo', 'mensaje_nuevo:41:7', ['solicitud' => 41], 41, [7, 9]);
+    $armada = (new ReglaAvisoDeNegociacion)->armar($evento);
 
-    expect($enCamino->tipo)->toBe(TipoNotificacion::EquipoEnCamino)
-        ->and($enCamino->parametros)->toBe(['solicitud' => 41])
-        ->and($enCamino->recursoId)->toBe(41)
-        ->and($enCamino->destinatarios)->toHaveCount(1)
-        ->and($ejecutada->tipo)->toBe(TipoNotificacion::SolicitudEjecutada)
-        ->and($ejecutada->parametros)->toBe(['solicitud' => 41])
-        ->and($ejecutada->destinatarios)->toHaveCount(1)
-        ->and($ejecutada->claveEvento)->not->toBe($enCamino->claveEvento);
+    expect($armada->tipo)->toBe(TipoNotificacion::MensajeNuevo)
+        ->and($armada->parametros)->toBe(['solicitud' => 41])
+        ->and($armada->recursoId)->toBe(41)
+        ->and($armada->claveEvento)->toBe('mensaje_nuevo:41:7')
+        ->and($armada->destinatarios)->toHaveCount(2);
 
-    expect(fn () => (new ReglaEquipoEnCamino)->armar(new stdClass))->toThrow(InvalidArgumentException::class);
+    expect(fn () => (new ReglaAvisoDeNegociacion)->armar(new stdClass))->toThrow(InvalidArgumentException::class);
 });
