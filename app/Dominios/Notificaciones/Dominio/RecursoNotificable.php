@@ -13,4 +13,9 @@ enum RecursoNotificable: string
     case Contrato = 'contrato';
     case OrdenTrabajo = 'orden_trabajo';
     case Trabajo = 'trabajo';
+    case Proveedor = 'proveedor';
+    case Piloto = 'piloto';
+    case Auxiliar = 'auxiliar';
+    case Dron = 'dron';
+    case Documento = 'documento';
 }

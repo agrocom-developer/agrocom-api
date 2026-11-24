@@ -3,7 +3,11 @@
 namespace App\Dominios\Notificaciones\Infraestructura;
 
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaContratoCreado;
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaDocumentoPorVencer;
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaDocumentoVencido;
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaEstadoDeAprobacionCambiado;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaOrdenTrabajoCreada;
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaProveedorRegistrado;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaTrabajoCerrado;
 use App\Dominios\Notificaciones\Aplicacion\ReglasDeNotificacion;
 use App\Dominios\Notificaciones\Contratos\LecturaNotificaciones;
@@ -29,6 +33,10 @@ final class NotificacionesServiceProvider extends ServiceProvider
         ReglaContratoCreado::class,
         ReglaOrdenTrabajoCreada::class,
         ReglaTrabajoCerrado::class,
+        ReglaEstadoDeAprobacionCambiado::class,
+        ReglaDocumentoPorVencer::class,
+        ReglaDocumentoVencido::class,
+        ReglaProveedorRegistrado::class,
     ];
 
     public function register(): void

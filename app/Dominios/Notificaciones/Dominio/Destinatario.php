@@ -20,6 +20,8 @@ final readonly class Destinatario
 
     public const string EQUIPO = 'equipo';
 
+    public const string USUARIO = 'usuario';
+
     private function __construct(
         public string $tipo,
         public string|int $referencia,
@@ -33,6 +35,17 @@ final readonly class Destinatario
     public static function persona(int $personaId): self
     {
         return new self(self::PERSONA, $personaId);
+    }
+
+    /**
+     * Una cuenta concreta. Es la excepción al «nunca un `usuario_id` suelto» del
+     * ADR 0025 (extensión del ADR 0036): en el marketplace quien emite el hecho
+     * ya conoce la cuenta que lo solicitó (el titular de un proveedor, el propio
+     * piloto) porque esa cuenta es la identidad pública del solicitante.
+     */
+    public static function usuario(int $usuarioId): self
+    {
+        return new self(self::USUARIO, $usuarioId);
     }
 
     public static function equipo(int $equipoTrabajoId): self

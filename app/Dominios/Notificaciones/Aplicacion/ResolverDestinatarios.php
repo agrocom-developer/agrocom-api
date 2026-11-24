@@ -67,6 +67,7 @@ final class ResolverDestinatarios
             Destinatario::ROL => $this->usuariosPorRol->idsConRol((string) $destinatario->referencia),
             Destinatario::PERSONA => $this->cuentaDePersona((int) $destinatario->referencia),
             Destinatario::EQUIPO => $this->cuentasDeEquipo((int) $destinatario->referencia, $fecha),
+            Destinatario::USUARIO => [(int) $destinatario->referencia],
             default => [],
         };
     }
