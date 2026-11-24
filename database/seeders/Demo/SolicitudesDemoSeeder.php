@@ -2,6 +2,8 @@
 
 namespace Database\Seeders\Demo;
 
+use App\Dominios\Asignacion\Aplicacion\IniciarAsignacion;
+use App\Dominios\Flota\Infraestructura\Eloquent\Disponibilidad;
 use App\Dominios\Flota\Infraestructura\Eloquent\Equipo;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Proveedor;
 use App\Dominios\Solicitudes\Aplicacion\CancelarSolicitud;
@@ -9,11 +11,14 @@ use App\Dominios\Solicitudes\Aplicacion\CrearSolicitud;
 use App\Dominios\Solicitudes\Aplicacion\GestionarTerrenos;
 use App\Dominios\Solicitudes\Aplicacion\MaquinaEstados\MaquinaEstadosSolicitud;
 use App\Dominios\Solicitudes\Aplicacion\PublicarSolicitud;
+use App\Dominios\Solicitudes\Contratos\Eventos\SolicitudPublicada;
 use App\Dominios\Solicitudes\Dominio\ActorSolicitud;
 use App\Dominios\Solicitudes\Dominio\EstadoSolicitud;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\SolicitudServicio;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Event;
 use Ramsey\Uuid\Uuid;
 
 /**
@@ -26,6 +31,12 @@ use Ramsey\Uuid\Uuid;
  * volver a correrlo no crea nada de nuevo. Los estados pasan por los casos de uso
  * y la máquina de estados reales (invariante 7): una solicitud asignada se arma
  * publicándola y fijando su equipo con la transición `en_asignacion → asignada`.
+ *
+ * Publicar anuncia `SolicitudPublicada`, que el motor de asignación toma al
+ * instante (ADR 0030). Para armar cada paso del ciclo sin que el motor se
+ * adelante, la siembra publica sin anunciar y, para la solicitud que debe
+ * quedar con ofertas vivas, entrega el motor a mano al final. Los equipos
+ * quedan «en línea» para que una solicitud urgente tenga a quién ofrecer.
  */
 class SolicitudesDemoSeeder extends Seeder
 {
@@ -50,6 +61,11 @@ class SolicitudesDemoSeeder extends Seeder
         $equipo = Equipo::query()->orderBy('id')->first();
         $proveedor = $equipo === null ? null : Proveedor::query()->find($equipo->proveedor_id);
 
+        Equipo::query()->orderBy('id')->get()->each(fn (Equipo $enLinea) => Disponibilidad::query()->firstOrCreate(
+            ['equipo_id' => $enLinea->id],
+            ['en_linea' => true, 'actualizado_en' => Carbon::now()],
+        ));
+
         foreach ($clientes->values() as $indice => $cliente) {
             $terreno = $this->terrenos->crear($cliente->usuario_id, [
                 'nombre' => 'Lote '.['Norte', 'Sur', 'Este'][$indice % 3],
@@ -60,7 +76,7 @@ class SolicitudesDemoSeeder extends Seeder
             ]);
 
             $this->solicitud($cliente, $terreno->id, "demo-{$indice}-a", EstadoSolicitud::Borrador);
-            $this->solicitud($cliente, $terreno->id, "demo-{$indice}-b", EstadoSolicitud::Publicada, urgente: true);
+            $this->solicitud($cliente, $terreno->id, "demo-{$indice}-b", EstadoSolicitud::Publicada);
 
             if ($indice === 0) {
                 $this->solicitud($cliente, $terreno->id, "demo-{$indice}-c", EstadoSolicitud::SinProveedor);
@@ -102,9 +118,15 @@ class SolicitudesDemoSeeder extends Seeder
             return;
         }
 
-        $solicitud = $this->publicar->ejecutar($cliente->usuario_id, $solicitud->id);
+        $solicitud = Event::fakeFor(
+            fn () => $this->publicar->ejecutar($cliente->usuario_id, $solicitud->id),
+            [SolicitudPublicada::class],
+        );
 
         if ($destino === EstadoSolicitud::Publicada) {
+            // El motor la toma como en producción: ofrece a los propios y deja ofertas vivas.
+            app(IniciarAsignacion::class)->ejecutar($solicitud->id);
+
             return;
         }
 
