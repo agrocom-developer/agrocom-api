@@ -115,7 +115,7 @@ final class CascaraPanel
      * campana —que cuenta lo no leído de la lista que recibe— sigue siendo
      * exacto hasta «9+».
      *
-     * @return list<array{id: int|null, alerta_id: int|null, icon: string, title: string, time: string, unread: bool, href: string}>
+     * @return list<array{id: int, icon: string, title: string, time: string, unread: bool, href: string}>
      */
     private function notificaciones(SecUser $usuario, int $idRolActivo): array
     {
@@ -131,7 +131,6 @@ final class CascaraPanel
 
         $candidatas = array_map(fn (NotificacionPanel $aviso): array => [
             'id' => $aviso->id,
-            'alerta_id' => null,
             'icon' => $aviso->icono,
             'title' => $aviso->titulo,
             'momento' => Carbon::parse($aviso->creadaEn),

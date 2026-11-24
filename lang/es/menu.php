@@ -20,11 +20,12 @@ return [
     // Marketplace (ADR 0027): la solicitud de servicio es la unidad de negocio.
     'solicitudes' => [
         'label' => 'Mercado',
-        'descripcion' => 'Solicitudes con sus ofertas, clientes, calificaciones, disputas y métricas.',
+        'descripcion' => 'Solicitudes con sus ofertas, clientes, calificaciones, disputas, métricas y avisos.',
         'items' => [
             'tablero' => 'Tablero',
             'solicitudes' => 'Solicitudes',
             'clientes' => 'Clientes',
+            'avisos' => 'Avisos',
             'calificaciones' => 'Calificaciones',
             'disputas' => 'Disputas',
             'metricas' => 'Métricas del mercado',

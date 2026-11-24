@@ -28,6 +28,8 @@ use Database\Seeders\Catalogo\ProveedorPropioSeeder;
 use Illuminate\Database\Seeder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Marketplace: proveedores, pilotos, auxiliares, drones, equipos y clientes con
@@ -217,6 +219,8 @@ class ProveedoresDemoSeeder extends Seeder
             'marca' => 'XAG', 'modelo' => 'P100 Pro', 'numero_serie' => 'XAGP100-77412', 'capacidad_tanque_l' => '50.00', 'ancho_pasada_m' => '10.00',
         ]);
 
+        // El tercer dron queda pendiente: una foto aprobada y dos por revisar, para recorrer la revisión del panel.
+        $this->fotosDelDron($tres->id, ['frontal' => 'aprobada', 'lateral' => 'en_revision', 'placa_serie' => 'en_revision']);
         $this->documentosYAprobacion(TipoSujeto::Dron, $uno->id);
         // El T25: el seguro venció ayer. El proceso diario lo marca vencido y suspende al dron.
         $this->documentosYAprobacion(TipoSujeto::Dron, $dos->id, venceSeguroAyer: true);
@@ -291,6 +295,8 @@ class ProveedoresDemoSeeder extends Seeder
         }
 
         if ($sujeto === TipoSujeto::Dron) {
+            // Un dron no se aprueba sin las fotos obligatorias aprobadas.
+            $this->fotosDelDron($id, array_fill_keys((array) config('flota.fotos_obligatorias'), 'aprobada'));
             $this->resolverAprobacionDron->ejecutar($id, AccionAprobacion::Aprobar, $this->admin);
         } else {
             $this->resolverAprobacion->ejecutar($sujeto, $id, AccionAprobacion::Aprobar, $this->admin);
@@ -326,6 +332,44 @@ class ProveedoresDemoSeeder extends Seeder
         }
 
         return $cargados;
+    }
+
+    /**
+     * Las fotos que el proveedor sube del dron, en el disco privado y con el estado que se pide.
+     * Una imagen real y liviana por foto, para verla desde el panel.
+     *
+     * @param  array<string, string>  $estados  tipo de foto → estado (`aprobada`, `en_revision`, `rechazada`)
+     */
+    private function fotosDelDron(int $dronId, array $estados): void
+    {
+        foreach ($estados as $tipo => $estado) {
+            if (DB::table('flo_dron_fotos')->where('dron_id', $dronId)->where('tipo', $tipo)->whereNull('deleted_at')->exists()) {
+                continue;
+            }
+
+            $imagen = imagecreatetruecolor(640, 480);
+            imagefilledrectangle($imagen, 0, 0, 640, 480, imagecolorallocate($imagen, 70, 90, 100));
+            imagefilledrectangle($imagen, 0, 340, 640, 480, imagecolorallocate($imagen, 120, 130, 120));
+            imagestring($imagen, 5, 20, 20, "Dron {$dronId} - {$tipo}", imagecolorallocate($imagen, 255, 255, 255));
+
+            $ruta = "drones/{$dronId}/fotos/{$tipo}-demo.jpg";
+            $temporal = (string) tempnam(sys_get_temp_dir(), 'dron-demo-');
+            imagejpeg($imagen, $temporal, 70);
+            Storage::disk('local')->put($ruta, (string) file_get_contents($temporal));
+
+            DB::table('flo_dron_fotos')->insert([
+                'dron_id' => $dronId,
+                'tipo' => $tipo,
+                'archivo' => $ruta,
+                'estado' => $estado,
+                'revisado_por' => $estado === 'en_revision' ? null : $this->admin,
+                'revisado_en' => $estado === 'en_revision' ? null : now(),
+                'created_by' => $this->admin,
+                'updated_by' => $this->admin,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 
     /** Un PDF mínimo y válido por documento: alcanza para abrirlo desde el panel. */
