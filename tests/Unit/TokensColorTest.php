@@ -15,8 +15,16 @@
 
 $raizProyecto = dirname(__DIR__, 2);
 
-/** Literal de color CSS: hex de 3/4/6/8 dígitos, o una función rgb()/hsl(). */
-const PATRON_COLOR_LITERAL = '/#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})(?![0-9a-fA-F])|\b(?:rgba?|hsla?)\s*\(/';
+/** Colores con nombre CSS más habituales; `transparent`/`inherit`/`currentColor` no son colores fijos. */
+const PATRON_NOMBRES_COLOR = 'black|white|gr[ae]y|dimgr[ae]y|darkgr[ae]y|lightgr[ae]y|slategr[ae]y|gainsboro|whitesmoke|silver|red|green|blue|yellow|orange|purple|pink|brown|navy|teal|maroon|olive|lime|aqua|cyan|magenta|gold|crimson|tomato|coral|salmon|beige|ivory|snow';
+
+/**
+ * Literal de color CSS: hex de 3/4/6/8 dígitos, una función rgb()/hsl(), o un
+ * color con nombre (black, dimgray…) como valor de una propiedad de color.
+ * Los nombres solo se buscan tras `:` de una propiedad de color y antes de
+ * `;`/`}`/espacio, para no confundir texto o clases como `.red`.
+ */
+const PATRON_COLOR_LITERAL = '/#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})(?![0-9a-fA-F])|\b(?:rgba?|hsla?)\s*\(|\b(?:color|background(?:-color)?|border(?:-(?:top|right|bottom|left))?(?:-color)?|outline(?:-color)?|fill|stroke)\s*:[^;{}]*(?<![\w-])(?:'.PATRON_NOMBRES_COLOR.')(?![\w-])/i';
 
 /**
  * Los comentarios se descartan antes de buscar: los archivos de este repo
@@ -101,7 +109,7 @@ test('ningún color hardcodeado fuera de resources/css/tokens/ (CLAUDE.md invari
         }
     }
 
-    expect($fugas)->toBe([], "Usá un token CSS (var(--ag-…)); si el color no existe todavía, se declara en resources/css/tokens/.\n".implode("\n", $fugas));
+    expect($fugas)->toBe([], "Usa un token CSS (var(--ag-…)); si el color no existe todavía, se declara en resources/css/tokens/.\n".implode("\n", $fugas));
 });
 
 test('el token de la sombra de selección está declarado en los dos temas', function () use ($raizProyecto) {

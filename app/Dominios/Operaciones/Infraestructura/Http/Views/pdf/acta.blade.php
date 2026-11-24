@@ -14,8 +14,8 @@
     documento nunca carga). Un PDF descargado no reacciona a
     `[data-bs-theme]`: no hay theming que aplicar sobre un archivo estático
     (ADR 0002), así que la invariante 11 de CLAUDE.md no tiene nada que
-    proteger acá — igual se evita el hex/rgb literal que vigila
-    `TokensColorTest` usando palabras clave CSS con nombre.
+    proteger acá. Los colores vienen de `PaletaPdf` vía `pdf/estilos-base`;
+    `TokensColorTest` vigila que no vuelvan literales ni colores con nombre.
 --}}
 <!DOCTYPE html>
 <html lang="es">
@@ -23,12 +23,7 @@
     <meta charset="utf-8">
     <title>{{ __('operaciones.pdf.acta.titulo_documento', ['id' => $trabajo->id]) }}</title>
     <style>
-        body { font-family: Helvetica, Arial, sans-serif; font-size: 12px; color: black; }
-        h1 { font-size: 18px; margin-bottom: 4px; }
-        p.subtitulo { color: dimgray; margin-top: 0; }
-        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-        th, td { border: 1px solid gray; padding: 6px 8px; text-align: left; }
-        th { background-color: whitesmoke; width: 40%; }
+@include('operaciones::pdf.estilos-base')
     </style>
 </head>
 <body>
