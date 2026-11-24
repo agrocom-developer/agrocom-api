@@ -15,7 +15,7 @@ use OpenApi\Attributes as OA;
  */
 #[OA\Tag(
     name: 'Sincronizacion',
-    description: 'Pull de catálogo con cursor para la app de campo (espec §2.1, punto 6): personas operativas, '
+    description: 'Pull de catálogo con cursor para la app de campo (especificación §10.3): personas operativas, '
         .'servicios asignados al equipo del operario (solicitudes aceptadas) y límites de condiciones de vuelo. '
         .'Recetas y productos de mezcla quedan fuera a propósito (ver docblock de '
         .'`ObtenerCatalogoDesdeCursor`, HU-78/tarea 94): el piloto transcribe el producto por '
@@ -24,7 +24,7 @@ use OpenApi\Attributes as OA;
 #[OA\Schema(
     schema: 'PersonaCatalogo',
     title: 'Persona operativa (catálogo)',
-    description: 'Persona vigente (no borrada) para el pull de catálogo (espec §4.2).',
+    description: 'Persona vigente (no borrada) para el pull de catálogo (especificación §4.3).',
     required: ['id', 'nombre', 'rol', 'base_id', 'activo', 'updated_at'],
     properties: [
         new OA\Property(property: 'id', type: 'integer', example: 5),
@@ -99,7 +99,7 @@ use OpenApi\Attributes as OA;
 #[OA\Schema(
     schema: 'LimitesCondicionesCatalogo',
     title: 'Límites de condiciones de vuelo (catálogo)',
-    description: 'Los límites con los que el servidor valida el registro `condiciones` de `POST /api/sync` (espec §9.2); '
+    description: 'Los límites con los que el servidor valida el registro `condiciones` de `POST /api/sync` (especificación §9.2); '
         .'la app, que es offline, los muestra para que lo que ve y lo que se exige nunca se contradigan. DECIMAL como string (invariante 6). '
         .'`viento_max_kmh`, `temperatura_max_c` y `humedad_max_pct` siempre traen valor; los demás son `null` si el sistema no fija un límite, '
         .'y la app no debe aplicarlo.',

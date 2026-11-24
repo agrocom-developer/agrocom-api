@@ -48,7 +48,7 @@ final class ActaController
         path: '/api/trabajos/{uuid_cliente}/acta',
         operationId: 'generarActaTrabajo',
         description: 'Genera el acta de conformidad de un trabajo `cerrado` con todas sus sesiones vigentes '
-            .'`validado` (espec §4.3/§17). Idempotente por trabajo, no por `uuid_cliente`: un segundo pedido '
+            .'`validado` (especificación §3). Idempotente por trabajo, no por `uuid_cliente`: un segundo pedido '
             .'sobre un trabajo que ya tiene acta devuelve la MISMA fila y el MISMO PDF, sin regenerar nada. '
             .'`estado: rechazado` cuando el trabajo no cumple las condiciones — nunca 422 de negocio.',
         summary: 'Genera el acta de conformidad de un trabajo',

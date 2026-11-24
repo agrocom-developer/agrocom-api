@@ -40,7 +40,7 @@ use OpenApi\Attributes as OA;
 )]
 #[OA\Tag(
     name: 'Seguridad',
-    description: 'Sesión de la app de campo por token de dispositivo (espec §4.6, HU-03).',
+    description: 'Sesión de la app de campo por token de dispositivo (especificación §13).',
 )]
 final class SesionCampoController
 {

@@ -22,6 +22,23 @@ use OpenApi\Attributes as OA;
     name: 'Terrenos',
     description: 'Terrenos que el cliente registra una vez y reutiliza en cada solicitud de servicio (ADR 0027).',
 )]
+#[OA\Schema(
+    schema: 'TerrenoEntrada',
+    title: 'Terreno (datos que envía el cliente)',
+    description: 'Cuerpo de `POST /api/terrenos` y de `PUT /api/terrenos/{id}`: solo lo que el cliente escribe, sin `id`. Las hectáreas viajan como número o cadena decimal con hasta cuatro decimales (invariante 6).',
+    required: ['nombre', 'hectareas'],
+    properties: [
+        new OA\Property(property: 'nombre', type: 'string', example: 'Lote Norte'),
+        new OA\Property(property: 'hectareas', type: 'string', example: '120.5'),
+        new OA\Property(property: 'cultivo', type: 'string', nullable: true),
+        new OA\Property(property: 'geometria', description: 'Polígono GeoJSON (`Polygon` o `MultiPolygon`).', type: 'object', nullable: true),
+        new OA\Property(property: 'referencias_acceso', type: 'string', nullable: true),
+        new OA\Property(property: 'colindantes_sensibles', type: 'string', nullable: true),
+        new OA\Property(property: 'acceso_dificil', type: 'boolean', nullable: true),
+        new OA\Property(property: 'zona_id', type: 'integer', nullable: true),
+    ],
+    type: 'object',
+)]
 final class TerrenosController
 {
     private const PERMISO = 'solicitudes.terreno.gestionar';
@@ -91,23 +108,7 @@ final class TerrenosController
         description: 'Registra un terreno del cliente. Las hectáreas se envían como número o cadena decimal con hasta cuatro decimales.',
         summary: 'Registrar un terreno',
         security: [['tokenDispositivo' => []]],
-        requestBody: new OA\RequestBody(
-            required: true,
-            content: new OA\JsonContent(
-                required: ['nombre', 'hectareas'],
-                properties: [
-                    new OA\Property(property: 'nombre', type: 'string', example: 'Lote Norte'),
-                    new OA\Property(property: 'hectareas', type: 'string', example: '120.5'),
-                    new OA\Property(property: 'cultivo', type: 'string', nullable: true),
-                    new OA\Property(property: 'geometria', description: 'Polígono GeoJSON (`Polygon` o `MultiPolygon`).', type: 'object', nullable: true),
-                    new OA\Property(property: 'referencias_acceso', type: 'string', nullable: true),
-                    new OA\Property(property: 'colindantes_sensibles', type: 'string', nullable: true),
-                    new OA\Property(property: 'acceso_dificil', type: 'boolean', nullable: true),
-                    new OA\Property(property: 'zona_id', type: 'integer', nullable: true),
-                ],
-                type: 'object',
-            ),
-        ),
+        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(ref: '#/components/schemas/TerrenoEntrada')),
         tags: ['Terrenos'],
         responses: [
             new OA\Response(response: 201, description: 'Terreno creado.', content: new OA\JsonContent(required: ['terreno'], properties: [new OA\Property(property: 'terreno', ref: '#/components/schemas/Terreno')], type: 'object')),
@@ -135,7 +136,7 @@ final class TerrenosController
         description: 'Corrige los datos de un terreno propio. Las solicitudes ya creadas conservan sus propias hectáreas.',
         summary: 'Actualizar un terreno',
         security: [['tokenDispositivo' => []]],
-        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(ref: '#/components/schemas/Terreno')),
+        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(ref: '#/components/schemas/TerrenoEntrada')),
         tags: ['Terrenos'],
         parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
         responses: [

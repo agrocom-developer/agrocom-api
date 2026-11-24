@@ -4,7 +4,7 @@
 
 Agrocom es un marketplace de servicios de fumigación con drones. Un cliente solicita un servicio sobre su terreno; un proveedor (piloto con su dron y, si hace falta, su auxiliar) lo ejecuta; el cliente califica y el proveedor ve su reputación. Los drones cumplen el papel del vehículo. Agrocom capta a los clientes, es el nexo entre las partes y además es proveedor con su propia flota y sus propios pilotos. La empresa también vende drones y entrega a cada comprador trabajo asegurado a través de la plataforma.
 
-Este documento define el producto. Las decisiones que lo sostienen están en `docs/decisiones/` (ADR 0027 a 0038) y las reglas de operación en `docs/politicas/`. Cuando un valor numérico figura aquí como «parámetro», vive en la configuración del sistema (ADR 0016) y un administrador puede ajustarlo sin desplegar.
+Este documento define el producto. Las decisiones que lo sostienen están en `docs/decisiones/` (ADR 0027 a 0039) y las reglas de operación en `docs/politicas/`. Cuando un valor numérico figura aquí como «parámetro», vive en la configuración del sistema (ADR 0016) y un administrador puede ajustarlo sin desplegar.
 
 ## 1. Principios
 
@@ -223,7 +223,7 @@ Canal por la app y por la web, con cola de casos por severidad. Una incidencia `
 
 ## 10. Endpoints
 
-Prefijo `/api/v1`. Autenticación por token. El contrato publicado es `docs/api/openapi.yaml`, generado desde el código (ADR 0014). Los verbos de abajo definen la superficie.
+Prefijo `/api`. Autenticación por token de dispositivo (`POST /auth/token`). El contrato publicado es `docs/api/openapi.yaml`, generado desde el código (ADR 0014). Los verbos de abajo definen la superficie.
 
 ### 10.1 Cliente
 
@@ -264,10 +264,9 @@ Prefijo `/api/v1`. Autenticación por token. El contrato publicado es `docs/api/
 
 | Método y ruta | Función |
 |---|---|
-| `POST /sync/lote` | Recibe un lote ordenado por `secuencia` con sesiones, mezclas, incidencias y metadatos de evidencias; cada registro se aplica una sola vez por `uuid_cliente`; devuelve el resultado por registro |
-| `POST /sync/evidencias` | Sube evidencias comprimidas, en cola separada |
-| `GET /sync/catalogos` | Catálogos desde un cursor (productos, límites de condiciones, parámetros) |
-| `GET /sync/solicitudes-asignadas` | Solicitudes del equipo para llevar al lote |
+| `POST /sync` | Recibe un lote de registros (`trabajo`, `sesion`, `condiciones`, `mezcla`, `incidencia`, `recarga`, cierres y más); cada registro se aplica una sola vez por `uuid_cliente`, en orden causal fijo sin importar el orden del arreglo, y se devuelve el resultado por registro (`aplicado`, `duplicado` o `rechazado`) |
+| `POST /evidencias` | Sube evidencias comprimidas, en cola separada |
+| `GET /sync/catalogo?desde={cursor}` | Catálogo desde un cursor opaco: personas, servicios asignados al equipo del operario, servicios retirados y límites de condiciones |
 
 La sincronización es idempotente: reaplicar un lote dos, tres o diez veces, en orden o con desorden parcial, deja el mismo estado final.
 

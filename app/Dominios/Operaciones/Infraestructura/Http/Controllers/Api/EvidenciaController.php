@@ -12,8 +12,7 @@ use Illuminate\Http\UploadedFile;
 use OpenApi\Attributes as OA;
 
 /**
- * `POST /api/evidencias` (espec §2.1 punto 7, TE-07 parte servidor, tarea
- * 19): cola separada de evidencias, aparte del lote de `POST /api/sync` —
+ * `POST /api/evidencias` (especificación §4.6, cola de evidencias): cola separada de evidencias, aparte del lote de `POST /api/sync` —
  * ver el docblock de la migración de `ope_evidencias` para el porqué de un
  * endpoint dedicado. Adaptador delgado (ADR 0008): valida el sobre, invoca
  * el caso de uso y traduce el resultado — ninguna regla de negocio vive acá.
