@@ -17,6 +17,15 @@ enum TipoNotificacion: string
     case ContratoCreado = 'contrato_creado';
     case OrdenTrabajoCreada = 'orden_trabajo_creada';
     case TrabajoCerrado = 'trabajo_cerrado';
+    case SujetoAprobado = 'sujeto_aprobado';
+    case SujetoRechazado = 'sujeto_rechazado';
+    case SujetoSuspendido = 'sujeto_suspendido';
+    case SujetoRehabilitado = 'sujeto_rehabilitado';
+    case SujetoDadoDeBaja = 'sujeto_dado_de_baja';
+    case SujetoReenviado = 'sujeto_reenviado';
+    case DocumentoPorVencer = 'documento_por_vencer';
+    case DocumentoVencido = 'documento_vencido';
+    case ProveedorRegistrado = 'proveedor_registrado';
 
     /** Nombre del ícono de Material Symbols que rotula el aviso en la campana. */
     public function icono(): string
@@ -25,6 +34,12 @@ enum TipoNotificacion: string
             self::ContratoCreado => 'description',
             self::OrdenTrabajoCreada => 'assignment',
             self::TrabajoCerrado => 'task_alt',
+            self::SujetoAprobado, self::SujetoRehabilitado => 'verified',
+            self::SujetoRechazado => 'cancel',
+            self::SujetoSuspendido, self::SujetoDadoDeBaja => 'block',
+            self::SujetoReenviado, self::ProveedorRegistrado => 'pending_actions',
+            self::DocumentoPorVencer => 'event_upcoming',
+            self::DocumentoVencido => 'event_busy',
         };
     }
 

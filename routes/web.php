@@ -14,6 +14,8 @@ use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ReportesComercia
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\SiembraController;
 use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\SiembraLoteController;
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
+use App\Dominios\Flota\Infraestructura\Http\Controllers\Web\DronesController as DronesFlotaController;
+use App\Dominios\Flota\Infraestructura\Http\Controllers\Web\EquiposController as EquiposFlotaController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\BateriasController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\FichasDronController;
 use App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Web\NotificacionesController;
@@ -33,6 +35,11 @@ use App\Dominios\Personal\Infraestructura\Http\Controllers\Web\PersonasControlle
 use App\Dominios\Portal\Infraestructura\Http\Controllers\Web\ActasPortalController;
 use App\Dominios\Portal\Infraestructura\Http\Controllers\Web\AvancePortalController;
 use App\Dominios\Portal\Infraestructura\Http\Controllers\Web\ReportesPortalController;
+use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web\AprobacionController;
+use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web\AuxiliaresController as AuxiliaresPanelController;
+use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web\DocumentosController as DocumentosPanelController;
+use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web\PilotosController as PilotosPanelController;
+use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web\ProveedoresController;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\BitacoraController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\BusquedaController;
@@ -829,6 +836,72 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::delete('/panel/baterias/{bateria}', [BateriasController::class, 'destroy'])
             ->name('panel.baterias.destroy');
+
+        // Marketplace (ADR 0028, 0029, 0032): cola de aprobación de proveedores,
+        // pilotos, auxiliares, drones y documentos. Los permisos son de grano
+        // fino por entidad y por acción (`proveedores.proveedor.ver`/`.aprobar`/
+        // `.suspender`/`.dar_baja`, y sus pares de piloto, auxiliar y
+        // `flota.dron.*`), verificados DENTRO de cada controlador contra el ROL
+        // ACTIVO. La ficha de cada uno ofrece las acciones que el rol puede hacer.
+        Route::get('/panel/proveedores', [ProveedoresController::class, 'index'])
+            ->name('panel.proveedores.index');
+
+        Route::get('/panel/proveedores/{proveedor}', [ProveedoresController::class, 'show'])
+            ->whereNumber('proveedor')
+            ->name('panel.proveedores.show');
+
+        Route::post('/panel/proveedores/{id}/resolver', [AprobacionController::class, 'proveedor'])
+            ->whereNumber('id')
+            ->name('panel.proveedores.resolver');
+
+        Route::get('/panel/pilotos', [PilotosPanelController::class, 'index'])
+            ->name('panel.pilotos.index');
+
+        Route::get('/panel/pilotos/{piloto}', [PilotosPanelController::class, 'show'])
+            ->whereNumber('piloto')
+            ->name('panel.pilotos.show');
+
+        Route::post('/panel/pilotos/{id}/resolver', [AprobacionController::class, 'piloto'])
+            ->whereNumber('id')
+            ->name('panel.pilotos.resolver');
+
+        Route::get('/panel/auxiliares', [AuxiliaresPanelController::class, 'index'])
+            ->name('panel.auxiliares.index');
+
+        Route::get('/panel/auxiliares/{auxiliar}', [AuxiliaresPanelController::class, 'show'])
+            ->whereNumber('auxiliar')
+            ->name('panel.auxiliares.show');
+
+        Route::post('/panel/auxiliares/{id}/resolver', [AprobacionController::class, 'auxiliar'])
+            ->whereNumber('id')
+            ->name('panel.auxiliares.resolver');
+
+        // `drones-flota` y `equipos-flota`: el nombre corto ya lo usan el catálogo
+        // operativo de drones (`panel.drones.*`) y las cuadrillas.
+        Route::get('/panel/drones-flota', [DronesFlotaController::class, 'index'])
+            ->name('panel.drones-flota.index');
+
+        Route::get('/panel/drones-flota/{dron}', [DronesFlotaController::class, 'show'])
+            ->whereNumber('dron')
+            ->name('panel.drones-flota.show');
+
+        Route::post('/panel/drones-flota/{dron}/resolver', [DronesFlotaController::class, 'resolver'])
+            ->whereNumber('dron')
+            ->name('panel.drones-flota.resolver');
+
+        Route::get('/panel/equipos-flota', [EquiposFlotaController::class, 'index'])
+            ->name('panel.equipos-flota.index');
+
+        Route::get('/panel/documentos', [DocumentosPanelController::class, 'index'])
+            ->name('panel.documentos.index');
+
+        Route::get('/panel/documentos/{documento}/archivo', [DocumentosPanelController::class, 'archivo'])
+            ->whereNumber('documento')
+            ->name('panel.documentos.archivo');
+
+        Route::post('/panel/documentos/{documento}/revisar', [DocumentosPanelController::class, 'revisar'])
+            ->whereNumber('documento')
+            ->name('panel.documentos.revisar');
 
         // Tarea 72 (HU-49, ADR 0015 punto 3): equipos de trabajo — el piloto
         // y su auxiliar, con el equipamiento asignado, cada uno con su

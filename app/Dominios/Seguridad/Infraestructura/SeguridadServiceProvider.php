@@ -6,8 +6,10 @@ use App\Dominios\Seguridad\Aplicacion\BuscarEnElPanel;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Contratos\AutorizacionPortalCliente;
 use App\Dominios\Seguridad\Contratos\IdentidadOperarioToken;
+use App\Dominios\Seguridad\Contratos\LecturaCuentas;
 use App\Dominios\Seguridad\Contratos\LecturaUsuarioDePersona;
 use App\Dominios\Seguridad\Contratos\LecturaUsuariosPorRol;
+use App\Dominios\Seguridad\Contratos\RegistroCuentas;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecTokenDispositivo;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioInterno;
 use App\Dominios\Seguridad\Infraestructura\Http\AutorizacionPanelWebSesion;
@@ -76,6 +78,12 @@ final class SeguridadServiceProvider extends ServiceProvider
         // cuentas avisar cuando un hecho le importa a un rol.
         $this->app->bind(LecturaUsuariosPorRol::class, LecturaUsuariosPorRolEloquent::class);
 
+        // Misma frontera, para el marketplace (ADR 0036): `Proveedores` y
+        // `Solicitudes` registran cuentas con rol y leen su nombre sin importar
+        // `SecUser`.
+        $this->app->bind(RegistroCuentas::class, RegistroCuentasEloquent::class);
+        $this->app->bind(LecturaCuentas::class, RegistroCuentasEloquent::class);
+
         // Buscador global: el agregador recibe TODOS los proveedores que cada
         // módulo taggeó, sin conocer ninguno (ADR 0003, regla 2 — acá el
         // contrato viaja al revés: Seguridad no importa Comercial, es Comercial
@@ -98,6 +106,24 @@ final class SeguridadServiceProvider extends ServiceProvider
 
         $this->configurarTokensDeDispositivo();
         $this->configurarLimitesDeLogin();
+        $this->configurarLimiteDeRegistroPublico();
+    }
+
+    /**
+     * Límite del registro público de clientes y proveedores (ADR 0036): son
+     * endpoints sin autenticación que crean cuentas, así que sin un tope sirven
+     * para llenar la base de cuentas basura. Por IP: 5 altas por minuto y 20
+     * por hora (una oficina que registra a varios clientes seguidos cabe; un
+     * script no).
+     */
+    private function configurarLimiteDeRegistroPublico(): void
+    {
+        RateLimiter::for('registro-publico', function (Request $request): array {
+            return [
+                Limit::perMinute(5)->by('registro-publico|minuto|'.$request->ip()),
+                Limit::perHour(20)->by('registro-publico|hora|'.$request->ip()),
+            ];
+        });
     }
 
     /**

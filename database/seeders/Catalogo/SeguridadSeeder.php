@@ -30,6 +30,10 @@ class SeguridadSeeder extends Seeder
         'jefe_campo' => 'Jefe de campo: coordina la cuadrilla y valida sesiones ajenas.',
         'encargado_operaciones' => 'Encargado de operaciones: administra usuarios, órdenes y planificación.',
         'dueno' => 'Dueño de Agrocom SRL: acceso total, incluida la gestión de otros dueños.',
+        // Marketplace (ADR 0036): cuentas que se registran por sí mismas desde
+        // la app. No tienen ninguna pantalla del panel; operan por la API.
+        'cliente' => 'Cliente del marketplace: solicita servicios de fumigación y califica al proveedor.',
+        'proveedor' => 'Proveedor del marketplace: gestiona su personal, sus drones y sus equipos desde la app.',
         // Descripción recortada a propósito: `sec_role.description` es
         // `varchar(150)` (migración `2026_08_27_100003`) y el texto original
         // del pedido (168 caracteres) no entra — SQLite no lo detecta (sin
@@ -332,6 +336,37 @@ class SeguridadSeeder extends Seeder
         'campania.campania.editar' => 'Editar los datos de una campaña',
         'campania.campania.cambiar_estado' => 'Cambiar el estado de una campaña (abrir, cerrar) — exclusivo del dueño',
         'campania.campania.eliminar' => 'Dar de baja (lógica) una campaña',
+        // Marketplace (ADR 0032 y 0036): aprobación de proveedores, pilotos,
+        // auxiliares y drones en el panel. Grano por acción, mismo criterio
+        // que `comercial.contrato.cambiar_estado`: aprobar (o rechazar) un
+        // registro, suspenderlo y darlo de baja no son la misma
+        // responsabilidad. `.aprobar` cubre aprobar, rechazar y rehabilitar.
+        'proveedores.proveedor.ver' => 'Ver el listado y la ficha de proveedores',
+        'proveedores.proveedor.aprobar' => 'Aprobar o rechazar a un proveedor y rehabilitar a uno suspendido',
+        'proveedores.proveedor.suspender' => 'Suspender a un proveedor, con motivo',
+        'proveedores.proveedor.dar_baja' => 'Dar de baja a un proveedor, con motivo',
+        'proveedores.piloto.ver' => 'Ver el listado y la ficha de pilotos',
+        'proveedores.piloto.aprobar' => 'Aprobar o rechazar a un piloto y rehabilitar a uno suspendido',
+        'proveedores.piloto.suspender' => 'Suspender a un piloto, con motivo',
+        'proveedores.piloto.dar_baja' => 'Dar de baja a un piloto, con motivo',
+        'proveedores.auxiliar.ver' => 'Ver el listado y la ficha de auxiliares',
+        'proveedores.auxiliar.aprobar' => 'Aprobar o rechazar a un auxiliar y rehabilitar a uno suspendido',
+        'proveedores.auxiliar.suspender' => 'Suspender a un auxiliar, con motivo',
+        'proveedores.auxiliar.dar_baja' => 'Dar de baja a un auxiliar, con motivo',
+        'proveedores.documento.ver' => 'Ver la cola de documentos y descargar su archivo (acceso restringido)',
+        'proveedores.documento.revisar' => 'Aprobar o rechazar un documento, con motivo en el rechazo',
+        'flota.dron.ver' => 'Ver el listado y la ficha de drones del marketplace',
+        'flota.dron.aprobar' => 'Aprobar o rechazar un dron y rehabilitar a uno suspendido',
+        'flota.dron.suspender' => 'Suspender un dron, con motivo',
+        'flota.dron.dar_baja' => 'Dar de baja un dron, con motivo',
+        'flota.equipo.ver' => 'Ver los equipos (piloto, dron y auxiliar) de los proveedores',
+        // Marketplace, lado app (token de dispositivo): lo que cada rol hace
+        // sobre lo SUYO. El alcance (solo sus registros) lo hacen los casos de
+        // uso; el permiso es la puerta.
+        'proveedores.cuenta.gestionar' => 'Gestionar su propio proveedor desde la app: pilotos, drones, equipos y documentos',
+        'proveedores.auxiliar.registrar' => 'Registrar a un auxiliar (queda pendiente de aprobación)',
+        'proveedores.documento.cargar' => 'Cargar los documentos propios o de lo que uno registró',
+        'solicitudes.cliente.gestionar' => 'Gestionar su propio perfil de cliente desde la app',
     ];
 
     /**
@@ -346,12 +381,56 @@ class SeguridadSeeder extends Seeder
     private const PERMISOS_SOLO_ADMIN_PLATAFORMA = PermisosReservados::SOLO_ADMIN_PLATAFORMA;
 
     /**
+     * Administración de proveedores y flota en el panel (ADR 0032): el
+     * encargado de operaciones revisa documentos y aprueba. El dueño recibe
+     * todo el catálogo.
+     *
+     * @var list<string>
+     */
+    private const PERMISOS_ADMINISTRACION_PROVEEDORES = [
+        'proveedores.proveedor.ver',
+        'proveedores.proveedor.aprobar',
+        'proveedores.proveedor.suspender',
+        'proveedores.proveedor.dar_baja',
+        'proveedores.piloto.ver',
+        'proveedores.piloto.aprobar',
+        'proveedores.piloto.suspender',
+        'proveedores.piloto.dar_baja',
+        'proveedores.auxiliar.ver',
+        'proveedores.auxiliar.aprobar',
+        'proveedores.auxiliar.suspender',
+        'proveedores.auxiliar.dar_baja',
+        'proveedores.documento.ver',
+        'proveedores.documento.revisar',
+        'flota.dron.ver',
+        'flota.dron.aprobar',
+        'flota.dron.suspender',
+        'flota.dron.dar_baja',
+        'flota.equipo.ver',
+    ];
+
+    /** @var list<string> */
+    private const PERMISOS_PROVEEDOR = [
+        'proveedores.cuenta.gestionar',
+        'proveedores.auxiliar.registrar',
+        'proveedores.documento.cargar',
+    ];
+
+    /** @var list<string> */
+    private const PERMISOS_CLIENTE = [
+        'solicitudes.cliente.gestionar',
+    ];
+
+    /**
      * Piloto: lo que ejecuta desde `agrocom-field` (HU-17, tarea 24) más su
      * tablero.
      *
      * @var list<string>
      */
     private const PERMISOS_PILOTO = [
+        // Marketplace: el piloto registra a su auxiliar y carga sus documentos.
+        'proveedores.auxiliar.registrar',
+        'proveedores.documento.cargar',
         'operaciones.acta.generar',
         'operaciones.acta.firmar',
         // Tarea 67: el dashboard dejó de ser un tablero único de gerencia y
@@ -367,6 +446,8 @@ class SeguridadSeeder extends Seeder
      * @var list<string>
      */
     private const PERMISOS_AUXILIAR = [
+        // Marketplace: el auxiliar carga sus propios documentos.
+        'proveedores.documento.cargar',
         // Tarea 67, mismo motivo que el piloto: ve sus propias sesiones (como
         // auxiliar de ellas), nada de la operación global.
         'seguridad.dashboard.ver',
@@ -698,8 +779,12 @@ class SeguridadSeeder extends Seeder
         // encargado_operaciones: todo salvo asignar_rol_dueno.
         $this->asignar(
             $roles['encargado_operaciones'],
-            $permisos->only(self::PERMISOS_ENCARGADO_OPERACIONES)->values()->all(),
+            $permisos->only([...self::PERMISOS_ENCARGADO_OPERACIONES, ...self::PERMISOS_ADMINISTRACION_PROVEEDORES])->values()->all(),
         );
+
+        // Marketplace (ADR 0036): proveedor y cliente operan por la API con lo suyo.
+        $this->asignar($roles['proveedor'], $permisos->only(self::PERMISOS_PROVEEDOR)->values()->all());
+        $this->asignar($roles['cliente'], $permisos->only(self::PERMISOS_CLIENTE)->values()->all());
 
         // piloto (HU-17, tarea 24): ejecuta desde `agrocom-field`; en el
         // panel solo ve su tablero.

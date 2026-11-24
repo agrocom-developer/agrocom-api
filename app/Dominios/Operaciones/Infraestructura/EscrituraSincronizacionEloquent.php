@@ -378,7 +378,7 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
                     $this->alertas->porBateriaCaliente($recarga, $sesion);
                 }
 
-                event(new RecargaRegistrada($datos->bateriaSalienteId));
+                event(new RecargaRegistrada($datos->bateriaSalienteId, $sesion->dron_id === null ? null : (int) $sesion->dron_id));
             });
         } catch (QueryException $excepcion) {
             return $this->resultadoDesdeExcepcion($excepcion, 'ope_recargas');
