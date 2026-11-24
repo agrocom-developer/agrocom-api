@@ -44,6 +44,8 @@ function proyectoDeJuguete(): string
         'tests/Unit/LevantaAppTest.php' => "<?php\nuses(\\Tests\\TestCase::class);\ntest('x', fn () => 1);\n",
         'tests/Unit/ArquitecturaModulosTest.php' => "<?php\ntest('x', fn () => 1);\n",
         'tests/Unit/ContratoOpenApiTest.php' => "<?php\ntest('x', fn () => 1);\n",
+        'tests/Unit/Contrato/EjemplosDeApiTest.php' => "<?php\ntest('x', fn () => 1);\n",
+        'tests/Feature/Contrato/RutasDelContratoTest.php' => "<?php\ntest('x', fn () => 1);\n",
         'tests/Unit/Sub/AnidadaTest.php' => "<?php\nuse App\\Dominios\\Gamma\\Dominio\\Regla;\ntest('x', fn () => Regla::class);\n",
     ];
     foreach ($archivos as $ruta => $contenido) {
@@ -83,12 +85,12 @@ afterEach(function () {
 });
 
 test('un diff vacío corre solo el humo mínimo', function () {
-    expect(elegidas($this->raiz, []))->toEqualCanonicalizing(['ArquitecturaModulosTest.php', 'ContratoOpenApiTest.php']);
+    expect(elegidas($this->raiz, []))->toEqualCanonicalizing(['ArquitecturaModulosTest.php', 'ContratoOpenApiTest.php', 'EjemplosDeApiTest.php', 'RutasDelContratoTest.php']);
 });
 
 test('documentación y metadatos no despiertan ninguna prueba más', function () {
     expect(elegidas($this->raiz, ['README.md', 'CLAUDE.md', '.claude/skills/x/SKILL.md', '.gitignore']))
-        ->toEqualCanonicalizing(['ArquitecturaModulosTest.php', 'ContratoOpenApiTest.php']);
+        ->toEqualCanonicalizing(['ArquitecturaModulosTest.php', 'ContratoOpenApiTest.php', 'EjemplosDeApiTest.php', 'RutasDelContratoTest.php']);
 });
 
 test('una clase hoja elige la prueba que la nombra y las pruebas que levantan la app', function () {

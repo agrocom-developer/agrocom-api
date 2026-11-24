@@ -1,0 +1,19 @@
+{
+    "operationId": "verReputacion",
+    "descripcion": "Calificación, tasas y sanciones propias.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/reputacion",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "calificacion_promedio": "0.00",
+            "calificaciones_conteo": 0,
+            "tasa_aceptacion": "1.0000",
+            "tasa_cancelacion": "0.0000",
+            "sanciones": []
+        }
+    }
+}

@@ -1,0 +1,27 @@
+{
+    "operationId": "obtenerCatalogoSincronizacion",
+    "descripcion": "Pull incremental desde el cursor: sin cambios, listas vacías.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/sync/catalogo?desde=eyJwZXJzb25hcyI6eyJ1IjoiMjAyNi0xMS0yNFQwNTo0NTowNCswMDowMCIsImlkIjo5fSwic2VydmljaW9zX2FzaWduYWRvcyI6eyJ1IjoiMjAyNi0xMS0yNFQwNTo0NToyOSswMDowMCIsImlkIjo1fSwic2VydmljaW9zX3JldGlyYWRvcyI6eyJ1IjoiMjAyNi0xMS0yNFQwNTo0NTo0NCswMDowMCIsImlkIjowfX0%3D",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "personas": [],
+            "servicios_asignados": [],
+            "servicios_retirados": [],
+            "limites": {
+                "humedad_min_pct": null,
+                "viento_max_kmh": "17.00",
+                "temperatura_max_c": "30.00",
+                "humedad_max_pct": "90.00",
+                "altura_vuelo_m": null,
+                "velocidad_vuelo_kmh": null,
+                "ancho_pasada_m": null
+            },
+            "cursor": "eyJwZXJzb25hcyI6eyJ1IjoiMjAyNi0xMS0yNFQwNTo0NTowNCswMDowMCIsImlkIjo5fSwic2VydmljaW9zX2FzaWduYWRvcyI6eyJ1IjoiMjAyNi0xMS0yNFQwNTo0NToyOSswMDowMCIsImlkIjo1fSwic2VydmljaW9zX3JldGlyYWRvcyI6eyJ1IjoiMjAyNi0xMS0yNFQwNTo0NTo0NCswMDowMCIsImlkIjowfX0="
+        }
+    }
+}

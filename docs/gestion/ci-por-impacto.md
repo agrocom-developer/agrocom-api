@@ -19,6 +19,8 @@ El **humo mínimo** corre siempre, sin importar el diff:
 
 - `tests/Unit/ArquitecturaModulosTest.php`: fronteras entre módulos y reglas de importación (ADR 0003).
 - `tests/Unit/ContratoOpenApiTest.php`: `docs/api/openapi.yaml` se lee y cada operación tiene `operationId` único.
+- `tests/Unit/Contrato/EjemplosDeApiTest.php`: cada fixture real de `docs/api/ejemplos/` cumple el esquema del contrato (respuesta, estado documentado, petición, decimales como string, sin credenciales).
+- `tests/Feature/Contrato/RutasDelContratoTest.php`: cada ruta de la API está en el contrato, cada operación del contrato existe como ruta y la seguridad declarada coincide con la que exige la ruta.
 
 ## El selector: `bin/tests-afectados`
 
@@ -63,7 +65,7 @@ El análisis es estático, sobre el texto de cada prueba y de cada clase:
 - **Pruebas que nombran clases.** Una prueba depende de los nombres `App\…`/`Database\…` que
   escribe; un nombre que es solo un namespace cubre todo lo que cuelga de él.
 - **Pruebas que leen archivos.** Los literales de ruta (`/lang/es/…`, `database_path('migrations')`,
-  `/app/Dominios/Comercial`) marcan qué carpetas escanea una prueba; corre cuando cambia algo adentro.
+  `/app/Dominios/Proveedores`) marcan qué carpetas escanea una prueba; corre cuando cambia algo adentro.
 - **Pruebas que levantan la app** (`TestCase`, `tests/Feature/`) corren ante cambios de `app/`, rutas,
   vistas, idiomas y datos semilla.
 - **Pruebas opacas** (sin referencias ni rutas detectables) corren ante cualquier cambio de código.
@@ -119,4 +121,4 @@ Local: `CI_PRESUPUESTO_SEG=180 bin/verify` avisa si la corrida de pruebas supera
 - Una prueba nueva no se registra en ningún lado: el selector la descubre por su contenido. Si una
   prueba escanea archivos con rutas armadas dinámicamente (sin literales), el selector la trata como
   opaca y corre ante cualquier cambio de código; para afinarla basta nombrar la carpeta que lee con
-  un literal (`'/app/Dominios/Comercial'`).
+  un literal (`'/app/Dominios/Proveedores'`).

@@ -1,0 +1,26 @@
+{
+    "operationId": "crearTerreno",
+    "descripcion": "Validación: faltan datos obligatorios.",
+    "peticion": {
+        "metodo": "POST",
+        "ruta": "/api/terrenos",
+        "autenticada": true,
+        "cuerpo": {
+            "hectareas": "0"
+        }
+    },
+    "respuesta": {
+        "estado": 422,
+        "cuerpo": {
+            "message": "Este campo es obligatorio. (y 1 error más)",
+            "errors": {
+                "nombre": [
+                    "Este campo es obligatorio."
+                ],
+                "hectareas": [
+                    "El valor debe ser mayor que 0."
+                ]
+            }
+        }
+    }
+}

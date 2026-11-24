@@ -1,0 +1,13 @@
+{
+    "operationId": "cerrarSesionCampo",
+    "descripcion": "Cierra la sesión: el token deja de valer.",
+    "peticion": {
+        "metodo": "DELETE",
+        "ruta": "/api/auth/token",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 204,
+        "cuerpo": null
+    }
+}

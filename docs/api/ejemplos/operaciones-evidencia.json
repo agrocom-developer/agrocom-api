@@ -1,0 +1,24 @@
+{
+    "operationId": "subirEvidencia",
+    "descripcion": "Sube una evidencia comprimida (multipart); va en una cola separada del lote.",
+    "peticion": {
+        "metodo": "POST",
+        "ruta": "/api/evidencias",
+        "autenticada": true,
+        "cuerpo": {
+            "uuid_cliente": "0a1b2c3d-1111-4a11-8a11-0000000000e1",
+            "tipo": "imagen_campo",
+            "fecha": "2026-11-24T11:41:00-04:00"
+        },
+        "multipart": {
+            "archivo": "campo.jpg (image/jpeg)"
+        }
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "uuid_cliente": "0a1b2c3d-1111-4a11-8a11-0000000000e1",
+            "estado": "aplicado"
+        }
+    }
+}

@@ -1,0 +1,33 @@
+{
+    "operationId": "crearSolicitud",
+    "descripcion": "Validación: ventana de fechas invertida y hectáreas en cero.",
+    "peticion": {
+        "metodo": "POST",
+        "ruta": "/api/solicitudes",
+        "autenticada": true,
+        "cuerpo": {
+            "uuid_cliente": "5b0f6a52-0c1e-4b6c-9d57-7f9d3a1c2e99",
+            "terreno_id": 4,
+            "tipo_aplicacion": "herbicida",
+            "hectareas_solicitadas": "0",
+            "producto_indicado": "Glifosato",
+            "aporta_producto": "cliente",
+            "ventana_desde": "2026-12-06",
+            "ventana_hasta": "2026-11-28"
+        }
+    },
+    "respuesta": {
+        "estado": 422,
+        "cuerpo": {
+            "message": "El valor debe ser mayor que 0. (y 1 error más)",
+            "errors": {
+                "hectareas_solicitadas": [
+                    "El valor debe ser mayor que 0."
+                ],
+                "ventana_hasta": [
+                    "La fecha debe ser igual o posterior a fecha deseada desde."
+                ]
+            }
+        }
+    }
+}

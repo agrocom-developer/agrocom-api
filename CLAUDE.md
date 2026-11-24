@@ -1,6 +1,6 @@
 # CLAUDE.md — invariantes de `agrocom-api`
 
-Este repo es el backend (Laravel + PostgreSQL) y el panel web (AdminLTE + Blade/Livewire) de Agrocom SRL. El desarrollo lo hace una sola persona con agentes de IA como implementadores principales; estas invariantes existen para que la coherencia no dependa de la memoria de nadie. La fuente de verdad funcional/técnica es `docs/especificacion/especificacion_funcional_tecnica.md`; el porqué de cada decisión de arquitectura está en `docs/decisiones/` (ADRs). Léelos antes de implementar algo que los toque.
+Este repo es el backend (Laravel + PostgreSQL) y el panel web (AdminLTE + Blade/Livewire) de Agrocom SRL. El desarrollo lo hace una sola persona con agentes de IA como implementadores principales; estas invariantes existen para que la coherencia no dependa de la memoria de nadie. La fuente de verdad funcional/técnica es `docs/especificacion/marketplace.md`; el porqué de cada decisión de arquitectura está en `docs/decisiones/` (ADRs). Léelos antes de implementar algo que los toque.
 
 ## Invariantes no negociables
 
@@ -30,6 +30,8 @@ Este repo es el backend (Laravel + PostgreSQL) y el panel web (AdminLTE + Blade/
 No hay suite de tests funcionales (`tests/Feature/`): a partir del 15/9/2026 el desarrollador prueba cada cambio a mano, en vivo, contra el compose real — dejó de confiar en que una suite automática de caja negra/blanca sobre la API reflejara que el sistema hace lo que se pide. `tests/Unit/` se mantiene (arquitectura de módulos, máquinas de estado, bitácora de auditoría, reglas de dominio puras — nada que ejercite HTTP) y sigue corriendo en `bin/verify`.
 
 **Se verifica lo afectado, no la suite entera.** `./bin/verify` corre Pint sobre lo tocado, Larastan y las pruebas que el selector de impacto (`bin/tests-afectados`) elige para el diff, más un humo mínimo que corre siempre (arquitectura de módulos y contrato de API). Ni personas ni agentes corren la suite completa por defecto: `./bin/verify --todo` es para cuando el selector ya lo exige, un release o reproducir una falla nocturna. En CI un PR a `develop` corre lo afectado y la suite completa corre en el release a `master`, de noche y con la etiqueta `full-ci`. El selector falla siempre hacia más pruebas, nunca hacia menos. Detalle en `docs/gestion/ci-por-impacto.md`.
+
+El **contrato de API** también tiene compuerta: las pruebas de `tests/Unit/Contrato` y `tests/Feature/Contrato` (humo que corre siempre) validan que cada ruta esté en `docs/api/openapi.yaml` y que los ejemplos reales de `docs/api/ejemplos/` cumplan sus esquemas (ver el skill `contrato-api`).
 
 Lo que sí hay que escribir y mantener es una suite de **no funcionales de seguridad**: inyección, y exposición de datos entre usuarios (un usuario logueado viendo o alcanzando por ID un recurso que no le corresponde — el caso del portal del invariante 5 es el ejemplo central). Esa es la categoría de prueba que se valida hoy, no el flujo funcional completo.
 

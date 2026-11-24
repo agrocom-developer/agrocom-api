@@ -24,7 +24,15 @@ Ejecuta `php artisan l5-swagger:generate` y copia `storage/api-docs/api-docs.yam
 1. Anotá el endpoint con `OA\...`: tag por módulo, parámetros, esquema de request, todas las respuestas (200, 401, 403, 404, 422) y el vocabulario del dominio tal como viaja (`hectareas_declaradas`, `uuid_cliente`). Dinero y hectáreas como cadenas decimales.
 2. Escribí el caso de uso en `Aplicacion/`; el controller es un adaptador delgado.
 3. Regenerá el spec y revisá el diff del YAML: debe contener exactamente lo que querías.
-4. Test del endpoint: éxito, validación, autorización (404 si el recurso es ajeno) e idempotencia si recibe `uuid_cliente`.
+4. Si el endpoint lo usan las apps, suma sus intercambios a `bin/lib/generar-ejemplos.php` y regenera `docs/api/ejemplos/` con `bin/generar-ejemplos`: éxito, validación, autorización (404 si el recurso es ajeno) e idempotencia si recibe `uuid_cliente`.
+5. Corre `vendor/bin/pest tests/Unit/Contrato tests/Feature/Contrato`: cada ruta debe estar en el contrato y cada ejemplo debe cumplir su esquema.
+
+## Ejemplos reales y pruebas de contrato
+
+- `docs/api/ejemplos/*.json` son intercambios reales (request y response) capturados contra la API con `bin/generar-ejemplos`, que levanta un PostgreSQL desechable, siembra el catálogo y los datos de demostración y recorre los flujos del cliente, el proveedor y el piloto. Las apps los usan como fixtures de sus propias pruebas de contrato. Nunca se editan a mano; el formato está en `docs/api/ejemplos/README.md`.
+- `tests/Unit/Contrato/EjemplosDeApiTest.php` valida cada ejemplo contra el esquema de `docs/api/openapi.yaml` (estado documentado, campos sin documentar, nullables, enums, decimales como string, ninguna credencial viva).
+- `tests/Feature/Contrato/RutasDelContratoTest.php` compara las rutas registradas con el contrato (sin endpoint sin documentar ni documentado de más, y la seguridad declarada coincide con la exigida).
+- Un campo `nullable` que apunta a un esquema (`$ref`) se declara con `allOf: [new OA\Schema(ref: ...)]` junto a `nullable: true`: swagger-php descarta `nullable` cuando va al lado de un `ref`.
 
 ## Compatibilidad con las apps
 

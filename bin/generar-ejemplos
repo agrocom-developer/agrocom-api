@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+#
+# Regenera docs/api/ejemplos/: fixtures REALES del contrato de API para las
+# apps (cliente, piloto, auxiliar). Corre el recorrido de las apps contra la
+# API de verdad y guarda cada request/response como JSON.
+#
+# Necesita una base PostgreSQL VACÍA y DESECHABLE: el script migra el esquema,
+# lo siembra con el catálogo y los datos de demostración, y escribe en ella
+# (solicitudes, ofertas, sesiones). Nunca apuntes `DB_*` a una base con datos
+# que quieras conservar. Sin `GENERAR_EJEMPLOS_EN_HOST`, levanta y destruye un
+# contenedor PostgreSQL propio, así que no toca nada tuyo.
+#
+#   bin/generar-ejemplos            # levanta un PostgreSQL efímero en Docker
+#   GENERAR_EJEMPLOS_EN_HOST=1 DB_HOST=... DB_PORT=... DB_DATABASE=... \
+#     DB_USERNAME=... DB_PASSWORD=... bin/generar-ejemplos   # base propia, desechable
+#
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+CONTENEDOR=""
+limpiar() {
+    if [ -n "$CONTENEDOR" ]; then
+        docker rm -f "$CONTENEDOR" >/dev/null 2>&1 || true
+    fi
+}
+trap limpiar EXIT
+
+if [ "${GENERAR_EJEMPLOS_EN_HOST:-0}" != "1" ]; then
+    command -v docker >/dev/null 2>&1 || { echo "Hace falta Docker (o GENERAR_EJEMPLOS_EN_HOST=1 con una base desechable)." >&2; exit 2; }
+    PUERTO="${GENERAR_EJEMPLOS_PUERTO:-55434}"
+    CONTENEDOR="agrocom-ejemplos-pg-$$"
+    docker run -d --name "$CONTENEDOR" -e POSTGRES_PASSWORD=ejemplos -e POSTGRES_DB=agrocom_ejemplos \
+        -p "${PUERTO}:5432" postgres:16 >/dev/null
+    for _ in $(seq 1 40); do
+        docker exec "$CONTENEDOR" pg_isready -U postgres >/dev/null 2>&1 && break
+        sleep 1
+    done
+    export DB_CONNECTION=pgsql DB_HOST=127.0.0.1 DB_PORT="$PUERTO" DB_DATABASE=agrocom_ejemplos \
+        DB_USERNAME=postgres DB_PASSWORD=ejemplos
+fi
+
+export APP_ENV=local APP_DEBUG=false APP_LOCALE=es APP_FALLBACK_LOCALE=es \
+    CACHE_STORE=array SESSION_DRIVER=array QUEUE_CONNECTION=sync MAIL_MAILER=array
+export APP_KEY="${APP_KEY:-base64:aPIEaT+7R/iMkdhaovR9jpORpVHYbF4m/hcf13BCn9U=}"
+
+php artisan migrate --force --no-interaction
+php artisan db:seed --force --no-interaction
+php artisan db:seed --class='Database\Seeders\Demo\DemoSeeder' --force --no-interaction
+
+php bin/lib/generar-ejemplos.php "$PWD" "$PWD/docs/api/ejemplos"

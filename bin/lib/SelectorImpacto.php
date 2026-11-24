@@ -29,6 +29,8 @@ final class SelectorImpacto
     public const HUMO = [
         'tests/Unit/ArquitecturaModulosTest.php',
         'tests/Unit/ContratoOpenApiTest.php',
+        'tests/Unit/Contrato/EjemplosDeApiTest.php',
+        'tests/Feature/Contrato/RutasDelContratoTest.php',
     ];
 
     /**
@@ -457,7 +459,7 @@ final class SelectorImpacto
 
     /**
      * Carpetas o archivos del repo que una prueba nombra de forma literal, como
-     * prefijos (`lang/es`, `app/Dominios/Comercial`). Un literal con comodín o
+     * prefijos (`lang/es`, `app/Dominios/Proveedores`). Un literal con comodín o
      * variable se corta en el primer segmento dinámico.
      *
      * @return list<string>

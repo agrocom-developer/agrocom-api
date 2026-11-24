@@ -1,0 +1,30 @@
+{
+    "operationId": "actualizarTerreno",
+    "descripcion": "Corrige los datos de un terreno propio.",
+    "peticion": {
+        "metodo": "PUT",
+        "ruta": "/api/terrenos/4",
+        "autenticada": true,
+        "cuerpo": {
+            "nombre": "Lote Los Álamos",
+            "hectareas": "118.2500",
+            "cultivo": "Soya"
+        }
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "terreno": {
+                "id": 4,
+                "nombre": "Lote Los Álamos",
+                "hectareas": "118.2500",
+                "cultivo": "Soya",
+                "geometria": null,
+                "referencias_acceso": "Camino vecinal, portón azul a 2 km de la ruta.",
+                "colindantes_sensibles": null,
+                "acceso_dificil": false,
+                "zona_id": null
+            }
+        }
+    }
+}

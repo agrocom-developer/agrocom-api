@@ -1,0 +1,44 @@
+{
+    "operationId": "verCalificacionesDelServicio",
+    "descripcion": "Calificaciones de un servicio completado.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/solicitudes/8/calificaciones",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "puede_calificar": true,
+            "vence_en": "2026-12-01T05:45:32+00:00",
+            "plazo_dias": 7,
+            "sujetos": [
+                {
+                    "tipo": "proveedor",
+                    "id": 1,
+                    "nombre": "Agrocom SRL",
+                    "calificacion": null
+                },
+                {
+                    "tipo": "piloto",
+                    "id": 1,
+                    "nombre": "Rodrigo Suárez Peña",
+                    "calificacion": null
+                },
+                {
+                    "tipo": "auxiliar",
+                    "id": 1,
+                    "nombre": "Diego Parada Cuéllar",
+                    "calificacion": null
+                }
+            ],
+            "etiquetas": [
+                "puntualidad",
+                "cobertura_pareja",
+                "comunicacion",
+                "cuidado_entorno",
+                "orden_lote"
+            ]
+        }
+    }
+}

@@ -1,0 +1,26 @@
+{
+    "operationId": "emitirTokenDispositivo",
+    "descripcion": "Falta el uuid del dispositivo y la contraseña.",
+    "peticion": {
+        "metodo": "POST",
+        "ruta": "/api/auth/token",
+        "autenticada": false,
+        "cuerpo": {
+            "username": "rodrigo.suarez"
+        }
+    },
+    "respuesta": {
+        "estado": 422,
+        "cuerpo": {
+            "message": "Este campo es obligatorio. (y 1 error más)",
+            "errors": {
+                "password": [
+                    "Este campo es obligatorio."
+                ],
+                "uuid_dispositivo": [
+                    "Este campo es obligatorio."
+                ]
+            }
+        }
+    }
+}

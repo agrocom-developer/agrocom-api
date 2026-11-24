@@ -1,0 +1,21 @@
+{
+    "operationId": "sincronizarLote",
+    "descripcion": "Un lote sin `registros` es el único caso que responde 422.",
+    "peticion": {
+        "metodo": "POST",
+        "ruta": "/api/sync",
+        "autenticada": true,
+        "cuerpo": []
+    },
+    "respuesta": {
+        "estado": 422,
+        "cuerpo": {
+            "message": "Falta este campo.",
+            "errors": {
+                "registros": [
+                    "Falta este campo."
+                ]
+            }
+        }
+    }
+}

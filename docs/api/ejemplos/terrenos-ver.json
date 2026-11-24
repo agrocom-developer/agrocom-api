@@ -1,0 +1,25 @@
+{
+    "operationId": "verTerreno",
+    "descripcion": "Detalle de un terreno propio.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/terrenos/4",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "terreno": {
+                "id": 4,
+                "nombre": "Lote Los Álamos",
+                "hectareas": "120.5000",
+                "cultivo": "Soya",
+                "geometria": null,
+                "referencias_acceso": "Camino vecinal, portón azul a 2 km de la ruta.",
+                "colindantes_sensibles": null,
+                "acceso_dificil": false,
+                "zona_id": null
+            }
+        }
+    }
+}
