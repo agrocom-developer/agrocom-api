@@ -213,6 +213,13 @@ class SecMenuSeeder extends Seeder
         // de la ficha.
         $this->item($solicitudes, 'solicitudes', 'asignaciones', 'alt_route', 2, ruta: 'panel.asignaciones.index', codigoPermiso: 'asignacion.asignacion.ver');
 
+        // Posventa (ADR 0031, 0033 y 0039): moderación de calificaciones, disputas de
+        // los servicios y métricas del mercado. Gateados por el permiso de LISTADO;
+        // moderar y resolver rigen los botones de cada pantalla.
+        $this->item($solicitudes, 'solicitudes', 'calificaciones', 'star', 3, ruta: 'panel.calificaciones.index', codigoPermiso: 'calificaciones.calificacion.ver');
+        $this->item($solicitudes, 'solicitudes', 'disputas', 'report', 4, ruta: 'panel.disputas.index', codigoPermiso: 'disputas.disputa.ver');
+        $this->item($solicitudes, 'solicitudes', 'metricas', 'insights', 5, ruta: 'panel.metricas.index', codigoPermiso: 'metricas.panel.ver');
+
         // Recursos (§4.2)
         // HU-27 (tarea 36): administración de la flota de drones — activa
         // el ítem que ya estaba sembrado como "botón sin link" (ver

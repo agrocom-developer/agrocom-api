@@ -341,6 +341,26 @@ class SeguridadSeeder extends Seeder
         'asignacion.asignacion.forzar' => 'Asignar o reasignar una solicitud a un proveedor a mano, con motivo',
         'asignacion.sancion.ver' => 'Ver las sanciones de los proveedores',
         'asignacion.sancion.levantar' => 'Levantar una sanción de un proveedor, con motivo',
+        // Calificaciones (ADR 0031 y 0039), lado app: el cliente califica al proveedor,
+        // al piloto y al auxiliar; el proveedor califica al cliente en privado, ve lo
+        // que recibe y reporta lo abusivo. El alcance lo hacen los casos de uso.
+        'calificaciones.calificacion.calificar_proveedor' => 'Calificar al proveedor, al piloto y al auxiliar de un servicio completado desde la app',
+        'calificaciones.calificacion.calificar_cliente' => 'Calificar en privado al cliente de un servicio completado desde la app',
+        'calificaciones.calificacion.ver_recibidas' => 'Ver las calificaciones que recibe su proveedor desde la app',
+        'calificaciones.calificacion.reportar' => 'Reportar desde la app una calificación recibida que considera abusiva',
+        // Calificaciones, panel: la cola de moderación y la moderación con causa y motivo.
+        'calificaciones.calificacion.ver' => 'Ver las calificaciones y su cola de moderación',
+        'calificaciones.calificacion.moderar' => 'Ocultar o restablecer una calificación, con causa y motivo',
+        // Disputas (ADR 0033 y 0039), lado app: cada parte abre, argumenta, retira y apela
+        // las suyas. El alcance (solo la disputa de su solicitud) lo hacen los casos de uso.
+        'disputas.disputa.gestionar_cliente' => 'Abrir, argumentar, retirar y apelar una disputa de su servicio desde la app del cliente',
+        'disputas.disputa.gestionar_proveedor' => 'Abrir, argumentar, retirar y apelar una disputa de su proveedor desde la app',
+        // Disputas, panel: la cola, la mediación de soporte y la resolución.
+        'disputas.disputa.ver' => 'Ver las disputas, sus mensajes y su resolución',
+        'disputas.disputa.atender' => 'Tomar una disputa, pedir información a las partes y mensajear como soporte',
+        'disputas.disputa.resolver' => 'Resolver una disputa o su apelación, con resultado, reembolso y motivo',
+        // Métricas del mercado en el panel (especificación §14).
+        'metricas.panel.ver' => 'Ver las métricas del mercado: solicitudes, aceptación, calificación, tiempos de asignación e ingreso',
     ];
 
     /**
@@ -391,6 +411,10 @@ class SeguridadSeeder extends Seeder
         'asignacion.oferta.ver',
         'asignacion.oferta.responder',
         'flota.disponibilidad.gestionar',
+        'calificaciones.calificacion.calificar_cliente',
+        'calificaciones.calificacion.ver_recibidas',
+        'calificaciones.calificacion.reportar',
+        'disputas.disputa.gestionar_proveedor',
     ];
 
     /** @var list<string> */
@@ -398,6 +422,8 @@ class SeguridadSeeder extends Seeder
         'solicitudes.cliente.gestionar',
         'solicitudes.terreno.gestionar',
         'solicitudes.solicitud.gestionar',
+        'calificaciones.calificacion.calificar_proveedor',
+        'disputas.disputa.gestionar_cliente',
     ];
 
     /**
@@ -427,6 +453,22 @@ class SeguridadSeeder extends Seeder
     ];
 
     /**
+     * Calificaciones, disputas y métricas en el panel (ADR 0031, 0033 y 0039): el
+     * encargado de operaciones modera, media y resuelve, y mira el mercado. El dueño
+     * recibe todo el catálogo.
+     *
+     * @var list<string>
+     */
+    private const PERMISOS_ADMINISTRACION_POSTVENTA = [
+        'calificaciones.calificacion.ver',
+        'calificaciones.calificacion.moderar',
+        'disputas.disputa.ver',
+        'disputas.disputa.atender',
+        'disputas.disputa.resolver',
+        'metricas.panel.ver',
+    ];
+
+    /**
      * Piloto: lo que ejecuta desde `agrocom-field` (HU-17, tarea 24) más su
      * tablero.
      *
@@ -440,6 +482,11 @@ class SeguridadSeeder extends Seeder
         'asignacion.oferta.ver',
         'asignacion.oferta.responder',
         'flota.disponibilidad.gestionar',
+        // Calificaciones y disputas (ADR 0031 y 0033): el piloto habla por su proveedor.
+        'calificaciones.calificacion.calificar_cliente',
+        'calificaciones.calificacion.ver_recibidas',
+        'calificaciones.calificacion.reportar',
+        'disputas.disputa.gestionar_proveedor',
         'operaciones.acta.generar',
         'operaciones.acta.firmar',
         // Tarea 67: el dashboard dejó de ser un tablero único de gerencia y
@@ -784,7 +831,7 @@ class SeguridadSeeder extends Seeder
         // encargado_operaciones: todo salvo asignar_rol_dueno.
         $this->asignar(
             $roles['encargado_operaciones'],
-            $permisos->only([...self::PERMISOS_ENCARGADO_OPERACIONES, ...self::PERMISOS_ADMINISTRACION_PROVEEDORES, ...self::PERMISOS_ADMINISTRACION_SOLICITUDES, ...self::PERMISOS_ADMINISTRACION_ASIGNACION])->values()->all(),
+            $permisos->only([...self::PERMISOS_ENCARGADO_OPERACIONES, ...self::PERMISOS_ADMINISTRACION_PROVEEDORES, ...self::PERMISOS_ADMINISTRACION_SOLICITUDES, ...self::PERMISOS_ADMINISTRACION_ASIGNACION, ...self::PERMISOS_ADMINISTRACION_POSTVENTA])->values()->all(),
         );
 
         // Marketplace (ADR 0036): proveedor y cliente operan por la API con lo suyo.
