@@ -5,6 +5,7 @@ namespace App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api;
 use App\Dominios\Compartido\Infraestructura\Http\RechazoDeDominio;
 use App\Dominios\Seguridad\Contratos\IdentidadOperarioToken;
 use App\Dominios\Solicitudes\Aplicacion\CancelarSolicitud;
+use App\Dominios\Solicitudes\Aplicacion\ConformarSolicitud;
 use App\Dominios\Solicitudes\Aplicacion\CrearSolicitud;
 use App\Dominios\Solicitudes\Aplicacion\EstimarSolicitudDelCliente;
 use App\Dominios\Solicitudes\Aplicacion\ListarSolicitudesDelCliente;
@@ -60,6 +61,7 @@ final class SolicitudesController
         private readonly EstimarSolicitudDelCliente $estimar,
         private readonly PublicarSolicitud $publicar,
         private readonly CancelarSolicitud $cancelar,
+        private readonly ConformarSolicitud $conformar,
         private readonly IdentidadOperarioToken $identidad,
     ) {}
 
@@ -296,6 +298,36 @@ final class SolicitudesController
 
         try {
             $solicitud = $this->cancelar->porCliente($this->usuarioId(), $id, (string) $request->validated('motivo'));
+        } catch (SolicitudInvalida|TransicionSolicitudNoPermitida $excepcion) {
+            return RechazoDeDominio::respuesta($excepcion);
+        }
+
+        return response()->json(['solicitud' => new SolicitudServicioResource($solicitud)]);
+    }
+
+    #[OA\Post(
+        path: '/api/solicitudes/{id}/conformidad',
+        operationId: 'conformarSolicitud',
+        description: 'El cliente da su conformidad a un servicio `ejecutada`: la solicitud pasa a `completada`, se congelan el monto final y la comisión que Agrocom devenga (se calcula, no se cobra en la app) y se abre la calificación durante 7 días. '
+            .'Si no hay observación, la conformidad es tácita al vencer el plazo (72 horas por defecto). Darla dos veces devuelve la misma solicitud. Para observar el servicio se abre una disputa (`POST /api/solicitudes/{id}/disputas`).',
+        summary: 'Dar la conformidad a un servicio',
+        security: [['tokenDispositivo' => []]],
+        tags: ['Solicitudes'],
+        parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
+        responses: [
+            new OA\Response(response: 200, description: 'Solicitud completada.', content: new OA\JsonContent(required: ['solicitud'], properties: [new OA\Property(property: 'solicitud', ref: '#/components/schemas/SolicitudServicio')], type: 'object')),
+            new OA\Response(response: 401, description: 'Token ausente o revocado.'),
+            new OA\Response(response: 403, description: 'El rol del token no es de cliente.'),
+            new OA\Response(response: 404, description: 'No existe o es de otro cliente.'),
+            new OA\Response(response: 422, description: 'La solicitud todavía no está ejecutada o terminó de otra forma.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
+        ],
+    )]
+    public function conformidad(Request $request, int $id): JsonResponse
+    {
+        $this->exigirPermiso($request);
+
+        try {
+            $solicitud = $this->conformar->ejecutar($this->usuarioId(), $id);
         } catch (SolicitudInvalida|TransicionSolicitudNoPermitida $excepcion) {
             return RechazoDeDominio::respuesta($excepcion);
         }

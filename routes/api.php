@@ -214,6 +214,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/solicitudes/{id}/cancelar', [SolicitudesController::class, 'cancelar'])
         ->whereNumber('id')
         ->name('api.solicitudes.cancelar');
+    Route::post('/solicitudes/{id}/conformidad', [SolicitudesController::class, 'conformidad'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.conformidad');
 
     // Avisos in-app de la cuenta (ADR 0025): las apps no tienen campana de panel.
     Route::get('/notificaciones', [NotificacionesController::class, 'index'])->name('api.notificaciones.index');

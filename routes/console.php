@@ -36,3 +36,19 @@ Schedule::command('asignacion:evaluar-proveedores')
     ->dailyAt('04:00')
     ->withoutOverlapping()
     ->onOneServer();
+
+/*
+ * Cierre del servicio (especificación §5.1, ADR 0039): cada hora completa por
+ * conformidad tácita las solicitudes que llevan más del plazo en `ejecutada` sin
+ * conformidad ni disputa, y una vez al día aplica la política de calificación a
+ * los clientes con aviso vigente. Ambos son idempotentes.
+ */
+Schedule::command('solicitudes:completar-vencidas')
+    ->hourly()
+    ->withoutOverlapping()
+    ->onOneServer();
+
+Schedule::command('solicitudes:evaluar-clientes')
+    ->dailyAt('04:30')
+    ->withoutOverlapping()
+    ->onOneServer();

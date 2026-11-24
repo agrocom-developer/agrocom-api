@@ -40,4 +40,43 @@ return [
 
     /* Recargo por hectárea cuando el proveedor aporta el producto. */
     'recargo_producto_proveedor_hectarea' => env('SOLICITUDES_RECARGO_PRODUCTO_HECTAREA', '60.00'),
+
+    /*
+     * Horas que tiene el cliente, desde que la solicitud queda `ejecutada`, para
+     * dar la conformidad o abrir una disputa. Vencido el plazo sin observación,
+     * la solicitud pasa a `completada` por conformidad tácita (especificación
+     * §5.1 y política de disputas).
+     */
+    'conformidad_horas' => (int) env('SOLICITUDES_CONFORMIDAD_HORAS', 72),
+
+    /*
+     * Tolerancia, en porcentaje, de las hectáreas confirmadas sobre las
+     * solicitadas: lo que excede ese tope no se factura (política de comisión).
+     */
+    'tolerancia_hectareas_pct' => env('SOLICITUDES_TOLERANCIA_HECTAREAS_PCT', '5'),
+
+    /*
+     * Comisión que Agrocom devenga por cada servicio completado, en porcentaje
+     * sobre el monto final (política de comisión, ADR 0034). Se calcula y se
+     * congela en la solicitud; no se cobra dentro de la aplicación en la versión 1.
+     * El propio no paga (el ingreso es de Agrocom); el dron vendido por Agrocom
+     * tiene una tasa preferencial del grupo.
+     */
+    'comision' => [
+        'propio' => env('SOLICITUDES_COMISION_PROPIO_PCT', '0'),
+        'independiente' => env('ASIGNACION_COMISION_EXTERNO_PCT', '15'),
+        'tercero' => env('ASIGNACION_COMISION_EXTERNO_PCT', '15'),
+        'dron_vendido' => env('SOLICITUDES_COMISION_DRON_VENDIDO_PCT', '10'),
+    ],
+
+    /*
+     * Política de calificación aplicada al cliente: promedio mínimo de lo que le
+     * califican los proveedores, mínimo de calificaciones para evaluarlo y días
+     * que pasan entre el aviso y la limitación de la publicación.
+     */
+    'calificacion_cliente' => [
+        'umbral' => env('SOLICITUDES_CLIENTE_CALIFICACION_UMBRAL', '3.5'),
+        'minimo_conteo' => (int) env('SOLICITUDES_CLIENTE_CALIFICACION_MINIMO', 10),
+        'plazo_limitacion_dias' => (int) env('SOLICITUDES_CLIENTE_PLAZO_LIMITACION_DIAS', 30),
+    ],
 ];

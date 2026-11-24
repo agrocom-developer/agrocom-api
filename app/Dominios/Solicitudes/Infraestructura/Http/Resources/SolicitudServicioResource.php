@@ -30,7 +30,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'observaciones', type: 'string', nullable: true),
         new OA\Property(property: 'tarifa_hectarea', description: 'Congelada al publicar; incluye recargos por hectárea.', type: 'string', nullable: true, example: '132.0000'),
         new OA\Property(property: 'monto_estimado', description: 'Congelado al publicar.', type: 'string', nullable: true, example: '10560.00'),
-        new OA\Property(property: 'monto_final', type: 'string', nullable: true),
+        new OA\Property(property: 'monto_final', description: 'Se congela al completar la solicitud: el estimado escalado por las hectáreas facturadas.', type: 'string', nullable: true),
         new OA\Property(property: 'estado', type: 'string', enum: ['borrador', 'publicada', 'en_asignacion', 'sin_proveedor', 'asignada', 'en_camino', 'en_ejecucion', 'suspendida_por_clima', 'ejecutada', 'en_disputa', 'completada', 'cancelada']),
         new OA\Property(property: 'proveedor_id', type: 'integer', nullable: true),
         new OA\Property(property: 'publicada_en', type: 'string', format: 'date-time', nullable: true),
