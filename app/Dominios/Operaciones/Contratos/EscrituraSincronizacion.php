@@ -59,19 +59,6 @@ namespace App\Dominios\Operaciones\Contratos;
  * `registrarCondiciones()`, nunca rechaza por la medición en sí (temperatura
  * de batería alta): persiste una alerta calculada, no bloquea el registro.
  *
- * `abrirEstadia()` (HU-51, tarea 74) crea una fila nueva, mismo mecanismo de
- * idempotencia que `abrirTrabajo()`. Sin `$operarioPersonaId`: la espec no
- * define dueño-persona para este registro — la estadía es del EQUIPO, y el
- * único chequeo de pertenencia es "el equipo no tiene ya una estadía
- * abierta", que resuelve el índice único parcial de la migración, no una
- * comparación contra el operario del token.
- *
- * `cerrarEstadia()` (HU-51, tarea 74) MUTA una fila existente, mismo
- * mecanismo de idempotencia que `cerrarTrabajo()`/`cerrarSesion()`: se
- * resuelve dentro de la implementación comparando `cierre_uuid_cliente`
- * bajo `lockForUpdate()`. Sin `$operarioPersonaId`, mismo motivo que
- * `abrirEstadia()`.
- *
  * `registrarEvidenciaEquipo()` (HU-80, tarea 86) crea una fila nueva, mismo
  * mecanismo de idempotencia que `registrarRecepcionCaldo()`: solo depende de
  * `trabajo`, no de `sesion`. Sin `$operarioPersonaId`, mismo motivo que ese
@@ -98,10 +85,6 @@ interface EscrituraSincronizacion
     public function registrarIncidencia(RegistroIncidencia $datos): ResultadoSincronizacion;
 
     public function registrarRecarga(RegistroRecarga $datos): ResultadoSincronizacion;
-
-    public function abrirEstadia(AperturaEstadiaHacienda $datos): ResultadoSincronizacion;
-
-    public function cerrarEstadia(CierreEstadiaHacienda $datos): ResultadoSincronizacion;
 
     public function registrarEvidenciaEquipo(RegistroEvidenciaEquipo $datos): ResultadoSincronizacion;
 }

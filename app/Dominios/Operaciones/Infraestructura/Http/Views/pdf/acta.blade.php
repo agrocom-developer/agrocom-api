@@ -5,7 +5,7 @@
     incluye firmante/fecha_firma: al momento de generarse, el acta todavía
     está `pendiente`.
 
-    Solo lo mínimo de un acta de conformidad — lote/trabajo, hectáreas
+    Solo lo mínimo de un acta de conformidad — solicitud/trabajo, hectáreas
     conformadas, fecha. Nada del reporte técnico completo (mezcla,
     condiciones, litros/ha): eso es HU-18 (tarea 25), tarea aparte. Sin
     componentes Atomic Design del panel: dompdf no procesa el CSS compilado
@@ -33,7 +33,7 @@
 </head>
 <body>
     <h1>{{ __('operaciones.pdf.acta.titulo') }}</h1>
-    <p class="subtitulo">{{ __('operaciones.pdf.comun.subtitulo_lote_orden', ['lote' => $trabajo->lote_id, 'orden' => $trabajo->orden_id, 'aplicacion' => $trabajo->nro_aplicacion]) }}</p>
+    <p class="subtitulo">{{ __('operaciones.pdf.comun.subtitulo_solicitud', ['solicitud' => $trabajo->solicitud_id]) }}</p>
 
     <table>
         <tr>

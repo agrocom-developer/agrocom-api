@@ -33,7 +33,7 @@
 </head>
 <body>
     <h1>{{ __('operaciones.pdf.reporte_tecnico.titulo') }}</h1>
-    <p class="subtitulo">{{ __('operaciones.pdf.comun.subtitulo_lote_orden', ['lote' => $trabajo->lote_id, 'orden' => $trabajo->orden_id, 'aplicacion' => $trabajo->nro_aplicacion]) }}</p>
+    <p class="subtitulo">{{ __('operaciones.pdf.comun.subtitulo_solicitud', ['solicitud' => $trabajo->solicitud_id]) }}</p>
     <p class="subtitulo">{{ __('operaciones.pdf.reporte_tecnico.emitido_el', ['fecha' => $reporte->generado_en->format('d/m/Y H:i')]) }}</p>
 
     <h2>{{ __('operaciones.pdf.reporte_tecnico.imagen_campo_titulo') }}</h2>

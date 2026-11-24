@@ -8,18 +8,13 @@ use App\Dominios\Operaciones\Contratos\LecturaAlertasTemperaturaBateria;
 use App\Dominios\Operaciones\Contratos\LecturaContadoresPanel;
 use App\Dominios\Operaciones\Contratos\LecturaDesempenioPersona;
 use App\Dominios\Operaciones\Contratos\LecturaDrones;
-use App\Dominios\Operaciones\Contratos\LecturaLotesConOrdenPorContrato;
-use App\Dominios\Operaciones\Contratos\LecturaOrdenesVigentes;
+use App\Dominios\Operaciones\Contratos\LecturaLimitesDeVuelo;
 use App\Dominios\Operaciones\Contratos\LecturaPanelOperaciones;
 use App\Dominios\Operaciones\Contratos\LecturaRecargasPorBateria;
 use App\Dominios\Operaciones\Contratos\LecturaReporteTecnico;
 use App\Dominios\Operaciones\Contratos\LecturaResumenCuadrilla;
-use App\Dominios\Operaciones\Contratos\LecturaResumenOrdenesContrato;
-use App\Dominios\Operaciones\Contratos\LecturaRetirosCatalogo;
 use App\Dominios\Operaciones\Contratos\LecturaSesionesPorPersona;
 use App\Dominios\Operaciones\Contratos\LecturaTrabajos;
-use App\Dominios\Operaciones\Contratos\LecturaTrabajosAsignados;
-use App\Dominios\Operaciones\Contratos\LecturaTrabajosPorContrato;
 use App\Dominios\Operaciones\Infraestructura\Busqueda\BusquedaDrones;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -38,10 +33,8 @@ final class OperacionesServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->bind(LecturaOrdenesVigentes::class, LecturaOrdenesVigentesEloquent::class);
-        $this->app->bind(LecturaTrabajosAsignados::class, LecturaTrabajosAsignadosEloquent::class);
-        $this->app->bind(LecturaRetirosCatalogo::class, LecturaRetirosCatalogoEloquent::class);
         $this->app->bind(EscrituraSincronizacion::class, EscrituraSincronizacionEloquent::class);
+        $this->app->bind(LecturaLimitesDeVuelo::class, LimitesDeVueloDelSistema::class);
         $this->app->bind(LecturaActaConformada::class, LecturaActaConformadaEloquent::class);
         $this->app->bind(LecturaReporteTecnico::class, LecturaReporteTecnicoEloquent::class);
         $this->app->bind(LecturaAlertasTemperaturaBateria::class, LecturaAlertasTemperaturaBateriaEloquent::class);
@@ -49,9 +42,6 @@ final class OperacionesServiceProvider extends ServiceProvider
         $this->app->bind(LecturaPanelOperaciones::class, LecturaPanelOperacionesEloquent::class);
         $this->app->bind(LecturaDesempenioPersona::class, LecturaDesempenioPersonaEloquent::class);
         $this->app->bind(LecturaTrabajos::class, LecturaTrabajosEloquent::class);
-        $this->app->bind(LecturaResumenOrdenesContrato::class, LecturaResumenOrdenesContratoEloquent::class);
-        $this->app->bind(LecturaTrabajosPorContrato::class, LecturaTrabajosPorContratoEloquent::class);
-        $this->app->bind(LecturaLotesConOrdenPorContrato::class, LecturaLotesConOrdenPorContratoEloquent::class);
         $this->app->bind(LecturaDrones::class, LecturaDronesEloquent::class);
         $this->app->bind(LecturaResumenCuadrilla::class, LecturaResumenCuadrillaEloquent::class);
         $this->app->bind(LecturaSesionesPorPersona::class, LecturaSesionesPorPersonaEloquent::class);

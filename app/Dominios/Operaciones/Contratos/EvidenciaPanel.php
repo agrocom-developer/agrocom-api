@@ -12,7 +12,7 @@ namespace App\Dominios\Operaciones\Contratos;
  * `TrabajosController::evidenciaArchivo()`. Resolverla acá y no en la vista
  * mantiene el conocimiento de ese disco dentro de Operaciones.
  *
- * `loteId` viaja pelado por el mismo motivo que en {@see SesionPanel}.
+ * `solicitudId` viaja pelado por el mismo motivo que en {@see SesionPanel}.
  */
 final readonly class EvidenciaPanel
 {
@@ -21,7 +21,7 @@ final readonly class EvidenciaPanel
         public string $tipo,
         public string $url,
         public string $fecha,
-        public ?int $loteId,
+        public ?int $solicitudId,
         public ?int $trabajoId,
     ) {}
 }

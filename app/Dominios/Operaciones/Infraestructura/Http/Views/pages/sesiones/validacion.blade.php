@@ -27,7 +27,7 @@
       (tarea 131), resuelto en lote vía `LecturaPanelPersonal`. Sin entrada
       para el id (persona borrada o inexistente): fallback a `#id`, mismo
       criterio que `$etiquetasBase`/`$etiquetasContrato` en otras pantallas.
-    - $loteLabelPorTrabajo (array<int, string>): subtítulo opcional bajo el
+    - $solicitudPorTrabajo (array<int, string>): subtítulo opcional bajo el
       código de trabajo, indexado por `trabajo_id`; sin entrada, no se pinta.
     - $puedeVerTrabajos (bool): gatea el enlace de la columna «Trabajo» a su
       ficha (`operaciones.trabajo.ver`) — sin el permiso, texto plano.
@@ -113,8 +113,8 @@
                                         #{{ $sesion->trabajo_id }}
                                     @endif
                                 </span>
-                                @if (($loteLabelPorTrabajo[$sesion->trabajo_id] ?? null) !== null)
-                                    <span class="ag-sesiones-validacion__sub">{{ $loteLabelPorTrabajo[$sesion->trabajo_id] }}</span>
+                                @if (($solicitudPorTrabajo[$sesion->trabajo_id] ?? null) !== null)
+                                    <span class="ag-sesiones-validacion__sub">{{ $solicitudPorTrabajo[$sesion->trabajo_id] }}</span>
                                 @endif
                             </span>
                             <span role="cell">{{ $etiquetasPiloto[$sesion->piloto_id] ?? "#{$sesion->piloto_id}" }}</span>

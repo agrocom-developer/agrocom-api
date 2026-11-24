@@ -6,6 +6,7 @@ use App\Dominios\Seguridad\Contratos\IdentidadOperarioToken;
 use App\Dominios\Sincronizacion\Aplicacion\ObtenerCatalogoDesdeCursor;
 use App\Dominios\Sincronizacion\Infraestructura\Http\Requests\ObtenerCatalogoRequest;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 use OpenApi\Attributes as OA;
 
 /**
@@ -14,73 +15,11 @@ use OpenApi\Attributes as OA;
  */
 #[OA\Tag(
     name: 'Sincronizacion',
-    description: 'Pull de catálogo con cursor para la app de campo (espec §2.1, punto 6). '
-        .'TE-06 parcial: órdenes, lotes, personas y trabajos asignados desde el panel (HU-70) — '
-        .'recetas y productos de mezcla quedan fuera a propósito (ver docblock de '
+    description: 'Pull de catálogo con cursor para la app de campo (espec §2.1, punto 6): personas operativas, '
+        .'servicios asignados al equipo del operario (solicitudes aceptadas) y límites de condiciones de vuelo. '
+        .'Recetas y productos de mezcla quedan fuera a propósito (ver docblock de '
         .'`ObtenerCatalogoDesdeCursor`, HU-78/tarea 94): el piloto transcribe el producto por '
         .'nombre en el propio evento `mezcla` de `POST /api/sync`, sin necesitar bajarlo antes.',
-)]
-#[OA\Schema(
-    schema: 'LoteDeOrdenCatalogo',
-    title: 'Lote de una orden (catálogo)',
-    description: 'Uno de los lotes que cubre una orden, con las hectáreas que le pidió a ESE lote '
-        .'(HU-92, tarea 107 — una orden puede cubrir varios lotes de la propiedad). DECIMAL como string (invariante 6).',
-    required: ['lote_id', 'hectareas_solicitadas'],
-    properties: [
-        new OA\Property(property: 'lote_id', description: 'Lote que cubre la orden (módulo Comercial, solo ID).', type: 'integer', example: 3),
-        new OA\Property(property: 'hectareas_solicitadas', description: 'Hectáreas que la orden le pidió a ESE lote. DECIMAL como string.', type: 'string', example: '50.00'),
-    ],
-    type: 'object',
-)]
-#[OA\Schema(
-    schema: 'OrdenCatalogo',
-    title: 'Orden de aplicación (catálogo)',
-    description: 'Orden vigente para el pull de catálogo (espec §4.3, ampliada HU-92 tarea 107: '
-        .'`lotes` reemplaza el `lote_id` único de antes; HU-79 tarea 110: `litros_ha`/`kilos_por_vuelo` '
-        .'son mutuamente excluyentes según la categoría de insumo). Los DECIMAL viajan como string (invariante 6). '
-        .'Los límites climáticos y parámetros de vuelo YA NO viajan acá (migración '
-        .'`2026_09_18_100001_mueve_clima_vuelo_de_ordenes_a_trabajos_table`): son del trabajo '
-        .'(equipo↔lote), ver `TrabajoCatalogo`.',
-    required: [
-        'id', 'contrato_id', 'lotes', 'nro_aplicacion', 'litros_ha', 'kilos_por_vuelo',
-        'observaciones', 'emitida_por_contacto_id', 'fecha_emision', 'estado', 'updated_at',
-    ],
-    properties: [
-        new OA\Property(property: 'id', type: 'integer', example: 1),
-        new OA\Property(property: 'contrato_id', type: 'integer', example: 1),
-        new OA\Property(
-            property: 'lotes',
-            type: 'array',
-            items: new OA\Items(ref: '#/components/schemas/LoteDeOrdenCatalogo'),
-        ),
-        new OA\Property(property: 'nro_aplicacion', type: 'integer', example: 1),
-        new OA\Property(property: 'litros_ha', description: 'Dosis en litros por hectárea (insumo líquido); null si la categoría es sólida.', type: 'string', example: '10.00', nullable: true),
-        new OA\Property(property: 'kilos_por_vuelo', description: 'Dosis en kilos por vuelo (insumo sólido); null si la categoría es líquida.', type: 'string', example: '8.50', nullable: true),
-        new OA\Property(property: 'observaciones', type: 'string', example: 'Aplicar en horas de la mañana.', nullable: true),
-        new OA\Property(property: 'emitida_por_contacto_id', type: 'integer', example: 2, nullable: true),
-        new OA\Property(property: 'fecha_emision', type: 'string', format: 'date', example: '2026-08-26'),
-        new OA\Property(property: 'estado', type: 'string', example: 'vigente'),
-        new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2026-08-26T12:00:00+00:00'),
-    ],
-    type: 'object',
-)]
-#[OA\Schema(
-    schema: 'LoteCatalogo',
-    title: 'Lote (catálogo)',
-    description: 'Lote vigente (no borrado) para el pull de catálogo (espec §4.1; ADR 0020: cuelga '
-        .'directo de la propiedad, sin el nivel intermedio Campo). `hectareas` es DECIMAL como string '
-        .'(invariante 6).',
-    required: ['id', 'propiedad_id', 'codigo', 'hectareas', 'geometria', 'restricciones', 'updated_at'],
-    properties: [
-        new OA\Property(property: 'id', type: 'integer', example: 3),
-        new OA\Property(property: 'propiedad_id', description: 'Id de servidor de la propiedad.', type: 'integer', example: 1),
-        new OA\Property(property: 'codigo', type: 'string', example: 'L-01'),
-        new OA\Property(property: 'hectareas', type: 'string', example: '120.50'),
-        new OA\Property(property: 'geometria', description: 'GeoJSON del lote, o null si no está cargado.', type: 'object', nullable: true),
-        new OA\Property(property: 'restricciones', type: 'string', nullable: true),
-        new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2026-08-26T12:00:00+00:00'),
-    ],
-    type: 'object',
 )]
 #[OA\Schema(
     schema: 'PersonaCatalogo',
@@ -98,87 +37,81 @@ use OpenApi\Attributes as OA;
     type: 'object',
 )]
 #[OA\Schema(
-    schema: 'TrabajoCatalogo',
-    title: 'Trabajo asignado desde el panel (catálogo)',
-    description: 'Trabajo abierto por el jefe de campo al repartir una orden vigente entre equipos '
-        .'(HU-70, tarea 85) — nunca los que nacen por sync (`equipo_trabajo_id` siempre presente acá). '
-        .'Solo trabajos `abierto` cuya orden no esté cerrada (`consumida`, `cancelada`, `vencida`): '
-        .'los cerrados, dados de baja o de una orden cerrada llegan en `trabajos_retirados`. '
-        .'FILTRADO por el operario del token: solo llegan los trabajos de los equipos en los que su '
-        .'persona es integrante vigente HOY (`per_equipo_integrantes`: `desde` <= hoy y `hasta` nulo '
-        .'o >= hoy) — todos ellos, si está en varios; nunca los de otro equipo. Una cuenta sin persona '
-        .'operativa recibe `trabajos` vacío. Límite conocido del cursor: si la persona entra a un '
-        .'equipo nuevo, los trabajos de ese equipo que no cambiaron desde el último pull no llegan '
-        .'en el incremental; los trae un pull completo (`desde` vacío). '
-        .'`uuid_cliente` es el que generó el panel al confirmar la asignación: la app lo usa TAL CUAL '
-        .'para abrir sesiones sobre este trabajo. `hectareas_declaradas` es DECIMAL como string (invariante 6). '
-        .'Los 7 campos de límites climáticos y parámetros de vuelo llegaron acá desde `OrdenCatalogo` '
-        .'(migración `2026_09_18_100001_mueve_clima_vuelo_de_ordenes_a_trabajos_table`): son condiciones '
-        .'de la tanda (Orden de Trabajo) de ESTE equipo, y viajan con su valor EFECTIVO ya resuelto '
-        .'(`Operaciones\\Dominio\\LimitesEfectivos`): el de la Orden de Trabajo o, si quedó en blanco, el '
-        .'parámetro por defecto del sistema. El contrato no es un nivel de esa herencia (HU-91). '
-        .'`viento_max_kmh`, `temperatura_max_c` y `humedad_max_pct` siempre traen valor (defaults 17.00, '
-        .'30.00 y 90.00). `humedad_min_pct`, `altura_vuelo_m`, `velocidad_vuelo_kmh` y `ancho_pasada_m` '
-        .'no tienen default del sistema: llegan `null` si la Orden de Trabajo no los trae, y la app no '
-        .'debe aplicar ese límite.',
-    required: [
-        'id', 'uuid_cliente', 'orden_id', 'lote_id', 'hectareas_declaradas', 'equipo_trabajo_id',
-        'humedad_min_pct', 'viento_max_kmh', 'temperatura_max_c', 'humedad_max_pct',
-        'altura_vuelo_m', 'velocidad_vuelo_kmh', 'ancho_pasada_m', 'updated_at',
-    ],
+    schema: 'TerrenoServicioCatalogo',
+    title: 'Terreno de un servicio (catálogo)',
+    description: 'El terreno sobre el que se ejecuta el servicio: dónde volar y qué cuidar. Hectáreas como decimal exacto en string (invariante 6).',
+    required: ['nombre', 'hectareas', 'acceso_dificil'],
     properties: [
-        new OA\Property(property: 'id', type: 'integer', example: 42),
+        new OA\Property(property: 'nombre', type: 'string', example: 'Lote Norte'),
+        new OA\Property(property: 'hectareas', type: 'string', example: '120.5000'),
+        new OA\Property(property: 'geometria', description: 'Polígono GeoJSON, o null si no está cargado.', type: 'object', nullable: true),
+        new OA\Property(property: 'referencias_acceso', type: 'string', nullable: true),
+        new OA\Property(property: 'colindantes_sensibles', description: 'Apiarios, cultivos orgánicos, viviendas.', type: 'string', nullable: true),
+        new OA\Property(property: 'acceso_dificil', type: 'boolean', example: false),
+    ],
+    type: 'object',
+)]
+#[OA\Schema(
+    schema: 'ServicioAsignadoCatalogo',
+    title: 'Servicio asignado (catálogo)',
+    description: 'Solicitud de servicio aceptada que el equipo del operario lleva al lote (ADR 0037). Solo estados de ejecución: '
+        .'`asignada`, `en_camino`, `en_ejecucion` o `suspendida_por_clima`. FILTRADO por el operario del token: solo los servicios de '
+        .'los equipos de flota en los que su cuenta es piloto o auxiliar con vigencia HOY; una cuenta sin equipo recibe la lista vacía. '
+        .'El `id` es el `solicitud_id` que la app envía en el registro `trabajo` de `POST /api/sync`. Sin datos de contacto del cliente. '
+        .'Límite conocido del cursor: si el operario entra a un equipo nuevo, los servicios de ese equipo que no cambiaron desde el '
+        .'último pull no llegan en el incremental; los trae un pull completo (`desde` vacío).',
+    required: ['id', 'uuid_cliente', 'estado', 'equipo_id', 'tipo_aplicacion', 'hectareas_solicitadas', 'producto_indicado', 'aporta_producto', 'ventana_desde', 'ventana_hasta', 'urgente', 'terreno', 'updated_at'],
+    properties: [
+        new OA\Property(property: 'id', type: 'integer', example: 31),
         new OA\Property(property: 'uuid_cliente', type: 'string', example: '9a1b7e3e-2f7a-4b3d-8c1e-6f2a1d9c4b0a'),
-        new OA\Property(property: 'orden_id', type: 'integer', example: 1),
-        new OA\Property(property: 'lote_id', type: 'integer', example: 3),
-        new OA\Property(property: 'hectareas_declaradas', type: 'string', example: '300.00'),
-        new OA\Property(property: 'equipo_trabajo_id', type: 'integer', example: 7),
-        new OA\Property(property: 'humedad_min_pct', description: 'Efectivo. Sin default del sistema: null si la Orden de Trabajo no lo trae.', type: 'string', example: '60.00', nullable: true),
-        new OA\Property(property: 'viento_max_kmh', description: 'Efectivo: el de la Orden de Trabajo o el default del sistema (17.00). Nunca null.', type: 'string', example: '15.00'),
-        new OA\Property(property: 'temperatura_max_c', description: 'Efectivo: el de la Orden de Trabajo o el default del sistema (30.00). Nunca null.', type: 'string', example: '32.00'),
-        new OA\Property(property: 'humedad_max_pct', description: 'Efectivo: el de la Orden de Trabajo o el default del sistema (90.00). Nunca null.', type: 'string', example: '90.00'),
-        new OA\Property(property: 'altura_vuelo_m', description: 'Efectivo. Sin default del sistema: null si la Orden de Trabajo no lo trae.', type: 'string', example: '3.00', nullable: true),
-        new OA\Property(property: 'velocidad_vuelo_kmh', description: 'Efectivo. Sin default del sistema: null si la Orden de Trabajo no lo trae.', type: 'string', example: '18.00', nullable: true),
-        new OA\Property(property: 'ancho_pasada_m', description: 'Efectivo. Sin default del sistema: null si la Orden de Trabajo no lo trae.', type: 'string', example: '7.00', nullable: true),
-        new OA\Property(property: 'updated_at', description: 'Última modificación del trabajo O de su Orden de Trabajo, la más reciente: editar (o dar de baja) la Orden de Trabajo cambia los límites efectivos y vuelve a entregar sus trabajos en el pull incremental siguiente. Es la posición del cursor de esta sección.', type: 'string', format: 'date-time', example: '2026-09-13T12:00:00+00:00'),
+        new OA\Property(property: 'estado', type: 'string', enum: ['asignada', 'en_camino', 'en_ejecucion', 'suspendida_por_clima'], example: 'asignada'),
+        new OA\Property(property: 'equipo_id', type: 'integer', example: 7),
+        new OA\Property(property: 'tipo_aplicacion', type: 'string', enum: ['herbicida', 'insecticida', 'fungicida', 'fertilizante_foliar', 'desecante', 'otro']),
+        new OA\Property(property: 'hectareas_solicitadas', type: 'string', example: '80.0000'),
+        new OA\Property(property: 'cultivo', type: 'string', nullable: true, example: 'Soya'),
+        new OA\Property(property: 'producto_indicado', type: 'string', example: 'Glifosato 480 SL, 2 L/ha'),
+        new OA\Property(property: 'aporta_producto', type: 'string', enum: ['cliente', 'proveedor']),
+        new OA\Property(property: 'ventana_desde', type: 'string', format: 'date', example: '2026-12-01'),
+        new OA\Property(property: 'ventana_hasta', type: 'string', format: 'date', example: '2026-12-10'),
+        new OA\Property(property: 'urgente', type: 'boolean', example: false),
+        new OA\Property(property: 'observaciones', type: 'string', nullable: true),
+        new OA\Property(property: 'terreno', ref: '#/components/schemas/TerrenoServicioCatalogo'),
+        new OA\Property(property: 'updated_at', description: 'Posición del cursor de esta sección.', type: 'string', format: 'date-time', example: '2026-12-01T12:00:00+00:00'),
     ],
     type: 'object',
 )]
 #[OA\Schema(
-    schema: 'OrdenRetiradaCatalogo',
-    title: 'Orden retirada (catálogo)',
-    description: 'Orden que dejó de estar `vigente` desde la posición del cursor (opción B de la propuesta de #312): '
-        .'`pausada`, `consumida`, `cancelada` o `vencida` (ADR 0022). La app la OCULTA, no la borra. Si una `pausada` '
-        .'se reanuda, vuelve a llegar en `ordenes[]` en el pull siguiente con `estado: vigente`. Las `emitida` nunca '
-        .'salen acá: nunca llegaron al catálogo, y son las únicas que se dan de baja. Órdenes y trabajos solo se dan '
-        .'de baja lógicamente (ADR 0007), así que no hay borrados físicos que perseguir.',
-    required: ['id', 'estado', 'updated_at'],
-    properties: [
-        new OA\Property(property: 'id', type: 'integer', example: 1),
-        new OA\Property(property: 'estado', type: 'string', enum: ['pausada', 'consumida', 'cancelada', 'vencida'], example: 'pausada'),
-        new OA\Property(property: 'updated_at', description: 'Posición del cursor de esta sección.', type: 'string', format: 'date-time', example: '2026-10-01T11:00:00+00:00'),
-    ],
-    type: 'object',
-)]
-#[OA\Schema(
-    schema: 'TrabajoRetiradoCatalogo',
-    title: 'Trabajo retirado (catálogo)',
-    description: 'Trabajo que el operario del token TUVO como asignado y ya no debe tener (opción B de la propuesta '
-        .'de #312). "Lo tuvo": es de uno de sus equipos vigentes hoy, o la bitácora de auditoría muestra que alguna '
-        .'vez estuvo asignado a un equipo que la persona integró — nunca llega el `uuid_cliente` de un trabajo de un '
-        .'equipo ajeno. Un trabajo nunca viaja a la vez en `trabajos[]` y acá: `trabajos[]` solo trae trabajos '
-        .'`abierto` de órdenes no cerradas. `motivo` (si aplican varios, gana el primero): `dado_de_baja` (baja '
-        .'lógica desde el panel), `reasignado` (su equipo ya no es uno en el que la persona esté vigente hoy, o quedó '
-        .'sin equipo), `cerrado` (el trabajo se cerró), `orden_cerrada` (su orden pasó a `consumida`, `cancelada` o '
-        .'`vencida` con el trabajo abierto). Una orden `pausada` NO retira sus trabajos: la app la oculta por '
-        .'`ordenes_retiradas`. Límite conocido: un trabajo que sigue en el mismo equipo cuando la PERSONA deja ese '
-        .'equipo no se detecta por cursor (no cambia ninguna fila del trabajo); lo resuelve un pull completo.',
+    schema: 'ServicioRetiradoCatalogo',
+    title: 'Servicio retirado (catálogo)',
+    description: 'Servicio que el equipo del operario tuvo y ya no debe llevar al lote. La app lo OCULTA, no lo borra: puede tener '
+        .'trabajo capturado sin sincronizar. `motivo`: `cancelada`, `reasignada` (volvió a asignación: el proveedor canceló o soporte lo reasignó) '
+        .'o `ejecutada` (cerrado por el servidor, a la espera de conformidad o terminado). Un servicio nunca viaja a la vez en '
+        .'`servicios_asignados` y acá.',
     required: ['id', 'uuid_cliente', 'motivo', 'updated_at'],
     properties: [
-        new OA\Property(property: 'id', type: 'integer', example: 42),
+        new OA\Property(property: 'id', type: 'integer', example: 31),
         new OA\Property(property: 'uuid_cliente', type: 'string', example: '9a1b7e3e-2f7a-4b3d-8c1e-6f2a1d9c4b0a'),
-        new OA\Property(property: 'motivo', type: 'string', enum: ['dado_de_baja', 'reasignado', 'cerrado', 'orden_cerrada'], example: 'reasignado'),
-        new OA\Property(property: 'updated_at', description: 'Última modificación del trabajo O de su orden de aplicación, la más reciente. Posición del cursor de esta sección.', type: 'string', format: 'date-time', example: '2026-10-01T11:00:00+00:00'),
+        new OA\Property(property: 'motivo', type: 'string', enum: ['cancelada', 'reasignada', 'ejecutada'], example: 'cancelada'),
+        new OA\Property(property: 'updated_at', description: 'Posición del cursor de esta sección.', type: 'string', format: 'date-time', example: '2026-12-02T11:00:00+00:00'),
+    ],
+    type: 'object',
+)]
+#[OA\Schema(
+    schema: 'LimitesCondicionesCatalogo',
+    title: 'Límites de condiciones de vuelo (catálogo)',
+    description: 'Los límites con los que el servidor valida el registro `condiciones` de `POST /api/sync` (espec §9.2); '
+        .'la app, que es offline, los muestra para que lo que ve y lo que se exige nunca se contradigan. DECIMAL como string (invariante 6). '
+        .'`viento_max_kmh`, `temperatura_max_c` y `humedad_max_pct` siempre traen valor; los demás son `null` si el sistema no fija un límite, '
+        .'y la app no debe aplicarlo.',
+    required: ['viento_max_kmh', 'temperatura_max_c', 'humedad_max_pct'],
+    properties: [
+        new OA\Property(property: 'humedad_min_pct', type: 'string', nullable: true),
+        new OA\Property(property: 'viento_max_kmh', type: 'string', example: '17.00'),
+        new OA\Property(property: 'temperatura_max_c', type: 'string', example: '30.00'),
+        new OA\Property(property: 'humedad_max_pct', type: 'string', example: '90.00'),
+        new OA\Property(property: 'altura_vuelo_m', type: 'string', nullable: true),
+        new OA\Property(property: 'velocidad_vuelo_kmh', type: 'string', nullable: true),
+        new OA\Property(property: 'ancho_pasada_m', type: 'string', nullable: true),
     ],
     type: 'object',
 )]
@@ -187,22 +120,16 @@ final class CatalogoController
     #[OA\Get(
         path: '/api/sync/catalogo',
         operationId: 'obtenerCatalogoSincronizacion',
-        description: 'Baja el catálogo de órdenes vigentes, lotes, personas y trabajos asignados '
-            .'desde el panel (solo los de los equipos vigentes hoy del operario del token, ver '
-            .'`TrabajoCatalogo`) modificados desde la posición del cursor recibido, con paginación por '
-            .'cursor (`updated_at`, `id`) — nunca por número de página, para no perder ni repetir '
-            .'registros entre pulls. `desde` vacío o ausente trae todo lo vigente (primera '
-            .'sincronización). Un `desde` no decodificable se trata igual que vacío, nunca como '
-            .'error de validación. Compatible hacia atrás: `ordenes_retiradas` y `trabajos_retirados` '
-            .'(opción B de la propuesta de #312) son secciones nuevas que una app que no las lee puede '
-            .'ignorar. Cada sección, retirados incluidos, avanza su propia posición dentro del mismo '
-            .'cursor opaco y entrega como máximo 200 filas por pull; no hay flag "hay más": la sección '
-            .'que llenó su página se completa en el pull siguiente con el cursor devuelto. Con cursor '
-            .'vacío las dos secciones de retirados vienen vacías y su posición arranca en el momento '
-            .'del pull (un retiro en ese mismo segundo puede llegar en el pull siguiente aunque el '
-            .'dispositivo nunca haya tenido la fila: se prefiere repetir a perder). Un cursor anterior '
-            .'a estas secciones las trae desde el principio, paginadas.',
-        summary: 'Pull de catálogo con cursor (órdenes, lotes, personas, trabajos y sus retirados)',
+        description: 'Baja el catálogo de personas, los servicios asignados al equipo del operario del token y los límites de '
+            .'condiciones de vuelo, modificado desde la posición del cursor recibido, con paginación por cursor (`updated_at`, `id`) '
+            .'— nunca por número de página, para no perder ni repetir registros entre pulls. `desde` vacío o ausente trae todo lo vigente '
+            .'(primera sincronización). Un `desde` no decodificable se trata igual que vacío, nunca como error de validación. '
+            .'Cada sección, `servicios_retirados` incluida, avanza su propia posición dentro del mismo cursor opaco y entrega como '
+            .'máximo 200 filas por pull; no hay flag "hay más": la sección que llenó su página se completa en el pull siguiente con el '
+            .'cursor devuelto. Con cursor vacío `servicios_retirados` viene vacía y su posición arranca en el momento del pull (un '
+            .'retiro en ese mismo segundo puede llegar en el pull siguiente aunque el dispositivo nunca haya tenido la fila: se prefiere '
+            .'repetir a perder). Un cursor anterior a esa sección la trae desde el principio, paginada.',
+        summary: 'Pull de catálogo con cursor (personas, servicios asignados y retirados, límites)',
         security: [['tokenDispositivo' => []]],
         tags: ['Sincronizacion'],
         parameters: [
@@ -219,42 +146,27 @@ final class CatalogoController
                 response: 200,
                 description: 'Catálogo modificado desde el cursor, y el cursor de continuación para el próximo pull.',
                 content: new OA\JsonContent(
-                    required: ['ordenes', 'lotes', 'personas', 'trabajos', 'ordenes_retiradas', 'trabajos_retirados', 'cursor'],
+                    required: ['personas', 'servicios_asignados', 'servicios_retirados', 'limites', 'cursor'],
                     properties: [
-                        new OA\Property(
-                            property: 'ordenes',
-                            type: 'array',
-                            items: new OA\Items(ref: '#/components/schemas/OrdenCatalogo'),
-                        ),
-                        new OA\Property(
-                            property: 'lotes',
-                            type: 'array',
-                            items: new OA\Items(ref: '#/components/schemas/LoteCatalogo'),
-                        ),
                         new OA\Property(
                             property: 'personas',
                             type: 'array',
                             items: new OA\Items(ref: '#/components/schemas/PersonaCatalogo'),
                         ),
                         new OA\Property(
-                            property: 'trabajos',
+                            property: 'servicios_asignados',
+                            description: 'Solicitudes aceptadas que el equipo del operario lleva al lote, modificadas desde el cursor.',
                             type: 'array',
-                            items: new OA\Items(ref: '#/components/schemas/TrabajoCatalogo'),
+                            items: new OA\Items(ref: '#/components/schemas/ServicioAsignadoCatalogo'),
                         ),
                         new OA\Property(
-                            property: 'ordenes_retiradas',
-                            description: 'Órdenes que dejaron de estar vigentes desde el cursor. Vacía en el primer pull (cursor vacío).',
+                            property: 'servicios_retirados',
+                            description: 'Servicios que el operario tuvo y ya no debe llevar, desde el cursor. Vacía en el primer pull (cursor vacío) y sin equipo.',
                             type: 'array',
-                            items: new OA\Items(ref: '#/components/schemas/OrdenRetiradaCatalogo'),
-                            example: [['id' => 1, 'estado' => 'pausada', 'updated_at' => '2026-10-01T11:00:00+00:00']],
+                            items: new OA\Items(ref: '#/components/schemas/ServicioRetiradoCatalogo'),
+                            example: [['id' => 31, 'uuid_cliente' => '9a1b7e3e-2f7a-4b3d-8c1e-6f2a1d9c4b0a', 'motivo' => 'cancelada', 'updated_at' => '2026-12-02T11:00:00+00:00']],
                         ),
-                        new OA\Property(
-                            property: 'trabajos_retirados',
-                            description: 'Trabajos que el operario tuvo y ya no debe tener como asignados, desde el cursor. Vacía en el primer pull (cursor vacío) y sin persona operativa.',
-                            type: 'array',
-                            items: new OA\Items(ref: '#/components/schemas/TrabajoRetiradoCatalogo'),
-                            example: [['id' => 42, 'uuid_cliente' => '9a1b7e3e-2f7a-4b3d-8c1e-6f2a1d9c4b0a', 'motivo' => 'reasignado', 'updated_at' => '2026-10-01T11:00:00+00:00']],
-                        ),
+                        new OA\Property(property: 'limites', ref: '#/components/schemas/LimitesCondicionesCatalogo'),
                         new OA\Property(
                             property: 'cursor',
                             description: 'Cursor opaco a reenviar tal cual en `desde` en el próximo pull.',
@@ -278,6 +190,7 @@ final class CatalogoController
         return response()->json($obtenerCatalogo->ejecutar(
             isset($filtros['desde']) ? (string) $filtros['desde'] : null,
             $identidadOperario->personaId($request),
+            Auth::guard('sanctum')->id() === null ? null : (int) Auth::guard('sanctum')->id(),
         ));
     }
 }

@@ -2,7 +2,6 @@
 
 namespace App\Dominios\Operaciones\Aplicacion;
 
-use App\Dominios\Comercial\Contratos\LecturaLotes;
 use App\Dominios\Mantenimiento\Contratos\LecturaCiclosBateria;
 use App\Dominios\Mezclas\Contratos\LecturaMezclas;
 use App\Dominios\Operaciones\Dominio\EstadoCoberturaTrabajo;
@@ -10,6 +9,7 @@ use App\Dominios\Operaciones\Infraestructura\Eloquent\Condiciones;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Incidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
+use App\Dominios\Solicitudes\Contratos\SolicitudParaTrabajo;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 use Carbon\CarbonImmutable;
@@ -41,7 +41,7 @@ final class ArmarContenidoReporteTecnico
 {
     public function __construct(
         private readonly CalcularCoberturaTrabajo $calcularCobertura,
-        private readonly LecturaLotes $lecturaLotes,
+        private readonly SolicitudParaTrabajo $solicitudes,
         private readonly LecturaCiclosBateria $lecturaCiclosBateria,
         private readonly LecturaMezclas $lecturaMezclas,
     ) {}
@@ -227,7 +227,7 @@ final class ArmarContenidoReporteTecnico
 
     /**
      * Solo se completa para `Parcial` (espec: "superficie no aplicada y
-     * motivo"): `Observado` es el caso inverso (exceso sobre el lote, ya
+     * motivo"): `Observado` es el caso inverso (exceso sobre lo pedido, ya
      * cubierto por la bandeja de alertas de HU-19) y `Completo`/`null` no
      * tienen faltante que reportar.
      *
@@ -240,13 +240,13 @@ final class ArmarContenidoReporteTecnico
             return null;
         }
 
-        $lote = $this->lecturaLotes->obtenerPorId($trabajo->lote_id);
+        $solicitud = $trabajo->solicitud_id === null ? null : $this->solicitudes->datos((int) $trabajo->solicitud_id);
 
-        if ($lote === null) {
+        if ($solicitud === null) {
             return null;
         }
 
-        $faltante = BigDecimal::of($lote->hectareas)->minus(BigDecimal::of((string) $trabajo->hectareas_declaradas));
+        $faltante = BigDecimal::of($solicitud->hectareasSolicitadas)->minus(BigDecimal::of((string) $trabajo->hectareas_declaradas));
 
         if ($faltante->isNegative()) {
             $faltante = BigDecimal::zero();

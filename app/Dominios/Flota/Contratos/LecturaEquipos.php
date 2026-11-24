@@ -20,6 +20,16 @@ interface LecturaEquipos
      */
     public function aptosDe(int $proveedorId, ?DateTimeImmutable $hoy = null): array;
 
+    /**
+     * Ids de los equipos en los que la cuenta es piloto o auxiliar. Con
+     * `$soloVigentes` solo los vigentes en la fecha; sin él, también los que ya
+     * terminaron (la app de campo los necesita para retirar lo que ya no es suyo).
+     * No juzga aptitud: eso es de {@see aptosDe()}.
+     *
+     * @return list<int>
+     */
+    public function equiposDeCuenta(int $usuarioId, bool $soloVigentes = true, ?DateTimeImmutable $hoy = null): array;
+
     /** Si el proveedor puede recibir ofertas hoy (tiene al menos un equipo apto). */
     public function tieneEquipoApto(int $proveedorId, ?DateTimeImmutable $hoy = null): bool;
 }

@@ -4,7 +4,6 @@ namespace App\Dominios\Operaciones\Infraestructura;
 
 use App\Dominios\Operaciones\Contratos\DatosReporteTecnico;
 use App\Dominios\Operaciones\Contratos\LecturaReporteTecnico;
-use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\ReporteTecnico;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 
@@ -16,16 +15,15 @@ use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
  * lo exige) — esta clase no es un modelo, es el adaptador que el
  * `ServiceProvider` del módulo liga a {@see LecturaReporteTecnico}.
  *
- * Ambos métodos suben la cadena `ReporteTecnico.trabajo_id → Trabajo.orden_id
- * / lote_id → OrdenAplicacion.contrato_id`, sin JOIN cross-tabla optimizado
- * a propósito (mismo criterio que `LecturaActaConformadaEloquent`: el
- * volumen no lo justifica y las tres tablas son propias del módulo). La
- * diferencia está en dónde nace la consulta:
+ * Ambos métodos suben `ReporteTecnico.trabajo_id → Trabajo.solicitud_id`,
+ * sin JOIN cross-tabla optimizado a propósito (mismo criterio que
+ * `LecturaActaConformadaEloquent`: el volumen no lo justifica y las dos tablas
+ * son propias del módulo). La diferencia está en dónde nace la consulta:
  *
- * - `listarTodos()` parte de los reportes y resuelve el contrato de cada uno.
- * - `listarPorContrato()` parte del contrato (invariante 5 de CLAUDE.md):
- *   primero los `trabajo_id` que cuelgan de una orden de ESE contrato, recién
- *   ahí los reportes de esos trabajos — nunca "todos y después filtrar".
+ * - `listarTodos()` parte de los reportes y resuelve la solicitud de cada uno.
+ * - `listarPorSolicitud()` parte de la solicitud (invariante 5 de CLAUDE.md):
+ *   primero los `trabajo_id` de ESA solicitud, recién ahí los reportes de esos
+ *   trabajos — nunca «todos y después filtrar».
  */
 final class LecturaReporteTecnicoEloquent implements LecturaReporteTecnico
 {
@@ -38,10 +36,9 @@ final class LecturaReporteTecnicoEloquent implements LecturaReporteTecnico
             ->all();
     }
 
-    public function listarPorContrato(int $contratoId): array
+    public function listarPorSolicitud(int $solicitudId): array
     {
-        $ordenIds = OrdenAplicacion::query()->where('contrato_id', $contratoId)->pluck('id');
-        $trabajos = Trabajo::query()->whereIn('orden_id', $ordenIds)->get(['id', 'lote_id']);
+        $trabajos = Trabajo::query()->where('solicitud_id', $solicitudId)->get(['id', 'solicitud_id']);
 
         return ReporteTecnico::query()
             ->whereIn('trabajo_id', $trabajos->pluck('id'))
@@ -50,8 +47,7 @@ final class LecturaReporteTecnicoEloquent implements LecturaReporteTecnico
             ->map(fn (ReporteTecnico $reporte): DatosReporteTecnico => new DatosReporteTecnico(
                 reporteId: $reporte->id,
                 trabajoId: $reporte->trabajo_id,
-                contratoId: $contratoId,
-                loteId: $trabajos->firstWhere('id', $reporte->trabajo_id)->lote_id,
+                solicitudId: $solicitudId,
                 horaInicio: $reporte->hora_inicio,
                 horaFin: $reporte->hora_fin,
                 pdfPath: $reporte->pdf_path,
@@ -63,13 +59,11 @@ final class LecturaReporteTecnicoEloquent implements LecturaReporteTecnico
     private function mapear(ReporteTecnico $reporte): DatosReporteTecnico
     {
         $trabajo = Trabajo::query()->findOrFail($reporte->trabajo_id);
-        $orden = OrdenAplicacion::query()->findOrFail($trabajo->orden_id);
 
         return new DatosReporteTecnico(
             reporteId: $reporte->id,
             trabajoId: $trabajo->id,
-            contratoId: $orden->contrato_id,
-            loteId: $trabajo->lote_id,
+            solicitudId: (int) $trabajo->solicitud_id,
             horaInicio: $reporte->hora_inicio,
             horaFin: $reporte->hora_fin,
             pdfPath: $reporte->pdf_path,

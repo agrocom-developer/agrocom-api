@@ -3,30 +3,19 @@
 namespace App\Dominios\Operaciones\Infraestructura;
 
 use App\Dominios\Operaciones\Aplicacion\AgregarPausasPorCausa;
-use App\Dominios\Operaciones\Aplicacion\ListarEstadiasHacienda;
 use App\Dominios\Operaciones\Contratos\AlertaPanel;
 use App\Dominios\Operaciones\Contratos\EquipoPersonaPanel;
 use App\Dominios\Operaciones\Contratos\EvidenciaPanel;
 use App\Dominios\Operaciones\Contratos\GranularidadVuelos;
 use App\Dominios\Operaciones\Contratos\LecturaPanelOperaciones;
-use App\Dominios\Operaciones\Contratos\OrdenAplicacionPanel;
-use App\Dominios\Operaciones\Contratos\ResumenEquipoTrabajoPanel;
-use App\Dominios\Operaciones\Contratos\ResumenLotePanel;
 use App\Dominios\Operaciones\Contratos\SesionPanel;
-use App\Dominios\Operaciones\Contratos\TandaDeEquipoPanel;
 use App\Dominios\Operaciones\Dominio\EstadoAlerta;
-use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
-use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
 use App\Dominios\Operaciones\Dominio\TonoEstadoSesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Alerta;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Dron;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
-use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
-use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenLote;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
-use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
-use App\Dominios\Operaciones\Infraestructura\Http\PasosDeOrden;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 use Illuminate\Support\Carbon;
@@ -53,13 +42,12 @@ final class LecturaPanelOperacionesEloquent implements LecturaPanelOperaciones
 {
     public function __construct(
         private readonly AgregarPausasPorCausa $pausasPorCausa,
-        private readonly ListarEstadiasHacienda $estadias,
     ) {}
 
     public function sesionesRecientes(int $limite, ?int $pilotoId = null): array
     {
         $sesiones = Sesion::query()
-            ->with(['trabajo:id,lote_id', 'dron:id,identificador'])
+            ->with(['trabajo:id,solicitud_id', 'dron:id,identificador'])
             ->when($pilotoId !== null, fn ($consulta) => $consulta->where(
                 fn ($anidada) => $anidada->where('piloto_id', $pilotoId)->orWhere('auxiliar_id', $pilotoId)
             ))
@@ -74,7 +62,7 @@ final class LecturaPanelOperacionesEloquent implements LecturaPanelOperaciones
     public function colaValidacion(int $limite): array
     {
         $sesiones = Sesion::query()
-            ->with(['trabajo:id,lote_id', 'dron:id,identificador'])
+            ->with(['trabajo:id,solicitud_id', 'dron:id,identificador'])
             ->where('estado', EstadoSesion::Cerrado)
             ->whereNull('anulada_en')
             ->orderBy('inicio')
@@ -102,29 +90,6 @@ final class LecturaPanelOperacionesEloquent implements LecturaPanelOperaciones
             $distribucion[] = [
                 'estado' => $estado->value,
                 'tono' => TonoEstadoSesion::deSesion($estado)->value,
-                'valor' => (int) ($conteos[$estado->value] ?? 0),
-            ];
-        }
-
-        return $distribucion;
-    }
-
-    public function distribucionOrdenesPorEstado(): array
-    {
-        $conteos = OrdenAplicacion::query()
-            ->selectRaw('estado, COUNT(*) as total')
-            ->groupBy('estado')
-            ->pluck('total', 'estado');
-
-        $distribucion = [];
-
-        foreach (EstadoOrdenAplicacion::cases() as $estado) {
-            $distribucion[] = [
-                'estado' => $estado->value,
-                // El tono lo define UNA vez `PasosDeOrden` para el badge del
-                // listado, la ficha y los pasos: acá se lee, no se repite. Un
-                // estado nuevo sin tono falla fuerte en vez de pintarse gris.
-                'tono' => PasosDeOrden::TONO_POR_ESTADO[$estado->value],
                 'valor' => (int) ($conteos[$estado->value] ?? 0),
             ];
         }
@@ -172,76 +137,10 @@ final class LecturaPanelOperacionesEloquent implements LecturaPanelOperaciones
         return $serie;
     }
 
-    public function resumenPorLote(): array
-    {
-        $sesiones = Sesion::query()
-            ->with('trabajo:id,lote_id')
-            ->whereNull('anulada_en')
-            ->orderBy('inicio')
-            ->get();
-
-        /** @var array<int, array{sesiones: int, validadas: int, hectareas: BigDecimal, litros: BigDecimal, minutos: int, ultima: ?string, estados: list<EstadoSesion>}> $porLote */
-        $porLote = [];
-
-        foreach ($sesiones as $sesion) {
-            $loteId = $sesion->trabajo?->lote_id;
-
-            if ($loteId === null) {
-                continue;
-            }
-
-            $acumulado = $porLote[$loteId] ?? [
-                'sesiones' => 0,
-                'validadas' => 0,
-                'hectareas' => BigDecimal::zero(),
-                'litros' => BigDecimal::zero(),
-                'minutos' => 0,
-                'ultima' => null,
-                'estados' => [],
-            ];
-
-            $acumulado['sesiones']++;
-            $acumulado['estados'][] = $sesion->estado;
-            $acumulado['ultima'] = $sesion->inicio->toIso8601String();
-
-            if ($sesion->litros_consumidos !== null) {
-                $acumulado['litros'] = $acumulado['litros']->plus(BigDecimal::of($sesion->litros_consumidos));
-            }
-
-            if ($sesion->fin !== null) {
-                $acumulado['minutos'] += (int) round($sesion->inicio->diffInMinutes($sesion->fin));
-            }
-
-            if ($sesion->estado === EstadoSesion::Validado) {
-                $acumulado['validadas']++;
-                $acumulado['hectareas'] = $acumulado['hectareas']->plus(BigDecimal::of($sesion->hectareas_declaradas));
-            }
-
-            $porLote[$loteId] = $acumulado;
-        }
-
-        $resumen = [];
-
-        foreach ($porLote as $loteId => $acumulado) {
-            $resumen[$loteId] = new ResumenLotePanel(
-                loteId: $loteId,
-                sesiones: $acumulado['sesiones'],
-                sesionesValidadas: $acumulado['validadas'],
-                hectareasAplicadas: $this->aEscalaDos($acumulado['hectareas']),
-                tono: $this->tonoAgregado($acumulado['estados'])->value,
-                ultimaSesion: $acumulado['ultima'],
-                litrosConsumidos: $this->aEscalaDos($acumulado['litros']),
-                minutosVuelo: $acumulado['minutos'],
-            );
-        }
-
-        return $resumen;
-    }
-
     public function sesionesConCapturas(int $limite): array
     {
         $sesiones = Sesion::query()
-            ->with(['capturaRc', 'incidencias.evidenciaFoto', 'trabajo:id,lote_id', 'dron:id,identificador'])
+            ->with(['capturaRc', 'incidencias.evidenciaFoto', 'trabajo:id,solicitud_id', 'dron:id,identificador'])
             ->whereNull('anulada_en')
             ->where(fn ($consulta) => $consulta
                 ->whereNotNull('captura_rc_id')
@@ -293,7 +192,7 @@ final class LecturaPanelOperacionesEloquent implements LecturaPanelOperaciones
             // pública: se sirve por streaming con el permiso reverificado.
             url: route('panel.evidencias.archivo', $evidencia->id),
             fecha: $evidencia->fecha->toIso8601String(),
-            loteId: $sesion->trabajo?->lote_id,
+            solicitudId: $sesion->trabajo?->solicitud_id,
             trabajoId: $sesion->trabajo_id,
         ), $evidencias);
     }
@@ -340,25 +239,6 @@ final class LecturaPanelOperacionesEloquent implements LecturaPanelOperaciones
         // y el catálogo completo de causas (incluidas las que están en cero)
         // ya lo resuelve ese caso de uso.
         return $this->pausasPorCausa->ejecutar(Carbon::now()->format('Y-m'));
-    }
-
-    public function diasEnHaciendaDelMes(): array
-    {
-        // Delega en el caso de uso del listado en vez de volver a sumar: el
-        // tablero y `/panel/estadias` tienen que contar los mismos días —
-        // mismo criterio que `pausasPorCausaDelMes()`.
-        $desde = Carbon::now()->startOfMonth()->toDateString();
-        $hasta = Carbon::now()->endOfMonth()->toDateString();
-
-        $porCuadrilla = $this->estadias->diasEfectivosPorEquipo($desde, $hasta);
-        $resumen = $this->estadias->resumen($desde, $hasta);
-
-        return [
-            'total_dias' => round((float) array_sum($porCuadrilla), 1),
-            'en_curso' => $resumen['en_curso'],
-            'por_cuadrilla' => $porCuadrilla,
-            'por_propiedad' => $this->estadias->diasEfectivosPorPropiedad($desde, $hasta),
-        ];
     }
 
     public function equiposDePersonaDelMes(int $personaId): array
@@ -416,185 +296,6 @@ final class LecturaPanelOperacionesEloquent implements LecturaPanelOperaciones
         return $equipos;
     }
 
-    public function trabajosAbiertosPorEquipo(): array
-    {
-        $trabajos = Trabajo::query()
-            ->whereNotNull('equipo_trabajo_id')
-            ->where('estado', EstadoTrabajo::Abierto)
-            ->orderBy('inicio')
-            ->get(['equipo_trabajo_id', 'lote_id', 'hectareas_declaradas', 'inicio']);
-
-        /** @var array<int, array{trabajos: int, hectareas: BigDecimal, lotes: list<int>, ultima: ?string}> $porEquipo */
-        $porEquipo = [];
-
-        foreach ($trabajos as $trabajo) {
-            /** @var int $equipoId */
-            $equipoId = $trabajo->equipo_trabajo_id;
-
-            $acumulado = $porEquipo[$equipoId] ?? ['trabajos' => 0, 'hectareas' => BigDecimal::zero(), 'lotes' => [], 'ultima' => null];
-
-            $acumulado['trabajos']++;
-            $acumulado['hectareas'] = $acumulado['hectareas']->plus(BigDecimal::of($trabajo->hectareas_declaradas));
-            $acumulado['ultima'] = $trabajo->inicio->toIso8601String();
-
-            if (! in_array($trabajo->lote_id, $acumulado['lotes'], true)) {
-                $acumulado['lotes'][] = $trabajo->lote_id;
-            }
-
-            $porEquipo[$equipoId] = $acumulado;
-        }
-
-        $resumen = [];
-
-        foreach ($porEquipo as $equipoId => $acumulado) {
-            $resumen[$equipoId] = new ResumenEquipoTrabajoPanel(
-                equipoTrabajoId: $equipoId,
-                trabajosAbiertos: $acumulado['trabajos'],
-                hectareasDeclaradas: $this->aEscalaDos($acumulado['hectareas']),
-                loteIds: $acumulado['lotes'],
-                ultimoInicio: $acumulado['ultima'],
-            );
-        }
-
-        return $resumen;
-    }
-
-    public function tandasAbiertasPorEquipo(): array
-    {
-        $ordenes = OrdenAplicacion::query()
-            ->whereIn('estado', EstadoOrdenAplicacion::valoresAbiertos())
-            ->get(['id', 'nro_aplicacion', 'estado'])
-            ->keyBy('id');
-
-        if ($ordenes->isEmpty()) {
-            return [];
-        }
-
-        $trabajos = Trabajo::query()
-            ->whereIn('orden_id', $ordenes->keys()->all())
-            ->whereNotNull('equipo_trabajo_id')
-            ->whereNotNull('orden_trabajo_id')
-            ->orderBy('id')
-            ->get(['orden_id', 'orden_trabajo_id', 'equipo_trabajo_id', 'lote_id', 'estado', 'hectareas_declaradas']);
-
-        /** @var array<int, array<int, array{orden: int, lotes: list<int>, abiertos: int, total: int, hectareas: BigDecimal}>> $acumulado equipo → tanda */
-        $acumulado = [];
-
-        foreach ($trabajos as $trabajo) {
-            $equipoId = (int) $trabajo->equipo_trabajo_id;
-            $tandaId = (int) $trabajo->orden_trabajo_id;
-            $loteId = (int) $trabajo->lote_id;
-
-            $fila = $acumulado[$equipoId][$tandaId]
-                ?? ['orden' => (int) $trabajo->orden_id, 'lotes' => [], 'abiertos' => 0, 'total' => 0, 'hectareas' => BigDecimal::zero()];
-
-            $fila['total']++;
-            $fila['abiertos'] += $trabajo->estado === EstadoTrabajo::Abierto ? 1 : 0;
-            $fila['hectareas'] = $fila['hectareas']->plus(BigDecimal::of($trabajo->hectareas_declaradas));
-
-            if (! in_array($loteId, $fila['lotes'], true)) {
-                $fila['lotes'][] = $loteId;
-            }
-
-            $acumulado[$equipoId][$tandaId] = $fila;
-        }
-
-        $porEquipo = [];
-
-        foreach ($acumulado as $equipoId => $tandas) {
-            krsort($tandas);
-
-            foreach ($tandas as $tandaId => $fila) {
-                $orden = $ordenes->get($fila['orden']);
-
-                if ($orden === null) {
-                    continue;
-                }
-
-                $porEquipo[$equipoId][] = new TandaDeEquipoPanel(
-                    equipoTrabajoId: $equipoId,
-                    ordenTrabajoId: $tandaId,
-                    ordenId: $fila['orden'],
-                    nroAplicacion: $orden->nro_aplicacion,
-                    estadoOrden: $orden->estado->value,
-                    tonoOrden: PasosDeOrden::TONO_POR_ESTADO[$orden->estado->value],
-                    loteIds: $fila['lotes'],
-                    trabajosAbiertos: $fila['abiertos'],
-                    trabajosTotal: $fila['total'],
-                    hectareasDeclaradas: $this->aEscalaDos($fila['hectareas']),
-                );
-            }
-        }
-
-        return $porEquipo;
-    }
-
-    public function ordenesAplicacionConEquipos(int $cerradas): array
-    {
-        $abiertas = EstadoOrdenAplicacion::valoresAbiertos();
-
-        $ordenes = OrdenAplicacion::query()
-            ->whereIn('estado', $abiertas)
-            ->orderByDesc('fecha_emision')
-            ->orderByDesc('id')
-            ->get();
-
-        if ($cerradas > 0) {
-            $ordenes = $ordenes->concat(
-                OrdenAplicacion::query()
-                    ->whereNotIn('estado', $abiertas)
-                    ->orderByDesc('fecha_emision')
-                    ->orderByDesc('id')
-                    ->limit($cerradas)
-                    ->get(),
-            );
-        }
-
-        if ($ordenes->isEmpty()) {
-            return [];
-        }
-
-        $ids = $ordenes->pluck('id')->all();
-
-        /** @var array<int, list<int>> $lotesPorOrden */
-        $lotesPorOrden = [];
-
-        foreach (OrdenLote::query()->whereIn('orden_id', $ids)->orderBy('id')->get(['orden_id', 'lote_id']) as $fila) {
-            $lotesPorOrden[(int) $fila->orden_id][] = (int) $fila->lote_id;
-        }
-
-        /** @var array<int, list<int>> $equiposPorOrden */
-        $equiposPorOrden = [];
-
-        $trabajos = Trabajo::query()
-            ->whereIn('orden_id', $ids)
-            ->whereNotNull('equipo_trabajo_id')
-            ->orderBy('equipo_trabajo_id')
-            ->get(['orden_id', 'equipo_trabajo_id']);
-
-        foreach ($trabajos as $trabajo) {
-            $equipoId = (int) $trabajo->equipo_trabajo_id;
-            $ordenId = (int) $trabajo->orden_id;
-
-            if (! in_array($equipoId, $equiposPorOrden[$ordenId] ?? [], true)) {
-                $equiposPorOrden[$ordenId][] = $equipoId;
-            }
-        }
-
-        return $ordenes->map(fn (OrdenAplicacion $orden): OrdenAplicacionPanel => new OrdenAplicacionPanel(
-            id: (int) $orden->id,
-            nroAplicacion: $orden->nro_aplicacion,
-            estado: $orden->estado->value,
-            // El tono lo define UNA vez `PasosDeOrden` para el listado: acá se lee.
-            tono: PasosDeOrden::TONO_POR_ESTADO[$orden->estado->value],
-            abierta: $orden->estado->estaAbierta(),
-            fechaEmision: $orden->fecha_emision->toDateString(),
-            equiposNecesarios: $orden->cantidad_equipos_necesarios,
-            loteIds: $lotesPorOrden[(int) $orden->id] ?? [],
-            equipoTrabajoIds: $equiposPorOrden[(int) $orden->id] ?? [],
-        ))->values()->all();
-    }
-
     public function totalesDelMesPorPersona(int $personaId): array
     {
         $sesiones = Sesion::query()
@@ -625,7 +326,7 @@ final class LecturaPanelOperacionesEloquent implements LecturaPanelOperaciones
         return new SesionPanel(
             id: $sesion->id,
             trabajoId: $sesion->trabajo_id,
-            loteId: (int) ($sesion->trabajo->lote_id ?? 0),
+            solicitudId: (int) ($sesion->trabajo->solicitud_id ?? 0),
             pilotoId: $sesion->piloto_id,
             estado: $sesion->estado->value,
             tono: TonoEstadoSesion::deSesion($sesion->estado, $sesion->anulada_en !== null)->value,
@@ -642,26 +343,6 @@ final class LecturaPanelOperacionesEloquent implements LecturaPanelOperaciones
             // explícito, no implícito (que además es deprecación en PHP 8.3).
             minutosVuelo: $sesion->fin !== null ? (int) round($sesion->inicio->diffInMinutes($sesion->fin)) : null,
         );
-    }
-
-    /**
-     * Tono agregado de un lote: el peor estado de sus sesiones manda. Un
-     * lote con cinco sesiones validadas y una cerrada sigue teniendo trabajo
-     * pendiente, así que se pinta como pendiente — no como completado.
-     *
-     * @param  list<EstadoSesion>  $estados
-     */
-    private function tonoAgregado(array $estados): TonoEstadoSesion
-    {
-        if (in_array(EstadoSesion::Abierto, $estados, true)) {
-            return TonoEstadoSesion::Info;
-        }
-
-        if (in_array(EstadoSesion::Cerrado, $estados, true)) {
-            return TonoEstadoSesion::Warning;
-        }
-
-        return $estados === [] ? TonoEstadoSesion::Neutral : TonoEstadoSesion::Success;
     }
 
     private function aEscalaDos(BigDecimal $valor): string

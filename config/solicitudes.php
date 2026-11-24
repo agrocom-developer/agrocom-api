@@ -30,6 +30,14 @@ return [
     /* Recargo por terreno de difícil acceso, en porcentaje sobre el subtotal base. */
     'recargo_acceso_dificil_pct' => env('SOLICITUDES_RECARGO_ACCESO_DIFICIL_PCT', '10'),
 
+    /*
+     * Porcentaje mínimo de las hectáreas pedidas que deben declarar los
+     * trabajos cerrados para dar la solicitud por ejecutada. La cobertura exacta
+     * rara vez coincide con lo pedido; el acta de conformidad fija lo que se
+     * factura (política de comisión).
+     */
+    'cobertura_minima_pct' => env('SOLICITUDES_COBERTURA_MINIMA_PCT', '95'),
+
     /* Recargo por hectárea cuando el proveedor aporta el producto. */
     'recargo_producto_proveedor_hectarea' => env('SOLICITUDES_RECARGO_PRODUCTO_HECTAREA', '60.00'),
 ];

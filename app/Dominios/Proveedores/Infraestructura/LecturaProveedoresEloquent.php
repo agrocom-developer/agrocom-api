@@ -58,6 +58,14 @@ final class LecturaProveedoresEloquent implements LecturaProveedores
         return new DatosAuxiliar($auxiliar->id, $auxiliar->proveedor_id, $auxiliar->usuario_id, $nombres[$auxiliar->usuario_id] ?? "#{$auxiliar->usuario_id}", $auxiliar->estado->value);
     }
 
+    public function registrosDeCuenta(int $usuarioId): array
+    {
+        return [
+            'pilotos' => array_map('intval', Piloto::query()->where('usuario_id', $usuarioId)->pluck('id')->all()),
+            'auxiliares' => array_map('intval', Auxiliar::query()->where('usuario_id', $usuarioId)->pluck('id')->all()),
+        ];
+    }
+
     public function pilotosDe(int $proveedorId): array
     {
         $pilotos = Piloto::query()->where('proveedor_id', $proveedorId)->orderBy('id')->get();

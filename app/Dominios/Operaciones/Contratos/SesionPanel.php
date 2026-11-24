@@ -2,7 +2,6 @@
 
 namespace App\Dominios\Operaciones\Contratos;
 
-use App\Dominios\Comercial\Contratos\LecturaPanelComercial;
 use App\Dominios\Operaciones\Dominio\TonoEstadoSesion;
 use App\Dominios\Personal\Contratos\LecturaPersonas;
 
@@ -11,11 +10,11 @@ use App\Dominios\Personal\Contratos\LecturaPersonas;
  * consumidor —`Seguridad`, que arma el dashboard— nunca recibe el modelo
  * Eloquent `Sesion`. `hectareas` viaja como string decimal (invariante 6).
  *
- * `loteId` y `pilotoId` viajan como ENTEROS PELADOS, sin nombre: el lote es
- * de `Comercial` y la persona de `Personal`, y este módulo solo guarda la FK
- * (ADR 0003, regla 3 — cero relaciones Eloquent cruzando módulos). Quien
- * compone el dashboard los cruza con
- * {@see LecturaPanelComercial} y
+ * `solicitudId` y `pilotoId` viajan como ENTEROS PELADOS, sin nombre: la
+ * solicitud es de `Solicitudes` y la persona de `Personal`, y este módulo solo
+ * guarda la FK (ADR 0003, regla 3 — cero relaciones Eloquent cruzando
+ * módulos). Quien compone el dashboard los cruza con
+ * `Solicitudes\Contratos\LecturaContextoSolicitudes` y
  * {@see LecturaPersonas}. `dronCodigo` sí
  * viaja resuelto: `ope_drones` es tabla propia.
  *
@@ -31,7 +30,7 @@ final readonly class SesionPanel
     public function __construct(
         public int $id,
         public int $trabajoId,
-        public int $loteId,
+        public int $solicitudId,
         public int $pilotoId,
         public string $estado,
         public string $tono,

@@ -24,9 +24,7 @@ final readonly class AperturaTrabajo
 {
     private function __construct(
         public string $uuidCliente,
-        public int $ordenId,
-        public int $loteId,
-        public int $nroAplicacion,
+        public int $solicitudId,
         public string $hectareasDeclaradas,
         public string $inicio,
         public ?string $fin,
@@ -36,9 +34,7 @@ final readonly class AperturaTrabajo
     public static function intentarDesdeArreglo(array $datos): ?self
     {
         if (! self::esStringNoVacio($datos['uuid_cliente'] ?? null)
-            || ! self::esEntero($datos['orden_id'] ?? null)
-            || ! self::esEntero($datos['lote_id'] ?? null)
-            || ! self::esEntero($datos['nro_aplicacion'] ?? null)
+            || ! self::esEntero($datos['solicitud_id'] ?? null)
             || ! self::esNumeroNoNegativoOAusente($datos['hectareas_declaradas'] ?? null)
             || ! self::esStringNoVacio($datos['inicio'] ?? null)
             || ! self::esStringOAusente($datos['fin'] ?? null)
@@ -48,9 +44,7 @@ final readonly class AperturaTrabajo
 
         return new self(
             uuidCliente: (string) $datos['uuid_cliente'],
-            ordenId: (int) $datos['orden_id'],
-            loteId: (int) $datos['lote_id'],
-            nroAplicacion: (int) $datos['nro_aplicacion'],
+            solicitudId: (int) $datos['solicitud_id'],
             hectareasDeclaradas: isset($datos['hectareas_declaradas']) ? (string) $datos['hectareas_declaradas'] : '0',
             inicio: (string) $datos['inicio'],
             fin: isset($datos['fin']) ? (string) $datos['fin'] : null,
