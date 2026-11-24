@@ -11,9 +11,6 @@ use App\Dominios\Seguridad\Dominio\MotivoFinVistaComo;
 use App\Dominios\Seguridad\Dominio\PermisosReservados;
 use App\Dominios\Seguridad\Dominio\TipoUsuario;
 use App\Dominios\Seguridad\Dominio\VistaComoActiva;
-use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioCliente;
-use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioInterno;
-use App\Dominios\Seguridad\Infraestructura\Http\AutorizacionPortalClienteSesion;
 use App\Dominios\Seguridad\Infraestructura\Http\Middleware\AplicarVistaComo;
 use Illuminate\Container\Container;
 use Illuminate\Database\Capsule\Manager as Capsule;
@@ -283,59 +280,7 @@ it('el modo de solo lectura se enciende y se apaga, y apagado no estorba', funct
     ModoSoloLectura::verificar($modelo);
 });
 
-// --- 4. El portal tiene UNA fuente de contrato ------------------------------------------
-
-it('el portal resuelve el contrato de la cuenta del guard cliente y de ninguna otra parte', function () {
-    $cuentaDeCliente = (new SecUsuarioCliente)->forceFill(['id' => 10, 'contrato_id' => 3]);
-    $solicitud = Request::create('/portal/avance');
-    $solicitud->setUserResolver(static fn (?string $guard = null) => $guard === 'cliente' ? $cuentaDeCliente : null);
-
-    // Es lo que hace `AplicarVistaComo`: poner la cuenta observada en ESE guard.
-    expect((new AutorizacionPortalClienteSesion)->contratoId($solicitud))->toBe(3);
-});
-
-it('un administrador con su propia sesión no tiene contrato: sin cuenta de cliente en el guard, nada', function () {
-    $administrador = (new SecUsuarioInterno)->forceFill(['id' => 1, 'persona_id' => null, 'contrato_id' => 3]);
-    $solicitud = Request::create('/portal/avance');
-    $solicitud->setUserResolver(static fn (?string $guard = null) => $guard === 'interno' ? $administrador : null);
-
-    // Ni siquiera un `contrato_id` colado en la cuenta interna se lee: el guard es `cliente`.
-    expect((new AutorizacionPortalClienteSesion)->contratoId($solicitud))->toBeNull();
-});
-
-it('el módulo Portal no conoce la vista como: no hay un where aparte para «el administrador mirando»', function () use ($raizProyecto) {
-    $conocen = [];
-
-    foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($raizProyecto.'/app/Dominios/Portal', FilesystemIterator::SKIP_DOTS)) as $archivo) {
-        if (! $archivo->isFile() || ! str_ends_with($archivo->getPathname(), '.php')) {
-            continue;
-        }
-
-        $contenido = (string) file_get_contents($archivo->getPathname());
-
-        if (preg_match('/VistaComo|vista_como|viendo_como|user\(\s*[\'"]interno[\'"]\s*\)|guard\(\s*[\'"]interno[\'"]\s*\)/i', $contenido) === 1) {
-            $conocen[] = substr($archivo->getPathname(), strlen($raizProyecto) + 1);
-        }
-    }
-
-    expect($conocen)->toBe([]);
-});
-
-it('todo controlador del portal saca su contrato de AutorizacionPortalCliente', function () use ($raizProyecto) {
-    $sinContrato = [];
-
-    foreach (glob($raizProyecto.'/app/Dominios/Portal/Infraestructura/Http/Controllers/Web/*.php') ?: [] as $archivo) {
-        $contenido = (string) file_get_contents($archivo);
-
-        if (! str_contains($contenido, 'AutorizacionPortalCliente') || ! str_contains($contenido, '->contratoId($request)')) {
-            $sinContrato[] = basename($archivo);
-        }
-    }
-
-    expect($sinContrato)->toBe([]);
-});
-
-// --- 5. Siembra y esquema ----------------------------------------------------------
+// --- 4. Siembra y esquema ----------------------------------------------------------
 
 it('el permiso ver_como es solo del administrador de plataforma', function () use ($raizProyecto) {
     $semilla = (string) file_get_contents($raizProyecto.'/database/seeders/Catalogo/SeguridadSeeder.php');

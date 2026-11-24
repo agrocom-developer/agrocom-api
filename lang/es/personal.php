@@ -504,8 +504,6 @@ return [
         'filtro_hasta' => 'Hasta',
         'filtro_cliente' => 'Cliente',
         'filtro_cliente_placeholder' => 'Todos los clientes',
-        'filtro_campania' => 'Campaña',
-        'filtro_campania_placeholder' => 'Todas las campañas',
         'filtrar' => 'Filtrar',
         'limpiar_filtro' => 'Limpiar filtros',
 
@@ -527,11 +525,9 @@ return [
         'col_fecha' => 'Fecha',
         'col_rol' => 'Rol',
         'col_cliente' => 'Cliente',
-        'col_campania' => 'Campaña',
-        'col_lote' => 'Lote',
+        'col_solicitud' => 'Solicitud',
         'col_hectareas' => 'Hectáreas',
         'col_estado' => 'Estado',
-        'sin_campania' => '—',
 
         'seccion_rechazos' => 'Sesiones rechazadas',
         'rechazos_vacio_titulo' => 'Sin rechazos con este filtro',

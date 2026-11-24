@@ -19,7 +19,7 @@
         <x-molecules.captura-rc-card
             :fecha="\Illuminate\Support\Carbon::parse($sesion['fecha'])->format('d/m/Y H:i')"
             :piloto="$sesion['piloto'] ?? '—'"
-            :lote="$sesion['lote']"
+            :lote="$sesion['solicitud']"
             :dron="$sesion['dron'] ?? '—'"
             :hectareas="number_format((float) $sesion['hectareas'], 2, ',', '.').' ha'"
             :tiempo-vuelo="$comoDuracion($sesion['minutosVuelo'])"

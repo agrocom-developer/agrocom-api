@@ -113,11 +113,30 @@ class SecMenuSeeder extends Seeder
             'menu.mantenimiento.label',
         ]);
 
+        // El marketplace tampoco lleva contratos, campañas, siembra por etapas,
+        // facturas por contrato, órdenes de aplicación ni de trabajo, estadías,
+        // ni la cartera comercial que los sostenía (ADR 0037): el cliente pide
+        // un servicio y de ahí nace el trabajo. Los módulos «Comercial» y
+        // «Financiero» salen enteros del árbol.
+        $this->retirarEntradas([
+            'menu.operacion.items.ordenes',
+            'menu.operacion.items.estadias',
+            'menu.comercial.items.campanias',
+            'menu.comercial.items.clientes',
+            'menu.comercial.items.contratos',
+            'menu.comercial.items.propiedades',
+            'menu.comercial.items.lotes',
+            'menu.comercial.items.cultivos',
+            'menu.comercial.label',
+            'menu.financiero.items.facturas',
+            'menu.financiero.label',
+            'menu.reportes.items.comerciales',
+        ]);
+
         $operacion = $this->modulo('operacion', 'flight_takeoff', 1);
-        $comercial = $this->modulo('comercial', 'handshake', 2);
+        $solicitudes = $this->modulo('solicitudes', 'request_quote', 2);
         $recursos = $this->modulo('recursos', 'precision_manufacturing', 3);
         $proveedores = $this->modulo('proveedores', 'local_shipping', 4);
-        $financiero = $this->modulo('financiero', 'payments', 5);
         $reportes = $this->modulo('reportes', 'lab_profile', 6);
         $seguridad = $this->modulo('seguridad', 'admin_panel_settings', 7);
 
@@ -139,10 +158,6 @@ class SecMenuSeeder extends Seeder
         // etiqueta.
         $this->renombrar($operacion, 'menu.operacion.items.programacion', 'menu.operacion.items.tablero');
         $this->item($operacion, 'operacion', 'tablero', 'dashboard', 1, ruta: 'panel.dashboard', codigoPermiso: 'seguridad.dashboard.ver');
-        // HU-25 (tarea 38): órdenes de aplicación con su propia máquina de
-        // estados (emitida → vigente).
-        $this->item($operacion, 'operacion', 'ordenes', 'assignment', 2, ruta: 'panel.ordenes.index', codigoPermiso: 'operaciones.orden.ver');
-
         // Refactor de menú (17/9/2026, pedido directo del dueño): "Trabajos"
         // pasaba por el mismo nombre que el Word del dueño usa para la orden
         // que el operador emite ("Orden de Trabajo" ya está confirmado como
@@ -177,15 +192,6 @@ class SecMenuSeeder extends Seeder
         $this->mover('menu.recursos.items.equipos_trabajo', 'menu.operacion.items.cuadrillas', $operacion, 4);
         $this->reapuntar('panel.equipos-trabajo.index', 'panel.cuadrillas.index');
         $this->item($operacion, 'operacion', 'cuadrillas', 'groups', 4, ruta: 'panel.cuadrillas.index', codigoPermiso: 'personal.equipo_trabajo.ver');
-        // HU-51 (tarea 74): entrada y salida del equipo en cada hacienda. Se
-        // mantiene como ítem PROPIO, separado de "Asignación de equipos"
-        // (evaluado y descartado fusionarlos, 17/9/2026): el equipo se forma
-        // una sola vez por campaña, pero la estadía es por propiedad — un
-        // mismo equipo puede alojarse en varias propiedades de la misma
-        // campaña, cardinalidad distinta a la de la asignación. Baja del
-        // orden 6 al 5 en este refactor.
-        $this->item($operacion, 'operacion', 'estadias', 'holiday_village', 5, ruta: 'panel.estadias.index', codigoPermiso: 'operaciones.estadia.ver');
-
         // Refactor de menú (17/9/2026, pedido directo del dueño): "Sesiones"
         // apuntaba a la cola de validación, pero el uso real es más amplio —
         // seguimiento del avance de cada vuelo, con validación como una de
@@ -197,82 +203,10 @@ class SecMenuSeeder extends Seeder
         // HU-14 (tarea 14): cola de validación de sesiones cerradas.
         $this->item($operacion, 'operacion', 'seguimiento_vuelos', 'flight', 6, ruta: 'panel.sesiones.validacion.index', codigoPermiso: 'operaciones.sesion.validar');
 
-        // Comercial (§4.1 + cap. 9)
-        //
-        // HU-46 (tarea 69, ADR 0015 punto 1) — reubicado el 9/9/2026 por
-        // pedido del dueño, mirando el panel andando. El ítem había nacido
-        // bajo Seguridad leyendo la campaña como "configuración de toda la
-        // operación", y eso contradecía el propio ADR corregido el 8/9: la
-        // campaña era del **cliente**. Agrocom es una empresa de servicio —
-        // *"si fuera por nosotros daríamos servicio todo el año, no tuviéramos
-        // que abrir campaña propia"*—: el cliente habilitaba su campaña, con
-        // sus tiempos de riego y siembra, y recién ahí entraba la fumigación.
-        // Por eso se agrupó con Clientes, Contratos y Propiedades, no con la
-        // configuración de la casa.
-        //
-        // Corrección del 15/9/2026 (ADR 0015): esa lectura de "la campaña es
-        // del cliente" quedó reemplazada — la campaña pasa a ser catálogo
-        // compartido, sin dueño; el vínculo con el cliente vive en
-        // `com_contratos`, no en `cpn_campanias`. Sigue agrupada bajo
-        // Comercial (agrupación de layout, no una frontera de módulo — mismo
-        // caso que `baterias`, que vive en `Mantenimiento` y se muestra bajo
-        // Recursos, ADR 0011 extensión del 26/8/2026 punto 3), pero pasa a la
-        // CABEZA del grupo: en el flujo de alta la campaña ya existe antes
-        // que el contrato que la referencia. El permiso no cambia
-        // (`campania.campania.ver`, módulo `Campania`). El resto del grupo
-        // corre un lugar: Clientes 2, Contratos 3, Propiedades 4, Lotes 5,
-        // Cultivos 6.
-        $this->mover('menu.seguridad.items.campanias', 'menu.comercial.items.campanias', $comercial, 1);
-        $this->item($comercial, 'comercial', 'campanias', 'calendar_month', 1, ruta: 'panel.campanias.index', codigoPermiso: 'campania.campania.ver');
-
-        // HU-22 (tarea 33): alta y mantenimiento de clientes — activa el
-        // ítem que ya estaba sembrado como "botón sin link" (ver docblock
-        // de `item()`).
-        $this->item($comercial, 'comercial', 'clientes', 'contact_page', 2, ruta: 'panel.clientes.index', codigoPermiso: 'comercial.cliente.ver');
-        // HU-23 (tarea 34): administración de contratos — activa el ítem que
-        // ya estaba sembrado como "botón sin link" (ver docblock de `item()`).
-        $this->item($comercial, 'comercial', 'contratos', 'description', 3, ruta: 'panel.contratos.index', codigoPermiso: 'comercial.contrato.ver');
-        // HU-24 (tarea 35): administración de campos y sus lotes — activa
-        // el ítem que ya estaba sembrado como "botón sin link" (ver
-        // docblock de `item()`).
-        //
-        // Tarea 77 (HU-54, pedido del dueño 7/9/2026): "Campos y lotes" se
-        // separa en dos ítems. `renombrar()` conserva la fila y su id (la
-        // propiedad sigue siendo la misma pantalla, mismo permiso); "Lotes"
-        // es un ítem nuevo (etapa 1 lo sembró como "botón sin link" — la
-        // pantalla llegó recién en la etapa 2, que es la que agrega
-        // `ruta: 'panel.lotes.index'` acá; `item()` activa la ruta de una
-        // instalación que ya tenía el ítem sembrado sin necesitar una
-        // migración de datos nueva, ver su docblock).
-        //
-        // ADR 0018 (10/9/2026): "Propiedad" pasa a ser una entidad real,
-        // distinta de "Campo" (antes eran la misma fila — ver el ADR, punto
-        // 1, para el caso "Gamelera" que rompió ese supuesto). El vocabulario
-        // que la tarea 77 le había dado a esta pantalla ("Propiedades", para
-        // lo que hoy era `Campo`) quedó incorrecto un tiempo y se revertía con
-        // un método dedicado — ver ADR 0020 justo abajo, que reemplaza esa
-        // reversión: ahora el ítem legado se retira directamente.
-        //
-        // ADR 0020 (15/9/2026): `Campo` se elimina como entidad — `Lote`
-        // cuelga directo de `Propiedad`, sin nivel intermedio. El ítem legado
-        // "campos" (la MISMA fila de arriba, que pasó de "Campos y lotes" a
-        // "Propiedades" y de vuelta a "Campos") ya no tiene pantalla
-        // (`panel.campos.index` no existe) ni permiso vigente
-        // (`comercial.campo.ver` se retira en `SeguridadSeeder`): se retira
-        // del árbol con `retirarItemCampos()` (soft delete explícito, mismo
-        // criterio que las bajas de catálogo al principio de este método).
-        // "Propiedades" y "Lotes" quedan como ítems independientes: orden 4
-        // y 5 desde la corrección del 15/9/2026 de "Campañas" de arriba.
-        $this->retirarItemCampos($comercial);
-        $this->item($comercial, 'comercial', 'propiedades', 'domain', 4, ruta: 'panel.propiedades.index', codigoPermiso: 'comercial.propiedad.ver');
-        $this->item($comercial, 'comercial', 'lotes', 'grid_view', 5, ruta: 'panel.lotes.index', codigoPermiso: 'comercial.lote.ver');
-
-        // HU-48 (tarea 71, ADR 0015 punto 4): catálogo de cultivos. Ítem
-        // creado directo con ruta y permiso, no "botón sin link": el
-        // catálogo no formaba parte de la siembra original de `sec_menu`
-        // (ver docblock de `item()`). Último del grupo (orden 6) desde la
-        // corrección del 15/9/2026 de "Campañas" de arriba.
-        $this->item($comercial, 'comercial', 'cultivos', 'grass', 6, ruta: 'panel.cultivos.index', codigoPermiso: 'comercial.cultivo.ver');
+        // Solicitudes de servicio (ADR 0027): la unidad de negocio del
+        // marketplace. Gateado por el permiso de LISTADO (`ver`); cancelar rige
+        // el botón de la ficha, no la visibilidad del ítem.
+        $this->item($solicitudes, 'solicitudes', 'solicitudes', 'request_quote', 1, ruta: 'panel.solicitudes.index', codigoPermiso: 'solicitudes.solicitud.ver');
 
         // Recursos (§4.2)
         // HU-27 (tarea 36): administración de la flota de drones — activa
@@ -307,10 +241,6 @@ class SecMenuSeeder extends Seeder
         $this->renombrar($recursos, 'menu.recursos.items.personas', 'menu.recursos.items.personal');
         $this->item($recursos, 'recursos', 'personal', 'badge', 5, ruta: 'panel.personas.index', codigoPermiso: 'personal.persona.ver');
 
-        // Financiero (§4.4 + cap. 11)
-        // HU-31 (tarea 45): "como encargado, quiero emitir la factura de un
-        // trabajo desde su acta conformada" — activa el ítem que ya estaba
-        // sembrado como "botón sin link" (ver docblock de `item()`).
         // Marketplace (ADR 0032): la cola de aprobación. Cada ítem va gateado por
         // el permiso de LISTADO (`.ver`); aprobar, suspender y dar de baja rigen
         // los botones de la ficha, no la visibilidad del ítem. Documentos va
@@ -322,7 +252,6 @@ class SecMenuSeeder extends Seeder
         $this->item($proveedores, 'proveedores', 'drones_flota', 'airplanemode_active', 5, ruta: 'panel.drones-flota.index', codigoPermiso: 'flota.dron.ver');
         $this->item($proveedores, 'proveedores', 'equipos_flota', 'groups', 6, ruta: 'panel.equipos-flota.index', codigoPermiso: 'flota.equipo.ver');
 
-        $this->item($financiero, 'financiero', 'facturas', 'receipt', 6, ruta: 'panel.facturas.index', codigoPermiso: 'comercial.factura.ver');
         // Reportes (cap. 9 y 10)
         // HU-43 (tarea 57): "como encargado, quiero listar y descargar los
         // reportes técnicos generados, para reenviarlos al agrónomo" —
@@ -330,10 +259,6 @@ class SecMenuSeeder extends Seeder
         // docblock de `item()`). Mismo permiso `operaciones.reporte.ver` que
         // ya gatea la descarga individual (misma acción de negocio).
         $this->item($reportes, 'reportes', 'tecnicos', 'summarize', 1, ruta: 'panel.reportes.tecnicos.index', codigoPermiso: 'operaciones.reporte.ver');
-        // HU-32 (tarea 46): "como dueño, quiero un reporte comercial de
-        // avance por cliente, contrato y campaña" — activa el ítem que ya
-        // estaba sembrado como "botón sin link" (ver docblock de `item()`).
-        $this->item($reportes, 'reportes', 'comerciales', 'insert_chart', 2, ruta: 'panel.reportes.comercial.index', codigoPermiso: 'comercial.reporte.ver');
         // HU-19 (tarea 26): bandeja de alertas por excepción — activa el
         // ítem que ya estaba sembrado como "botón sin link" (ver docblock de
         // `item()`).
@@ -423,30 +348,6 @@ class SecMenuSeeder extends Seeder
             ->where('padre_id', $padre->id)
             ->where('label', $labelViejo)
             ->update(['label' => $labelNuevo]);
-    }
-
-    /**
-     * ADR 0020: `Campo` se elimina como entidad — `Lote` cuelga directo de
-     * `Propiedad`, sin nivel intermedio. El ítem legado "campos" (que en su
-     * momento supo llamarse "Campos y lotes", después "Propiedades" bajo la
-     * tarea 77, y de vuelta a "Campos" con ADR 0018 — siempre la MISMA fila,
-     * ver el historial en `run()` justo arriba de donde se llama a este
-     * método) ya no tiene pantalla (`panel.campos.index` no existe) ni
-     * permiso vigente (`comercial.campo.ver` se retira en `SeguridadSeeder`):
-     * se retira del árbol en vez de renombrarlo.
-     *
-     * Filtra por `padre_id` + `ruta` (no por `label`, que solo puede haber
-     * cambiado con el tiempo — mismo criterio que ya documentaba el método
-     * que este reemplaza). `delete()` es soft (invariante 8 de CLAUDE.md:
-     * `ModeloDominio` trae `SoftDeletes` de fábrica) y `SecMenu::query()` ya
-     * excluye lo soft-deleteado, así que correr esto dos veces es no-op.
-     */
-    private function retirarItemCampos(SecMenu $padre): void
-    {
-        SecMenu::query()
-            ->where('padre_id', $padre->id)
-            ->where('ruta', 'panel.campos.index')
-            ->delete();
     }
 
     /**

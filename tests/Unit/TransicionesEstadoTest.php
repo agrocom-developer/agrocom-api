@@ -497,8 +497,8 @@ function estadosArchivosVigilados(string $raizProyecto): array
 // protege nada (p. ej. porque se movió app/Dominios).
 test('el descubrimiento encuentra el código de dominio de app/', function () use ($raizProyecto) {
     expect(estadosArchivosVigilados($raizProyecto))
-        ->toContain('app/Dominios/Comercial/Infraestructura/Eloquent/Contrato.php')
-        ->toContain('app/Dominios/Operaciones/Aplicacion/ListarOrdenesAplicacion.php');
+        ->toContain('app/Dominios/Solicitudes/Infraestructura/Eloquent/SolicitudServicio.php')
+        ->toContain('app/Dominios/Operaciones/Aplicacion/ListarAlertas.php');
 });
 
 test('ninguna asignación de estado fuera del servicio de máquina de estados (CLAUDE.md invariante 7)', function () use ($raizProyecto) {

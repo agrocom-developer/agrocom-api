@@ -14,13 +14,10 @@
     CascaraPanel, más:
     - $persona (PerPersona).
     - $resultado (App\Dominios\Personal\Aplicacion\ResultadoDesempenioPersona):
-      sesiones/rechazos/incidencias ya filtrados por cliente/campaña, los
-      cuatro totales, y las opciones de los selects de cliente/campaña
-      (->clientesDisponibles, ->campaniasDisponibles, ->clientePorCampania —
-      este último alimenta el filtro dependiente de
-      `resources/js/pages/personas-desempeno.js`, mismo criterio que
-      `contratos-form.js`).
-    - $filtros (array{desde,hasta,cliente_id,campania_id}): valores
+      sesiones/rechazos/incidencias ya filtrados por cliente, los
+      cuatro totales, y las opciones de los select de cliente
+      (->clientesDisponibles).
+    - $filtros (array{desde,hasta,cliente_id}): valores
       aplicados, para dejar el formulario con el estado tras el submit.
     - $vinculos (list): aside "Relacionado" — ficha de la persona, cuadrillas
       que integra hoy. Sin timeline: no hay bitácora antes/después
@@ -33,7 +30,7 @@
     Estado vacío: dos casos distintos, NO la misma pieza.
     - $sinDatosEnRango (la persona no tiene ninguna sesión/rechazo en TODO
       el rango de fechas — clientesDisponibles sale sin aplicar el filtro de
-      cliente/campaña, ver ObtenerDesempenioPersona::opcionesDeFiltro):
+      cliente, ver ObtenerDesempenioPersona::opcionesDeFiltro):
       reemplaza el KPI y las tres secciones por un bloque único e ilustrado
       (ícono grande + título + detalle), mismo criterio que
       `seguridad::pages.dashboard._sin-secciones`. El aside "Relacionado"
@@ -49,9 +46,8 @@
 --}}
 @php
     $opcionesCliente = collect($resultado->clientesDisponibles)->mapWithKeys(fn ($nombre, $id) => [$id => $nombre]);
-    $opcionesCampania = collect($resultado->campaniasDisponibles)->mapWithKeys(fn ($codigo, $id) => [$id => $codigo]);
     $sinDatosEnRango = $opcionesCliente->isEmpty();
-    $filtrosActivos = collect(['cliente_id', 'campania_id'])->filter(fn ($campo) => $filtros[$campo] !== null)->count();
+    $filtrosActivos = collect(['cliente_id'])->filter(fn ($campo) => $filtros[$campo] !== null)->count();
 @endphp
 <x-templates.panel-shell :title="__('personal.desempenio.titulo', ['nombre' => $persona->nombre])" :tema="$tema">
     <x-templates.panel-layout
@@ -95,16 +91,6 @@
                         :placeholder="__('personal.desempenio.filtro_cliente_placeholder')"
                         data-ag-desempenio-cliente
                     />
-
-                    <x-atoms.select
-                        name="campania_id"
-                        :label="__('personal.desempenio.filtro_campania')"
-                        :options="$opcionesCampania"
-                        :value="$filtros['campania_id']"
-                        :placeholder="__('personal.desempenio.filtro_campania_placeholder')"
-                        data-ag-desempenio-campania
-                        data-mapa-cliente-campania="{{ json_encode($resultado->clientePorCampania) }}"
-                    />
                 </x-organisms.filter-panel>
             </div>
 
@@ -139,7 +125,7 @@
                     {{--
                         Estado vacío ilustrado (etapa 3, tarea 81): la persona
                         no tiene NINGUNA sesión ni rechazo en todo el rango de
-                        fechas — clientesDisponibles/campaniasDisponibles
+                        fechas — clientesDisponibles
                         salen de las mismas filas (ver ObtenerDesempenioPersona::
                         opcionesDeFiltro) sin aplicar el filtro de cliente/
                         campaña, así que si está vacío las tres secciones de
@@ -161,13 +147,12 @@
                                     :detail="__('personal.desempenio.sesiones_vacio')"
                                 />
                             @else
-                                <x-molecules.index-table columns="6rem 1fr 1fr 1fr 1.4fr 6rem 7rem">
+                                <x-molecules.index-table columns="6rem 1fr 1fr 1.6fr 6rem 7rem">
                                     <x-slot:head>
                                         <span role="columnheader">{{ __('personal.desempenio.col_fecha') }}</span>
                                         <span role="columnheader">{{ __('personal.desempenio.col_rol') }}</span>
                                         <span role="columnheader">{{ __('personal.desempenio.col_cliente') }}</span>
-                                        <span role="columnheader">{{ __('personal.desempenio.col_campania') }}</span>
-                                        <span role="columnheader">{{ __('personal.desempenio.col_lote') }}</span>
+                                        <span role="columnheader">{{ __('personal.desempenio.col_solicitud') }}</span>
                                         <span role="columnheader">{{ __('personal.desempenio.col_hectareas') }}</span>
                                         <span role="columnheader">{{ __('personal.desempenio.col_estado') }}</span>
                                     </x-slot:head>
@@ -177,8 +162,7 @@
                                             <span role="cell" class="ag-persona-desempeno__mono">{{ \Illuminate\Support\Carbon::parse($sesion->fecha)->format('d/m/Y') }}</span>
                                             <span role="cell">{{ __('personal.rol_equipo.'.$sesion->rol) }}</span>
                                             <span role="cell">{{ $sesion->clienteNombre }}</span>
-                                            <span role="cell">{{ $sesion->campaniaCodigo ?? __('personal.desempenio.sin_campania') }}</span>
-                                            <span role="cell">{{ $sesion->loteCodigo }} — {{ $sesion->propiedadNombre }}</span>
+                                            <span role="cell">{{ $sesion->solicitudEtiqueta }}</span>
                                             <span role="cell" class="ag-persona-desempeno__mono">{{ number_format((float) $sesion->hectareasDeclaradas, 2, ',', '.') }}</span>
                                             <span role="cell">
                                                 <x-atoms.badge :variant="$sesion->estado === 'validado' ? 'success' : 'warning'">
@@ -201,13 +185,12 @@
                                     :detail="__('personal.desempenio.rechazos_vacio')"
                                 />
                             @else
-                                <x-molecules.index-table columns="6rem 1fr 1fr 1fr 1.2fr 1.6fr 1fr">
+                                <x-molecules.index-table columns="6rem 1fr 1fr 1.4fr 1.6fr 1fr">
                                     <x-slot:head>
                                         <span role="columnheader">{{ __('personal.desempenio.col_fecha') }}</span>
                                         <span role="columnheader">{{ __('personal.desempenio.col_rol') }}</span>
                                         <span role="columnheader">{{ __('personal.desempenio.col_cliente') }}</span>
-                                        <span role="columnheader">{{ __('personal.desempenio.col_campania') }}</span>
-                                        <span role="columnheader">{{ __('personal.desempenio.col_lote') }}</span>
+                                        <span role="columnheader">{{ __('personal.desempenio.col_solicitud') }}</span>
                                         <span role="columnheader">{{ __('personal.desempenio.col_motivo') }}</span>
                                         <span role="columnheader">{{ __('personal.desempenio.col_rechazado_por') }}</span>
                                     </x-slot:head>
@@ -217,8 +200,7 @@
                                             <span role="cell" class="ag-persona-desempeno__mono">{{ \Illuminate\Support\Carbon::parse($rechazo->fecha)->format('d/m/Y') }}</span>
                                             <span role="cell">{{ __('personal.rol_equipo.'.$rechazo->rol) }}</span>
                                             <span role="cell">{{ $rechazo->clienteNombre }}</span>
-                                            <span role="cell">{{ $rechazo->campaniaCodigo ?? __('personal.desempenio.sin_campania') }}</span>
-                                            <span role="cell">{{ $rechazo->loteCodigo }} — {{ $rechazo->propiedadNombre }}</span>
+                                            <span role="cell">{{ $rechazo->solicitudEtiqueta }}</span>
                                             <span role="cell">{{ $rechazo->motivo }}</span>
                                             <span role="cell">{{ $rechazo->rechazadoPorNombre }}</span>
                                         </div>

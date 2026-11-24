@@ -92,16 +92,13 @@ final class IniciarVistaComo
     }
 
     /**
-     * Una cuenta de portal no tiene rol (ADR 0004) pero sí necesita contrato:
-     * sin él no hay nada que mirar. Una interna se ve bajo UN rol — el que
+     * Una cuenta de portal no tiene rol (ADR 0004): se mira sin rol. Una interna se ve bajo UN rol — el que
      * eligió el administrador, o el único que tiene.
      */
     private function rolAObservar(SecUser $observado, ?int $idRolElegido): ?int
     {
         if ($observado->type === TipoUsuario::Cliente) {
-            return $observado->contrato_id !== null
-                ? null
-                : throw VistaComoNoPermitida::sinContrato();
+            return null;
         }
 
         $rolesVivos = $observado->idsDeRolesActivos();

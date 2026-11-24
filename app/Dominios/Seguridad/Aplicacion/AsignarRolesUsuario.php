@@ -77,7 +77,6 @@ final class AsignarRolesUsuario
         string $name,
         TipoUsuario $type,
         ?int $personaId,
-        ?int $contratoId,
         array $roleIds,
         ?int $idRolActivo,
     ): SecUser {
@@ -101,7 +100,6 @@ final class AsignarRolesUsuario
             $name,
             $type,
             $personaId,
-            $contratoId,
             $roleIds,
             $idRolActivo,
             $esAlta,
@@ -119,7 +117,6 @@ final class AsignarRolesUsuario
             $usuario->email = $email;
             $usuario->type = $type;
             $usuario->persona_id = $personaId;
-            $usuario->contrato_id = $contratoId;
 
             if ($password !== null) {
                 $usuario->password = $password;

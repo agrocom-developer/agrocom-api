@@ -2,9 +2,7 @@
 
 return [
     'titulo' => [
-        'contrato_creado' => 'Contrato nuevo de :cliente (:hectareas ha).',
-        'orden_trabajo_creada' => 'Tu cuadrilla tiene una orden de trabajo nueva: aplicación :aplicacion de la orden #:orden (:hectareas ha en total).',
-        'trabajo_cerrado' => 'Se cerró un trabajo de :hectareas ha (aplicación :aplicacion, orden #:orden).',
+        'trabajo_cerrado' => 'Se cerró un trabajo de :hectareas ha (solicitud #:solicitud).',
         'sujeto_aprobado' => 'El :sujeto «:nombre» fue aprobado.',
         'sujeto_rechazado' => 'El :sujeto «:nombre» fue rechazado. Motivo: :motivo',
         'sujeto_suspendido' => 'El :sujeto «:nombre» fue suspendido. Motivo: :motivo',

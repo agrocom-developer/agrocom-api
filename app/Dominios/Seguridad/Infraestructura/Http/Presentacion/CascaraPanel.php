@@ -2,7 +2,6 @@
 
 namespace App\Dominios\Seguridad\Infraestructura\Http\Presentacion;
 
-use App\Dominios\Comercial\Contratos\LecturaContadoresPanel as LecturaContadoresPanelComercial;
 use App\Dominios\Notificaciones\Contratos\AlertasDeCuenta;
 use App\Dominios\Notificaciones\Contratos\LecturaNotificaciones;
 use App\Dominios\Notificaciones\Contratos\NotificacionPanel;
@@ -13,6 +12,7 @@ use App\Dominios\Seguridad\Aplicacion\ObtenerMenuPorRolActivo;
 use App\Dominios\Seguridad\Dominio\TemaPreferencia;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUserPreferencia;
+use App\Dominios\Solicitudes\Contratos\LecturaContextoSolicitudes;
 use Illuminate\Support\Carbon;
 use Throwable;
 
@@ -51,7 +51,7 @@ final class CascaraPanel
         private readonly ObtenerMenuPorRolActivo $obtenerMenu,
         private readonly ListarRolesDisponibles $listarRolesDisponibles,
         private readonly LecturaContadoresPanelOperaciones $contadoresOperaciones,
-        private readonly LecturaContadoresPanelComercial $contadoresComercial,
+        private readonly LecturaContextoSolicitudes $solicitudes,
         private readonly LecturaPanelOperaciones $panelOperaciones,
         private readonly LecturaNotificaciones $notificacionesDelMotor,
     ) {}
@@ -116,20 +116,13 @@ final class CascaraPanel
     {
         $badges = [];
 
-        $ordenesVigentes = $this->contadoresOperaciones->ordenesVigentes();
-        if ($ordenesVigentes > 0) {
-            $badges['menu.operacion.items.ordenes'] = [
-                'numero' => (string) $ordenesVigentes,
-                'texto' => __('seguridad.respuestas.badge_ordenes_vigentes', ['cantidad' => $ordenesVigentes]),
-            ];
-        }
-
-        // Contratos «En ejecución» (`vigente`): los que hoy tienen la operación en marcha.
-        $contratosEnEjecucion = $this->contadoresComercial->contratosEnEjecucion();
-        if ($contratosEnEjecucion > 0) {
-            $badges['menu.comercial.items.contratos'] = [
-                'numero' => (string) $contratosEnEjecucion,
-                'texto' => __('seguridad.respuestas.badge_contratos_en_ejecucion', ['cantidad' => $contratosEnEjecucion]),
+        // Solicitudes que esperan proveedor: publicadas, en asignación o sin proveedor.
+        $conteo = $this->solicitudes->conteoPorEstado();
+        $esperandoProveedor = ($conteo['publicada'] ?? 0) + ($conteo['en_asignacion'] ?? 0) + ($conteo['sin_proveedor'] ?? 0);
+        if ($esperandoProveedor > 0) {
+            $badges['menu.solicitudes.items.solicitudes'] = [
+                'numero' => (string) $esperandoProveedor,
+                'texto' => __('seguridad.respuestas.badge_solicitudes_esperando', ['cantidad' => $esperandoProveedor]),
             ];
         }
 
@@ -149,7 +142,7 @@ final class CascaraPanel
      * punto 7), en vez de absorber una en la otra.
      *
      * - Los avisos de flujo de negocio del módulo `Notificaciones`, repartidos
-     *   por cuenta: contrato creado, orden de trabajo creada, trabajo cerrado.
+     *   por cuenta: trabajo cerrado y los cambios de aprobación.
      *   Solo los de quien mira (su id sale de la sesión, nunca de la petición).
      *   Cada uno lleva a `panel.notificaciones.abrir`, que lo marca leído y
      *   resuelve el destino contra el rol activo.

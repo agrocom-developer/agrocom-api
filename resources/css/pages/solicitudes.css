@@ -1,0 +1,32 @@
+/*
+ * Pages: solicitudes/* (módulo Solicitudes) y trabajos/index (módulo
+ * Operaciones) — la solicitud de servicio y los trabajos que la ejecutan
+ * (ADR 0027 y 0037). CSS propio de ESTAS páginas (ver convención en
+ * resources/css/pages/index.css). La tabla (`molecules/index-table`), los
+ * filtros y la anatomía de las fichas (`ag-detalle`, `molecules/form-layout`)
+ * viven en el catálogo. Todo color y medida por token (CLAUDE.md invariante 11).
+ */
+
+.ag-solicitudes {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+/* Celda de dos líneas: el dato principal y, debajo, el secundario atenuado. */
+.ag-solicitudes__nombre {
+    display: block;
+    font-weight: var(--ag-font-weight-medium);
+}
+
+.ag-solicitudes__sub {
+    display: block;
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
+}
+
+/* Cifras (hectáreas, montos) en mono para que alineen en columna. */
+.ag-solicitudes__cifra {
+    font-family: var(--ag-font-family-mono);
+    font-variant-numeric: tabular-nums;
+}

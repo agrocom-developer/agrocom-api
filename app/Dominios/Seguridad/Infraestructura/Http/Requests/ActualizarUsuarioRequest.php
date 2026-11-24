@@ -55,12 +55,6 @@ final class ActualizarUsuarioRequest extends FormRequest
                 'integer',
                 Rule::exists('per_personas', 'id')->whereNull('deleted_at'),
             ],
-            'contrato_id' => [
-                'required_if:type,cliente',
-                'prohibited_if:type,interno',
-                'integer',
-                Rule::exists('com_contratos', 'id')->whereNull('deleted_at')->where('estado', 'vigente'),
-            ],
             'roles' => [
                 'present_if:type,interno',
                 'prohibited_if:type,cliente',
@@ -80,9 +74,6 @@ final class ActualizarUsuarioRequest extends FormRequest
             'email.unique' => __('seguridad.validacion.usuario_email_unico'),
             'persona_id.exists' => __('seguridad.validacion.usuario_persona_invalida'),
             'persona_id.prohibited_if' => __('seguridad.validacion.usuario_persona_prohibida_portal'),
-            'contrato_id.required_if' => __('seguridad.validacion.usuario_contrato_requerido'),
-            'contrato_id.prohibited_if' => __('seguridad.validacion.usuario_contrato_prohibido_interno'),
-            'contrato_id.exists' => __('seguridad.validacion.usuario_contrato_invalido'),
             'roles.present_if' => __('seguridad.validacion.usuario_roles_requerido'),
             'roles.prohibited_if' => __('seguridad.validacion.usuario_roles_prohibido_portal'),
             'roles.*.exists' => __('seguridad.validacion.usuario_rol_invalido'),

@@ -99,10 +99,10 @@ function limpiezaAviso(int $usuarioId, string $clave, bool $leido = false): Noti
 {
     return Notificacion::create([
         'usuario_id' => $usuarioId,
-        'tipo' => TipoNotificacion::ContratoCreado,
+        'tipo' => TipoNotificacion::TrabajoCerrado,
         'clave_evento' => $clave,
         'parametros' => ['cliente' => 'Cliente', 'hectareas' => '10,00'],
-        'recurso_tipo' => RecursoNotificable::Contrato,
+        'recurso_tipo' => RecursoNotificable::Trabajo,
         'recurso_id' => 1,
         'leida_en' => $leido ? now() : null,
     ]);
@@ -191,8 +191,8 @@ test('con la vista como otro usuario activa abrir una alerta no escribe, pero ta
 
 test('marcar todas marca los avisos y las alertas de la cuenta, e ignora las que no existen', function () {
     $ana = limpiezaCuenta();
-    limpiezaAviso($ana, 'contrato_creado:1');
-    limpiezaAviso($ana, 'contrato_creado:2');
+    limpiezaAviso($ana, 'trabajo_cerrado:1');
+    limpiezaAviso($ana, 'trabajo_cerrado:2');
 
     $marcadas = app(MarcarTodasLeidas::class)->ejecutar($ana, [10, 11, 999]);
 
@@ -205,7 +205,7 @@ test('marcar todas marca los avisos y las alertas de la cuenta, e ignora las que
 test('marcar todas no toca los avisos ni las alertas de otra cuenta', function () {
     $ana = limpiezaCuenta();
     $beto = limpiezaCuenta();
-    limpiezaAviso($beto, 'contrato_creado:1');
+    limpiezaAviso($beto, 'trabajo_cerrado:1');
     app(AbrirAlerta::class)->ejecutar($beto, 12);
     $antes = Notificacion::query()->deUsuario($beto)->firstOrFail()->updated_at;
 
@@ -222,9 +222,9 @@ test('marcar todas no toca los avisos ni las alertas de otra cuenta', function (
 
 test('limpiar da de baja todos los avisos de la cuenta, leídos o no, y limpia las alertas que se le pasan', function () {
     $ana = limpiezaCuenta();
-    limpiezaAviso($ana, 'contrato_creado:1');
-    limpiezaAviso($ana, 'contrato_creado:2', leido: true);
-    limpiezaAviso($ana, 'contrato_creado:3');
+    limpiezaAviso($ana, 'trabajo_cerrado:1');
+    limpiezaAviso($ana, 'trabajo_cerrado:2', leido: true);
+    limpiezaAviso($ana, 'trabajo_cerrado:3');
     app(AbrirAlerta::class)->ejecutar($ana, 12);
 
     $limpiadas = app(LimpiarNotificaciones::class)->ejecutar($ana, [10, 12]);
@@ -239,7 +239,7 @@ test('limpiar da de baja todos los avisos de la cuenta, leídos o no, y limpia l
 
 test('limpiar es idempotente: repetirlo no cambia nada', function () {
     $ana = limpiezaCuenta();
-    limpiezaAviso($ana, 'contrato_creado:1');
+    limpiezaAviso($ana, 'trabajo_cerrado:1');
 
     app(LimpiarNotificaciones::class)->ejecutar($ana, [10]);
     $bitacoras = Bitacora::query()->count();
@@ -252,9 +252,9 @@ test('limpiar es idempotente: repetirlo no cambia nada', function () {
 test('limpiar no toca los avisos ni el estado de las alertas de otra cuenta', function () {
     $ana = limpiezaCuenta();
     $beto = limpiezaCuenta();
-    limpiezaAviso($ana, 'contrato_creado:1');
-    limpiezaAviso($beto, 'contrato_creado:1');
-    limpiezaAviso($beto, 'contrato_creado:2', leido: true);
+    limpiezaAviso($ana, 'trabajo_cerrado:1');
+    limpiezaAviso($beto, 'trabajo_cerrado:1');
+    limpiezaAviso($beto, 'trabajo_cerrado:2', leido: true);
     app(AbrirAlerta::class)->ejecutar($beto, 10);
 
     app(LimpiarNotificaciones::class)->ejecutar($ana, [10, 11]);
@@ -267,8 +267,8 @@ test('limpiar no toca los avisos ni el estado de las alertas de otra cuenta', fu
 
 test('cada aviso que se limpia deja su fila de bitácora, no un borrado masivo que se la salte', function () {
     $ana = limpiezaCuenta();
-    limpiezaAviso($ana, 'contrato_creado:1');
-    limpiezaAviso($ana, 'contrato_creado:2');
+    limpiezaAviso($ana, 'trabajo_cerrado:1');
+    limpiezaAviso($ana, 'trabajo_cerrado:2');
 
     app(LimpiarNotificaciones::class)->ejecutar($ana, [10]);
 
@@ -278,7 +278,7 @@ test('cada aviso que se limpia deja su fila de bitácora, no un borrado masivo q
 
 test('limpiar no borra físicamente: el aviso sigue en la tabla, dado de baja', function () {
     $ana = limpiezaCuenta();
-    $aviso = limpiezaAviso($ana, 'contrato_creado:1');
+    $aviso = limpiezaAviso($ana, 'trabajo_cerrado:1');
 
     app(LimpiarNotificaciones::class)->ejecutar($ana);
 

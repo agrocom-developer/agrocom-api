@@ -28,9 +28,7 @@
     $rutaActual = \Illuminate\Support\Facades\Route::currentRouteName();
 
     $links = [
-        ['ruta' => 'portal.avance.index', 'icono' => 'trending_up', 'label' => __('portal.chrome.nav_avance')],
-        ['ruta' => 'portal.actas.index', 'icono' => 'description', 'label' => __('portal.chrome.nav_actas')],
-        ['ruta' => 'portal.reportes.index', 'icono' => 'summarize', 'label' => __('portal.chrome.nav_reportes')],
+        ['ruta' => 'portal.perfil.edit', 'icono' => 'person', 'label' => __('portal.chrome.nav_perfil')],
     ];
 @endphp
 

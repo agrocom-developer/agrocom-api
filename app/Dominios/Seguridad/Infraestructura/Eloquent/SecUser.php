@@ -58,7 +58,6 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string $password
  * @property TipoUsuario $type
  * @property int|null $persona_id
- * @property int|null $contrato_id
  * @property bool $state
  */
 class SecUser extends ModeloDominio implements AuthenticatableContract, CanResetPasswordContract
@@ -120,7 +119,6 @@ class SecUser extends ModeloDominio implements AuthenticatableContract, CanReset
         'password',
         'type',
         'persona_id',
-        'contrato_id',
         'state',
     ];
 
@@ -136,7 +134,6 @@ class SecUser extends ModeloDominio implements AuthenticatableContract, CanReset
         return [
             'type' => TipoUsuario::class,
             'persona_id' => 'integer',
-            'contrato_id' => 'integer',
             'state' => 'boolean',
             'password' => 'hashed',
         ];

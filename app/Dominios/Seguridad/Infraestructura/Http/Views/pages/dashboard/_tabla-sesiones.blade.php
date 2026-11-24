@@ -9,7 +9,7 @@
     otro filtro, no dos tablas que mantener.
 
     Espera:
-    - $sesiones (list): filas ya resueltas por ArmarDashboard (el lote y el
+    - $sesiones (list): filas ya resueltas por ArmarDashboard (la solicitud y el
       piloto vienen con nombre, no con id).
     - $limiteLista (int|null, opcional): tope de filas SOLO para la lista de
       tablet.
@@ -26,7 +26,7 @@
 <div class="ag-table" role="table">
     <div class="ag-table__head" role="row">
         <span role="columnheader">{{ __('seguridad.dashboard.col_hora') }}</span>
-        <span role="columnheader">{{ __('seguridad.dashboard.col_lote') }}</span>
+        <span role="columnheader">{{ __('seguridad.dashboard.col_solicitud') }}</span>
         <span role="columnheader">{{ __('seguridad.dashboard.col_piloto') }}</span>
         <span role="columnheader">{{ __('seguridad.dashboard.col_dron') }}</span>
         <span role="columnheader" class="ag-table__ha">{{ __('seguridad.dashboard.col_vuelo') }}</span>
@@ -37,9 +37,9 @@
         <div class="ag-table__row" role="row">
             <span class="ag-table__mono" role="cell">{{ \Illuminate\Support\Carbon::parse($sesion['inicio'])->format('d/m H:i') }}</span>
             <span class="ag-table__strong" role="cell">
-                <a class="ag-dash__link" href="{{ route('panel.trabajos.detalle', $sesion['trabajoId']) }}">{{ $sesion['lote'] }}</a>
-                @if ($sesion['propiedad'])
-                    <span class="ag-table__sub">{{ $sesion['propiedad'] }}</span>
+                <a class="ag-dash__link" href="{{ route('panel.trabajos.detalle', $sesion['trabajoId']) }}">{{ $sesion['solicitud'] }}</a>
+                @if ($sesion['cliente'])
+                    <span class="ag-table__sub">{{ $sesion['cliente'] }}</span>
                 @endif
             </span>
             <span role="cell">{{ $sesion['piloto'] ?? '—' }}</span>
@@ -59,7 +59,7 @@
         <div class="ag-session-list__row">
             <span class="ag-session-list__hora">{{ \Illuminate\Support\Carbon::parse($sesion['inicio'])->format('H:i') }}</span>
             <span class="ag-session-list__body">
-                <span class="ag-session-list__lote">{{ $sesion['lote'] }}</span>
+                <span class="ag-session-list__lote">{{ $sesion['solicitud'] }}</span>
                 <span class="ag-session-list__meta">
                     {{ $sesion['piloto'] ?? '—' }} · {{ $sesion['dron'] ?? '—' }} · {{ $comoDuracion($sesion['minutosVuelo']) }} · {{ number_format((float) $sesion['hectareas'], 2, ',', '.') }} ha
                 </span>

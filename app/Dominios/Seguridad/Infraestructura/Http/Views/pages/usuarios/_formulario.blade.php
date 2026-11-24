@@ -65,17 +65,6 @@
 
     $tipoActual = $usuario?->type?->value ?? old('type', 'interno');
     $esCliente = $tipoActual === 'cliente';
-
-    $opcionesContrato = $contratosVigentesDisponibles->mapWithKeys(fn ($contrato) => [
-        $contrato->id => __('seguridad.usuarios.campo_contrato_opcion', [
-            'cliente' => $contrato->razon_social,
-            'hectareas' => $contrato->hectareas_contratadas,
-        ]),
-    ]);
-    $mapaClienteContrato = $contratosVigentesDisponibles->pluck('cliente_id', 'id');
-    $contratoActual = $contratosVigentesDisponibles->firstWhere('id', (int) ($usuario?->contrato_id ?? 0));
-    $clienteId = old('cliente_id', $contratoActual?->cliente_id ?? '');
-    $contratoId = old('contrato_id', $usuario?->contrato_id ?? '');
 @endphp
 
 <form method="POST" action="{{ $accion }}" class="ag-usuarios-form" novalidate data-ag-usuarios-form data-tipo-inicial="{{ $tipoActual }}">
@@ -142,7 +131,6 @@
                 :help="__('seguridad.usuarios.campo_email_ayuda')"
                 :error="$errors->first('email')"
                 data-ag-usuario-email
-                data-mapa-cliente-email="{{ json_encode($emailPorCliente ?? []) }}"
             />
 
             <x-atoms.input
@@ -167,19 +155,9 @@
                     readonly
                 />
             @else
-                <x-atoms.select
-                    name="type"
-                    id="type"
-                    :label="__('seguridad.usuarios.campo_tipo')"
-                    :options="[
-                        'interno' => __('seguridad.usuarios.tipo_interno'),
-                        ...($puedeCrearPortal ? ['cliente' => __('seguridad.usuarios.tipo_cliente')] : []),
-                    ]"
-                    :value="$tipoActual"
-                    required
-                    :error="$errors->first('type')"
-                    data-ag-usuario-tipo
-                />
+                {{-- Las cuentas que se crean desde el panel son internas; el cliente
+                     del marketplace se registra solo desde la app (ADR 0036). --}}
+                <input type="hidden" name="type" value="interno">
             @endif
         </x-molecules.form-section>
 
@@ -210,39 +188,6 @@
                 :error="$errors->first('roles')"
                 class="ag-form-section__field--full"
                 :disabled="$esCliente"
-            />
-        </x-molecules.form-section>
-
-        <x-molecules.form-section
-            :title="__('seguridad.usuarios.seccion_portal')"
-            :count="__('seguridad.usuarios.campos_contador', ['cantidad' => 2])"
-            data-ag-usuario-seccion-cliente
-            :hidden="! $esCliente"
-        >
-            <x-atoms.select
-                name="cliente_id"
-                id="cliente_id"
-                :label="__('seguridad.usuarios.campo_cliente')"
-                :options="$clientesDisponibles"
-                :value="$clienteId"
-                :placeholder="__('seguridad.usuarios.campo_cliente_placeholder')"
-                :help="__('seguridad.usuarios.campo_cliente_ayuda')"
-                :disabled="! $esCliente"
-                data-ag-usuario-cliente
-            />
-
-            <x-atoms.select
-                name="contrato_id"
-                id="contrato_id"
-                :label="__('seguridad.usuarios.campo_contrato')"
-                :options="$opcionesContrato"
-                :value="$contratoId"
-                :placeholder="__('seguridad.usuarios.campo_contrato_placeholder')"
-                :required="$esCliente"
-                :error="$errors->first('contrato_id')"
-                :disabled="! $esCliente"
-                data-ag-usuario-contrato
-                data-mapa-cliente-contrato="{{ $mapaClienteContrato->toJson() }}"
             />
         </x-molecules.form-section>
 

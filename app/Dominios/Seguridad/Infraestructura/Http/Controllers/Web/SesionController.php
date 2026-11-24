@@ -91,7 +91,7 @@ final class SesionController
                 'requiere_seleccion_rol' => false,
                 'rol_activo_id' => null,
                 'roles' => [],
-                'destino' => route('portal.avance.index'),
+                'destino' => route('portal.perfil.edit'),
             ]);
         }
 

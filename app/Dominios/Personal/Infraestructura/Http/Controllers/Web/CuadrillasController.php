@@ -51,7 +51,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Route;
 use Illuminate\View\View;
 
 /**
@@ -373,9 +372,8 @@ final class CuadrillasController
         $integrantes = $lectura->integrantesAFecha($equipoTrabajo->id, $fecha);
         $recursos = $lectura->recursosAFecha($equipoTrabajo->id, $fecha);
 
-        $puedeVerEstadias = $this->autorizacion->tienePermiso($request, 'operaciones.estadia.ver');
         $puedeVerTrabajos = $this->autorizacion->tienePermiso($request, 'operaciones.trabajo.ver');
-        $datosResumen = $puedeVerEstadias || $puedeVerTrabajos
+        $datosResumen = $puedeVerTrabajos
             ? $lecturaResumenCuadrilla->deCuadrilla($equipoTrabajo->id)
             : null;
 
@@ -396,12 +394,10 @@ final class CuadrillasController
                 ->get(),
             'tonoPorEstado' => self::TONO_POR_ESTADO,
             'diasVigencia' => (int) $equipoTrabajo->desde->diffInDays($equipoTrabajo->hasta ?? now()),
-            'estadiasEnCurso' => $puedeVerEstadias && $datosResumen instanceof DatosResumenCuadrilla ? $datosResumen->estadiasEnCurso : null,
             'creadaPor' => $this->nombreAutor($equipoTrabajo->created_by),
             'vinculos' => $this->vinculosDeCuadrilla(
                 $equipoTrabajo,
                 $this->autorizacion->tienePermiso($request, 'personal.base.editar'),
-                $puedeVerEstadias,
                 $puedeVerTrabajos,
                 $datosResumen,
             ),
@@ -738,56 +734,13 @@ final class CuadrillasController
     {
         $resumen = [];
 
-        $puedeVerEstadias = $this->autorizacion->tienePermiso($request, 'operaciones.estadia.ver');
-        $puedeCrearEstadia = $this->autorizacion->tienePermiso($request, 'operaciones.estadia.crear');
         $puedeVerTrabajos = $this->autorizacion->tienePermiso($request, 'operaciones.trabajo.ver');
 
-        $datos = $puedeVerEstadias || $puedeCrearEstadia || $puedeVerTrabajos
+        $datos = $puedeVerTrabajos
             ? $lecturaResumenCuadrilla->deCuadrilla($equipoTrabajo->id)
             : null;
 
-        // 1) Estadías en hacienda (Operaciones) — las rutas las crea otro
-        // módulo en paralelo: `Route::has()` como resguardo mientras no
-        // existan todas.
-        if (($puedeVerEstadias || $puedeCrearEstadia) && $datos instanceof DatosResumenCuadrilla) {
-            $acciones = [];
-
-            if ($puedeVerEstadias && Route::has('panel.estadias.index')) {
-                $acciones[] = [
-                    'label' => __('personal.equipos_trabajo.aside_estadias_accion_ver'),
-                    'href' => route('panel.estadias.index', ['equipo_trabajo_id' => $equipoTrabajo->id]),
-                    'icono' => 'list',
-                ];
-            }
-
-            if ($puedeCrearEstadia && Route::has('panel.estadias.create')) {
-                $acciones[] = [
-                    'label' => __('personal.equipos_trabajo.aside_estadias_accion_crear'),
-                    'href' => route('panel.estadias.create', ['equipo_trabajo_id' => $equipoTrabajo->id]),
-                    'icono' => 'add',
-                ];
-            }
-
-            $resumen[] = [
-                'titulo' => __('personal.equipos_trabajo.aside_estadias_titulo'),
-                'icono' => 'holiday_village',
-                'tieneDatos' => $datos->estadiasTotal > 0,
-                'items' => [
-                    ['label' => __('personal.equipos_trabajo.aside_estadias_total'), 'value' => (string) $datos->estadiasTotal, 'mono' => true],
-                    [
-                        'label' => __('personal.equipos_trabajo.aside_estadias_en_curso'),
-                        'value' => (string) $datos->estadiasEnCurso,
-                        'mono' => true,
-                        'variant' => $datos->estadiasEnCurso > 0 ? 'success' : 'neutral',
-                    ],
-                ],
-                'vacioTitulo' => __('personal.equipos_trabajo.aside_estadias_vacio_titulo'),
-                'vacioDetalle' => __('personal.equipos_trabajo.aside_estadias_vacio_detalle'),
-                'acciones' => $acciones,
-            ];
-        }
-
-        // 2) Órdenes de trabajo (Operaciones).
+        // 1) Trabajos (Operaciones).
         if ($puedeVerTrabajos && $datos instanceof DatosResumenCuadrilla) {
             $resumen[] = [
                 'titulo' => __('personal.equipos_trabajo.aside_trabajos_titulo'),
@@ -812,8 +765,8 @@ final class CuadrillasController
             ];
         }
 
-        // 3) Base de la cuadrilla (propio del módulo, mismo criterio de
-        // gating que las otras dos: el permiso de lo que la acción hace).
+        // 2) Base de la cuadrilla (propio del módulo, mismo criterio de
+        // gating que la otra: el permiso de lo que la acción hace).
         if ($this->autorizacion->tienePermiso($request, 'personal.base.editar')) {
             $resumen[] = [
                 'titulo' => __('personal.equipos_trabajo.aside_base_titulo'),
@@ -868,7 +821,6 @@ final class CuadrillasController
     private function vinculosDeCuadrilla(
         EquipoTrabajo $equipoTrabajo,
         bool $puedeEditarBase,
-        bool $puedeVerEstadias,
         bool $puedeVerTrabajos,
         ?DatosResumenCuadrilla $datos,
     ): array {
@@ -891,16 +843,6 @@ final class CuadrillasController
                 'title' => __('personal.equipos_trabajo.vinculo_trabajos'),
                 'meta' => __('personal.equipos_trabajo.vinculo_trabajos_meta', ['total' => $datos->trabajosTotal, 'abiertos' => $datos->trabajosAbiertos]),
                 'tone' => 'distintivo-1',
-            ];
-        }
-
-        if ($puedeVerEstadias && $datos instanceof DatosResumenCuadrilla && Route::has('panel.estadias.index')) {
-            $vinculos[] = [
-                'href' => route('panel.estadias.index', ['equipo_trabajo_id' => $equipoTrabajo->id]),
-                'icon' => 'holiday_village',
-                'title' => __('personal.equipos_trabajo.vinculo_estadias'),
-                'meta' => __('personal.equipos_trabajo.vinculo_estadias_meta', ['total' => $datos->estadiasTotal, 'enCurso' => $datos->estadiasEnCurso]),
-                'tone' => 'info',
             ];
         }
 

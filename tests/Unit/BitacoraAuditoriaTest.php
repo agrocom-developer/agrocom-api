@@ -162,7 +162,7 @@ test('el descubrimiento encuentra los modelos de dominio con tabla propia', func
 
     expect($archivos)
         ->toContain('app/Dominios/Seguridad/Infraestructura/Eloquent/SecRole.php')
-        ->toContain('app/Dominios/Comercial/Infraestructura/Eloquent/Contrato.php')
+        ->toContain('app/Dominios/Solicitudes/Infraestructura/Eloquent/SolicitudServicio.php')
         ->not->toContain('app/Dominios/Seguridad/Infraestructura/Eloquent/SecUsuarioInterno.php');
 });
 

@@ -35,7 +35,6 @@ final class RegistroCuentasEloquent implements LecturaCuentas, RegistroCuentas
                 'password' => $password,
                 'type' => TipoUsuario::Interno,
                 'persona_id' => null,
-                'contrato_id' => null,
                 'state' => true,
             ]);
 

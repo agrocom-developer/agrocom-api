@@ -21,7 +21,7 @@ return [
     'vacio_ayuda' => 'Prueba con menos palabras, o con una parte del nombre: la búsqueda encuentra el texto aunque esté en el medio.',
 
     'inicial_titulo' => 'Escribe algo para buscar',
-    'inicial_ayuda' => 'Se busca en clientes, propiedades, lotes, campañas, personas, drones y equipos. Puedes escribir varias palabras y no hace falta que estén en orden ni con acentos.',
+    'inicial_ayuda' => 'Se busca en personas, drones, cuadrillas, bases y baterías. Puedes escribir varias palabras y no hace falta que estén en orden ni con acentos.',
 
     'corta_titulo' => 'Escribe un poco más',
     'corta_ayuda' => 'Con una sola letra entra casi todo. Prueba con al menos dos.',
@@ -29,21 +29,14 @@ return [
     'ver_todos' => 'Ver los :total en :bloque',
 
     'bloques' => [
-        'clientes' => 'Clientes',
         'personas' => 'Personas',
-        'propiedades' => 'Propiedades',
-        'campos' => 'Campos',
         'drones' => 'Drones',
-        'lotes' => 'Lotes',
-        'campanias' => 'Campañas',
-        'cultivos' => 'Cultivos',
         'equipos_trabajo' => 'Cuadrillas',
         'bases' => 'Bases',
         'baterias' => 'Baterías',
     ],
 
     'detalle' => [
-        'nit' => 'NIT :nit',
         'hectareas' => ':hectareas ha',
         'ciclos' => ':ciclos ciclos',
     ],

@@ -14,9 +14,9 @@ use Illuminate\Support\Collection;
  * trabajo (ADR 0015 punto 3 — la pertenencia a un equipo no es exclusiva).
  *
  * Le pide todo a {@see LecturaDesempenioPersona} (Operaciones, vía su
- * Contratos/) SIN filtrar por cliente/campaña — el filtro se aplica acá, en
+ * Contratos/) SIN filtrar por cliente — el filtro se aplica acá, en
  * PHP, sobre el resultado completo del rango de fechas, porque las opciones
- * de los selects de cliente/campaña salen de esos mismos datos (valores
+ * de los selects de cliente salen de esos mismos datos (valores
  * únicos ya presentes), no de una consulta aparte a `Comercial`.
  *
  * Suma hectáreas con `Brick\Math\BigDecimal` (invariante 6 de CLAUDE.md,
@@ -27,20 +27,18 @@ final class ObtenerDesempenioPersona
 {
     public function __construct(private readonly LecturaDesempenioPersona $lectura) {}
 
-    public function ejecutar(int $personaId, string $desde, string $hasta, ?int $clienteId, ?int $campaniaId): ResultadoDesempenioPersona
+    public function ejecutar(int $personaId, string $desde, string $hasta, ?int $clienteId): ResultadoDesempenioPersona
     {
         $datos = $this->lectura->ejecutar($personaId, $desde, $hasta);
 
-        [$clientesDisponibles, $campaniasDisponibles, $clientePorCampania] = $this->opcionesDeFiltro($datos);
+        $clientesDisponibles = $this->opcionesDeFiltro($datos);
 
         $sesiones = collect($datos->sesiones)
             ->when($clienteId !== null, fn (Collection $filas) => $filas->where('clienteId', $clienteId))
-            ->when($campaniaId !== null, fn (Collection $filas) => $filas->where('campaniaId', $campaniaId))
             ->values();
 
         $rechazosFiltrados = collect($datos->rechazos)
             ->when($clienteId !== null, fn (Collection $filas) => $filas->where('clienteId', $clienteId))
-            ->when($campaniaId !== null, fn (Collection $filas) => $filas->where('campaniaId', $campaniaId))
             ->values();
 
         $nombresPorPersonaId = PerPersona::query()
@@ -52,12 +50,9 @@ final class ObtenerDesempenioPersona
                 sesionId: $rechazo->sesionId,
                 fecha: $rechazo->fecha,
                 rol: $rechazo->rol,
-                loteCodigo: $rechazo->loteCodigo,
-                propiedadNombre: $rechazo->propiedadNombre,
+                solicitudEtiqueta: $rechazo->solicitudEtiqueta,
                 clienteId: $rechazo->clienteId,
                 clienteNombre: $rechazo->clienteNombre,
-                campaniaId: $rechazo->campaniaId,
-                campaniaCodigo: $rechazo->campaniaCodigo,
                 hectareasDeclaradas: $rechazo->hectareasDeclaradas,
                 motivo: $rechazo->motivo,
                 rechazadoPorNombre: $nombresPorPersonaId->get($rechazo->rechazadoPorPersonaId, '—'),
@@ -66,7 +61,7 @@ final class ObtenerDesempenioPersona
 
         // Las incidencias de una sesión rechazada siguen siendo hechos de
         // esa sesión (p. ej. la batería que motivó el rechazo): visibles si
-        // la sesión O su rechazo pasaron el filtro de cliente/campaña.
+        // la sesión O su rechazo pasaron el filtro de cliente.
         $sesionIdsVisibles = $sesiones->pluck('sesionId')
             ->merge($rechazosFiltrados->pluck('sesionId'))
             ->all();
@@ -91,34 +86,24 @@ final class ObtenerDesempenioPersona
             totalSesionesRechazadas: $rechazos->count(),
             totalIncidencias: $incidencias->count(),
             clientesDisponibles: $clientesDisponibles,
-            campaniasDisponibles: $campaniasDisponibles,
-            clientePorCampania: $clientePorCampania,
         );
     }
 
     /**
-     * @return array{0: array<int, string>, 1: array<int, string>, 2: array<int, int>}
+     * @return array<int, string> clienteId => nombre, ordenado por nombre.
      */
     private function opcionesDeFiltro(DatosDesempenioPersona $datos): array
     {
         $clientes = [];
-        $campanias = [];
-        $clientePorCampania = [];
 
         foreach ([...$datos->sesiones, ...$datos->rechazos] as $fila) {
             if ($fila->clienteId !== 0) {
                 $clientes[$fila->clienteId] = $fila->clienteNombre;
             }
-
-            if ($fila->campaniaId !== null) {
-                $campanias[$fila->campaniaId] = $fila->campaniaCodigo ?? (string) $fila->campaniaId;
-                $clientePorCampania[$fila->campaniaId] = $fila->clienteId;
-            }
         }
 
         asort($clientes);
-        asort($campanias);
 
-        return [$clientes, $campanias, $clientePorCampania];
+        return $clientes;
     }
 }

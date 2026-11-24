@@ -166,12 +166,7 @@ function panelHomogeneoPantallas(string $raiz): array
 function panelHomogeneoMaquinasConFicha(): array
 {
     return [
-        'TransicionesCampania' => 'Campania/campanias',
-        'TransicionesContrato' => 'Comercial/contratos',
-        'TransicionesOrden' => 'Operaciones/ordenes',
-        'TransicionesEstadia' => 'Operaciones/estadias',
         'TransicionesEquipoTrabajo' => 'Personal/cuadrillas',
-        'TransicionesTrabajo' => 'Operaciones/trabajos',
     ];
 }
 
@@ -188,6 +183,7 @@ function panelHomogeneoMaquinasSinFicha(): array
         'TransicionesSesion' => 'se valida desde pantallas propias',
         'TransicionesDocumento' => 'se revisa desde la cola de documentos, con motivo en el rechazo',
         'TransicionesAprobacion' => 'la aprobación se resuelve con acciones de la ficha y de la cola, con motivo en un modal',
+        'TransicionesTrabajo' => 'los trabajos nacen en la app de campo; el panel los consulta y los da de baja, no los edita',
         'TransicionesSolicitud' => 'la crea el cliente desde la app; el panel solo la consulta y la cancela con motivo en un modal',
     ];
 }
@@ -230,14 +226,8 @@ function panelHomogeneoMaquinasExistentes(string $raiz): array
 function panelHomogeneoReferencias(): array
 {
     return [
-        'Campania/campanias',
-        'Comercial/clientes',
-        'Comercial/propiedades',
-        'Comercial/lotes',
-        'Comercial/contratos',
-        'Operaciones/ordenes',
-        'Operaciones/ordenes-trabajo',
-        'Operaciones/estadias',
+        'Proveedores/proveedores',
+        'Solicitudes/solicitudes',
         'Personal/cuadrillas',
     ];
 }
@@ -253,8 +243,8 @@ function panelHomogeneoReferencias(): array
 function panelHomogeneoReferenciasFicha(): array
 {
     return [
-        'Operaciones/ordenes',
-        'Operaciones/ordenes-trabajo',
+        'Proveedores/proveedores',
+        'Solicitudes/solicitudes',
     ];
 }
 
@@ -774,17 +764,16 @@ test('el descubrimiento encuentra las pantallas de referencia y deja afuera las 
     $rutas = array_column(panelHomogeneoPantallas($raizProyecto), 'ruta');
 
     expect($rutas)
-        ->toContain('Comercial/clientes/index.blade.php')
-        ->toContain('Comercial/clientes/_formulario.blade.php')
-        ->toContain('Operaciones/ordenes-trabajo/create.blade.php')
+        ->toContain('Solicitudes/solicitudes/index.blade.php')
+        ->toContain('Solicitudes/solicitudes/show.blade.php')
+        ->toContain('Proveedores/proveedores/index.blade.php')
         ->toContain('Mantenimiento/baterias/_formulario.blade.php')
-        ->toContain('Operaciones/trabajos/edit.blade.php')
-        ->toContain('Operaciones/ordenes/show.blade.php')
+        ->toContain('Operaciones/trabajos/index.blade.php')
+        ->toContain('Operaciones/trabajos/show.blade.php')
         ->toContain('Personal/personas/desempeno.blade.php')
         ->not->toContain('Seguridad/roles/index.blade.php')
         ->not->toContain('Seguridad/usuarios/create.blade.php')
-        ->not->toContain('Portal/actas/index.blade.php')
-        ->not->toContain('Operaciones/ordenes/create.blade.php');
+        ->not->toContain('Portal/actas/index.blade.php');
 });
 
 test('todo index evaluado pinta una tabla de objetos', function () use ($raizProyecto) {
@@ -886,8 +875,8 @@ test('ninguna pantalla de referencia se esconde en la lista de pendientes', func
     // Cada entrada es una referencia PARA CIERTOS TIPOS de pantalla: un
     // directorio puede ser la referencia de su listado/formulario sin serlo
     // (todavía) de su ficha, y viceversa — un mismo directorio puede aparecer
-    // en las dos listas (Operaciones/ordenes y ordenes-trabajo lo son de
-    // las tres cosas).
+    // en las dos listas (Proveedores/proveedores y Solicitudes/solicitudes lo
+    // son de las tres cosas).
     $referencias = [
         ...array_map(fn (string $carpeta): array => ['carpeta' => $carpeta, 'tipos' => ['listado', 'formulario']], panelHomogeneoReferencias()),
         ...array_map(fn (string $carpeta): array => ['carpeta' => $carpeta, 'tipos' => ['ficha']], panelHomogeneoReferenciasFicha()),
@@ -1122,19 +1111,19 @@ test('las reglas de formulario detectan cada incumplimiento', function () {
 });
 
 test('un objeto con máquina de estados y ficha de edición debe mostrar los pasos', function () {
-    // `Comercial/contratos` está en la tabla de máquinas con ficha de edición.
-    expect(panelHomogeneoReglasSinteticas('formulario', PANEL_HOMOGENEO_FORMULARIO_CONFORME, ['edit.blade.php' => ''], 'Comercial', 'contratos'))
+    // `Personal/cuadrillas` está en la tabla de máquinas con ficha de edición.
+    expect(panelHomogeneoReglasSinteticas('formulario', PANEL_HOMOGENEO_FORMULARIO_CONFORME, ['edit.blade.php' => ''], 'Personal', 'cuadrillas'))
         ->toBe(['step-arrow']);
 
     $conPasos = str_replace('</x-organisms.page-header>', '', PANEL_HOMOGENEO_FORMULARIO_CONFORME);
     $conPasos = str_replace('<x-molecules.form-layout>', "<x-molecules.step-arrow :steps=\"\$pasos\" />\n<x-molecules.form-layout>", $conPasos);
 
-    expect(panelHomogeneoReglasSinteticas('formulario', $conPasos, ['edit.blade.php' => ''], 'Comercial', 'contratos'))->toBe([]);
+    expect(panelHomogeneoReglasSinteticas('formulario', $conPasos, ['edit.blade.php' => ''], 'Personal', 'cuadrillas'))->toBe([]);
 
     // Los pasos pueden venir de un parcial que el formulario incluye.
-    $conParcial = str_replace('<x-molecules.form-layout>', "@include('comercial::pages.contratos._pasos')\n<x-molecules.form-layout>", PANEL_HOMOGENEO_FORMULARIO_CONFORME);
+    $conParcial = str_replace('<x-molecules.form-layout>', "@include('personal::pages.cuadrillas._pasos')\n<x-molecules.form-layout>", PANEL_HOMOGENEO_FORMULARIO_CONFORME);
 
-    expect(panelHomogeneoReglasSinteticas('formulario', $conParcial, ['edit.blade.php' => '', '_pasos.blade.php' => '<x-molecules.step-arrow :steps="$pasos" />'], 'Comercial', 'contratos'))->toBe([]);
+    expect(panelHomogeneoReglasSinteticas('formulario', $conParcial, ['edit.blade.php' => '', '_pasos.blade.php' => '<x-molecules.step-arrow :steps="$pasos" />'], 'Personal', 'cuadrillas'))->toBe([]);
 });
 
 const PANEL_HOMOGENEO_FICHA_CONFORME = <<<'BLADE'
