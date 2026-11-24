@@ -4,7 +4,7 @@ namespace App\Dominios\Proveedores\Contratos;
 
 /**
  * Escritura de las tasas de aceptación y de cancelación de un proveedor
- * (especificación §4.3). Las calcula la asignación a partir de sus ofertas y
+ * (especificación §4.3). Las calcula la negociación a partir de sus ofertas y
  * cancelaciones; `Proveedores` solo las guarda en su ficha, porque cada módulo
  * escribe únicamente sus tablas (ADR 0003).
  */

@@ -3,7 +3,7 @@
 namespace App\Dominios\Proveedores\Contratos;
 
 /**
- * Lo que `Flota` (y, más adelante, `Asignacion`) necesita saber de proveedores,
+ * Lo que `Flota` (y `Negociacion`) necesita saber de proveedores,
  * pilotos y auxiliares sin importar sus modelos (ADR 0003, regla 2).
  */
 interface LecturaProveedores
@@ -38,8 +38,8 @@ interface LecturaProveedores
 
     /**
      * Proveedores aprobados de un grupo: `propio` (Agrocom) o `tercero`
-     * (independientes y terceros). Solo `Asignacion` lo usa, para armar la
-     * ronda; filtrar por equipo apto le toca a `Flota`.
+     * (independientes y terceros). Lo usa `Negociacion` para avisar de una
+     * solicitud nueva; filtrar por equipo apto le toca a `Flota`.
      *
      * @return list<DatosProveedor>
      */
