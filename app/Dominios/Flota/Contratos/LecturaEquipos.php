@@ -5,9 +5,9 @@ namespace App\Dominios\Flota\Contratos;
 use DateTimeImmutable;
 
 /**
- * Elegibilidad de equipos para la asignación (especificación §5.2 y §6, ADR
- * 0030). El motor de asignación pregunta por este contrato y nunca recorre las
- * tablas de flota ni de proveedores.
+ * Elegibilidad de equipos para ofertar y adjudicar (especificación §5.2 y §6, ADR
+ * 0030). La negociación pregunta por este contrato y nunca recorre las tablas
+ * de flota ni de proveedores.
  */
 interface LecturaEquipos
 {
