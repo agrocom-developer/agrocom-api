@@ -24,6 +24,7 @@ final class LecturaServiciosEloquent implements LecturaServicios
             estado: $solicitud->estado->value,
             clienteId: $solicitud->cliente_id,
             clienteUsuarioId: $solicitud->cliente->usuario_id,
+            clienteNombre: $solicitud->cliente->razon_social,
             proveedorId: $solicitud->proveedor_id,
             equipoId: $solicitud->equipo_id,
             hectareasSolicitadas: $solicitud->hectareas_solicitadas,

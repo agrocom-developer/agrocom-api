@@ -15,6 +15,7 @@ final readonly class DatosServicio
         public string $estado,
         public int $clienteId,
         public int $clienteUsuarioId,
+        public string $clienteNombre,
         public ?int $proveedorId,
         public ?int $equipoId,
         public string $hectareasSolicitadas,

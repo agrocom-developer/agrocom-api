@@ -295,5 +295,5 @@ test('un cliente con la publicación limitada no publica solicitudes', function 
     DB::table('sol_clientes')->where('id', $clienteId)->update(['publicacion_limitada_en' => now()]);
 
     expect(fn () => app(PublicarSolicitud::class)->ejecutar(CIERRE_CLIENTE_USUARIO, $id))
-        ->toThrow(SolicitudInvalida::class, 'limitada');
+        ->toRechazarCon(SolicitudInvalida::class, 'solicitudes.errores.publicacion_limitada');
 });
