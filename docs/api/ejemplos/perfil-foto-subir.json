@@ -1,0 +1,19 @@
+{
+    "operationId": "subirFotoDePerfil",
+    "descripcion": "La cuenta sube su foto de perfil (multipart, menos de 300 KB).",
+    "peticion": {
+        "metodo": "PUT",
+        "ruta": "/api/perfil/foto",
+        "autenticada": true,
+        "cuerpo": null,
+        "multipart": {
+            "archivo": "foto.jpg (image/jpeg)"
+        }
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "foto_url": "/api/personas/9/foto?expires=1795547152&signature=1a8d10959c4c65542fb12b92f4939ef2f1197a0498b5ab14fd3f71455d43b54a"
+        }
+    }
+}

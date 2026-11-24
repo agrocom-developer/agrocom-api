@@ -21,12 +21,13 @@
                 "id": 9,
                 "name": "Rodrigo Suárez Peña",
                 "username": "rodrigo.suarez",
-                "persona_id": 10
+                "persona_id": 10,
+                "foto_url": null
             },
             "rol": {
                 "id": 1,
                 "name": "piloto",
-                "description": "Piloto de dron: ejecuta sesiones de vuelo en campo."
+                "description": "Piloto de dron: ofrece, ejecuta los servicios adjudicados y sube las fotos desde la app."
             },
             "dispositivo": {
                 "id": 6,
@@ -35,10 +36,10 @@
                 "rol": {
                     "id": 1,
                     "name": "piloto",
-                    "description": "Piloto de dron: ejecuta sesiones de vuelo en campo."
+                    "description": "Piloto de dron: ofrece, ejecuta los servicios adjudicados y sube las fotos desde la app."
                 },
                 "last_used_at": null,
-                "created_at": "2026-11-24T15:58:52+00:00"
+                "created_at": "2026-11-24T18:50:51+00:00"
             }
         }
     }

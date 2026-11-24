@@ -1,0 +1,18 @@
+{
+    "operationId": "confirmarPagoDeSolicitud",
+    "descripcion": "El cliente no informa el pago: lo escribe solo el proveedor.",
+    "peticion": {
+        "metodo": "POST",
+        "ruta": "/api/solicitudes/18/pago-confirmado",
+        "autenticada": true,
+        "cuerpo": {
+            "uuid_cliente": "9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e40"
+        }
+    },
+    "respuesta": {
+        "estado": 403,
+        "cuerpo": {
+            "message": "No tienes permiso para hacer esto."
+        }
+    }
+}

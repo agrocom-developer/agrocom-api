@@ -18,7 +18,8 @@
                 "referencias_acceso": "Camino vecinal, portón azul a 2 km de la ruta.",
                 "colindantes_sensibles": null,
                 "acceso_dificil": false,
-                "zona_id": null
+                "zona_id": null,
+                "fotos": []
             }
         }
     }

@@ -125,6 +125,40 @@ function registrar(string $nombre, string $operacion, string $descripcion, strin
     return [$estado, $respuesta];
 }
 
+/**
+ * Como {@see registrar()}, pero con un archivo de imagen (multipart). Guarda el intercambio sin el binario.
+ *
+ * @param  array<string, mixed>  $cuerpo
+ * @return array{0: int, 1: mixed}
+ */
+function registrarFoto(string $nombre, string $operacion, string $descripcion, string $metodo, string $ruta, array $cuerpo, string $token, int $esperado, int $rojo = 90): array
+{
+    global $salida, $guardados, $fallos;
+
+    $archivo = tempnam(sys_get_temp_dir(), 'foto');
+    $lienzo = imagecreatetruecolor(320, 240);
+    imagefill($lienzo, 0, 0, imagecolorallocate($lienzo, $rojo, 140, 60));
+    imagejpeg($lienzo, $archivo, 70);
+
+    [$estado, $respuesta] = llamar($metodo, $ruta, $cuerpo, $token, ['archivo' => new UploadedFile($archivo, 'foto.jpg', 'image/jpeg', null, true)]);
+
+    if ($estado !== $esperado) {
+        $fallos[] = "{$nombre}: se esperaba {$esperado} y llegó {$estado} ".substr(json_encode($respuesta, JSON_UNESCAPED_UNICODE) ?: '', 0, 300);
+
+        return [$estado, $respuesta];
+    }
+
+    file_put_contents("{$salida}/{$nombre}.json", json_encode([
+        'operationId' => $operacion,
+        'descripcion' => $descripcion,
+        'peticion' => ['metodo' => $metodo, 'ruta' => $ruta, 'autenticada' => true, 'cuerpo' => $cuerpo === [] ? null : $cuerpo, 'multipart' => ['archivo' => 'foto.jpg (image/jpeg)']],
+        'respuesta' => ['estado' => $estado, 'cuerpo' => sanear($respuesta)],
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION)."\n");
+    $guardados++;
+
+    return [$estado, $respuesta];
+}
+
 /** Sustituye toda credencial viva por el marcador. */
 function sanear(mixed $valor): mixed
 {
@@ -220,7 +254,13 @@ try {
         registrar('terrenos-actualizar', 'actualizarTerreno', 'Corrige los datos de un terreno propio.', 'PUT', "/api/terrenos/{$terrenoId}", [
             'nombre' => 'Lote Los Álamos', 'hectareas' => '118.2500', 'cultivo' => 'Soya',
         ], $tokenCliente, 200);
+
+        registrarFoto('terrenos-foto-subir', 'subirFotoDeTerreno', 'El cliente sube una foto del estado de su terreno (multipart, menos de 300 KB); el piloto la ve antes de ofertar.', 'POST', "/api/terrenos/{$terrenoId}/fotos", ['descripcion' => 'Borde norte con maleza alta'], $tokenCliente, 201);
+        registrar('terrenos-ver-con-fotos', 'verTerreno', 'El terreno trae sus fotos con URL firmada de corta vida.', 'GET', "/api/terrenos/{$terrenoId}", null, $tokenCliente, 200);
     }
+
+    registrar('referencias-precio', 'precioDeReferencia', 'Precio por hectárea de referencia para proponer: de la zona, la macrorregión o el general del tipo.', 'GET', '/api/referencias/precio?tipo_aplicacion=herbicida&macrorregion=chiquitania', null, $tokenCliente, 200);
+    registrar('referencias-precio-invalido', 'precioDeReferencia', 'Validación: tipo de aplicación inexistente.', 'GET', '/api/referencias/precio?tipo_aplicacion=riego', null, $tokenCliente, 422);
 
     registrar('solicitudes-lista', 'listarSolicitudes', 'Solicitudes del cliente, la más reciente primero.', 'GET', '/api/solicitudes', null, $tokenCliente, 200);
 
@@ -285,6 +325,15 @@ try {
 
     registrar('seguridad-sesion-piloto', 'verSesionCampo', 'Sesión vigente del piloto.', 'GET', '/api/auth/sesion', null, $tokenPiloto, 200);
     registrar('seguridad-dispositivos', 'listarDispositivosPropios', 'Dispositivos con token vivo de la cuenta.', 'GET', '/api/dispositivos', null, $tokenPiloto, 200);
+    registrar('proveedores-mi-piloto', 'verMiProveedor', 'El piloto propio de Agrocom ve en solo lectura el proveedor al que pertenece.', 'GET', '/api/proveedores/mi', null, $tokenPiloto, 200);
+    registrar('proveedores-drones-piloto', 'listarDrones', 'El piloto ve los drones de su equipo.', 'GET', '/api/proveedores/drones', null, $tokenPiloto, 200);
+    registrar('dispositivos-push-registrar', 'registrarDispositivoPush', 'La app registra el token de push de su aparato al iniciar sesión.', 'POST', '/api/dispositivos', ['token' => 'fcm:ejemplo-token-de-push', 'plataforma' => 'android'], $tokenPiloto, 201);
+    registrar('dispositivos-push-repetido', 'registrarDispositivoPush', 'Repetir el token no duplica: responde 200.', 'POST', '/api/dispositivos', ['token' => 'fcm:ejemplo-token-de-push', 'plataforma' => 'android'], $tokenPiloto, 200);
+    registrar('dispositivos-push-plataforma-invalida', 'registrarDispositivoPush', 'Validación: plataforma desconocida.', 'POST', '/api/dispositivos', ['token' => 'fcm:otro', 'plataforma' => 'web'], $tokenPiloto, 422);
+    registrar('dispositivos-push-retirar', 'retirarDispositivoPush', 'Al cerrar sesión la app retira el token de push.', 'DELETE', '/api/dispositivos/'.rawurlencode('fcm:ejemplo-token-de-push'), null, $tokenPiloto, 204);
+    registrar('dispositivos-push-retirar-ajeno', 'retirarDispositivoPush', 'Un token que no existe o es de otra cuenta responde 404.', 'DELETE', '/api/dispositivos/'.rawurlencode('fcm:ejemplo-token-de-push'), null, $tokenPiloto, 404);
+    registrarFoto('perfil-foto-subir', 'subirFotoDePerfil', 'La cuenta sube su foto de perfil (multipart, menos de 300 KB).', 'PUT', '/api/perfil/foto', [], $tokenPiloto, 200, 140);
+    registrar('perfil-foto-quitar', 'quitarFotoDePerfil', 'Quita la foto de perfil.', 'DELETE', '/api/perfil/foto', null, $tokenPiloto, 204);
 
     [, $catalogo] = registrar('sync-catalogo-completo', 'obtenerCatalogoSincronizacion', 'Primer pull: todo lo vigente, con el cursor de continuación.', 'GET', '/api/sync/catalogo', null, $tokenPiloto, 200);
 
@@ -468,6 +517,13 @@ try {
                 'uuid_cliente' => '9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e34', 'secuencia' => 3, 'hectareas_ejecutadas' => '98.5000', 'nota' => 'Servicio terminado.',
             ], $tokenPilotoCarlos, 201);
             registrar('solicitudes-finalizada', 'verSolicitud', 'Finalizada: precio final = hectáreas ejecutadas por precio acordado; el pago se acuerda fuera de la app.', 'GET', "/api/solicitudes/{$solicitudNegociada}", null, $tokenCliente, 200);
+            $uuidPago = '9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e40';
+            registrar('pago-confirmado-cliente-no-escribe', 'confirmarPagoDeSolicitud', 'El cliente no informa el pago: lo escribe solo el proveedor.', 'POST', "/api/solicitudes/{$solicitudNegociada}/pago-confirmado", ['uuid_cliente' => $uuidPago], $tokenCliente, 403);
+            registrar('pago-confirmado-ver-vacio', 'verPagoConfirmadoDeSolicitud', 'Antes de que el proveedor lo informe, el pago es nulo.', 'GET', "/api/solicitudes/{$solicitudNegociada}/pago-confirmado", null, $tokenCliente, 200);
+            registrar('pago-confirmado', 'confirmarPagoDeSolicitud', 'El proveedor informa que recibió el pago, que ocurre fuera de la aplicación; el monto es el final del servicio.', 'POST', "/api/solicitudes/{$solicitudNegociada}/pago-confirmado", ['uuid_cliente' => $uuidPago, 'metodo' => 'transferencia', 'nota' => 'Recibido en la cuenta del banco.'], $tokenPilotoCarlos, 201);
+            registrar('pago-confirmado-reintento', 'confirmarPagoDeSolicitud', 'Repetir el mismo uuid devuelve el mismo registro (200).', 'POST', "/api/solicitudes/{$solicitudNegociada}/pago-confirmado", ['uuid_cliente' => $uuidPago, 'metodo' => 'transferencia'], $tokenPilotoCarlos, 200);
+            registrar('pago-confirmado-otro-uuid', 'confirmarPagoDeSolicitud', 'Un segundo registro con otro uuid responde 409: lo confirmado no se reescribe.', 'POST', "/api/solicitudes/{$solicitudNegociada}/pago-confirmado", ['uuid_cliente' => '9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e41'], $tokenPilotoCarlos, 409);
+            registrar('pago-confirmado-ver', 'verPagoConfirmadoDeSolicitud', 'El cliente ve que el proveedor confirmó el pago.', 'GET', "/api/solicitudes/{$solicitudNegociada}/pago-confirmado", null, $tokenCliente, 200);
             registrar('seguimiento-ubicacion-sin-ejecucion', 'verUbicacionDelPiloto', 'Fuera de la ejecución no hay ubicación: la respuesta viene sin punto.', 'GET', "/api/solicitudes/{$solicitudNegociada}/ubicacion-piloto", null, $tokenCliente, 200);
         }
     }

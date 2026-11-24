@@ -1,0 +1,15 @@
+{
+    "operationId": "verPagoConfirmadoDeSolicitud",
+    "descripcion": "Antes de que el proveedor lo informe, el pago es nulo.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/solicitudes/18/pago-confirmado",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "pago": null
+        }
+    }
+}

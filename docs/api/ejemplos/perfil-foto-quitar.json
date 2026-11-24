@@ -1,0 +1,13 @@
+{
+    "operationId": "quitarFotoDePerfil",
+    "descripcion": "Quita la foto de perfil.",
+    "peticion": {
+        "metodo": "DELETE",
+        "ruta": "/api/perfil/foto",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 204,
+        "cuerpo": null
+    }
+}

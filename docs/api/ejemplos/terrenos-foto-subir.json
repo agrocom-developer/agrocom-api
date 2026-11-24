@@ -1,0 +1,25 @@
+{
+    "operationId": "subirFotoDeTerreno",
+    "descripcion": "El cliente sube una foto del estado de su terreno (multipart, menos de 300 KB); el piloto la ve antes de ofertar.",
+    "peticion": {
+        "metodo": "POST",
+        "ruta": "/api/terrenos/10/fotos",
+        "autenticada": true,
+        "cuerpo": {
+            "descripcion": "Borde norte con maleza alta"
+        },
+        "multipart": {
+            "archivo": "foto.jpg (image/jpeg)"
+        }
+    },
+    "respuesta": {
+        "estado": 201,
+        "cuerpo": {
+            "foto": {
+                "id": 1,
+                "descripcion": "Borde norte con maleza alta",
+                "url": "/api/terrenos/fotos/1/archivo?expires=1795547148&signature=05e70361a42415d36e953be9e2e72a555d18e7c557b576c99fbc6e4a09053a48"
+            }
+        }
+    }
+}

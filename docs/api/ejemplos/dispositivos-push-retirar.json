@@ -1,0 +1,13 @@
+{
+    "operationId": "retirarDispositivoPush",
+    "descripcion": "Al cerrar sesión la app retira el token de push.",
+    "peticion": {
+        "metodo": "DELETE",
+        "ruta": "/api/dispositivos/fcm%3Aejemplo-token-de-push",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 204,
+        "cuerpo": null
+    }
+}

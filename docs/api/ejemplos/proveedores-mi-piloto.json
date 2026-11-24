@@ -1,0 +1,30 @@
+{
+    "operationId": "verMiProveedor",
+    "descripcion": "El piloto propio de Agrocom ve en solo lectura el proveedor al que pertenece.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/proveedores/mi",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "proveedor": {
+                "id": 1,
+                "tipo": "propio",
+                "razon_social": "Agrocom SRL",
+                "documento_fiscal": null,
+                "telefono": "+591 3 3512000",
+                "zona_base_id": 1,
+                "radio_operacion_km": "150.0",
+                "estado": "aprobado",
+                "motivo_estado": null,
+                "aprobado_en": "2026-11-24T18:50:16+00:00",
+                "calificacion_promedio": "4.59",
+                "calificaciones_conteo": 1
+            },
+            "documentos_faltantes": [],
+            "apto_para_ofertas": true
+        }
+    }
+}

@@ -1,0 +1,19 @@
+{
+    "operationId": "confirmarPagoDeSolicitud",
+    "descripcion": "Un segundo registro con otro uuid responde 409: lo confirmado no se reescribe.",
+    "peticion": {
+        "metodo": "POST",
+        "ruta": "/api/solicitudes/18/pago-confirmado",
+        "autenticada": true,
+        "cuerpo": {
+            "uuid_cliente": "9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e41"
+        }
+    },
+    "respuesta": {
+        "estado": 409,
+        "cuerpo": {
+            "message": "El pago de este servicio ya fue confirmado.",
+            "codigo": "pago_ya_confirmado"
+        }
+    }
+}

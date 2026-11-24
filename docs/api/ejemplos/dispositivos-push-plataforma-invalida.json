@@ -1,0 +1,24 @@
+{
+    "operationId": "registrarDispositivoPush",
+    "descripcion": "Validación: plataforma desconocida.",
+    "peticion": {
+        "metodo": "POST",
+        "ruta": "/api/dispositivos",
+        "autenticada": true,
+        "cuerpo": {
+            "token": "fcm:otro",
+            "plataforma": "web"
+        }
+    },
+    "respuesta": {
+        "estado": 422,
+        "cuerpo": {
+            "message": "La opción elegida no es válida.",
+            "errors": {
+                "plataforma": [
+                    "La opción elegida no es válida."
+                ]
+            }
+        }
+    }
+}

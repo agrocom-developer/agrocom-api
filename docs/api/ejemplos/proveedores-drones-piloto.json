@@ -1,0 +1,31 @@
+{
+    "operationId": "listarDrones",
+    "descripcion": "El piloto ve los drones de su equipo.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/proveedores/drones",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "data": [
+                {
+                    "id": 1,
+                    "dueno_proveedor_id": 1,
+                    "operador_proveedor_id": 1,
+                    "marca": "DJI",
+                    "modelo": "Agras T30",
+                    "numero_serie": "1ZNBJ4A00B00K9",
+                    "anio": null,
+                    "capacidad_tanque_l": "30.00",
+                    "ancho_pasada_m": "9.00",
+                    "ciclos_bateria": 212,
+                    "estado": "aprobado",
+                    "motivo_estado": null,
+                    "origen": "flota_agrocom"
+                }
+            ]
+        }
+    }
+}

@@ -24,8 +24,8 @@
                 "ofertas_vigentes": 0,
                 "mi_negociacion": null,
                 "distancia_km": null,
-                "publicada_en": "2026-11-24T15:58:51+00:00",
-                "vence_en": "2026-12-01T15:58:51+00:00",
+                "publicada_en": "2026-11-24T18:50:49+00:00",
+                "vence_en": "2026-12-01T18:50:49+00:00",
                 "producto_indicado": "Glifosato 480 SL, 2 L/ha",
                 "aporta_producto": "cliente",
                 "urgente": false,
@@ -37,7 +37,14 @@
                     "cultivo": "Soya",
                     "referencias_acceso": "Camino vecinal, portón azul a 2 km de la ruta.",
                     "colindantes_sensibles": null,
-                    "acceso_dificil": false
+                    "acceso_dificil": false,
+                    "fotos": [
+                        {
+                            "id": 1,
+                            "descripcion": "Borde norte con maleza alta",
+                            "url": "/api/terrenos/fotos/1/archivo?expires=1795547156&signature=e86f8f4c8c09d8424a12fdc3c48066fcc0fc793cf577185e072038a7ca777c88"
+                        }
+                    ]
                 }
             }
         }
