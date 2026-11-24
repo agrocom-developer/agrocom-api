@@ -208,5 +208,5 @@ test('al cerrar el trabajo la solicitud recibe lo declarado por los trabajos cer
     expect($resultados[0]['estado'])->toBe('aplicado')
         ->and($doble->coberturas)->toHaveCount(1)
         ->and($doble->coberturas[0][0])->toBe(31)
-        ->and(bccomp($doble->coberturas[0][1], '78.25', 2))->toBe(0);
+        ->and(rtrim(rtrim($doble->coberturas[0][1], '0'), '.'))->toBe('78.25');
 });
