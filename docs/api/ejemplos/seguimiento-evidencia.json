@@ -1,0 +1,29 @@
+{
+    "operationId": "subirEvidenciaDeSolicitud",
+    "descripcion": "Sube una foto de avance comprimida (multipart); cola separada de los registros livianos.",
+    "peticion": {
+        "metodo": "POST",
+        "ruta": "/api/solicitudes/18/evidencias",
+        "autenticada": true,
+        "cuerpo": {
+            "uuid_cliente": "9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e33",
+            "tipo": "foto_avance"
+        },
+        "multipart": {
+            "archivo": "avance.jpg (image/jpeg)"
+        }
+    },
+    "respuesta": {
+        "estado": 201,
+        "cuerpo": {
+            "evidencia": {
+                "id": 10,
+                "uuid_cliente": "9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e33",
+                "tipo": "foto_avance",
+                "avance_id": null,
+                "url": "/api/evidencias/10/archivo",
+                "subida_en": "2026-11-24T15:58:54+00:00"
+            }
+        }
+    }
+}

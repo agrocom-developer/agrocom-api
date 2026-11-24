@@ -1,6 +1,6 @@
 {
     "operationId": "listarDrones",
-    "descripcion": "Drones del proveedor.",
+    "descripcion": "Drones del proveedor, con su modelo.",
     "peticion": {
         "metodo": "GET",
         "ruta": "/api/proveedores/drones",
@@ -17,6 +17,7 @@
                     "marca": "DJI",
                     "modelo": "Agras T40",
                     "numero_serie": "1WNDH2K00A0417",
+                    "anio": null,
                     "capacidad_tanque_l": "40.00",
                     "ancho_pasada_m": "11.00",
                     "ciclos_bateria": 0,

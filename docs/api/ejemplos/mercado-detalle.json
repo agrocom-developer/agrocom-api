@@ -1,0 +1,45 @@
+{
+    "operationId": "verSolicitudAbierta",
+    "descripcion": "Detalle previo a ofertar: lotes (polígonos), estado del terreno y datos del servicio, sin datos del cliente.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/solicitudes-abiertas/18",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "solicitud": {
+                "id": 18,
+                "centro": null,
+                "hectareas_solicitadas": "100.0000",
+                "precio_ha_propuesto": "128.0000",
+                "zona": null,
+                "zona_id": null,
+                "macrorregion": null,
+                "cultivo": "Soya",
+                "tipo_aplicacion": "herbicida",
+                "ventana_desde": "2026-12-14",
+                "ventana_hasta": "2026-12-20",
+                "ofertas_vigentes": 0,
+                "mi_negociacion": null,
+                "distancia_km": null,
+                "publicada_en": "2026-11-24T15:58:51+00:00",
+                "vence_en": "2026-12-01T15:58:51+00:00",
+                "producto_indicado": "Glifosato 480 SL, 2 L/ha",
+                "aporta_producto": "cliente",
+                "urgente": false,
+                "observaciones": "Entrar por el portón sur.",
+                "terreno": {
+                    "nombre": "Lote Los Álamos",
+                    "hectareas": "118.2500",
+                    "geometria": null,
+                    "cultivo": "Soya",
+                    "referencias_acceso": "Camino vecinal, portón azul a 2 km de la ruta.",
+                    "colindantes_sensibles": null,
+                    "acceso_dificil": false
+                }
+            }
+        }
+    }
+}

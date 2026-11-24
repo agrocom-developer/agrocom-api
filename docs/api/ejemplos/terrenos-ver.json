@@ -3,14 +3,14 @@
     "descripcion": "Detalle de un terreno propio.",
     "peticion": {
         "metodo": "GET",
-        "ruta": "/api/terrenos/4",
+        "ruta": "/api/terrenos/10",
         "autenticada": true
     },
     "respuesta": {
         "estado": 200,
         "cuerpo": {
             "terreno": {
-                "id": 4,
+                "id": 10,
                 "nombre": "Lote Los Álamos",
                 "hectareas": "120.5000",
                 "cultivo": "Soya",

@@ -1,6 +1,6 @@
 {
     "operationId": "verReputacion",
-    "descripcion": "Calificación, tasas y sanciones propias.",
+    "descripcion": "Calificación, tasa de cancelación y alertas propias; sin sanciones automáticas.",
     "peticion": {
         "metodo": "GET",
         "ruta": "/api/reputacion",
@@ -9,11 +9,14 @@
     "respuesta": {
         "estado": 200,
         "cuerpo": {
-            "calificacion_promedio": "0.00",
-            "calificaciones_conteo": 0,
-            "tasa_aceptacion": "1.0000",
-            "tasa_cancelacion": "0.0000",
-            "sanciones": []
+            "reputacion": {
+                "calificacion_promedio": "0.00",
+                "calificaciones_conteo": 0,
+                "tasa_cancelacion": "0.3333",
+                "adjudicadas": 3,
+                "canceladas": 1,
+                "alerta_cancelacion": true
+            }
         }
     }
 }

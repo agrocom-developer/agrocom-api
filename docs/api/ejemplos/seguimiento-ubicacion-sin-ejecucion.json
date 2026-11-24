@@ -1,0 +1,15 @@
+{
+    "operationId": "verUbicacionDelPiloto",
+    "descripcion": "Fuera de la ejecución no hay ubicación: la respuesta viene sin punto.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/solicitudes/18/ubicacion-piloto",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "ubicacion": null
+        }
+    }
+}

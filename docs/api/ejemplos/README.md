@@ -27,14 +27,15 @@ Los archivos son generados: no se editan a mano. Se regeneran con `bin/generar-e
 - `ruta` lleva los identificadores ya resueltos (`/api/solicitudes/12/publicar`).
 - Los tokens se sustituyen por el marcador `12|<token-del-dispositivo>`: un fixture nunca guarda una credencial viva.
 - Hectáreas, litros y montos viajan como cadena decimal exacta (`"100.0000"`), nunca como número.
-- Los instantes (`ofrecida_en`, `vence_en`, `creada_en`) cambian en cada regeneración; las apps no deben comparar su valor literal.
+- Los instantes (`vence_en`, `creada_en`) cambian en cada regeneración; las apps no deben comparar su valor literal.
 
 ## Qué cubren
 
 - Sesión por token de dispositivo: sesión de cliente y de piloto, credenciales inválidas, token ausente, revocado y de un rol equivocado, cierre de sesión y dispositivos.
-- Cliente: zonas, terrenos y solicitudes (crear, reintentar con el mismo `uuid_cliente`, estimar, publicar, cancelar, recurso ajeno).
-- Proveedor y flota: perfil, pilotos, auxiliares, documentos, drones, equipos y disponibilidad.
-- Ofertas: lista, detalle, reputación, aceptar y aceptar otra vez.
+- Cliente: zonas, terrenos y solicitudes (crear, reintentar con el mismo `uuid_cliente`, estimar, publicar, cambiar precio, cancelar, recurso ajeno).
+- Proveedor y flota: perfil, pilotos, auxiliares, documentos, drones y equipos.
+- Mercado y negociación: mapa de solicitudes abiertas con filtros, resumen por zona, detalle previo a ofertar, ofertar (y reintento idempotente), comparar, contraofertar, aceptar y aceptar otra vez.
+- Ejecución: inicio, avance, foto de avance, ubicación del piloto (enviar y ver), cierre, chat y preferencias de aviso.
 - Posventa y avisos: calificaciones, disputas y notificaciones.
 - Sincronización del lote offline: catálogo completo e incremental, lote nuevo, replay del mismo lote (todos `duplicado`), rechazo parcial, lote sin registros y sin token; y la subida de evidencia.
 

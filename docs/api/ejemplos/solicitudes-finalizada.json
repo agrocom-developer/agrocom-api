@@ -1,0 +1,96 @@
+{
+    "operationId": "verSolicitud",
+    "descripcion": "Finalizada: precio final = hectáreas ejecutadas por precio acordado; el pago se acuerda fuera de la app.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/solicitudes/18",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "solicitud": {
+                "id": 18,
+                "uuid_cliente": "5b0f6a52-0c1e-4b6c-9d57-7f9d3a1c2e01",
+                "terreno_id": 10,
+                "tipo_aplicacion": "herbicida",
+                "hectareas_solicitadas": "100.0000",
+                "cultivo": "Soya",
+                "producto_indicado": "Glifosato 480 SL, 2 L/ha",
+                "aporta_producto": "cliente",
+                "ventana_desde": "2026-12-14",
+                "ventana_hasta": "2026-12-20",
+                "urgente": false,
+                "observaciones": "Entrar por el portón sur.",
+                "precio_ha_propuesto": "128.0000",
+                "precio_ha_acordado": "121.0000",
+                "monto_estimado": "12100.00",
+                "hectareas_ejecutadas": "98.5000",
+                "porcentaje_avance": "98.50",
+                "monto_final": "11918.50",
+                "estado": "finalizada",
+                "oferta_adjudicada_id": 18,
+                "vence_en": "2026-12-01T15:58:51+00:00",
+                "proveedor_id": 2,
+                "publicada_en": "2026-11-24T15:58:51+00:00",
+                "motivo_cancelacion": null,
+                "cancelada_por": null,
+                "terreno": {
+                    "id": 10,
+                    "nombre": "Lote Los Álamos",
+                    "hectareas": "118.2500",
+                    "cultivo": "Soya",
+                    "geometria": null,
+                    "referencias_acceso": "Camino vecinal, portón azul a 2 km de la ruta.",
+                    "colindantes_sensibles": null,
+                    "acceso_dificil": false,
+                    "zona_id": null
+                },
+                "historial": [
+                    {
+                        "estado_anterior": null,
+                        "estado_nuevo": "borrador",
+                        "origen": "cliente",
+                        "motivo": null,
+                        "creado_en": "2026-11-24T15:58:51+00:00"
+                    },
+                    {
+                        "estado_anterior": "borrador",
+                        "estado_nuevo": "abierta",
+                        "origen": "cliente",
+                        "motivo": null,
+                        "creado_en": "2026-11-24T15:58:51+00:00"
+                    },
+                    {
+                        "estado_anterior": "abierta",
+                        "estado_nuevo": "con_ofertas",
+                        "origen": "sistema",
+                        "motivo": null,
+                        "creado_en": "2026-11-24T15:58:53+00:00"
+                    },
+                    {
+                        "estado_anterior": "con_ofertas",
+                        "estado_nuevo": "adjudicada",
+                        "origen": "proveedor",
+                        "motivo": null,
+                        "creado_en": "2026-11-24T15:58:53+00:00"
+                    },
+                    {
+                        "estado_anterior": "adjudicada",
+                        "estado_nuevo": "en_ejecucion",
+                        "origen": "proveedor",
+                        "motivo": null,
+                        "creado_en": "2026-11-24T15:58:53+00:00"
+                    },
+                    {
+                        "estado_anterior": "en_ejecucion",
+                        "estado_nuevo": "finalizada",
+                        "origen": "proveedor",
+                        "motivo": null,
+                        "creado_en": "2026-11-24T15:58:54+00:00"
+                    }
+                ]
+            }
+        }
+    }
+}

@@ -3,7 +3,7 @@
     "descripcion": "Corrige los datos de un terreno propio.",
     "peticion": {
         "metodo": "PUT",
-        "ruta": "/api/terrenos/4",
+        "ruta": "/api/terrenos/10",
         "autenticada": true,
         "cuerpo": {
             "nombre": "Lote Los Álamos",
@@ -15,7 +15,7 @@
         "estado": 200,
         "cuerpo": {
             "terreno": {
-                "id": 4,
+                "id": 10,
                 "nombre": "Lote Los Álamos",
                 "hectareas": "118.2500",
                 "cultivo": "Soya",

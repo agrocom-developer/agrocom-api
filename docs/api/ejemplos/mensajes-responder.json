@@ -1,0 +1,28 @@
+{
+    "operationId": "enviarMensaje",
+    "descripcion": "El proveedor responde.",
+    "peticion": {
+        "metodo": "POST",
+        "ruta": "/api/solicitudes/18/mensajes",
+        "autenticada": true,
+        "cuerpo": {
+            "uuid_cliente": "9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e22",
+            "texto": "El jueves temprano, si el viento lo permite."
+        }
+    },
+    "respuesta": {
+        "estado": 201,
+        "cuerpo": {
+            "mensaje": {
+                "id": 17,
+                "uuid_cliente": "9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e22",
+                "solicitud_id": 18,
+                "autor_rol": "proveedor",
+                "propio": true,
+                "texto": "El jueves temprano, si el viento lo permite.",
+                "leido_en": null,
+                "creado_en": "2026-11-24T15:58:53+00:00"
+            }
+        }
+    }
+}

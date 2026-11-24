@@ -1,0 +1,44 @@
+{
+    "operationId": "guardarPreferenciasDeAviso",
+    "descripcion": "Activa o apaga los avisos de nuevas solicitudes y los acota a una región.",
+    "peticion": {
+        "metodo": "PUT",
+        "ruta": "/api/notificaciones/preferencias",
+        "autenticada": true,
+        "cuerpo": {
+            "nuevas_solicitudes": {
+                "activo": true,
+                "zonas": [],
+                "macrorregiones": [
+                    "chiquitania",
+                    "valles"
+                ],
+                "hectareas_minimas": "50.0000"
+            },
+            "ofertas": true,
+            "mensajes": true,
+            "avance": true,
+            "calificaciones": true
+        }
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "preferencias": {
+                "nuevas_solicitudes": {
+                    "activo": true,
+                    "zonas": [],
+                    "macrorregiones": [
+                        "chiquitania",
+                        "valles"
+                    ],
+                    "hectareas_minimas": "50.0000"
+                },
+                "ofertas": true,
+                "mensajes": true,
+                "avance": true,
+                "calificaciones": true
+            }
+        }
+    }
+}

@@ -1,6 +1,6 @@
 {
     "operationId": "obtenerCatalogoSincronizacion",
-    "descripcion": "Pull completo: los servicios aceptados por el equipo del operario aparecen en `servicios_asignados`.",
+    "descripcion": "Pull completo: las solicitudes adjudicadas o en ejecución del equipo del operario aparecen en `servicios_asignados`.",
     "peticion": {
         "metodo": "GET",
         "ruta": "/api/sync/catalogo",
@@ -16,7 +16,7 @@
                     "rol": "dueno",
                     "base_id": 1,
                     "activo": true,
-                    "updated_at": "2026-11-24T05:44:55+00:00"
+                    "updated_at": "2026-11-24T15:58:38+00:00"
                 },
                 {
                     "id": 2,
@@ -24,7 +24,7 @@
                     "rol": "encargado_operaciones",
                     "base_id": 1,
                     "activo": true,
-                    "updated_at": "2026-11-24T05:44:56+00:00"
+                    "updated_at": "2026-11-24T15:58:38+00:00"
                 },
                 {
                     "id": 3,
@@ -32,7 +32,7 @@
                     "rol": "jefe_campo",
                     "base_id": 2,
                     "activo": true,
-                    "updated_at": "2026-11-24T05:44:57+00:00"
+                    "updated_at": "2026-11-24T15:58:39+00:00"
                 },
                 {
                     "id": 4,
@@ -40,7 +40,7 @@
                     "rol": "piloto",
                     "base_id": 2,
                     "activo": true,
-                    "updated_at": "2026-11-24T05:44:58+00:00"
+                    "updated_at": "2026-11-24T15:58:39+00:00"
                 },
                 {
                     "id": 5,
@@ -48,7 +48,7 @@
                     "rol": "piloto",
                     "base_id": 3,
                     "activo": true,
-                    "updated_at": "2026-11-24T05:45:00+00:00"
+                    "updated_at": "2026-11-24T15:58:39+00:00"
                 },
                 {
                     "id": 6,
@@ -56,7 +56,7 @@
                     "rol": "auxiliar",
                     "base_id": 2,
                     "activo": true,
-                    "updated_at": "2026-11-24T05:45:01+00:00"
+                    "updated_at": "2026-11-24T15:58:39+00:00"
                 },
                 {
                     "id": 7,
@@ -64,7 +64,7 @@
                     "rol": "auxiliar",
                     "base_id": 2,
                     "activo": true,
-                    "updated_at": "2026-11-24T05:45:03+00:00"
+                    "updated_at": "2026-11-24T15:58:39+00:00"
                 },
                 {
                     "id": 8,
@@ -72,7 +72,7 @@
                     "rol": "auxiliar",
                     "base_id": 3,
                     "activo": true,
-                    "updated_at": "2026-11-24T05:45:03+00:00"
+                    "updated_at": "2026-11-24T15:58:40+00:00"
                 },
                 {
                     "id": 9,
@@ -80,33 +80,131 @@
                     "rol": "auxiliar",
                     "base_id": 1,
                     "activo": false,
-                    "updated_at": "2026-11-24T05:45:04+00:00"
+                    "updated_at": "2026-11-24T15:58:40+00:00"
+                },
+                {
+                    "id": 10,
+                    "nombre": "Rodrigo Suárez Peña",
+                    "rol": "piloto",
+                    "base_id": null,
+                    "activo": true,
+                    "updated_at": "2026-11-24T15:58:45+00:00"
+                },
+                {
+                    "id": 11,
+                    "nombre": "Valeria Montaño Roca",
+                    "rol": "piloto",
+                    "base_id": null,
+                    "activo": true,
+                    "updated_at": "2026-11-24T15:58:45+00:00"
+                },
+                {
+                    "id": 12,
+                    "nombre": "Diego Parada Cuéllar",
+                    "rol": "auxiliar",
+                    "base_id": null,
+                    "activo": true,
+                    "updated_at": "2026-11-24T15:58:45+00:00"
+                },
+                {
+                    "id": 13,
+                    "nombre": "Carlos Mamani Quispe",
+                    "rol": "piloto",
+                    "base_id": null,
+                    "activo": true,
+                    "updated_at": "2026-11-24T15:58:45+00:00"
+                },
+                {
+                    "id": 14,
+                    "nombre": "Esteban Choque Ramos",
+                    "rol": "auxiliar",
+                    "base_id": null,
+                    "activo": true,
+                    "updated_at": "2026-11-24T15:58:45+00:00"
+                },
+                {
+                    "id": 15,
+                    "nombre": "Marcelo Terrazas Aguilera",
+                    "rol": "piloto",
+                    "base_id": null,
+                    "activo": true,
+                    "updated_at": "2026-11-24T15:58:45+00:00"
+                },
+                {
+                    "id": 16,
+                    "nombre": "Iván Cuéllar Soliz",
+                    "rol": "piloto",
+                    "base_id": null,
+                    "activo": true,
+                    "updated_at": "2026-11-24T15:58:45+00:00"
+                },
+                {
+                    "id": 17,
+                    "nombre": "Lucía Flores Justiniano",
+                    "rol": "auxiliar",
+                    "base_id": null,
+                    "activo": true,
+                    "updated_at": "2026-11-24T15:58:45+00:00"
                 }
             ],
             "servicios_asignados": [
                 {
-                    "id": 5,
-                    "uuid_cliente": "0533588b-4abc-5ac3-a105-d524ae9710ae",
-                    "estado": "asignada",
+                    "id": 10,
+                    "uuid_cliente": "baf58aac-6e05-5aa4-8cda-d11afe5b57b5",
+                    "estado": "en_ejecucion",
                     "equipo_id": 1,
                     "tipo_aplicacion": "herbicida",
-                    "hectareas_solicitadas": "60.0000",
+                    "hectareas_solicitadas": "80.0000",
                     "cultivo": "Soya",
                     "producto_indicado": "Glifosato 480 SL, 2 L/ha",
                     "aporta_producto": "cliente",
-                    "ventana_desde": "2026-11-27",
-                    "ventana_hasta": "2026-12-06",
+                    "ventana_desde": "2026-11-23",
+                    "ventana_hasta": "2026-11-26",
                     "urgente": false,
                     "observaciones": null,
                     "terreno": {
                         "nombre": "Lote Norte",
                         "hectareas": "80.0000",
-                        "geometria": null,
+                        "geometria": {
+                            "type": "Polygon",
+                            "coordinates": [
+                                [
+                                    [
+                                        -63.2018,
+                                        -17.5391
+                                    ],
+                                    [
+                                        -63.1918,
+                                        -17.5391
+                                    ],
+                                    [
+                                        -63.1918,
+                                        -17.5291
+                                    ],
+                                    [
+                                        -63.2018,
+                                        -17.5291
+                                    ],
+                                    [
+                                        -63.2018,
+                                        -17.5391
+                                    ]
+                                ]
+                            ]
+                        },
                         "referencias_acceso": "Camino vecinal a 3 km de la ruta principal.",
                         "colindantes_sensibles": null,
                         "acceso_dificil": false
                     },
-                    "updated_at": "2026-11-24T05:45:29+00:00"
+                    "precio_ha_propuesto": "115.0000",
+                    "precio_ha_acordado": "115.0000",
+                    "hectareas_ejecutadas": "51.2000",
+                    "porcentaje_avance": "64.00",
+                    "contacto": {
+                        "nombre": "Agropecuaria San Rafael SRL",
+                        "telefono": "+591 76543210"
+                    },
+                    "updated_at": "2026-11-24T13:58:45+00:00"
                 }
             ],
             "servicios_retirados": [],
@@ -119,7 +217,7 @@
                 "velocidad_vuelo_kmh": null,
                 "ancho_pasada_m": null
             },
-            "cursor": "eyJwZXJzb25hcyI6eyJ1IjoiMjAyNi0xMS0yNFQwNTo0NTowNCswMDowMCIsImlkIjo5fSwic2VydmljaW9zX2FzaWduYWRvcyI6eyJ1IjoiMjAyNi0xMS0yNFQwNTo0NToyOSswMDowMCIsImlkIjo1fSwic2VydmljaW9zX3JldGlyYWRvcyI6eyJ1IjoiMjAyNi0xMS0yNFQwNTo0NTo0NCswMDowMCIsImlkIjowfX0="
+            "cursor": "eyJwZXJzb25hcyI6eyJ1IjoiMjAyNi0xMS0yNFQxNTo1ODo0NSswMDowMCIsImlkIjoxN30sInNlcnZpY2lvc19hc2lnbmFkb3MiOnsidSI6IjIwMjYtMTEtMjRUMTM6NTg6NDUrMDA6MDAiLCJpZCI6MTB9LCJzZXJ2aWNpb3NfcmV0aXJhZG9zIjp7InUiOiIyMDI2LTExLTI0VDE1OjU4OjUyKzAwOjAwIiwiaWQiOjB9fQ=="
         }
     }
 }

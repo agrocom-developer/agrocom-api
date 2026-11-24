@@ -8,374 +8,6 @@ servers:
     url: /
     description: 'Servidor actual — la URL base la define el entorno (local, staging, producción).'
 paths:
-  /api/ofertas:
-    get:
-      tags:
-        - Ofertas
-      summary: 'Mis ofertas'
-      description: 'Las ofertas del proveedor de la cuenta. `vista=vivas` (por defecto) deja las que esperan respuesta, con su cuenta regresiva; `vista=historial`, las ya resueltas. `desde` (ISO 8601) devuelve solo lo que cambió después: es la consulta periódica (polling) con que la app se entera de una oferta nueva, junto con `GET /api/notificaciones`. El servicio muestra el terreno aproximado, las hectáreas, el pago estimado y la distancia; nunca datos del cliente.'
-      operationId: listarOfertas
-      parameters:
-        -
-          name: vista
-          in: query
-          required: false
-          schema:
-            type: string
-            enum:
-              - vivas
-              - historial
-        -
-          name: desde
-          in: query
-          required: false
-          schema:
-            type: string
-            format: date-time
-      responses:
-        200:
-          description: Ofertas.
-          content:
-            application/json:
-              schema:
-                required:
-                  - ofertas
-                properties:
-                  ofertas:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Oferta'
-                type: object
-        401:
-          description: 'Token ausente o revocado.'
-        403:
-          description: 'El rol del token no recibe ofertas.'
-        404:
-          description: 'La cuenta no pertenece a ningún proveedor.'
-      security:
-        -
-          tokenDispositivo: []
-  '/api/ofertas/{id}':
-    get:
-      tags:
-        - Ofertas
-      summary: 'Detalle de una oferta'
-      description: 'Una oferta del proveedor de la cuenta. Una oferta de otro proveedor responde 404.'
-      operationId: verOferta
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        200:
-          description: 'La oferta.'
-          content:
-            application/json:
-              schema:
-                required:
-                  - oferta
-                properties:
-                  oferta:
-                    $ref: '#/components/schemas/Oferta'
-                type: object
-        401:
-          description: 'Token ausente o revocado.'
-        403:
-          description: 'El rol del token no recibe ofertas.'
-        404:
-          description: 'No existe o es de otro proveedor.'
-      security:
-        -
-          tokenDispositivo: []
-  '/api/ofertas/{id}/aceptar':
-    post:
-      tags:
-        - Ofertas
-      summary: 'Aceptar una oferta'
-      description: 'Acepta una oferta viva. Requiere red. Es atómico sobre la solicitud: si otro proveedor la aceptó antes, la oferta venció o se retiró, responde 409 y no cambia nada. Con `equipo_id` asigna ese equipo; sin él, el primer equipo apto y libre en la ventana. Aceptar dos veces la misma oferta devuelve la misma oferta. La solicitud queda `asignada` y se avisa al cliente.'
-      operationId: aceptarOferta
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              properties:
-                equipo_id:
-                  type: integer
-                  nullable: true
-              type: object
-      responses:
-        200:
-          description: 'Oferta aceptada.'
-          content:
-            application/json:
-              schema:
-                required:
-                  - oferta
-                properties:
-                  oferta:
-                    $ref: '#/components/schemas/Oferta'
-                type: object
-        401:
-          description: 'Token ausente o revocado.'
-        403:
-          description: 'El rol del token no responde ofertas.'
-        404:
-          description: 'No existe o es de otro proveedor.'
-        409:
-          description: 'La oferta ya no está disponible: otro proveedor aceptó, venció o se retiró.'
-        422:
-          description: 'No hay un equipo apto y libre, o el proveedor tiene una sanción vigente.'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorValidacion'
-      security:
-        -
-          tokenDispositivo: []
-  '/api/ofertas/{id}/rechazar':
-    post:
-      tags:
-        - Ofertas
-      summary: 'Rechazar una oferta'
-      description: 'Rechaza una oferta viva con motivo. Requiere red. Rechazar no penaliza hasta que la tasa de aceptación baje del umbral de la política de calificación. Rechazar dos veces la misma oferta devuelve la misma oferta.'
-      operationId: rechazarOferta
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              required:
-                - motivo
-              properties:
-                motivo:
-                  type: string
-                  example: 'No tengo equipo libre esa semana'
-              type: object
-      responses:
-        200:
-          description: 'Oferta rechazada.'
-          content:
-            application/json:
-              schema:
-                required:
-                  - oferta
-                properties:
-                  oferta:
-                    $ref: '#/components/schemas/Oferta'
-                type: object
-        401:
-          description: 'Token ausente o revocado.'
-        403:
-          description: 'El rol del token no responde ofertas.'
-        404:
-          description: 'No existe o es de otro proveedor.'
-        409:
-          description: 'La oferta ya no está disponible.'
-        422:
-          description: 'Falta el motivo.'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorValidacion'
-      security:
-        -
-          tokenDispositivo: []
-  '/api/solicitudes/{id}/en-camino':
-    post:
-      tags:
-        - Ofertas
-      summary: 'El equipo salió hacia el lote'
-      description: 'El proveedor avisa que el equipo salió hacia el lote: la solicitud pasa de `asignada` a `en_camino` y se avisa al cliente. Solo lo hace el proveedor al que se asignó el servicio. Es idempotente: avisar de nuevo no cambia nada ni repite el aviso. Requiere red, como las demás acciones de negocio del proveedor sin outbox.'
-      operationId: avisarEquipoEnCamino
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        200:
-          description: 'El servicio quedó en camino.'
-          content:
-            application/json:
-              schema:
-                required:
-                  - solicitud_id
-                  - estado
-                properties:
-                  solicitud_id:
-                    type: integer
-                  estado:
-                    type: string
-                    example: en_camino
-                type: object
-        401:
-          description: 'Token ausente o revocado.'
-        403:
-          description: 'El rol del token no responde ofertas.'
-        404:
-          description: 'La solicitud no existe o no está asignada a tu proveedor.'
-        422:
-          description: 'La solicitud no está asignada.'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorValidacion'
-      security:
-        -
-          tokenDispositivo: []
-  '/api/solicitudes/{id}/cancelar-proveedor':
-    post:
-      tags:
-        - Ofertas
-      summary: 'Cancelar un servicio aceptado'
-      description: 'El proveedor cancela un servicio que ya aceptó (`asignada` o `en_camino`), con motivo. La solicitud vuelve a asignación con prioridad, sin ofrecérsela de nuevo a quien canceló, y se avisa al cliente. Suma a su tasa de cancelación: pesa el doble con menos de 12 horas de anticipación y no pesa si la `causa` es `emergencia` o `falla_de_equipo` avisada con más de 12 horas. Tres cancelaciones en 30 días generan una advertencia; cinco, una restricción temporal de ofertas (política de cancelación).'
-      operationId: cancelarSolicitudComoProveedor
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              required:
-                - motivo
-              properties:
-                motivo:
-                  type: string
-                  example: 'El dron quedó en reparación'
-                causa:
-                  type: string
-                  nullable: true
-                  enum:
-                    - otra
-                    - falla_de_equipo
-                    - emergencia
-              type: object
-      responses:
-        200:
-          description: 'Cancelación registrada.'
-          content:
-            application/json:
-              schema:
-                required:
-                  - solicitud_id
-                  - peso
-                properties:
-                  solicitud_id:
-                    type: integer
-                  peso:
-                    description: 'Peso con que cuenta en la tasa de cancelación.'
-                    type: integer
-                    example: 1
-                type: object
-        401:
-          description: 'Token ausente o revocado.'
-        403:
-          description: 'El rol del token no responde ofertas.'
-        404:
-          description: 'La solicitud no existe o no está asignada a tu proveedor.'
-        422:
-          description: 'Falta el motivo o la solicitud ya no admite cancelación del proveedor.'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorValidacion'
-      security:
-        -
-          tokenDispositivo: []
-  /api/reputacion:
-    get:
-      tags:
-        - Ofertas
-      summary: 'Mi reputación'
-      description: 'Tu calificación, tus tasas de aceptación y de cancelación (cuatro decimales, entre 0 y 1) y las sanciones vigentes con su motivo. Una sanción se apela ante un administrador (política de calificación, «Defensa»).'
-      operationId: verReputacion
-      responses:
-        200:
-          description: 'Reputación del proveedor.'
-          content:
-            application/json:
-              schema:
-                required:
-                  - calificacion_promedio
-                  - calificaciones_conteo
-                  - tasa_aceptacion
-                  - tasa_cancelacion
-                  - sanciones
-                properties:
-                  calificacion_promedio:
-                    type: string
-                    example: '4.60'
-                  calificaciones_conteo:
-                    type: integer
-                    example: 24
-                  tasa_aceptacion:
-                    type: string
-                    example: '0.8500'
-                  tasa_cancelacion:
-                    type: string
-                    example: '0.0200'
-                  sanciones:
-                    type: array
-                    items:
-                      properties:
-                        tipo:
-                          type: string
-                          enum:
-                            - advertencia
-                            - restriccion_ofertas
-                            - revision_suspension
-                        causa:
-                          type: string
-                          enum:
-                            - cancelaciones
-                            - calificacion
-                            - aceptacion
-                        motivo:
-                          type: string
-                        desde:
-                          type: string
-                          format: date-time
-                        hasta:
-                          type: string
-                          format: date-time
-                          nullable: true
-                      type: object
-                type: object
-        401:
-          description: 'Token ausente o revocado.'
-        403:
-          description: 'El rol del token no recibe ofertas.'
-        404:
-          description: 'La cuenta no pertenece a ningún proveedor.'
-      security:
-        -
-          tokenDispositivo: []
   '/api/solicitudes/{id}/calificaciones':
     get:
       tags:
@@ -1128,91 +760,6 @@ paths:
                       -
                         $ref: '#/components/schemas/VersionApk'
                 type: object
-  /api/disponibilidad:
-    get:
-      tags:
-        - Flota
-      summary: 'Mi disponibilidad'
-      description: 'La disponibilidad declarada de los equipos vigentes de la cuenta. Un equipo sin fila nunca declaró nada y cuenta como fuera de línea.'
-      operationId: consultarDisponibilidad
-      responses:
-        200:
-          description: 'Disponibilidad por equipo.'
-          content:
-            application/json:
-              schema:
-                required:
-                  - data
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Disponibilidad'
-                type: object
-        401:
-          description: 'Token ausente o revocado.'
-        403:
-          description: 'El rol del token no gestiona disponibilidad.'
-      security:
-        -
-          tokenDispositivo: []
-    put:
-      tags:
-        - Flota
-      summary: 'Declararme en línea o fuera de línea'
-      description: 'Pone en línea o fuera de línea un equipo (`equipo_id`) o, sin él, todos los equipos vigentes de la cuenta. Una solicitud urgente solo se ofrece a quien está en línea. `lat` y `lng` actualizan la última ubicación, que mide la distancia a los terrenos. Idempotente.'
-      operationId: declararDisponibilidad
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              required:
-                - en_linea
-              properties:
-                en_linea:
-                  type: boolean
-                equipo_id:
-                  type: integer
-                  nullable: true
-                lat:
-                  type: number
-                  example: -17.7833
-                  nullable: true
-                lng:
-                  type: number
-                  example: -63.1821
-                  nullable: true
-              type: object
-      responses:
-        200:
-          description: 'Disponibilidad actualizada.'
-          content:
-            application/json:
-              schema:
-                required:
-                  - data
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Disponibilidad'
-                type: object
-        401:
-          description: 'Token ausente o revocado.'
-        403:
-          description: 'El rol del token no gestiona disponibilidad.'
-        404:
-          description: 'El equipo no es de la cuenta.'
-        422:
-          description: 'Datos inválidos o la cuenta no tiene equipos vigentes.'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorValidacion'
-      security:
-        -
-          tokenDispositivo: []
   /api/proveedores/drones:
     get:
       tags:
@@ -1268,6 +815,10 @@ paths:
                 numero_serie:
                   type: string
                   example: 1WNDH2K00A0001
+                anio:
+                  type: integer
+                  example: 2024
+                  nullable: true
                 capacidad_tanque_l:
                   type: string
                   example: '40.00'
@@ -1332,6 +883,10 @@ paths:
                   type: string
                 numero_serie:
                   type: string
+                anio:
+                  type: integer
+                  example: 2024
+                  nullable: true
                 capacidad_tanque_l:
                   type: string
                   example: '40.00'
@@ -1603,6 +1158,1613 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/proveedores/drones/{id}/fotos':
+    get:
+      tags:
+        - Flota
+      summary: 'Fotos del dron'
+      description: 'Las fotos de un dron propio con su estado de revisión.'
+      operationId: listarFotosDeDron
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Fotos.
+          content:
+            application/json:
+              schema:
+                required:
+                  - fotos
+                properties:
+                  fotos:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FotoDeDron'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no gestiona drones.'
+        404:
+          description: 'El dron no existe o es de otro proveedor.'
+      security:
+        -
+          tokenDispositivo: []
+    post:
+      tags:
+        - Flota
+      summary: 'Subir una foto del dron'
+      description: 'Sube una foto del dron (multipart, menos de 300 KB). Queda `en_revision` hasta que un administrador la aprueba o la rechaza con motivo. Fotos obligatorias para aprobar el dron: frontal, lateral y placa de serie.'
+      operationId: subirFotoDeDron
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              required:
+                - tipo
+                - archivo
+              properties:
+                tipo:
+                  type: string
+                  enum:
+                    - frontal
+                    - lateral
+                    - placa_serie
+                    - otra
+                archivo:
+                  type: string
+                  format: binary
+              type: object
+      responses:
+        201:
+          description: 'Foto guardada.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - foto
+                properties:
+                  foto:
+                    $ref: '#/components/schemas/FotoDeDron'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no gestiona drones.'
+        404:
+          description: 'El dron no existe o es de otro proveedor.'
+        422:
+          description: 'Archivo inválido o de 300 KB o más.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/proveedores/drones/{id}/fotos/{foto}':
+    delete:
+      tags:
+        - Flota
+      summary: 'Borrar una foto del dron'
+      description: 'Borra una foto propia, solo mientras está `en_revision` o `rechazada`.'
+      operationId: borrarFotoDeDron
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        -
+          name: foto
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        204:
+          description: 'Foto borrada.'
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no gestiona drones.'
+        404:
+          description: 'La foto o el dron no existen o son de otro proveedor.'
+        422:
+          description: 'La foto ya está aprobada.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/drones/fotos/{foto}/archivo':
+    get:
+      tags:
+        - Flota
+      summary: 'Descargar una foto del dron'
+      description: 'El archivo de una foto de dron: las aprobadas las ve cualquier cuenta autenticada (el cliente al comparar ofertas); las demás, solo el proveedor dueño.'
+      operationId: descargarFotoDeDron
+      parameters:
+        -
+          name: foto
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'La imagen.'
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        401:
+          description: 'Token ausente o revocado.'
+        404:
+          description: 'No existe o no es visible para la cuenta.'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/solicitudes/{id}/mensajes':
+    get:
+      tags:
+        - Mensajes
+      summary: 'Leer los mensajes'
+      description: 'Los mensajes posteriores a `despues` (el `cursor` de la respuesta anterior), en orden de creación. `solo_lectura` es verdadero cuando el plazo de escritura cerró. Solo las dos partes del servicio; otra cuenta recibe 404.'
+      operationId: listarMensajes
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        -
+          name: despues
+          in: query
+          required: false
+          schema:
+            type: integer
+        -
+          name: limite
+          in: query
+          required: false
+          schema:
+            type: integer
+            maximum: 100
+      responses:
+        200:
+          description: Mensajes.
+          content:
+            application/json:
+              schema:
+                required:
+                  - mensajes
+                  - cursor
+                  - solo_lectura
+                properties:
+                  mensajes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Mensaje'
+                  cursor:
+                    type: integer
+                    nullable: true
+                  solo_lectura:
+                    type: boolean
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no usa el chat.'
+        404:
+          description: 'La solicitud no es de la cuenta.'
+      security:
+        -
+          tokenDispositivo: []
+    post:
+      tags:
+        - Mensajes
+      summary: 'Enviar un mensaje'
+      description: 'Escribe un mensaje a la otra parte. Idempotente por `uuid_cliente`: reintentar responde 200 con el mismo mensaje. Se avisa a la otra parte. Con el plazo cerrado responde 409 `chat_cerrado`.'
+      operationId: enviarMensaje
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - uuid_cliente
+                - texto
+              properties:
+                uuid_cliente:
+                  type: string
+                  format: uuid
+                texto:
+                  type: string
+                  maxLength: 1000
+              type: object
+      responses:
+        201:
+          description: 'Mensaje creado.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - mensaje
+                properties:
+                  mensaje:
+                    $ref: '#/components/schemas/Mensaje'
+                type: object
+        200:
+          description: 'Reintento: el mensaje ya existía.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - mensaje
+                properties:
+                  mensaje:
+                    $ref: '#/components/schemas/Mensaje'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no usa el chat.'
+        404:
+          description: 'La solicitud no es de la cuenta.'
+        409:
+          description: '`chat_cerrado`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorConflicto'
+        422:
+          description: 'Texto vacío o de más de 1000 caracteres.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/solicitudes/{id}/mensajes/leidos':
+    post:
+      tags:
+        - Mensajes
+      summary: 'Marcar mensajes como leídos'
+      description: 'Marca como leídos los mensajes de la otra parte hasta `hasta` (un cursor).'
+      operationId: marcarMensajesLeidos
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - hasta
+              properties:
+                hasta:
+                  type: integer
+                  example: 120
+              type: object
+      responses:
+        200:
+          description: 'Cuántos mensajes se marcaron.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - marcados
+                properties:
+                  marcados:
+                    type: integer
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no usa el chat.'
+        404:
+          description: 'La solicitud no es de la cuenta.'
+      security:
+        -
+          tokenDispositivo: []
+  /api/solicitudes-abiertas:
+    get:
+      tags:
+        - Mercado
+      summary: 'Mapa de solicitudes abiertas'
+      description: 'Las solicitudes `abierta` y `con_ofertas`, para pintar el mapa. Todos los filtros son del usuario: no hay un radio fijo de operación. Paginación por cursor opaco (`siguiente_cursor`). Solo cuentas de proveedor habilitadas (aprobadas y con un equipo apto); si no, 403 `proveedor_no_habilitado`.'
+      operationId: listarSolicitudesAbiertas
+      parameters:
+        -
+          name: bbox
+          in: query
+          description: 'Encuadre del mapa: `oeste,sur,este,norte`.'
+          required: false
+          schema:
+            type: string
+            example: '-64.5,-18.5,-61.0,-16.5'
+        -
+          name: zona_id
+          in: query
+          required: false
+          schema:
+            type: integer
+        -
+          name: macrorregion
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - cercado
+              - norte_integrado
+              - chiquitania
+              - valles
+              - chaco
+        -
+          name: hectareas_min
+          in: query
+          required: false
+          schema:
+            type: string
+        -
+          name: hectareas_max
+          in: query
+          required: false
+          schema:
+            type: string
+        -
+          name: precio_ha_min
+          in: query
+          required: false
+          schema:
+            type: string
+        -
+          name: precio_ha_max
+          in: query
+          required: false
+          schema:
+            type: string
+        -
+          name: fecha_hasta
+          in: query
+          description: 'Ventana deseada que empieza antes de esa fecha.'
+          required: false
+          schema:
+            type: string
+            format: date
+        -
+          name: cultivo
+          in: query
+          required: false
+          schema:
+            type: string
+        -
+          name: tipo_aplicacion
+          in: query
+          required: false
+          schema:
+            type: string
+        -
+          name: orden
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - distancia
+              - precio_ha
+              - hectareas
+              - reciente
+        -
+          name: lat
+          in: query
+          description: 'Latitud del piloto para `orden=distancia`; no se guarda.'
+          required: false
+          schema:
+            type: number
+        -
+          name: lon
+          in: query
+          description: 'Longitud del piloto para `orden=distancia`; no se guarda.'
+          required: false
+          schema:
+            type: number
+        -
+          name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+        -
+          name: limite
+          in: query
+          required: false
+          schema:
+            type: integer
+            maximum: 100
+      responses:
+        200:
+          description: 'Solicitudes del mapa.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - solicitudes
+                  - siguiente_cursor
+                properties:
+                  solicitudes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SolicitudAbierta'
+                  siguiente_cursor:
+                    type: string
+                    nullable: true
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol no ve el mapa o el proveedor no está habilitado.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorConflicto'
+        422:
+          description: 'Encuadre inválido.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  /api/solicitudes-abiertas/resumen-zonas:
+    get:
+      tags:
+        - Mercado
+      summary: 'Resumen por zona y macrorregión'
+      description: 'Cuántas solicitudes, hectáreas y qué precio promedio hay por zona y macrorregión, con los mismos filtros del mapa: responde «cuántos clientes y cuántas hectáreas hay en los valles frente a la Chiquitania».'
+      operationId: resumenZonasAbiertas
+      responses:
+        200:
+          description: 'Una fila por zona.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - zonas
+                properties:
+                  zonas:
+                    type: array
+                    items:
+                      type: object
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol no ve el mapa o el proveedor no está habilitado.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorConflicto'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/solicitudes-abiertas/{id}':
+    get:
+      tags:
+        - Mercado
+      summary: 'Detalle de una solicitud abierta'
+      description: 'El detalle previo a ofertar: los lotes como polígonos GeoJSON, el estado del terreno, el cultivo, el producto y las observaciones. No incluye nombre, teléfono ni documento del cliente: esos datos se entregan solo tras la adjudicación.'
+      operationId: verSolicitudAbierta
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'La solicitud.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - solicitud
+                properties:
+                  solicitud:
+                    $ref: '#/components/schemas/SolicitudAbierta'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol no ve el mapa o el proveedor no está habilitado.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorConflicto'
+        404:
+          description: 'No existe o ya no está abierta.'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/solicitudes/{id}/ofertas':
+    get:
+      tags:
+        - Ofertas
+      summary: 'Comparar las ofertas recibidas'
+      description: 'El comparador del cliente: una fila por proveedor con su oferta más reciente, el historial de esa negociación y los datos del proveedor para decidir (calificación, tasa de cancelación, distancia, modelo del dron y fotos aprobadas). Solo el cliente de la solicitud; la de otro cliente responde 404.'
+      operationId: compararOfertas
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Ofertas.
+          content:
+            application/json:
+              schema:
+                required:
+                  - ofertas
+                properties:
+                  ofertas:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Oferta'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no es de cliente.'
+        404:
+          description: 'No existe o es de otro cliente.'
+      security:
+        -
+          tokenDispositivo: []
+    post:
+      tags:
+        - Ofertas
+      summary: 'Ofertar sobre una solicitud'
+      description: 'La primera oferta del proveedor sobre una solicitud `abierta` o `con_ofertas`. `tipo=acepta_propuesta` acepta exactamente el precio propuesto; `tipo=contraoferta` indica `precio_ha`, distinto del propuesto. Sin `equipo_id` usa el primer equipo apto. Idempotente por `uuid_cliente`: reintentar responde 200 con la misma oferta. Solo cuentas de proveedor habilitadas; un proveedor no oferta sobre solicitudes de su propia cuenta de cliente.'
+      operationId: ofertarSolicitud
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - uuid_cliente
+                - tipo
+              properties:
+                uuid_cliente:
+                  type: string
+                  format: uuid
+                tipo:
+                  type: string
+                  enum:
+                    - acepta_propuesta
+                    - contraoferta
+                precio_ha:
+                  description: 'Obligatorio en `contraoferta`.'
+                  type: string
+                  example: '118'
+                  nullable: true
+                equipo_id:
+                  type: integer
+                  nullable: true
+                nota:
+                  type: string
+                  example: 'Puedo ir la primera semana.'
+                  nullable: true
+              type: object
+      responses:
+        201:
+          description: 'Oferta creada.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - oferta
+                properties:
+                  oferta:
+                    $ref: '#/components/schemas/Oferta'
+                type: object
+        200:
+          description: 'Reintento: ya existía una oferta con ese `uuid_cliente`.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - oferta
+                properties:
+                  oferta:
+                    $ref: '#/components/schemas/Oferta'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol no oferta o el proveedor no está habilitado.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorConflicto'
+        404:
+          description: 'La solicitud no existe o la cuenta no es de un proveedor.'
+        409:
+          description: 'La solicitud ya no está abierta, o ya hay una negociación vigente o cerrada con este proveedor.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorConflicto'
+        422:
+          description: 'Precio inválido, sin equipo apto o sobre su propia cuenta.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  /api/ofertas:
+    get:
+      tags:
+        - Ofertas
+      summary: 'Mis ofertas'
+      description: 'Las ofertas de la cuenta, de la más nueva a la más vieja. Para el proveedor: las de su proveedor (sin precios de otros proveedores). Para el cliente: con `solicitud_id`, las de esa solicitud propia.'
+      operationId: listarOfertas
+      parameters:
+        -
+          name: estado
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - vigente
+              - aceptada
+              - reemplazada
+              - rechazada
+              - retirada
+              - vencida
+              - cerrada
+        -
+          name: solicitud_id
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Ofertas.
+          content:
+            application/json:
+              schema:
+                required:
+                  - ofertas
+                properties:
+                  ofertas:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Oferta'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no negocia.'
+        404:
+          description: 'La cuenta no pertenece a ningún proveedor o la solicitud no es suya.'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/ofertas/{id}':
+    get:
+      tags:
+        - Ofertas
+      summary: 'Detalle de una oferta'
+      description: 'Una oferta de la negociación, para su proveedor o para el cliente de la solicitud. Otra cuenta recibe 404.'
+      operationId: verOferta
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'La oferta.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - oferta
+                properties:
+                  oferta:
+                    $ref: '#/components/schemas/Oferta'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no negocia.'
+        404:
+          description: 'No existe o es de otra cuenta.'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/ofertas/{id}/contraofertar':
+    post:
+      tags:
+        - Ofertas
+      summary: Contraofertar
+      description: 'Responde a la oferta vigente de la contraparte con otro precio por hectárea: la oferta anterior pasa a `reemplazada` y se crea la siguiente (`numero + 1`), vigente para la otra parte. La oferta número 5 es definitiva y ya no admite contraoferta. Idempotente por `uuid_cliente` (opcional).'
+      operationId: contraofertarOferta
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - precio_ha
+              properties:
+                precio_ha:
+                  type: string
+                  example: '122'
+                nota:
+                  type: string
+                  nullable: true
+                uuid_cliente:
+                  type: string
+                  format: uuid
+                  nullable: true
+              type: object
+      responses:
+        201:
+          description: 'La oferta nueva.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - oferta
+                properties:
+                  oferta:
+                    $ref: '#/components/schemas/Oferta'
+                type: object
+        200:
+          description: 'Reintento con el mismo `uuid_cliente`.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - oferta
+                properties:
+                  oferta:
+                    $ref: '#/components/schemas/Oferta'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no negocia.'
+        404:
+          description: 'No existe o es de otra cuenta.'
+        409:
+          description: 'La oferta ya no está vigente, no es su turno o es definitiva.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorConflicto'
+        422:
+          description: 'Precio inválido.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/ofertas/{id}/aceptar':
+    post:
+      tags:
+        - Ofertas
+      summary: 'Aceptar una oferta'
+      description: 'Acepta la oferta vigente de la contraparte (el cliente acepta una oferta del proveedor; el proveedor acepta la contraoferta del cliente). Es atómico sobre la solicitud: adjudica, fija el precio acordado y el monto estimado, cierra las demás ofertas vigentes y abre el contacto y el chat. Dos aceptaciones simultáneas de ofertas distintas dejan una `aceptada` y la otra con 409 `solicitud_ya_adjudicada`. Aceptar dos veces la misma oferta devuelve la misma oferta.'
+      operationId: aceptarOferta
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'Oferta aceptada: la solicitud queda `adjudicada`.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - oferta
+                properties:
+                  oferta:
+                    $ref: '#/components/schemas/Oferta'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no negocia.'
+        404:
+          description: 'No existe o es de otra cuenta.'
+        409:
+          description: '`oferta_no_vigente`, `solicitud_ya_adjudicada`, `equipo_no_disponible`, `no_es_su_turno` o `solicitud_no_abierta`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorConflicto'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/ofertas/{id}/rechazar':
+    post:
+      tags:
+        - Ofertas
+      summary: 'Rechazar una oferta'
+      description: 'Rechaza la oferta vigente de la contraparte: cierra la negociación y el proveedor no puede abrir otra en esa solicitud. Si era la última vigente, la solicitud vuelve a `abierta`.'
+      operationId: rechazarOferta
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'Oferta rechazada.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - oferta
+                properties:
+                  oferta:
+                    $ref: '#/components/schemas/Oferta'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no negocia.'
+        404:
+          description: 'No existe o es de otra cuenta.'
+        409:
+          description: 'La oferta ya no está vigente o no es su turno.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorConflicto'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/ofertas/{id}/retirar':
+    post:
+      tags:
+        - Ofertas
+      summary: 'Retirar una oferta propia'
+      description: 'El autor retira su oferta mientras sigue vigente. Si era la última vigente, la solicitud vuelve a `abierta`. Un proveedor que retira puede abrir otra negociación mientras la solicitud siga abierta.'
+      operationId: retirarOferta
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'Oferta retirada.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - oferta
+                properties:
+                  oferta:
+                    $ref: '#/components/schemas/Oferta'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no negocia.'
+        404:
+          description: 'No existe o es de otra cuenta.'
+        409:
+          description: 'La oferta ya no está vigente o no es del solicitante.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorConflicto'
+      security:
+        -
+          tokenDispositivo: []
+  /api/notificaciones/preferencias:
+    get:
+      tags:
+        - Preferencias
+      summary: 'Mis preferencias de aviso'
+      description: 'Las preferencias de aviso de la cuenta. Sin nada guardado: todo activo, todas las zonas y sin mínimo de hectáreas.'
+      operationId: verPreferenciasDeAviso
+      responses:
+        200:
+          description: 'Las preferencias.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - preferencias
+                properties:
+                  preferencias:
+                    $ref: '#/components/schemas/PreferenciasDeAviso'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no gestiona preferencias.'
+      security:
+        -
+          tokenDispositivo: []
+    put:
+      tags:
+        - Preferencias
+      summary: 'Guardar mis preferencias de aviso'
+      description: 'Guarda las preferencias; lo que no se envía conserva su valor. Un piloto activa o desactiva los avisos de nuevas solicitudes y limita zonas, macrorregiones y hectáreas mínimas.'
+      operationId: guardarPreferenciasDeAviso
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PreferenciasDeAviso'
+      responses:
+        200:
+          description: 'Las preferencias guardadas.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - preferencias
+                properties:
+                  preferencias:
+                    $ref: '#/components/schemas/PreferenciasDeAviso'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no gestiona preferencias.'
+        422:
+          description: 'Macrorregión inválida o datos mal formados.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/solicitudes/{id}/inicio':
+    post:
+      tags:
+        - Seguimiento
+      summary: 'Marcar el inicio del servicio'
+      description: 'El piloto marca el inicio: la solicitud `adjudicada` pasa a `en_ejecucion` (una sola vez) y se avisa al cliente. Idempotente por `uuid_cliente`. Solo la cuenta del equipo adjudicado.'
+      operationId: iniciarServicio
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - uuid_cliente
+              properties:
+                uuid_cliente:
+                  type: string
+                  format: uuid
+                secuencia:
+                  type: integer
+                  nullable: true
+                registrado_en:
+                  type: string
+                  format: date-time
+                  nullable: true
+              type: object
+      responses:
+        201:
+          description: 'Registro aplicado.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - registro
+                properties:
+                  registro:
+                    $ref: '#/components/schemas/RegistroDeAvance'
+                type: object
+        200:
+          description: 'Duplicado: el registro ya estaba aplicado.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - registro
+                properties:
+                  registro:
+                    $ref: '#/components/schemas/RegistroDeAvance'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no registra seguimiento.'
+        404:
+          description: 'La solicitud no es del equipo de la cuenta.'
+        409:
+          description: 'La solicitud no está `adjudicada`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorConflicto'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/solicitudes/{id}/avance':
+    get:
+      tags:
+        - Seguimiento
+      summary: 'Ver el avance del servicio'
+      description: 'El seguimiento de una solicitud adjudicada, para el cliente y para el proveedor adjudicado: estado, porcentaje y hectáreas ejecutadas, monto estimado y final, registros del piloto y fotos de avance (con URL para pedirlas con el mismo token). Otra cuenta recibe 404.'
+      operationId: verAvance
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'El seguimiento.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - avance
+                properties:
+                  avance:
+                    type: object
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no ve seguimiento.'
+        404:
+          description: 'No existe o es de otra cuenta.'
+      security:
+        -
+          tokenDispositivo: []
+    post:
+      tags:
+        - Seguimiento
+      summary: 'Marcar el avance'
+      description: 'Marca el avance con `hectareas_ejecutadas` o `porcentaje` (uno de los dos; el otro se deriva de las hectáreas solicitadas). No puede pasar de las hectáreas solicitadas más la tolerancia (5 %); un valor menor al último exige `motivo_correccion`. Idempotente por `uuid_cliente`.'
+      operationId: registrarAvance
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - uuid_cliente
+              properties:
+                uuid_cliente:
+                  type: string
+                  format: uuid
+                secuencia:
+                  type: integer
+                  nullable: true
+                hectareas_ejecutadas:
+                  type: string
+                  example: '40'
+                  nullable: true
+                porcentaje:
+                  type: string
+                  example: '50'
+                  nullable: true
+                nota:
+                  type: string
+                  nullable: true
+                motivo_correccion:
+                  type: string
+                  nullable: true
+                registrado_en:
+                  type: string
+                  format: date-time
+                  nullable: true
+              type: object
+      responses:
+        201:
+          description: 'Registro aplicado.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - registro
+                properties:
+                  registro:
+                    $ref: '#/components/schemas/RegistroDeAvance'
+                type: object
+        200:
+          description: Duplicado.
+          content:
+            application/json:
+              schema:
+                required:
+                  - registro
+                properties:
+                  registro:
+                    $ref: '#/components/schemas/RegistroDeAvance'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no registra seguimiento.'
+        404:
+          description: 'La solicitud no es del equipo de la cuenta.'
+        409:
+          description: 'La solicitud no está `en_ejecucion`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorConflicto'
+        422:
+          description: '`hectareas_exceden_tolerancia` o `correccion_sin_motivo`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/solicitudes/{id}/cierre':
+    post:
+      tags:
+        - Seguimiento
+      summary: 'Cerrar el servicio'
+      description: 'El piloto pide el cierre con las hectáreas realmente ejecutadas. Con las fotos mínimas ya subidas (`foto_avance` o `foto_final`) la solicitud pasa a `finalizada`, se congelan hectáreas ejecutadas y `monto_final` (hectáreas × precio acordado), se elimina la última ubicación y se avisa al cliente; si faltan fotos, finaliza al subir la que completa el mínimo, en el orden en que lleguen.'
+      operationId: cerrarServicio
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - uuid_cliente
+                - hectareas_ejecutadas
+              properties:
+                uuid_cliente:
+                  type: string
+                  format: uuid
+                hectareas_ejecutadas:
+                  type: string
+                  example: '78.5'
+                secuencia:
+                  type: integer
+                  nullable: true
+                nota:
+                  type: string
+                  nullable: true
+                registrado_en:
+                  type: string
+                  format: date-time
+                  nullable: true
+              type: object
+      responses:
+        201:
+          description: 'Registro aplicado.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - registro
+                properties:
+                  registro:
+                    $ref: '#/components/schemas/RegistroDeAvance'
+                type: object
+        200:
+          description: Duplicado.
+          content:
+            application/json:
+              schema:
+                required:
+                  - registro
+                properties:
+                  registro:
+                    $ref: '#/components/schemas/RegistroDeAvance'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no registra seguimiento.'
+        404:
+          description: 'La solicitud no es del equipo de la cuenta.'
+        409:
+          description: 'La solicitud no está `en_ejecucion`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorConflicto'
+        422:
+          description: '`hectareas_exceden_tolerancia`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/solicitudes/{id}/evidencias':
+    post:
+      tags:
+        - Seguimiento
+      summary: 'Subir una foto del servicio'
+      description: 'Sube una foto de avance, final o de incidencia (multipart, menos de 300 KB: la app la comprime antes). Cola separada de los registros livianos. Idempotente por `uuid_cliente`. Pueden subir el piloto y el auxiliar del equipo adjudicado. El cierre pendiente se revisa al subirla.'
+      operationId: subirEvidenciaDeSolicitud
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              required:
+                - uuid_cliente
+                - tipo
+                - archivo
+              properties:
+                uuid_cliente:
+                  type: string
+                  format: uuid
+                tipo:
+                  type: string
+                  enum:
+                    - foto_avance
+                    - foto_final
+                    - foto_incidencia
+                avance_uuid_cliente:
+                  type: string
+                  format: uuid
+                  nullable: true
+                archivo:
+                  type: string
+                  format: binary
+              type: object
+      responses:
+        201:
+          description: 'Foto guardada.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - evidencia
+                properties:
+                  evidencia:
+                    type: object
+                type: object
+        200:
+          description: Duplicado.
+          content:
+            application/json:
+              schema:
+                required:
+                  - evidencia
+                properties:
+                  evidencia:
+                    type: object
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no sube evidencias.'
+        404:
+          description: 'La solicitud no es del equipo de la cuenta.'
+        409:
+          description: 'La solicitud no está en ejecución.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorConflicto'
+        422:
+          description: 'Archivo inválido o de 300 KB o más.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/evidencias/{id}/archivo':
+    get:
+      tags:
+        - Seguimiento
+      summary: 'Descargar una foto del servicio'
+      description: 'El archivo de una foto de avance, para el cliente de la solicitud y para el proveedor adjudicado. Se sirve del disco privado, nunca por una URL pública.'
+      operationId: descargarEvidencia
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'La imagen.'
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no ve seguimiento.'
+        404:
+          description: 'No existe o es de otra cuenta.'
+      security:
+        -
+          tokenDispositivo: []
+  /api/ubicacion:
+    put:
+      tags:
+        - Seguimiento
+      summary: 'Enviar la ubicación del piloto'
+      description: 'La app del piloto envía su última posición (cada 30 s con el servicio abierto). Solo se acepta con la solicitud `en_ejecucion` y desde la cuenta del equipo; reemplaza la fila única de la solicitud. No va por el outbox: sin red, se omite. Se elimina al finalizar o cancelar y no se guarda en historial ni en logs.'
+      operationId: enviarUbicacion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - solicitud_id
+                - latitud
+                - longitud
+              properties:
+                solicitud_id:
+                  type: integer
+                latitud:
+                  type: number
+                  example: -17.7833
+                longitud:
+                  type: number
+                  example: -63.1821
+                precision_m:
+                  type: number
+                  nullable: true
+                capturado_en:
+                  type: string
+                  format: date-time
+                  nullable: true
+              type: object
+      responses:
+        204:
+          description: 'Ubicación guardada.'
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no registra seguimiento.'
+        404:
+          description: 'La solicitud no es del equipo de la cuenta.'
+        409:
+          description: '`ubicacion_no_permitida`: la solicitud no está `en_ejecucion`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorConflicto'
+        422:
+          description: 'Coordenadas inválidas.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/solicitudes/{id}/ubicacion-piloto':
+    get:
+      tags:
+        - Seguimiento
+      summary: 'Ver dónde está el piloto'
+      description: 'La última ubicación de la app del piloto, solo para el cliente de la solicitud y solo mientras está `en_ejecucion`: un punto que se refresca, sin ruta ni tiempo estimado. `vigente` es falso si pasaron 5 minutos desde la captura. Sin ubicación responde 200 con `ubicacion: null`.'
+      operationId: verUbicacionDelPiloto
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'La ubicación o `null`.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - ubicacion
+                properties:
+                  ubicacion:
+                    type: object
+                    nullable: true
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no es de cliente.'
+        404:
+          description: 'No existe o es de otro cliente.'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/solicitudes/{id}/cancelar-proveedor':
+    post:
+      tags:
+        - Seguimiento
+      summary: 'Cancelar un servicio adjudicado (proveedor)'
+      description: 'El proveedor adjudicado devuelve la solicitud al mercado (vuelve a `abierta`) con motivo obligatorio. Libera al proveedor y al equipo, queda registrado en su tasa de cancelación y no puede volver a ofertar en esa solicitud. Sin penalidad en dinero.'
+      operationId: cancelarComoProveedor
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - motivo
+              properties:
+                motivo:
+                  type: string
+                  example: 'El dron quedó en mantenimiento.'
+              type: object
+      responses:
+        204:
+          description: 'Solicitud devuelta al mercado.'
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no es de proveedor.'
+        404:
+          description: 'La solicitud no es del proveedor de la cuenta.'
+        409:
+          description: 'La solicitud ya no está `adjudicada`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorConflicto'
+        422:
+          description: 'Falta el motivo.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  /api/reputacion:
+    get:
+      tags:
+        - Seguimiento
+      summary: 'Mi reputación'
+      description: 'La reputación del proveedor de la cuenta: calificación y tasa de cancelación (cancelaciones tras adjudicar sobre servicios adjudicados, últimos 90 días). Sin sanciones ni tasa de aceptación: si una cifra pasa el umbral se alerta al panel y decide el administrador.'
+      operationId: verReputacion
+      responses:
+        200:
+          description: 'La reputación.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - reputacion
+                properties:
+                  reputacion:
+                    type: object
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no es de proveedor.'
+        404:
+          description: 'La cuenta no pertenece a ningún proveedor.'
       security:
         -
           tokenDispositivo: []
@@ -2430,6 +3592,10 @@ paths:
                 - telefono
                 - razon_social
                 - documento_fiscal
+                - nombres
+                - apellidos
+                - documento_identidad
+                - fecha_nacimiento
               properties:
                 tipo:
                   type: string
@@ -2459,6 +3625,20 @@ paths:
                 razon_social:
                   type: string
                   example: 'Mamani Agroservicios'
+                nombres:
+                  description: 'Datos de la persona (piloto o titular); el administrador los revisa al aprobar.'
+                  type: string
+                  example: Carlos
+                apellidos:
+                  type: string
+                  example: 'Mamani Quispe'
+                documento_identidad:
+                  type: string
+                  example: '7845123 SC'
+                fecha_nacimiento:
+                  type: string
+                  format: date
+                  example: '1988-04-12'
                 documento_fiscal:
                   description: 'NIT o documento de identidad.'
                   type: string
@@ -2914,7 +4094,7 @@ paths:
       tags:
         - Solicitudes
       summary: 'Mis solicitudes e historial'
-      description: 'Las solicitudes del cliente de la cuenta, de la más nueva a la más vieja. `vista=activas` deja las que siguen vivas; `vista=historial`, las que terminaron (`completada` o `cancelada`). `estado` filtra por un estado exacto.'
+      description: 'Las solicitudes del cliente de la cuenta, de la más nueva a la más vieja. `vista=activas` deja las que siguen vivas; `vista=historial`, las que terminaron (`calificada`, `cancelada` o `expirada`). `estado` filtra por un estado exacto.'
       operationId: listarSolicitudes
       parameters:
         -
@@ -2978,7 +4158,7 @@ paths:
       tags:
         - Solicitudes
       summary: 'Crear una solicitud de servicio'
-      description: 'Crea una solicitud en `borrador`, idempotente por `uuid_cliente`: reintentar el mismo uuid responde 200 con la solicitud ya creada (nunca una segunda). Las hectáreas no pueden superar las del terreno. La tarifa se calcula y se congela al publicar.'
+      description: 'Crea una solicitud en `borrador`, idempotente por `uuid_cliente`: reintentar el mismo uuid responde 200 con la solicitud ya creada (nunca una segunda). Las hectáreas no pueden superar las del terreno. `precio_ha_propuesto` (precio por hectárea que propone el cliente) puede venir acá o fijarse con `POST /api/solicitudes/{id}/precio` antes de publicar.'
       operationId: crearSolicitud
       requestBody:
         required: true
@@ -3037,6 +4217,10 @@ paths:
                   nullable: true
                 observaciones:
                   type: string
+                  nullable: true
+                precio_ha_propuesto:
+                  type: string
+                  example: '125'
                   nullable: true
               type: object
       responses:
@@ -3116,8 +4300,8 @@ paths:
     get:
       tags:
         - Solicitudes
-      summary: 'Tarifa estimada de una solicitud'
-      description: 'La tarifa estimada: hectáreas por tarifa por hectárea más recargos explícitos (urgencia, acceso difícil, producto del proveedor). Antes de publicar usa la tarifa vigente y desglosa cada recargo; publicada, devuelve la tarifa congelada (`congelada: true`) sin desglose.'
+      summary: 'Monto estimado de una solicitud'
+      description: 'El monto estimado: hectáreas solicitadas por el precio por hectárea vigente (el propuesto, o el acordado una vez adjudicada), con el precio de referencia como guía.'
       operationId: estimarSolicitud
       parameters:
         -
@@ -3151,8 +4335,8 @@ paths:
     post:
       tags:
         - Solicitudes
-      summary: 'Publicar una solicitud'
-      description: 'Congela la tarifa por hectárea y el monto estimado y deja la solicitud `publicada` para que el motor de asignación la tome. También republica una `sin_proveedor`, opcionalmente ampliando `ventana_hasta`; la tarifa ya congelada no cambia.'
+      summary: 'Abrir una solicitud al mercado'
+      description: 'Abre la solicitud a los pilotos: `borrador` pasa a `abierta`, con su vigencia (7 días) y visible en el mapa. Exige precio por hectárea propuesto, hectáreas que no superen las del terreno, fecha deseada no pasada y un teléfono en la cuenta. Avisa a los pilotos cuyas preferencias coinciden con la zona y las hectáreas. Una solicitud `expirada` se renueva igual, dentro del plazo de renovación.'
       operationId: publicarSolicitud
       parameters:
         -
@@ -3161,20 +4345,9 @@ paths:
           required: true
           schema:
             type: integer
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              properties:
-                ventana_hasta:
-                  type: string
-                  format: date
-                  nullable: true
-              type: object
       responses:
         200:
-          description: 'Solicitud publicada.'
+          description: 'Solicitud abierta.'
           content:
             application/json:
               schema:
@@ -3191,7 +4364,7 @@ paths:
         404:
           description: 'No existe o es de otro cliente.'
         422:
-          description: 'La solicitud no está en un estado que se pueda publicar, o la ventana ya venció.'
+          description: 'Falta el precio o el teléfono, la solicitud no está en un estado que se pueda abrir o la fecha deseada ya pasó.'
           content:
             application/json:
               schema:
@@ -3204,7 +4377,7 @@ paths:
       tags:
         - Solicitudes
       summary: 'Cancelar una solicitud'
-      description: 'Cancela una solicitud propia con motivo. Es gratuita hasta que un proveedor acepta; después rige la política de cancelación (ADR 0033). Una solicitud en ejecución o ya ejecutada no se cancela por este camino.'
+      description: 'Cancela una solicitud propia con motivo. Es gratuita y sin penalidad en dinero; si ya estaba adjudicada, queda registrada en la tasa de cancelación del cliente y el proveedor queda libre. Una solicitud en ejecución o finalizada no se cancela por este camino: si hay desacuerdo, se abre una disputa.'
       operationId: cancelarSolicitud
       parameters:
         -
@@ -3252,13 +4425,13 @@ paths:
       security:
         -
           tokenDispositivo: []
-  '/api/solicitudes/{id}/conformidad':
+  '/api/solicitudes/{id}/precio':
     post:
       tags:
         - Solicitudes
-      summary: 'Dar la conformidad a un servicio'
-      description: 'El cliente da su conformidad a un servicio `ejecutada`: la solicitud pasa a `completada`, se congelan el monto final y la comisión que Agrocom devenga (se calcula, no se cobra en la app) y se abre la calificación durante 7 días. Si no hay observación, la conformidad es tácita al vencer el plazo (72 horas por defecto). Darla dos veces devuelve la misma solicitud. Para observar el servicio se abre una disputa (`POST /api/solicitudes/{id}/disputas`).'
-      operationId: conformarSolicitud
+      summary: 'Cambiar el precio propuesto'
+      description: 'Cambia el precio por hectárea que propone el cliente, mientras la solicitud está en `borrador`, `abierta` o `con_ofertas`. Las ofertas vigentes no cambian; se avisa a los proveedores con una negociación vigente.'
+      operationId: cambiarPrecioSolicitud
       parameters:
         -
           name: id
@@ -3266,9 +4439,21 @@ paths:
           required: true
           schema:
             type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - precio_ha_propuesto
+              properties:
+                precio_ha_propuesto:
+                  type: string
+                  example: '130'
+              type: object
       responses:
         200:
-          description: 'Solicitud completada.'
+          description: 'Solicitud con el precio nuevo.'
           content:
             application/json:
               schema:
@@ -3285,7 +4470,48 @@ paths:
         404:
           description: 'No existe o es de otro cliente.'
         422:
-          description: 'La solicitud todavía no está ejecutada o terminó de otra forma.'
+          description: 'Precio inválido o la solicitud ya no admite el cambio.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/solicitudes/{id}/renovar':
+    post:
+      tags:
+        - Solicitudes
+      summary: 'Renovar una solicitud expirada'
+      description: 'Vuelve a abrir una solicitud `expirada`, dentro del plazo de renovación (30 días). Nueva vigencia; las ofertas anteriores siguen cerradas.'
+      operationId: renovarSolicitud
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'Solicitud abierta de nuevo.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - solicitud
+                properties:
+                  solicitud:
+                    $ref: '#/components/schemas/SolicitudServicio'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no es de cliente.'
+        404:
+          description: 'No existe o es de otro cliente.'
+        422:
+          description: 'No está expirada o pasó el plazo de renovación.'
           content:
             application/json:
               schema:
@@ -3485,108 +4711,6 @@ paths:
                 type: object
 components:
   schemas:
-    Oferta:
-      title: 'Oferta de servicio'
-      required:
-        - id
-        - solicitud_id
-        - estado
-        - ronda
-        - grupo
-        - ofrecida_en
-        - vence_en
-        - segundos_restantes
-      properties:
-        id:
-          description: "Una oferta tal como la ve el proveedor (especificación §6, punto 8): el\nterreno aproximado, las hectáreas, el pago estimado y la distancia; sin datos\nde contacto del cliente. Los importes y las hectáreas viajan como cadena\ndecimal exacta (invariante 6 de CLAUDE.md)."
-          type: integer
-          example: 31
-        solicitud_id:
-          type: integer
-          example: 12
-        estado:
-          type: string
-          enum:
-            - ofrecida
-            - aceptada
-            - rechazada
-            - vencida
-            - retirada
-        ronda:
-          type: integer
-          example: 1
-        grupo:
-          type: string
-          enum:
-            - propio
-            - tercero
-        ofrecida_en:
-          type: string
-          format: date-time
-        vence_en:
-          type: string
-          format: date-time
-        segundos_restantes:
-          description: 'Cuenta regresiva de una oferta viva; 0 si ya se resolvió.'
-          type: integer
-          example: 540
-        respondida_en:
-          type: string
-          format: date-time
-          nullable: true
-        motivo_rechazo:
-          type: string
-          nullable: true
-        motivo_retiro:
-          type: string
-          nullable: true
-          enum:
-            - otro_acepto
-            - cancelada
-            - reasignada
-            - asignacion_forzada
-        equipo_id:
-          type: integer
-          nullable: true
-        pago_estimado:
-          type: string
-          example: '9792.00'
-          nullable: true
-        distancia_km:
-          type: string
-          example: '23.40'
-          nullable: true
-        servicio:
-          description: 'Lo que se muestra del servicio antes de aceptar: sin nombre del terreno ni contacto del cliente.'
-          properties:
-            tipo_aplicacion:
-              type: string
-            hectareas:
-              type: string
-              example: '80.0000'
-            urgente:
-              type: boolean
-            ventana_desde:
-              type: string
-              format: date
-            ventana_hasta:
-              type: string
-              format: date
-            zona:
-              type: string
-              example: Warnes
-              nullable: true
-            ubicacion_aproximada:
-              properties:
-                lat:
-                  type: string
-                lng:
-                  type: string
-              type: object
-              nullable: true
-          type: object
-          nullable: true
-      type: object
     CalificacionesDelServicio:
       title: 'Estado de la calificación de un servicio'
       description: 'A quiénes se puede calificar en el servicio, a quiénes ya se calificó y hasta cuándo.'
@@ -3967,30 +5091,41 @@ components:
           type: string
           format: uri
       type: object
-    Disponibilidad:
-      title: 'Disponibilidad de un equipo'
+    FotoDeDron:
+      title: 'Foto de un dron'
       required:
-        - equipo_id
-        - en_linea
-        - actualizado_en
+        - id
+        - dron_id
+        - tipo
+        - estado
+        - url
       properties:
-        equipo_id:
-          description: "Disponibilidad «en línea» de los equipos del proveedor (especificación §4.4 y\n§10.2). Requiere red: sin señal el proveedor no recibe ofertas de todos modos."
+        id:
+          description: "Fotos del dron (`negociacion-contrato.md` §9): el proveedor las sube y el administrador las\naprueba; el cliente ve las aprobadas al comparar ofertas. Requieren red."
           type: integer
-          example: 4
-        en_linea:
-          type: boolean
-        lat:
+        dron_id:
+          type: integer
+        tipo:
           type: string
-          example: '-17.7833000'
+          enum:
+            - frontal
+            - lateral
+            - placa_serie
+            - otra
+        estado:
+          type: string
+          enum:
+            - en_revision
+            - aprobada
+            - rechazada
+        motivo:
+          description: 'Motivo del rechazo.'
+          type: string
           nullable: true
-        lng:
+        url:
+          description: 'Se pide con el mismo token.'
           type: string
-          example: '-63.1821000'
-          nullable: true
-        actualizado_en:
-          type: string
-          format: date-time
+          example: /api/drones/fotos/5/archivo
       type: object
     Dron:
       title: Dron
@@ -4026,6 +5161,11 @@ components:
         numero_serie:
           type: string
           example: 1WNDH2K00A0001
+        anio:
+          description: 'Año del dron; el cliente lo ve al comparar ofertas.'
+          type: integer
+          example: 2024
+          nullable: true
         capacidad_tanque_l:
           type: string
           example: '40.00'
@@ -4090,6 +5230,337 @@ components:
           type: string
           format: date
           nullable: true
+      type: object
+    Mensaje:
+      title: 'Mensaje del chat'
+      required:
+        - id
+        - uuid_cliente
+        - solicitud_id
+        - autor_rol
+        - propio
+        - texto
+        - creado_en
+      properties:
+        id:
+          description: 'Crece con el orden de creación; es el cursor.'
+          type: integer
+          example: 120
+        uuid_cliente:
+          type: string
+          format: uuid
+        solicitud_id:
+          type: integer
+        autor_rol:
+          type: string
+          enum:
+            - cliente
+            - proveedor
+        propio:
+          description: 'Verdadero si lo escribió la cuenta que consulta.'
+          type: boolean
+        texto:
+          type: string
+          example: 'Llego el lunes temprano.'
+        leido_en:
+          type: string
+          format: date-time
+          nullable: true
+        creado_en:
+          type: string
+          format: date-time
+      type: object
+    SolicitudAbierta:
+      title: 'Solicitud abierta (mapa)'
+      description: 'Lo que un piloto ve de una solicitud antes de ofertar. Nunca incluye nombre, teléfono, documento ni dirección del cliente, ni los precios de las ofertas de otros proveedores.'
+      required:
+        - id
+        - hectareas_solicitadas
+        - precio_ha_propuesto
+        - ofertas_vigentes
+      properties:
+        id:
+          description: "El mapa de solicitudes abiertas del piloto (`negociacion-contrato.md` §8): todas las\nsolicitudes `abierta` y `con_ofertas` de Santa Cruz con filtros del usuario, sin radio\nfijo de operación y sin datos privados del cliente. Requiere red."
+          type: integer
+          example: 31
+        centro:
+          description: 'Centroide de los lotes.'
+          properties:
+            latitud:
+              type: number
+              example: -17.7833
+            longitud:
+              type: number
+              example: -63.1821
+          type: object
+          nullable: true
+        hectareas_solicitadas:
+          type: string
+          example: '80.0000'
+        precio_ha_propuesto:
+          type: string
+          example: '125.0000'
+        zona:
+          type: string
+          example: Warnes
+          nullable: true
+        zona_id:
+          type: integer
+          nullable: true
+        macrorregion:
+          type: string
+          nullable: true
+          enum:
+            - cercado
+            - norte_integrado
+            - chiquitania
+            - valles
+            - chaco
+        cultivo:
+          type: string
+          nullable: true
+        tipo_aplicacion:
+          type: string
+        ventana_desde:
+          type: string
+          format: date
+        ventana_hasta:
+          type: string
+          format: date
+        ofertas_vigentes:
+          description: 'Cuántas ofertas vigentes tiene (sin sus precios).'
+          type: integer
+        mi_negociacion:
+          description: 'Estado de la última oferta de mi proveedor, o null si no oferté.'
+          type: string
+          nullable: true
+        distancia_km:
+          description: 'Solo si se envían `lat` y `lon`; esas coordenadas no se guardan.'
+          type: string
+          nullable: true
+        publicada_en:
+          type: string
+          format: date-time
+          nullable: true
+        vence_en:
+          type: string
+          format: date-time
+          nullable: true
+        producto_indicado:
+          description: 'Solo en el detalle.'
+          type: string
+        aporta_producto:
+          description: 'Solo en el detalle.'
+          type: string
+        urgente:
+          description: 'Solo en el detalle.'
+          type: boolean
+        observaciones:
+          description: 'Solo en el detalle.'
+          type: string
+          nullable: true
+        terreno:
+          description: 'Solo en el detalle: nombre, hectáreas, `geometria` GeoJSON de los lotes, referencias de acceso, colindantes sensibles y acceso difícil.'
+          type: object
+          nullable: true
+      type: object
+    Oferta:
+      title: 'Oferta o contraoferta'
+      description: 'El precio por hectárea que una parte pone sobre una solicitud. El autor alterna: número impar es del proveedor, par es del cliente. El cliente la recibe además con `proveedor` (calificación, tasa de cancelación, dron y fotos aprobadas) y, en el comparador, con `historial`.'
+      required:
+        - id
+        - uuid_cliente
+        - solicitud_id
+        - numero
+        - autor
+        - tipo
+        - precio_ha
+        - monto_estimado
+        - estado
+        - es_definitiva
+        - vence_en
+      properties:
+        id:
+          description: "Ofertas y contraofertas (`negociacion-contrato.md` §2 y §3). Requieren red: la\nnegociación es una conversación entre dos personas y no pasa por el outbox. Adaptador\ndelgado (ADR 0008): el lado (cliente o proveedor) lo decide el rol del token; el\nalcance y las reglas viven en los casos de uso. Una oferta ajena responde 404."
+          type: integer
+          example: 41
+        uuid_cliente:
+          type: string
+          format: uuid
+        solicitud_id:
+          type: integer
+          example: 31
+        proveedor_id:
+          type: integer
+          example: 3
+        equipo_id:
+          type: integer
+          nullable: true
+        numero:
+          description: 'Posición en la negociación: 1 es la primera oferta del proveedor.'
+          type: integer
+          example: 1
+        autor:
+          type: string
+          enum:
+            - proveedor
+            - cliente
+        tipo:
+          type: string
+          enum:
+            - acepta_propuesta
+            - contraoferta
+        precio_ha:
+          type: string
+          example: '118.0000'
+        monto_estimado:
+          description: 'Hectáreas solicitadas por este precio.'
+          type: string
+          example: '9440.00'
+        estado:
+          type: string
+          enum:
+            - vigente
+            - aceptada
+            - reemplazada
+            - rechazada
+            - retirada
+            - vencida
+            - cerrada
+        es_definitiva:
+          description: 'La última de la negociación: solo se acepta o se rechaza.'
+          type: boolean
+        nota:
+          type: string
+          nullable: true
+        oferta_anterior_id:
+          type: integer
+          nullable: true
+        distancia_km:
+          type: string
+          example: '42.50'
+          nullable: true
+        vence_en:
+          type: string
+          format: date-time
+        respondida_en:
+          type: string
+          format: date-time
+          nullable: true
+        creada_en:
+          type: string
+          format: date-time
+          nullable: true
+        proveedor:
+          description: 'Solo para el cliente.'
+          type: object
+          nullable: true
+        historial:
+          description: 'Solo en el comparador del cliente: las ofertas de esa negociación.'
+          type: array
+          items:
+            type: object
+          nullable: true
+      type: object
+    PreferenciasDeAviso:
+      title: 'Preferencias de aviso'
+      required:
+        - nuevas_solicitudes
+        - ofertas
+        - mensajes
+        - avance
+        - calificaciones
+      properties:
+        nuevas_solicitudes:
+          description: 'Solo aplica a cuentas de proveedor. `zonas` y `macrorregiones` vacías significan todas.'
+          properties:
+            activo:
+              description: "Preferencias de aviso (`negociacion-contrato.md` §7): el piloto activa o desactiva los\navisos de nuevas solicitudes en sus zonas (el incentivo para recibir ofertas de\ntrabajo) y cada cuenta elige qué categorías recibe. Las obligatorias no se apagan."
+              type: boolean
+              example: true
+            zonas:
+              type: array
+              items:
+                type: integer
+              example:
+                - 3
+                - 7
+            macrorregiones:
+              type: array
+              items:
+                type: string
+                enum:
+                  - cercado
+                  - norte_integrado
+                  - chiquitania
+                  - valles
+                  - chaco
+              example:
+                - chiquitania
+            hectareas_minimas:
+              type: string
+              example: '50.0000'
+              nullable: true
+          type: object
+        ofertas:
+          type: boolean
+        mensajes:
+          type: boolean
+        avance:
+          type: boolean
+        calificaciones:
+          type: boolean
+      type: object
+    RegistroDeAvance:
+      title: 'Registro de seguimiento'
+      description: 'Un registro del piloto: `inicio`, `avance` o `cierre`. Nace en el dispositivo con su `uuid_cliente`, así que aplicarlo dos veces deja la base idéntica.'
+      required:
+        - id
+        - uuid_cliente
+        - tipo
+        - registrado_en
+      properties:
+        id:
+          description: "La ejecución del servicio (`negociacion-contrato.md` §4 y §6): el piloto marca el inicio,\nsube fotos y marca el avance, y cierra; el cliente ve el avance, las fotos y la última\nubicación del piloto. Los registros del piloto son idempotentes por `uuid_cliente`, para\nque la app los encole en el outbox y los reintente sin duplicar. La ubicación no va por\nel outbox: sin red, se omite."
+          type: integer
+        uuid_cliente:
+          type: string
+          format: uuid
+        tipo:
+          type: string
+          enum:
+            - inicio
+            - avance
+            - cierre
+        hectareas_ejecutadas:
+          type: string
+          example: '40.0000'
+          nullable: true
+        porcentaje:
+          type: string
+          example: '50.00'
+          nullable: true
+        nota:
+          type: string
+          nullable: true
+        registrado_en:
+          type: string
+          format: date-time
+      type: object
+    ErrorConflicto:
+      title: 'Conflicto de estado'
+      description: 'La acción ya no es posible por el estado actual (otra parte decidió antes, venció, etc.). `codigo` es estable y es lo que la app traduce a su pantalla.'
+      required:
+        - message
+        - codigo
+      properties:
+        message:
+          description: "Traduce una regla de negociación incumplida a su respuesta HTTP: 404 si el recurso no es\nde la cuenta (invariante 5), 403 si la cuenta no está habilitada, 409 con `codigo` si el\nestado ya no admite la acción (carreras, vencimientos) y 422 con el campo si el dato es inválido."
+          type: string
+          example: 'La oferta ya no está vigente.'
+        codigo:
+          type: string
+          example: oferta_no_vigente
       type: object
     Auxiliar:
       title: Auxiliar
@@ -4479,12 +5950,10 @@ components:
           example: 9a1b7e3e-2f7a-4b3d-8c1e-6f2a1d9c4b0a
         estado:
           type: string
-          example: asignada
+          example: adjudicada
           enum:
-            - asignada
-            - en_camino
+            - adjudicada
             - en_ejecucion
-            - suspendida_por_clima
         equipo_id:
           type: integer
           example: 7
@@ -4528,6 +5997,34 @@ components:
           nullable: true
         terreno:
           $ref: '#/components/schemas/TerrenoServicioCatalogo'
+        precio_ha_propuesto:
+          description: 'Lo que propuso el cliente al abrir la solicitud.'
+          type: string
+          example: '125.0000'
+          nullable: true
+        precio_ha_acordado:
+          description: 'El precio de la oferta adjudicada.'
+          type: string
+          example: '118.0000'
+          nullable: true
+        hectareas_ejecutadas:
+          type: string
+          example: '51.2000'
+          nullable: true
+        porcentaje_avance:
+          type: string
+          example: '64.00'
+          nullable: true
+        contacto:
+          description: 'Nombre y teléfono del cliente: se entregan solo tras adjudicar.'
+          properties:
+            nombre:
+              type: string
+            telefono:
+              type: string
+              nullable: true
+          type: object
+          nullable: true
         updated_at:
           description: 'Posición del cursor de esta sección.'
           type: string
@@ -4875,44 +6372,29 @@ components:
     EstimacionSolicitud:
       title: 'Estimación de una solicitud'
       required:
-        - congelada
-        - tarifa_hectarea
+        - precio_acordado
         - hectareas
-        - monto_estimado
       properties:
-        congelada:
-          description: 'Verdadero si la solicitud ya se publicó y la tarifa no cambia.'
-          type: boolean
-        tarifa_base_hectarea:
+        precio_ha:
+          description: 'Precio por hectárea vigente: el acordado si ya se adjudicó; si no, el propuesto.'
           type: string
-          example: '120.0000'
+          example: '125.0000'
           nullable: true
-        tarifa_hectarea:
-          description: 'Tarifa por hectárea con los recargos incluidos.'
-          type: string
-          example: '132.0000'
+        precio_acordado:
+          description: 'Verdadero si la solicitud ya se adjudicó y el precio no cambia.'
+          type: boolean
         hectareas:
           type: string
           example: '80.0000'
-        subtotal_base:
-          type: string
-          example: '9600.00'
-          nullable: true
-        recargo_urgente:
-          type: string
-          example: '1920.00'
-          nullable: true
-        recargo_acceso_dificil:
-          type: string
-          example: '0.00'
-          nullable: true
-        recargo_producto:
-          type: string
-          example: '0.00'
-          nullable: true
         monto_estimado:
           type: string
-          example: '11520.00'
+          example: '10000.00'
+          nullable: true
+        precio_referencia_ha:
+          description: 'Guía de mercado para el tipo de aplicación; no es un límite.'
+          type: string
+          example: '120.00'
+          nullable: true
       type: object
     TerrenoEntrada:
       title: 'Terreno (datos que envía el cliente)'
@@ -5001,7 +6483,7 @@ components:
       type: object
     SolicitudServicio:
       title: 'Solicitud de servicio'
-      description: 'La unidad de negocio del marketplace (especificación §4.2, ADR 0027). Hectáreas, tarifa y montos son decimales exactos en string. `tarifa_hectarea` y `monto_estimado` son nulos hasta publicar y quedan congelados desde entonces. `terreno` e `historial` solo viajan en el detalle.'
+      description: 'La unidad de negocio del marketplace (especificación §4.2, ADR 0027). Hectáreas, precios y montos son decimales exactos en string. `precio_ha_propuesto` lo fija el cliente; `precio_ha_acordado` queda fijo al adjudicar; `monto_final` (hectáreas ejecutadas × precio acordado) se congela al finalizar y es lo que el cliente paga fuera de la app. `terreno` e `historial` solo viajan en el detalle.'
       required:
         - id
         - uuid_cliente
@@ -5063,35 +6545,52 @@ components:
         observaciones:
           type: string
           nullable: true
-        tarifa_hectarea:
-          description: 'Congelada al publicar; incluye recargos por hectárea.'
+        precio_ha_propuesto:
+          description: 'Precio por hectárea que propone el cliente.'
           type: string
-          example: '132.0000'
+          example: '125.0000'
+          nullable: true
+        precio_ha_acordado:
+          description: 'Precio de la oferta adjudicada.'
+          type: string
+          example: '118.0000'
           nullable: true
         monto_estimado:
-          description: 'Congelado al publicar.'
+          description: 'Hectáreas solicitadas por el precio vigente.'
           type: string
-          example: '10560.00'
+          example: '9440.00'
           nullable: true
+        hectareas_ejecutadas:
+          type: string
+          example: '78.5000'
+          nullable: true
+        porcentaje_avance:
+          type: string
+          example: '65.00'
         monto_final:
-          description: 'Se congela al completar la solicitud: el estimado escalado por las hectáreas facturadas.'
+          description: 'Se congela al finalizar: hectáreas ejecutadas por el precio acordado.'
           type: string
           nullable: true
         estado:
           type: string
           enum:
             - borrador
-            - publicada
-            - en_asignacion
-            - sin_proveedor
-            - asignada
-            - en_camino
+            - abierta
+            - con_ofertas
+            - adjudicada
             - en_ejecucion
-            - suspendida_por_clima
-            - ejecutada
-            - en_disputa
-            - completada
+            - finalizada
+            - calificada
             - cancelada
+            - expirada
+            - disputada
+        oferta_adjudicada_id:
+          type: integer
+          nullable: true
+        vence_en:
+          type: string
+          format: date-time
+          nullable: true
         proveedor_id:
           type: integer
           nullable: true
@@ -5192,9 +6691,6 @@ components:
       scheme: bearer
 tags:
   -
-    name: Ofertas
-    description: 'El proveedor ve las ofertas que le hace el motor de asignación y las acepta o rechaza (ADR 0030). Requiere red.'
-  -
     name: Calificaciones
     description: 'El cliente califica al proveedor, al piloto y al auxiliar de un servicio completado, durante 7 días; el proveedor califica al cliente en privado y ve las calificaciones que recibe (ADR 0031).'
   -
@@ -5203,6 +6699,21 @@ tags:
   -
     name: Distribucion
     description: 'Versionado y distribución del APK de agrocom-field (HU-20).'
+  -
+    name: Mensajes
+    description: 'Mensajes entre el cliente y el proveedor adjudicado, desde la adjudicación. Texto de hasta 1000 caracteres, sin adjuntos: las fotos van como evidencia.'
+  -
+    name: Mercado
+    description: 'El piloto ve en un mapa las solicitudes abiertas para decidir a qué zona ir con su equipo (los valles frente a la Chiquitania) y a cuáles ofertar.'
+  -
+    name: Ofertas
+    description: 'El proveedor ofrece su precio por hectárea, cada parte contraoferta a la otra y el cliente elige: aceptar una oferta adjudica la solicitud.'
+  -
+    name: Preferencias
+    description: 'Qué avisos recibe la cuenta. Las categorías obligatorias (adjudicación, cierre, expiración, cuenta y aprobación, disputas, emergencias) no aparecen y no se pueden desactivar.'
+  -
+    name: Seguimiento
+    description: 'Inicio, avance con fotos, cierre y ubicación del piloto. El piloto solo sube fotos y marca el avance; lo operativo se acuerda en persona.'
   -
     name: Notificaciones
     description: 'Avisos in-app de la cuenta (ADR 0025): el panel los ve en la campana; las apps, por esta API.'
