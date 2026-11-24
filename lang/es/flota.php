@@ -20,12 +20,17 @@ return [
         'piloto_id' => 'piloto',
         'dron_id' => 'dron',
         'auxiliar_id' => 'auxiliar',
+        'en_linea' => 'estado en línea',
+        'lat' => 'latitud',
+        'lng' => 'longitud',
+        'equipo_id' => 'equipo',
         'vigente_desde' => 'inicio de la vigencia',
         'vigente_hasta' => 'fin de la vigencia',
     ],
 
     'errores' => [
         'sin_proveedor' => 'Tu cuenta no es titular de ningún proveedor.',
+        'sin_equipos' => 'No tienes equipos vigentes para declarar disponibilidad.',
         'proveedor_no_admite_altas' => 'Tu proveedor ya no admite altas: está rechazado, suspendido o dado de baja.',
         'dron_ajeno' => 'No encontramos ese dron entre los tuyos.',
         'equipo_ajeno' => 'No encontramos ese equipo entre los tuyos.',
