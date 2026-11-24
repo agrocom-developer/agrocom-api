@@ -4,36 +4,32 @@
 
 ## Principios
 
-- Cancelar debe ser fácil y justo para ambas partes.
-- Una cancelación tardía cuesta un desplazamiento, insumos y una ventana climática; la penalidad lo refleja.
-- Nadie paga por causas que no controla.
+- Cancelar debe ser fácil.
+- La plataforma no cobra, así que no impone penalidades en dinero; registra quién cancela y deja que la reputación y la moderación actúen.
+- Nadie queda marcado por causas que no controla.
 
 ## Cancelación del cliente
 
-| Momento | Penalidad |
+| Momento | Efecto |
 |---|---|
-| Antes de que un proveedor acepte | Ninguna |
-| Aceptada, con más de 48 horas de anticipación al inicio de la ventana | Ninguna |
-| Aceptada, entre 48 y 12 horas | 10 % del monto estimado |
-| Aceptada, con menos de 12 horas o equipo en camino | 25 % del monto estimado |
-| Equipo en el lote y trabajo no ejecutable por causa del cliente (sin acceso, terreno distinto al declarado, producto no entregado) | 50 % del monto estimado más recargo por desplazamiento |
-
-Los porcentajes y las horas son parámetros. La penalidad se cobra al cliente fuera de la app (ADR 0034) y el proveedor la recibe descontando la comisión. Un cliente con penalidades impagas no puede publicar nuevas solicitudes.
+| Antes de adjudicar (`borrador`, `abierta`, `con_ofertas`) | Ninguno; las ofertas vigentes se cierran |
+| Adjudicada y antes de iniciar | Motivo obligatorio; queda registrada en su tasa de cancelación; el piloto recibe el aviso |
+| En ejecución | No se cancela: se cierra con las hectáreas realmente ejecutadas y, si hay desacuerdo, se abre una disputa |
 
 ## Cancelación del proveedor
 
-- Después de aceptar, cancelar suma a la tasa de cancelación del proveedor.
-- La solicitud vuelve a `en_asignacion` con prioridad y se avisa al cliente.
-- Tres cancelaciones del proveedor en 30 días generan advertencia; cinco, restricción temporal de ofertas; la reincidencia lleva a suspensión revisada por un administrador.
-- Cancelar con menos de 12 horas pesa el doble en la tasa.
+- Solo antes de iniciar. Motivo obligatorio.
+- La solicitud vuelve a `abierta`; el cliente recibe el aviso y las demás ofertas siguen cerradas. Ese proveedor no puede ofertar de nuevo en esa solicitud.
+- Queda registrada en su tasa de cancelación, visible al cliente en sus ofertas futuras y al administrador.
 
-## Sin penalidad para nadie
+## Sin registro para nadie
 
-- Clima fuera de límites (viento, lluvia, temperatura); la solicitud pasa a `suspendida_por_clima` y se reprograma.
-- Emergencia declarada o incidencia de seguridad.
-- Falla comprobada del equipo del proveedor, que no cuenta como cancelación si se avisó con más de 12 horas.
-- Falta de proveedor (`sin_proveedor`).
-- Error de datos de la solicitud reconocido por soporte.
+- Una causa de fuerza mayor declarada con motivo y reconocida por soporte: clima fuera de lo operable, emergencia o incidencia de seguridad, falla comprobada del equipo, error de datos de la solicitud.
+- Falta de ofertas o expiración de la solicitud.
+
+## Alertas y decisiones
+
+Un umbral de tasa de cancelación (parámetro) genera una alerta en el panel con el detalle. Un administrador revisa, avisa por escrito y decide; no hay restricción automática. El proveedor puede apelar.
 
 ## Registro
 
