@@ -2,10 +2,12 @@
 
 namespace App\Dominios\Proveedores\Infraestructura;
 
+use App\Dominios\Proveedores\Aplicacion\ActualizarCalificacionDeProveedor;
 use App\Dominios\Proveedores\Aplicacion\ActualizarTasasDeProveedor;
 use App\Dominios\Proveedores\Aplicacion\CargarDocumento;
 use App\Dominios\Proveedores\Aplicacion\EstadoDocumentalDeSujeto;
 use App\Dominios\Proveedores\Aplicacion\ListarDocumentosDeSujeto;
+use App\Dominios\Proveedores\Contratos\CalificacionDeProveedores;
 use App\Dominios\Proveedores\Contratos\CargaDocumentos;
 use App\Dominios\Proveedores\Contratos\LecturaDocumentos;
 use App\Dominios\Proveedores\Contratos\LecturaProveedores;
@@ -30,6 +32,7 @@ final class ProveedoresServiceProvider extends ServiceProvider
         $this->app->bind(VerificacionDocumental::class, EstadoDocumentalDeSujeto::class);
         $this->app->bind(LecturaDocumentos::class, ListarDocumentosDeSujeto::class);
         $this->app->bind(ReputacionDeProveedores::class, ActualizarTasasDeProveedor::class);
+        $this->app->bind(CalificacionDeProveedores::class, ActualizarCalificacionDeProveedor::class);
     }
 
     public function boot(): void
