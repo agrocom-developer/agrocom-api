@@ -101,7 +101,7 @@ Antes de adjudicar se revalida bajo bloqueo: proveedor aprobado, equipo apto y s
 
 ## 4. Seguimiento y cierre
 
-Registros que el piloto sincroniza por `POST /sync` (un solo rol escritor; el servidor rechaza si la cuenta no es del equipo adjudicado):
+Registros que el piloto envía (un solo rol escritor; el servidor rechaza si la cuenta no es del equipo adjudicado). Cada uno tiene su ruta REST (`POST /solicitudes/{id}/inicio`, `/avance`, `/cierre` y `/mensajes`), idempotente por `uuid_cliente`, que la app reintenta desde su outbox; la tabla muestra el tipo de registro:
 
 | Tipo | Campos | Efecto |
 |---|---|---|
@@ -111,9 +111,9 @@ Registros que el piloto sincroniza por `POST /sync` (un solo rol escritor; el se
 | `mensaje` | idem, `solicitud_id`, `texto` | Crea el mensaje; entrega al recuperar red |
 | `incidencia` | como hoy: tipo, severidad, descripción, ubicación | Abre incidencia |
 
-Evidencias: `POST /evidencias` (multipart, cola separada, menos de 300 KB) con `uuid_cliente`, `solicitud_id`, `tipo` (`foto_avance`, `foto_final`, `foto_incidencia`) y `avance_uuid_cliente` opcional. Piloto y auxiliar del equipo pueden subir. La solicitud pasa a `finalizada` cuando hay `cierre` y al menos `seguimiento.evidencias_minimas_cierre` (1) evidencias `foto_avance` o `foto_final` subidas, en el orden que lleguen (el procesamiento de la evidencia revisa el cierre pendiente).
+Evidencias: `POST /solicitudes/{id}/evidencias` (multipart, cola separada, menos de 300 KB) con `uuid_cliente`, `tipo` (`foto_avance`, `foto_final`, `foto_incidencia`) y `avance_uuid_cliente` opcional. Piloto y auxiliar del equipo pueden subir. La solicitud pasa a `finalizada` cuando hay `cierre` y al menos `seguimiento.evidencias_minimas_cierre` (1) evidencias `foto_avance` o `foto_final` subidas, en el orden que lleguen (el procesamiento de la evidencia revisa el cierre pendiente).
 
-Respuesta de `/sync` por registro: `aplicado`, `duplicado` o `rechazado` con `motivo` (`solicitud_no_adjudicada`, `equipo_ajeno`, `estado_invalido`, `hectareas_exceden_tolerancia`, `correccion_sin_motivo`).
+Respuesta por registro: 201 si se aplicó, 200 con el mismo registro si el `uuid_cliente` ya existía (duplicado), o 404, 409 o 422 con el `codigo` del motivo (`solicitud_ajena`, `estado_invalido`, `hectareas_exceden_tolerancia`, `correccion_sin_motivo`).
 
 Compatibilidad: el servidor sigue aceptando los tipos de registro operativos detallados que ya conoce (sesión de vuelo, condiciones, mezcla, recarga) sin exigirlos para finalizar; no condicionan ningún estado.
 
@@ -182,7 +182,7 @@ Cada elemento: `id`, `centro` (`latitud`, `longitud` del centroide de los lotes)
 ## 10. Recursos nuevos, cambiados y retirados
 
 ### Nuevos
-`GET /solicitudes-abiertas`, `GET /solicitudes-abiertas/resumen-zonas`, `GET /solicitudes-abiertas/{id}`, `POST /solicitudes/{id}/ofertas`, `GET /solicitudes/{id}/ofertas`, `GET /ofertas/{id}`, `POST /ofertas/{id}/contraofertar`, `POST /ofertas/{id}/retirar`, `POST /solicitudes/{id}/precio`, `POST /solicitudes/{id}/renovar`, `GET /solicitudes/{id}/avance`, `GET /solicitudes/{id}/ubicacion-piloto`, `PUT /ubicacion`, `GET|POST /solicitudes/{id}/mensajes`, `POST /solicitudes/{id}/mensajes/leidos`, `POST /solicitudes/{id}/pago-confirmado`, `GET|PUT /notificaciones/preferencias`, `POST /dispositivos`, `DELETE /dispositivos/{token}`, `POST /terrenos/{id}/fotos`, `GET /referencias/precio`, `POST|GET|DELETE /proveedores/drones/{id}/fotos`, `PUT /proveedores/perfil/foto`; registros de sync `inicio`, `avance`, `cierre`, `mensaje`.
+`GET /solicitudes-abiertas`, `GET /solicitudes-abiertas/resumen-zonas`, `GET /solicitudes-abiertas/{id}`, `POST /solicitudes/{id}/ofertas`, `GET /solicitudes/{id}/ofertas`, `GET /ofertas/{id}`, `POST /ofertas/{id}/contraofertar`, `POST /ofertas/{id}/retirar`, `POST /solicitudes/{id}/precio`, `POST /solicitudes/{id}/renovar`, `GET /solicitudes/{id}/avance`, `POST /solicitudes/{id}/{inicio|avance|cierre|evidencias}`, `GET /solicitudes/{id}/ubicacion-piloto`, `PUT /ubicacion`, `GET|POST /solicitudes/{id}/mensajes`, `POST /solicitudes/{id}/mensajes/leidos`, `POST /solicitudes/{id}/pago-confirmado`, `GET|PUT /notificaciones/preferencias`, `POST /dispositivos`, `DELETE /dispositivos/{token}`, `POST /terrenos/{id}/fotos`, `GET /referencias/precio`, `POST|GET|DELETE /proveedores/drones/{id}/fotos`, `PUT /proveedores/perfil/foto`; registros `inicio`, `avance`, `cierre` y `mensaje`.
 
 ### Cambiados
 - `POST /solicitudes`, `PUT /solicitudes/{id}`: reciben `precio_ha_propuesto`, varios terrenos, `observaciones`; ya no calculan tarifa ni recargos. `GET /solicitudes/{id}/estimacion` pasa a devolver el monto estimado con el precio propuesto.
@@ -217,6 +217,6 @@ Ninguna migración borra datos; toda tabla o columna que sale de `public` se mue
 - **Máquinas de estado** (`tests/Unit`): tabla completa de transiciones permitidas y prohibidas de solicitud y oferta.
 - **Aceptación concurrente**: dos aceptaciones simultáneas de ofertas distintas de la misma solicitud dejan una `aceptada` y la otra con 409.
 - **Aislamiento (no funcional de seguridad)**: un piloto no ve ofertas de otro; un cliente no ve solicitudes ni mensajes ajenos; el contacto del cliente no aparece antes de adjudicar; la ubicación no se entrega fuera de `en_ejecucion`.
-- **Replay de sync**: `inicio`, `avance`, `cierre` y `mensaje` aplicados dos, tres o diez veces, en orden y en desorden parcial, dejan la base idéntica.
+- **Replay**: `inicio`, `avance`, `cierre` y `mensaje` aplicados dos, tres o diez veces, en orden y en desorden parcial, dejan la base idéntica.
 - **Decimales**: `monto_estimado` y `monto_final` exactos con casos de redondeo.
 - **Contrato**: cada ruta nueva está en `docs/api/openapi.yaml` con sus ejemplos.
