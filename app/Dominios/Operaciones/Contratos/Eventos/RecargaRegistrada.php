@@ -23,8 +23,16 @@ namespace App\Dominios\Operaciones\Contratos\Eventos;
  * `Mantenimiento\Infraestructura\MantenimientoServiceProvider::boot()`
  * registra el listener que incrementa `ciclos_acumulados` — ver
  * `Mantenimiento\Aplicacion\IncrementarCiclosBateria`.
+ *
+ * `$dronId` es el `ope_drones.id` de la sesión donde ocurrió la recarga
+ * (`null` si la sesión no tiene dron). Es lo que le permite a `Flota` sumar el
+ * ciclo al contador del dron del marketplace (ADR 0029, punto 4; ADR 0036): ver
+ * `Flota\Aplicacion\IncrementarCiclosBateriaDron`.
  */
 final readonly class RecargaRegistrada
 {
-    public function __construct(public string $bateriaSalienteId) {}
+    public function __construct(
+        public string $bateriaSalienteId,
+        public ?int $dronId = null,
+    ) {}
 }
