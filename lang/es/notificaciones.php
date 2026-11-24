@@ -14,6 +14,7 @@ return [
         'proveedor_registrado' => 'Un proveedor :tipo espera tu revisión: «:nombre».',
         'oferta_vencida' => 'Venció sin respuesta la oferta de la solicitud #:solicitud.',
         'nueva_solicitud_abierta' => 'Nueva solicitud #:solicitud de :hectareas ha en :zona, a :precio por hectárea. Revísala en el mapa y ofrece tu precio.',
+        'oferta_retirada' => 'Se cerró la negociación de la solicitud #:solicitud. Motivo: :motivo',
         'oferta_recibida' => '«:proveedor» ofrece :precio por hectárea en la solicitud #:solicitud. Acéptala, contraoferta o recházala antes de que venza.',
         'precio_cambiado' => 'El cliente cambió el precio propuesto de la solicitud #:solicitud a :precio por hectárea. Tu oferta vigente no cambia.',
         'solicitud_adjudicada' => 'La solicitud #:solicitud quedó adjudicada a «:proveedor» a :precio por hectárea. Ya pueden coordinar por el chat.',
@@ -32,7 +33,6 @@ return [
         'publicacion_limitada' => 'La publicación de solicitudes de «:cliente» quedó limitada por su calificación promedio (:promedio) hasta una revisión.',
         // Avisos del modelo anterior de asignación: se conservan para leer los ya entregados.
         'oferta_creada' => 'Nueva oferta de :hectareas ha (solicitud #:solicitud). Respóndela antes de las :hora.',
-        'oferta_retirada' => 'Se retiró la oferta de la solicitud #:solicitud. Motivo: :motivo.',
         'solicitud_asignada' => 'La solicitud #:solicitud quedó asignada a «:proveedor».',
         'solicitud_reasignada' => 'El proveedor canceló la solicitud #:solicitud: vuelve a asignación con prioridad.',
         'solicitud_sin_proveedor' => 'Ningún proveedor aceptó la solicitud #:solicitud: amplía la ventana, mejora la tarifa o cancélala sin penalidad.',

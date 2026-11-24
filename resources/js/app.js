@@ -20,7 +20,6 @@ import './organisms/cambiar-vista-modal.js';
 import './templates/auth-layout.js';
 import './pages/login.js';
 import './pages/usuarios-form.js';
-import './pages/cuadrillas-form.js';
 import './pages/roles-permisos.js';
 import './pages/configuracion-form.js';
 // Al final: repone campos y avisa con `change`, así que los átomos y las páginas
@@ -93,10 +92,6 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('DOMContentLoaded', () => {
     if (document.querySelector('[data-ag-chart]')) {
         import('./organisms/dashboard-charts.js');
-    }
-
-    if (document.querySelector('[data-ag-map]')) {
-        import('./organisms/dashboard-map.js');
     }
 
     // Editor del perímetro de un lote (formulario de campos): Leaflet más el

@@ -7,10 +7,9 @@
  * estas claves tal cual (ver Database\Seeders\Catalogo\SecMenuSeeder) y se
  * resuelven vía __() recién en presentación (ADR 0013).
  *
- * Los módulos y su vocabulario salen de la ESPECIFICACIÓN, no del mockup
- * (`docs/especificacion/marketplace.md`): Operación, Recursos,
- * Proveedores, Seguridad y Reportes. El mockup aprobado fija el LAYOUT (riel
- * + sidebar + badges).
+ * Los módulos y su vocabulario salen de la ESPECIFICACIÓN
+ * (`docs/especificacion/marketplace.md`): Mercado, Proveedores, Catálogos y
+ * Seguridad.
  *
  * Archivo propio (no `seguridad.php`): el menú es transversal a todos los
  * módulos de dominio, aunque el catálogo `sec_menu` viva en Seguridad.
@@ -18,38 +17,17 @@
 
 return [
 
-    'operacion' => [
-        'label' => 'Operación',
-        'descripcion' => 'Trabajos, cuadrillas y seguimiento de vuelos de cada servicio.',
-        'items' => [
-            'tablero' => 'Tablero',
-            'orden_trabajo' => 'Trabajos',
-            'cuadrillas' => 'Cuadrillas',
-            'seguimiento_vuelos' => 'Seguimiento de vuelos',
-        ],
-    ],
-
     // Marketplace (ADR 0027): la solicitud de servicio es la unidad de negocio.
     'solicitudes' => [
-        'label' => 'Solicitudes',
-        'descripcion' => 'Solicitudes de servicio de los clientes y su ciclo hasta la conformidad.',
+        'label' => 'Mercado',
+        'descripcion' => 'Solicitudes con sus ofertas, clientes, calificaciones, disputas y métricas.',
         'items' => [
-            'solicitudes' => 'Solicitudes de servicio',
+            'tablero' => 'Tablero',
+            'solicitudes' => 'Solicitudes',
+            'clientes' => 'Clientes',
             'calificaciones' => 'Calificaciones',
             'disputas' => 'Disputas',
             'metricas' => 'Métricas del mercado',
-        ],
-    ],
-
-    'recursos' => [
-        'label' => 'Recursos',
-        'descripcion' => 'Drones, baterías, bases, personal y fichas técnicas de dron.',
-        'items' => [
-            'drones' => 'Drones',
-            'baterias' => 'Baterías',
-            'bases' => 'Bases',
-            'personal' => 'Personal',
-            'fichas_dron' => 'Fichas de dron',
         ],
     ],
 
@@ -67,12 +45,11 @@ return [
         ],
     ],
 
-    'reportes' => [
-        'label' => 'Reportes',
-        'descripcion' => 'Reportes técnicos y alertas por excepción.',
+    'catalogos' => [
+        'label' => 'Catálogos',
+        'descripcion' => 'Las zonas de Santa Cruz que agrupan el mapa y el tablero.',
         'items' => [
-            'tecnicos' => 'Técnicos',
-            'alertas' => 'Alertas',
+            'zonas' => 'Zonas',
         ],
     ],
 
@@ -84,7 +61,7 @@ return [
             'roles' => 'Roles y permisos',
             'dispositivos' => 'Dispositivos',
             'organizacion' => 'Organización',
-            'versiones_apk' => 'Versiones del APK',
+            'versiones_apk' => 'Versiones de las apps',
             'configuracion' => 'Configuración del sistema',
             'bitacora' => 'Bitácora',
         ],

@@ -116,7 +116,7 @@ test('sin datos las tasas son null y las sumas cero', function () {
     $m = app(CalcularMetricas::class)->ejecutar(PeriodoDeMetricas::de('30', new DateTimeImmutable));
 
     expect($m['mercado']['solicitudes_publicadas'])->toBe(0)
-        ->and($m['mercado']['tasa_asignacion'])->toBeNull()
+        ->and($m['mercado']['tasa_adjudicacion'])->toBeNull()
         ->and($m['mercado']['tiempo_aceptacion_promedio_min'])->toBeNull()
         ->and($m['calidad']['calificacion_promedio'])->toBeNull()
         ->and($m['calidad']['tasa_disputas'])->toBeNull()
@@ -126,7 +126,7 @@ test('sin datos las tasas son null y las sumas cero', function () {
         ->and($m['proveedores'])->toBe([]);
 });
 
-test('el mercado cuenta lo publicado en el período, la adjudicación, los tiempos y propios contra terceros', function () {
+test('el mercado cuenta lo publicado en el período, la adjudicación, los tiempos y las rondas de negociación', function () {
     metricasEsquema();
     $ahora = Carbon::now();
     $hace = fn (int $dias): Carbon => $ahora->copy()->subDays($dias);
@@ -146,17 +146,17 @@ test('el mercado cuenta lo publicado en el período, la adjudicación, los tiemp
 
     expect($m['solicitudes_publicadas'])->toBe(4)
         ->and($m['por_estado'])->toEqual(['finalizada' => 1, 'adjudicada' => 1, 'expirada' => 1, 'abierta' => 1])
-        ->and($m['asignadas'])->toBe(2)
-        ->and($m['tasa_asignacion'])->toBe('0.5000')
-        ->and($m['sin_proveedor'])->toBe(1)
+        ->and($m['adjudicadas'])->toBe(2)
+        ->and($m['tasa_adjudicacion'])->toBe('0.5000')
+        ->and($m['expiradas'])->toBe(1)
         ->and($m['hectareas_solicitadas'])->toBe('400.0000')
         ->and($m['hectareas_servidas'])->toBe('90.0000')
         ->and($m['aceptaciones'])->toBe(2)
         ->and($m['tiempo_aceptacion_promedio_min'])->toBe('120.0')
         ->and($m['tiempo_aceptacion_mediana_min'])->toBe('120.0')
-        ->and($m['aceptadas_por_propios'])->toBe(1)
-        ->and($m['aceptadas_por_terceros'])->toBe(1)
-        ->and($m['proporcion_propios'])->toBe('0.5000');
+        ->and($m['ofertas_por_solicitud'])->toBe('0.50')
+        ->and($m['rondas_promedio'])->not->toBeNull()
+        ->and($m['negociaciones'])->toBe(2);
 });
 
 test('la oferta calcula la tasa de aceptación y de cancelación del proveedor', function () {

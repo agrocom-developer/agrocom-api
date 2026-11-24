@@ -164,9 +164,7 @@ Consecuencia de diseño explícita: **el relleno sólido de marca (botones) es c
 | Molecule | `donut-chart` | — | **Retirado** (28/8/2026, auditoría visual externa obs. #5/#6 — ver §10.5). Reemplazado por `distribution-bar`, mismo prop shape. |
 | Molecule | `distribution-bar` | `resources/views/components/molecules/distribution-bar.blade.php` | Implementado (2026-08-28, auditoría visual externa obs. #5/#6) |
 | Molecule | `apex-chart` | `resources/views/components/molecules/apex-chart.blade.php` | Implementado (29/8/2026, novena vuelta — ver §13) |
-| Molecule | `lote-resumen-card` | `resources/views/components/molecules/lote-resumen-card.blade.php` | Implementado (29/8/2026, novena vuelta) |
 | Molecule | `captura-rc-card` | `resources/views/components/molecules/captura-rc-card.blade.php` | Implementado (29/8/2026, novena vuelta) |
-| Organism | `mapa-operativo` | `resources/views/components/organisms/mapa-operativo.blade.php` | Implementado (29/8/2026, novena vuelta — ver §13) |
 | Molecule | `alert-strip` | `resources/views/components/molecules/alert-strip.blade.php` | Implementado (28/8/2026, sexta vuelta parte 2 — ver §10.3). Faltaba en esta tabla; se agrega en la sincronización del 2/9/2026. |
 | Organism | `module-rail` | `resources/views/components/organisms/module-rail.blade.php` | Implementado (28/8/2026, quinta vuelta — nivel 1 del layout, §7.1). Faltaba en esta tabla; se agrega el 2/9/2026. |
 | Organism | `module-sidebar` | `resources/views/components/organisms/module-sidebar.blade.php` | Implementado (28/8/2026, quinta vuelta — nivel 2 del layout, §7.1; sucesor de `sidebar-nav`). Faltaba en esta tabla; se agrega el 2/9/2026. |
@@ -1210,12 +1208,11 @@ del catálogo sigue con import estático simple):
 // resources/js/app.js
 document.addEventListener('DOMContentLoaded', () => {
     if (document.querySelector('[data-ag-chart]')) import('./organisms/dashboard-charts.js');
-    if (document.querySelector('[data-ag-map]')) import('./organisms/dashboard-map.js');
 });
 ```
 
 Vite genera un chunk separado por cada import() dinámico (`dashboard-charts-*.js`,
-`dashboard-map-*.js`, con su CSS propio en el caso de Leaflet) que el
+`dashboard-charts.js`) que el
 navegador solo pide si el DOM de la página tiene el contenedor
 correspondiente — verificado con Playwright que login/selección de rol no
 descargan ninguno de los dos chunks.
@@ -1224,7 +1221,7 @@ descargan ninguno de los dos chunks.
 DESPUÉS de que `DOMContentLoaded` ya disparó (por definición: el import()
 ocurre dentro de un handler de ese mismo evento). Si el módulo hijo
 también hace `document.addEventListener('DOMContentLoaded', renderizar)`,
-ese listener nunca se ejecuta. `dashboard-charts.js`/`dashboard-map.js`
+ese listener nunca se ejecuta. `dashboard-charts.js`
 renderizan de inmediato al cargar, sin volver a esperar el evento.
 
 ### 13.2. Resolución de colores en JS — `resources/js/shared/color-tokens.js`
@@ -1239,7 +1236,7 @@ Todo color nuevo en JS pasa por acá — confirmado en auditoría que es el
 único mecanismo usado (excepción encontrada y corregida: un `#fff` literal
 en el borde de los `circleMarker` del mapa, ver 13.4).
 
-### 13.3. `apex-chart` y `mapa-operativo` — altura declarada vs. altura real
+### 13.3. `apex-chart` — altura declarada vs. altura real
 
 `apex-chart.blade.php` NO fija `height` como CSS del contenedor — lo pasa
 como `chart.height` (número) a ApexCharts vía `data-ag-chart-height`, y el
@@ -1250,21 +1247,7 @@ la leyenda POR ENCIMA — el `overflow:hidden` de `.ag-card` recortaba la
 segunda fila de leyenda del donut de 4 estados. Con un alto numérico,
 ApexCharts reserva espacio para la leyenda dentro de ese total.
 
-`mapa-operativo` tiene su propio gotcha de layout: el pane "Mapa" no es el
-tab activo por defecto (Bootstrap lo deja en `display:none` hasta el
-primer click) y Leaflet inicializado en un contenedor de tamaño cero
-renderiza mal — `dashboard-map.js` escucha `shown.bs.tab` del botón del
-tab para llamar `mapa.invalidateSize()` la primera vez que se muestra.
-
 ### 13.4. Auditoría (`validador`, 29/8/2026) — 2 hallazgos bloqueantes, ambos corregidos
-
-- Invariante 11: `dashboard-map.js` tenía `color: '#fff'` literal en el
-  borde de los `circleMarker` de sesión (único hex de toda la rama) —
-  corregido a `leerColorToken('--ag-color-gray-0')`.
-- Larastan (nivel 6): los métodos privados `lote()`/`sesion()` de
-  `DatosDemoMapaOperativo` devolvían `array` sin value type — se
-  completó el docblock con el shape exacto (mismo criterio que
-  `lotes()`/`sesionesGeo()`).
 
 Resto de la auditoría (ADR 0003, ADR 0009, ADR 0013, seguridad de los
 popups de Leaflet vía `createElement`/`textContent` — nunca `innerHTML`—,

@@ -2,11 +2,8 @@
 
 namespace App\Dominios\Seguridad\Infraestructura\Http\Presentacion;
 
-use App\Dominios\Notificaciones\Contratos\AlertasDeCuenta;
 use App\Dominios\Notificaciones\Contratos\LecturaNotificaciones;
 use App\Dominios\Notificaciones\Contratos\NotificacionPanel;
-use App\Dominios\Operaciones\Contratos\LecturaContadoresPanel as LecturaContadoresPanelOperaciones;
-use App\Dominios\Operaciones\Contratos\LecturaPanelOperaciones;
 use App\Dominios\Seguridad\Aplicacion\ListarRolesDisponibles;
 use App\Dominios\Seguridad\Aplicacion\ObtenerMenuPorRolActivo;
 use App\Dominios\Seguridad\Dominio\TemaPreferencia;
@@ -24,11 +21,8 @@ use Throwable;
  * persistido, el chrome del header y los badges del menú (TE-14, tarea 60 —
  * contadores reales de cada módulo dueño, ver {@see menuBadges()}).
  *
- * Desde la tarea 67 no queda nada de maqueta acá: las notificaciones de la
- * campana son las alertas por excepción reales (HU-19) y la versión del pie
- * sale de `config('app.version')`. Desde la tarea 141 la campana mezcla dos
- * fuentes (ver {@see notificaciones()}): esas alertas técnicas y los avisos
- * de flujo de negocio del módulo `Notificaciones`.
+ * Las notificaciones de la campana son los avisos de flujo de negocio del
+ * módulo `Notificaciones` y la versión del pie sale de `config('app.version')`.
  *
  * El 9/9/2026 el header se quedó además sin contexto de negocio, mirando el
  * panel andando: cayeron el chip de campaña (ADR 0015 — la campaña es del
@@ -42,17 +36,13 @@ use Throwable;
  */
 final class CascaraPanel
 {
-    private const ALERTAS_NOTIFICACION = 5;
-
-    /** Tope de avisos que muestra la campana, sumadas las dos fuentes. */
+    /** Tope de avisos que muestra la campana. */
     private const MAXIMO_EN_CAMPANA = 10;
 
     public function __construct(
         private readonly ObtenerMenuPorRolActivo $obtenerMenu,
         private readonly ListarRolesDisponibles $listarRolesDisponibles,
-        private readonly LecturaContadoresPanelOperaciones $contadoresOperaciones,
         private readonly LecturaContextoSolicitudes $solicitudes,
-        private readonly LecturaPanelOperaciones $panelOperaciones,
         private readonly LecturaNotificaciones $notificacionesDelMotor,
     ) {}
 
@@ -87,25 +77,11 @@ final class CascaraPanel
     }
 
     /**
-     * Contadores reales de pendientes de los ítems del menú (badge ámbar del
-     * nivel 3), indexados por la clave `label` de `sec_menu` (TE-14, tarea
-     * 60 — contadores reales, no maqueta). `numero` es lo
-     * único que pinta el badge en el sidebar (compacto); `texto` es la frase
-     * completa del tooltip.
-     *
-     * Dos ítems de la maqueta original quedan sin badge porque ningún
-     * módulo tiene un dato real detrás: `operacion.items.programacion` (no
-     * existe el concepto de sesión programada) y `recursos.items.drones`
-     * (`ope_drones` no registra estado de taller).
-     * `panel-layout.blade.php` ya tolera la ausencia de una clave
+     * Contadores reales de pendientes de los ítems del menú (badge del nivel
+     * 3), indexados por la clave `label` de `sec_menu`. `numero` es lo único
+     * que pinta el badge en el sidebar (compacto); `texto` es la frase completa
+     * del tooltip. `panel-layout.blade.php` tolera la ausencia de una clave
      * (`$menuBadges[$label] ?? null`).
-     *
-     * Refactor de menú (17/9/2026): "Pausas" perdió su ítem propio
-     * (`SecMenuSeeder`, absorbido por "Seguimiento de vuelos") y con él su
-     * badge — `LecturaContadoresPanel::pausasDelMes()` sigue existiendo (no
-     * se sabe si otra pantalla lo va a necesitar) pero ya no se llama desde
-     * acá. El badge de "Sesiones" se re-etiqueta a
-     * `menu.operacion.items.seguimiento_vuelos`, la clave nueva de ese ítem.
      *
      * @return array<string, array{numero: string, texto: string}>
      */
@@ -123,32 +99,16 @@ final class CascaraPanel
             ];
         }
 
-        $sesionesPendientes = $this->contadoresOperaciones->sesionesPendientesValidacion();
-        if ($sesionesPendientes > 0) {
-            $badges['menu.operacion.items.seguimiento_vuelos'] = [
-                'numero' => (string) $sesionesPendientes,
-                'texto' => __('seguridad.respuestas.badge_sesiones_pendientes', ['cantidad' => $sesionesPendientes]),
-            ];
-        }
-
         return $badges;
     }
 
     /**
-     * Campana del header: mezcla DOS fuentes que conviven (tarea 141, ADR 0025
-     * punto 7), en vez de absorber una en la otra.
-     *
-     * - Los avisos de flujo de negocio del módulo `Notificaciones`, repartidos
-     *   por cuenta: trabajo cerrado y los cambios de aprobación.
-     *   Solo los de quien mira (su id sale de la sesión, nunca de la petición).
-     *   Cada uno lleva a `panel.notificaciones.abrir`, que lo marca leído y
-     *   resuelve el destino contra el rol activo.
-     * - Las alertas por excepción reales (HU-19), gateadas por
-     *   `operaciones.alerta.ver` contra el ROL ACTIVO (un rol que no puede
-     *   entrar a `/panel/alertas` tampoco las lee por la campana). Cada cuenta
-     *   tiene su propio estado sobre ellas: al abrirla desde la campana queda
-     *   leída para esa cuenta (sin declararla atendida, que es de todos), y una
-     *   que la cuenta limpió no vuelve a aparecer — sigue en su pantalla.
+     * Campana del header: los avisos de flujo de negocio del módulo
+     * `Notificaciones`, repartidos por cuenta (ofertas, adjudicaciones,
+     * disputas, aprobaciones). Solo los de quien mira (su id sale de la
+     * sesión, nunca de la petición). Cada uno lleva a
+     * `panel.notificaciones.abrir`, que lo marca leído y resuelve el destino
+     * contra el rol activo.
      *
      * Cuáles entran y en qué orden lo decide {@see CampanaDeAvisos}: primero
      * todo lo no leído, después los leídos más recientes. Así el badge de la
@@ -163,8 +123,8 @@ final class CascaraPanel
             $delMotor = $this->notificacionesDelMotor->recientesDe($usuario->id, self::MAXIMO_EN_CAMPANA);
         } catch (Throwable $excepcion) {
             // La campana es un widget secundario: si falla la lectura de avisos (p. ej. un
-            // entorno al que le falta la migración), se reporta y el panel sigue, con las
-            // alertas técnicas si las hay — un aviso roto no tira todas las páginas.
+            // entorno al que le falta la migración), se reporta y el panel sigue — un
+            // aviso roto no tira todas las páginas.
             report($excepcion);
             $delMotor = [];
         }
@@ -179,38 +139,6 @@ final class CascaraPanel
             'href' => route('panel.notificaciones.abrir', $aviso->id),
         ], $delMotor);
 
-        if ($usuario->tienePermisoEnRol('operaciones.alerta.ver', $idRolActivo)) {
-            $deLaCuenta = $this->alertasDeLaCuenta($usuario->id);
-
-            foreach ($this->panelOperaciones->alertasRecientes(self::ALERTAS_NOTIFICACION, $deLaCuenta->limpiadas) as $alerta) {
-                $candidatas[] = [
-                    'id' => null,
-                    'alerta_id' => $alerta->id,
-                    'icon' => 'warning',
-                    'title' => $alerta->mensaje,
-                    'momento' => Carbon::parse($alerta->creadaEn),
-                    'unread' => $alerta->pendiente && ! $deLaCuenta->leyo($alerta->id),
-                    'href' => route('panel.notificaciones.abrir-alerta', $alerta->id),
-                ];
-            }
-        }
-
         return CampanaDeAvisos::elegir($candidatas, self::MAXIMO_EN_CAMPANA);
-    }
-
-    /**
-     * Qué hizo esta cuenta con las alertas. Como la lectura de avisos, es
-     * secundaria: si falla, se reporta y las alertas salen como si la cuenta
-     * no hubiera tocado ninguna.
-     */
-    private function alertasDeLaCuenta(int $usuarioId): AlertasDeCuenta
-    {
-        try {
-            return $this->notificacionesDelMotor->alertasDeCuenta($usuarioId);
-        } catch (Throwable $excepcion) {
-            report($excepcion);
-
-            return new AlertasDeCuenta;
-        }
     }
 }

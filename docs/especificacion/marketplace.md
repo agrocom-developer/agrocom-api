@@ -287,7 +287,24 @@ La sincronización es idempotente: reaplicar un lote dos, tres o diez veces, en 
 
 ### 10.4 Administración y soporte
 
-Son pantallas del panel (ADR 0008), no endpoints de la API de las apps: `panel/proveedores`, `panel/pilotos`, `panel/auxiliares`, `panel/drones-flota` (aprobar, rechazar, suspender, revisar fotos), `panel/documentos`, `panel/solicitudes` (consulta, negociaciones de cada solicitud, cancelación con motivo), `panel/calificaciones` (ocultar o dejar visible con causa y motivo), `panel/disputas`, `panel/metricas` y la configuración de parámetros.
+Son pantallas del panel (ADR 0008), no endpoints de la API de las apps. El menú tiene cuatro módulos y cada pantalla se muestra solo si el rol activo tiene su permiso de listado (`.ver`); las acciones de cada una exigen su permiso propio.
+
+| Módulo | Pantalla | Qué hace |
+|---|---|---|
+| Mercado | `panel/dashboard` | Tablero: solicitudes por estado y por región (macrorregión de la zona del terreno), hectáreas abiertas a ofertas y la cola de lo que espera una decisión |
+| Mercado | `panel/solicitudes` | Lista con filtro por estado; la ficha muestra cada negociación por proveedor con sus rondas, el chat, el avance, las fotos y la última ubicación del piloto. Cancela con motivo (`solicitudes.solicitud.cancelar`) o cierra la negociación de un proveedor con motivo (`solicitudes.solicitud.intervenir`) mientras la solicitud sigue abierta a ofertas |
+| Mercado | `panel/clientes` | Ficha del cliente con su reputación y sus solicitudes; suspende y reactiva con motivo (`solicitudes.cliente.suspender`) |
+| Mercado | `panel/calificaciones` | Oculta o deja visible una calificación con causa y motivo |
+| Mercado | `panel/disputas` | Toma, media y resuelve |
+| Mercado | `panel/metricas` | Adjudicación, ofertas por solicitud, rondas por negociación, tiempos, calidad y volumen |
+| Proveedores | `panel/proveedores`, `panel/pilotos`, `panel/auxiliares` | Aprobar, rechazar, suspender y dar de baja, con motivo |
+| Proveedores | `panel/documentos` | Revisión de documentos y descarga restringida |
+| Proveedores | `panel/drones-flota` | Aprobación del dron y revisión de sus fotos (`flota.dron.revisar_foto`); no se aprueba sin las fotos de `flota.fotos_obligatorias` aprobadas |
+| Proveedores | `panel/equipos-flota` | Consulta de equipos |
+| Catálogos | `panel/zonas` | Zonas de Santa Cruz con su región y su centro |
+| Seguridad | usuarios, roles, dispositivos, organización, versiones de las apps, configuración y bitácora | Roles del panel: `dueno`, `encargado_operaciones` (administrador del marketplace), `soporte` y `admin_plataforma` |
+
+El administrador lee el chat y la ubicación solo para atender una disputa o una intervención; no escribe en ellos. Cerrar una negociación no es una sanción: no restringe ninguna cuenta (ADR 0033).
 
 ## 11. Parámetros configurables
 

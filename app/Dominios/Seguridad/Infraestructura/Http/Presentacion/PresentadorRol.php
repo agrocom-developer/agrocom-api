@@ -31,7 +31,8 @@ final class PresentadorRol
         'piloto' => 'flight_takeoff',
         'auxiliar' => 'engineering',
         'jefe_campo' => 'supervisor_account',
-        'encargado_operaciones' => 'inventory_2',
+        'encargado_operaciones' => 'fact_check',
+        'soporte' => 'support_agent',
         'admin_plataforma' => 'admin_panel_settings',
     ];
 

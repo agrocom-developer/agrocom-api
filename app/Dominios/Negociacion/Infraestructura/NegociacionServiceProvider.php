@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Negociacion\Infraestructura;
 
+use App\Dominios\Negociacion\Contratos\LecturaNegociacionParaPanel;
 use App\Dominios\Negociacion\Infraestructura\Console\AvisarInactividadCommand;
 use App\Dominios\Negociacion\Infraestructura\Console\ProcesarNegociacionCommand;
 use App\Dominios\Negociacion\Infraestructura\Oyentes\AvisarCambioDePrecio;
@@ -22,6 +23,11 @@ use Illuminate\Support\ServiceProvider;
  */
 final class NegociacionServiceProvider extends ServiceProvider
 {
+    public function register(): void
+    {
+        $this->app->bind(LecturaNegociacionParaPanel::class, LecturaNegociacionParaPanelEloquent::class);
+    }
+
     public function boot(): void
     {
         Event::listen(SolicitudAbierta::class, AvisarNuevaSolicitud::class);

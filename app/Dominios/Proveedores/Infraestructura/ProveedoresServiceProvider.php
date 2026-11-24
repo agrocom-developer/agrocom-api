@@ -13,6 +13,7 @@ use App\Dominios\Proveedores\Contratos\LecturaDocumentos;
 use App\Dominios\Proveedores\Contratos\LecturaProveedores;
 use App\Dominios\Proveedores\Contratos\ReputacionDeProveedores;
 use App\Dominios\Proveedores\Contratos\VerificacionDocumental;
+use App\Dominios\Proveedores\Infraestructura\Busqueda\BusquedaProveedores;
 use App\Dominios\Proveedores\Infraestructura\Console\AsignarTitularPropioCommand;
 use App\Dominios\Proveedores\Infraestructura\Console\ProcesarVencimientosCommand;
 use Illuminate\Support\Facades\View;
@@ -33,6 +34,10 @@ final class ProveedoresServiceProvider extends ServiceProvider
         $this->app->bind(LecturaDocumentos::class, ListarDocumentosDeSujeto::class);
         $this->app->bind(ReputacionDeProveedores::class, ActualizarTasasDeProveedor::class);
         $this->app->bind(CalificacionDeProveedores::class, ActualizarCalificacionDeProveedor::class);
+
+        // Buscador global (`busqueda.proveedores`): el agregador de Seguridad
+        // no conoce estas clases, las recibe por tag.
+        $this->app->tag(BusquedaProveedores::class, 'busqueda.proveedores');
     }
 
     public function boot(): void

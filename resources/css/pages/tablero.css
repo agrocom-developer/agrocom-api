@@ -1,0 +1,102 @@
+/*
+ * Page: tablero del panel
+ * (app/Dominios/Seguridad/Infraestructura/Http/Views/pages/dashboard.blade.php)
+ * KPIs, solicitudes por estado y por región y cola de pendientes. Cero color ni
+ * tamaño hardcodeado: todo por token (CLAUDE.md invariante 11).
+ */
+
+.ag-tablero__kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: var(--ag-space-4);
+}
+
+.ag-tablero__columnas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+    gap: var(--ag-space-4);
+    align-items: start;
+}
+
+.ag-tablero__scroll {
+    overflow-x: auto;
+}
+
+.ag-tablero__tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-tablero__tabla th,
+.ag-tablero__tabla td {
+    padding: var(--ag-space-2) var(--ag-space-3);
+    text-align: left;
+    border-bottom: 1px solid var(--ag-color-border-row);
+    color: var(--ag-color-text);
+    font-weight: var(--ag-font-weight-regular);
+}
+
+.ag-tablero__tabla thead th {
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ag-tablero__tabla tbody th {
+    font-weight: var(--ag-font-weight-bold);
+}
+
+.ag-tablero__tabla tbody tr:last-child th,
+.ag-tablero__tabla tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.ag-tablero__tabla .ag-tablero__num {
+    text-align: right;
+    font-family: var(--ag-font-family-mono);
+    font-variant-numeric: tabular-nums;
+}
+
+.ag-tablero__ayuda {
+    margin: 0;
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-tablero__pendientes {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+    gap: var(--ag-space-3);
+}
+
+.ag-tablero__pendiente {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-3);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background: var(--ag-color-surface-card);
+}
+
+.ag-tablero__pendiente-cifra {
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-lg);
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-warning-strong);
+    min-width: 2ch;
+    text-align: right;
+}
+
+.ag-tablero__pendiente-texto {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text);
+}

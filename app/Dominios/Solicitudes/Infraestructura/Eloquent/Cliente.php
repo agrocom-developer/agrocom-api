@@ -20,6 +20,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $documento_fiscal
  * @property string|null $telefono
  * @property EstadoCliente $estado
+ * @property string|null $motivo_estado
  * @property string $calificacion_promedio
  * @property int $calificaciones_conteo
  * @property Carbon|null $aviso_calificacion_en

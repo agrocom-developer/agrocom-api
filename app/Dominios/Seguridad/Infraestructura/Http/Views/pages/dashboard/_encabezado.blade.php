@@ -1,5 +1,5 @@
 {{--
-    Parcial: encabezado del dashboard — título, fecha de hoy y rol activo.
+    Parcial: encabezado del tablero — título, fecha de hoy y rol activo.
 
     La fecha se formatea acá y no llega del servidor a propósito: es
     presentación pura (el mismo instante, en el idioma del panel), no un dato
@@ -10,16 +10,14 @@
     ver su docblock) en vez del `.ag-dash__header` propio que tenía antes —
     el slot `chip` es exactamente para este caso.
 
-    Espera: $rol (string|null) — nombre legible del rol activo; $tecnico
-    (bool) — el rol es técnico (tarea 139) y lleva su propio título y bajada;
-    $puedeVerComo (bool) — el rol activo tiene `seguridad.usuario.ver_como`:
+    Espera: $rol (string|null) — nombre legible del rol activo; $puedeVerComo (bool) — el rol activo tiene `seguridad.usuario.ver_como`:
     junto al chip aparece el botón «Cambiar vista», que abre el modal
     `_modal-cambiar-vista` (incluido aparte, a nivel de `.ag-dash`, para no
     anidar un modal Bootstrap dentro de este header).
 --}}
 <x-organisms.page-header
-    :title="__($tecnico ? 'seguridad.dashboard.titulo_tecnico' : 'seguridad.dashboard.titulo')"
-    :subtitle="__($tecnico ? 'seguridad.dashboard.bajada_tecnica' : 'seguridad.dashboard.bajada', [
+    :title="__('seguridad.dashboard.titulo')"
+    :subtitle="__('seguridad.dashboard.bajada', [
         'fecha' => \Illuminate\Support\Str::ucfirst(now()->locale(app()->getLocale())->isoFormat('dddd D [de] MMMM')),
     ])"
 >

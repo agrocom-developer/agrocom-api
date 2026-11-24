@@ -2,7 +2,6 @@
 
 namespace App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Web;
 
-use App\Dominios\Notificaciones\Aplicacion\AbrirAlerta;
 use App\Dominios\Notificaciones\Aplicacion\AbrirNotificacion;
 use App\Dominios\Notificaciones\Aplicacion\LimpiarNotificaciones;
 use App\Dominios\Notificaciones\Aplicacion\MarcarTodasLeidas;
@@ -37,22 +36,6 @@ final class NotificacionesController
         $aviso = $abrir->ejecutar($this->cuenta($request), $notificacion);
 
         return redirect()->to($destino->url($request, $aviso));
-    }
-
-    /**
-     * `GET /panel/notificaciones/alertas/{alerta}/abrir`: deja la alerta técnica
-     * leída para ESTA cuenta y lleva a su pantalla. No la declara atendida (eso es
-     * de todos y se hace allá). Mismo criterio que `abrir`: GET porque es un enlace
-     * de la campana, y marcar leído es idempotente. Exige el permiso de ver
-     * alertas contra el rol activo, como la campana para mostrarlas.
-     */
-    public function abrirAlerta(Request $request, int $alerta, AbrirAlerta $abrir, AutorizacionPanelWeb $autorizacion): RedirectResponse
-    {
-        abort_unless($autorizacion->tienePermiso($request, self::PERMISO_ALERTAS), 403);
-
-        $abrir->ejecutar($this->cuenta($request), $alerta);
-
-        return redirect()->route('panel.alertas.index');
     }
 
     /** `POST /panel/notificaciones/marcar-todas`: solo las de esta cuenta. */

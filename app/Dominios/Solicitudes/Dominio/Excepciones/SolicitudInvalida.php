@@ -24,6 +24,16 @@ final class SolicitudInvalida extends RuntimeException
         return new self(Texto::de('solicitudes.errores.cliente_suspendido'));
     }
 
+    public static function zonaEnUso(int $terrenos, int $proveedores): self
+    {
+        return new self(Texto::de('solicitudes.zonas.en_uso', ['terrenos' => $terrenos, 'proveedores' => $proveedores]));
+    }
+
+    public static function clienteYaEnEseEstado(): self
+    {
+        return new self(Texto::de('solicitudes.errores.cliente_ya_en_ese_estado'));
+    }
+
     public static function publicacionLimitada(): self
     {
         return new self(Texto::de('solicitudes.errores.publicacion_limitada'));

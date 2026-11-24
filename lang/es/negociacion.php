@@ -51,4 +51,12 @@ return [
         'chat_cerrado' => 'El chat de este servicio ya cerró: solo puedes leer los mensajes.',
         'bbox_invalido' => 'El encuadre debe ser «oeste,sur,este,norte» con números.',
     ],
+
+    // Intervención del administrador desde el panel (ficha de la solicitud).
+    'panel' => [
+        'negociacion_cerrada' => 'Cerraste la negociación. El cliente y el proveedor reciben el motivo.',
+        'error_motivo_requerido' => 'Escribe el motivo del cierre.',
+        'error_motivo_corto' => 'El motivo debe tener al menos 3 caracteres.',
+        'error_motivo_largo' => 'El motivo no puede pasar de 500 caracteres.',
+    ],
 ];

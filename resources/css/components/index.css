@@ -35,7 +35,6 @@
 @import './section-head.css';
 @import './distribution-bar.css';
 @import './apex-chart.css';
-@import './lote-card.css';
 @import './captura-rc-card.css';
 @import './summary-card.css';
 @import './confirm-button.css';
@@ -66,7 +65,6 @@
 @import './cambiar-vista-modal.css';
 @import './tabs.css';
 @import './mapa-pantalla-completa.css';
-@import './mapa-operativo.css';
 
 /* Organisms (tarea 31 — arquetipo formulario) */
 @import './page-header.css';

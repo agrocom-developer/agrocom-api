@@ -30,3 +30,113 @@
     font-family: var(--ag-font-family-mono);
     font-variant-numeric: tabular-nums;
 }
+
+/* ---------- Ficha: negociación, seguimiento y chat ---------- */
+
+.ag-solicitudes__vacio {
+    margin: 0;
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-solicitudes__negociaciones {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-4);
+}
+
+.ag-solicitudes__negociacion {
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    padding: var(--ag-space-3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
+}
+
+.ag-solicitudes__negociacion-cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ag-space-3);
+}
+
+.ag-solicitudes__negociacion-titulo {
+    margin: 0;
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-bold);
+    margin-right: auto;
+}
+
+.ag-solicitudes__fila-nota td {
+    padding-top: 0;
+}
+
+.ag-solicitudes__ubicacion {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ag-space-2);
+    margin: 0 0 var(--ag-space-3);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-solicitudes__fotos {
+    list-style: none;
+    margin: var(--ag-space-3) 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: var(--ag-space-3);
+}
+
+.ag-solicitudes__foto {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+}
+
+.ag-solicitudes__foto img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: var(--ag-radius-md);
+    border: 1px solid var(--ag-color-border-card);
+}
+
+.ag-solicitudes__chat {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-2);
+    max-height: 22rem;
+    overflow-y: auto;
+}
+
+.ag-solicitudes__mensaje {
+    max-width: 85%;
+    padding: var(--ag-space-2) var(--ag-space-3);
+    border-radius: var(--ag-radius-md);
+    background: var(--ag-color-surface-muted, var(--ag-color-surface-card));
+    border: 1px solid var(--ag-color-border-card);
+}
+
+.ag-solicitudes__mensaje--proveedor {
+    align-self: flex-end;
+    background: var(--ag-color-primary-subtle);
+}
+
+.ag-solicitudes__mensaje-meta {
+    display: block;
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-solicitudes__mensaje-texto {
+    margin: 0;
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text);
+    overflow-wrap: anywhere;
+}

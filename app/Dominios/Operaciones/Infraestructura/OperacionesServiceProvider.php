@@ -15,7 +15,6 @@ use App\Dominios\Operaciones\Contratos\LecturaReporteTecnico;
 use App\Dominios\Operaciones\Contratos\LecturaResumenCuadrilla;
 use App\Dominios\Operaciones\Contratos\LecturaSesionesPorPersona;
 use App\Dominios\Operaciones\Contratos\LecturaTrabajos;
-use App\Dominios\Operaciones\Infraestructura\Busqueda\BusquedaDrones;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -46,11 +45,6 @@ final class OperacionesServiceProvider extends ServiceProvider
         $this->app->bind(LecturaResumenCuadrilla::class, LecturaResumenCuadrillaEloquent::class);
         $this->app->bind(LecturaSesionesPorPersona::class, LecturaSesionesPorPersonaEloquent::class);
         $this->app->bind(LecturaRecargasPorBateria::class, LecturaRecargasPorBateriaEloquent::class);
-
-        // Buscador global (`busqueda.proveedores`): el agregador de Seguridad
-        // no conoce estas clases, las recibe por tag. Sumar una entidad al
-        // buscador es escribir su proveedor y taggearlo acá.
-        $this->app->tag(BusquedaDrones::class, 'busqueda.proveedores');
     }
 
     public function boot(): void

@@ -7,4 +7,13 @@ enum EstadoCliente: string
 {
     case Activo = 'activo';
     case Suspendido = 'suspendido';
+
+    /** Tono del badge del panel (`atoms/badge`). */
+    public function tono(): string
+    {
+        return match ($this) {
+            self::Activo => 'success',
+            self::Suspendido => 'danger',
+        };
+    }
 }

@@ -36,14 +36,14 @@ test('ofrece las pantallas preferidas del rol, en su orden, y no las que el men�
     $menu = [
         moduloMenu('operacion', [
             itemMenu('panel.dashboard'),
-            itemMenu('panel.trabajos.index'),
+            itemMenu('panel.documentos.index'),
             itemMenu('panel.solicitudes.index'),
         ]),
     ];
 
-    // `encargado_operaciones` prefiere solicitudes → trabajos → …; sin vuelos ni cuadrillas en su menú, no aparecen.
+    // `encargado_operaciones` prefiere documentos → … → solicitudes; sin proveedores ni drones en su menú, no aparecen.
     expect(rutasDe(AccesosRapidos::para('encargado_operaciones', $menu)))
-        ->toBe(['panel.solicitudes.index', 'panel.trabajos.index']);
+        ->toBe(['panel.documentos.index', 'panel.solicitudes.index']);
 });
 
 test('un permiso que el menú no muestra no se ofrece, aunque el rol lo prefiera', function () {
@@ -64,8 +64,8 @@ test('cada acceso lleva ícono, etiqueta y módulo del menú, sin traducir', fun
 });
 
 test('no pasa de seis accesos', function () {
-    $rutas = ['panel.solicitudes.index', 'panel.proveedores.index', 'panel.trabajos.index', 'panel.documentos.index', 'panel.reportes.tecnicos.index', 'panel.alertas.index'];
-    $menu = [moduloMenu('todo', [...array_map(itemMenu(...), $rutas), itemMenu('panel.cuadrillas.index')])];
+    $rutas = ['panel.solicitudes.index', 'panel.proveedores.index', 'panel.documentos.index', 'panel.drones-flota.index', 'panel.disputas.index', 'panel.metricas.index'];
+    $menu = [moduloMenu('todo', [...array_map(itemMenu(...), $rutas), itemMenu('panel.clientes.index')])];
 
     expect(AccesosRapidos::para('dueno', $menu))->toHaveCount(AccesosRapidos::MAXIMO)
         ->and(rutasDe(AccesosRapidos::para('dueno', $menu)))->toBe($rutas);
@@ -74,26 +74,17 @@ test('no pasa de seis accesos', function () {
 test('un rol sin lista propia cae en las primeras pantallas de su menú, sin repetir el tablero', function () {
     $menu = [
         moduloMenu('operacion', [itemMenu('panel.dashboard'), itemMenu('panel.solicitudes.index')]),
-        moduloMenu('recursos', [itemMenu('panel.drones.index')]),
+        moduloMenu('recursos', [itemMenu('panel.drones-flota.index')]),
     ];
 
-    expect(rutasDe(AccesosRapidos::para('un_rol_nuevo', $menu)))->toBe(['panel.solicitudes.index', 'panel.drones.index'])
-        ->and(rutasDe(AccesosRapidos::para(null, $menu)))->toBe(['panel.solicitudes.index', 'panel.drones.index']);
+    expect(rutasDe(AccesosRapidos::para('un_rol_nuevo', $menu)))->toBe(['panel.solicitudes.index', 'panel.drones-flota.index'])
+        ->and(rutasDe(AccesosRapidos::para(null, $menu)))->toBe(['panel.solicitudes.index', 'panel.drones-flota.index']);
 });
 
 test('un rol con lista propia pero sin ninguna de sus pantallas también cae en el menú', function () {
     $menu = [moduloMenu('recursos', [itemMenu('panel.bases.index')])];
 
     expect(rutasDe(AccesosRapidos::para('dueno', $menu)))->toBe(['panel.bases.index']);
-});
-
-test('el piloto y el ayudante ven su tablero, que es todo su menú', function () {
-    $menu = [
-        moduloMenu('operacion', [itemMenu('panel.dashboard')]),
-    ];
-
-    expect(rutasDe(AccesosRapidos::para('piloto', $menu)))->toBe(['panel.dashboard'])
-        ->and(rutasDe(AccesosRapidos::para('auxiliar', $menu)))->toBe(['panel.dashboard']);
 });
 
 test('encuentra las pantallas anidadas a cualquier profundidad y una pantalla suelta en la raíz', function () {
