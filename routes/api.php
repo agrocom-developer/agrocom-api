@@ -182,6 +182,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/ofertas/{id}/rechazar', [OfertasController::class, 'rechazar'])
         ->whereNumber('id')
         ->name('api.ofertas.rechazar');
+    Route::post('/solicitudes/{id}/en-camino', [ServiciosDelProveedorController::class, 'enCamino'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.en-camino');
     Route::post('/solicitudes/{id}/cancelar-proveedor', [ServiciosDelProveedorController::class, 'cancelar'])
         ->whereNumber('id')
         ->name('api.solicitudes.cancelar-proveedor');

@@ -10,6 +10,7 @@ use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaDisputaApelada;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaDisputaResuelta;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaDocumentoPorVencer;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaDocumentoVencido;
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaEquipoEnCamino;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaEstadoDeAprobacionCambiado;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaOfertaCreada;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaOfertaRetirada;
@@ -19,6 +20,7 @@ use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaProveedorSancionado;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaPublicacionLimitada;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaSolicitudAsignada;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaSolicitudCompletada;
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaSolicitudEjecutada;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaSolicitudReasignada;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaSolicitudSinProveedor;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaTrabajoCerrado;
@@ -63,6 +65,8 @@ final class NotificacionesServiceProvider extends ServiceProvider
         ReglaDisputaApelada::class,
         ReglaClienteConAviso::class,
         ReglaPublicacionLimitada::class,
+        ReglaEquipoEnCamino::class,
+        ReglaSolicitudEjecutada::class,
     ];
 
     public function register(): void

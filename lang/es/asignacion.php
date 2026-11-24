@@ -43,6 +43,7 @@ return [
         'equipo_no_apto' => 'Ese equipo no está apto para recibir ofertas: revisa la aprobación y los documentos de su piloto y su dron.',
         'motivo_requerido' => 'Indica el motivo.',
         'proveedor_no_asignado' => 'Esta solicitud no está asignada a tu proveedor.',
+        'solicitud_no_puede_salir' => 'Solo un servicio asignado puede salir en camino.',
         'solicitud_no_cancelable' => 'La solicitud ya no admite la cancelación del proveedor: solo aplica mientras está asignada o el equipo va en camino.',
         'solicitud_no_forzable' => 'La solicitud no está en un estado que admita asignarla a mano.',
         'proveedor_no_elegible' => 'Ese proveedor no está aprobado.',

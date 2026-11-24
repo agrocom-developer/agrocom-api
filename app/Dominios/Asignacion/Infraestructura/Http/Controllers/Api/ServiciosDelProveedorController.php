@@ -4,6 +4,7 @@ namespace App\Dominios\Asignacion\Infraestructura\Http\Controllers\Api;
 
 use App\Dominios\Asignacion\Aplicacion\CancelarComoProveedor;
 use App\Dominios\Asignacion\Aplicacion\ReputacionDelProveedor;
+use App\Dominios\Asignacion\Aplicacion\SalirEnCamino;
 use App\Dominios\Asignacion\Dominio\CausaCancelacion;
 use App\Dominios\Asignacion\Dominio\Excepciones\AsignacionInvalida;
 use App\Dominios\Asignacion\Infraestructura\Http\Requests\CancelarComoProveedorRequest;
@@ -23,8 +24,38 @@ final class ServiciosDelProveedorController
     public function __construct(
         private readonly IdentidadOperarioToken $identidad,
         private readonly CancelarComoProveedor $cancelar,
+        private readonly SalirEnCamino $salirEnCamino,
         private readonly ReputacionDelProveedor $reputacion,
     ) {}
+
+    #[OA\Post(
+        path: '/api/solicitudes/{id}/en-camino',
+        operationId: 'avisarEquipoEnCamino',
+        description: 'El proveedor avisa que el equipo salió hacia el lote: la solicitud pasa de `asignada` a `en_camino` y se avisa al cliente. Solo lo hace el proveedor al que se asignó el servicio. Es idempotente: avisar de nuevo no cambia nada ni repite el aviso. Requiere red, como las demás acciones de negocio del proveedor sin outbox.',
+        summary: 'El equipo salió hacia el lote',
+        security: [['tokenDispositivo' => []]],
+        tags: ['Ofertas'],
+        parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
+        responses: [
+            new OA\Response(response: 200, description: 'El servicio quedó en camino.', content: new OA\JsonContent(required: ['solicitud_id', 'estado'], properties: [new OA\Property(property: 'solicitud_id', type: 'integer'), new OA\Property(property: 'estado', type: 'string', example: 'en_camino')], type: 'object')),
+            new OA\Response(response: 401, description: 'Token ausente o revocado.'),
+            new OA\Response(response: 403, description: 'El rol del token no responde ofertas.'),
+            new OA\Response(response: 404, description: 'La solicitud no existe o no está asignada a tu proveedor.'),
+            new OA\Response(response: 422, description: 'La solicitud no está asignada.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
+        ],
+    )]
+    public function enCamino(Request $request, int $id): JsonResponse
+    {
+        abort_unless($this->identidad->tienePermiso($request, 'asignacion.oferta.responder'), 403, __('aprobacion.errores.sin_permiso'));
+
+        try {
+            $this->salirEnCamino->ejecutar($this->usuarioId(), $id);
+        } catch (AsignacionInvalida $excepcion) {
+            return RespuestaDeAsignacion::de($excepcion);
+        }
+
+        return response()->json(['solicitud_id' => $id, 'estado' => 'en_camino']);
+    }
 
     #[OA\Post(
         path: '/api/solicitudes/{id}/cancelar-proveedor',
