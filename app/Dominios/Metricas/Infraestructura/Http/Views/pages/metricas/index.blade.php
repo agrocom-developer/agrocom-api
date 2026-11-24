@@ -71,7 +71,7 @@
                 <x-molecules.stat-card :label="__('metricas.proveedores')" icon="groups" :value="$entero($m['oferta']['proveedores_aprobados'])" :foot="__('metricas.proveedores_pie', ['pendientes' => $m['oferta']['proveedores_pendientes']])" state="info" />
                 <x-molecules.stat-card :label="__('metricas.drones')" icon="airplanemode_active" :value="$entero($m['oferta']['drones_aprobados'])" state="distintivo-2" />
                 <x-molecules.stat-card :label="__('metricas.tasa_aceptacion')" icon="thumb_up" :value="$pct($m['oferta']['tasa_aceptacion'])" :foot="__('metricas.tasa_aceptacion_pie', ['respondidas' => $m['oferta']['ofertas_respondidas']])" state="success" />
-                <x-molecules.stat-card :label="__('metricas.tasa_cancelacion')" icon="cancel" :value="$pct($m['oferta']['tasa_cancelacion'])" :foot="__('metricas.tasa_cancelacion_pie', ['cancelaciones' => $m['oferta']['cancelaciones_proveedor'], 'sanciones' => $m['oferta']['sanciones_vigentes']])" state="warning" />
+                <x-molecules.stat-card :label="__('metricas.tasa_cancelacion')" icon="cancel" :value="$pct($m['oferta']['tasa_cancelacion'])" :foot="__('metricas.tasa_cancelacion_pie', ['cancelaciones' => $m['oferta']['cancelaciones_proveedor']])" state="warning" />
             </div>
 
             <h2 class="ag-detalle__campo-label">{{ __('metricas.seccion_ingreso') }}</h2>

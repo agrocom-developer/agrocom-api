@@ -143,15 +143,7 @@
 
                 <x-slot:aside>
                     @if ($persona['tieneDatos'])
-                        <x-molecules.summary-card :title="$persona['titulo']" :items="$persona['items']">
-                            @if ($persona['editarHref'])
-                                <x-slot:action>
-                                    <x-atoms.button :href="$persona['editarHref']" variant="outline" icon="edit" block>
-                                        {{ __('seguridad.perfil.persona_editar') }}
-                                    </x-atoms.button>
-                                </x-slot:action>
-                            @endif
-                        </x-molecules.summary-card>
+                        <x-molecules.summary-card :title="$persona['titulo']" :items="$persona['items']" />
                         <p class="ag-perfil__nota">{{ $persona['nota'] }}</p>
                     @else
                         <x-molecules.empty-state

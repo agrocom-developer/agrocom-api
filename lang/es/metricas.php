@@ -15,7 +15,7 @@ return [
     'subtitulo' => 'Del :desde al :hasta. Las tasas sin base de cálculo se muestran como «sin datos».',
     'periodo_dias' => ':dias días',
     'sin_datos' => 'sin datos',
-    'sin_cobro' => 'La aplicación no cobra en la versión 1: la comisión devengada es lo que los proveedores deben liquidar a Agrocom fuera de la app. Agrocom ajusta la comisión de un servicio en la misma proporción que cualquier reembolso resuelto en una disputa.',
+    'sin_cobro' => 'La aplicación no cobra: el monto de cada servicio es lo que acuerdan las partes (hectáreas ejecutadas por el precio acordado) y lo pagan fuera de la app.',
 
     'seccion_mercado' => 'Mercado',
     'solicitudes' => 'Solicitudes publicadas',
@@ -46,11 +46,11 @@ return [
     'tasa_cancelacion' => 'Tasa de cancelación del proveedor',
     'tasa_cancelacion_pie' => ':cancelaciones cancelaciones de proveedores',
 
-    'seccion_ingreso' => 'Ingreso',
-    'volumen' => 'Volumen bruto de servicios',
+    'seccion_ingreso' => 'Volumen',
+    'volumen' => 'Monto acordado de servicios finalizados',
     'volumen_pie' => ':servicios servicios completados',
-    'ingreso_hectarea' => 'Ingreso por hectárea',
-    'ingreso_hectarea_pie' => 'Comisión devengada entre hectáreas completadas',
+    'ingreso_hectarea' => 'Monto por hectárea',
+    'ingreso_hectarea_pie' => 'Monto acordado entre hectáreas ejecutadas',
 
     'seccion_proveedores' => 'Proveedores con más servicios',
     'proveedores_vacio_titulo' => 'Todavía no hay servicios completados',

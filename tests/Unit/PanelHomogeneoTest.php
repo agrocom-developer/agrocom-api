@@ -94,18 +94,16 @@ function panelHomogeneoExcluida(array $vista): bool
 }
 
 /**
- * Fichas que no se llaman `show.blade.php` (plan §8): hoy solo
- * `Personal/personas/desempeno.blade.php`, la ficha de desempeño de una
- * persona — mismo papel que un `show`, nombre de ruta propio
- * (`panel.personas.desempenio`). Una lista explícita, no una adivinanza por
- * patrón de nombre: agregar acá una pantalla nueva es una decisión, no un
- * efecto colateral de cómo se llame el archivo.
+ * Fichas que no se llaman `show.blade.php` (plan §8). Hoy ninguna: toda ficha
+ * del panel es un `show`. Una lista explícita, no una adivinanza por patrón de
+ * nombre: agregar acá una pantalla nueva es una decisión, no un efecto
+ * colateral de cómo se llame el archivo.
  *
  * @return list<string>
  */
 function panelHomogeneoFichasSinNombreShow(): array
 {
-    return ['Personal/personas/desempeno.blade.php'];
+    return [];
 }
 
 /**
@@ -163,11 +161,17 @@ function panelHomogeneoPantallas(string $raiz): array
  *
  * @return array<string, string>
  */
-function panelHomogeneoMaquinasConFicha(): array
+function panelHomogeneoMaquinasConFicha(?array $reemplazo = null): array
 {
-    return [
-        'TransicionesEquipoTrabajo' => 'Personal/cuadrillas',
-    ];
+    // Hoy ninguna máquina tiene ficha de edición en el panel. El reemplazo solo
+    // lo usan las pruebas sintéticas de la regla `step-arrow`.
+    static $tabla = [];
+
+    if ($reemplazo !== null) {
+        $tabla = $reemplazo;
+    }
+
+    return $tabla;
 }
 
 /**
@@ -178,6 +182,7 @@ function panelHomogeneoMaquinasConFicha(): array
 function panelHomogeneoMaquinasSinFicha(): array
 {
     return [
+        'TransicionesCliente' => 'se suspende o se reactiva desde la ficha, con motivo en un modal',
         'TransicionesVersionApk' => 'solo listado; badge y acciones de fila con el tono del estado',
         'TransicionesActa' => 'se valida desde pantallas propias',
         'TransicionesSesion' => 'se valida desde pantallas propias',
@@ -185,7 +190,7 @@ function panelHomogeneoMaquinasSinFicha(): array
         'TransicionesAprobacion' => 'la aprobación se resuelve con acciones de la ficha y de la cola, con motivo en un modal',
         'TransicionesTrabajo' => 'los trabajos nacen en la app de campo; el panel los consulta y los da de baja, no los edita',
         'TransicionesSolicitud' => 'la crea el cliente desde la app; el panel solo la consulta y la cancela con motivo en un modal',
-        'TransicionesOferta' => 'las genera el motor de asignación; el panel las consulta y asigna a mano, con motivo en un modal',
+        'TransicionesOferta' => 'las crean cliente y proveedor desde la app; el panel las consulta dentro de la solicitud',
         'TransicionesCalificacion' => 'las escriben los clientes y los proveedores desde la app; el panel las modera (ocultar o dejar visible) con causa y motivo en un modal',
         'TransicionesDisputa' => 'las abren las partes desde la app; el panel las toma, media y resuelve con resultado, reembolso y motivo en un modal',
     ];
@@ -219,10 +224,8 @@ function panelHomogeneoMaquinasExistentes(string $raiz): array
 /**
  * Directorios cuyo LISTADO y/o FORMULARIO es la pantalla de referencia (plan
  * §1). Un directorio puede ser referencia de esto sin serlo de su ficha
- * (arquetipo Detalle) — `Personal/cuadrillas` es la referencia de "tabla de
- * detalle con paginación dentro del formulario", pero su `show.blade.php`
- * todavía no sigue el arquetipo Detalle (tarea 125): ver
- * `panelHomogeneoReferenciasFicha()`, que es la lista aparte para eso.
+ * (arquetipo Detalle): ver `panelHomogeneoReferenciasFicha()`, que es la lista
+ * aparte para eso.
  *
  * @return list<string>
  */
@@ -231,7 +234,6 @@ function panelHomogeneoReferencias(): array
     return [
         'Proveedores/proveedores',
         'Solicitudes/solicitudes',
-        'Personal/cuadrillas',
     ];
 }
 
@@ -770,10 +772,8 @@ test('el descubrimiento encuentra las pantallas de referencia y deja afuera las 
         ->toContain('Solicitudes/solicitudes/index.blade.php')
         ->toContain('Solicitudes/solicitudes/show.blade.php')
         ->toContain('Proveedores/proveedores/index.blade.php')
-        ->toContain('Mantenimiento/baterias/_formulario.blade.php')
-        ->toContain('Operaciones/trabajos/index.blade.php')
-        ->toContain('Operaciones/trabajos/show.blade.php')
-        ->toContain('Personal/personas/desempeno.blade.php')
+        ->toContain('Flota/drones/show.blade.php')
+        ->toContain('Calificaciones/calificaciones/index.blade.php')
         ->not->toContain('Seguridad/roles/index.blade.php')
         ->not->toContain('Seguridad/usuarios/create.blade.php')
         ->not->toContain('Portal/actas/index.blade.php');
@@ -1114,7 +1114,9 @@ test('las reglas de formulario detectan cada incumplimiento', function () {
 });
 
 test('un objeto con máquina de estados y ficha de edición debe mostrar los pasos', function () {
-    // `Personal/cuadrillas` está en la tabla de máquinas con ficha de edición.
+    // Un objeto de prueba figura en la tabla de máquinas con ficha de edición.
+    panelHomogeneoMaquinasConFicha(['TransicionesDePrueba' => 'Personal/cuadrillas']);
+
     expect(panelHomogeneoReglasSinteticas('formulario', PANEL_HOMOGENEO_FORMULARIO_CONFORME, ['edit.blade.php' => ''], 'Personal', 'cuadrillas'))
         ->toBe(['step-arrow']);
 
@@ -1127,6 +1129,8 @@ test('un objeto con máquina de estados y ficha de edición debe mostrar los pas
     $conParcial = str_replace('<x-molecules.form-layout>', "@include('personal::pages.cuadrillas._pasos')\n<x-molecules.form-layout>", PANEL_HOMOGENEO_FORMULARIO_CONFORME);
 
     expect(panelHomogeneoReglasSinteticas('formulario', $conParcial, ['edit.blade.php' => '', '_pasos.blade.php' => '<x-molecules.step-arrow :steps="$pasos" />'], 'Personal', 'cuadrillas'))->toBe([]);
+
+    panelHomogeneoMaquinasConFicha([]);
 });
 
 const PANEL_HOMOGENEO_FICHA_CONFORME = <<<'BLADE'

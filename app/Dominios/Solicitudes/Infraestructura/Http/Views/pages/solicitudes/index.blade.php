@@ -9,8 +9,10 @@
     Datos esperados (ver SolicitudesController::index()): la cáscara de
     CascaraPanel, más:
     - $solicitudes (LengthAwarePaginator<SolicitudServicio>) con `terreno` y `cliente`.
-    - $filtros (array{q: string, estado: ?string}).
-    - $estadosFiltro (list<EstadoSolicitud>).
+    - $ofertasVigentes (array<int, int>): solicitud → cantidad de ofertas vigentes.
+    - $filtros (array{q: string, estado: ?string, region: ?string, zona: ?int}).
+    - $estadosFiltro (list<EstadoSolicitud>), $regionesFiltro (list<Macrorregion>) y
+      $zonasFiltro (array<int, string>).
 
     Gateada por `solicitudes.solicitud.ver`, verificado server-side en el
     controlador. Estilos en resources/css/pages/solicitudes.css — cero color
@@ -43,8 +45,9 @@
 
             @php
                 $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
-                $filtrosPanelActivos = $filtros['estado'] !== null && $filtros['estado'] !== '' ? 1 : 0;
+                $filtrosPanelActivos = collect([$filtros['estado'], $filtros['region'], $filtros['zona']])->filter(fn ($valor) => $valor !== null && $valor !== '')->count();
                 $opcionesEstado = collect($estadosFiltro)->mapWithKeys(fn ($opcion) => [$opcion->value => __('solicitudes.estado.'.$opcion->value)])->all();
+                $opcionesRegion = collect($regionesFiltro)->mapWithKeys(fn ($opcion) => [$opcion->value => __('solicitudes.macrorregion.'.$opcion->value)])->all();
             @endphp
 
             @if ($hayFiltrosActivos || $solicitudes->isNotEmpty())
@@ -61,6 +64,22 @@
                             :options="$opcionesEstado"
                             :value="$filtros['estado']"
                             :placeholder="__('solicitudes.panel.filtro_todos')"
+                        />
+                        <x-atoms.select
+                            name="region"
+                            id="filtro-region"
+                            :label="__('solicitudes.panel.filtro_region')"
+                            :options="$opcionesRegion"
+                            :value="$filtros['region']"
+                            :placeholder="__('solicitudes.panel.filtro_todas')"
+                        />
+                        <x-atoms.select
+                            name="zona"
+                            id="filtro-zona"
+                            :label="__('solicitudes.panel.filtro_zona')"
+                            :options="$zonasFiltro"
+                            :value="$filtros['zona']"
+                            :placeholder="__('solicitudes.panel.filtro_todas')"
                         />
                     </x-organisms.filter-panel>
 
@@ -88,13 +107,14 @@
                     />
                 @endif
             @else
-                <x-molecules.index-table columns="3rem minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 0.8fr) minmax(0, 0.9fr) var(--ag-row-actions-width)">
+                <x-molecules.index-table columns="3rem minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 0.9fr) minmax(0, 0.9fr) var(--ag-row-actions-width)">
                     <x-slot:head>
                         <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('solicitudes.panel.col_solicitud') }}</span>
-                        <span role="columnheader">{{ __('solicitudes.panel.col_aplicacion') }}</span>
+                        <span role="columnheader">{{ __('solicitudes.panel.col_zona') }}</span>
                         <span role="columnheader">{{ __('solicitudes.panel.col_estado') }}</span>
                         <span role="columnheader">{{ __('solicitudes.panel.col_hectareas') }}</span>
+                        <span role="columnheader">{{ __('solicitudes.panel.col_precio') }}</span>
                         <span role="columnheader">{{ __('solicitudes.panel.col_ventana') }}</span>
                         <span role="columnheader" class="ag-index-table__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
                     </x-slot:head>
@@ -109,15 +129,33 @@
                                 <span class="ag-solicitudes__sub">{{ $solicitud->cliente->razon_social }}</span>
                             </span>
                             <span role="cell">
-                                {{ __('solicitudes.tipo_aplicacion.'.$solicitud->tipo_aplicacion->value) }}
-                                @if ($solicitud->urgente)
-                                    <x-atoms.badge variant="alert">{{ __('solicitudes.panel.urgente') }}</x-atoms.badge>
-                                @endif
+                                <span class="ag-solicitudes__nombre">{{ $solicitud->terreno->zona->nombre ?? __('solicitudes.panel.sin_zona') }}</span>
+                                <span class="ag-solicitudes__sub">
+                                    {{ $solicitud->terreno->zona?->macrorregion ? __('solicitudes.macrorregion.'.$solicitud->terreno->zona->macrorregion) : '' }}
+                                    · {{ __('solicitudes.tipo_aplicacion.'.$solicitud->tipo_aplicacion->value) }}
+                                </span>
                             </span>
                             <span role="cell">
                                 <x-atoms.badge :variant="$solicitud->estado->tono()">{{ __('solicitudes.estado.'.$solicitud->estado->value) }}</x-atoms.badge>
+                                @if ($solicitud->urgente)
+                                    <x-atoms.badge variant="alert">{{ __('solicitudes.panel.urgente') }}</x-atoms.badge>
+                                @endif
+                                @if (($ofertasVigentes[$solicitud->id] ?? 0) > 0)
+                                    <span class="ag-solicitudes__sub">{{ trans_choice('solicitudes.panel.ofertas_vigentes', $ofertasVigentes[$solicitud->id], ['cantidad' => $ofertasVigentes[$solicitud->id]]) }}</span>
+                                @endif
                             </span>
                             <span role="cell" class="ag-solicitudes__cifra">{{ number_format((float) $solicitud->hectareas_solicitadas, 2, ',', '.') }} ha</span>
+                            <span role="cell" class="ag-solicitudes__cifra">
+                                @if ($solicitud->precio_ha_acordado !== null)
+                                    {{ number_format((float) $solicitud->precio_ha_acordado, 2, ',', '.') }}
+                                    <span class="ag-solicitudes__sub">{{ __('solicitudes.panel.precio_acordado') }}</span>
+                                @elseif ($solicitud->precio_ha_propuesto !== null)
+                                    {{ number_format((float) $solicitud->precio_ha_propuesto, 2, ',', '.') }}
+                                    <span class="ag-solicitudes__sub">{{ __('solicitudes.panel.precio_propuesto') }}</span>
+                                @else
+                                    —
+                                @endif
+                            </span>
                             <span role="cell">{{ $solicitud->ventana_desde->format('d/m') }} – {{ $solicitud->ventana_hasta->format('d/m/Y') }}</span>
                             <span role="cell" class="ag-index-table__acciones">
                                 <x-organisms.row-actions>

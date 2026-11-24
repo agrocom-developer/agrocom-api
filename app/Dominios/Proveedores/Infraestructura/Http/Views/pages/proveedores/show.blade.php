@@ -99,7 +99,7 @@
             </div>
 
             <x-molecules.form-layout>
-                <x-molecules.form-section accent="primary-2" :title="__('proveedores.proveedores.seccion_datos')" :count="__('proveedores.campos_contador', ['cantidad' => 8])">
+                <x-molecules.form-section accent="primary-2" :title="__('proveedores.proveedores.seccion_datos')" :count="__('proveedores.campos_contador', ['cantidad' => 7])">
                     <div class="ag-detalle__campo">
                         <p class="ag-detalle__campo-label">{{ __('proveedores.proveedores.campo_razon_social') }}</p>
                         <p class="ag-detalle__campo-valor">{{ $proveedor->razon_social }}</p>
@@ -128,10 +128,6 @@
                     <div class="ag-detalle__campo">
                         <p class="ag-detalle__campo-label">{{ __('proveedores.proveedores.campo_zona') }}</p>
                         <p class="ag-detalle__campo-valor">{{ $zona ?? __('proveedores.sin_dato') }}</p>
-                    </div>
-                    <div class="ag-detalle__campo">
-                        <p class="ag-detalle__campo-label">{{ __('proveedores.proveedores.campo_radio') }}</p>
-                        <p class="ag-detalle__campo-valor">{{ __('proveedores.proveedores.radio_km', ['km' => rtrim(rtrim($proveedor->radio_operacion_km, '0'), '.')]) }}</p>
                     </div>
                     <div class="ag-detalle__campo">
                         <p class="ag-detalle__campo-label">{{ __('proveedores.proveedores.campo_aprobado') }}</p>

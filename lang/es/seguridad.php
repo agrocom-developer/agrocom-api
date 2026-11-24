@@ -738,8 +738,6 @@ return [
         'persona_sin_dato' => 'Sin registrar',
         'persona_sin_base' => 'Sin base asignada',
         'persona_nota' => 'Solo lectura. Si algo no está correcto, pídele a un administrador que lo corrija.',
-        'persona_nota_editable' => 'Solo lectura en esta pantalla. Puedes corregirlos desde Personal.',
-        'persona_editar' => 'Editar en Personal',
         'persona_vacio_titulo' => 'Tu cuenta no está vinculada a una persona',
         'persona_vacio_detalle' => 'Un administrador puede vincularla desde Seguridad › Usuarios.',
         'persona_baja_titulo' => 'La persona vinculada a tu cuenta ya no está activa',
@@ -934,8 +932,7 @@ return [
         'rol_dispositivo_requerido' => 'Debes indicar con qué rol opera este dispositivo.',
         'rol_activo_requerido' => 'Debes seleccionar un rol activo antes de continuar.',
         'badge_solicitudes_esperando' => ':cantidad esperando proveedor',
-        'badge_sesiones_pendientes' => ':cantidad sin validar',
-        'badge_pausas_mes' => ':cantidad este mes',
+        'badge_por_resolver' => ':cantidad por resolver',
     ],
 
 ];

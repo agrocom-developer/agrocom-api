@@ -2,11 +2,9 @@
 
 namespace App\Dominios\Seguridad\Infraestructura\Http\Presentacion;
 
-use App\Dominios\Notificaciones\Contratos\AlertasDeCuenta;
+use App\Dominios\Metricas\Contratos\LecturaTablero;
 use App\Dominios\Notificaciones\Contratos\LecturaNotificaciones;
 use App\Dominios\Notificaciones\Contratos\NotificacionPanel;
-use App\Dominios\Operaciones\Contratos\LecturaContadoresPanel as LecturaContadoresPanelOperaciones;
-use App\Dominios\Operaciones\Contratos\LecturaPanelOperaciones;
 use App\Dominios\Seguridad\Aplicacion\ListarRolesDisponibles;
 use App\Dominios\Seguridad\Aplicacion\ObtenerMenuPorRolActivo;
 use App\Dominios\Seguridad\Dominio\TemaPreferencia;
@@ -42,17 +40,14 @@ use Throwable;
  */
 final class CascaraPanel
 {
-    private const ALERTAS_NOTIFICACION = 5;
-
     /** Tope de avisos que muestra la campana, sumadas las dos fuentes. */
     private const MAXIMO_EN_CAMPANA = 10;
 
     public function __construct(
         private readonly ObtenerMenuPorRolActivo $obtenerMenu,
         private readonly ListarRolesDisponibles $listarRolesDisponibles,
-        private readonly LecturaContadoresPanelOperaciones $contadoresOperaciones,
         private readonly LecturaContextoSolicitudes $solicitudes,
-        private readonly LecturaPanelOperaciones $panelOperaciones,
+        private readonly LecturaTablero $tablero,
         private readonly LecturaNotificaciones $notificacionesDelMotor,
     ) {}
 
@@ -87,25 +82,11 @@ final class CascaraPanel
     }
 
     /**
-     * Contadores reales de pendientes de los ítems del menú (badge ámbar del
-     * nivel 3), indexados por la clave `label` de `sec_menu` (TE-14, tarea
-     * 60 — contadores reales, no maqueta). `numero` es lo
-     * único que pinta el badge en el sidebar (compacto); `texto` es la frase
-     * completa del tooltip.
-     *
-     * Dos ítems de la maqueta original quedan sin badge porque ningún
-     * módulo tiene un dato real detrás: `operacion.items.programacion` (no
-     * existe el concepto de sesión programada) y `recursos.items.drones`
-     * (`ope_drones` no registra estado de taller).
-     * `panel-layout.blade.php` ya tolera la ausencia de una clave
+     * Contadores reales de pendientes de los ítems del menú (badge ámbar),
+     * indexados por la clave `label` de `sec_menu`. `numero` es lo único que
+     * pinta el badge en el sidebar (compacto); `texto` es la frase completa del
+     * tooltip. `panel-layout.blade.php` tolera la ausencia de una clave
      * (`$menuBadges[$label] ?? null`).
-     *
-     * Refactor de menú (17/9/2026): "Pausas" perdió su ítem propio
-     * (`SecMenuSeeder`, absorbido por "Seguimiento de vuelos") y con él su
-     * badge — `LecturaContadoresPanel::pausasDelMes()` sigue existiendo (no
-     * se sabe si otra pantalla lo va a necesitar) pero ya no se llama desde
-     * acá. El badge de "Sesiones" se re-etiqueta a
-     * `menu.operacion.items.seguimiento_vuelos`, la clave nueva de ese ítem.
      *
      * @return array<string, array{numero: string, texto: string}>
      */
@@ -117,18 +98,32 @@ final class CascaraPanel
         $conteo = $this->solicitudes->conteoPorEstado();
         $esperandoProveedor = ($conteo['abierta'] ?? 0) + ($conteo['con_ofertas'] ?? 0) + ($conteo['expirada'] ?? 0);
         if ($esperandoProveedor > 0) {
-            $badges['menu.solicitudes.items.solicitudes'] = [
+            $badges['menu.operacion.items.solicitudes'] = [
                 'numero' => (string) $esperandoProveedor,
                 'texto' => __('seguridad.respuestas.badge_solicitudes_esperando', ['cantidad' => $esperandoProveedor]),
             ];
         }
 
-        $sesionesPendientes = $this->contadoresOperaciones->sesionesPendientesValidacion();
-        if ($sesionesPendientes > 0) {
-            $badges['menu.operacion.items.seguimiento_vuelos'] = [
-                'numero' => (string) $sesionesPendientes,
-                'texto' => __('seguridad.respuestas.badge_sesiones_pendientes', ['cantidad' => $sesionesPendientes]),
-            ];
+        // Lo que espera una decisión del administrador: cada ítem del menú lleva
+        // su cola. El badge solo cuenta; ocultarlo o mostrarlo no autoriza nada.
+        $pendientes = $this->tablero->pendientes();
+        $colas = [
+            'menu.operacion.items.disputas' => $pendientes['disputas'],
+            'menu.operacion.items.calificaciones' => $pendientes['calificaciones'],
+            'menu.proveedores.items.proveedores' => $pendientes['proveedores'],
+            'menu.proveedores.items.pilotos' => $pendientes['pilotos'],
+            'menu.proveedores.items.auxiliares' => $pendientes['auxiliares'],
+            'menu.proveedores.items.drones_flota' => $pendientes['drones'] + $pendientes['fotos_dron'],
+            'menu.proveedores.items.documentos' => $pendientes['documentos'],
+        ];
+
+        foreach ($colas as $label => $cantidad) {
+            if ($cantidad > 0) {
+                $badges[$label] = [
+                    'numero' => (string) $cantidad,
+                    'texto' => __('seguridad.respuestas.badge_por_resolver', ['cantidad' => $cantidad]),
+                ];
+            }
         }
 
         return $badges;
@@ -155,7 +150,7 @@ final class CascaraPanel
      * campana —que cuenta lo no leído de la lista que recibe— sigue siendo
      * exacto hasta «9+».
      *
-     * @return list<array{id: int|null, alerta_id: int|null, icon: string, title: string, time: string, unread: bool, href: string}>
+     * @return list<array{id: int|null, icon: string, title: string, time: string, unread: bool, href: string}>
      */
     private function notificaciones(SecUser $usuario, int $idRolActivo): array
     {
@@ -171,7 +166,6 @@ final class CascaraPanel
 
         $candidatas = array_map(fn (NotificacionPanel $aviso): array => [
             'id' => $aviso->id,
-            'alerta_id' => null,
             'icon' => $aviso->icono,
             'title' => $aviso->titulo,
             'momento' => Carbon::parse($aviso->creadaEn),
@@ -179,38 +173,6 @@ final class CascaraPanel
             'href' => route('panel.notificaciones.abrir', $aviso->id),
         ], $delMotor);
 
-        if ($usuario->tienePermisoEnRol('operaciones.alerta.ver', $idRolActivo)) {
-            $deLaCuenta = $this->alertasDeLaCuenta($usuario->id);
-
-            foreach ($this->panelOperaciones->alertasRecientes(self::ALERTAS_NOTIFICACION, $deLaCuenta->limpiadas) as $alerta) {
-                $candidatas[] = [
-                    'id' => null,
-                    'alerta_id' => $alerta->id,
-                    'icon' => 'warning',
-                    'title' => $alerta->mensaje,
-                    'momento' => Carbon::parse($alerta->creadaEn),
-                    'unread' => $alerta->pendiente && ! $deLaCuenta->leyo($alerta->id),
-                    'href' => route('panel.notificaciones.abrir-alerta', $alerta->id),
-                ];
-            }
-        }
-
         return CampanaDeAvisos::elegir($candidatas, self::MAXIMO_EN_CAMPANA);
-    }
-
-    /**
-     * Qué hizo esta cuenta con las alertas. Como la lectura de avisos, es
-     * secundaria: si falla, se reporta y las alertas salen como si la cuenta
-     * no hubiera tocado ninguna.
-     */
-    private function alertasDeLaCuenta(int $usuarioId): AlertasDeCuenta
-    {
-        try {
-            return $this->notificacionesDelMotor->alertasDeCuenta($usuarioId);
-        } catch (Throwable $excepcion) {
-            report($excepcion);
-
-            return new AlertasDeCuenta;
-        }
     }
 }

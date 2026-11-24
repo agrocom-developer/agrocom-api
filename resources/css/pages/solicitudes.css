@@ -30,3 +30,60 @@
     font-family: var(--ag-font-family-mono);
     font-variant-numeric: tabular-nums;
 }
+
+/* ---------- Ficha: negociación, ejecución y mensajes ---------- */
+
+.ag-solicitudes__negociaciones,
+.ag-solicitudes__ejecucion {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-5);
+}
+
+.ag-solicitudes__negociaciones h3,
+.ag-solicitudes__ejecucion h3 {
+    margin: 0 0 var(--ag-space-2);
+    font-size: var(--ag-font-size-sm);
+}
+
+.ag-solicitudes__fotos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+    gap: var(--ag-space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ag-solicitudes__fotos img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+    background: var(--ag-color-bg-table-head);
+}
+
+.ag-solicitudes__mensajes {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ag-solicitudes__mensaje {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+    padding: var(--ag-space-2) var(--ag-space-3);
+    border-left: 3px solid var(--ag-color-border-strong);
+    background: var(--ag-color-bg-table-head);
+    border-radius: var(--ag-radius-sm);
+}
+
+.ag-solicitudes__mensaje--proveedor {
+    border-left-color: var(--ag-color-primary);
+}

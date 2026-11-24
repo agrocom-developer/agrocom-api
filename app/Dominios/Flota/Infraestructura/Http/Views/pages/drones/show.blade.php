@@ -3,7 +3,7 @@
     Ficha de revisión de un dron del marketplace — arquetipo Detalle (§6.4 de
     docs/diseno/guia_pantalla_panel.md): cabecera con el estado y las acciones de
     aprobación que el rol activo puede hacer, KPIs (capacidad, ancho de pasada,
-    ciclos de batería), los datos con su dueño y operador, los documentos con su
+    fotos aprobadas), los datos con su dueño y operador, los documentos con su
     revisión, los equipos donde trabaja y el historial.
 
     Datos esperados (ver DronesController::show()): la cáscara de CascaraPanel,
@@ -93,16 +93,17 @@
                     state="distintivo-1"
                 />
                 <x-molecules.stat-card
-                    :label="__('flota.drones.kpi_ciclos')"
-                    icon="battery_charging_full"
-                    :value="(string) $dron->ciclos_bateria"
-                    :foot="__('flota.drones.kpi_ciclos_pie')"
-                    state="distintivo-2"
+                    :label="__('flota.drones.kpi_fotos')"
+                    icon="photo_camera"
+                    :value="(string) count(array_filter($fotos, fn ($f) => $f['estado'] === 'aprobada'))"
+                    :value-suffix="'/ '.count(config('flota.fotos_obligatorias'))"
+                    :foot="count($fotosFaltantes) === 0 ? __('flota.drones.kpi_fotos_completas') : __('flota.drones.kpi_fotos_faltan', ['fotos' => implode(', ', array_map(fn ($t) => mb_strtolower(__('flota.fotos.tipo.'.$t)), $fotosFaltantes))])"
+                    :state="count($fotosFaltantes) === 0 ? 'success' : 'warning'"
                 />
             </div>
 
             <x-molecules.form-layout>
-                <x-molecules.form-section accent="primary-2" :title="__('flota.drones.seccion_datos')" :count="__('proveedores.campos_contador', ['cantidad' => 7])">
+                <x-molecules.form-section accent="primary-2" :title="__('flota.drones.seccion_datos')" :count="__('proveedores.campos_contador', ['cantidad' => 8])">
                     <div class="ag-detalle__campo">
                         <p class="ag-detalle__campo-label">{{ __('flota.drones.campo_marca') }}</p>
                         <p class="ag-detalle__campo-valor">{{ $dron->marca }}</p>
@@ -110,6 +111,10 @@
                     <div class="ag-detalle__campo">
                         <p class="ag-detalle__campo-label">{{ __('flota.drones.campo_modelo') }}</p>
                         <p class="ag-detalle__campo-valor">{{ $dron->modelo }}</p>
+                    </div>
+                    <div class="ag-detalle__campo">
+                        <p class="ag-detalle__campo-label">{{ __('flota.drones.campo_anio') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ $dron->anio ?? __('proveedores.sin_dato') }}</p>
                     </div>
                     <div class="ag-detalle__campo">
                         <p class="ag-detalle__campo-label">{{ __('flota.drones.campo_serie') }}</p>
@@ -123,7 +128,7 @@
                         <p class="ag-detalle__campo-label">{{ __('flota.drones.campo_dueno') }}</p>
                         <p class="ag-detalle__campo-valor">
                             @if ($dueno && $puedeVerProveedor)
-                                <a href="{{ route('panel.proveedores.show', $dueno->id) }}">{{ $dueno->razonSocial }}</a>
+                                <a class="ag-dash__link" href="{{ route('panel.proveedores.show', $dueno->id) }}">{{ $dueno->razonSocial }}</a>
                             @else
                                 {{ $dueno->razonSocial ?? __('proveedores.sin_dato') }}
                             @endif
@@ -138,6 +143,13 @@
                         <p class="ag-detalle__campo-valor">{{ $dron->aprobado_en?->format('d/m/Y H:i') ?? __('proveedores.sin_dato') }}</p>
                     </div>
                 </x-molecules.form-section>
+
+                @include('flota::pages.drones._fotos', [
+                    'dron' => $dron,
+                    'fotos' => $fotos,
+                    'fotosFaltantes' => $fotosFaltantes,
+                    'puedeRevisarFotos' => $puedeRevisarFotos,
+                ])
 
                 @include('proveedores::pages._documentos-sujeto', [
                     'documentos' => $documentos,

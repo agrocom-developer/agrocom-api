@@ -347,7 +347,7 @@
        --ag-color-primary-emphasis (verde-300 en oscuro, ~7.7:1 contra este
        fondo, era ~8.3:1 — AAA) sin necesidad de token propio, mismo
        criterio que en claro. */
-    --ag-color-accent-link: var(--ag-color-amber-300);
+    --ag-color-accent-link: var(--ag-color-green-300);
 
     /* Editorial de auth-layout: wordmark bicromía "COM" + chip de ícono,
        constantes entre temas (igual que --ag-color-scrim*), porque la foto

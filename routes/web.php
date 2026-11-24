@@ -5,19 +5,9 @@ use App\Dominios\Disputas\Infraestructura\Http\Controllers\Web\DisputasControlle
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Web\DronesController as DronesFlotaController;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Web\EquiposController as EquiposFlotaController;
-use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\BateriasController;
-use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\FichasDronController;
 use App\Dominios\Metricas\Infraestructura\Http\Controllers\Web\MetricasController;
+use App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Web\AvisosController;
 use App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Web\NotificacionesController;
-use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
-use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\DronesController;
-use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\PausasController;
-use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\ReportesTecnicosController;
-use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\TrabajosController;
-use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\ValidacionSesionesController;
-use App\Dominios\Personal\Infraestructura\Http\Controllers\Web\BasesController;
-use App\Dominios\Personal\Infraestructura\Http\Controllers\Web\CuadrillasController;
-use App\Dominios\Personal\Infraestructura\Http\Controllers\Web\PersonasController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web\AprobacionController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web\AuxiliaresController as AuxiliaresPanelController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web\DocumentosController as DocumentosPanelController;
@@ -43,7 +33,9 @@ use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\SesionController
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\SesionPortalController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\UsuariosController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\VistaComoController;
+use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Web\ClientesController as ClientesPanelController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Web\SolicitudesController as SolicitudesPanelController;
+use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Web\ZonasController as ZonasPanelController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -251,12 +243,6 @@ Route::middleware('auth:interno')->group(function () {
             ->where('notificacion', '[0-9]{1,18}')
             ->name('panel.notificaciones.abrir');
 
-        // Las alertas técnicas de Operaciones también se abren desde la campana: dejan leída
-        // la alerta para esta cuenta (no la atienden) y llevan a su pantalla.
-        Route::get('/panel/notificaciones/alertas/{alerta}/abrir', [NotificacionesController::class, 'abrirAlerta'])
-            ->where('alerta', '[0-9]{1,18}')
-            ->name('panel.notificaciones.abrir-alerta');
-
         Route::post('/panel/notificaciones/marcar-todas', [NotificacionesController::class, 'marcarTodas'])
             ->name('panel.notificaciones.marcar-todas');
 
@@ -320,183 +306,6 @@ Route::middleware('auth:interno')->group(function () {
         Route::post('/panel/versiones-apk/{version}/autorizar', [VersionesApkController::class, 'autorizar'])
             ->name('panel.versiones-apk.autorizar');
 
-        // Trabajos (ADR 0037): los que los equipos abrieron sobre solicitudes de
-        // servicio. El listado es `panel.trabajos.index`; el detalle de UNO —
-        // sesiones, acta, reporte, evidencias y eliminar mientras no esté
-        // validado (HU-93)— cuelga del prefijo `detalle/`. Los trabajos nacen
-        // en la app de campo: el panel no los crea ni los edita.
-        Route::get('/panel/trabajos', [TrabajosController::class, 'index'])
-            ->name('panel.trabajos.index');
-
-        Route::get('/panel/trabajos/detalle/{trabajo}', [TrabajosController::class, 'show'])
-            ->name('panel.trabajos.detalle');
-
-        Route::delete('/panel/trabajos/detalle/{trabajo}', [TrabajosController::class, 'destroy'])
-            ->name('panel.trabajos.detalle-eliminar');
-
-        // HU-17 (tarea 24): descarga del PDF del acta desde el panel — solo
-        // lectura, mismo permiso `operaciones.trabajo.ver` que el detalle
-        // (generar/firmar el acta es de `agrocom-field`, no del panel).
-        Route::get('/panel/trabajos/detalle/{trabajo}/acta/pdf', [TrabajosController::class, 'actaPdf'])
-            ->name('panel.trabajos.acta-pdf');
-
-        // HU-18 (tarea 25): descarga del reporte técnico desde el panel —
-        // solo lectura, permiso propio `operaciones.reporte.ver` (espec §3
-        // línea 89: jefe de campo/encargado/dueño, no piloto/auxiliar; ver
-        // runs/25.md). El reporte se genera solo al firmar el acta
-        // (`GenerarReporteTecnico`); esta ruta nunca lo genera.
-        Route::get('/panel/trabajos/detalle/{trabajo}/reporte/pdf', [TrabajosController::class, 'reporteTecnicoPdf'])
-            ->name('panel.trabajos.reporte-pdf');
-
-        // HU-42 (tarea 56): galería de evidencias de un trabajo — solo
-        // lectura, mismo permiso `operaciones.trabajo.ver` que el detalle.
-        // El streaming del archivo real vive en una ruta propia porque no
-        // cuelga de un `{trabajo}` (la evidencia puede venir de una sesión).
-        Route::get('/panel/trabajos/detalle/{trabajo}/evidencias', [TrabajosController::class, 'evidencias'])
-            ->name('panel.trabajos.evidencias');
-
-        Route::get('/panel/evidencias/{evidencia}/archivo', [TrabajosController::class, 'evidenciaArchivo'])
-            ->name('panel.evidencias.archivo');
-
-        // HU-14 (tarea 14): cola de validación de sesiones cerradas.
-        // Permiso `operaciones.sesion.validar` verificado DENTRO del
-        // controlador contra el ROL ACTIVO, mismo criterio que las rutas de
-        // arriba; la policy validador≠piloto (invariante 4) se reverifica
-        // del lado del servidor en cada acción, no solo en el listado.
-        Route::get('/panel/sesiones/validacion', [ValidacionSesionesController::class, 'index'])
-            ->name('panel.sesiones.validacion.index');
-
-        Route::post('/panel/sesiones/{sesion}/validar', [ValidacionSesionesController::class, 'validar'])
-            ->name('panel.sesiones.validacion.validar');
-
-        Route::post('/panel/sesiones/{sesion}/rechazar', [ValidacionSesionesController::class, 'rechazar'])
-            ->name('panel.sesiones.validacion.rechazar');
-
-        // HU-44 (tarea 58): pausas de sesión con causa atribuible (DS-01).
-        // Permisos `operaciones.pausa.ver`/`.registrar` verificados DENTRO
-        // del controlador contra el ROL ACTIVO, mismo criterio que las
-        // rutas de arriba.
-        Route::get('/panel/pausas', [PausasController::class, 'index'])
-            ->name('panel.pausas.index');
-
-        Route::get('/panel/pausas/crear', [PausasController::class, 'create'])
-            ->name('panel.pausas.create');
-
-        Route::post('/panel/pausas', [PausasController::class, 'store'])
-            ->name('panel.pausas.store');
-
-        // HU-19 (tarea 26): bandeja de alertas por excepción. Permiso
-        // `operaciones.alerta.ver` gatea la pantalla,
-        // `operaciones.alerta.atender` gatea la acción — ambos verificados
-        // DENTRO del controlador contra el ROL ACTIVO, mismo criterio que
-        // las rutas de arriba.
-        Route::get('/panel/alertas', [AlertasController::class, 'index'])
-            ->name('panel.alertas.index');
-
-        Route::post('/panel/alertas/{alerta}/atender', [AlertasController::class, 'atender'])
-            ->name('panel.alertas.atender');
-
-        // HU-27 (tarea 36): administración de la flota de drones con su
-        // modelo y capacidad de carga. Sin sub-entidad (a diferencia de
-        // `clientes`/`campos`): un dron no tiene contactos ni lotes. Cuatro
-        // permisos de grano fino
-        // (`operaciones.dron.ver`/`.crear`/`.editar`/`.eliminar`)
-        // verificados DENTRO del controlador contra el ROL ACTIVO, mismo
-        // criterio que `clientes`/`campos` arriba.
-        Route::get('/panel/drones', [DronesController::class, 'index'])
-            ->name('panel.drones.index');
-
-        Route::get('/panel/drones/crear', [DronesController::class, 'create'])
-            ->name('panel.drones.create');
-
-        Route::post('/panel/drones', [DronesController::class, 'store'])
-            ->name('panel.drones.store');
-
-        Route::get('/panel/drones/{dron}/editar', [DronesController::class, 'edit'])
-            ->name('panel.drones.edit');
-
-        Route::put('/panel/drones/{dron}', [DronesController::class, 'update'])
-            ->name('panel.drones.update');
-
-        Route::delete('/panel/drones/{dron}', [DronesController::class, 'destroy'])
-            ->name('panel.drones.destroy');
-
-        // HU-26 (tarea 37): administración de bases y personas operativas,
-        // dos ABMs INDEPENDIENTES (una base es catálogo simple; una persona
-        // la referencia por `base_id`, FK nullable, pero cada una tiene su
-        // propia pantalla). Sin sub-entidad en ninguna de las dos. Cuatro
-        // permisos de grano fino por recurso
-        // (`personal.base.*`/`personal.persona.*`) verificados DENTRO del
-        // controlador contra el ROL ACTIVO, mismo criterio que
-        // `clientes`/`campos`/`drones` arriba.
-        Route::get('/panel/bases', [BasesController::class, 'index'])
-            ->name('panel.bases.index');
-
-        Route::get('/panel/bases/crear', [BasesController::class, 'create'])
-            ->name('panel.bases.create');
-
-        Route::post('/panel/bases', [BasesController::class, 'store'])
-            ->name('panel.bases.store');
-
-        Route::get('/panel/bases/{base}/editar', [BasesController::class, 'edit'])
-            ->name('panel.bases.edit');
-
-        Route::put('/panel/bases/{base}', [BasesController::class, 'update'])
-            ->name('panel.bases.update');
-
-        Route::delete('/panel/bases/{base}', [BasesController::class, 'destroy'])
-            ->name('panel.bases.destroy');
-
-        Route::get('/panel/personas', [PersonasController::class, 'index'])
-            ->name('panel.personas.index');
-
-        Route::get('/panel/personas/crear', [PersonasController::class, 'create'])
-            ->name('panel.personas.create');
-
-        Route::post('/panel/personas', [PersonasController::class, 'store'])
-            ->name('panel.personas.store');
-
-        Route::get('/panel/personas/{persona}/editar', [PersonasController::class, 'edit'])
-            ->name('panel.personas.edit');
-
-        Route::put('/panel/personas/{persona}', [PersonasController::class, 'update'])
-            ->name('panel.personas.update');
-
-        Route::delete('/panel/personas/{persona}', [PersonasController::class, 'destroy'])
-            ->name('panel.personas.destroy');
-
-        // HU-58 (tarea 81): "¿qué hizo esta persona esta campaña?" — ficha
-        // de desempeño por sesión (nunca por equipo de trabajo, ADR 0015
-        // punto 3). Permiso propio `personal.persona.desempenio`, más fino
-        // que `.ver`: es información sensible que no ve cualquiera con
-        // acceso al listado de personas.
-        Route::get('/panel/personas/{persona}/desempeno', [PersonasController::class, 'desempenio'])
-            ->name('panel.personas.desempenio');
-
-        // HU-39 (tarea 51): catálogo de baterías con sus ciclos acumulados y
-        // estado, para retirarlas antes de que fallen en vuelo. ABM de
-        // `Mantenimiento`. Cuatro permisos de grano fino
-        // (`mantenimiento.bateria.ver`/`.crear`/`.editar`/`.eliminar`)
-        // verificados DENTRO del controlador contra el ROL ACTIVO, mismo
-        // criterio que el resto del panel.
-        Route::get('/panel/baterias', [BateriasController::class, 'index'])
-            ->name('panel.baterias.index');
-
-        Route::get('/panel/baterias/crear', [BateriasController::class, 'create'])
-            ->name('panel.baterias.create');
-
-        Route::post('/panel/baterias', [BateriasController::class, 'store'])
-            ->name('panel.baterias.store');
-
-        Route::get('/panel/baterias/{bateria}/editar', [BateriasController::class, 'edit'])
-            ->name('panel.baterias.edit');
-
-        Route::put('/panel/baterias/{bateria}', [BateriasController::class, 'update'])
-            ->name('panel.baterias.update');
-
-        Route::delete('/panel/baterias/{bateria}', [BateriasController::class, 'destroy'])
-            ->name('panel.baterias.destroy');
-
         // Solicitudes de servicio (ADR 0027): el administrador las consulta y, con
         // el permiso de cancelar, las cancela con motivo. El cliente las crea
         // desde la app; el panel no crea ni edita solicitudes.
@@ -510,6 +319,41 @@ Route::middleware('auth:interno')->group(function () {
         Route::post('/panel/solicitudes/{solicitud}/cancelar', [SolicitudesPanelController::class, 'cancelar'])
             ->whereNumber('solicitud')
             ->name('panel.solicitudes.cancelar');
+
+        // La foto de un avance, desde el disco privado (`solicitudes.solicitud.ver_seguimiento`).
+        Route::get('/panel/solicitudes/{solicitud}/evidencias/{evidencia}', [SolicitudesPanelController::class, 'evidencia'])
+            ->whereNumber(['solicitud', 'evidencia'])
+            ->name('panel.solicitudes.evidencia');
+
+        // Clientes del marketplace: ficha con sus terrenos y solicitudes; suspender o
+        // reactivar con motivo (`solicitudes.cliente.*`).
+        Route::get('/panel/clientes', [ClientesPanelController::class, 'index'])
+            ->name('panel.clientes.index');
+
+        Route::get('/panel/clientes/{cliente}', [ClientesPanelController::class, 'show'])
+            ->whereNumber('cliente')
+            ->name('panel.clientes.show');
+
+        Route::post('/panel/clientes/{cliente}/estado', [ClientesPanelController::class, 'cambiarEstado'])
+            ->whereNumber('cliente')
+            ->name('panel.clientes.estado');
+
+        // Zonas de Santa Cruz y su macrorregión (`solicitudes.zona.*`).
+        Route::get('/panel/zonas', [ZonasPanelController::class, 'index'])
+            ->name('panel.zonas.index');
+
+        Route::get('/panel/zonas/{zona}/editar', [ZonasPanelController::class, 'edit'])
+            ->whereNumber('zona')
+            ->name('panel.zonas.edit');
+
+        Route::put('/panel/zonas/{zona}', [ZonasPanelController::class, 'update'])
+            ->whereNumber('zona')
+            ->name('panel.zonas.update');
+
+        // Avisos que el sistema envía a clientes, proveedores y administradores
+        // (`notificaciones.aviso.ver`). Solo lectura.
+        Route::get('/panel/avisos', [AvisosController::class, 'index'])
+            ->name('panel.avisos.index');
 
         // Calificaciones (ADR 0031 y 0039): la cola de moderación; ocultar con causa y
         // motivo o dejar visible. Ocultar no borra: deja de contar para el promedio.
@@ -589,8 +433,6 @@ Route::middleware('auth:interno')->group(function () {
             ->whereNumber('id')
             ->name('panel.auxiliares.resolver');
 
-        // `drones-flota` y `equipos-flota`: el nombre corto ya lo usan el catálogo
-        // operativo de drones (`panel.drones.*`) y las cuadrillas.
         Route::get('/panel/drones-flota', [DronesFlotaController::class, 'index'])
             ->name('panel.drones-flota.index');
 
@@ -601,6 +443,16 @@ Route::middleware('auth:interno')->group(function () {
         Route::post('/panel/drones-flota/{dron}/resolver', [DronesFlotaController::class, 'resolver'])
             ->whereNumber('dron')
             ->name('panel.drones-flota.resolver');
+
+        // Las fotos que el proveedor sube del dron: se ven desde el disco privado y se
+        // aprueban o rechazan una por una (`flota.dron.aprobar`).
+        Route::get('/panel/drones-flota/{dron}/fotos/{foto}', [DronesFlotaController::class, 'foto'])
+            ->whereNumber(['dron', 'foto'])
+            ->name('panel.drones-flota.foto');
+
+        Route::post('/panel/drones-flota/{dron}/fotos/{foto}/revisar', [DronesFlotaController::class, 'revisarFoto'])
+            ->whereNumber(['dron', 'foto'])
+            ->name('panel.drones-flota.foto-revisar');
 
         Route::get('/panel/equipos-flota', [EquiposFlotaController::class, 'index'])
             ->name('panel.equipos-flota.index');
@@ -615,97 +467,6 @@ Route::middleware('auth:interno')->group(function () {
         Route::post('/panel/documentos/{documento}/revisar', [DocumentosPanelController::class, 'revisar'])
             ->whereNumber('documento')
             ->name('panel.documentos.revisar');
-
-        // Tarea 72 (HU-49, ADR 0015 punto 3): equipos de trabajo — el piloto
-        // y su auxiliar, con el equipamiento asignado, cada uno con su
-        // propia vigencia. Cuatro permisos de grano fino
-        // (`personal.equipo_trabajo.ver`/`.crear`/`.editar`/`.eliminar`)
-        // verificados DENTRO del controlador contra el ROL ACTIVO. La ficha
-        // (`show`) y las rutas de integrantes/recursos exigen `.editar` para
-        // mutar — asignar o finalizar una vigencia es mantener el equipo,
-        // no un permiso aparte.
-        Route::get('/panel/cuadrillas', [CuadrillasController::class, 'index'])
-            ->name('panel.cuadrillas.index');
-
-        Route::get('/panel/cuadrillas/crear', [CuadrillasController::class, 'create'])
-            ->name('panel.cuadrillas.create');
-
-        Route::post('/panel/cuadrillas', [CuadrillasController::class, 'store'])
-            ->name('panel.cuadrillas.store');
-
-        Route::get('/panel/cuadrillas/{equipoTrabajo}', [CuadrillasController::class, 'show'])
-            ->name('panel.cuadrillas.show');
-
-        Route::get('/panel/cuadrillas/{equipoTrabajo}/editar', [CuadrillasController::class, 'edit'])
-            ->name('panel.cuadrillas.edit');
-
-        Route::put('/panel/cuadrillas/{equipoTrabajo}', [CuadrillasController::class, 'update'])
-            ->name('panel.cuadrillas.update');
-
-        // Tarea "cuadrillas-estadias" (19/9/2026): máquina de estados
-        // `activo ⇄ inactivo` (`step-arrow` en la ficha de edición) — pasa por
-        // `CambiarEstadoEquipoTrabajo`, nunca un `estado = ...` suelto.
-        Route::post('/panel/cuadrillas/{equipoTrabajo}/estado', [CuadrillasController::class, 'cambiarEstado'])
-            ->name('panel.cuadrillas.cambiar-estado');
-
-        Route::delete('/panel/cuadrillas/{equipoTrabajo}', [CuadrillasController::class, 'destroy'])
-            ->name('panel.cuadrillas.destroy');
-
-        Route::post('/panel/cuadrillas/{equipoTrabajo}/integrantes', [CuadrillasController::class, 'asignarIntegrante'])
-            ->name('panel.cuadrillas.integrantes.store');
-
-        Route::delete('/panel/cuadrillas/{equipoTrabajo}/integrantes/{integrante}', [CuadrillasController::class, 'desasignarIntegrante'])
-            ->name('panel.cuadrillas.integrantes.destroy');
-
-        Route::post('/panel/cuadrillas/{equipoTrabajo}/recursos', [CuadrillasController::class, 'asignarRecurso'])
-            ->name('panel.cuadrillas.recursos.store');
-
-        Route::delete('/panel/cuadrillas/{equipoTrabajo}/recursos/{recurso}', [CuadrillasController::class, 'desasignarRecurso'])
-            ->name('panel.cuadrillas.recursos.destroy');
-
-        // Tarea "cuadrillas-estadias" (19/9/2026): accesorios (machete,
-        // palas, linternas…) que lleva la cuadrilla, con cantidad — sin
-        // vigencia propia, a diferencia de integrantes/recursos.
-        Route::post('/panel/cuadrillas/{equipoTrabajo}/accesorios', [CuadrillasController::class, 'agregarAccesorio'])
-            ->name('panel.cuadrillas.accesorios.store');
-
-        Route::delete('/panel/cuadrillas/{equipoTrabajo}/accesorios/{accesorio}', [CuadrillasController::class, 'quitarAccesorio'])
-            ->name('panel.cuadrillas.accesorios.destroy');
-
-        // HU-82 (tarea 97): ficha de inventario del dron — serie, chasis,
-        // versión de software, región, serie del control y accesorios. ABM
-        // sin máquina de estados, mismo molde que `baterias` arriba.
-        // Cuatro permisos de grano fino
-        // (`mantenimiento.ficha_dron.ver`/`.crear`/`.editar`/`.eliminar`)
-        // verificados DENTRO del controlador contra el ROL ACTIVO, mismo
-        // criterio que el resto del panel. `identificador_dron` correlaciona
-        // por TEXTO contra `ope_drones.identificador`, sin FK real (ver
-        // docblock de la migración `man_drones`).
-        Route::get('/panel/fichas-dron', [FichasDronController::class, 'index'])
-            ->name('panel.fichas-dron.index');
-
-        Route::get('/panel/fichas-dron/crear', [FichasDronController::class, 'create'])
-            ->name('panel.fichas-dron.create');
-
-        Route::post('/panel/fichas-dron', [FichasDronController::class, 'store'])
-            ->name('panel.fichas-dron.store');
-
-        Route::get('/panel/fichas-dron/{fichaDron}/editar', [FichasDronController::class, 'edit'])
-            ->name('panel.fichas-dron.edit');
-
-        Route::put('/panel/fichas-dron/{fichaDron}', [FichasDronController::class, 'update'])
-            ->name('panel.fichas-dron.update');
-
-        Route::delete('/panel/fichas-dron/{fichaDron}', [FichasDronController::class, 'destroy'])
-            ->name('panel.fichas-dron.destroy');
-
-        // HU-43 (tarea 57): "como encargado, quiero listar y descargar los
-        // reportes técnicos generados, para reenviarlos al agrónomo" — cierra
-        // Sprint 12. Reusa el permiso `operaciones.reporte.ver` que ya gatea
-        // la descarga individual (`panel.trabajos.reporte-pdf`), misma acción
-        // de negocio. Filtrable por cliente y por período de generación.
-        Route::get('/panel/reportes/tecnicos', [ReportesTecnicosController::class, 'index'])
-            ->name('panel.reportes.tecnicos.index');
     });
 });
 

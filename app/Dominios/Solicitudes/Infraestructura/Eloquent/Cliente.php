@@ -24,6 +24,8 @@ use Illuminate\Support\Carbon;
  * @property int $calificaciones_conteo
  * @property Carbon|null $aviso_calificacion_en
  * @property Carbon|null $publicacion_limitada_en
+ * @property string|null $motivo_suspension
+ * @property Carbon|null $suspendido_en
  */
 class Cliente extends ModeloDominio
 {
@@ -51,6 +53,7 @@ class Cliente extends ModeloDominio
             'calificaciones_conteo' => 'integer',
             'aviso_calificacion_en' => 'datetime',
             'publicacion_limitada_en' => 'datetime',
+            'suspendido_en' => 'datetime',
         ];
     }
 }

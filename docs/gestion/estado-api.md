@@ -16,6 +16,10 @@ Qué está hecho en `agrocom-api` para las apps móviles (`cliente`, `piloto` y 
 | Ejecución offline | `POST /api/sync` (lote idempotente por `uuid_cliente`), `GET /api/sync/catalogo` con cursor (solicitudes adjudicadas y en ejecución del equipo), `POST /api/solicitudes/{id}/evidencias` en cola aparte, actas y reporte del lote. | ADR 0005, 0040; especificación §10.3 |
 | Retiro de la operación interna | El alcance de finanzas, inventario y mantenimiento de flota no forma parte del marketplace; sus endpoints y esquemas no están en el contrato. | ADR 0035 |
 
+### Panel
+
+La torre de control del administrador está en `docs/panel/torre-de-control.md`: tablero, solicitudes con negociación, ejecución y chat, proveedores, drones con revisión de fotos, clientes, zonas, avisos, calificaciones, disputas y seguridad.
+
 ### Contrato
 
 - `docs/api/openapi.yaml` se regenera con `composer openapi` y coincide con el código: 92 operaciones documentadas, ninguna ruta de `/api` sin documentar ni documentada sin ruta, y la seguridad declarada coincide con la que exigen las rutas.
@@ -44,7 +48,6 @@ El motor está implementado; lo que sigue pendiente de `negociacion-contrato.md`
 
 - Aviso push al sistema operativo: `POST /api/dispositivos` y `DELETE /api/dispositivos/{token}` para registrar el token de push (el aviso vive en la lista `GET /api/notificaciones`).
 - `POST /api/solicitudes/{id}/pago-confirmado`, `PUT /api/proveedores/perfil/foto`, `POST /api/terrenos/{id}/fotos` y `GET /api/referencias/precio`.
-- Revisión de las fotos del dron desde el panel (`panel/drones-flota`) y la exigencia de las fotos obligatorias para aprobar el dron.
 - Los registros `inicio`, `avance`, `cierre` y `mensaje` viajan hoy por sus rutas REST idempotentes por `uuid_cliente`, no por `POST /api/sync`.
 
 ### Endpoints de la especificación sin implementar

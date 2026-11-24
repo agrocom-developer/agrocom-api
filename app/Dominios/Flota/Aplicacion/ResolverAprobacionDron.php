@@ -11,6 +11,7 @@ use App\Dominios\Compartido\Dominio\Excepciones\TransicionDeAprobacionInvalida;
 use App\Dominios\Compartido\Dominio\OrigenCambio;
 use App\Dominios\Compartido\Dominio\TipoDocumento;
 use App\Dominios\Flota\Aplicacion\MaquinaEstados\MaquinaEstadosDron;
+use App\Dominios\Flota\Dominio\Excepciones\FotosDeDronIncompletas;
 use App\Dominios\Flota\Infraestructura\Eloquent\Dron;
 use App\Dominios\Flota\Infraestructura\Eloquent\HistorialEstadoDron;
 use App\Dominios\Proveedores\Contratos\LecturaProveedores;
@@ -22,7 +23,8 @@ use Illuminate\Support\Facades\DB;
  * ADR 0029 y 0032). Misma regla que `ResolverAprobacion` de Proveedores: la
  * transición se valida contra la tabla compartida, rechazar, suspender y dar de
  * baja exigen motivo, aprobar exige los documentos del dron (registro,
- * habilitación y seguro) aprobados y vigentes, y cada cambio deja su fila de
+ * habilitación y seguro) aprobados y vigentes y las fotos obligatorias
+ * (`config('flota.fotos_obligatorias')`) aprobadas, y cada cambio deja su fila de
  * historial y el aviso al titular del dueño.
  */
 final class ResolverAprobacionDron
@@ -37,6 +39,7 @@ final class ResolverAprobacionDron
      * @throws TransicionDeAprobacionInvalida
      * @throws MotivoRequerido
      * @throws DocumentosIncompletos
+     * @throws FotosDeDronIncompletas
      */
     public function ejecutar(
         int $dronId,
@@ -56,6 +59,12 @@ final class ResolverAprobacionDron
 
                 if ($faltantes !== []) {
                     throw new DocumentosIncompletos(array_map(static fn (string $tipo): TipoDocumento => TipoDocumento::from($tipo), $faltantes));
+                }
+
+                $fotosFaltantes = $this->fotosObligatoriasFaltantes($dronId);
+
+                if ($fotosFaltantes !== []) {
+                    throw new FotosDeDronIncompletas($fotosFaltantes);
                 }
             }
 
@@ -87,5 +96,22 @@ final class ResolverAprobacionDron
                 porElSistema: $origen === OrigenCambio::Sistema,
             ));
         });
+    }
+
+    /**
+     * Los tipos de foto obligatorios que el dron todavía no tiene aprobados.
+     *
+     * @return list<string>
+     */
+    private function fotosObligatoriasFaltantes(int $dronId): array
+    {
+        $aprobadas = DB::table('flo_dron_fotos')
+            ->where('dron_id', $dronId)
+            ->where('estado', 'aprobada')
+            ->whereNull('deleted_at')
+            ->pluck('tipo')
+            ->all();
+
+        return array_values(array_diff((array) config('flota.fotos_obligatorias', []), $aprobadas));
     }
 }

@@ -41,7 +41,7 @@
 
             @php
                 $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
-                $filtrosPanelActivos = collect(['estado', 'origen'])
+                $filtrosPanelActivos = collect(['estado', 'origen', 'fotos'])
                     ->filter(fn ($campo) => $filtros[$campo] !== null && $filtros[$campo] !== '')
                     ->count();
                 $opcionesEstado = collect($estadosFiltro)->mapWithKeys(fn ($opcion) => [$opcion->value => __('aprobacion.estado.'.$opcion->value)])->all();
@@ -71,6 +71,14 @@
                             :value="$filtros['origen']"
                             :placeholder="__('proveedores.filtro_todos')"
                         />
+                        <x-atoms.select
+                            name="fotos"
+                            id="filtro-fotos"
+                            :label="__('flota.drones.filtro_fotos')"
+                            :options="['en_revision' => __('flota.drones.filtro_fotos_en_revision')]"
+                            :value="$filtros['fotos']"
+                            :placeholder="__('proveedores.filtro_todos')"
+                        />
                     </x-organisms.filter-panel>
 
                     <x-molecules.table-search
@@ -97,13 +105,12 @@
                     />
                 @endif
             @else
-                <x-molecules.index-table columns="3rem minmax(0, 1.4fr) minmax(0, 1.2fr) minmax(0, 0.7fr) minmax(0, 0.6fr) minmax(0, 0.8fr) var(--ag-row-actions-width)">
+                <x-molecules.index-table columns="3rem minmax(0, 1.4fr) minmax(0, 1.2fr) minmax(0, 0.7fr) minmax(0, 0.8fr) var(--ag-row-actions-width)">
                     <x-slot:head>
                         <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('flota.drones.col_dron') }}</span>
                         <span role="columnheader">{{ __('flota.drones.col_dueno') }}</span>
                         <span role="columnheader">{{ __('flota.drones.col_capacidad') }}</span>
-                        <span role="columnheader">{{ __('flota.drones.col_ciclos') }}</span>
                         <span role="columnheader">{{ __('flota.drones.col_estado') }}</span>
                         <span role="columnheader" class="ag-index-table__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
                     </x-slot:head>
@@ -122,7 +129,6 @@
                                 <span class="ag-proveedores__sub">{{ __('flota.origen.'.$dron->origen->value) }}</span>
                             </span>
                             <span role="cell" class="ag-proveedores__cifra">{{ __('flota.drones.litros', ['litros' => $dron->capacidad_tanque_l]) }}</span>
-                            <span role="cell" class="ag-proveedores__cifra">{{ $dron->ciclos_bateria }}</span>
                             <span role="cell">
                                 <x-atoms.badge :variant="$dron->estado->tono()">{{ __('aprobacion.estado.'.$dron->estado->value) }}</x-atoms.badge>
                             </span>

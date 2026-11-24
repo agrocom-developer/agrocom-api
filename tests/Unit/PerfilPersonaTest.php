@@ -97,12 +97,12 @@ function perfilCuenta(?int $personaId): SecUser
     return SecUser::withTrashed()->findOrFail($id);
 }
 
-/** @return array{titulo: string, tieneDatos: bool, items: list<array<string, mixed>>, nota: string, editarHref: ?string, vacioTitulo: string, vacioDetalle: string} */
-function perfilTarjeta(SecUser $cuenta, bool $puedeEditar = false): array
+/** @return array{titulo: string, tieneDatos: bool, items: list<array<string, mixed>>, nota: string, vacioTitulo: string, vacioDetalle: string} */
+function perfilTarjeta(SecUser $cuenta): array
 {
     $metodo = new ReflectionMethod(PerfilController::class, 'tarjetaPersona');
 
-    return $metodo->invoke(new PerfilController, $cuenta, app(LecturaDatosPersonales::class), $puedeEditar);
+    return $metodo->invoke(new PerfilController, $cuenta, app(LecturaDatosPersonales::class));
 }
 
 /** @param  array{items: list<array<string, mixed>>}  $tarjeta */
@@ -159,19 +159,17 @@ test('sin persona vinculada la tarjeta lo dice y no muestra datos', function () 
 
     expect($tarjeta['tieneDatos'])->toBeFalse()
         ->and($tarjeta['items'])->toBe([])
-        ->and($tarjeta['vacioTitulo'])->toBe('Tu cuenta no está vinculada a una persona')
-        ->and($tarjeta['editarHref'])->toBeNull();
+        ->and($tarjeta['vacioTitulo'])->toBe('Tu cuenta no está vinculada a una persona');
 });
 
 test('con la persona dada de baja no muestra sus datos y lo dice distinto', function () {
     $id = perfilPersona('Ana Pérez', ['ci' => '1111111', 'deleted_at' => now()]);
 
-    $tarjeta = perfilTarjeta(perfilCuenta($id), puedeEditar: true);
+    $tarjeta = perfilTarjeta(perfilCuenta($id));
 
     expect($tarjeta['tieneDatos'])->toBeFalse()
         ->and($tarjeta['items'])->toBe([])
         ->and($tarjeta['vacioTitulo'])->toBe('La persona vinculada a tu cuenta ya no está activa')
-        ->and($tarjeta['editarHref'])->toBeNull()
         ->and(json_encode($tarjeta))->not->toContain('1111111');
 });
 
@@ -188,20 +186,4 @@ test('lo que no está cargado se dice, en vez de dejar un hueco', function () {
         ->and(perfilValor($tarjeta, 'Dirección'))->toBe('Sin registrar')
         ->and(perfilValor($tarjeta, 'Base'))->toBe('Sin base asignada')
         ->and(perfilValor($tarjeta, 'Cargo'))->toBe('Piloto');
-});
-
-// ── 4. Editar en Personal ──────────────────────────────────────────────────────
-
-test('solo quien puede editar personas ve el acceso a Personal, y lleva a su propia persona', function () {
-    $ana = perfilPersona('Ana Pérez');
-    perfilPersona('Beto Soto');
-    $cuenta = perfilCuenta($ana);
-
-    $conPermiso = perfilTarjeta($cuenta, puedeEditar: true);
-    $sinPermiso = perfilTarjeta($cuenta, puedeEditar: false);
-
-    expect($conPermiso['editarHref'])->toEndWith("/panel/personas/{$ana}/editar")
-        ->and($conPermiso['nota'])->toBe('Solo lectura en esta pantalla. Puedes corregirlos desde Personal.')
-        ->and($sinPermiso['editarHref'])->toBeNull()
-        ->and($sinPermiso['nota'])->toBe('Solo lectura. Si algo no está correcto, pídele a un administrador que lo corrija.');
 });

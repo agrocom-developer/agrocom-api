@@ -15,15 +15,14 @@ use Illuminate\Support\Facades\DB;
  * Las métricas del mercado del panel (especificación §14): mercado (solicitudes,
  * asignación y tiempo hasta la aceptación), calidad (calificación, disputas y
  * reembolsos), oferta (proveedores, drones, tasa de aceptación y de cancelación) e
- * ingreso (volumen, comisión devengada). Módulo de solo lectura (ADR 0012): agrega
+ * volumen (monto acordado de los servicios finalizados). Módulo de solo lectura (ADR 0012): agrega
  * con consultas de lectura sobre las tablas de los módulos dueños y no escribe
  * nada; los nombres y las tasas de cada proveedor llegan por el contrato de
  * `Proveedores`. Todo importe y toda tasa en decimal exacto (invariante 6 de
  * CLAUDE.md); sin divisor, `null` («sin datos»), nunca cero.
  *
- * La comisión devengada es la congelada en las solicitudes completadas menos los
- * ajustes de la última resolución de cada disputa. No hay cobro en la aplicación en
- * la versión 1 (ADR 0034): es lo que Agrocom tiene por cobrar a los proveedores.
+ * No hay cobro en la aplicación: el monto final es hectáreas ejecutadas por precio
+ * acordado y las partes lo pagan fuera de la app.
  */
 final class CalcularMetricas
 {
@@ -159,7 +158,6 @@ final class CalcularMetricas
             'tasa_aceptacion' => Razones::tasa($aceptadas, $respondidas),
             'cancelaciones_proveedor' => $cancelaciones,
             'tasa_cancelacion' => Razones::tasa($cancelaciones, $aceptadas),
-            'sanciones_vigentes' => 0,
         ];
     }
 

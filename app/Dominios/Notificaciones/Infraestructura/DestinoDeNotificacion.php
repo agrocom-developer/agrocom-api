@@ -12,9 +12,9 @@ use Illuminate\Http\Request;
  * Al aviso solo se le guarda el recurso; la URL se resuelve acá, al abrir,
  * contra el ROL ACTIVO de la sesión (invariante 10): si ese rol puede ver el
  * recurso, va a él; si no, cae en la primera pantalla que sí puede ver
- * (`primerDestinoVisible`), nunca en un 403. Un piloto que recibe un
- * aviso de un trabajo cerrado no tiene `operaciones.trabajo.ver`: aterriza en
- * su tablero.
+ * (`primerDestinoVisible`), nunca en un 403. Un rol sin
+ * `solicitudes.solicitud.ver` que abre un aviso de una solicitud aterriza en su
+ * primera pantalla visible.
  *
  * Es el único lugar que conoce las rutas y los permisos de los recursos de los
  * demás módulos; el aviso mismo no sabe nada de ellos. El click nunca concede
@@ -27,7 +27,8 @@ final class DestinoDeNotificacion
     public function url(Request $request, Notificacion $notificacion): string
     {
         [$ruta, $permiso, $conId] = match ($notificacion->recurso_tipo) {
-            RecursoNotificable::Trabajo => ['panel.trabajos.detalle', 'operaciones.trabajo.ver', true],
+            // El trabajo nace de una solicitud y se sigue desde ella: lleva a la cola de solicitudes.
+            RecursoNotificable::Trabajo => ['panel.solicitudes.index', 'solicitudes.solicitud.ver', false],
             RecursoNotificable::Proveedor => ['panel.proveedores.show', 'proveedores.proveedor.ver', true],
             RecursoNotificable::Piloto => ['panel.pilotos.show', 'proveedores.piloto.ver', true],
             RecursoNotificable::Auxiliar => ['panel.auxiliares.show', 'proveedores.auxiliar.ver', true],

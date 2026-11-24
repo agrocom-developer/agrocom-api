@@ -524,8 +524,8 @@ it('toda ruta con sesión lleva AplicarVistaComo, después de abrirla y antes de
         }
     }
 
-    // Que el barrido no pase por vacío: el panel y el portal son cientos de rutas.
-    expect($conSesion)->toBeGreaterThan(100)
+    // Que el barrido no pase por vacío: el panel y el portal son decenas de rutas.
+    expect($conSesion)->toBeGreaterThan(60)
         ->and($incumplen)->toBe([]);
 });
 

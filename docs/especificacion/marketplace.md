@@ -287,7 +287,7 @@ La sincronización es idempotente: reaplicar un lote dos, tres o diez veces, en 
 
 ### 10.4 Administración y soporte
 
-Son pantallas del panel (ADR 0008), no endpoints de la API de las apps: `panel/proveedores`, `panel/pilotos`, `panel/auxiliares`, `panel/drones-flota` (aprobar, rechazar, suspender, revisar fotos), `panel/documentos`, `panel/solicitudes` (consulta, negociaciones de cada solicitud, cancelación con motivo), `panel/calificaciones` (ocultar o dejar visible con causa y motivo), `panel/disputas`, `panel/metricas` y la configuración de parámetros.
+Son pantallas del panel (ADR 0008; detalle en `docs/panel/torre-de-control.md`), no endpoints de la API de las apps: `panel/proveedores`, `panel/pilotos`, `panel/auxiliares`, `panel/drones-flota` (aprobar, rechazar, suspender, revisar fotos), `panel/documentos`, `panel/clientes`, `panel/zonas`, `panel/avisos`, `panel/solicitudes` (consulta, negociaciones de cada solicitud, cancelación con motivo), `panel/calificaciones` (ocultar o dejar visible con causa y motivo), `panel/disputas`, `panel/metricas` y la configuración de parámetros.
 
 ## 11. Parámetros configurables
 

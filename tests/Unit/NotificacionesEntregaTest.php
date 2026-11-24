@@ -721,18 +721,19 @@ function ntfAutorizacion(array $permisos): AutorizacionPanelWeb
     };
 }
 
-test('el click lleva al recurso si el rol activo puede verlo y, si no, a su primera pantalla — nunca a un 403', function (RecursoNotificable $recurso, string $permiso, string $rutaEsperada) {
+test('el click lleva al recurso si el rol activo puede verlo y, si no, a su primera pantalla — nunca a un 403', function (RecursoNotificable $recurso, string $permiso, string $rutaEsperada, bool $conId) {
     $aviso = new Notificacion(['recurso_tipo' => $recurso, 'recurso_id' => 42]);
     $peticion = Request::create('/panel/notificaciones/1/abrir');
 
     $conPermiso = (new DestinoDeNotificacion(ntfAutorizacion([$permiso])))->url($peticion, $aviso);
     $sinPermiso = (new DestinoDeNotificacion(ntfAutorizacion([])))->url($peticion, $aviso);
 
-    expect($conPermiso)->toBe(route($rutaEsperada, 42))
+    expect($conPermiso)->toBe(route($rutaEsperada, $conId ? [42] : []))
         ->and($sinPermiso)->toBe('http://localhost/panel/dashboard');
 })->with([
-    'trabajo' => [RecursoNotificable::Trabajo, 'operaciones.trabajo.ver', 'panel.trabajos.detalle'],
-    'proveedor' => [RecursoNotificable::Proveedor, 'proveedores.proveedor.ver', 'panel.proveedores.show'],
+    'trabajo' => [RecursoNotificable::Trabajo, 'solicitudes.solicitud.ver', 'panel.solicitudes.index', false],
+    'proveedor' => [RecursoNotificable::Proveedor, 'proveedores.proveedor.ver', 'panel.proveedores.show', true],
+    'solicitud' => [RecursoNotificable::Solicitud, 'solicitudes.solicitud.ver', 'panel.solicitudes.show', true],
 ]);
 
 test('cada recurso que un aviso puede nombrar tiene destino: el match del destino cubre todos los casos', function () {
@@ -787,7 +788,12 @@ test('todo acceso al modelo Notificacion sale acotado por cuenta con deUsuario()
     foreach (ntfArchivosDeApp() as $ruta) {
         $codigo = (string) file_get_contents($raiz.'/'.$ruta);
 
-        if ($ruta === 'app/Dominios/Notificaciones/Infraestructura/Eloquent/Notificacion.php') {
+        // El modelo, y la pantalla de avisos del panel (`notificaciones.aviso.ver`): ve los de
+        // todas las cuentas a propósito, como auditoría del sistema, y solo con ese permiso.
+        if (in_array($ruta, [
+            'app/Dominios/Notificaciones/Infraestructura/Eloquent/Notificacion.php',
+            'app/Dominios/Notificaciones/Infraestructura/Http/Controllers/Web/AvisosController.php',
+        ], true)) {
             continue;
         }
 

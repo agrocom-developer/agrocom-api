@@ -1,6 +1,5 @@
 <?php
 
-use App\Dominios\Operaciones\Aplicacion\EliminarTrabajo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use App\Dominios\Sincronizacion\Aplicacion\SincronizarLote;
@@ -200,7 +199,7 @@ afterEach(function () {
 
 test('con la sesión abierta antes de la baja se aceptan sus condiciones, su incidencia, su cierre y el cierre del trabajo', function () {
     $enCurso = bajaTrabajoConSesionAbierta();
-    app(EliminarTrabajo::class)->ejecutar($enCurso['trabajo']);
+    $enCurso['trabajo']->delete();
 
     $estados = bajaSync(bajaRegistrosDeCierre($enCurso));
 
@@ -227,7 +226,7 @@ test('con la sesión abierta antes de la baja se aceptan sus condiciones, su inc
 
 test('las condiciones de esa sesión se deciden con los límites vigentes del sistema', function () {
     $enCurso = bajaTrabajoConSesionAbierta();
-    app(EliminarTrabajo::class)->ejecutar($enCurso['trabajo']);
+    $enCurso['trabajo']->delete();
 
     // 18 km/h supera el límite de viento del sistema (17) y no trae observación firmada.
     $estados = bajaSync([[
@@ -248,7 +247,7 @@ test('las condiciones de esa sesión se deciden con los límites vigentes del si
 
 test('una sesión nueva después de la baja se sigue rechazando con trabajo_no_existe_aun', function () {
     $enCurso = bajaTrabajoConSesionAbierta();
-    app(EliminarTrabajo::class)->ejecutar($enCurso['trabajo']);
+    $enCurso['trabajo']->delete();
 
     $resultados = app(SincronizarLote::class)->ejecutar([[
         'tipo' => 'sesion',
@@ -268,7 +267,7 @@ test('una sesión nueva después de la baja se sigue rechazando con trabajo_no_e
 
 test('reenviar los mismos registros no duplica nada', function () {
     $enCurso = bajaTrabajoConSesionAbierta();
-    app(EliminarTrabajo::class)->ejecutar($enCurso['trabajo']);
+    $enCurso['trabajo']->delete();
     $registros = bajaRegistrosDeCierre($enCurso);
 
     bajaSync($registros);
@@ -288,7 +287,7 @@ test('reenviar los mismos registros no duplica nada', function () {
 
 test('un cierre de trabajo distinto sobre el trabajo ya cerrado tras la baja se rechaza como trabajo_ya_cerrado', function () {
     $enCurso = bajaTrabajoConSesionAbierta();
-    app(EliminarTrabajo::class)->ejecutar($enCurso['trabajo']);
+    $enCurso['trabajo']->delete();
     bajaSync(bajaRegistrosDeCierre($enCurso));
 
     $resultados = app(SincronizarLote::class)->ejecutar([[

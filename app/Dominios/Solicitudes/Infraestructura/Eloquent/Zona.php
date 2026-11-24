@@ -6,9 +6,9 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
 
 /**
- * Zona geográfica (`sol_zonas`, especificación §4.1): centroide y radio. El
- * proveedor declara su zona base y el motor de asignación las usa para escalar
- * por radio (ADR 0030). Las coordenadas viajan como string decimal.
+ * Zona geográfica (`sol_zonas`, especificación §4.1): centroide y macrorregión.
+ * Alimentan los filtros del mapa de solicitudes y los avisos de nuevas
+ * solicitudes de los pilotos. Las coordenadas viajan como string decimal.
  *
  * @property int $id
  * @property string $nombre

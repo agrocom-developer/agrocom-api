@@ -19,6 +19,7 @@ use App\Dominios\Notificaciones\Aplicacion\ReglasDeNotificacion;
 use App\Dominios\Notificaciones\Contratos\LecturaNotificaciones;
 use App\Dominios\Notificaciones\Dominio\ReglaNotificacion;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -29,8 +30,9 @@ use Illuminate\Support\ServiceProvider;
  * contrato de lectura de la campana. `boot()` registra el listener genérico
  * UNA vez por cada evento que tiene regla: un solo listener sirve a todos.
  *
- * Las vistas de la campana no viven en un namespace propio: la molécula
- * `notifications-menu` es del catálogo del panel y recibe ya armados los datos.
+ * La molécula `notifications-menu` de la campana es del catálogo del panel y
+ * recibe ya armados los datos; la pantalla de avisos del panel vive en el
+ * namespace de vistas `notificaciones::`.
  */
 final class NotificacionesServiceProvider extends ServiceProvider
 {
@@ -65,6 +67,8 @@ final class NotificacionesServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        View::addNamespace('notificaciones', app_path('Dominios/Notificaciones/Infraestructura/Http/Views'));
+
         foreach ($this->app->make(ReglasDeNotificacion::class)->eventos() as $evento) {
             Event::listen($evento, EntregarNotificacionDelEvento::class);
         }

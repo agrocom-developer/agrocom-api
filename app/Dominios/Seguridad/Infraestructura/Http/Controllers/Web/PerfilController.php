@@ -28,8 +28,6 @@ use Illuminate\View\View;
  */
 final class PerfilController
 {
-    private const PERMISO_EDITAR_PERSONA = 'personal.persona.editar';
-
     public function edit(
         Request $request,
         CascaraPanel $cascara,
@@ -43,11 +41,7 @@ final class PerfilController
         return view('seguridad::pages.perfil.index', array_merge($cuerpo, [
             'usuario' => $usuario,
             'accesos' => $this->accesosDelRol($idRolActivo, $cuerpo['menu']),
-            'persona' => $this->tarjetaPersona(
-                $usuario,
-                $lecturaPersona,
-                $autorizacion->tienePermiso($request, self::PERMISO_EDITAR_PERSONA),
-            ),
+            'persona' => $this->tarjetaPersona($usuario, $lecturaPersona),
         ]));
     }
 
@@ -107,9 +101,9 @@ final class PerfilController
      * `persona_id` de la cuenta autenticada, nunca de la petición: nadie ve los datos de otra.
      * Sin persona vinculada, o con una dada de baja, la tarjeta dice cuál de las dos es.
      *
-     * @return array{titulo: string, tieneDatos: bool, items: list<array<string, mixed>>, nota: string, editarHref: ?string, vacioTitulo: string, vacioDetalle: string}
+     * @return array{titulo: string, tieneDatos: bool, items: list<array<string, mixed>>, nota: string, vacioTitulo: string, vacioDetalle: string}
      */
-    private function tarjetaPersona(SecUser $usuario, LecturaDatosPersonales $lecturaPersona, bool $puedeEditar): array
+    private function tarjetaPersona(SecUser $usuario, LecturaDatosPersonales $lecturaPersona): array
     {
         $datos = $usuario->persona_id !== null ? $lecturaPersona->dePersona($usuario->persona_id) : null;
         $sinDato = __('seguridad.perfil.persona_sin_dato');
@@ -126,8 +120,7 @@ final class PerfilController
                 ['label' => __('seguridad.perfil.persona_correo'), 'value' => $datos->correo ?? $sinDato],
                 ['label' => __('seguridad.perfil.persona_direccion'), 'value' => $datos->direccion ?? $sinDato],
             ],
-            'nota' => $puedeEditar ? __('seguridad.perfil.persona_nota_editable') : __('seguridad.perfil.persona_nota'),
-            'editarHref' => $datos !== null && $puedeEditar ? route('panel.personas.edit', $datos->id) : null,
+            'nota' => __('seguridad.perfil.persona_nota'),
             'vacioTitulo' => $usuario->persona_id === null
                 ? __('seguridad.perfil.persona_vacio_titulo')
                 : __('seguridad.perfil.persona_baja_titulo'),
