@@ -42,7 +42,7 @@ final class IntervencionController
     /** `GET /panel/evidencias/{evidencia}/archivo`: la foto, desde el disco privado (nunca una URL pública). */
     public function evidencia(Request $request, int $evidencia): BinaryFileResponse
     {
-        abort_unless($this->autorizacion->tienePermiso($request, 'solicitudes.solicitud.ver'), 403);
+        abort_unless($this->autorizacion->tienePermiso($request, 'solicitudes.solicitud.ver_seguimiento'), 403);
 
         $foto = Evidencia::query()->findOrFail($evidencia);
 

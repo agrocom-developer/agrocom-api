@@ -163,7 +163,6 @@ Consecuencia de diseño explícita: **el relleno sólido de marca (botones) es c
 | Molecule | `section-head` | `resources/views/components/molecules/section-head.blade.php` | Implementado (2026-08-28, sexta vuelta parte 2) |
 | Molecule | `donut-chart` | — | **Retirado** (28/8/2026, auditoría visual externa obs. #5/#6 — ver §10.5). Reemplazado por `distribution-bar`, mismo prop shape. |
 | Molecule | `distribution-bar` | `resources/views/components/molecules/distribution-bar.blade.php` | Implementado (2026-08-28, auditoría visual externa obs. #5/#6) |
-| Molecule | `apex-chart` | `resources/views/components/molecules/apex-chart.blade.php` | Implementado (29/8/2026, novena vuelta — ver §13) |
 | Molecule | `captura-rc-card` | `resources/views/components/molecules/captura-rc-card.blade.php` | Implementado (29/8/2026, novena vuelta) |
 | Molecule | `alert-strip` | `resources/views/components/molecules/alert-strip.blade.php` | Implementado (28/8/2026, sexta vuelta parte 2 — ver §10.3). Faltaba en esta tabla; se agrega en la sincronización del 2/9/2026. |
 | Organism | `module-rail` | `resources/views/components/organisms/module-rail.blade.php` | Implementado (28/8/2026, quinta vuelta — nivel 1 del layout, §7.1). Faltaba en esta tabla; se agrega el 2/9/2026. |
@@ -1235,17 +1234,6 @@ aplica el token a `color` de un `<span>` oculto y lee
 Todo color nuevo en JS pasa por acá — confirmado en auditoría que es el
 único mecanismo usado (excepción encontrada y corregida: un `#fff` literal
 en el borde de los `circleMarker` del mapa, ver 13.4).
-
-### 13.3. `apex-chart` — altura declarada vs. altura real
-
-`apex-chart.blade.php` NO fija `height` como CSS del contenedor — lo pasa
-como `chart.height` (número) a ApexCharts vía `data-ag-chart-height`, y el
-contenedor solo lleva ese valor como `min-height` mientras el chunk
-diferido carga. Motivo: con `chart.height: '100%'` sobre un contenedor de
-altura CSS fija, ApexCharts llena esa altura solo con el gráfico y agrega
-la leyenda POR ENCIMA — el `overflow:hidden` de `.ag-card` recortaba la
-segunda fila de leyenda del donut de 4 estados. Con un alto numérico,
-ApexCharts reserva espacio para la leyenda dentro de ese total.
 
 ### 13.4. Auditoría (`validador`, 29/8/2026) — 2 hallazgos bloqueantes, ambos corregidos
 

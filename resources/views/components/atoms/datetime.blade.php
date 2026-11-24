@@ -30,7 +30,7 @@
     mismo input (sin altInput/input oculto: al no ser `type="date"` no hay
     restricción de formato nativo que sortear).
 
-    Carga diferida (mismo criterio que dashboard-charts/dashboard-map en
+    Carga diferida (por presencia en el DOM, en
     app.js): flatpickr solo se importa si `[data-ag-datetime]` existe en el
     DOM, para no bajarlo en pantallas que no lo usan.
 

@@ -20,6 +20,7 @@ use App\Dominios\Notificaciones\Contratos\EnviadorDePush;
 use App\Dominios\Notificaciones\Contratos\LecturaNotificaciones;
 use App\Dominios\Notificaciones\Dominio\ReglaNotificacion;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -67,6 +68,8 @@ final class NotificacionesServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        View::addNamespace('notificaciones', app_path('Dominios/Notificaciones/Infraestructura/Http/Views'));
+
         foreach ($this->app->make(ReglasDeNotificacion::class)->eventos() as $evento) {
             Event::listen($evento, EntregarNotificacionDelEvento::class);
         }

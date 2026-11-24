@@ -5,6 +5,7 @@ namespace App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Web;
 use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Negociacion\Contratos\LecturaNegociacionParaPanel;
+use App\Dominios\Proveedores\Contratos\LecturaProveedores;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Contratos\LecturaCuentas;
 use App\Dominios\Solicitudes\Aplicacion\CancelarSolicitud;
@@ -13,7 +14,9 @@ use App\Dominios\Solicitudes\Dominio\EstadoSolicitud;
 use App\Dominios\Solicitudes\Dominio\Excepciones\SolicitudInvalida;
 use App\Dominios\Solicitudes\Dominio\Excepciones\TransicionSolicitudNoPermitida;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\SolicitudServicio;
+use App\Dominios\Solicitudes\Infraestructura\Eloquent\Zona;
 use App\Dominios\Solicitudes\Infraestructura\Http\Requests\CancelarSolicitudRequest;
+use App\Dominios\Solicitudes\Infraestructura\Http\Requests\GuardarZonaRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -26,7 +29,8 @@ use Illuminate\View\View;
  * `POST /panel/solicitudes/{solicitud}/cancelar` (soporte cancela con motivo).
  * El cliente las crea desde la app; el panel solo las consulta y las cancela.
  *
- * Gateada por `solicitudes.solicitud.ver` (y `.cancelar` para la acción),
+ * Gateada por `solicitudes.solicitud.ver` (y `.cancelar` para la acción; el chat, las fotos y la
+ * ubicación, `.ver_seguimiento`),
  * verificados DENTRO del controlador contra el ROL ACTIVO (invariante 10).
  */
 final class SolicitudesController
@@ -34,6 +38,8 @@ final class SolicitudesController
     private const PERMISO_VER = 'solicitudes.solicitud.ver';
 
     private const PERMISO_CANCELAR = 'solicitudes.solicitud.cancelar';
+
+    private const PERMISO_SEGUIMIENTO = 'solicitudes.solicitud.ver_seguimiento';
 
     private const PERMISO_INTERVENIR = 'solicitudes.solicitud.intervenir';
 
@@ -45,9 +51,13 @@ final class SolicitudesController
 
         $busqueda = TextoDeFiltro::de($request, 'q');
         $estado = EstadoSolicitud::tryFrom(TextoDeFiltro::de($request, 'estado'));
+        $region = in_array(TextoDeFiltro::de($request, 'region'), GuardarZonaRequest::REGIONES, true) ? TextoDeFiltro::de($request, 'region') : null;
+        $zonaId = ctype_digit(TextoDeFiltro::de($request, 'zona')) ? (int) TextoDeFiltro::de($request, 'zona') : null;
 
         $solicitudes = SolicitudServicio::query()
             ->with(['terreno:id,nombre', 'cliente:id,razon_social'])
+            ->when($region !== null, fn ($consulta) => $consulta->whereHas('terreno.zona', fn ($zona) => $zona->where('macrorregion', $region)))
+            ->when($zonaId !== null, fn ($consulta) => $consulta->whereHas('terreno', fn ($terreno) => $terreno->where('zona_id', $zonaId)))
             ->when($estado !== null, fn ($consulta) => $consulta->where('estado', $estado->value))
             ->when($busqueda !== '', function ($consulta) use ($busqueda): void {
                 $consulta->where(function ($interna) use ($busqueda): void {
@@ -66,24 +76,35 @@ final class SolicitudesController
         return view('solicitudes::pages.solicitudes.index', [
             ...$this->autorizacion->cascara($request),
             'solicitudes' => $solicitudes,
-            'filtros' => ['q' => $busqueda, 'estado' => $estado?->value],
+            'filtros' => ['q' => $busqueda, 'estado' => $estado?->value, 'region' => $region, 'zona' => $zonaId],
             'estadosFiltro' => EstadoSolicitud::cases(),
+            'regionesFiltro' => GuardarZonaRequest::REGIONES,
+            'zonasFiltro' => Zona::query()->orderBy('nombre')->pluck('nombre', 'id')->all(),
         ]);
     }
 
-    public function show(Request $request, SolicitudServicio $solicitud, LecturaCuentas $cuentas, LecturaContextoSolicitudes $contexto, LecturaNegociacionParaPanel $negociacion): View
+    public function show(Request $request, SolicitudServicio $solicitud, LecturaCuentas $cuentas, LecturaContextoSolicitudes $contexto, LecturaNegociacionParaPanel $negociacion, LecturaProveedores $proveedores): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
         $solicitud->load(['terreno', 'cliente', 'historial']);
         $cascara = $this->autorizacion->cascara($request);
+        $puedeVerSeguimiento = $this->autorizacion->tienePermiso($request, self::PERMISO_SEGUIMIENTO);
+        $negocia = $negociacion->deLaSolicitud($solicitud->id);
+
+        // El chat, las fotos y la ubicación son datos de las partes: sin el permiso no salen del servidor.
+        if (! $puedeVerSeguimiento) {
+            $negocia = [...$negocia, 'avances' => [], 'fotos' => [], 'mensajes' => [], 'ubicacion' => null];
+        }
 
         return view('solicitudes::pages.solicitudes.show', [
             ...$cascara,
             'solicitud' => $solicitud,
             'puedeCancelar' => $this->autorizacion->tienePermiso($request, self::PERMISO_CANCELAR) && $solicitud->estado->admiteCancelacion(),
             'puedeIntervenir' => $this->autorizacion->tienePermiso($request, self::PERMISO_INTERVENIR) && $solicitud->estado->enMercado(),
-            'negocia' => $negociacion->deLaSolicitud($solicitud->id),
+            'nombreProveedor' => $solicitud->proveedor_id === null ? null : ($proveedores->proveedor($solicitud->proveedor_id)->razonSocial ?? "#{$solicitud->proveedor_id}"),
+            'puedeVerSeguimiento' => $puedeVerSeguimiento,
+            'negocia' => $negocia,
             'lineaDeTiempo' => $this->lineaDeTiempo($solicitud, $cuentas, $cascara['zonaHoraria'] ?? null),
             'contexto' => $contexto->porIds([$solicitud->id])[$solicitud->id] ?? null,
         ]);

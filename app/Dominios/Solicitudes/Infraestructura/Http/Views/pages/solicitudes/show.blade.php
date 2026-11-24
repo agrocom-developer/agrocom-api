@@ -154,7 +154,7 @@
                         <p class="ag-detalle__campo-label">{{ __('solicitudes.panel.campo_proveedor') }}</p>
                         <p class="ag-detalle__campo-valor">
                             @if ($solicitud->proveedor_id !== null)
-                                <a class="ag-dash__link" href="{{ route('panel.proveedores.show', $solicitud->proveedor_id) }}">#{{ $solicitud->proveedor_id }}</a>
+                                <a class="ag-dash__link" href="{{ route('panel.proveedores.show', $solicitud->proveedor_id) }}">{{ $nombreProveedor }}</a>
                             @else
                                 {{ __('solicitudes.panel.sin_proveedor') }}
                             @endif
@@ -191,6 +191,7 @@
                     </div>
                 </x-molecules.form-section>
 
+                @if ($puedeVerSeguimiento)
                 <x-molecules.form-section accent="primary-2" :title="__('solicitudes.panel.seccion_seguimiento')" :count="(string) (count($negocia['avances']) + count($negocia['fotos']))">
                     <div class="ag-form-section__field--full">
                         @include('solicitudes::pages.solicitudes._seguimiento', ['avances' => $negocia['avances'], 'fotos' => $negocia['fotos'], 'ubicacion' => $negocia['ubicacion']])
@@ -202,6 +203,7 @@
                         @include('solicitudes::pages.solicitudes._chat', ['mensajes' => $negocia['mensajes']])
                     </div>
                 </x-molecules.form-section>
+                @endif
 
                 <x-slot:aside>
                     <x-molecules.form-section accent="distintivo-2" :title="__('solicitudes.panel.historial_titulo')" :count="(string) count($lineaDeTiempo)">

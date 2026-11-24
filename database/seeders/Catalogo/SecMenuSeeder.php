@@ -105,6 +105,7 @@ class SecMenuSeeder extends Seeder
         $this->item($mercado, 'solicitudes', 'calificaciones', 'star', 4, ruta: 'panel.calificaciones.index', codigoPermiso: 'calificaciones.calificacion.ver');
         $this->item($mercado, 'solicitudes', 'disputas', 'report', 5, ruta: 'panel.disputas.index', codigoPermiso: 'disputas.disputa.ver');
         $this->item($mercado, 'solicitudes', 'metricas', 'insights', 6, ruta: 'panel.metricas.index', codigoPermiso: 'metricas.panel.ver');
+        $this->item($mercado, 'solicitudes', 'avisos', 'notifications_active', 7, ruta: 'panel.avisos.index', codigoPermiso: 'notificaciones.aviso.ver');
 
         // Proveedores (ADR 0032): la cola de aprobación. Documentos va primero:
         // es la cola que más se mira a diario. Aprobar, suspender y dar de baja

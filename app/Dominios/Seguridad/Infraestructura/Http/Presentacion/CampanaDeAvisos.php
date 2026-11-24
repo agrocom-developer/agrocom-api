@@ -6,9 +6,8 @@ use Illuminate\Support\Carbon;
 
 /**
  * Qué avisos entran en la campana del header y en qué orden (tarea 141, ADR
- * 0025 punto 7). Pura: recibe candidatas ya armadas —las del motor de
- * `Notificaciones` y las alertas técnicas de `Operaciones`— y devuelve la
- * lista final, sin tocar la base.
+ * 0025 punto 7). Pura: recibe candidatas ya armadas, las del motor de
+ * `Notificaciones`, y devuelve la lista final, sin tocar la base.
  *
  * Regla: entran PRIMERO todos los no leídos (hasta el tope) y se completa con
  * los leídos más recientes; el resultado va del más nuevo al más viejo. Sin
@@ -20,8 +19,8 @@ use Illuminate\Support\Carbon;
 final class CampanaDeAvisos
 {
     /**
-     * @param  list<array{id: int|null, alerta_id?: int|null, icon: string, title: string, momento: Carbon, unread: bool, href: string}>  $candidatas
-     * @return list<array{id: int|null, alerta_id: int|null, icon: string, title: string, time: string, unread: bool, href: string}>
+     * @param  list<array{id: int, icon: string, title: string, momento: Carbon, unread: bool, href: string}>  $candidatas
+     * @return list<array{id: int, icon: string, title: string, time: string, unread: bool, href: string}>
      */
     public static function elegir(array $candidatas, int $maximo): array
     {
@@ -40,7 +39,6 @@ final class CampanaDeAvisos
 
         return array_map(static fn (array $aviso): array => [
             'id' => $aviso['id'],
-            'alerta_id' => $aviso['alerta_id'] ?? null,
             'icon' => $aviso['icon'],
             'title' => $aviso['title'],
             'time' => $aviso['momento']->diffForHumans(),

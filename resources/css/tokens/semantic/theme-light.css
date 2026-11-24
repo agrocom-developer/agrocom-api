@@ -386,7 +386,7 @@
        --ag-color-accent directamente, porque el contraste no-texto exigido
        es 3:1, que --ag-color-accent ya cumple de sobra contra
        --ag-color-bg-auth. */
-    --ag-color-accent-link: var(--ag-color-amber-800);
+    --ag-color-accent-link: var(--ag-color-primary-emphasis);
 
     /* Editorial de auth-layout: wordmark bicromía "COM" + chip de ícono,
        constantes entre temas (igual que --ag-color-scrim*), porque la foto

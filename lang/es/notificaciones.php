@@ -46,4 +46,21 @@ return [
         'no_encontrada' => 'No encontramos ese aviso entre los tuyos.',
         'dispositivo_no_encontrado' => 'No encontramos ese dispositivo entre los tuyos.',
     ],
+
+    'panel' => [
+        'titulo' => 'Avisos del sistema',
+        'subtitulo' => 'Lo que el sistema avisó a clientes, proveedores y administradores, del más nuevo al más viejo.',
+        'vacio_titulo' => 'Todavía no hay avisos',
+        'vacio_detalle' => 'Los avisos nacen de los eventos del marketplace: una adjudicación, una aprobación, una disputa. Cuando ocurra el primero, aparece aquí.',
+        'filtro_vacio_titulo' => 'Sin resultados para este filtro',
+        'filtro_vacio_detalle' => 'Cambia el filtro para ver más avisos.',
+        'filtro_lectura' => 'Lectura',
+        'filtro_todos' => 'Todos',
+        'lectura' => ['sin_leer' => 'Sin leer', 'leida' => 'Leído'],
+        'col_aviso' => 'Aviso',
+        'col_destinatario' => 'Destinatario',
+        'col_lectura' => 'Lectura',
+        'col_fecha' => 'Fecha',
+        'paginacion_aria' => 'Paginación de avisos',
+    ],
 ];

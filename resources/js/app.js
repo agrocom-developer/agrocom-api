@@ -84,38 +84,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Carga diferida de ApexCharts/Leaflet (dashboard): un solo entrypoint Vite
-// para todo el panel, así que un import estático acá los bajaría hasta en el
-// login. `import()` dinámico + guard de presencia en el DOM hace que Vite
-// genere chunks separados que el navegador solo pide cuando la página
-// realmente tiene un gráfico o un mapa.
+// Carga diferida: un solo entrypoint Vite para todo el panel, así que un import
+// estático acá lo bajaría hasta en el login. `import()` dinámico + guard de
+// presencia en el DOM hace que Vite genere un chunk separado que el navegador
+// solo pide cuando la página realmente lo usa.
 document.addEventListener('DOMContentLoaded', () => {
-    if (document.querySelector('[data-ag-chart]')) {
-        import('./organisms/dashboard-charts.js');
-    }
-
-    // Editor del perímetro de un lote (formulario de campos): Leaflet más el
-    // plugin de dibujo, que no entra en ninguna otra pantalla.
-    if (document.querySelector('[data-ag-lote-mapa]')) {
-        import('./organisms/lote-mapa-editor.js');
-    }
-
-    // Editor de coordenadas de una propiedad (adenda 16/9/2026 a ADR 0018
-    // punto 1 / ADR 0020): marcador + polígonos múltiples, módulo aparte del
-    // de Lote (ver su docblock).
-    if (document.querySelector('[data-ag-propiedad-mapa]')) {
-        import('./organisms/propiedad-mapa-editor.js');
-    }
-
-    // Marcador de ubicación de una Base (tarea 132): mapa embebido, módulo
-    // aparte del de Propiedad (ver su docblock — compartir el chunk de
-    // Leaflet entre editores de mapa rompe la inicialización).
-    if (document.querySelector('[data-ag-base-mapa]')) {
-        import('./organisms/base-mapa-marcador.js');
-    }
-
-    // atoms/datetime (flatpickr): solo dos usos hoy (pausas), no vale la
-    // pena bajarlo en el resto del panel.
+    // atoms/datetime (flatpickr): no vale la pena bajarlo en el resto del panel.
     if (document.querySelector('[data-ag-datetime]')) {
         import('./atoms/datetime.js');
     }

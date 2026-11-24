@@ -275,8 +275,6 @@ return [
         ],
         'vacio_titulo' => 'Todavía no hay solicitudes',
         'vacio_detalle' => 'Cuando un cliente publique una solicitud, verás aquí cómo avanza por estado y por región.',
-        'sin_permiso_titulo' => 'No tienes pantallas de mercado habilitadas',
-        'sin_permiso_detalle' => 'Tu rol activo no incluye el tablero. Usa el menú lateral para ir a tus pantallas.',
     ],
 
     // HU-45 (tarea 39): alta y mantenimiento de usuarios internos del panel,
