@@ -26,6 +26,8 @@ return [
         'disputa_resuelta' => 'La disputa del servicio #:solicitud se cerró: :resultado. Reembolso: :monto.',
         'disputa_apelada' => 'Se apeló la resolución de la disputa del servicio #:solicitud: vuelve a revisión.',
         'cliente_con_aviso' => 'El promedio de las calificaciones que recibes de los proveedores es :promedio. Si no mejora, se limitará tu publicación de solicitudes.',
+        'equipo_en_camino' => 'El equipo salió hacia tu lote: el servicio #:solicitud empieza pronto.',
+        'solicitud_ejecutada' => 'El servicio #:solicitud quedó ejecutado: confirma que estás conforme o abre una disputa antes del plazo.',
         'publicacion_limitada' => 'La publicación de solicitudes de «:cliente» quedó limitada por su calificación promedio (:promedio) hasta una revisión.',
     ],
 

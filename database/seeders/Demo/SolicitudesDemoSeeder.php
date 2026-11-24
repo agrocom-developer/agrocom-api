@@ -24,6 +24,7 @@ use App\Dominios\Solicitudes\Dominio\ActorSolicitud;
 use App\Dominios\Solicitudes\Dominio\EstadoSolicitud;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\SolicitudServicio;
+use App\Dominios\Solicitudes\Infraestructura\Eloquent\Terreno;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -81,13 +82,17 @@ class SolicitudesDemoSeeder extends Seeder
         ));
 
         foreach ($clientes->values() as $indice => $cliente) {
-            $terreno = $this->terrenos->crear($cliente->usuario_id, [
-                'nombre' => 'Lote '.['Norte', 'Sur', 'Este'][$indice % 3],
-                'hectareas' => (string) (80 + $indice * 40),
-                'cultivo' => ['Soya', 'Maíz', 'Girasol'][$indice % 3],
-                'referencias_acceso' => 'Camino vecinal a 3 km de la ruta principal.',
-                'acceso_dificil' => $indice === 2,
-            ]);
+            $nombre = 'Lote '.['Norte', 'Sur', 'Este'][$indice % 3];
+
+            // Volver a sembrar no repite el terreno.
+            $terreno = Terreno::query()->where('cliente_id', $cliente->id)->where('nombre', $nombre)->first()
+                ?? $this->terrenos->crear($cliente->usuario_id, [
+                    'nombre' => $nombre,
+                    'hectareas' => (string) (80 + $indice * 40),
+                    'cultivo' => ['Soya', 'Maíz', 'Girasol'][$indice % 3],
+                    'referencias_acceso' => 'Camino vecinal a 3 km de la ruta principal.',
+                    'acceso_dificil' => $indice === 2,
+                ]);
 
             $this->solicitud($cliente, $terreno->id, "demo-{$indice}-a", EstadoSolicitud::Borrador);
             $this->solicitud($cliente, $terreno->id, "demo-{$indice}-b", EstadoSolicitud::Publicada);

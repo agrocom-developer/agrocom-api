@@ -39,6 +39,8 @@ enum TipoNotificacion: string
     case DisputaApelada = 'disputa_apelada';
     case ClienteConAviso = 'cliente_con_aviso';
     case PublicacionLimitada = 'publicacion_limitada';
+    case EquipoEnCamino = 'equipo_en_camino';
+    case SolicitudEjecutada = 'solicitud_ejecutada';
 
     /** Nombre del ícono de Material Symbols que rotula el aviso en la campana. */
     public function icono(): string
@@ -64,6 +66,8 @@ enum TipoNotificacion: string
             self::DisputaResuelta => 'balance',
             self::DisputaApelada => 'undo',
             self::ClienteConAviso, self::PublicacionLimitada => 'person_alert',
+            self::EquipoEnCamino => 'local_shipping',
+            self::SolicitudEjecutada => 'fact_check',
         };
     }
 

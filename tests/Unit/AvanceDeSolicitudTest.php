@@ -30,6 +30,7 @@ function avanceEsquema(): void
 
     $migraciones = [
         'create_plt_bitacoras_table',
+        'create_sol_clientes_table',
         'create_sol_solicitudes_servicio_table',
         'create_sol_solicitud_historial_table',
     ];
@@ -57,6 +58,16 @@ function avanceEsquema(): void
 
 function avanceSolicitud(EstadoSolicitud $estado, string $hectareas = '100.0000'): SolicitudServicio
 {
+    DB::table('sol_clientes')->insertOrIgnore([
+        'id' => 1,
+        'usuario_id' => 55,
+        'tipo' => 'persona',
+        'razon_social' => 'Cliente de prueba',
+        'estado' => 'activo',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
     $id = DB::table('sol_solicitudes_servicio')->insertGetId([
         'uuid_cliente' => (string) Str::uuid(),
         'cliente_id' => 1,
@@ -143,7 +154,7 @@ test('lo cubierto pasa la solicitud a ejecutada solo desde el porcentaje mínimo
 
     expect($solicitud->fresh()->estado)->toBe(EstadoSolicitud::Ejecutada)
         ->and(avanceHistorial($solicitud->id))->toBe(['ejecutada']);
-    Event::assertDispatched(SolicitudEjecutada::class, fn (SolicitudEjecutada $evento): bool => $evento->solicitudId === $solicitud->id);
+    Event::assertDispatched(SolicitudEjecutada::class, fn (SolicitudEjecutada $evento): bool => $evento->solicitudId === $solicitud->id && $evento->clienteUsuarioId === 55);
 });
 
 test('la cobertura de una solicitud que ya no está en ejecución no la cambia', function () {

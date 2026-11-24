@@ -77,6 +77,11 @@ final class AsignacionInvalida extends RuntimeException
         return new self(Texto::de('asignacion.errores.solicitud_no_cancelable'));
     }
 
+    public static function solicitudNoPuedeSalir(): self
+    {
+        return new self(Texto::de('asignacion.errores.solicitud_no_puede_salir'));
+    }
+
     public static function solicitudNoForzable(): self
     {
         return new self(Texto::de('asignacion.errores.solicitud_no_forzable'));

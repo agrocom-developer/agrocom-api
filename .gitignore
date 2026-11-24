@@ -41,3 +41,4 @@ runs/
 /docs/diseno/canvas/*.html
 !/docs/diseno/canvas/*.dc.html
 phpunit.afectadas.xml
+/storage/demo

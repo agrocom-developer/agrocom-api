@@ -42,6 +42,13 @@ interface AsignacionDeSolicitud
     public function devolver(int $solicitudId, string $origen, ?int $actorUsuarioId, string $motivo): void;
 
     /**
+     * `asignada` pasa a `en_camino`: el proveedor avisa que el equipo salió hacia el lote.
+     *
+     * @throws SolicitudNoAsignable si la solicitud ya no está `asignada`.
+     */
+    public function salirEnCamino(int $solicitudId, ?int $actorUsuarioId): void;
+
+    /**
      * `sin_proveedor` vuelve a `en_asignacion` (pasando por `publicada`): un
      * administrador la asigna a mano.
      *

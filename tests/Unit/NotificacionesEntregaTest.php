@@ -1,5 +1,6 @@
 <?php
 
+use App\Dominios\Asignacion\Contratos\Eventos\EquipoEnCamino;
 use App\Dominios\Asignacion\Contratos\Eventos\OfertaCreada;
 use App\Dominios\Asignacion\Contratos\Eventos\OfertaRetirada;
 use App\Dominios\Asignacion\Contratos\Eventos\OfertaVencida;
@@ -44,6 +45,7 @@ use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\CascaraPanel;
 use App\Dominios\Solicitudes\Contratos\Eventos\ClienteAvisadoPorCalificacion;
 use App\Dominios\Solicitudes\Contratos\Eventos\PublicacionDeClienteLimitada;
 use App\Dominios\Solicitudes\Contratos\Eventos\SolicitudCompletada;
+use App\Dominios\Solicitudes\Contratos\Eventos\SolicitudEjecutada;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -519,6 +521,9 @@ test('el listener está registrado para cada evento que tiene regla, y para ning
         DisputaApelada::class,
         ClienteAvisadoPorCalificacion::class,
         PublicacionDeClienteLimitada::class,
+        // Avance del servicio hacia el cliente.
+        EquipoEnCamino::class,
+        SolicitudEjecutada::class,
     ];
 
     foreach ($eventos as $evento) {

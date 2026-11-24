@@ -88,6 +88,8 @@ final class AvanceDeSolicitud implements SolicitudParaTrabajo
             return;
         }
 
-        event(new SolicitudEjecutada($ejecutada->id, $ejecutada->cliente_id, $ejecutada->proveedor_id));
+        $ejecutada->loadMissing('cliente');
+
+        event(new SolicitudEjecutada($ejecutada->id, $ejecutada->cliente_id, $ejecutada->cliente->usuario_id, $ejecutada->proveedor_id));
     }
 }

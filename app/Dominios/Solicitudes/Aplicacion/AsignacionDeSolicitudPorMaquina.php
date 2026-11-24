@@ -53,6 +53,11 @@ final class AsignacionDeSolicitudPorMaquina implements AsignacionDeSolicitud
         $this->paso($solicitudId, EstadoSolicitud::EnAsignacion, ActorSolicitud::from($origen), $actorUsuarioId, $motivo, ['proveedor_id' => null]);
     }
 
+    public function salirEnCamino(int $solicitudId, ?int $actorUsuarioId): void
+    {
+        $this->paso($solicitudId, EstadoSolicitud::EnCamino, ActorSolicitud::Proveedor, $actorUsuarioId, null);
+    }
+
     public function reabrir(int $solicitudId, ?int $actorUsuarioId, string $motivo): void
     {
         DB::transaction(function () use ($solicitudId, $actorUsuarioId, $motivo): void {

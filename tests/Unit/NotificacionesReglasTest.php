@@ -1,6 +1,9 @@
 <?php
 
+use App\Dominios\Asignacion\Contratos\Eventos\EquipoEnCamino;
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaEquipoEnCamino;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaProveedorRegistrado;
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaSolicitudEjecutada;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaTrabajoCerrado;
 use App\Dominios\Notificaciones\Aplicacion\ReglasDeNotificacion;
 use App\Dominios\Notificaciones\Aplicacion\ResolverDestinatarios;
@@ -16,6 +19,7 @@ use App\Dominios\Personal\Contratos\LecturaEquipoTrabajo;
 use App\Dominios\Seguridad\Contratos\DatosUsuarioDePersona;
 use App\Dominios\Seguridad\Contratos\LecturaUsuarioDePersona;
 use App\Dominios\Seguridad\Contratos\LecturaUsuariosPorRol;
+use App\Dominios\Solicitudes\Contratos\Eventos\SolicitudEjecutada;
 use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 use Illuminate\Support\Carbon;
 
@@ -268,6 +272,9 @@ test('cada tipo de aviso tiene su texto en lang/es/notificaciones.php y usa solo
         'disputa_apelada' => ['solicitud'],
         'cliente_con_aviso' => ['promedio'],
         'publicacion_limitada' => ['cliente', 'promedio'],
+        // Avance del servicio hacia el cliente.
+        'equipo_en_camino' => ['solicitud'],
+        'solicitud_ejecutada' => ['solicitud'],
     ];
 
     foreach (TipoNotificacion::cases() as $tipo) {
@@ -319,4 +326,20 @@ test('cada regla atiende un evento y todas las reglas del proveedor tienen un ev
     $eventos = array_map(static fn (ReglaNotificacion $r): string => $r->evento(), $reglas);
 
     expect(array_unique($eventos))->toHaveCount(2);
+});
+
+test('el equipo en camino y el servicio ejecutado avisan solo al cliente, con la solicitud como clave', function () {
+    $enCamino = (new ReglaEquipoEnCamino)->armar(new EquipoEnCamino(41, 7, 3, 9));
+    $ejecutada = (new ReglaSolicitudEjecutada)->armar(new SolicitudEjecutada(41, 2, 7, 3));
+
+    expect($enCamino->tipo)->toBe(TipoNotificacion::EquipoEnCamino)
+        ->and($enCamino->parametros)->toBe(['solicitud' => 41])
+        ->and($enCamino->recursoId)->toBe(41)
+        ->and($enCamino->destinatarios)->toHaveCount(1)
+        ->and($ejecutada->tipo)->toBe(TipoNotificacion::SolicitudEjecutada)
+        ->and($ejecutada->parametros)->toBe(['solicitud' => 41])
+        ->and($ejecutada->destinatarios)->toHaveCount(1)
+        ->and($ejecutada->claveEvento)->not->toBe($enCamino->claveEvento);
+
+    expect(fn () => (new ReglaEquipoEnCamino)->armar(new stdClass))->toThrow(InvalidArgumentException::class);
 });

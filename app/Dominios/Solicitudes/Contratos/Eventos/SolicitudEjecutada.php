@@ -14,6 +14,7 @@ final readonly class SolicitudEjecutada implements ShouldDispatchAfterCommit
     public function __construct(
         public int $solicitudId,
         public int $clienteId,
+        public int $clienteUsuarioId,
         public ?int $proveedorId,
     ) {}
 }

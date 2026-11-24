@@ -25,7 +25,8 @@ use Illuminate\Support\Facades\Auth;
  *   sesión del panel.
  *
  * No corre desde `DatabaseSeeder` a propósito (tarea 100: la instalación
- * nueva arranca con el mínimo dato estructural). Se invoca a mano:
+ * nueva arranca con el mínimo dato estructural). Se invoca con `bin/demo seed`
+ * o a mano:
  *
  *   docker compose exec -T app php artisan db:seed --class='Database\Seeders\Demo\DemoSeeder'
  */
@@ -55,5 +56,10 @@ class DemoSeeder extends Seeder
         // Marketplace: usa los drones de `ope_drones` que siembra FlotaDemoSeeder.
         $this->call(ProveedoresDemoSeeder::class);
         $this->call(SolicitudesDemoSeeder::class);
+        // Cada piloto y auxiliar del marketplace necesita su persona para abrir sesiones.
+        $this->call(PersonasDeOperariosDemoSeeder::class);
+        // Recorrido completo para las apps y vigencia de ofertas relativa a ahora.
+        $this->call(RecorridoDemoSeeder::class);
+        $this->call(RenovarVigenciaDemoSeeder::class);
     }
 }

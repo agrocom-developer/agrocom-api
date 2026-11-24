@@ -1,0 +1,275 @@
+#!/usr/bin/env bash
+#
+# Demo local del marketplace: una API con datos de ejemplo para recorrer las
+# apps (cliente, piloto, auxiliar) en el simulador o en un teléfono.
+#
+#   bin/demo up      # postgres en docker + migra + siembra + sirve la API
+#   bin/demo seed    # (re)siembra catálogo y demo; renueva la vigencia de las ofertas
+#   bin/demo reset   # borra la base, migra y siembra de cero
+#   bin/demo down    # detiene la API y el postgres (conserva los datos)
+#   bin/demo down --borrar   # además elimina el contenedor y sus datos
+#   bin/demo estado  # qué está corriendo y a qué direcciones apuntar las apps
+#   bin/demo logs    # sigue el log de la API
+#
+# Configuración por variables de entorno (todas opcionales):
+#   DEMO_PORT        puerto de la API                          (8000)
+#   DEMO_HOST        interfaz donde escucha la API             (0.0.0.0)
+#   DEMO_DB_PORT     puerto de postgres en el host             (el del contenedor si
+#                    existe; si no, el primero libre desde 55440)
+#   DEMO_NOMBRE      nombre del contenedor de postgres         (agrocom-demo-pg)
+#   DEMO_PHP         binario de PHP del host                   (php)
+#   DEMO_SCHEDULER   1 para correr también `schedule:work`; las ofertas entonces
+#                    vencen y escalan como en producción      (0)
+#
+# No lee ni escribe el `.env` del repo: toda la configuración entra por
+# variables de entorno del proceso. El estado de la demo (clave de la app,
+# pid, log) vive en `storage/demo/`, fuera de git.
+#
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+NOMBRE="${DEMO_NOMBRE:-agrocom-demo-pg}"
+PUERTO="${DEMO_PORT:-8000}"
+HOST="${DEMO_HOST:-0.0.0.0}"
+PHP="${DEMO_PHP:-php}"
+SCHEDULER="${DEMO_SCHEDULER:-0}"
+IMAGEN="postgres:16"
+DB_NOMBRE="agrocom"
+DB_USUARIO="agrocom"
+DB_CLAVE="agrocom"
+ESTADO_DIR="storage/demo"
+SUFIJO="${NOMBRE}-${PUERTO}"
+PID_API="${ESTADO_DIR}/api-${SUFIJO}.pid"
+PID_SCHED="${ESTADO_DIR}/scheduler-${SUFIJO}.pid"
+LOG_API="${ESTADO_DIR}/api-${SUFIJO}.log"
+
+mkdir -p "$ESTADO_DIR"
+
+info() { printf '\033[1m==>\033[0m %s\n' "$*"; }
+falla() { printf '\033[31merror:\033[0m %s\n' "$*" >&2; exit 1; }
+
+puerto_ocupado() { lsof -nP -iTCP:"$1" -sTCP:LISTEN >/dev/null 2>&1; }
+
+requiere() { command -v "$1" >/dev/null 2>&1 || falla "falta '$1' en el PATH"; }
+
+existe_contenedor() { docker ps -a --format '{{.Names}}' | grep -qx "$NOMBRE"; }
+esta_corriendo() { docker ps --format '{{.Names}}' | grep -qx "$NOMBRE"; }
+
+puerto_de_contenedor() {
+    docker port "$NOMBRE" 5432/tcp 2>/dev/null | head -n1 | sed -E 's/.*:([0-9]+)$/\1/'
+}
+
+primer_puerto_libre() {
+    local p=55440
+    while puerto_ocupado "$p"; do p=$((p + 1)); done
+    echo "$p"
+}
+
+# Clave de la app: se genera una vez y se reutiliza (no depende de ningún .env).
+app_key() {
+    local f="$ESTADO_DIR/app.key"
+    if [ ! -s "$f" ]; then
+        printf 'base64:%s' "$(head -c 32 /dev/urandom | base64)" > "$f"
+        chmod 600 "$f"
+    fi
+    cat "$f"
+}
+
+DB_PUERTO=""
+
+# Exporta el entorno que Laravel necesita; `.env` no interviene.
+exportar_entorno() {
+    [ -n "$DB_PUERTO" ] || falla "postgres no está levantado: corre 'bin/demo up'"
+    export APP_ENV=local APP_DEBUG=true APP_NAME=Agrocom APP_KEY
+    APP_KEY="$(app_key)"
+    export APP_URL="http://localhost:${PUERTO}"
+    export APP_LOCALE=es APP_FALLBACK_LOCALE=es
+    export DB_CONNECTION=pgsql DB_HOST=127.0.0.1 DB_PORT="$DB_PUERTO"
+    export DB_DATABASE="$DB_NOMBRE" DB_USERNAME="$DB_USUARIO" DB_PASSWORD="$DB_CLAVE"
+    export SESSION_DRIVER=file CACHE_STORE=file QUEUE_CONNECTION=sync
+    export MAIL_MAILER=log LOG_CHANNEL=single LOG_LEVEL=debug FILESYSTEM_DISK=local
+    export SENTRY_LARAVEL_DSN=
+}
+
+artisan() { "$PHP" artisan "$@"; }
+
+levantar_postgres() {
+    requiere docker
+    docker info >/dev/null 2>&1 || falla "docker no está corriendo"
+
+    if existe_contenedor; then
+        esta_corriendo || { info "arrancando el contenedor $NOMBRE"; docker start "$NOMBRE" >/dev/null; }
+        DB_PUERTO="$(puerto_de_contenedor)"
+    else
+        DB_PUERTO="${DEMO_DB_PORT:-$(primer_puerto_libre)}"
+        puerto_ocupado "$DB_PUERTO" && falla "el puerto $DB_PUERTO ya está en uso (DEMO_DB_PORT)"
+        info "creando postgres en el puerto $DB_PUERTO ($NOMBRE)"
+        docker run -d --name "$NOMBRE" \
+            -e POSTGRES_DB="$DB_NOMBRE" -e POSTGRES_USER="$DB_USUARIO" -e POSTGRES_PASSWORD="$DB_CLAVE" \
+            -p "${DB_PUERTO}:5432" -v "${NOMBRE}-datos:/var/lib/postgresql/data" "$IMAGEN" >/dev/null
+    fi
+
+    info "esperando a postgres en el puerto $DB_PUERTO"
+    local i
+    for i in $(seq 1 60); do
+        docker exec "$NOMBRE" pg_isready -U "$DB_USUARIO" -d "$DB_NOMBRE" >/dev/null 2>&1 && return 0
+        sleep 1
+    done
+    falla "postgres no respondió a tiempo"
+}
+
+# Detecta el postgres de una corrida anterior sin crearlo.
+detectar_postgres() {
+    DB_PUERTO=""
+    if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1 && esta_corriendo; then
+        DB_PUERTO="$(puerto_de_contenedor)"
+    fi
+}
+
+sembrar() {
+    exportar_entorno
+    info "sembrando catálogo y demo del marketplace"
+    artisan db:seed --force --no-interaction
+    artisan db:seed --force --no-interaction --class='Database\Seeders\Demo\DemoSeeder'
+}
+
+migrar() {
+    exportar_entorno
+    info "migrando"
+    artisan migrate --force --no-interaction
+}
+
+api_corriendo() {
+    [ -s "$PID_API" ] && kill -0 "$(cat "$PID_API")" 2>/dev/null
+}
+
+levantar_api() {
+    exportar_entorno
+    if api_corriendo; then
+        info "la API ya está corriendo (pid $(cat "$PID_API"))"
+        return 0
+    fi
+    puerto_ocupado "$PUERTO" && falla "el puerto $PUERTO ya está en uso (DEMO_PORT)"
+
+    info "sirviendo la API en ${HOST}:${PUERTO}"
+    # `php -S` directo: sin el reinicio por cambios de `artisan serve` y con las
+    # variables de entorno heredadas tal cual.
+    local raiz="$PWD"
+    pushd public >/dev/null
+    nohup "$PHP" -d variables_order=EGPCS -S "${HOST}:${PUERTO}" "${raiz}/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php" \
+        </dev/null > "${raiz}/${LOG_API}" 2>&1 &
+    echo $! > "${raiz}/${PID_API}"
+    popd >/dev/null
+
+    if [ "$SCHEDULER" = "1" ]; then
+        nohup "$PHP" artisan schedule:work </dev/null >> "$LOG_API" 2>&1 &
+        echo $! > "$PID_SCHED"
+    fi
+
+    local i
+    for i in $(seq 1 40); do
+        curl -fs -o /dev/null "http://127.0.0.1:${PUERTO}/api/zonas" && return 0
+        api_corriendo || { tail -n 20 "$LOG_API" >&2; falla "la API se detuvo al arrancar"; }
+        sleep 0.5
+    done
+    tail -n 20 "$LOG_API" >&2
+    falla "la API no respondió en http://127.0.0.1:${PUERTO}"
+}
+
+detener_api() {
+    local f
+    for f in "$PID_API" "$PID_SCHED"; do
+        if [ -s "$f" ] && kill -0 "$(cat "$f")" 2>/dev/null; then
+            kill "$(cat "$f")" 2>/dev/null || true
+        fi
+        rm -f "$f"
+    done
+}
+
+ip_de_la_red() {
+    local iface
+    iface="$(route -n get default 2>/dev/null | awk '/interface:/ {print $2}')"
+    { [ -n "$iface" ] && ipconfig getifaddr "$iface" 2>/dev/null; } || ipconfig getifaddr en0 2>/dev/null || true
+}
+
+resumen() {
+    local ip
+    ip="$(ip_de_la_red)"
+    cat <<EOF
+
+API de demo lista.
+  Simulador de iOS / emulador de escritorio:  http://localhost:${PUERTO}
+  Teléfono en la misma red:                   http://${ip:-<ip-de-tu-equipo>}:${PUERTO}
+  Emulador de Android:                        http://10.0.2.2:${PUERTO}
+  Postgres:                                   127.0.0.1:${DB_PUERTO} (${DB_USUARIO}/${DB_CLAVE}, base ${DB_NOMBRE})
+  Log:                                        ${LOG_API}
+
+Usuarios (contraseña 0000): ver docs/gestion/demo-local.md
+  cliente   agro.sanrafael · luis.antelo · coop.valle.grande
+  piloto    rodrigo.suarez · valeria.montano   auxiliar  diego.parada
+  proveedor carlos.mamani (auxiliar esteban.choque)
+  tercero   fumigaciones.oriente (pilotos marcelo.terrazas, ivan.cuellar; auxiliar lucia.flores)
+EOF
+}
+
+orden="${1:-}"
+[ $# -gt 0 ] && shift
+
+case "$orden" in
+    up)
+        requiere "$PHP"; requiere curl; requiere lsof
+        [ -d vendor ] || falla "faltan las dependencias: corre 'composer install'"
+        levantar_postgres
+        # Migrar y sembrar son idempotentes: sobre una base ya sembrada solo
+        # completan lo que falta y renuevan la vigencia de las ofertas.
+        migrar
+        sembrar
+        levantar_api
+        resumen
+        ;;
+    seed)
+        detectar_postgres
+        migrar
+        sembrar
+        ;;
+    reset)
+        detectar_postgres
+        [ -n "$DB_PUERTO" ] || levantar_postgres
+        exportar_entorno
+        info "recreando la base desde cero"
+        # `migrate:fresh` solo borra el esquema público y las migraciones de retiro
+        # crean esquemas de respaldo: se elimina todo esquema de usuario y se recrea `public`.
+        docker exec "$NOMBRE" psql -U "$DB_USUARIO" -d "$DB_NOMBRE" -q -c "DO \$\$ DECLARE s text; BEGIN FOR s IN SELECT nspname FROM pg_namespace WHERE nspname NOT LIKE 'pg\_%' AND nspname <> 'information_schema' LOOP EXECUTE format('DROP SCHEMA %I CASCADE', s); END LOOP; CREATE SCHEMA public; END \$\$" >/dev/null 2>&1
+        artisan migrate --force --no-interaction
+        sembrar
+        api_corriendo || levantar_api
+        resumen
+        ;;
+    down)
+        detener_api
+        if existe_contenedor; then
+            if [ "${1:-}" = "--borrar" ]; then
+                info "eliminando $NOMBRE y sus datos"
+                docker rm -f "$NOMBRE" >/dev/null
+                docker volume rm "${NOMBRE}-datos" >/dev/null 2>&1 || true
+            else
+                info "deteniendo $NOMBRE (los datos se conservan)"
+                docker stop "$NOMBRE" >/dev/null
+            fi
+        fi
+        ;;
+    estado)
+        detectar_postgres
+        if [ -n "$DB_PUERTO" ]; then echo "postgres: corriendo en el puerto $DB_PUERTO ($NOMBRE)"; else echo "postgres: detenido"; fi
+        if api_corriendo; then echo "api:      corriendo en ${HOST}:${PUERTO} (pid $(cat "$PID_API"))"; else echo "api:      detenida"; fi
+        ;;
+    logs)
+        [ -f "$LOG_API" ] || falla "no hay log todavía: corre 'bin/demo up'"
+        exec tail -f "$LOG_API"
+        ;;
+    *)
+        sed -n '3,22p' "$0" | sed 's/^# \{0,1\}//'
+        [ -z "$orden" ] || exit 2
+        ;;
+esac

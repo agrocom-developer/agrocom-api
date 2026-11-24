@@ -198,6 +198,51 @@ paths:
       security:
         -
           tokenDispositivo: []
+  '/api/solicitudes/{id}/en-camino':
+    post:
+      tags:
+        - Ofertas
+      summary: 'El equipo salió hacia el lote'
+      description: 'El proveedor avisa que el equipo salió hacia el lote: la solicitud pasa de `asignada` a `en_camino` y se avisa al cliente. Solo lo hace el proveedor al que se asignó el servicio. Es idempotente: avisar de nuevo no cambia nada ni repite el aviso. Requiere red, como las demás acciones de negocio del proveedor sin outbox.'
+      operationId: avisarEquipoEnCamino
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'El servicio quedó en camino.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - solicitud_id
+                  - estado
+                properties:
+                  solicitud_id:
+                    type: integer
+                  estado:
+                    type: string
+                    example: en_camino
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no responde ofertas.'
+        404:
+          description: 'La solicitud no existe o no está asignada a tu proveedor.'
+        422:
+          description: 'La solicitud no está asignada.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
   '/api/solicitudes/{id}/cancelar-proveedor':
     post:
       tags:
