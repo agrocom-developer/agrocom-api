@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * `ope_evidencias.tipo` nació como `varchar(20)` con cinco valores cortos.
@@ -18,7 +19,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (DB::getDriverName() !== 'pgsql') {
+        // En una base vacía esta migración corre antes del `create`
+        // consolidado, que ya nace con `varchar(40)`: no hay nada que ensanchar.
+        if (DB::getDriverName() !== 'pgsql' || ! Schema::hasTable('ope_evidencias')) {
             return;
         }
 

@@ -24,7 +24,7 @@ return new class extends Migration
         Schema::create('ope_evidencias', function (Blueprint $table) {
             $table->id();
             $table->string('uuid_cliente', 36);
-            $table->string('tipo', 20);
+            $table->string('tipo', 40);
             $table->string('archivo_url');
             $table->string('hash', 64);
             $table->foreignId('subido_por')->nullable()->constrained('per_personas')->nullOnDelete();
