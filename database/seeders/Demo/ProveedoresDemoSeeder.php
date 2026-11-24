@@ -5,6 +5,7 @@ namespace Database\Seeders\Demo;
 use App\Dominios\Compartido\Dominio\AccionAprobacion;
 use App\Dominios\Compartido\Dominio\TipoDocumento;
 use App\Dominios\Flota\Aplicacion\CrearEquipo;
+use App\Dominios\Flota\Aplicacion\GestionarFotosDeDron;
 use App\Dominios\Flota\Aplicacion\RegistrarDron;
 use App\Dominios\Flota\Aplicacion\ResolverAprobacionDron;
 use App\Dominios\Flota\Infraestructura\Eloquent\Dron as DronMarketplace;
@@ -68,6 +69,7 @@ class ProveedoresDemoSeeder extends Seeder
         private readonly RevisarDocumento $revisarDocumento,
         private readonly ResolverAprobacion $resolverAprobacion,
         private readonly ResolverAprobacionDron $resolverAprobacionDron,
+        private readonly GestionarFotosDeDron $fotosDeDron,
         private readonly ProcesarVencimientos $procesarVencimientos,
     ) {}
 
@@ -291,6 +293,7 @@ class ProveedoresDemoSeeder extends Seeder
         }
 
         if ($sujeto === TipoSujeto::Dron) {
+            $this->aprobarFotosDelDron($id);
             $this->resolverAprobacionDron->ejecutar($id, AccionAprobacion::Aprobar, $this->admin);
         } else {
             $this->resolverAprobacion->ejecutar($sujeto, $id, AccionAprobacion::Aprobar, $this->admin);
@@ -303,6 +306,30 @@ class ProveedoresDemoSeeder extends Seeder
                 ->where('tipo', TipoDocumento::SeguroResponsabilidad->value)
                 ->update(['vence_en' => now()->subDay()->toDateString()]);
         }
+    }
+
+    /** Un dron no se aprueba sin las fotos obligatorias aprobadas: el proveedor las sube y el administrador las aprueba. */
+    private function aprobarFotosDelDron(int $dronId): void
+    {
+        $titular = (int) Proveedor::query()->whereKey(DronMarketplace::query()->whereKey($dronId)->value('dueno_proveedor_id'))->value('usuario_titular_id');
+
+        foreach ((array) config('flota.fotos_obligatorias', []) as $tipo) {
+            $foto = $this->fotosDeDron->subir($titular, $dronId, (string) $tipo, $this->fotoDemo((string) $tipo));
+            $this->fotosDeDron->revisar($this->admin, (int) $foto['id'], true, null);
+        }
+    }
+
+    /** Una imagen real y liviana (menos de 300 KB) para la foto de un dron. */
+    private function fotoDemo(string $tipo): UploadedFile
+    {
+        $imagen = imagecreatetruecolor(640, 480);
+        imagefilledrectangle($imagen, 0, 0, 640, 480, imagecolorallocate($imagen, 200, 205, 210));
+        imagestring($imagen, 5, 20, 20, "Dron - {$tipo}", imagecolorallocate($imagen, 40, 40, 40));
+
+        $ruta = (string) tempnam(sys_get_temp_dir(), 'dron-demo-');
+        imagejpeg($imagen, $ruta, 70);
+
+        return new UploadedFile($ruta, "dron-{$tipo}.jpg", 'image/jpeg', null, true);
     }
 
     /**

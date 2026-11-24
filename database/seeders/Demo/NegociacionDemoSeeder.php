@@ -192,6 +192,8 @@ class NegociacionDemoSeeder extends Seeder
             ]);
         }, ventana: [3, 5]);
 
+        // Fecha deseada lejana a propósito: el equipo de Carlos queda libre del día 6 al 9 desde hoy
+        // (30-nov a 3-dic con la demo sembrada el 24-nov) para demostrar una adjudicación sin conflicto.
         $this->solicitud('neg-adjudicada-esperanza', 'luis.antelo', 'La Esperanza', 65, '120', hace: 26, despues: function (int $id): void {
             $oferta = $this->tras(24, fn () => $this->negociar->ofertar($this->usuarios['carlos.mamani'], $id, ['uuid_cliente' => $this->uuid("{$id}:carlos-1"), 'tipo' => 'acepta_propuesta']))[0];
             $this->tras(20, fn () => $this->negociar->aceptar(Negociar::LADO_CLIENTE, $this->usuarios['luis.antelo'], $oferta->id));
@@ -200,7 +202,7 @@ class NegociacionDemoSeeder extends Seeder
                 [18, 'p', 'Don Luis, le escribe Carlos Mamani. ¿Le parece que vayamos mañana?'],
                 [16, 'c', 'Sí, mañana está bien. Avíseme cuando salga.'],
             ]);
-        }, ventana: [6, 10]);
+        }, ventana: [16, 19]);
     }
 
     /** En ejecución: el piloto marcó inicio, sube fotos de avance y comparte su última ubicación. */
