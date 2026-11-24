@@ -20,9 +20,10 @@ Este `docs/` contiene la documentación vigente de Agrocom, un marketplace de se
   - 0038 motor de asignación: ofertas, rondas, aceptación atómica, sanciones y asignación a mano
   - 0039 calificaciones, disputas, comisión y métricas: cierre del servicio, reputación ponderada, moderación, reembolsos y panel de métricas
 - **`politicas/`**: una política por tema, que operan lo decidido: `cancelacion.md`, `calificacion.md`, `verificacion_proveedores.md`, `seguridad.md`, `disputas.md`, `comision.md`.
-- **`gestion/`**: cola de tareas del ciclo automático, entornos, automatización del desarrollo y el plan de homogeneización del panel; `respuestas_campo/capturas_rc/` guarda las capturas del control remoto del dron.
+- **`gestion/`**: cola de tareas del ciclo automático, `estado-api.md` (qué está hecho en la API y qué falta), entornos, automatización del desarrollo y el plan de homogeneización del panel; `respuestas_campo/capturas_rc/` guarda las capturas del control remoto del dron.
 - **`diseno/`**: sistema de diseño del panel (tokens CSS, catálogo Atomic Design) y guía de construcción de pantallas.
 - **`api/openapi.yaml`**: contrato de API generado desde el código (ADR 0014); no se edita a mano.
+- **`api/ejemplos/`**: intercambios reales de la API (petición y respuesta) que las apps usan como fixtures de contrato; se regeneran con `bin/generar-ejemplos`.
 - **`glosario.md`**: vocabulario de negocio y técnico.
 
 ## Cómo leer
