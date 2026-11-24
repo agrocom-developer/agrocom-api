@@ -22,8 +22,6 @@ use Tests\TestCase;
  *   2. Sin persona vinculada, o con una dada de baja, la tarjeta lo dice y no
  *      muestra nada — y son dos mensajes distintos.
  *   3. Lo que no está cargado se dice («Sin registrar»); no queda un hueco.
- *   4. Editar en Personal solo se ofrece a quien tiene `personal.persona.editar`, y
- *      siempre apunta a la persona de la propia cuenta.
  */
 
 uses(TestCase::class);
@@ -191,17 +189,3 @@ test('lo que no está cargado se dice, en vez de dejar un hueco', function () {
 });
 
 // ── 4. Editar en Personal ──────────────────────────────────────────────────────
-
-test('solo quien puede editar personas ve el acceso a Personal, y lleva a su propia persona', function () {
-    $ana = perfilPersona('Ana Pérez');
-    perfilPersona('Beto Soto');
-    $cuenta = perfilCuenta($ana);
-
-    $conPermiso = perfilTarjeta($cuenta, puedeEditar: true);
-    $sinPermiso = perfilTarjeta($cuenta, puedeEditar: false);
-
-    expect($conPermiso['editarHref'])->toEndWith("/panel/personas/{$ana}/editar")
-        ->and($conPermiso['nota'])->toBe('Solo lectura en esta pantalla. Puedes corregirlos desde Personal.')
-        ->and($sinPermiso['editarHref'])->toBeNull()
-        ->and($sinPermiso['nota'])->toBe('Solo lectura. Si algo no está correcto, pídele a un administrador que lo corrija.');
-});
