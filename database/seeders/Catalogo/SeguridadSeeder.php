@@ -329,6 +329,18 @@ class SeguridadSeeder extends Seeder
         // cancelación por soporte, con motivo.
         'solicitudes.solicitud.ver' => 'Ver el listado y la ficha de las solicitudes de servicio',
         'solicitudes.solicitud.cancelar' => 'Cancelar una solicitud de servicio desde el panel, con motivo',
+        // Asignación (ADR 0030 y 0038), lado app: el proveedor ve y responde las
+        // ofertas de su proveedor y se declara en línea. El alcance lo hacen los
+        // casos de uso; el permiso es la puerta.
+        'asignacion.oferta.ver' => 'Ver las ofertas de su proveedor y su reputación desde la app',
+        'asignacion.oferta.responder' => 'Aceptar o rechazar una oferta y cancelar un servicio aceptado desde la app',
+        'flota.disponibilidad.gestionar' => 'Declararse en línea o fuera de línea desde la app',
+        // Asignación, panel: cola, ofertas y asignación a mano con motivo; sanciones
+        // de los proveedores y su levantamiento (apelación).
+        'asignacion.asignacion.ver' => 'Ver la cola de asignación y las rondas y ofertas de cada solicitud',
+        'asignacion.asignacion.forzar' => 'Asignar o reasignar una solicitud a un proveedor a mano, con motivo',
+        'asignacion.sancion.ver' => 'Ver las sanciones de los proveedores',
+        'asignacion.sancion.levantar' => 'Levantar una sanción de un proveedor, con motivo',
     ];
 
     /**
@@ -376,6 +388,9 @@ class SeguridadSeeder extends Seeder
         'proveedores.cuenta.gestionar',
         'proveedores.auxiliar.registrar',
         'proveedores.documento.cargar',
+        'asignacion.oferta.ver',
+        'asignacion.oferta.responder',
+        'flota.disponibilidad.gestionar',
     ];
 
     /** @var list<string> */
@@ -398,6 +413,20 @@ class SeguridadSeeder extends Seeder
     ];
 
     /**
+     * Asignación en el panel (ADR 0030 y 0038): el encargado de operaciones ve
+     * la cola, asigna a mano y atiende las sanciones. El dueño recibe todo el
+     * catálogo.
+     *
+     * @var list<string>
+     */
+    private const PERMISOS_ADMINISTRACION_ASIGNACION = [
+        'asignacion.asignacion.ver',
+        'asignacion.asignacion.forzar',
+        'asignacion.sancion.ver',
+        'asignacion.sancion.levantar',
+    ];
+
+    /**
      * Piloto: lo que ejecuta desde `agrocom-field` (HU-17, tarea 24) más su
      * tablero.
      *
@@ -407,6 +436,10 @@ class SeguridadSeeder extends Seeder
         // Marketplace: el piloto registra a su auxiliar y carga sus documentos.
         'proveedores.auxiliar.registrar',
         'proveedores.documento.cargar',
+        // Asignación (ADR 0030): el piloto de un proveedor responde sus ofertas.
+        'asignacion.oferta.ver',
+        'asignacion.oferta.responder',
+        'flota.disponibilidad.gestionar',
         'operaciones.acta.generar',
         'operaciones.acta.firmar',
         // Tarea 67: el dashboard dejó de ser un tablero único de gerencia y
@@ -751,7 +784,7 @@ class SeguridadSeeder extends Seeder
         // encargado_operaciones: todo salvo asignar_rol_dueno.
         $this->asignar(
             $roles['encargado_operaciones'],
-            $permisos->only([...self::PERMISOS_ENCARGADO_OPERACIONES, ...self::PERMISOS_ADMINISTRACION_PROVEEDORES, ...self::PERMISOS_ADMINISTRACION_SOLICITUDES])->values()->all(),
+            $permisos->only([...self::PERMISOS_ENCARGADO_OPERACIONES, ...self::PERMISOS_ADMINISTRACION_PROVEEDORES, ...self::PERMISOS_ADMINISTRACION_SOLICITUDES, ...self::PERMISOS_ADMINISTRACION_ASIGNACION])->values()->all(),
         );
 
         // Marketplace (ADR 0036): proveedor y cliente operan por la API con lo suyo.
