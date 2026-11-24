@@ -11,7 +11,7 @@ namespace App\Dominios\Personal\Dominio;
  * puede reactivar), gobernada por
  * `Dominio\MaquinaEstados\TransicionesEquipoTrabajo` y escrita únicamente por
  * `Aplicacion\MaquinaEstados\MaquinaEstadosEquipoTrabajo` (invariante 7 de
- * CLAUDE.md). `CrearEquipoTrabajo`/`ActualizarEquipoTrabajo` ya no reciben
+ * CLAUDE.md). `CrearEquipoTrabajo` ya no recibe
  * `estado`: una cuadrilla nace `activo` y la edición no lo toca — el cambio
  * de estado tiene su propio caso de uso, `CambiarEstadoEquipoTrabajo`.
  */

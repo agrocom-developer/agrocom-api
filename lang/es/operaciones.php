@@ -13,32 +13,6 @@
 
 return [
 
-    'estado' => [
-        'emitida' => 'Emitida',
-        'vigente' => 'Vigente',
-        'pausada' => 'Pausada',
-        'consumida' => 'Consumida',
-        'cancelada' => 'Cancelada',
-        'vencida' => 'Vencida',
-    ],
-
-    // Momento del ciclo del cultivo en que se aplica (HU-47, tarea 70; enum
-    // `Dominio\TipoAplicacion`). Mismo criterio que `estado` de arriba:
-    // vocabulario compartido por el formulario, el listado y su filtro.
-    'tipo_aplicacion' => [
-        'siembra' => 'Siembra',
-        'desarrollo' => 'Desarrollo',
-        'cosecha' => 'Cosecha',
-    ],
-
-    // HU-79 (tarea 110): etiquetas del selector de PRESENTACIÓN "Tipo" que
-    // filtra "Categoría de insumo" en el formulario de orden — no es un
-    // campo que el server valide, ver docblock de `_formulario.blade.php`.
-    'tipo_insumo' => [
-        'solido' => 'Sólido',
-        'liquido' => 'Líquido',
-    ],
-
     // Estados de sesión del dashboard demo (quinta vuelta — maquetas
     // 4a/5a/5b). "Validada"/"En vuelo"/"Programada" son vocabulario del
     // ciclo de vida real de `sesiones` (especificación §4.3/§5);
@@ -56,18 +30,6 @@ return [
             'abierto' => 'Abierta',
             'cerrado' => 'Cerrada',
             'validado' => 'Validada',
-        ],
-    ],
-
-    // Tipos de `ope_evidencias.tipo` (enum `Dominio\TipoEvidencia`), para la
-    // galería multimedia del dashboard y donde haga falta nombrar el tipo.
-    'evidencias' => [
-        'tipo' => [
-            'captura_rc' => 'Captura del control remoto',
-            'imagen_campo' => 'Imagen del campo',
-            'foto_incidencia' => 'Foto de incidencia',
-            'comprobante' => 'Comprobante',
-            'firma_acta' => 'Firma del acta',
         ],
     ],
 
@@ -429,101 +391,6 @@ return [
             'pendiente' => 'Pendiente',
             'atendida' => 'Atendida',
         ],
-    ],
-
-    // Pantalla de panel "Operación › Drones" (HU-27, tarea 36): ABM de la
-    // flota de drones, con su modelo (texto libre) y capacidad de carga en
-    // litros (30/50/60, CHECK de base de datos). Mismo molde que
-    // `comercial.campos`/`comercial.clientes`, sin sub-entidad.
-    // Capacidad de carga en kilos (HU-81, tarea 96): sin catálogo cerrado,
-    // a diferencia de los litros.
-    'drones' => [
-        'titulo' => 'Drones',
-        'subtitulo' => 'Flota de drones registrada, con su modelo y volumen de carga.',
-        'nuevo' => 'Nuevo dron',
-        'filtro_busqueda' => 'Buscar',
-        'filtro_busqueda_placeholder' => 'Identificador o modelo…',
-        'filtrar' => 'Filtrar',
-        'limpiar_filtro' => 'Limpiar filtro',
-        'vacio_titulo' => 'Todavía no hay drones registrados',
-        'vacio_detalle' => 'Registra cada dron de la flota con su identificador, modelo y capacidad de carga. Necesitarás al menos uno para ejecutar trabajos.',
-        'filtro_vacio_titulo' => 'Sin resultados para esta búsqueda',
-        'filtro_vacio_detalle' => 'Ningún dron coincide con el término buscado. Prueba con otro identificador o modelo.',
-        'col_identificador' => 'Identificador',
-        'col_modelo' => 'Modelo',
-        'col_capacidad' => 'Capacidad de carga',
-        'sin_modelo' => '—',
-        'sin_capacidad' => '—',
-        'capacidad_valor' => ':cantidad L',
-        'capacidad_kg_valor' => ':cantidad kg',
-        'editar' => 'Editar',
-        'eliminar_accion' => 'Eliminar',
-        'confirmar_eliminar_titulo' => 'Eliminar dron',
-        'confirmar_baja' => '¿Confirmas la baja de este dron?',
-        'paginacion_aria' => 'Paginación de drones',
-        'paginacion_anterior' => 'Anterior',
-        'paginacion_siguiente' => 'Siguiente',
-        'paginacion_info' => 'Página :actual de :total',
-        'titulo_crear' => 'Nuevo dron',
-        'titulo_editar' => 'Editar dron',
-        'subtitulo_form' => 'Identificador, modelo y capacidad de carga del dron.',
-        'seccion_datos' => 'Datos del dron',
-        'campos_contador' => ':cantidad campos',
-        'campo_identificador' => 'Identificador',
-        'campo_modelo' => 'Modelo',
-        'campo_modelo_ayuda' => 'Texto libre, ej.: DJI Agras T30.',
-        'campo_capacidad' => 'Capacidad de carga (L)',
-        'campo_capacidad_ayuda' => 'Valores permitidos: 30, 50 o 60 litros.',
-        'campo_capacidad_kg' => 'Capacidad de carga (kg)',
-        'campo_capacidad_kg_ayuda' => 'Kilos que puede llevar el dron por vuelo, para aplicación sólida.',
-        'estado_form' => 'Los cambios se guardan al confirmar.',
-        'error_identificador_requerido' => 'Ingresa el identificador del dron.',
-        'creado' => 'Dron creado correctamente.',
-        'actualizado' => 'Dron actualizado correctamente.',
-        'eliminado' => 'Dron dado de baja correctamente.',
-        'volver' => 'Volver a drones',
-        'aside_ficha_titulo' => 'Ficha de inventario',
-        'aside_ficha_serie' => 'Número de serie',
-        'aside_ficha_software' => 'Versión de software',
-        'aside_ficha_sin_dato' => '—',
-        'aside_ficha_vacio_titulo' => 'Sin ficha de inventario',
-        'aside_ficha_vacio_detalle' => 'Registra la ficha del dron con el identificador :identificador para que aparezca aquí.',
-        'aside_ficha_accion_ver' => 'Ver ficha',
-        'aside_ficha_accion_crear' => 'Crear ficha',
-        'aside_cuadrillas_titulo' => 'Cuadrillas',
-        'aside_cuadrillas_vigentes' => 'Vigentes',
-        'aside_cuadrillas_historial' => 'En el historial',
-        'aside_cuadrillas_actual' => 'Actual',
-        'aside_cuadrillas_vacio_titulo' => 'Sin cuadrillas',
-        'aside_cuadrillas_vacio_detalle' => 'Ninguna cuadrilla tiene asignado este dron. Se asigna desde la ficha de la cuadrilla.',
-        'aside_cuadrillas_accion_ver' => 'Ver cuadrillas',
-        'aside_sesiones_titulo' => 'Sesiones de vuelo',
-        'aside_sesiones_total' => 'Total',
-        'aside_sesiones_validadas' => 'Validadas',
-        'aside_sesiones_vacio_titulo' => 'Sin sesiones de vuelo',
-        'aside_sesiones_vacio_detalle' => 'Las sesiones de vuelo con este dron llegan desde la app de campo.',
-    ],
-
-    // Pantalla de panel "Reportes › Técnicos" (HU-43, tarea 57):
-    // panel.reportes.tecnicos.index. Solo lectura — filtra y enlaza a la
-    // descarga individual ya existente (panel.trabajos.reporte-pdf).
-    'reportes_tecnicos' => [
-        'titulo' => 'Reportes técnicos',
-        'subtitulo' => 'Reportes técnicos generados por lote, para reenviar al agrónomo.',
-        'filtro_cliente' => 'Cliente',
-        'filtro_cliente_placeholder' => 'Todos los clientes',
-        'filtro_desde' => 'Desde',
-        'filtro_hasta' => 'Hasta',
-        'vacio_titulo' => 'Todavía no se generó ningún reporte técnico',
-        'vacio_detalle' => 'Los reportes técnicos se generan por lote a medida que se cierran y conforman trabajos. En cuanto se genere el primero, vas a verlo acá.',
-        'filtro_vacio_titulo' => 'Ningún reporte coincide con estos filtros',
-        'filtro_vacio_detalle' => 'Prueba con otro cliente, amplía el rango de fechas o quita los filtros para ver todos los reportes.',
-        'col_trabajo' => 'Trabajo',
-        'col_cliente' => 'Cliente',
-        'col_generado' => 'Generado',
-        'col_descarga' => 'Descarga',
-        'trabajo_solicitud' => 'Solicitud :solicitud',
-        'descargar_pdf' => 'Descargar PDF',
     ],
 
     // Mensajes de error.

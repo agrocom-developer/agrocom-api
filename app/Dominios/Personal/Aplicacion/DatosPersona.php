@@ -7,7 +7,7 @@ use App\Dominios\Personal\Dominio\RolOperativoPersona;
 /**
  * Lo que se carga de una persona de campo en el alta y en la edición
  * (21/9/2026): datos personales, datos de referencia y su trabajo en campo.
- * Mismo objeto para `CrearPersona` y `ActualizarPersona`, que ya no reciben
+ * Lo recibe `CrearPersona`, que no recibe
  * una docena de parámetros sueltos.
  *
  * `activo` no viaja acá: no es un campo del formulario. La persona nace activa

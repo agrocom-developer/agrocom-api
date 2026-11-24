@@ -5,9 +5,7 @@ namespace App\Dominios\Mantenimiento\Infraestructura;
 use App\Dominios\Mantenimiento\Aplicacion\IncrementarCiclosBateria;
 use App\Dominios\Mantenimiento\Contratos\LecturaCiclosBateria;
 use App\Dominios\Mantenimiento\Contratos\LecturaEquipamiento;
-use App\Dominios\Mantenimiento\Contratos\LecturaEquipamientoPorBase;
 use App\Dominios\Mantenimiento\Contratos\LecturaEstadoEquipamiento;
-use App\Dominios\Mantenimiento\Contratos\LecturaMantenimientoPorDron;
 use App\Dominios\Operaciones\Contratos\Eventos\RecargaRegistrada;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
@@ -37,8 +35,6 @@ final class MantenimientoServiceProvider extends ServiceProvider
         $this->app->bind(LecturaCiclosBateria::class, LecturaCiclosBateriaEloquent::class);
         $this->app->bind(LecturaEquipamiento::class, LecturaEquipamientoEloquent::class);
         $this->app->bind(LecturaEstadoEquipamiento::class, LecturaEstadoEquipamientoEloquent::class);
-        $this->app->bind(LecturaEquipamientoPorBase::class, LecturaEquipamientoPorBaseEloquent::class);
-        $this->app->bind(LecturaMantenimientoPorDron::class, LecturaMantenimientoPorDronEloquent::class);
     }
 
     public function boot(): void

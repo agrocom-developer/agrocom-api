@@ -9,7 +9,7 @@ use Illuminate\Database\QueryException;
 /**
  * Alta de un dron (HU-27, tarea 36): identificador, modelo (texto libre) y
  * capacidad de carga en litros (30/50/60, CHECK de base de datos). Capacidad
- * en kilos (HU-81, tarea 96) sin catálogo cerrado, ver `CrearDronRequest`.
+ * en kilos (HU-81, tarea 96) sin catálogo cerrado.
  */
 final class CrearDron
 {
