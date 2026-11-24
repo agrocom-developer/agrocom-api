@@ -10,9 +10,9 @@ Un servicio de fumigación aérea implica riesgo para personas, cultivos vecinos
 
 1. El proveedor independiente o tercero **se registra por sí mismo** en la app o la web. Su estado inicial es `pendiente`; solo un administrador lo pasa a `aprobado`.
 2. El piloto de un proveedor registra a su auxiliar; un administrador lo aprueba.
-3. Cada piloto, auxiliar y dron tiene documentos propios con vencimiento (identidad, licencia o habilitación, registro del dron, seguro de responsabilidad civil, certificado de fumigación y antecedentes según la normativa local).
+3. Cada piloto, auxiliar y dron tiene documentos propios con vencimiento (identidad, licencia o habilitación, registro del dron, seguro de responsabilidad civil, certificado de fumigación y antecedentes según la normativa local). El registro pide además los datos de la persona y el modelo y las fotos del dron (ADR 0042).
 4. Un documento vencido suspende de forma automática al sujeto; un aviso previo (30 y 7 días) se envía al proveedor.
-5. El administrador deja motivo en cada rechazo, suspensión o baja; el sujeto puede reenviar o apelar.
+5. El administrador deja motivo en cada rechazo, suspensión o baja; el sujeto puede reenviar o apelar. Un proveedor que no está `aprobado` no ve el mapa de solicitudes abiertas ni ofrece.
 6. Los proveedores propios pasan por el mismo flujo.
 
 ## Alternativas descartadas

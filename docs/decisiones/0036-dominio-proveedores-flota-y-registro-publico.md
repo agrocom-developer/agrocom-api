@@ -33,5 +33,5 @@ Los ADR 0028, 0029 y 0032 fijan el qué: proveedores propio, independiente y ter
 
 - Una migración por tabla nueva y una ampliación de `ntf_notificaciones`; ninguna destructiva.
 - `RecargaRegistrada` suma un parámetro opcional: el listener de baterías existente no cambia.
-- La asignación (ADR 0030) lee la aptitud de un equipo de `Flota` (`AptitudDeEquipo`: proveedor, piloto, dron y auxiliar aprobados, documentos vigentes y vigencia); no hay que duplicar esa regla.
+- La negociación (ADR 0030) lee la aptitud de un equipo de `Flota` (`AptitudDeEquipo`: proveedor, piloto, dron y auxiliar aprobados, documentos vigentes y vigencia); no hay que duplicar esa regla.
 - La revisión humana posterior a la integración cubre `MaquinaEstados*`, el proceso de vencimientos y el cambio en la sincronización de recargas.

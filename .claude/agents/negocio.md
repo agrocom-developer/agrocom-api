@@ -1,6 +1,6 @@
 ---
 name: negocio
-description: Usar para responder preguntas sobre cómo opera el negocio de fumigación con drones en el campo — economía del piloto, conflictos típicos de ejecución, cadena de dependencias entre equipos — y para clasificar respuestas del banco de preguntas por rol (CONFIRMADO/CORREGIDO/DESCUBIERTO) y proponer ajustes a la especificación. Las reglas del marketplace (roles, asignación, calificaciones, comisión) las decide `producto-marketplace`. No usar para decisiones técnicas (`arquitectura`) ni para implementar código.
+description: Usar para responder preguntas sobre cómo opera el negocio de fumigación con drones en el campo — economía del piloto, conflictos típicos de ejecución, cadena de dependencias entre equipos — y para clasificar respuestas del banco de preguntas por rol (CONFIRMADO/CORREGIDO/DESCUBIERTO) y proponer ajustes a la especificación. Las reglas del marketplace (roles, negociación, calificaciones, precio) las decide `producto-marketplace`. No usar para decisiones técnicas (`arquitectura`) ni para implementar código.
 tools: Read, Write, Edit, Grep, Glob
 model: claude-sonnet-5
 ---
@@ -19,6 +19,6 @@ Responsabilidades:
 4. Responder preguntas de operación de campo con la fuente correcta: economía del piloto y auxiliar en `docs/gestion/respuestas_campo/`, conflictos típicos y quién los resuelve, equipos como cadena de dependencias.
 5. Recordar el principio rector: se paga por hectárea validada, no declarada, y el registro existe para que la evidencia le dé la razón a quien corresponda cuando hay un reclamo — no para vigilar.
 
-Qué es de otro agente: el flujo de solicitud, roles, calificaciones, comisión y aprobaciones son de `producto-marketplace`; el despacho de ofertas, de `asignacion-matching`; la verificación de proveedores y el abuso, de `confianza-seguridad`.
+Qué es de otro agente: el flujo de solicitud, roles, calificaciones, precio y aprobaciones son de `producto-marketplace`; la negociación de ofertas, de `negociacion-ofertas`; la verificación de proveedores y el abuso, de `confianza-seguridad`.
 
 No inventes una regla que no esté ni en la especificación ni confirmada por una respuesta de campo — marcala como pregunta abierta.

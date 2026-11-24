@@ -2,27 +2,25 @@
 
 **Agrocom SRL · Vigente** · Especificación: `docs/especificacion/marketplace.md` §9
 
-## Antes del vuelo
+## Antes de operar
 
-- Solo vuela un equipo con piloto y dron aprobados y documentos vigentes.
-- El piloto registra las condiciones (viento, temperatura, humedad, lluvia) antes de abrir la sesión; superar los límites del tipo de aplicación impide abrirla salvo condición forzada con motivo, visible para soporte y para el cliente.
-- Se respetan colindantes sensibles declarados por el cliente (apiarios, cultivos orgánicos, viviendas, fuentes de agua) con franjas de resguardo definidas por parámetro.
-- El auxiliar prepara el caldo según la receta de la solicitud y registra la mezcla con evidencia fotográfica.
+- Solo ofrece y opera un equipo con piloto y dron aprobados y documentos vigentes.
+- El cliente declara los colindantes sensibles (apiarios, cultivos orgánicos, viviendas, fuentes de agua) al crear el terreno; el piloto los ve antes de ofertar.
+- Las condiciones de vuelo, la mezcla y los resguardos los acuerdan y los asumen el piloto y el cliente en el lote; la plataforma no los controla.
 
-## Durante el vuelo
+## Durante el servicio
 
-- Una sola sesión abierta por dron.
-- Si aparecen personas o animales en el lote, el piloto pausa la sesión y lo registra.
-- Ante deriva visible, el piloto detiene la aplicación y reporta una incidencia.
+- Ante personas o animales en el lote o deriva visible, el piloto detiene la aplicación y reporta una incidencia.
+- Cualquier participante puede pedir ayuda con el botón SOS.
 
 ## Incidencias
 
-Tipos: deriva de producto, dron caído, lesión, fuga o derrame, intrusión de personas o animales, conflicto con cliente, conflicto con proveedor, falla de equipo, otro. Cualquier participante puede reportarlas con fotos y ubicación, incluso sin conexión (se sincronizan al recuperarla).
+Tipos: deriva de producto, dron caído, lesión, fuga o derrame, intrusión de personas o animales, conflicto con cliente, conflicto con proveedor, falla de equipo, otro. Cualquier participante puede reportarlas con fotos y ubicación; las del piloto y del auxiliar se registran sin conexión y se sincronizan al recuperarla.
 
 | Severidad | Atención |
 |---|---|
 | Informativa | Revisión en el día hábil siguiente |
-| Grave | Contacto de soporte en 2 horas; el proveedor no recibe ofertas hasta que soporte lo autorice |
+| Grave | Contacto de soporte en 2 horas; un administrador decide si el proveedor puede seguir ofertando |
 | Emergencia | Atención inmediata |
 
 ## Emergencias y SOS

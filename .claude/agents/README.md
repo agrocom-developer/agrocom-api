@@ -10,8 +10,8 @@ Skills que los agentes cargan: `marketplace-politicas`, `contrato-api`, `ciclo-s
 
 | Agente | Cuándo usarlo |
 |---|---|
-| `producto-marketplace` | Reglas del marketplace: roles, solicitud, calificaciones, comisión, aprobaciones, backlog |
-| `asignacion-matching` | Despacho: propios primero, terceros por radio y calificación, ofertas y tiempos |
+| `producto-marketplace` | Reglas del marketplace: roles, solicitud, precio, calificaciones, aprobaciones, backlog |
+| `negociacion-ofertas` | Negociación: precio por hectárea, ofertas, contraofertas, adjudicación y vigencias |
 | `confianza-seguridad` | Verificación de proveedores, abuso, privacidad, seguridad de API, panel y apps |
 | `negocio` | Operación de campo, banco de preguntas, economía del piloto |
 
@@ -20,7 +20,7 @@ Skills que los agentes cargan: `marketplace-politicas`, `contrato-api`, `ciclo-s
 | Agente | Cuándo usarlo |
 |---|---|
 | `arquitectura` | Encaje de código nuevo y redacción de ADRs |
-| `backend` | Casos de uso, eventos, endpoints: reglas con dinero, estados y asignación |
+| `backend` | Casos de uso, eventos, endpoints: reglas con dinero, estados y negociación |
 | `modelo-datos` | Esquema PostgreSQL, índices e integridad |
 | `migracion-esquema` | Migraciones destructivas: respaldo, `down`, prueba con datos reales |
 | `modulos-roles` | Seguridad `sec_*`: permisos, roles, policies |
@@ -48,4 +48,4 @@ Skills que los agentes cargan: `marketplace-politicas`, `contrato-api`, `ciclo-s
 
 ## Lo que estos agentes nunca deciden solos
 
-Una regla de negocio nueva (cómo se asigna un servicio, qué calificación ve quién, cuánto cobra la plataforma) la propone `producto-marketplace` como decisión revisable y se documenta; ningún agente de implementación la inventa. Lo mismo vale para el despacho (`asignacion-matching`).
+Una regla de negocio nueva (cómo se negocia un servicio, qué calificación ve quién, qué se muestra antes de adjudicar) la propone `producto-marketplace` como decisión revisable y se documenta; ningún agente de implementación la inventa. Lo mismo vale para la negociación de ofertas (`negociacion-ofertas`).
