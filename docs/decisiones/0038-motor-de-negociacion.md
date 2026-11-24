@@ -30,5 +30,5 @@ El ADR 0030 fija el qué de la negociación: el cliente propone un precio por he
 
 ## Consecuencias
 
-- Migraciones nuevas para `neg_ofertas` y `neg_cancelaciones`, columnas de precio en `sol_solicitudes_servicio` y la ampliación de los CHECK de `ntf_notificaciones`. Los datos existentes se mueven a esquemas `respaldo_*` sin `DROP` (`negociacion-contrato.md`, §11).
+- Migraciones nuevas para `neg_ofertas` y `neg_cancelaciones`, columnas de precio en `sol_solicitudes_servicio` y la ampliación de los CHECK de `ntf_notificaciones`. Los esquemas `respaldo_*` desaparecen con la migración `2026_12_04_100100_elimina_esquemas_de_respaldo` (`negociacion-contrato.md`, §11).
 - La revisión humana posterior a la integración cubre la adjudicación (`ResponderOferta`), `VencerOfertas`, `CancelarComoProveedor`, el mapa de abiertas y las migraciones.

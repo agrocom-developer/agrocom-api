@@ -29,16 +29,9 @@ La migración `2026_11_23_100000_retira_operacion_interna` es destructiva a prop
 - `down()` devuelve las tablas a `public`, restaura `vehiculo_id`, las bajas lógicas y el catálogo de seguridad, y elimina el esquema de respaldo.
 - Solo corre en PostgreSQL; las pruebas de `tests/Unit` no ejecutan esta migración.
 
-### Retiro definitivo del respaldo
+### Esquemas de respaldo
 
-Mientras exista el esquema, las claves foráneas de las tablas archivadas hacia `per_personas`, `per_bases`, `per_equipos_trabajo` y `cpn_campanias` impiden borrar físicamente esas filas. Cuando el dueño confirme que no necesita los datos:
-
-1. Volcar el respaldo y guardar el archivo fuera del servidor:
-   `pg_dump --schema=respaldo_operacion_interna --format=custom --file=respaldo_operacion_interna.dump <base>`
-2. Comprobar el volcado (`pg_restore --list respaldo_operacion_interna.dump`).
-3. Eliminar el esquema en una migración propia: `DROP SCHEMA respaldo_operacion_interna CASCADE`.
-
-Antes de aplicar la migración en un entorno con datos reales conviene hacer el mismo volcado de las 18 tablas, aunque la migración sea reversible.
+Los esquemas `respaldo_*` que crean estas migraciones no existen en una base al día: la migración `2026_12_04_100100_elimina_esquemas_de_respaldo` los elimina con `DROP SCHEMA … CASCADE`, porque el sistema no conserva datos retirados. Su `down()` solo recrea los esquemas vacíos.
 
 ## Alternativas descartadas
 

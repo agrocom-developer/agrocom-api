@@ -28,15 +28,9 @@ Dos migraciones, ambas con respaldo dentro de la propia base y ninguna con `DROP
 
 Verificada contra PostgreSQL 16 con datos de cada tabla retirada: `up`, `down` y `up` de nuevo, con el respaldo y la restauración comprobados.
 
-### Retiro definitivo del respaldo
+### Esquemas de respaldo
 
-Mientras exista el esquema, las claves foráneas de las tablas archivadas hacia `per_*`, `sec_user` y `ope_*` impiden borrar físicamente esas filas. Cuando el dueño confirme que no necesita los datos:
-
-1. Volcar el respaldo: `pg_dump --schema=respaldo_contratos_y_ordenes --format=custom --file=respaldo_contratos_y_ordenes.dump <base>`, y guardar el archivo fuera del servidor.
-2. Comprobar el volcado: `pg_restore --list respaldo_contratos_y_ordenes.dump`.
-3. Eliminar el esquema en una migración propia: `DROP SCHEMA respaldo_contratos_y_ordenes CASCADE`.
-
-Antes de aplicar la migración en un entorno con datos reales conviene hacer el mismo volcado, aunque la migración sea reversible.
+Los esquemas `respaldo_*` que crean estas migraciones no existen en una base al día: la migración `2026_12_04_100100_elimina_esquemas_de_respaldo` los elimina con `DROP SCHEMA … CASCADE`, porque el sistema no conserva datos retirados. Su `down()` solo recrea los esquemas vacíos.
 
 ## Alternativas descartadas
 

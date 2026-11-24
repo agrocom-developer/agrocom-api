@@ -204,7 +204,7 @@ Cada elemento: `id`, `centro` (`latitud`, `longitud` del centroide de los lotes)
 
 ## 11. Datos existentes
 
-Ninguna migración borra datos; toda tabla o columna que sale de `public` se mueve a un esquema `respaldo_*` (`ALTER TABLE … SET SCHEMA` o copia previa a la columna) con `down()` que la restaura, y se verifica contra PostgreSQL.
+Ninguna migración borra datos; toda tabla o columna que sale de `public` se mueve a un esquema `respaldo_*` (`ALTER TABLE … SET SCHEMA` o copia previa a la columna) con `down()` que la restaura, y se verifica contra PostgreSQL. Los esquemas `respaldo_*` los elimina la migración `2026_12_04_100100_elimina_esquemas_de_respaldo` (el sistema no conserva datos retirados).
 
 | Origen | Destino |
 |---|---|
