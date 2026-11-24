@@ -8,6 +8,329 @@ servers:
     url: /
     description: 'Servidor actual — la URL base la define el entorno (local, staging, producción).'
 paths:
+  /api/ofertas:
+    get:
+      tags:
+        - Ofertas
+      summary: 'Mis ofertas'
+      description: 'Las ofertas del proveedor de la cuenta. `vista=vivas` (por defecto) deja las que esperan respuesta, con su cuenta regresiva; `vista=historial`, las ya resueltas. `desde` (ISO 8601) devuelve solo lo que cambió después: es la consulta periódica (polling) con que la app se entera de una oferta nueva, junto con `GET /api/notificaciones`. El servicio muestra el terreno aproximado, las hectáreas, el pago estimado y la distancia; nunca datos del cliente.'
+      operationId: listarOfertas
+      parameters:
+        -
+          name: vista
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - vivas
+              - historial
+        -
+          name: desde
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+      responses:
+        200:
+          description: Ofertas.
+          content:
+            application/json:
+              schema:
+                required:
+                  - ofertas
+                properties:
+                  ofertas:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Oferta'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no recibe ofertas.'
+        404:
+          description: 'La cuenta no pertenece a ningún proveedor.'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/ofertas/{id}':
+    get:
+      tags:
+        - Ofertas
+      summary: 'Detalle de una oferta'
+      description: 'Una oferta del proveedor de la cuenta. Una oferta de otro proveedor responde 404.'
+      operationId: verOferta
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'La oferta.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - oferta
+                properties:
+                  oferta:
+                    $ref: '#/components/schemas/Oferta'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no recibe ofertas.'
+        404:
+          description: 'No existe o es de otro proveedor.'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/ofertas/{id}/aceptar':
+    post:
+      tags:
+        - Ofertas
+      summary: 'Aceptar una oferta'
+      description: 'Acepta una oferta viva. Requiere red. Es atómico sobre la solicitud: si otro proveedor la aceptó antes, la oferta venció o se retiró, responde 409 y no cambia nada. Con `equipo_id` asigna ese equipo; sin él, el primer equipo apto y libre en la ventana. Aceptar dos veces la misma oferta devuelve la misma oferta. La solicitud queda `asignada` y se avisa al cliente.'
+      operationId: aceptarOferta
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              properties:
+                equipo_id:
+                  type: integer
+                  nullable: true
+              type: object
+      responses:
+        200:
+          description: 'Oferta aceptada.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - oferta
+                properties:
+                  oferta:
+                    $ref: '#/components/schemas/Oferta'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no responde ofertas.'
+        404:
+          description: 'No existe o es de otro proveedor.'
+        409:
+          description: 'La oferta ya no está disponible: otro proveedor aceptó, venció o se retiró.'
+        422:
+          description: 'No hay un equipo apto y libre, o el proveedor tiene una sanción vigente.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/ofertas/{id}/rechazar':
+    post:
+      tags:
+        - Ofertas
+      summary: 'Rechazar una oferta'
+      description: 'Rechaza una oferta viva con motivo. Requiere red. Rechazar no penaliza hasta que la tasa de aceptación baje del umbral de la política de calificación. Rechazar dos veces la misma oferta devuelve la misma oferta.'
+      operationId: rechazarOferta
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - motivo
+              properties:
+                motivo:
+                  type: string
+                  example: 'No tengo equipo libre esa semana'
+              type: object
+      responses:
+        200:
+          description: 'Oferta rechazada.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - oferta
+                properties:
+                  oferta:
+                    $ref: '#/components/schemas/Oferta'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no responde ofertas.'
+        404:
+          description: 'No existe o es de otro proveedor.'
+        409:
+          description: 'La oferta ya no está disponible.'
+        422:
+          description: 'Falta el motivo.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/solicitudes/{id}/cancelar-proveedor':
+    post:
+      tags:
+        - Ofertas
+      summary: 'Cancelar un servicio aceptado'
+      description: 'El proveedor cancela un servicio que ya aceptó (`asignada` o `en_camino`), con motivo. La solicitud vuelve a asignación con prioridad, sin ofrecérsela de nuevo a quien canceló, y se avisa al cliente. Suma a su tasa de cancelación: pesa el doble con menos de 12 horas de anticipación y no pesa si la `causa` es `emergencia` o `falla_de_equipo` avisada con más de 12 horas. Tres cancelaciones en 30 días generan una advertencia; cinco, una restricción temporal de ofertas (política de cancelación).'
+      operationId: cancelarSolicitudComoProveedor
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - motivo
+              properties:
+                motivo:
+                  type: string
+                  example: 'El dron quedó en reparación'
+                causa:
+                  type: string
+                  nullable: true
+                  enum:
+                    - otra
+                    - falla_de_equipo
+                    - emergencia
+              type: object
+      responses:
+        200:
+          description: 'Cancelación registrada.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - solicitud_id
+                  - peso
+                properties:
+                  solicitud_id:
+                    type: integer
+                  peso:
+                    description: 'Peso con que cuenta en la tasa de cancelación.'
+                    type: integer
+                    example: 1
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no responde ofertas.'
+        404:
+          description: 'La solicitud no existe o no está asignada a tu proveedor.'
+        422:
+          description: 'Falta el motivo o la solicitud ya no admite cancelación del proveedor.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  /api/reputacion:
+    get:
+      tags:
+        - Ofertas
+      summary: 'Mi reputación'
+      description: 'Tu calificación, tus tasas de aceptación y de cancelación (cuatro decimales, entre 0 y 1) y las sanciones vigentes con su motivo. Una sanción se apela ante un administrador (política de calificación, «Defensa»).'
+      operationId: verReputacion
+      responses:
+        200:
+          description: 'Reputación del proveedor.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - calificacion_promedio
+                  - calificaciones_conteo
+                  - tasa_aceptacion
+                  - tasa_cancelacion
+                  - sanciones
+                properties:
+                  calificacion_promedio:
+                    type: string
+                    example: '4.60'
+                  calificaciones_conteo:
+                    type: integer
+                    example: 24
+                  tasa_aceptacion:
+                    type: string
+                    example: '0.8500'
+                  tasa_cancelacion:
+                    type: string
+                    example: '0.0200'
+                  sanciones:
+                    type: array
+                    items:
+                      properties:
+                        tipo:
+                          type: string
+                          enum:
+                            - advertencia
+                            - restriccion_ofertas
+                            - revision_suspension
+                        causa:
+                          type: string
+                          enum:
+                            - cancelaciones
+                            - calificacion
+                            - aceptacion
+                        motivo:
+                          type: string
+                        desde:
+                          type: string
+                          format: date-time
+                        hasta:
+                          type: string
+                          format: date-time
+                          nullable: true
+                      type: object
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no recibe ofertas.'
+        404:
+          description: 'La cuenta no pertenece a ningún proveedor.'
+      security:
+        -
+          tokenDispositivo: []
   /api/version:
     get:
       tags:
@@ -36,6 +359,91 @@ paths:
                         $ref: '#/components/schemas/VersionApk'
                     nullable: true
                 type: object
+  /api/disponibilidad:
+    get:
+      tags:
+        - Flota
+      summary: 'Mi disponibilidad'
+      description: 'La disponibilidad declarada de los equipos vigentes de la cuenta. Un equipo sin fila nunca declaró nada y cuenta como fuera de línea.'
+      operationId: consultarDisponibilidad
+      responses:
+        200:
+          description: 'Disponibilidad por equipo.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Disponibilidad'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no gestiona disponibilidad.'
+      security:
+        -
+          tokenDispositivo: []
+    put:
+      tags:
+        - Flota
+      summary: 'Declararme en línea o fuera de línea'
+      description: 'Pone en línea o fuera de línea un equipo (`equipo_id`) o, sin él, todos los equipos vigentes de la cuenta. Una solicitud urgente solo se ofrece a quien está en línea. `lat` y `lng` actualizan la última ubicación, que mide la distancia a los terrenos. Idempotente.'
+      operationId: declararDisponibilidad
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - en_linea
+              properties:
+                en_linea:
+                  type: boolean
+                equipo_id:
+                  type: integer
+                  nullable: true
+                lat:
+                  type: number
+                  example: -17.7833
+                  nullable: true
+                lng:
+                  type: number
+                  example: -63.1821
+                  nullable: true
+              type: object
+      responses:
+        200:
+          description: 'Disponibilidad actualizada.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Disponibilidad'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no gestiona disponibilidad.'
+        404:
+          description: 'El equipo no es de la cuenta.'
+        422:
+          description: 'Datos inválidos o la cuenta no tiene equipos vigentes.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
   /api/proveedores/drones:
     get:
       tags:
@@ -2296,6 +2704,108 @@ paths:
                 type: object
 components:
   schemas:
+    Oferta:
+      title: 'Oferta de servicio'
+      required:
+        - id
+        - solicitud_id
+        - estado
+        - ronda
+        - grupo
+        - ofrecida_en
+        - vence_en
+        - segundos_restantes
+      properties:
+        id:
+          description: "Una oferta tal como la ve el proveedor (especificación §6, punto 8): el\nterreno aproximado, las hectáreas, el pago estimado y la distancia; sin datos\nde contacto del cliente. Los importes y las hectáreas viajan como cadena\ndecimal exacta (invariante 6 de CLAUDE.md)."
+          type: integer
+          example: 31
+        solicitud_id:
+          type: integer
+          example: 12
+        estado:
+          type: string
+          enum:
+            - ofrecida
+            - aceptada
+            - rechazada
+            - vencida
+            - retirada
+        ronda:
+          type: integer
+          example: 1
+        grupo:
+          type: string
+          enum:
+            - propio
+            - tercero
+        ofrecida_en:
+          type: string
+          format: date-time
+        vence_en:
+          type: string
+          format: date-time
+        segundos_restantes:
+          description: 'Cuenta regresiva de una oferta viva; 0 si ya se resolvió.'
+          type: integer
+          example: 540
+        respondida_en:
+          type: string
+          format: date-time
+          nullable: true
+        motivo_rechazo:
+          type: string
+          nullable: true
+        motivo_retiro:
+          type: string
+          nullable: true
+          enum:
+            - otro_acepto
+            - cancelada
+            - reasignada
+            - asignacion_forzada
+        equipo_id:
+          type: integer
+          nullable: true
+        pago_estimado:
+          type: string
+          example: '9792.00'
+          nullable: true
+        distancia_km:
+          type: string
+          example: '23.40'
+          nullable: true
+        servicio:
+          description: 'Lo que se muestra del servicio antes de aceptar: sin nombre del terreno ni contacto del cliente.'
+          properties:
+            tipo_aplicacion:
+              type: string
+            hectareas:
+              type: string
+              example: '80.0000'
+            urgente:
+              type: boolean
+            ventana_desde:
+              type: string
+              format: date
+            ventana_hasta:
+              type: string
+              format: date
+            zona:
+              type: string
+              example: Warnes
+              nullable: true
+            ubicacion_aproximada:
+              properties:
+                lat:
+                  type: string
+                lng:
+                  type: string
+              type: object
+              nullable: true
+          type: object
+          nullable: true
+      type: object
     PaginacionLinks:
       title: 'Links de paginación'
       description: 'Links de navegación de la respuesta paginada estándar de Laravel.'
@@ -2433,6 +2943,31 @@ components:
           description: 'URL del release del `.apk` publicado en agrocom-field (GitHub Releases).'
           type: string
           format: uri
+      type: object
+    Disponibilidad:
+      title: 'Disponibilidad de un equipo'
+      required:
+        - equipo_id
+        - en_linea
+        - actualizado_en
+      properties:
+        equipo_id:
+          description: "Disponibilidad «en línea» de los equipos del proveedor (especificación §4.4 y\n§10.2). Requiere red: sin señal el proveedor no recibe ofertas de todos modos."
+          type: integer
+          example: 4
+        en_linea:
+          type: boolean
+        lat:
+          type: string
+          example: '-17.7833000'
+          nullable: true
+        lng:
+          type: string
+          example: '-63.1821000'
+          nullable: true
+        actualizado_en:
+          type: string
+          format: date-time
       type: object
     Dron:
       title: Dron
@@ -3590,6 +4125,9 @@ components:
       description: 'Token por dispositivo emitido por `POST /api/auth/token` (HU-03). Se envía como `Authorization: Bearer {token}`. Caduca a los `SANCTUM_EXPIRATION` minutos de emitido (30 días por defecto), o antes si se lo revoca desde el panel o si la cuenta o el rol con el que se emitió dejan de estar vigentes.'
       scheme: bearer
 tags:
+  -
+    name: Ofertas
+    description: 'El proveedor ve las ofertas que le hace el motor de asignación y las acepta o rechaza (ADR 0030). Requiere red.'
   -
     name: Distribucion
     description: 'Versionado y distribución del APK de agrocom-field (HU-20).'

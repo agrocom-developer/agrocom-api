@@ -1,6 +1,9 @@
 <?php
 
+use App\Dominios\Asignacion\Infraestructura\Http\Controllers\Api\OfertasController;
+use App\Dominios\Asignacion\Infraestructura\Http\Controllers\Api\ServiciosDelProveedorController;
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Api\VersionController;
+use App\Dominios\Flota\Infraestructura\Http\Controllers\Api\DisponibilidadController;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Api\DronesController;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Api\EquiposController;
 use App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Api\NotificacionesController;
@@ -158,6 +161,28 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/proveedores/equipos/{id}', [EquiposController::class, 'update'])
         ->whereNumber('id')
         ->name('api.proveedores.equipos.update');
+
+    // Marketplace (ADR 0030 y 0038): disponibilidad «en línea» y ofertas del
+    // proveedor. Requieren red: aceptar o rechazar es la única acción de negocio
+    // sin outbox (ADR 0028). El alcance (solo lo de su proveedor, un id ajeno es
+    // 404) lo hacen los casos de uso; el permiso del rol del token es la puerta.
+    Route::get('/disponibilidad', [DisponibilidadController::class, 'show'])->name('api.disponibilidad.show');
+    Route::put('/disponibilidad', [DisponibilidadController::class, 'update'])->name('api.disponibilidad.update');
+
+    Route::get('/ofertas', [OfertasController::class, 'index'])->name('api.ofertas.index');
+    Route::get('/ofertas/{id}', [OfertasController::class, 'show'])
+        ->whereNumber('id')
+        ->name('api.ofertas.show');
+    Route::post('/ofertas/{id}/aceptar', [OfertasController::class, 'aceptar'])
+        ->whereNumber('id')
+        ->name('api.ofertas.aceptar');
+    Route::post('/ofertas/{id}/rechazar', [OfertasController::class, 'rechazar'])
+        ->whereNumber('id')
+        ->name('api.ofertas.rechazar');
+    Route::post('/solicitudes/{id}/cancelar-proveedor', [ServiciosDelProveedorController::class, 'cancelar'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.cancelar-proveedor');
+    Route::get('/reputacion', [ServiciosDelProveedorController::class, 'reputacion'])->name('api.reputacion.show');
 
     // Cliente: su propio perfil (el alta es pública, arriba).
     Route::get('/clientes/mi', [ClientesController::class, 'show'])->name('api.clientes.mi');

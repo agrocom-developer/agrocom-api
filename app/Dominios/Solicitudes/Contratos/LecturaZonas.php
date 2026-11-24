@@ -6,4 +6,11 @@ namespace App\Dominios\Solicitudes\Contratos;
 interface LecturaZonas
 {
     public function nombre(int $id): ?string;
+
+    /**
+     * Centro de la zona, para medir distancias en la asignación.
+     *
+     * @return array{lat: float, lng: float}|null
+     */
+    public function centroide(int $id): ?array;
 }

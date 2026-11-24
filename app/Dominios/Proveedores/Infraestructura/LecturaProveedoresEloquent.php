@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Proveedores\Infraestructura;
 
+use App\Dominios\Compartido\Dominio\EstadoAprobacion;
 use App\Dominios\Proveedores\Contratos\DatosAuxiliar;
 use App\Dominios\Proveedores\Contratos\DatosPiloto;
 use App\Dominios\Proveedores\Contratos\DatosProveedor;
@@ -74,9 +75,70 @@ final class LecturaProveedoresEloquent implements LecturaProveedores
         return $pilotos->map(fn (Piloto $piloto): DatosPiloto => $this->datosPiloto($piloto, $nombres))->all();
     }
 
+    public function aprobadosDelGrupo(string $grupo): array
+    {
+        $proveedores = Proveedor::query()
+            ->where('estado', EstadoAprobacion::Aprobado->value)
+            ->when(
+                $grupo === 'propio',
+                fn ($consulta) => $consulta->where('tipo', TipoProveedor::Propio->value),
+                fn ($consulta) => $consulta->where('tipo', '!=', TipoProveedor::Propio->value),
+            )
+            ->orderBy('id')
+            ->get();
+
+        return $proveedores->map(fn (Proveedor $proveedor): DatosProveedor => $this->datos($proveedor))->all();
+    }
+
+    public function usuariosDeAviso(int $proveedorId): array
+    {
+        $proveedor = Proveedor::query()->find($proveedorId);
+
+        if ($proveedor === null) {
+            return [];
+        }
+
+        $cuentas = Piloto::query()
+            ->where('proveedor_id', $proveedorId)
+            ->where('estado', EstadoAprobacion::Aprobado->value)
+            ->pluck('usuario_id')
+            ->all();
+
+        if ($proveedor->usuario_titular_id !== null) {
+            array_unshift($cuentas, $proveedor->usuario_titular_id);
+        }
+
+        return array_values(array_unique(array_map('intval', $cuentas)));
+    }
+
+    public function proveedorDeLaCuenta(int $usuarioId): ?DatosProveedor
+    {
+        $titular = $this->proveedorDelTitular($usuarioId);
+
+        if ($titular !== null) {
+            return $titular;
+        }
+
+        $piloto = Piloto::query()->where('usuario_id', $usuarioId)->first();
+
+        return $piloto === null ? null : $this->proveedor($piloto->proveedor_id);
+    }
+
     private function datos(Proveedor $proveedor): DatosProveedor
     {
-        return new DatosProveedor($proveedor->id, $proveedor->usuario_titular_id, $proveedor->tipo->value, $proveedor->razon_social, $proveedor->estado->value);
+        return new DatosProveedor(
+            $proveedor->id,
+            $proveedor->usuario_titular_id,
+            $proveedor->tipo->value,
+            $proveedor->razon_social,
+            $proveedor->estado->value,
+            $proveedor->zona_base_id,
+            (string) $proveedor->radio_operacion_km,
+            (string) $proveedor->calificacion_promedio,
+            $proveedor->calificaciones_conteo,
+            (string) $proveedor->tasa_aceptacion,
+            (string) $proveedor->tasa_cancelacion,
+        );
     }
 
     /** @param  array<int, string>  $nombres */

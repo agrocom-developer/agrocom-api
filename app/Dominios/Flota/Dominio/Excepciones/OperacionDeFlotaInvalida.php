@@ -22,6 +22,11 @@ final class OperacionDeFlotaInvalida extends RuntimeException
         return new self(Texto::de('flota.errores.sin_proveedor'));
     }
 
+    public static function sinEquipos(): self
+    {
+        return new self(Texto::de('flota.errores.sin_equipos'));
+    }
+
     public static function proveedorNoAdmiteAltas(): self
     {
         return new self(Texto::de('flota.errores.proveedor_no_admite_altas'));

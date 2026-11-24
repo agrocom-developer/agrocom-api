@@ -11,6 +11,12 @@ final readonly class DatosProveedor
         public string $tipo,
         public string $razonSocial,
         public string $estado,
+        public ?int $zonaBaseId = null,
+        public string $radioOperacionKm = '50.0',
+        public string $calificacionPromedio = '0.00',
+        public int $calificacionesConteo = 0,
+        public string $tasaAceptacion = '1.0000',
+        public string $tasaCancelacion = '0.0000',
     ) {}
 
     public function estaAprobado(): bool

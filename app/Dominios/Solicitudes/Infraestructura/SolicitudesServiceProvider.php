@@ -2,9 +2,12 @@
 
 namespace App\Dominios\Solicitudes\Infraestructura;
 
+use App\Dominios\Solicitudes\Aplicacion\AsignacionDeSolicitudPorMaquina;
 use App\Dominios\Solicitudes\Aplicacion\AvanceDeSolicitud;
+use App\Dominios\Solicitudes\Contratos\AsignacionDeSolicitud;
 use App\Dominios\Solicitudes\Contratos\LecturaContextoSolicitudes;
 use App\Dominios\Solicitudes\Contratos\LecturaServiciosAsignados;
+use App\Dominios\Solicitudes\Contratos\LecturaSolicitudesParaAsignar;
 use App\Dominios\Solicitudes\Contratos\LecturaZonas;
 use App\Dominios\Solicitudes\Contratos\SolicitudParaTrabajo;
 use Illuminate\Support\Facades\View;
@@ -25,6 +28,8 @@ final class SolicitudesServiceProvider extends ServiceProvider
         $this->app->bind(SolicitudParaTrabajo::class, AvanceDeSolicitud::class);
         $this->app->bind(LecturaServiciosAsignados::class, LecturaServiciosAsignadosEloquent::class);
         $this->app->bind(LecturaContextoSolicitudes::class, LecturaContextoSolicitudesEloquent::class);
+        $this->app->bind(LecturaSolicitudesParaAsignar::class, LecturaSolicitudesParaAsignarEloquent::class);
+        $this->app->bind(AsignacionDeSolicitud::class, AsignacionDeSolicitudPorMaquina::class);
     }
 
     public function boot(): void

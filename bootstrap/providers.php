@@ -1,5 +1,6 @@
 <?php
 
+use App\Dominios\Asignacion\Infraestructura\AsignacionServiceProvider;
 use App\Dominios\Compartido\Infraestructura\CompartidoServiceProvider;
 use App\Dominios\Distribucion\Infraestructura\DistribucionServiceProvider;
 use App\Dominios\Flota\Infraestructura\FlotaServiceProvider;
@@ -26,4 +27,5 @@ return [
     ProveedoresServiceProvider::class,
     FlotaServiceProvider::class,
     SolicitudesServiceProvider::class,
+    AsignacionServiceProvider::class,
 ];

@@ -39,6 +39,7 @@ return [
         'descripcion' => 'Solicitudes de servicio de los clientes y su ciclo hasta la conformidad.',
         'items' => [
             'solicitudes' => 'Solicitudes de servicio',
+            'asignaciones' => 'Asignaciones',
         ],
     ],
 
@@ -64,6 +65,7 @@ return [
             'auxiliares' => 'Auxiliares',
             'drones_flota' => 'Drones',
             'equipos_flota' => 'Equipos',
+            'sanciones' => 'Sanciones',
             'documentos' => 'Documentos',
         ],
     ],
