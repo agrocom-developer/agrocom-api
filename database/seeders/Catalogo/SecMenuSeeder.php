@@ -116,6 +116,7 @@ class SecMenuSeeder extends Seeder
         $operacion = $this->modulo('operacion', 'flight_takeoff', 1);
         $comercial = $this->modulo('comercial', 'handshake', 2);
         $recursos = $this->modulo('recursos', 'precision_manufacturing', 3);
+        $proveedores = $this->modulo('proveedores', 'local_shipping', 4);
         $financiero = $this->modulo('financiero', 'payments', 5);
         $reportes = $this->modulo('reportes', 'lab_profile', 6);
         $seguridad = $this->modulo('seguridad', 'admin_panel_settings', 7);
@@ -310,6 +311,17 @@ class SecMenuSeeder extends Seeder
         // HU-31 (tarea 45): "como encargado, quiero emitir la factura de un
         // trabajo desde su acta conformada" — activa el ítem que ya estaba
         // sembrado como "botón sin link" (ver docblock de `item()`).
+        // Marketplace (ADR 0032): la cola de aprobación. Cada ítem va gateado por
+        // el permiso de LISTADO (`.ver`); aprobar, suspender y dar de baja rigen
+        // los botones de la ficha, no la visibilidad del ítem. Documentos va
+        // primero: es la cola que más se mira a diario.
+        $this->item($proveedores, 'proveedores', 'documentos', 'folder_open', 1, ruta: 'panel.documentos.index', codigoPermiso: 'proveedores.documento.ver');
+        $this->item($proveedores, 'proveedores', 'proveedores', 'local_shipping', 2, ruta: 'panel.proveedores.index', codigoPermiso: 'proveedores.proveedor.ver');
+        $this->item($proveedores, 'proveedores', 'pilotos', 'sports_esports', 3, ruta: 'panel.pilotos.index', codigoPermiso: 'proveedores.piloto.ver');
+        $this->item($proveedores, 'proveedores', 'auxiliares', 'support_agent', 4, ruta: 'panel.auxiliares.index', codigoPermiso: 'proveedores.auxiliar.ver');
+        $this->item($proveedores, 'proveedores', 'drones_flota', 'airplanemode_active', 5, ruta: 'panel.drones-flota.index', codigoPermiso: 'flota.dron.ver');
+        $this->item($proveedores, 'proveedores', 'equipos_flota', 'groups', 6, ruta: 'panel.equipos-flota.index', codigoPermiso: 'flota.equipo.ver');
+
         $this->item($financiero, 'financiero', 'facturas', 'receipt', 6, ruta: 'panel.facturas.index', codigoPermiso: 'comercial.factura.ver');
         // Reportes (cap. 9 y 10)
         // HU-43 (tarea 57): "como encargado, quiero listar y descargar los

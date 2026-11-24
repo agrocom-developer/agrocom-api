@@ -61,6 +61,20 @@ return [
         ],
     ],
 
+    // Marketplace (ADR 0028, 0029, 0032): aprobación de quienes prestan el servicio.
+    'proveedores' => [
+        'label' => 'Proveedores',
+        'descripcion' => 'Aprobación de proveedores, pilotos, auxiliares, drones y documentos de verificación.',
+        'items' => [
+            'proveedores' => 'Proveedores',
+            'pilotos' => 'Pilotos',
+            'auxiliares' => 'Auxiliares',
+            'drones_flota' => 'Drones',
+            'equipos_flota' => 'Equipos',
+            'documentos' => 'Documentos',
+        ],
+    ],
+
     'financiero' => [
         'label' => 'Financiero',
         'descripcion' => 'Facturación.',
