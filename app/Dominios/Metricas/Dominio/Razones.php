@@ -79,6 +79,12 @@ final class Razones
         return (string) $mediana->toScale(1, RoundingMode::HalfUp);
     }
 
+    /** Un importe o una suma que devuelve la base (cadena, número o `null`) a la escala dada, sin pasar por `float`. */
+    public static function escalar(mixed $valor, int $escala): string
+    {
+        return (string) BigDecimal::of($valor === null || $valor === '' ? '0' : (string) $valor)->toScale($escala, RoundingMode::HalfUp);
+    }
+
     /** Suma en decimal exacto de importes que llegan como cadena, número o `null`. */
     public static function suma(mixed ...$importes): string
     {

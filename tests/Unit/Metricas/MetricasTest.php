@@ -38,6 +38,7 @@ function metricasEsquema(): void
         'create_cal_moderaciones_table',
         'create_dsp_disputas_table',
         'create_dsp_resoluciones_table',
+        'crea_vistas_de_metricas',
     ]);
 
     foreach (['dsp_resoluciones', 'dsp_disputas', 'cal_calificaciones', 'neg_cancelaciones', 'neg_ofertas', 'sol_solicitud_historial', 'sol_solicitudes_servicio', 'flo_drones', 'prv_proveedores'] as $tabla) {
