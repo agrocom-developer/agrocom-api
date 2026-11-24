@@ -44,5 +44,6 @@ return [
 
     'errores' => [
         'no_encontrada' => 'No encontramos ese aviso entre los tuyos.',
+        'dispositivo_no_encontrado' => 'No encontramos ese dispositivo entre los tuyos.',
     ],
 ];

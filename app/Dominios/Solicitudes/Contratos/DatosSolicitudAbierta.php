@@ -11,7 +11,7 @@ final readonly class DatosSolicitudAbierta
 {
     /**
      * @param  array{latitud: float, longitud: float}|null  $centro
-     * @param  array<string, mixed>|null  $terreno  nombre, hectáreas, geometría, referencias de acceso, colindantes y acceso difícil.
+     * @param  array<string, mixed>|null  $terreno  nombre, hectáreas, geometría, referencias de acceso, colindantes, acceso difícil y fotos con URL firmada de corta vida.
      */
     public function __construct(
         public int $id,

@@ -30,6 +30,7 @@ final class EntregarNotificacion
     public function __construct(
         private readonly ReglasDeNotificacion $reglas,
         private readonly ResolverDestinatarios $destinatarios,
+        private readonly ?DispositivosPush $push = null,
     ) {}
 
     /**
@@ -86,6 +87,12 @@ final class EntregarNotificacion
         } catch (UniqueConstraintViolationException) {
             return false;
         }
+
+        $this->push?->avisar($usuarioId, $armada->tipo->value, [
+            'tipo' => $armada->tipo->value,
+            'recurso_tipo' => $armada->recurso->value,
+            'recurso_id' => $armada->recursoId,
+        ]);
 
         return true;
     }

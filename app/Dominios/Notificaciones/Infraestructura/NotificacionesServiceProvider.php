@@ -16,6 +16,7 @@ use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaProveedorRegistrado;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaPublicacionLimitada;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaTrabajoCerrado;
 use App\Dominios\Notificaciones\Aplicacion\ReglasDeNotificacion;
+use App\Dominios\Notificaciones\Contratos\EnviadorDePush;
 use App\Dominios\Notificaciones\Contratos\LecturaNotificaciones;
 use App\Dominios\Notificaciones\Dominio\ReglaNotificacion;
 use Illuminate\Support\Facades\Event;
@@ -61,6 +62,7 @@ final class NotificacionesServiceProvider extends ServiceProvider
         );
 
         $this->app->bind(LecturaNotificaciones::class, LecturaNotificacionesEloquent::class);
+        $this->app->bind(EnviadorDePush::class, EnviadorDePushNulo::class);
     }
 
     public function boot(): void

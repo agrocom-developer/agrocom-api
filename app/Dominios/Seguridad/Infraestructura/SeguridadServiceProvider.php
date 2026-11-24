@@ -3,8 +3,10 @@
 namespace App\Dominios\Seguridad\Infraestructura;
 
 use App\Dominios\Seguridad\Aplicacion\BuscarEnElPanel;
+use App\Dominios\Seguridad\Aplicacion\GestionarFotoDePerfil;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Contratos\AutorizacionPortalCliente;
+use App\Dominios\Seguridad\Contratos\FotosDePerfil;
 use App\Dominios\Seguridad\Contratos\IdentidadOperarioToken;
 use App\Dominios\Seguridad\Contratos\LecturaCuentas;
 use App\Dominios\Seguridad\Contratos\LecturaUsuarioDePersona;
@@ -83,6 +85,9 @@ final class SeguridadServiceProvider extends ServiceProvider
         // `SecUser`.
         $this->app->bind(RegistroCuentas::class, RegistroCuentasEloquent::class);
         $this->app->bind(LecturaCuentas::class, RegistroCuentasEloquent::class);
+
+        // Foto de perfil de la cuenta: otros módulos piden solo su URL firmada.
+        $this->app->bind(FotosDePerfil::class, GestionarFotoDePerfil::class);
 
         // Buscador global: el agregador recibe TODOS los proveedores que cada
         // módulo taggeó, sin conocer ninguno (ADR 0003, regla 2 — acá el

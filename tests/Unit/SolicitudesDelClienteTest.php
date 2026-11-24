@@ -38,6 +38,8 @@ function clienteEsquema(): void
         'create_sol_zonas_table',
         'create_sol_clientes_table',
         'create_sol_terrenos_table',
+        'create_sol_terreno_fotos_table',
+        'create_sol_precios_referencia_table',
         'create_sol_solicitudes_servicio_table',
         'create_sol_solicitud_historial_table',
         'agrega_reputacion_a_sol_clientes',
@@ -90,7 +92,7 @@ function datosSolicitud(int $terrenoId, array $cambios = []): array
 
 beforeEach(function () {
     clienteEsquema();
-    foreach (['neg_ofertas', 'sol_solicitud_historial', 'sol_solicitudes_servicio', 'sol_terrenos', 'sol_clientes'] as $tabla) {
+    foreach (['neg_ofertas', 'sol_solicitud_historial', 'sol_solicitudes_servicio', 'sol_terreno_fotos', 'sol_precios_referencia', 'sol_terrenos', 'sol_clientes'] as $tabla) {
         DB::table($tabla)->delete();
     }
     Carbon::setTestNow('2026-12-02 10:00:00');

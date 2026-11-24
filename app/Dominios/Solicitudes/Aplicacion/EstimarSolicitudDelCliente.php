@@ -13,7 +13,10 @@ use App\Dominios\Solicitudes\Dominio\Excepciones\SolicitudInvalida;
  */
 final class EstimarSolicitudDelCliente
 {
-    public function __construct(private readonly ObtenerSolicitudDelCliente $solicitudes) {}
+    public function __construct(
+        private readonly ObtenerSolicitudDelCliente $solicitudes,
+        private readonly PrecioDeReferencia $referencia,
+    ) {}
 
     /**
      * @return array{precio_ha: string|null, precio_acordado: bool, hectareas: string, monto_estimado: string|null, precio_referencia_ha: string|null}
@@ -31,7 +34,7 @@ final class EstimarSolicitudDelCliente
             'precio_acordado' => $solicitud->precio_ha_acordado !== null,
             'hectareas' => $solicitud->hectareas_solicitadas,
             'monto_estimado' => $precio === null ? null : MontoDelServicio::monto($solicitud->hectareas_solicitadas, (string) $precio),
-            'precio_referencia_ha' => config('negociacion.precio_referencia_ha.'.$solicitud->tipo_aplicacion->value),
+            'precio_referencia_ha' => $this->referencia->para($solicitud->tipo_aplicacion->value, $solicitud->terreno->zona_id)['precio_ha'],
         ];
     }
 }

@@ -28,5 +28,7 @@ class CatalogoSeeder extends Seeder
         // va después.
         $this->call(ZonasSeeder::class);
         $this->call(ProveedorPropioSeeder::class);
+        // Guía de precio por hectárea por tipo de aplicación y macrorregión (editable por el administrador).
+        $this->call(PreciosReferenciaSeeder::class);
     }
 }

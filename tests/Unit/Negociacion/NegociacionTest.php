@@ -8,6 +8,7 @@ use App\Dominios\Flota\Contratos\LecturaDrones;
 use App\Dominios\Flota\Contratos\LecturaEquipos;
 use App\Dominios\Flota\Contratos\LecturaIntegrantesDeEquipo;
 use App\Dominios\Negociacion\Aplicacion\CancelarComoProveedor;
+use App\Dominios\Negociacion\Aplicacion\ConfirmarPago;
 use App\Dominios\Negociacion\Aplicacion\ConsultarOfertas;
 use App\Dominios\Negociacion\Aplicacion\Mensajeria;
 use App\Dominios\Negociacion\Aplicacion\MercadoDeSolicitudes;
@@ -22,14 +23,18 @@ use App\Dominios\Negociacion\Infraestructura\Eloquent\Oferta;
 use App\Dominios\Proveedores\Contratos\DatosPiloto;
 use App\Dominios\Proveedores\Contratos\DatosProveedor;
 use App\Dominios\Proveedores\Contratos\LecturaProveedores;
+use App\Dominios\Seguridad\Contratos\FotosDePerfil;
 use App\Dominios\Solicitudes\Aplicacion\CambiarPrecioPropuesto;
 use App\Dominios\Solicitudes\Aplicacion\CancelarSolicitud;
 use App\Dominios\Solicitudes\Aplicacion\CrearSolicitud;
+use App\Dominios\Solicitudes\Aplicacion\GestionarFotosDeTerreno;
+use App\Dominios\Solicitudes\Aplicacion\PrecioDeReferencia;
 use App\Dominios\Solicitudes\Aplicacion\PublicarSolicitud;
 use App\Dominios\Solicitudes\Contratos\Eventos\PrecioPropuestoCambiado;
 use App\Dominios\Solicitudes\Contratos\Eventos\SolicitudAbierta;
 use App\Dominios\Solicitudes\Contratos\Eventos\SolicitudCancelada;
 use App\Dominios\Solicitudes\Dominio\Excepciones\SolicitudInvalida;
+use Database\Seeders\Catalogo\PreciosReferenciaSeeder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -70,9 +75,12 @@ function negMundo(): void
         'agrega_reputacion_a_sol_clientes',
         'agrega_negociacion_a_sol_solicitudes_servicio',
         'create_neg_tablas_de_negociacion',
+        'create_neg_pagos_confirmados_table',
+        'create_sol_terreno_fotos_table',
+        'create_sol_precios_referencia_table',
     ]);
 
-    foreach (['neg_preferencias', 'neg_ubicaciones', 'neg_evidencias', 'neg_avances', 'neg_mensajes', 'neg_cancelaciones', 'neg_ofertas', 'sol_solicitud_historial', 'sol_solicitudes_servicio', 'sol_terrenos', 'sol_clientes', 'sol_zonas'] as $tabla) {
+    foreach (['neg_pagos_confirmados', 'sol_terreno_fotos', 'sol_precios_referencia', 'neg_preferencias', 'neg_ubicaciones', 'neg_evidencias', 'neg_avances', 'neg_mensajes', 'neg_cancelaciones', 'neg_ofertas', 'sol_solicitud_historial', 'sol_solicitudes_servicio', 'sol_terrenos', 'sol_clientes', 'sol_zonas'] as $tabla) {
         DB::table($tabla)->delete();
     }
 
@@ -128,6 +136,14 @@ function negMundo(): void
         public function integrantes(int $equipoId): ?DatosIntegrantesEquipo
         {
             return new DatosIntegrantesEquipo($equipoId, intdiv($equipoId, 10), $equipoId + 1, intdiv($equipoId, 10) * 100, null, 'externo');
+        }
+    });
+
+    app()->instance(FotosDePerfil::class, new class implements FotosDePerfil
+    {
+        public function urlDe(int $usuarioId): ?string
+        {
+            return $usuarioId === NEG_PILOTO_7 ? "/api/personas/{$usuarioId}/foto?firma=prueba" : null;
         }
     });
 
@@ -652,4 +668,140 @@ test('los montos y las hectáreas son decimales exactos con redondeo a 2 decimal
         ->and(MontoDelServicio::porcentaje('40', '80'))->toBe('50.00')
         ->and(MontoDelServicio::porcentaje('90', '80'))->toBe('100.00')
         ->and(MontoDelServicio::hectareasDePorcentaje('33.33', '80'))->toBe('26.6640');
+});
+
+/** Deja la solicitud adjudicada al proveedor 7 finalizada con 78,5 ha (monto final 9263.00). */
+function negFinalizada(): int
+{
+    [$solicitud] = negAdjudicada();
+    $seguimiento = app(Seguimiento::class);
+    $seguimiento->iniciar(NEG_PILOTO_7, $solicitud, ['uuid_cliente' => (string) Str::uuid()]);
+    $seguimiento->cerrar(NEG_PILOTO_7, $solicitud, ['uuid_cliente' => (string) Str::uuid(), 'hectareas_ejecutadas' => '78.5']);
+    $seguimiento->subirEvidencia(NEG_PILOTO_7, $solicitud, ['uuid_cliente' => (string) Str::uuid(), 'tipo' => 'foto_final'], UploadedFile::fake()->image('f.jpg')->size(90));
+
+    return $solicitud;
+}
+
+test('el titular informa el pago de un servicio finalizado: monto del servidor, idempotente y sin cambiar el estado', function () {
+    negMundo();
+    $solicitud = negFinalizada();
+    $pagos = app(ConfirmarPago::class);
+    $uuid = (string) Str::uuid();
+
+    [$pago, $creado] = $pagos->ejecutar(NEG_TITULAR_7, $solicitud, ['uuid_cliente' => $uuid, 'metodo' => 'transferencia', 'nota' => 'Llegó a la cuenta']);
+    [$mismo, $creadoOtraVez] = $pagos->ejecutar(NEG_TITULAR_7, $solicitud, ['uuid_cliente' => $uuid, 'metodo' => 'efectivo']);
+
+    expect($creado)->toBeTrue()->and($creadoOtraVez)->toBeFalse()->and($mismo->id)->toBe($pago->id)
+        ->and($pago->monto)->toBe('9263.00')
+        ->and($mismo->metodo)->toBe('transferencia')
+        ->and(DB::table('neg_pagos_confirmados')->count())->toBe(1)
+        ->and(negEstado($solicitud))->toBe('finalizada')
+        ->and(negCodigo(fn () => $pagos->ejecutar(NEG_TITULAR_7, $solicitud, ['uuid_cliente' => (string) Str::uuid()])))->toBe('pago_ya_confirmado:409');
+});
+
+test('el pago lo escribe solo el titular del proveedor adjudicado y lo ven las dos partes', function () {
+    negMundo();
+    $solicitud = negFinalizada();
+    $pagos = app(ConfirmarPago::class);
+    $datos = ['uuid_cliente' => (string) Str::uuid()];
+
+    expect(negCodigo(fn () => $pagos->ejecutar(NEG_CLIENTE, $solicitud, $datos)))->toBe('pago_solo_proveedor:403')
+        ->and(negCodigo(fn () => $pagos->ejecutar(NEG_PILOTO_7, $solicitud, $datos)))->toBe('pago_solo_titular:403')
+        ->and(negCodigo(fn () => $pagos->ejecutar(NEG_TITULAR_8, $solicitud, $datos)))->toBe('solicitud_ajena:404')
+        ->and(negCodigo(fn () => $pagos->ejecutar(NEG_OTRO_CLIENTE, $solicitud, $datos)))->toBe('solicitud_ajena:404')
+        ->and($pagos->ver(NEG_CLIENTE, $solicitud))->toBeNull();
+
+    $pagos->ejecutar(NEG_TITULAR_7, $solicitud, $datos);
+
+    expect($pagos->ver(NEG_CLIENTE, $solicitud)->monto)->toBe('9263.00')
+        ->and($pagos->ver(NEG_PILOTO_7, $solicitud)->solicitud_id)->toBe($solicitud)
+        ->and(negCodigo(fn () => $pagos->ver(NEG_TITULAR_8, $solicitud)))->toBe('solicitud_ajena:404')
+        ->and(negCodigo(fn () => $pagos->ver(NEG_OTRO_CLIENTE, $solicitud)))->toBe('solicitud_ajena:404');
+});
+
+test('el pago no se informa antes de finalizar el servicio', function () {
+    negMundo();
+    [$solicitud] = negAdjudicada();
+
+    expect(negCodigo(fn () => app(ConfirmarPago::class)->ejecutar(NEG_TITULAR_7, $solicitud, ['uuid_cliente' => (string) Str::uuid()])))->toBe('estado_invalido:409')
+        ->and(DB::table('neg_pagos_confirmados')->count())->toBe(0);
+});
+
+test('el cliente sube fotos de su terreno, el piloto las ve con URL firmada y un tercero no las toca', function () {
+    negMundo();
+    $fotos = app(GestionarFotosDeTerreno::class);
+    $solicitud = negAbierta();
+
+    $foto = $fotos->subir(NEG_CLIENTE, 1, UploadedFile::fake()->image('borde.jpg')->size(120), '  Borde norte con maleza ');
+    $detalle = app(MercadoDeSolicitudes::class)->detalle(NEG_TITULAR_7, $solicitud);
+
+    expect($foto->descripcion)->toBe('Borde norte con maleza')
+        ->and($foto->bytes)->toBeGreaterThan(0)
+        ->and($detalle['terreno']['fotos'])->toHaveCount(1)
+        ->and($detalle['terreno']['fotos'][0]['url'])->toContain("/api/terrenos/fotos/{$foto->id}/archivo")->toContain('signature=')->toContain('expires=')
+        ->and($fotos->ruta($foto->id))->not->toBeNull()
+        ->and(count($fotos->listar(NEG_CLIENTE, 1)))->toBe(1);
+    Storage::disk('local')->assertExists($foto->archivo);
+
+    expect(fn () => $fotos->subir(NEG_OTRO_CLIENTE, 1, UploadedFile::fake()->image('x.jpg')->size(50), null))->toThrow(SolicitudInvalida::class)
+        ->and(fn () => $fotos->listar(NEG_OTRO_CLIENTE, 1))->toThrow(SolicitudInvalida::class)
+        ->and(fn () => $fotos->borrar(NEG_OTRO_CLIENTE, 1, $foto->id))->toThrow(SolicitudInvalida::class)
+        ->and(DB::table('sol_terreno_fotos')->whereNull('deleted_at')->count())->toBe(1);
+
+    $fotos->borrar(NEG_CLIENTE, 1, $foto->id);
+    expect(DB::table('sol_terreno_fotos')->whereNull('deleted_at')->count())->toBe(0)
+        ->and($fotos->ruta($foto->id))->toBeNull();
+});
+
+test('un terreno admite un máximo de fotos', function () {
+    negMundo();
+    config(['solicitudes.fotos_terreno.maximo_por_terreno' => 2]);
+    $fotos = app(GestionarFotosDeTerreno::class);
+
+    $fotos->subir(NEG_CLIENTE, 1, UploadedFile::fake()->image('a.jpg')->size(40), null);
+    $fotos->subir(NEG_CLIENTE, 1, UploadedFile::fake()->image('b.jpg')->size(40), null);
+
+    expect(fn () => $fotos->subir(NEG_CLIENTE, 1, UploadedFile::fake()->image('c.jpg')->size(40), null))->toThrow(SolicitudInvalida::class);
+});
+
+test('el cliente ve la foto de perfil del piloto del equipo en la tarjeta de la oferta', function () {
+    negMundo();
+    [$solicitud] = negAdjudicada();
+    $comparador = app(ConsultarOfertas::class)->delCliente(NEG_CLIENTE, $solicitud);
+
+    expect($comparador[0]['proveedor']['foto_url'])->toContain('/api/personas/'.NEG_PILOTO_7.'/foto');
+});
+
+test('el precio de referencia busca de la zona a la macrorregión, el general y el respaldo', function () {
+    negMundo();
+    $referencia = app(PrecioDeReferencia::class);
+    $ahora = now();
+    $fila = fn (array $datos): bool => DB::table('sol_precios_referencia')->insert([...$datos, 'created_at' => $ahora, 'updated_at' => $ahora]);
+
+    expect($referencia->para('herbicida'))->toMatchArray(['precio_ha' => '120.00', 'nivel' => 'respaldo']);
+
+    $fila(['tipo_aplicacion' => 'herbicida', 'zona_id' => null, 'macrorregion' => null, 'precio_ha' => '121.0000']);
+    $fila(['tipo_aplicacion' => 'herbicida', 'zona_id' => null, 'macrorregion' => 'chiquitania', 'precio_ha' => '132.0000']);
+    $fila(['tipo_aplicacion' => 'herbicida', 'zona_id' => 1, 'macrorregion' => null, 'precio_ha' => '140.0000']);
+
+    expect($referencia->para('herbicida'))->toMatchArray(['precio_ha' => '121.0000', 'nivel' => 'general'])
+        ->and($referencia->para('herbicida', null, 'chiquitania'))->toMatchArray(['precio_ha' => '132.0000', 'nivel' => 'macrorregion'])
+        ->and($referencia->para('herbicida', 1))->toMatchArray(['precio_ha' => '140.0000', 'nivel' => 'zona', 'macrorregion' => 'chiquitania', 'zona_id' => 1])
+        ->and($referencia->para('herbicida', null, 'valles'))->toMatchArray(['precio_ha' => '121.0000', 'nivel' => 'general'])
+        ->and($referencia->para('fungicida', 1))->toMatchArray(['precio_ha' => '135.00', 'nivel' => 'respaldo']);
+});
+
+test('el seeder de precios de referencia es idempotente y respeta lo que el administrador ajustó', function () {
+    negMundo();
+    $seeder = new PreciosReferenciaSeeder;
+
+    $seeder->run();
+    $total = DB::table('sol_precios_referencia')->count();
+    DB::table('sol_precios_referencia')->where('tipo_aplicacion', 'herbicida')->where('macrorregion', 'chaco')->update(['precio_ha' => '150.0000']);
+    $seeder->run();
+
+    expect($total)->toBe(6 * 6)
+        ->and(DB::table('sol_precios_referencia')->count())->toBe($total)
+        ->and(app(PrecioDeReferencia::class)->para('herbicida', null, 'chaco')['precio_ha'])->toBe('150.0000')
+        ->and(app(PrecioDeReferencia::class)->para('herbicida', null, 'chiquitania')['precio_ha'])->toBe('132.0000');
 });

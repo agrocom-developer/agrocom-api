@@ -106,4 +106,14 @@ final class SolicitudInvalida extends RuntimeException
     {
         return new self(Texto::de('solicitudes.errores.no_renovable'));
     }
+
+    public static function fotosDeTerrenoLlenas(int $maximo): self
+    {
+        return new self(Texto::de('solicitudes.errores.fotos_de_terreno_llenas', ['maximo' => $maximo]), false, 'archivo');
+    }
+
+    public static function fotoDeTerrenoAjena(): self
+    {
+        return new self(Texto::de('solicitudes.errores.foto_de_terreno_ajena'), true);
+    }
 }

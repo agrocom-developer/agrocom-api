@@ -21,7 +21,7 @@ final class GestionarTerrenos
     {
         $cliente = $this->clientes->resolver($usuarioId);
 
-        return Terreno::query()->where('cliente_id', $cliente->id)->orderBy('nombre')->get();
+        return Terreno::query()->where('cliente_id', $cliente->id)->with('fotos')->orderBy('nombre')->get();
     }
 
     /** @throws SolicitudInvalida `terrenoAjeno` (404) si no es del cliente. */
@@ -29,7 +29,7 @@ final class GestionarTerrenos
     {
         $cliente = $this->clientes->resolver($usuarioId);
 
-        $terreno = Terreno::query()->where('cliente_id', $cliente->id)->find($terrenoId);
+        $terreno = Terreno::query()->where('cliente_id', $cliente->id)->with('fotos')->find($terrenoId);
 
         if ($terreno === null) {
             throw SolicitudInvalida::terrenoAjeno();

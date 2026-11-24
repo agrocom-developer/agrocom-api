@@ -42,7 +42,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'aporta_producto', description: 'Solo en el detalle.', type: 'string'),
         new OA\Property(property: 'urgente', description: 'Solo en el detalle.', type: 'boolean'),
         new OA\Property(property: 'observaciones', description: 'Solo en el detalle.', type: 'string', nullable: true),
-        new OA\Property(property: 'terreno', description: 'Solo en el detalle: nombre, hectáreas, `geometria` GeoJSON de los lotes, referencias de acceso, colindantes sensibles y acceso difícil.', type: 'object', nullable: true),
+        new OA\Property(property: 'terreno', description: 'Solo en el detalle: nombre, hectáreas, `geometria` GeoJSON de los lotes, referencias de acceso, colindantes sensibles, acceso difícil y `fotos` del estado del terreno con URL firmada de corta vida (se piden sin token).', type: 'object', nullable: true),
     ],
     type: 'object',
 )]

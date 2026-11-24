@@ -7,6 +7,7 @@ use App\Dominios\Flota\Contratos\LecturaIntegrantesDeEquipo;
 use App\Dominios\Negociacion\Dominio\Excepciones\NegociacionInvalida;
 use App\Dominios\Negociacion\Infraestructura\Eloquent\Oferta;
 use App\Dominios\Proveedores\Contratos\LecturaProveedores;
+use App\Dominios\Seguridad\Contratos\FotosDePerfil;
 use App\Dominios\Solicitudes\Contratos\PasosDeSolicitud;
 
 /**
@@ -26,6 +27,7 @@ final class ConsultarOfertas
         private readonly LecturaDrones $drones,
         private readonly ReputacionDelProveedor $reputacion,
         private readonly Negociar $negociar,
+        private readonly FotosDePerfil $fotosDePerfil,
     ) {}
 
     /**
@@ -103,9 +105,15 @@ final class ConsultarOfertas
         $integrantes = $equipoId === null ? null : $this->integrantes->integrantes($equipoId);
         $dron = $integrantes === null ? null : $this->drones->dron($integrantes->dronId);
 
+        $piloto = $integrantes === null ? null : $this->proveedores->piloto($integrantes->pilotoId);
+        $titularId = $proveedor?->usuarioTitularId;
+        $fotoUrl = ($piloto === null ? null : $this->fotosDePerfil->urlDe($piloto->usuarioId))
+            ?? ($titularId === null ? null : $this->fotosDePerfil->urlDe($titularId));
+
         return [
             'id' => $proveedorId,
             'nombre' => $proveedor?->razonSocial,
+            'foto_url' => $fotoUrl,
             'calificacion_promedio' => $proveedor?->calificacionPromedio,
             'calificaciones_conteo' => $proveedor?->calificacionesConteo,
             'tasa_cancelacion' => $this->reputacion->tasa($proveedorId)['tasa_cancelacion'],
