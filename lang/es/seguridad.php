@@ -709,6 +709,7 @@ return [
 
     // Mensajes de error.
     'errores' => [
+        'foto_no_encontrada' => 'La cuenta no tiene foto de perfil.',
         'contrasena_actual_incorrecta' => 'La contraseña actual no es correcta.',
         'contrato_no_disponible' => 'El contrato #:id no existe o no está vigente.',
         'dispositivo_no_encontrado' => 'El dispositivo #:id_dispositivo no existe entre los del usuario #:id_usuario.',

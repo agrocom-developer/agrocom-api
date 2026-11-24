@@ -1,0 +1,15 @@
+{
+    "operationId": "retirarDispositivoPush",
+    "descripcion": "Un token que no existe o es de otra cuenta responde 404.",
+    "peticion": {
+        "metodo": "DELETE",
+        "ruta": "/api/dispositivos/fcm%3Aejemplo-token-de-push",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 404,
+        "cuerpo": {
+            "message": "No encontramos lo que buscas."
+        }
+    }
+}

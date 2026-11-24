@@ -1,0 +1,19 @@
+{
+    "operationId": "precioDeReferencia",
+    "descripcion": "Precio por hectárea de referencia para proponer: de la zona, la macrorregión o el general del tipo.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/referencias/precio?tipo_aplicacion=herbicida&macrorregion=chiquitania",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "tipo_aplicacion": "herbicida",
+            "zona_id": null,
+            "macrorregion": "chiquitania",
+            "precio_ha": "132.0000",
+            "nivel": "macrorregion"
+        }
+    }
+}

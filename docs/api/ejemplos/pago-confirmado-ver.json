@@ -1,0 +1,23 @@
+{
+    "operationId": "verPagoConfirmadoDeSolicitud",
+    "descripcion": "El cliente ve que el proveedor confirmó el pago.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/solicitudes/18/pago-confirmado",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "pago": {
+                "id": 1,
+                "uuid_cliente": "9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e40",
+                "solicitud_id": 18,
+                "monto": "11918.50",
+                "metodo": "transferencia",
+                "nota": "Recibido en la cuenta del banco.",
+                "confirmado_en": "2026-11-24T18:56:45+00:00"
+            }
+        }
+    }
+}

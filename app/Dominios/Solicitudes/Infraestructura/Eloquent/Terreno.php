@@ -5,6 +5,7 @@ namespace App\Dominios\Solicitudes\Infraestructura\Eloquent;
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Terreno de un cliente (`sol_terrenos`, especificación §4.1): el cliente lo
@@ -63,5 +64,11 @@ class Terreno extends ModeloDominio
     public function cliente(): BelongsTo
     {
         return $this->belongsTo(Cliente::class, 'cliente_id');
+    }
+
+    /** @return HasMany<TerrenoFoto, $this> */
+    public function fotos(): HasMany
+    {
+        return $this->hasMany(TerrenoFoto::class, 'terreno_id')->orderBy('id');
     }
 }

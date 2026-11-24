@@ -43,6 +43,8 @@ return [
         'cliente_suspendido' => 'Tu cuenta de cliente está suspendida y no puede pedir servicios.',
         'publicacion_limitada' => 'Tu publicación de solicitudes está limitada hasta una revisión por la calificación que reciben tus servicios. Contacta a soporte.',
         'terreno_ajeno' => 'El terreno no existe.',
+        'foto_de_terreno_ajena' => 'La foto no existe.',
+        'fotos_de_terreno_llenas' => 'Un terreno admite hasta :maximo fotos. Borra una para subir otra.',
         'solicitud_ajena' => 'La solicitud no existe.',
         'uuid_en_uso' => 'Ese identificador de solicitud ya se usó. Genera uno nuevo.',
         'hectareas_exceden_terreno' => 'Pides :solicitadas ha y el terreno tiene :disponibles ha.',

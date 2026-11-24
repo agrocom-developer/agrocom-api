@@ -18,7 +18,7 @@
                     "propio": true,
                     "texto": "Hola, ¿qué día pueden venir?",
                     "leido_en": null,
-                    "creado_en": "2026-11-24T15:58:53+00:00"
+                    "creado_en": "2026-11-24T18:56:45+00:00"
                 },
                 {
                     "id": 17,
@@ -28,7 +28,7 @@
                     "propio": false,
                     "texto": "El jueves temprano, si el viento lo permite.",
                     "leido_en": null,
-                    "creado_en": "2026-11-24T15:58:53+00:00"
+                    "creado_en": "2026-11-24T18:56:45+00:00"
                 }
             ],
             "cursor": 17,

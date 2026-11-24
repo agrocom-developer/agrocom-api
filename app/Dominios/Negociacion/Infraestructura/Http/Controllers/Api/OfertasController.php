@@ -45,7 +45,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'vence_en', type: 'string', format: 'date-time'),
         new OA\Property(property: 'respondida_en', type: 'string', format: 'date-time', nullable: true),
         new OA\Property(property: 'creada_en', type: 'string', format: 'date-time', nullable: true),
-        new OA\Property(property: 'proveedor', description: 'Solo para el cliente.', type: 'object', nullable: true),
+        new OA\Property(property: 'proveedor', description: 'Solo para el cliente: `nombre`, `foto_url` (foto de perfil del piloto del equipo o del titular, URL firmada de corta vida que se pide sin token; `null` si no hay), calificación, tasa de cancelación y dron con fotos aprobadas.', type: 'object', nullable: true),
         new OA\Property(property: 'historial', description: 'Solo en el comparador del cliente: las ofertas de esa negociación.', type: 'array', items: new OA\Items(type: 'object'), nullable: true),
     ],
     type: 'object',

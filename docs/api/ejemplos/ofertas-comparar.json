@@ -26,12 +26,13 @@
                     "nota": "Podemos ir la semana próxima.",
                     "oferta_anterior_id": null,
                     "distancia_km": null,
-                    "vence_en": "2026-11-26T15:58:53+00:00",
+                    "vence_en": "2026-11-26T18:56:44+00:00",
                     "respondida_en": null,
-                    "creada_en": "2026-11-24T15:58:53+00:00",
+                    "creada_en": "2026-11-24T18:56:44+00:00",
                     "proveedor": {
                         "id": 2,
                         "nombre": "Mamani Agroservicios",
+                        "foto_url": null,
                         "calificacion_promedio": "0.00",
                         "calificaciones_conteo": 0,
                         "tasa_cancelacion": "0.3333",
@@ -40,7 +41,23 @@
                             "modelo": "Agras T40",
                             "anio": null,
                             "capacidad_tanque_l": "40.00",
-                            "fotos": []
+                            "fotos": [
+                                {
+                                    "id": 10,
+                                    "tipo": "frontal",
+                                    "url": "/api/drones/fotos/10/archivo"
+                                },
+                                {
+                                    "id": 11,
+                                    "tipo": "lateral",
+                                    "url": "/api/drones/fotos/11/archivo"
+                                },
+                                {
+                                    "id": 12,
+                                    "tipo": "placa_serie",
+                                    "url": "/api/drones/fotos/12/archivo"
+                                }
+                            ]
                         }
                     },
                     "historial": [
@@ -60,9 +77,9 @@
                             "nota": "Podemos ir la semana próxima.",
                             "oferta_anterior_id": null,
                             "distancia_km": null,
-                            "vence_en": "2026-11-26T15:58:53+00:00",
+                            "vence_en": "2026-11-26T18:56:44+00:00",
                             "respondida_en": null,
-                            "creada_en": "2026-11-24T15:58:53+00:00"
+                            "creada_en": "2026-11-24T18:56:44+00:00"
                         }
                     ]
                 }

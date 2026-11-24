@@ -54,7 +54,8 @@ Convenciones: dominio en español, prefijo de tabla por módulo (ADR 0011), borr
 
 - **`sol_clientes`**: `id`, `usuario_id`, `tipo` (`persona` | `empresa`), `razon_social`, `documento_fiscal`, `telefono`, `estado` (`activo` | `suspendido`), `calificacion_promedio` (decimal 3,2), `calificaciones_conteo`.
 - **`sol_terrenos`**: la propiedad o lote del cliente. `id`, `cliente_id`, `nombre`, `geometria` (polígono GeoJSON), `hectareas` (decimal 12,4), `cultivo`, `referencias_acceso`, `colindantes_sensibles` (texto: apiarios, cultivos orgánicos, viviendas), `zona_id`, `estado_terreno` (texto breve: maleza, humedad, obstáculos, líneas eléctricas).
-- **`sol_terreno_fotos`**: `id`, `terreno_id`, `archivo_ref`, `bytes`, `descripcion`, `subida_en`. Imagen comprimida a menos de 300 KB. Las ve el piloto antes de ofertar.
+- **`sol_terreno_fotos`**: `id`, `terreno_id`, `archivo`, `hash`, `bytes`, `descripcion`. Imagen comprimida a menos de 300 KB, hasta 8 por terreno (`solicitudes.fotos_terreno.maximo_por_terreno`), en el disco privado. Las sube el cliente dueño y las ve el piloto en el detalle de la solicitud antes de ofertar, con una URL firmada de corta vida (15 minutos).
+- **`sol_precios_referencia`**: `id`, `tipo_aplicacion`, `zona_id` (nulo), `macrorregion` (nulo), `precio_ha` (decimal 14,4). Guía de precio por hectárea con tres niveles de detalle: zona, macrorregión o general por tipo. Datos sembrados que el administrador ajusta; el sembrado no los pisa. Si no hay ninguno, vale el respaldo de `config/negociacion.php`.
 - **`sol_zonas`**: `id`, `nombre`, `macrorregion` (`valles` | `chiquitania` | `otras`; catálogo ampliable por parámetro), `centroide`. Alimentan los filtros del mapa y las notificaciones.
 
 ### 4.2 Solicitud de servicio
@@ -85,7 +86,7 @@ Convenciones: dominio en español, prefijo de tabla por módulo (ADR 0011), borr
 ### 4.3 Proveedores y personas
 
 - **`prv_proveedores`**: `id`, `usuario_titular_id`, `tipo` (`propio` | `independiente` | `tercero`), `razon_social`, `documento_fiscal`, `zona_base_id`, `estado` (§5.2), `calificacion_promedio`, `calificaciones_conteo`, `tasa_cancelacion`, `aprobado_por`, `aprobado_en`. Agrocom existe como un proveedor de tipo `propio`; compite en igualdad con los demás.
-- **`prv_pilotos`**: `id`, `proveedor_id`, `usuario_id`, `nombres`, `apellidos`, `documento_identidad`, `telefono`, `foto_perfil_ref`, `licencia_numero`, `licencia_vence`, `categoria_habilitacion`, `estado` (`pendiente` | `aprobado` | `suspendido` | `rechazado` | `baja`).
+- **`prv_pilotos`**: `id`, `proveedor_id`, `usuario_id`, `nombres`, `apellidos`, `documento_identidad`, `telefono`, `licencia_numero`, `licencia_vence`, `categoria_habilitacion`, `estado` (`pendiente` | `aprobado` | `suspendido` | `rechazado` | `baja`).
 - **`prv_auxiliares`**: `id`, `proveedor_id`, `usuario_id`, `registrado_por_piloto_id`, `nombres`, `apellidos`, `documento_identidad`, `telefono`, `estado` (igual que el piloto). Un piloto o el proveedor registra a su auxiliar y un administrador lo aprueba.
 - **`prv_documentos`**: `id`, `sujeto_tipo` (`proveedor` | `piloto` | `auxiliar` | `dron`), `sujeto_id`, `tipo` (`identidad`, `licencia_piloto`, `habilitacion_dron`, `seguro_responsabilidad`, `registro_dron`, `certificado_fumigacion`, `antecedentes`, `otro`), `archivo_ref`, `vence_en`, `estado` (`en_revision` | `aprobado` | `rechazado` | `vencido`), `revisado_por`, `motivo_rechazo`. Ruta de archivo según ADR 0026.
 
@@ -109,7 +110,7 @@ Las tablas de ejecución que el piloto escribe en el lote llevan `uuid_cliente`,
 - **`seg_mensajes`**: `id`, `uuid_cliente`, `solicitud_id`, `autor_usuario_id`, `autor_rol` (`cliente` | `piloto`), `texto` (hasta 1000 caracteres), `creado_en`, `leido_en` (nulo hasta que lo lee la contraparte).
 - **`seg_ubicaciones`**: una fila por solicitud, la última: `solicitud_id` (único), `latitud`, `longitud`, `precision_m`, `capturado_en`, `recibido_en`. Se elimina al finalizar o cancelar (ADR 0040).
 - **`seg_incidencias`**: `id`, `uuid_cliente`, `solicitud_id`, `reportada_por_usuario_id`, `tipo` (§9.3), `severidad` (`informativa` | `grave` | `emergencia`), `descripcion`, `ubicacion`, `estado` (`abierta` | `en_atencion` | `cerrada`).
-- **`seg_pagos_confirmados`**: `solicitud_id` (único), `confirmado_por_usuario_id`, `monto`, `confirmado_en`. Registro informativo del proveedor de que recibió el pago; no cambia el estado.
+- **`neg_pagos_confirmados`**: `uuid_cliente`, `solicitud_id` (único), `confirmado_por_usuario_id`, `monto` (decimal 14,2, copia del monto final al confirmar), `metodo` (`efectivo` | `transferencia` | `qr` | `otro`), `nota`, `confirmado_en`. Registro informativo del proveedor de que recibió el pago; lo escribe solo el titular del proveedor adjudicado, no se reescribe y no cambia el estado.
 
 ### 4.7 Calificaciones
 
@@ -123,7 +124,8 @@ Las tablas de ejecución que el piloto escribe en el lote llevan `uuid_cliente`,
 ### 4.9 Transversales
 
 - **`ntf_notificaciones`** (ADR 0025): un aviso por cuenta destinataria.
-- **`ntf_preferencias`** y **`ntf_dispositivos`** (ADR 0041): preferencias por categoría, zonas de interés y token de push por dispositivo.
+- **`ntf_preferencias`** y **`ntf_dispositivos`** (ADR 0041): preferencias por categoría, zonas de interés y token de push por dispositivo. Un token está activo en una sola cuenta a la vez; el envío al sistema operativo va detrás de la interfaz `EnviadorDePush`, sin proveedor configurado todavía.
+- **`sec_user.foto_perfil_ref`**: foto de perfil de la persona de la cuenta (cliente, titular, piloto o auxiliar), menos de 300 KB, en el disco privado.
 - **`cfg_parametros`** (ADR 0016): parámetros de §11.
 - **`sec_*`**: usuarios, roles y permisos (ADR 0004).
 - **`aud_bitacora`**: auditoría de cambios (ADR 0007).
@@ -243,7 +245,10 @@ Prefijo `/api`. Autenticación por token de dispositivo (`POST /auth/token`). El
 | Método y ruta | Función |
 |---|---|
 | `POST /clientes/registro` | Alta de cliente |
-| `GET/POST/PUT /terrenos`, `POST /terrenos/{id}/fotos` | Propiedad, lotes y fotos de su estado |
+| `GET/POST/PUT /terrenos`, `POST /terrenos/{id}/fotos`, `DELETE /terrenos/{id}/fotos/{foto}` | Propiedad, lotes y fotos de su estado |
+| `GET /referencias/precio` | Precio por hectárea de referencia para proponer (también lo ve el piloto al ofertar) |
+| `GET /solicitudes/{id}/pago-confirmado` | Si el proveedor informó que recibió el pago |
+| `PUT/DELETE /perfil/foto` | Foto de perfil de la cuenta |
 | `POST /solicitudes`, `PUT /solicitudes/{id}` | Crea (idempotente por `uuid_cliente`) y edita el borrador |
 | `GET /solicitudes`, `GET /solicitudes/{id}` | Lista y detalle con avance y precio |
 | `POST /solicitudes/{id}/publicar`, `/cancelar`, `/renovar` | Abre la solicitud, la cancela o la renueva |
@@ -269,7 +274,9 @@ Prefijo `/api`. Autenticación por token de dispositivo (`POST /auth/token`). El
 | `POST /ofertas/{id}/aceptar`, `/contraofertar`, `/rechazar`, `/retirar` | Respuesta del proveedor |
 | `PUT /ubicacion` | Última ubicación durante la ejecución |
 | `GET/POST /solicitudes/{id}/mensajes` | Chat con el cliente adjudicado |
-| `POST /solicitudes/{id}/pago-confirmado` | Informa que recibió el pago |
+| `POST /solicitudes/{id}/pago-confirmado`, `GET /solicitudes/{id}/pago-confirmado` | El titular informa que recibió el pago; ambas partes lo consultan |
+| `PUT/DELETE /perfil/foto` | Foto de perfil de la cuenta |
+| `GET /proveedores/mi`, `GET /proveedores/drones` | El titular gestiona su proveedor y sus drones; el piloto los ve en solo lectura (el proveedor al que pertenece y los drones de sus equipos) |
 | `GET/PUT /notificaciones/preferencias`, `POST/DELETE /dispositivos` | Preferencias de aviso y token de push |
 | `GET /reputacion`, `GET /calificaciones/recibidas`, `POST /calificaciones/{id}/reportar` | Reputación y calificaciones recibidas |
 | `GET/POST /solicitudes/{id}/calificar-cliente` | Califica al cliente en privado (7 días) |
@@ -280,7 +287,7 @@ Prefijo `/api`. Autenticación por token de dispositivo (`POST /auth/token`). El
 | Método y ruta | Función |
 |---|---|
 | `POST /sync` | Recibe un lote de registros (`inicio`, `avance`, `cierre`, `mensaje`, `incidencia`); cada registro se aplica una sola vez por `uuid_cliente`, en orden causal fijo sin importar el orden del arreglo, y se devuelve el resultado por registro (`aplicado`, `duplicado` o `rechazado`) |
-| `POST /evidencias` | Sube fotos de avance comprimidas, en cola separada |
+| `POST /solicitudes/{id}/evidencias` | Sube fotos de avance, finales o de incidencia comprimidas, en cola separada |
 | `GET /sync/catalogo?desde={cursor}` | Catálogo desde un cursor opaco: servicios adjudicados y en ejecución del equipo con los datos que abre la adjudicación, servicios retirados, personas y mensajes recientes |
 
 La sincronización es idempotente: reaplicar un lote dos, tres o diez veces, en orden o con desorden parcial, deja el mismo estado final.

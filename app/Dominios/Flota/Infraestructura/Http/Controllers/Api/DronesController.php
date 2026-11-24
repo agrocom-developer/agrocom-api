@@ -7,8 +7,10 @@ use App\Dominios\Compartido\Infraestructura\Http\RechazoDeDominio;
 use App\Dominios\Flota\Aplicacion\ActualizarDron;
 use App\Dominios\Flota\Aplicacion\ReenviarDron;
 use App\Dominios\Flota\Aplicacion\RegistrarDron;
+use App\Dominios\Flota\Contratos\LecturaEquipos;
 use App\Dominios\Flota\Dominio\Excepciones\OperacionDeFlotaInvalida;
 use App\Dominios\Flota\Infraestructura\Eloquent\Dron;
+use App\Dominios\Flota\Infraestructura\Eloquent\Equipo;
 use App\Dominios\Flota\Infraestructura\Http\Requests\GuardarDronRequest;
 use App\Dominios\Flota\Infraestructura\Http\Resources\DronResource;
 use App\Dominios\Proveedores\Contratos\CargaDocumentos;
@@ -34,6 +36,7 @@ final class DronesController
     public function __construct(
         private readonly IdentidadOperarioToken $identidad,
         private readonly LecturaProveedores $proveedores,
+        private readonly LecturaEquipos $equipos,
         private readonly RegistrarDron $registrar,
         private readonly ActualizarDron $actualizar,
         private readonly ReenviarDron $reenviar,
@@ -43,19 +46,22 @@ final class DronesController
     #[OA\Get(
         path: '/api/proveedores/drones',
         operationId: 'listarDrones',
-        description: 'Drones que el proveedor del que la cuenta es titular opera, con su estado de aprobación y sus ciclos de batería.',
+        description: 'Drones que el proveedor del que la cuenta es titular opera, con su estado de aprobación y sus ciclos de batería. '
+            .'El piloto de un proveedor recibe, en solo lectura, los drones de sus equipos vigentes.',
         summary: 'Drones de mi proveedor',
         security: [['tokenDispositivo' => []]],
         tags: ['Flota'],
         responses: [
             new OA\Response(response: 200, description: 'Drones.', content: new OA\JsonContent(required: ['data'], properties: [new OA\Property(property: 'data', type: 'array', items: new OA\Items(ref: '#/components/schemas/Dron'))], type: 'object')),
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
-            new OA\Response(response: 403, description: 'El rol del token no gestiona un proveedor.'),
+            new OA\Response(response: 403, description: 'El rol del token no gestiona ni ve drones.'),
         ],
     )]
     public function index(Request $request): JsonResponse
     {
-        $this->exigirPermiso($request);
+        if (! $this->identidad->tienePermiso($request, self::PERMISO)) {
+            return $this->deMisEquipos($request);
+        }
 
         $proveedor = $this->proveedores->proveedorDelTitular($this->usuarioId($request));
 
@@ -246,5 +252,18 @@ final class DronesController
     private function exigirPermiso(Request $request): void
     {
         abort_unless($this->identidad->tienePermiso($request, self::PERMISO), 403, __('aprobacion.errores.sin_permiso'));
+    }
+
+    /** Solo lectura para el piloto: los drones de los equipos vigentes en los que la cuenta es piloto. */
+    private function deMisEquipos(Request $request): JsonResponse
+    {
+        abort_unless($this->identidad->tienePermiso($request, 'proveedores.cuenta.ver'), 403, __('aprobacion.errores.sin_permiso'));
+
+        $equipos = $this->equipos->equiposDeCuenta($this->usuarioId($request));
+        $dronIds = $equipos === [] ? [] : Equipo::query()->whereIn('id', $equipos)->pluck('dron_id')->all();
+
+        $drones = $dronIds === [] ? collect() : Dron::query()->whereIn('id', $dronIds)->orderBy('id')->get();
+
+        return response()->json(['data' => DronResource::collection($drones)->resolve($request)]);
     }
 }

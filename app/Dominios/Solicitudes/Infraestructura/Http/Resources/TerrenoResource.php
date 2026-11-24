@@ -2,7 +2,9 @@
 
 namespace App\Dominios\Solicitudes\Infraestructura\Http\Resources;
 
+use App\Dominios\Solicitudes\Aplicacion\GestionarFotosDeTerreno;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\Terreno;
+use App\Dominios\Solicitudes\Infraestructura\Eloquent\TerrenoFoto;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use OpenApi\Attributes as OA;
@@ -23,6 +25,18 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'colindantes_sensibles', description: 'Apiarios, cultivos orgánicos, viviendas.', type: 'string', nullable: true),
         new OA\Property(property: 'acceso_dificil', type: 'boolean', example: false),
         new OA\Property(property: 'zona_id', type: 'integer', nullable: true, example: 1),
+        new OA\Property(property: 'fotos', description: 'Fotos del estado del terreno (hasta 8). Las URLs son firmadas y de corta vida: se piden de nuevo con el terreno.', type: 'array', items: new OA\Items(ref: '#/components/schemas/FotoDeTerreno')),
+    ],
+    type: 'object',
+)]
+#[OA\Schema(
+    schema: 'FotoDeTerreno',
+    title: 'Foto del estado de un terreno',
+    required: ['id', 'url'],
+    properties: [
+        new OA\Property(property: 'id', type: 'integer', example: 5),
+        new OA\Property(property: 'descripcion', type: 'string', nullable: true, example: 'Borde norte con maleza alta'),
+        new OA\Property(property: 'url', description: 'URL firmada y de corta vida (relativa a la base de la API); se pide sin token.', type: 'string', example: '/api/terrenos/fotos/5/archivo?expires=1764000000&signature=ab12'),
     ],
     type: 'object',
 )]
@@ -41,6 +55,11 @@ final class TerrenoResource extends JsonResource
             'colindantes_sensibles' => $this->colindantes_sensibles,
             'acceso_dificil' => $this->acceso_dificil,
             'zona_id' => $this->zona_id,
+            'fotos' => $this->whenLoaded('fotos', fn () => $this->fotos->map(fn (TerrenoFoto $foto): array => [
+                'id' => $foto->id,
+                'descripcion' => $foto->descripcion,
+                'url' => GestionarFotosDeTerreno::url($foto->id),
+            ])->all()),
         ];
     }
 }

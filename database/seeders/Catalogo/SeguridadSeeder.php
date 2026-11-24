@@ -95,6 +95,7 @@ class SeguridadSeeder extends Seeder
         'flota.equipo.ver' => 'Ver los equipos (piloto, dron y auxiliar) de los proveedores',
         // Marketplace, lado app (token de dispositivo): lo que cada rol hace sobre lo SUYO. El alcance lo hacen los casos de uso; el permiso es la puerta.
         'proveedores.cuenta.gestionar' => 'Gestionar su propio proveedor desde la app: pilotos, drones, equipos y documentos',
+        'proveedores.cuenta.ver' => 'Ver, solo lectura, el proveedor al que pertenece y los drones de sus equipos desde la app (piloto)',
         'proveedores.auxiliar.registrar' => 'Registrar a un auxiliar (queda pendiente de aprobación)',
         'proveedores.documento.cargar' => 'Cargar los documentos propios o de lo que uno registró',
         'solicitudes.cliente.gestionar' => 'Gestionar su propio perfil de cliente desde la app',
@@ -117,6 +118,7 @@ class SeguridadSeeder extends Seeder
         'negociacion.seguimiento.registrar' => 'Marcar el inicio, el avance y el cierre de un servicio adjudicado y enviar la ubicación del piloto desde la app',
         'negociacion.seguimiento.ver' => 'Ver el avance y las fotos de un servicio propio desde la app',
         'negociacion.evidencia.subir' => 'Subir fotos de avance, finales y de incidencia de un servicio adjudicado desde la app',
+        'negociacion.pago.confirmar' => 'Informar que el proveedor recibió el pago de un servicio finalizado, que ocurre fuera de la aplicación',
         'negociacion.mensaje.usar' => 'Leer y escribir mensajes con la otra parte de un servicio adjudicado desde la app',
         'negociacion.preferencias.gestionar' => 'Activar o desactivar los avisos de la cuenta, y las zonas de las nuevas solicitudes, desde la app',
         // Calificaciones (ADR 0031 y 0039): lado app y cola de moderación del panel.
@@ -157,6 +159,7 @@ class SeguridadSeeder extends Seeder
         'negociacion.seguimiento.registrar',
         'negociacion.seguimiento.ver',
         'negociacion.evidencia.subir',
+        'negociacion.pago.confirmar',
         'negociacion.mensaje.usar',
         'negociacion.preferencias.gestionar',
         'calificaciones.calificacion.calificar_cliente',
@@ -184,6 +187,7 @@ class SeguridadSeeder extends Seeder
      * @var list<string>
      */
     private const PERMISOS_PILOTO = [
+        'proveedores.cuenta.ver',
         'proveedores.auxiliar.registrar',
         'proveedores.documento.cargar',
         'negociacion.mercado.ver',
@@ -191,6 +195,7 @@ class SeguridadSeeder extends Seeder
         'negociacion.seguimiento.registrar',
         'negociacion.seguimiento.ver',
         'negociacion.evidencia.subir',
+        'negociacion.pago.confirmar',
         'negociacion.mensaje.usar',
         'negociacion.preferencias.gestionar',
         'calificaciones.calificacion.calificar_cliente',

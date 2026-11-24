@@ -765,7 +765,7 @@ paths:
       tags:
         - Flota
       summary: 'Drones de mi proveedor'
-      description: 'Drones que el proveedor del que la cuenta es titular opera, con su estado de aprobación y sus ciclos de batería.'
+      description: 'Drones que el proveedor del que la cuenta es titular opera, con su estado de aprobación y sus ciclos de batería. El piloto de un proveedor recibe, en solo lectura, los drones de sus equipos vigentes.'
       operationId: listarDrones
       responses:
         200:
@@ -784,7 +784,7 @@ paths:
         401:
           description: 'Token ausente o revocado.'
         403:
-          description: 'El rol del token no gestiona un proveedor.'
+          description: 'El rol del token no gestiona ni ve drones.'
       security:
         -
           tokenDispositivo: []
@@ -2138,6 +2138,125 @@ paths:
       security:
         -
           tokenDispositivo: []
+  '/api/solicitudes/{id}/pago-confirmado':
+    get:
+      tags:
+        - Seguimiento
+      summary: 'Ver la confirmación del pago'
+      description: 'Si el proveedor ya informó que recibió el pago: el cliente de la solicitud y el proveedor adjudicado lo consultan. Sin confirmar responde 200 con `pago: null`.'
+      operationId: verPagoConfirmadoDeSolicitud
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'El pago, o `null`.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - pago
+                properties:
+                  pago:
+                    nullable: true
+                    allOf:
+                      -
+                        $ref: '#/components/schemas/PagoConfirmado'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no ve seguimiento.'
+        404:
+          description: 'La solicitud no es de la cuenta.'
+      security:
+        -
+          tokenDispositivo: []
+    post:
+      tags:
+        - Seguimiento
+      summary: 'Informar que recibí el pago'
+      description: 'El titular del proveedor adjudicado informa que recibió el pago, que ocurre fuera de la aplicación. Solo con la solicitud `finalizada`, `calificada` o `disputada`. El monto lo fija el servidor: es el monto final congelado. Un solo registro por solicitud, idempotente por `uuid_cliente` (repetirlo responde 200 con el mismo registro); una vez confirmado no se reescribe y otro `uuid_cliente` responde 409 `pago_ya_confirmado`. No cambia el estado de la solicitud. Lo escribe solo el proveedor (titular); el cliente lo lee con `GET /api/solicitudes/{id}/pago-confirmado`.'
+      operationId: confirmarPagoDeSolicitud
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - uuid_cliente
+              properties:
+                uuid_cliente:
+                  type: string
+                  format: uuid
+                metodo:
+                  type: string
+                  nullable: true
+                  enum:
+                    - efectivo
+                    - transferencia
+                    - qr
+                    - otro
+                nota:
+                  type: string
+                  nullable: true
+                  maxLength: 280
+              type: object
+      responses:
+        201:
+          description: 'Pago confirmado.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - pago
+                properties:
+                  pago:
+                    $ref: '#/components/schemas/PagoConfirmado'
+                type: object
+        200:
+          description: 'Duplicado: ya estaba confirmado con ese `uuid_cliente`.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - pago
+                properties:
+                  pago:
+                    $ref: '#/components/schemas/PagoConfirmado'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no confirma pagos (solo `message`), o la cuenta no es el titular del proveedor adjudicado (`message` y `codigo`: `pago_solo_titular`).'
+        404:
+          description: 'La solicitud no es de la cuenta.'
+        409:
+          description: 'La solicitud no está finalizada o el pago ya fue confirmado.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorConflicto'
+        422:
+          description: 'Datos inválidos.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
   /api/notificaciones/preferencias:
     get:
       tags:
@@ -2768,6 +2887,106 @@ paths:
       security:
         -
           tokenDispositivo: []
+  /api/dispositivos:
+    get:
+      tags:
+        - Seguridad
+      summary: 'Lista los dispositivos del operario autenticado'
+      description: 'Dispositivos donde el operario autenticado tiene sesión abierta. Solo los suyos: no existe forma de listar los de otro usuario desde la app de campo.'
+      operationId: listarDispositivosPropios
+      responses:
+        200:
+          description: 'Dispositivos con sesión viva, el usado más recientemente primero.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Dispositivo'
+                type: object
+        401:
+          description: 'Token ausente, revocado o ya sin rol válido.'
+      security:
+        -
+          tokenDispositivo: []
+    post:
+      tags:
+        - Notificaciones
+      summary: 'Registrar el token de push del aparato'
+      description: 'La app registra el token de push de su aparato al iniciar sesión. Idempotente por token: repetirlo responde 200 y deja una sola fila activa. Si el token estaba registrado a otra cuenta (el aparato cambió de sesión sin retirarlo), pasa a la cuenta actual. El envío al sistema operativo requiere un proveedor de push configurado; mientras no lo esté, los avisos se consultan en `GET /api/notificaciones`. El token no se devuelve ni se registra en logs.'
+      operationId: registrarDispositivoPush
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - token
+                - plataforma
+              properties:
+                token:
+                  type: string
+                  example: 'fcm:cJ3x...'
+                  maxLength: 512
+                plataforma:
+                  type: string
+                  enum:
+                    - android
+                    - ios
+              type: object
+      responses:
+        201:
+          description: 'Token registrado.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DispositivoPush'
+        200:
+          description: 'El token ya estaba registrado; queda a nombre de la cuenta actual.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DispositivoPush'
+        401:
+          description: 'Token ausente o revocado.'
+        422:
+          description: 'Token o plataforma inválidos.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/dispositivos/{token}':
+    delete:
+      tags:
+        - Notificaciones
+      summary: 'Retirar el token de push del aparato'
+      description: 'Retira el token de push del aparato, al cerrar sesión. Un token que no existe o es de otra cuenta responde 404. Va aparte de `DELETE /api/auth/token`, que revoca la sesión del aparato.'
+      operationId: retirarDispositivoPush
+      parameters:
+        -
+          name: token
+          in: path
+          description: 'El token de push, codificado para URL.'
+          required: true
+          schema:
+            type: string
+      responses:
+        204:
+          description: 'Token retirado.'
+        401:
+          description: 'Token ausente o revocado.'
+        404:
+          description: 'El token no existe o es de otra cuenta.'
+      security:
+        -
+          tokenDispositivo: []
   /api/notificaciones:
     get:
       tags:
@@ -3376,7 +3595,7 @@ paths:
       tags:
         - Proveedores
       summary: 'Mi proveedor y su estado de verificación'
-      description: 'El proveedor del que la cuenta es titular: estado de aprobación (con el motivo si fue rechazado o suspendido), los documentos obligatorios que aún no tienen uno aprobado y vigente, y si hoy puede recibir ofertas (`apto_para_ofertas`: aprobado y con al menos un equipo apto). La app lo consulta para mostrar «en revisión», «rechazado» o «listo para ponerte en línea».'
+      description: 'El proveedor del que la cuenta es titular: estado de aprobación (con el motivo si fue rechazado o suspendido), los documentos obligatorios que aún no tienen uno aprobado y vigente, y si hoy puede recibir ofertas (`apto_para_ofertas`: aprobado y con al menos un equipo apto). La app lo consulta para mostrar «en revisión», «rechazado» o «listo para ponerte en línea». El piloto de un proveedor (por ejemplo, el piloto propio de Agrocom) lo consulta en solo lectura: recibe el proveedor al que pertenece, sin el documento fiscal, y `documentos_faltantes` son los suyos como piloto.'
       operationId: verMiProveedor
       responses:
         200:
@@ -3404,9 +3623,9 @@ paths:
         401:
           description: 'Token ausente o revocado.'
         403:
-          description: 'El rol del token no gestiona un proveedor.'
+          description: 'El rol del token no gestiona ni ve un proveedor.'
         404:
-          description: 'La cuenta no es titular de ningún proveedor.'
+          description: 'La cuenta no es titular ni piloto de ningún proveedor.'
       security:
         -
           tokenDispositivo: []
@@ -3689,32 +3908,6 @@ paths:
                 $ref: '#/components/schemas/ErrorValidacion'
         429:
           description: 'Demasiados registros desde la misma IP; reintentar tras `Retry-After` segundos.'
-  /api/dispositivos:
-    get:
-      tags:
-        - Seguridad
-      summary: 'Lista los dispositivos del operario autenticado'
-      description: 'Dispositivos donde el operario autenticado tiene sesión abierta. Solo los suyos: no existe forma de listar los de otro usuario desde la app de campo.'
-      operationId: listarDispositivosPropios
-      responses:
-        200:
-          description: 'Dispositivos con sesión viva, el usado más recientemente primero.'
-          content:
-            application/json:
-              schema:
-                required:
-                  - data
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Dispositivo'
-                type: object
-        401:
-          description: 'Token ausente, revocado o ya sin rol válido.'
-      security:
-        -
-          tokenDispositivo: []
   '/api/dispositivos/{id}':
     get:
       tags:
@@ -3750,6 +3943,102 @@ paths:
       security:
         -
           tokenDispositivo: []
+  /api/perfil/foto:
+    put:
+      tags:
+        - Seguridad
+      summary: 'Subir mi foto de perfil'
+      description: 'La cuenta del token sube o reemplaza su foto de perfil (multipart, menos de 300 KB: la app la comprime antes). Sirve a clientes, proveedores, pilotos y auxiliares. El cliente la ve en la tarjeta del proveedor al comparar ofertas. La foto anterior se borra del disco privado.'
+      operationId: subirFotoDePerfil
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              required:
+                - archivo
+              properties:
+                archivo:
+                  type: string
+                  format: binary
+              type: object
+      responses:
+        200:
+          description: 'Foto guardada.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - foto_url
+                properties:
+                  foto_url:
+                    description: 'URL firmada y de corta vida; se pide sin token.'
+                    type: string
+                    example: '/api/personas/7/foto?expires=1764000000&signature=ab12'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        422:
+          description: 'Archivo inválido o de 300 KB o más.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+    delete:
+      tags:
+        - Seguridad
+      summary: 'Quitar mi foto de perfil'
+      description: 'Quita la foto de perfil de la cuenta del token y borra el archivo. Idempotente: sin foto responde igual.'
+      operationId: quitarFotoDePerfil
+      responses:
+        204:
+          description: 'Sin foto de perfil.'
+        401:
+          description: 'Token ausente o revocado.'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/personas/{usuario}/foto':
+    get:
+      tags:
+        - Seguridad
+      summary: 'Descargar una foto de perfil'
+      description: 'La imagen de perfil de una cuenta. No lleva token: la URL es firmada y de corta vida (15 minutos), y solo la entregan la propia sesión y la tarjeta del proveedor que ve el cliente al comparar ofertas. Una firma inválida o vencida responde 403.'
+      operationId: descargarFotoDePerfil
+      parameters:
+        -
+          name: usuario
+          in: path
+          required: true
+          schema:
+            type: integer
+        -
+          name: expires
+          in: query
+          required: true
+          schema:
+            type: integer
+        -
+          name: signature
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: 'La imagen.'
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        403:
+          description: 'Firma inválida o vencida.'
+        404:
+          description: 'La cuenta ya no tiene foto.'
   /api/auth/token:
     post:
       tags:
@@ -4086,6 +4375,88 @@ paths:
           description: 'El rol del token no es de cliente.'
         404:
           description: 'La cuenta no tiene ficha de cliente.'
+      security:
+        -
+          tokenDispositivo: []
+  /api/referencias/precio:
+    get:
+      tags:
+        - Solicitudes
+      summary: 'Precio de referencia por hectárea'
+      description: 'El precio por hectárea de referencia para un tipo de aplicación, de lo más específico a lo más general: la zona, su macrorregión o el precio general del tipo. `nivel` dice de dónde salió (`zona`, `macrorregion`, `general` o `respaldo`). Es una guía, no un límite: el precio máximo de sanidad es otro parámetro. Sin `zona_id` ni `macrorregion` devuelve el precio general. Importe como decimal exacto en string.'
+      operationId: precioDeReferencia
+      parameters:
+        -
+          name: tipo_aplicacion
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - herbicida
+              - insecticida
+              - fungicida
+              - fertilizante_foliar
+              - desecante
+              - otro
+        -
+          name: zona_id
+          in: query
+          description: 'Ver `GET /api/zonas`.'
+          required: false
+          schema:
+            type: integer
+        -
+          name: macrorregion
+          in: query
+          required: false
+          schema:
+            type: string
+            example: chiquitania
+      responses:
+        200:
+          description: 'El precio de referencia.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - tipo_aplicacion
+                  - precio_ha
+                  - nivel
+                properties:
+                  tipo_aplicacion:
+                    type: string
+                    example: herbicida
+                  zona_id:
+                    type: integer
+                    nullable: true
+                  macrorregion:
+                    type: string
+                    example: chiquitania
+                    nullable: true
+                  precio_ha:
+                    type: string
+                    example: '132.0000'
+                    nullable: true
+                  nivel:
+                    type: string
+                    nullable: true
+                    enum:
+                      - zona
+                      - macrorregion
+                      - general
+                      - respaldo
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no es de cliente ni de proveedor.'
+        422:
+          description: 'Tipo de aplicación, zona o macrorregión inválidos.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
       security:
         -
           tokenDispositivo: []
@@ -4666,6 +5037,133 @@ paths:
       security:
         -
           tokenDispositivo: []
+  '/api/terrenos/{id}/fotos':
+    post:
+      tags:
+        - Terrenos
+      summary: 'Subir una foto del terreno'
+      description: 'El cliente sube una foto del estado de su terreno (multipart, menos de 300 KB: la app la comprime antes). Hasta 8 por terreno. El piloto la ve en `GET /api/solicitudes-abiertas/{id}` antes de ofertar. Se guarda en el disco privado.'
+      operationId: subirFotoDeTerreno
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              required:
+                - archivo
+              properties:
+                archivo:
+                  type: string
+                  format: binary
+                descripcion:
+                  type: string
+                  nullable: true
+                  maxLength: 140
+              type: object
+      responses:
+        201:
+          description: 'Foto guardada.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - foto
+                properties:
+                  foto:
+                    $ref: '#/components/schemas/FotoDeTerreno'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no es de cliente.'
+        404:
+          description: 'No existe o es de otro cliente.'
+        422:
+          description: 'Archivo inválido, de 300 KB o más, o el terreno ya tiene el máximo de fotos.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/terrenos/{id}/fotos/{foto}':
+    delete:
+      tags:
+        - Terrenos
+      summary: 'Borrar una foto del terreno'
+      description: 'Borra una foto de un terreno propio.'
+      operationId: borrarFotoDeTerreno
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        -
+          name: foto
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        204:
+          description: 'Foto borrada.'
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no es de cliente.'
+        404:
+          description: 'La foto o el terreno no existen o son de otro cliente.'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/terrenos/fotos/{foto}/archivo':
+    get:
+      tags:
+        - Terrenos
+      summary: 'Descargar una foto del terreno'
+      description: 'El archivo de una foto de terreno. No lleva token: la URL es firmada y de corta vida (15 minutos), y solo la entregan el terreno del cliente dueño y el detalle de una solicitud abierta al piloto habilitado. Una firma inválida o vencida responde 403.'
+      operationId: descargarFotoDeTerreno
+      parameters:
+        -
+          name: foto
+          in: path
+          required: true
+          schema:
+            type: integer
+        -
+          name: expires
+          in: query
+          required: true
+          schema:
+            type: integer
+        -
+          name: signature
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: 'La imagen.'
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        403:
+          description: 'Firma inválida o vencida.'
+        404:
+          description: 'La foto ya no existe.'
   /api/zonas:
     get:
       tags:
@@ -5360,7 +5858,7 @@ components:
           type: string
           nullable: true
         terreno:
-          description: 'Solo en el detalle: nombre, hectáreas, `geometria` GeoJSON de los lotes, referencias de acceso, colindantes sensibles y acceso difícil.'
+          description: 'Solo en el detalle: nombre, hectáreas, `geometria` GeoJSON de los lotes, referencias de acceso, colindantes sensibles, acceso difícil y `fotos` del estado del terreno con URL firmada de corta vida (se piden sin token).'
           type: object
           nullable: true
       type: object
@@ -5452,7 +5950,7 @@ components:
           format: date-time
           nullable: true
         proveedor:
-          description: 'Solo para el cliente.'
+          description: 'Solo para el cliente: `nombre`, `foto_url` (foto de perfil del piloto del equipo o del titular, URL firmada de corta vida que se pide sin token; `null` si no hay), calificación, tasa de cancelación y dron con fotos aprobadas.'
           type: object
           nullable: true
         historial:
@@ -5461,6 +5959,42 @@ components:
           items:
             type: object
           nullable: true
+      type: object
+    PagoConfirmado:
+      title: 'Pago confirmado por el proveedor'
+      description: 'Registro informativo: el pago ocurrió fuera de la aplicación y lo informa el proveedor. `monto` es el monto final del servicio al momento de confirmar.'
+      required:
+        - id
+        - uuid_cliente
+        - solicitud_id
+        - monto
+        - confirmado_en
+      properties:
+        id:
+          description: "Confirmación del pago fuera de la aplicación (ADR 0034). El proveedor informa que\nrecibió el pago; el cliente solo lo consulta. No procesa cobros ni cambia el estado."
+          type: integer
+        uuid_cliente:
+          type: string
+          format: uuid
+        solicitud_id:
+          type: integer
+        monto:
+          type: string
+          example: '9440.00'
+        metodo:
+          type: string
+          nullable: true
+          enum:
+            - efectivo
+            - transferencia
+            - qr
+            - otro
+        nota:
+          type: string
+          nullable: true
+        confirmado_en:
+          type: string
+          format: date-time
       type: object
     PreferenciasDeAviso:
       title: 'Preferencias de aviso'
@@ -5561,6 +6095,27 @@ components:
         codigo:
           type: string
           example: oferta_no_vigente
+      type: object
+    DispositivoPush:
+      title: 'Token de push registrado'
+      required:
+        - id
+        - plataforma
+        - registrado_en
+      properties:
+        id:
+          description: "Token de push del aparato de la cuenta (`negociacion-contrato.md` §7). Cualquier\ncuenta con sesión registra y retira los suyos: el alcance sale del token de la\nsesión, nunca del cuerpo, y retirar el token de otra cuenta responde 404."
+          type: integer
+          example: 14
+        plataforma:
+          type: string
+          enum:
+            - android
+            - ios
+        registrado_en:
+          type: string
+          format: date-time
+          nullable: true
       type: object
     Auxiliar:
       title: Auxiliar
@@ -5860,6 +6415,11 @@ components:
           description: 'Persona operativa enlazada (módulo Personal, solo ID).'
           type: integer
           example: 3
+          nullable: true
+        foto_url:
+          description: 'Foto de perfil de la cuenta: URL firmada y de corta vida (se pide sin token); `null` si no tiene.'
+          type: string
+          example: '/api/personas/7/foto?expires=1764000000&signature=ab12'
           nullable: true
       type: object
     PersonaCatalogo:
@@ -6683,6 +7243,29 @@ components:
           type: integer
           example: 1
           nullable: true
+        fotos:
+          description: 'Fotos del estado del terreno (hasta 8). Las URLs son firmadas y de corta vida: se piden de nuevo con el terreno.'
+          type: array
+          items:
+            $ref: '#/components/schemas/FotoDeTerreno'
+      type: object
+    FotoDeTerreno:
+      title: 'Foto del estado de un terreno'
+      required:
+        - id
+        - url
+      properties:
+        id:
+          type: integer
+          example: 5
+        descripcion:
+          type: string
+          example: 'Borde norte con maleza alta'
+          nullable: true
+        url:
+          description: 'URL firmada y de corta vida (relativa a la base de la API); se pide sin token.'
+          type: string
+          example: '/api/terrenos/fotos/5/archivo?expires=1764000000&signature=ab12'
       type: object
   securitySchemes:
     tokenDispositivo:

@@ -2,10 +2,12 @@
 
 namespace App\Dominios\Solicitudes\Infraestructura;
 
+use App\Dominios\Solicitudes\Aplicacion\GestionarFotosDeTerreno;
 use App\Dominios\Solicitudes\Contratos\DatosSolicitudAbierta;
 use App\Dominios\Solicitudes\Contratos\LecturaMercado;
 use App\Dominios\Solicitudes\Dominio\EstadoSolicitud;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\SolicitudServicio;
+use App\Dominios\Solicitudes\Infraestructura\Eloquent\TerrenoFoto;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
@@ -41,7 +43,7 @@ final class LecturaMercadoEloquent implements LecturaMercado
 
     public function abierta(int $solicitudId): ?DatosSolicitudAbierta
     {
-        $solicitud = $this->consulta()->find($solicitudId);
+        $solicitud = $this->consulta()->with('terreno.fotos')->find($solicitudId);
 
         return $solicitud === null ? null : $this->datos($solicitud, true);
     }
@@ -88,6 +90,11 @@ final class LecturaMercadoEloquent implements LecturaMercado
                 'referencias_acceso' => $terreno->referencias_acceso,
                 'colindantes_sensibles' => $terreno->colindantes_sensibles,
                 'acceso_dificil' => $terreno->acceso_dificil,
+                'fotos' => $terreno->fotos->map(fn (TerrenoFoto $foto): array => [
+                    'id' => $foto->id,
+                    'descripcion' => $foto->descripcion,
+                    'url' => GestionarFotosDeTerreno::url($foto->id),
+                ])->all(),
             ] : null,
         );
     }

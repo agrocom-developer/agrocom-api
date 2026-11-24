@@ -1,0 +1,20 @@
+{
+    "operationId": "precioDeReferencia",
+    "descripcion": "Validación: tipo de aplicación inexistente.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/referencias/precio?tipo_aplicacion=riego",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 422,
+        "cuerpo": {
+            "message": "La opción elegida no es válida.",
+            "errors": {
+                "tipo_aplicacion": [
+                    "La opción elegida no es válida."
+                ]
+            }
+        }
+    }
+}

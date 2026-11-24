@@ -49,6 +49,9 @@ return [
         'ubicacion_no_permitida' => 'La ubicación solo se envía mientras el servicio está en ejecución.',
         'mensaje_invalido' => 'Escribe un mensaje de hasta :maximo caracteres.',
         'chat_cerrado' => 'El chat de este servicio ya cerró: solo puedes leer los mensajes.',
+        'pago_solo_proveedor' => 'Solo el proveedor del servicio informa que recibió el pago.',
+        'pago_solo_titular' => 'Solo el titular del proveedor informa que recibió el pago.',
+        'pago_ya_confirmado' => 'El pago de este servicio ya fue confirmado.',
         'bbox_invalido' => 'El encuadre debe ser «oeste,sur,este,norte» con números.',
     ],
 

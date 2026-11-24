@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Infraestructura\Http\Resources;
 
+use App\Dominios\Seguridad\Contratos\FotosDePerfil;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -27,6 +28,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'name', description: 'Nombre para mostrar.', type: 'string', example: 'Camila Rojas'),
         new OA\Property(property: 'username', description: 'Identificador de login (nunca un correo).', type: 'string', example: 'camila.rojas'),
         new OA\Property(property: 'persona_id', description: 'Persona operativa enlazada (módulo Personal, solo ID).', type: 'integer', example: 3, nullable: true),
+        new OA\Property(property: 'foto_url', description: 'Foto de perfil de la cuenta: URL firmada y de corta vida (se pide sin token); `null` si no tiene.', type: 'string', nullable: true, example: '/api/personas/7/foto?expires=1764000000&signature=ab12'),
     ],
     type: 'object',
 )]
@@ -40,6 +42,7 @@ final class UsuarioCampoResource extends JsonResource
             'name' => $this->name,
             'username' => $this->username,
             'persona_id' => $this->persona_id,
+            'foto_url' => app(FotosDePerfil::class)->urlDe($this->id),
         ];
     }
 }

@@ -10,8 +10,10 @@ use App\Dominios\Flota\Infraestructura\Http\Controllers\Api\FotosDeDronControlle
 use App\Dominios\Negociacion\Infraestructura\Http\Controllers\Api\MensajesController;
 use App\Dominios\Negociacion\Infraestructura\Http\Controllers\Api\MercadoController;
 use App\Dominios\Negociacion\Infraestructura\Http\Controllers\Api\OfertasController;
+use App\Dominios\Negociacion\Infraestructura\Http\Controllers\Api\PagoController;
 use App\Dominios\Negociacion\Infraestructura\Http\Controllers\Api\PreferenciasController;
 use App\Dominios\Negociacion\Infraestructura\Http\Controllers\Api\SeguimientoController;
+use App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Api\DispositivosPushController;
 use App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Api\NotificacionesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Api\ActaController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Api\EvidenciaController;
@@ -22,10 +24,12 @@ use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\MiProveedorCon
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\PilotosController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\RegistroProveedorController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\DispositivoController;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\FotoDePerfilController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\SesionCampoController;
 use App\Dominios\Sincronizacion\Infraestructura\Http\Controllers\Api\CatalogoController;
 use App\Dominios\Sincronizacion\Infraestructura\Http\Controllers\Api\SyncController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\ClientesController;
+use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\ReferenciasController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\SolicitudesController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\TerrenosController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\ZonasController;
@@ -81,6 +85,20 @@ Route::get('/zonas', [ZonasController::class, 'index'])
     ->middleware('throttle:60,1')
     ->name('api.zonas.index');
 
+// Foto del estado de un terreno: la URL es firmada y de corta vida (la entregan el terreno del
+// cliente dueño y el detalle de la solicitud abierta), así que la imagen carga sin token.
+Route::get('/terrenos/fotos/{foto}/archivo', [TerrenosController::class, 'archivoDeFoto'])
+    ->middleware(['signed:relative', 'throttle:120,1'])
+    ->whereNumber('foto')
+    ->name('api.terrenos.fotos.archivo');
+
+// Foto de perfil de una cuenta: URL firmada y de corta vida que solo emite el servidor
+// (la propia sesión y la tarjeta del proveedor que ve el cliente), así que carga sin token.
+Route::get('/personas/{usuario}/foto', [FotoDePerfilController::class, 'archivo'])
+    ->middleware(['signed:relative', 'throttle:120,1'])
+    ->whereNumber('usuario')
+    ->name('api.personas.foto');
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/auth/sesion', [SesionCampoController::class, 'show'])->name('api.auth.sesion');
 
@@ -88,11 +106,20 @@ Route::middleware('auth:sanctum')->group(function () {
     // request). Revocar el de otro es cosa del panel, con permiso propio.
     Route::delete('/auth/token', [SesionCampoController::class, 'destroy'])->name('api.auth.token.revocar');
 
+    // Foto de perfil de la propia cuenta (cliente, proveedor, piloto o auxiliar).
+    Route::put('/perfil/foto', [FotoDePerfilController::class, 'update'])->name('api.perfil.foto.update');
+    Route::delete('/perfil/foto', [FotoDePerfilController::class, 'destroy'])->name('api.perfil.foto.destroy');
+
     // Dispositivos del propio operario. El scoping vive en los casos de uso
     // (consultan desde la relación del usuario del token, nunca desde la
     // tabla global): un id ajeno devuelve 404, igual que en el portal del
     // cliente (invariante 5 de CLAUDE.md).
     Route::get('/dispositivos', [DispositivoController::class, 'index'])->name('api.dispositivos.index');
+    // Token de push del aparato (`negociacion-contrato.md` §7): se registra al iniciar sesión y se retira al cerrarla.
+    Route::post('/dispositivos', [DispositivosPushController::class, 'store'])->name('api.dispositivos.push.store');
+    Route::delete('/dispositivos/{token}', [DispositivosPushController::class, 'destroy'])
+        ->where('token', '.+')
+        ->name('api.dispositivos.push.destroy');
     Route::get('/dispositivos/{id}', [DispositivoController::class, 'show'])
         ->whereNumber('id')
         ->name('api.dispositivos.show');
@@ -234,6 +261,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/evidencias/{id}/archivo', [SeguimientoController::class, 'archivo'])
         ->whereNumber('id')
         ->name('api.evidencias.archivo');
+    // Pago fuera de la aplicación (ADR 0034): el proveedor informa que lo recibió; el cliente lo consulta.
+    Route::post('/solicitudes/{id}/pago-confirmado', [PagoController::class, 'store'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.pago-confirmado.store');
+    Route::get('/solicitudes/{id}/pago-confirmado', [PagoController::class, 'show'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.pago-confirmado.show');
     Route::put('/ubicacion', [SeguimientoController::class, 'enviarUbicacion'])->name('api.ubicacion.update');
     Route::get('/solicitudes/{id}/ubicacion-piloto', [SeguimientoController::class, 'verUbicacion'])
         ->whereNumber('id')
@@ -270,9 +304,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/terrenos/{id}', [TerrenosController::class, 'show'])
         ->whereNumber('id')
         ->name('api.terrenos.show');
+    Route::post('/terrenos/{id}/fotos', [TerrenosController::class, 'subirFoto'])
+        ->whereNumber('id')
+        ->name('api.terrenos.fotos.store');
+    Route::delete('/terrenos/{id}/fotos/{foto}', [TerrenosController::class, 'borrarFoto'])
+        ->whereNumber(['id', 'foto'])
+        ->name('api.terrenos.fotos.destroy');
     Route::put('/terrenos/{id}', [TerrenosController::class, 'update'])
         ->whereNumber('id')
         ->name('api.terrenos.update');
+
+    // Guía de precio por hectárea (§3.1): la usan el cliente al proponer y el piloto al ofertar.
+    Route::get('/referencias/precio', [ReferenciasController::class, 'precio'])->name('api.referencias.precio');
 
     Route::get('/solicitudes', [SolicitudesController::class, 'index'])->name('api.solicitudes.index');
     Route::post('/solicitudes', [SolicitudesController::class, 'store'])->name('api.solicitudes.store');

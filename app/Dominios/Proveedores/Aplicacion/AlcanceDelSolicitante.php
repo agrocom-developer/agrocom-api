@@ -27,6 +27,12 @@ final class AlcanceDelSolicitante
         return Proveedor::query()->where('usuario_titular_id', $usuarioId)->first();
     }
 
+    /** El registro de piloto vivo de la cuenta, si lo tiene (el piloto de un proveedor, no su titular). */
+    public function pilotoDeLaCuenta(int $usuarioId): ?Piloto
+    {
+        return Piloto::query()->where('usuario_id', $usuarioId)->first();
+    }
+
     public function puedeGestionar(int $usuarioId, TipoSujeto $tipo, int $sujetoId): bool
     {
         return match ($tipo) {

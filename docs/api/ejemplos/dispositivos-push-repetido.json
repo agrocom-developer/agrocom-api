@@ -1,0 +1,21 @@
+{
+    "operationId": "registrarDispositivoPush",
+    "descripcion": "Repetir el token no duplica: responde 200.",
+    "peticion": {
+        "metodo": "POST",
+        "ruta": "/api/dispositivos",
+        "autenticada": true,
+        "cuerpo": {
+            "token": "fcm:ejemplo-token-de-push",
+            "plataforma": "android"
+        }
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "id": 1,
+            "plataforma": "android",
+            "registrado_en": "2026-11-24T18:56:43+00:00"
+        }
+    }
+}

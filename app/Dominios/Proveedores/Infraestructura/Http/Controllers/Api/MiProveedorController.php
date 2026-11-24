@@ -27,6 +27,9 @@ final class MiProveedorController
 
     private const PERMISO = 'proveedores.cuenta.gestionar';
 
+    /** Solo lectura: el piloto de un proveedor ve a qué proveedor pertenece. */
+    private const PERMISO_VER = 'proveedores.cuenta.ver';
+
     public function __construct(
         private readonly IdentidadOperarioToken $identidad,
         private readonly AlcanceDelSolicitante $alcance,
@@ -41,7 +44,9 @@ final class MiProveedorController
         description: 'El proveedor del que la cuenta es titular: estado de aprobación (con el motivo si fue rechazado o '
             .'suspendido), los documentos obligatorios que aún no tienen uno aprobado y vigente, y si hoy puede '
             .'recibir ofertas (`apto_para_ofertas`: aprobado y con al menos un equipo apto). La app lo consulta para '
-            .'mostrar «en revisión», «rechazado» o «listo para ponerte en línea».',
+            .'mostrar «en revisión», «rechazado» o «listo para ponerte en línea». El piloto de un proveedor (por ejemplo, el '
+            .'piloto propio de Agrocom) lo consulta en solo lectura: recibe el proveedor al que pertenece, sin el documento fiscal, '
+            .'y `documentos_faltantes` son los suyos como piloto.',
         summary: 'Mi proveedor y su estado de verificación',
         security: [['tokenDispositivo' => []]],
         tags: ['Proveedores'],
@@ -60,13 +65,15 @@ final class MiProveedorController
                 ),
             ),
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
-            new OA\Response(response: 403, description: 'El rol del token no gestiona un proveedor.'),
-            new OA\Response(response: 404, description: 'La cuenta no es titular de ningún proveedor.'),
+            new OA\Response(response: 403, description: 'El rol del token no gestiona ni ve un proveedor.'),
+            new OA\Response(response: 404, description: 'La cuenta no es titular ni piloto de ningún proveedor.'),
         ],
     )]
     public function show(Request $request): JsonResponse
     {
-        $this->exigirPermiso($this->identidad, $request, self::PERMISO);
+        if (! $this->identidad->tienePermiso($request, self::PERMISO)) {
+            return $this->verComoPiloto($request);
+        }
 
         $proveedor = $this->alcance->proveedorDelTitular($this->usuarioId($request));
 
@@ -115,5 +122,27 @@ final class MiProveedorController
         }
 
         return response()->json(['proveedor' => new ProveedorResource($proveedor->refresh())]);
+    }
+
+    /** El piloto ve su proveedor en solo lectura; el alcance sale de su propio registro de piloto. */
+    private function verComoPiloto(Request $request): JsonResponse
+    {
+        $this->exigirPermiso($this->identidad, $request, self::PERMISO_VER);
+
+        $piloto = $this->alcance->pilotoDeLaCuenta($this->usuarioId($request));
+
+        abort_if($piloto === null, 404, __('proveedores.errores.sin_proveedor'));
+
+        $proveedor = $piloto->proveedor;
+        $faltantes = array_map(
+            static fn ($tipo): string => $tipo->value,
+            $this->estadoDocumental->faltantesDe(TipoSujeto::Piloto, $piloto->id),
+        );
+
+        return response()->json([
+            'proveedor' => [...(new ProveedorResource($proveedor))->resolve($request), 'documento_fiscal' => null],
+            'documentos_faltantes' => $faltantes,
+            'apto_para_ofertas' => $this->equipos->tieneEquipoApto($proveedor->id),
+        ]);
     }
 }

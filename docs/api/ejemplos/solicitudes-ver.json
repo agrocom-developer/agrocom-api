@@ -30,9 +30,9 @@
                 "monto_final": null,
                 "estado": "abierta",
                 "oferta_adjudicada_id": null,
-                "vence_en": "2026-12-01T15:58:51+00:00",
+                "vence_en": "2026-12-01T18:56:42+00:00",
                 "proveedor_id": null,
-                "publicada_en": "2026-11-24T15:58:51+00:00",
+                "publicada_en": "2026-11-24T18:56:42+00:00",
                 "motivo_cancelacion": null,
                 "cancelada_por": null,
                 "terreno": {
@@ -44,7 +44,14 @@
                     "referencias_acceso": "Camino vecinal, portón azul a 2 km de la ruta.",
                     "colindantes_sensibles": null,
                     "acceso_dificil": false,
-                    "zona_id": null
+                    "zona_id": null,
+                    "fotos": [
+                        {
+                            "id": 1,
+                            "descripcion": "Borde norte con maleza alta",
+                            "url": "/api/terrenos/fotos/1/archivo?expires=1795547502&signature=f3ceb1c5e8beffefdf087906ecebf36e1200a88eb81a76fdda22d74ba1e79a76"
+                        }
+                    ]
                 },
                 "historial": [
                     {
@@ -52,14 +59,14 @@
                         "estado_nuevo": "borrador",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-24T15:58:51+00:00"
+                        "creado_en": "2026-11-24T18:56:42+00:00"
                     },
                     {
                         "estado_anterior": "borrador",
                         "estado_nuevo": "abierta",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-24T15:58:51+00:00"
+                        "creado_en": "2026-11-24T18:56:42+00:00"
                     }
                 ]
             }

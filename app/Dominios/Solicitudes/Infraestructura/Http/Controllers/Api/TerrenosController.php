@@ -4,6 +4,7 @@ namespace App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api;
 
 use App\Dominios\Compartido\Infraestructura\Http\RechazoDeDominio;
 use App\Dominios\Seguridad\Contratos\IdentidadOperarioToken;
+use App\Dominios\Solicitudes\Aplicacion\GestionarFotosDeTerreno;
 use App\Dominios\Solicitudes\Aplicacion\GestionarTerrenos;
 use App\Dominios\Solicitudes\Dominio\Excepciones\SolicitudInvalida;
 use App\Dominios\Solicitudes\Infraestructura\Http\Requests\CrearTerrenoRequest;
@@ -12,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use OpenApi\Attributes as OA;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
  * Terrenos del cliente (especificación §10.1, `GET/POST/PUT /terrenos`).
@@ -45,6 +47,7 @@ final class TerrenosController
 
     public function __construct(
         private readonly GestionarTerrenos $terrenos,
+        private readonly GestionarFotosDeTerreno $fotos,
         private readonly IdentidadOperarioToken $identidad,
     ) {}
 
@@ -158,6 +161,102 @@ final class TerrenosController
         }
 
         return response()->json(['terreno' => new TerrenoResource($terreno)]);
+    }
+
+    #[OA\Post(
+        path: '/api/terrenos/{id}/fotos',
+        operationId: 'subirFotoDeTerreno',
+        description: 'El cliente sube una foto del estado de su terreno (multipart, menos de 300 KB: la app la comprime antes). Hasta 8 por terreno. '
+            .'El piloto la ve en `GET /api/solicitudes-abiertas/{id}` antes de ofertar. Se guarda en el disco privado.',
+        summary: 'Subir una foto del terreno',
+        security: [['tokenDispositivo' => []]],
+        requestBody: new OA\RequestBody(required: true, content: new OA\MediaType(mediaType: 'multipart/form-data', schema: new OA\Schema(required: ['archivo'], properties: [
+            new OA\Property(property: 'archivo', type: 'string', format: 'binary'),
+            new OA\Property(property: 'descripcion', type: 'string', maxLength: 140, nullable: true),
+        ], type: 'object'))),
+        tags: ['Terrenos'],
+        parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
+        responses: [
+            new OA\Response(response: 201, description: 'Foto guardada.', content: new OA\JsonContent(required: ['foto'], properties: [new OA\Property(property: 'foto', ref: '#/components/schemas/FotoDeTerreno')], type: 'object')),
+            new OA\Response(response: 401, description: 'Token ausente o revocado.'),
+            new OA\Response(response: 403, description: 'El rol del token no es de cliente.'),
+            new OA\Response(response: 404, description: 'No existe o es de otro cliente.'),
+            new OA\Response(response: 422, description: 'Archivo inválido, de 300 KB o más, o el terreno ya tiene el máximo de fotos.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
+        ],
+    )]
+    public function subirFoto(Request $request, int $id): JsonResponse
+    {
+        $this->exigirPermiso($request);
+        $datos = $request->validate([
+            'archivo' => ['required', 'file', 'mimes:jpg,jpeg,png,webp', 'max:'.(int) config('seguimiento.evidencia_max_kb', 300)],
+            'descripcion' => ['nullable', 'string', 'max:140'],
+        ]);
+
+        try {
+            $foto = $this->fotos->subir($this->usuarioId(), $id, $request->file('archivo'), $datos['descripcion'] ?? null);
+        } catch (SolicitudInvalida $excepcion) {
+            return RechazoDeDominio::respuesta($excepcion);
+        }
+
+        return response()->json(['foto' => ['id' => $foto->id, 'descripcion' => $foto->descripcion, 'url' => GestionarFotosDeTerreno::url($foto->id)]], 201);
+    }
+
+    #[OA\Delete(
+        path: '/api/terrenos/{id}/fotos/{foto}',
+        operationId: 'borrarFotoDeTerreno',
+        description: 'Borra una foto de un terreno propio.',
+        summary: 'Borrar una foto del terreno',
+        security: [['tokenDispositivo' => []]],
+        tags: ['Terrenos'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'foto', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 204, description: 'Foto borrada.'),
+            new OA\Response(response: 401, description: 'Token ausente o revocado.'),
+            new OA\Response(response: 403, description: 'El rol del token no es de cliente.'),
+            new OA\Response(response: 404, description: 'La foto o el terreno no existen o son de otro cliente.'),
+        ],
+    )]
+    public function borrarFoto(Request $request, int $id, int $foto): JsonResponse
+    {
+        $this->exigirPermiso($request);
+
+        try {
+            $this->fotos->borrar($this->usuarioId(), $id, $foto);
+        } catch (SolicitudInvalida $excepcion) {
+            return RechazoDeDominio::respuesta($excepcion);
+        }
+
+        return response()->json(null, 204);
+    }
+
+    #[OA\Get(
+        path: '/api/terrenos/fotos/{foto}/archivo',
+        operationId: 'descargarFotoDeTerreno',
+        description: 'El archivo de una foto de terreno. No lleva token: la URL es firmada y de corta vida (15 minutos), y solo la entregan el terreno del cliente dueño '
+            .'y el detalle de una solicitud abierta al piloto habilitado. Una firma inválida o vencida responde 403.',
+        summary: 'Descargar una foto del terreno',
+        tags: ['Terrenos'],
+        parameters: [
+            new OA\Parameter(name: 'foto', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'expires', in: 'query', required: true, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'signature', in: 'query', required: true, schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'La imagen.', content: new OA\MediaType(mediaType: 'image/jpeg', schema: new OA\Schema(type: 'string', format: 'binary'))),
+            new OA\Response(response: 403, description: 'Firma inválida o vencida.'),
+            new OA\Response(response: 404, description: 'La foto ya no existe.'),
+        ],
+    )]
+    public function archivoDeFoto(int $foto): BinaryFileResponse|JsonResponse
+    {
+        $ruta = $this->fotos->ruta($foto);
+
+        return $ruta === null
+            ? response()->json(['message' => __('solicitudes.errores.foto_de_terreno_ajena')], 404)
+            : response()->file($ruta, ['Cache-Control' => 'private, max-age=600']);
     }
 
     private function usuarioId(): int

@@ -6,6 +6,7 @@ use App\Dominios\Negociacion\Infraestructura\Eloquent\Avance;
 use App\Dominios\Negociacion\Infraestructura\Eloquent\Evidencia;
 use App\Dominios\Negociacion\Infraestructura\Eloquent\Mensaje;
 use App\Dominios\Negociacion\Infraestructura\Eloquent\Oferta;
+use App\Dominios\Negociacion\Infraestructura\Eloquent\PagoConfirmado;
 
 /** Arma las formas de respuesta de la negociación (las que documenta el OpenAPI). */
 final class Presentacion
@@ -74,6 +75,20 @@ final class Presentacion
             'avance_id' => $evidencia->avance_id,
             'url' => "/api/evidencias/{$evidencia->id}/archivo",
             'subida_en' => $evidencia->created_at->toIso8601String(),
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    public static function pago(PagoConfirmado $pago): array
+    {
+        return [
+            'id' => $pago->id,
+            'uuid_cliente' => $pago->uuid_cliente,
+            'solicitud_id' => $pago->solicitud_id,
+            'monto' => $pago->monto,
+            'metodo' => $pago->metodo,
+            'nota' => $pago->nota,
+            'confirmado_en' => $pago->confirmado_en->toIso8601String(),
         ];
     }
 }
