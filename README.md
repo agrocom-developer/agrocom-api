@@ -42,4 +42,5 @@ Una misma persona puede cumplir varios roles con un solo usuario, y opera bajo u
 - **Reglas para agentes de IA**: [`CLAUDE.md`](CLAUDE.md), las invariantes no negociables. Los subagentes especializados viven en [`.claude/agents/`](.claude/agents/).
 - **Flujo de trabajo**: [`CONTRIBUTING.md`](CONTRIBUTING.md). GitFlow simplificado, todo por PR; el CI auto-fusiona con checks en verde (ver `.github/workflows/`).
 - **Entorno local**: `docker compose up -d` levanta PHP, PostgreSQL y Mailpit (ver [`docs/gestion/entornos.md`](docs/gestion/entornos.md)).
+- **Demo para las apps**: `bin/demo up` levanta la API con datos de ejemplo en `0.0.0.0:8000` (ver [`docs/gestion/demo-local.md`](docs/gestion/demo-local.md)).
 - **Contrato de API**: `composer openapi` regenera `docs/api/openapi.yaml`; nunca se edita a mano.
