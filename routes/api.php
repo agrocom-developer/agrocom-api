@@ -18,6 +18,8 @@ use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\SesionCampoContr
 use App\Dominios\Sincronizacion\Infraestructura\Http\Controllers\Api\CatalogoController;
 use App\Dominios\Sincronizacion\Infraestructura\Http\Controllers\Api\SyncController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\ClientesController;
+use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\SolicitudesController;
+use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\TerrenosController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\ZonasController;
 use Illuminate\Support\Facades\Route;
 
@@ -163,6 +165,34 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Cliente: su propio perfil (el alta es pública, arriba).
     Route::get('/clientes/mi', [ClientesController::class, 'show'])->name('api.clientes.mi');
+
+    // Marketplace (ADR 0027): el cliente registra sus terrenos y pide servicios.
+    // Superficie online, sin outbox (ADR 0028). El alcance (solo lo propio, un
+    // id ajeno es 404) lo hacen los casos de uso; el permiso del rol del token
+    // es la puerta.
+    Route::get('/terrenos', [TerrenosController::class, 'index'])->name('api.terrenos.index');
+    Route::post('/terrenos', [TerrenosController::class, 'store'])->name('api.terrenos.store');
+    Route::get('/terrenos/{id}', [TerrenosController::class, 'show'])
+        ->whereNumber('id')
+        ->name('api.terrenos.show');
+    Route::put('/terrenos/{id}', [TerrenosController::class, 'update'])
+        ->whereNumber('id')
+        ->name('api.terrenos.update');
+
+    Route::get('/solicitudes', [SolicitudesController::class, 'index'])->name('api.solicitudes.index');
+    Route::post('/solicitudes', [SolicitudesController::class, 'store'])->name('api.solicitudes.store');
+    Route::get('/solicitudes/{id}', [SolicitudesController::class, 'show'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.show');
+    Route::get('/solicitudes/{id}/estimacion', [SolicitudesController::class, 'estimacion'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.estimacion');
+    Route::post('/solicitudes/{id}/publicar', [SolicitudesController::class, 'publicar'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.publicar');
+    Route::post('/solicitudes/{id}/cancelar', [SolicitudesController::class, 'cancelar'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.cancelar');
 
     // Avisos in-app de la cuenta (ADR 0025): las apps no tienen campana de panel.
     Route::get('/notificaciones', [NotificacionesController::class, 'index'])->name('api.notificaciones.index');

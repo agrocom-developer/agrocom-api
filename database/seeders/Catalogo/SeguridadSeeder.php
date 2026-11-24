@@ -367,6 +367,12 @@ class SeguridadSeeder extends Seeder
         'proveedores.auxiliar.registrar' => 'Registrar a un auxiliar (queda pendiente de aprobación)',
         'proveedores.documento.cargar' => 'Cargar los documentos propios o de lo que uno registró',
         'solicitudes.cliente.gestionar' => 'Gestionar su propio perfil de cliente desde la app',
+        'solicitudes.terreno.gestionar' => 'Registrar y consultar sus propios terrenos desde la app',
+        'solicitudes.solicitud.gestionar' => 'Crear, consultar, publicar y cancelar sus propias solicitudes de servicio desde la app',
+        // Marketplace, panel (ADR 0027): consulta de todas las solicitudes y
+        // cancelación por soporte, con motivo.
+        'solicitudes.solicitud.ver' => 'Ver el listado y la ficha de las solicitudes de servicio',
+        'solicitudes.solicitud.cancelar' => 'Cancelar una solicitud de servicio desde el panel, con motivo',
     ];
 
     /**
@@ -419,6 +425,20 @@ class SeguridadSeeder extends Seeder
     /** @var list<string> */
     private const PERMISOS_CLIENTE = [
         'solicitudes.cliente.gestionar',
+        'solicitudes.terreno.gestionar',
+        'solicitudes.solicitud.gestionar',
+    ];
+
+    /**
+     * Solicitudes de servicio en el panel (ADR 0027): el encargado de
+     * operaciones las consulta y cancela por soporte. El dueño recibe todo el
+     * catálogo.
+     *
+     * @var list<string>
+     */
+    private const PERMISOS_ADMINISTRACION_SOLICITUDES = [
+        'solicitudes.solicitud.ver',
+        'solicitudes.solicitud.cancelar',
     ];
 
     /**
@@ -779,7 +799,7 @@ class SeguridadSeeder extends Seeder
         // encargado_operaciones: todo salvo asignar_rol_dueno.
         $this->asignar(
             $roles['encargado_operaciones'],
-            $permisos->only([...self::PERMISOS_ENCARGADO_OPERACIONES, ...self::PERMISOS_ADMINISTRACION_PROVEEDORES])->values()->all(),
+            $permisos->only([...self::PERMISOS_ENCARGADO_OPERACIONES, ...self::PERMISOS_ADMINISTRACION_PROVEEDORES, ...self::PERMISOS_ADMINISTRACION_SOLICITUDES])->values()->all(),
         );
 
         // Marketplace (ADR 0036): proveedor y cliente operan por la API con lo suyo.

@@ -3,12 +3,13 @@
 namespace App\Dominios\Solicitudes\Infraestructura;
 
 use App\Dominios\Solicitudes\Contratos\LecturaZonas;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 /**
  * Cablea el módulo `Solicitudes` (especificación del marketplace §4.1 y §4.2,
- * ADR 0027 y 0036). Por ahora aloja al cliente y las zonas; la solicitud de
- * servicio y sus terrenos llegan en la tarea de solicitudes.
+ * ADR 0027 y 0036). Aloja al cliente, las zonas, los terrenos y la solicitud
+ * de servicio con su máquina de estados.
  */
 final class SolicitudesServiceProvider extends ServiceProvider
 {
@@ -21,6 +22,6 @@ final class SolicitudesServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Sin vistas ni oyentes todavía.
+        View::addNamespace('solicitudes', app_path('Dominios/Solicitudes/Infraestructura/Http/Views'));
     }
 }
