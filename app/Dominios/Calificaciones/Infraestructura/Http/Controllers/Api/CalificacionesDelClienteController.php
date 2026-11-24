@@ -46,7 +46,7 @@ use OpenApi\Attributes as OA;
                     new OA\Property(property: 'tipo', type: 'string', enum: ['proveedor', 'piloto', 'auxiliar', 'cliente']),
                     new OA\Property(property: 'id', type: 'integer'),
                     new OA\Property(property: 'nombre', type: 'string'),
-                    new OA\Property(property: 'calificacion', ref: '#/components/schemas/Calificacion', nullable: true),
+                    new OA\Property(property: 'calificacion', nullable: true, allOf: [new OA\Schema(ref: '#/components/schemas/Calificacion')]),
                 ],
                 type: 'object',
             ),

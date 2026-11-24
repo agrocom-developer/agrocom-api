@@ -1,6 +1,6 @@
 # ADR 0003 — Backend: monolito modular con Clean Architecture por eje ortogonal a los módulos de dominio
 
-**Estado:** Aceptada · **Fuente:** `docs/legacy/decisiones_arquitectura_v2.md`, sección 3.
+**Estado:** Aceptada
 
 ## Contexto
 
@@ -30,7 +30,7 @@ Inyección de dependencias vía el contenedor de Laravel: cada módulo registra 
 
 ## Consecuencias
 
-- Los límites de módulo coinciden con las fases de desarrollo de `docs/especificacion/especificacion_funcional_tecnica.md` (sección 15), lo que permite congelar las fases 3–8 sin contaminar la ruta crítica.
+- Los límites de módulo coinciden con las fases de desarrollo de `docs/especificacion/marketplace.md`, lo que permite congelar las fases 3–8 sin contaminar la ruta crítica.
 - Toda transición de estado con dinero (ver ADR de máquinas de estado en la especificación) pasa por un servicio de dominio explícito, nunca por un `UPDATE estado = ...` suelto en un controlador.
 
 ## Revisión (27/8/2026) — feature-first vs. layer-first, reapertura formal a pedido del usuario
@@ -64,7 +64,7 @@ Relevado hoy (27/8/2026), con HU-02 en curso:
 - **18 archivos de test** con casos de prueba (`test()`/`it()`: 84 casos en total), de los cuales **15 importan clases de `App\Dominios\*` directamente** (75 ocurrencias de `use App\Dominios...` a reescribir).
 - **`tests/Unit/ArquitecturaModulosTest.php` no admite un simple find-and-replace**: su mecanismo de descubrimiento (`glob($rutaDominios.'/*', GLOB_ONLYDIR)`, "carpeta de primer nivel = módulo") es una asunción estructural, no una ruta de import. Migrar a layer-first obliga a **rediseñar el test**, no a renombrarlo — es el archivo de mayor riesgo de todo el ejercicio porque es el que hoy defiende automáticamente las reglas 1, 2 y 5 del propio ADR 0003.
 - `routes/web.php` y `routes/api.php`: 2 archivos, 3 `use` + referencias inline a controladores.
-- `database/factories/SecUserFactory.php` + `database/seeders/Catalogo/SeguridadSeeder.php` + `database/seeders/Catalogo/SecMenuSeeder.php` + `database/seeders/Demo/NucleoComercialSeeder.php`: 4 archivos, 21 ocurrencias.
+- `database/factories/SecUserFactory.php` + `database/seeders/Catalogo/SeguridadSeeder.php` + `database/seeders/Catalogo/SecMenuSeeder.php` + el seeder de demostración del núcleo comercial: 4 archivos, 21 ocurrencias.
 - **Sin costo**: las 19 migraciones (`database/migrations/`) no referencian namespaces de módulo — usan nombres de tabla planos con prefijo (ADR 0011), indiferentes a este esquema. `composer.json` tampoco cambia: el root PSR-4 sigue siendo `App\` → `app/` en ambos esquemas, solo cambia la ruta relativa dentro de `app/`. Hoy no existe ningún `ServiceProvider` por módulo todavía (solo `App\Providers\AppServiceProvider`), así que esa pieza del ADR queda en cero para este cálculo, en cualquiera de los dos esquemas.
 - **Total: ~70 archivos con ediciones de import/namespace** (49 propios + 15 de test + 2 de rutas + 4 de factories/seeders), más el rediseño no mecánico del test de arquitectura.
 

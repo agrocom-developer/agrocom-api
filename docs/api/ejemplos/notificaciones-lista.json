@@ -1,0 +1,44 @@
+{
+    "operationId": "listarNotificaciones",
+    "descripcion": "Bandeja de notificaciones.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/notificaciones",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "data": [
+                {
+                    "id": 51,
+                    "tipo": "disputa_resuelta",
+                    "titulo": "La disputa del servicio #8 se cerró: parcial. Reembolso: 1000.00.",
+                    "recurso_tipo": "disputa",
+                    "recurso_id": 2,
+                    "leida": false,
+                    "creada_en": "2026-11-24T05:45:32+00:00"
+                },
+                {
+                    "id": 48,
+                    "tipo": "solicitud_completada",
+                    "titulo": "El servicio #8 quedó completado: puedes calificarlo durante 7 días.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 8,
+                    "leida": false,
+                    "creada_en": "2026-11-24T05:45:32+00:00"
+                },
+                {
+                    "id": 31,
+                    "tipo": "solicitud_completada",
+                    "titulo": "El servicio #6 quedó completado: puedes calificarlo durante 7 días.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 6,
+                    "leida": false,
+                    "creada_en": "2026-11-24T05:45:30+00:00"
+                }
+            ],
+            "no_leidas": 3
+        }
+    }
+}

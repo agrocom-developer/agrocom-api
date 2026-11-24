@@ -1,0 +1,15 @@
+{
+    "operationId": "listarTerrenos",
+    "descripcion": "Un rol de proveedor no alcanza los terrenos del cliente.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/terrenos",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 403,
+        "cuerpo": {
+            "message": "No tienes permiso para hacer esto."
+        }
+    }
+}

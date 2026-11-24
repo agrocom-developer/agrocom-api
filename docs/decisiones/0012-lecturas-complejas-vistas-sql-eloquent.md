@@ -4,7 +4,7 @@
 
 ## Contexto
 
-Las tablas transaccionales se mantienen en 3FN (`docs/especificacion/especificacion_funcional_tecnica.md`, sección 4), pero el sistema tiene un lado de lectura pesado: reportes técnico/comercial/de avance, dashboard/estado de resultados y mapa de avance — el módulo Reportes, que es de solo lectura ("Sistema (lectura)", `docs/especificacion/insumos_modelo_datos.md`, sección 1) — y el Portal, que son vistas de solo lectura sobre Comercial/Operaciones/Reportes. Son consultas anidadas multi-tabla que cruzan módulos; armarlas hidratando grafos de modelos Eloquent en memoria paga un costo de objetos que nadie va a mutar, y desnormalizar para evitarlo rompería la 3FN.
+Las tablas transaccionales se mantienen en 3FN (`docs/especificacion/marketplace.md`), pero el sistema tiene un lado de lectura pesado: reportes técnico/comercial/de avance, dashboard/estado de resultados y mapa de avance — el módulo Reportes, que es de solo lectura ("Sistema (lectura)") — y el Portal, que son vistas de solo lectura sobre Comercial/Operaciones/Reportes. Son consultas anidadas multi-tabla que cruzan módulos; armarlas hidratando grafos de modelos Eloquent en memoria paga un costo de objetos que nadie va a mutar, y desnormalizar para evitarlo rompería la 3FN.
 
 A la vez, cualquier estrategia que acerque lógica a la base de datos abre una puerta peligrosa: SQL que escribe se salta la bitácora por observer (invariante 9 de `CLAUDE.md`) y los servicios de máquina de estados (invariante 7), y queda fuera de Pest/Larastan y del diff de los PR.
 

@@ -1,0 +1,25 @@
+{
+    "operationId": "estimarSolicitud",
+    "descripcion": "Tarifa estimada antes de publicar.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/solicitudes/13/estimacion",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "estimacion": {
+                "congelada": false,
+                "tarifa_base_hectarea": "120.0000",
+                "tarifa_hectarea": "120.0000",
+                "hectareas": "100.0000",
+                "subtotal_base": "12000.00",
+                "recargo_urgente": "0.00",
+                "recargo_acceso_dificil": "0.00",
+                "recargo_producto": "0.00",
+                "monto_estimado": "12000.00"
+            }
+        }
+    }
+}

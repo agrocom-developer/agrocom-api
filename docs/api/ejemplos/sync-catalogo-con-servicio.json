@@ -1,0 +1,125 @@
+{
+    "operationId": "obtenerCatalogoSincronizacion",
+    "descripcion": "Pull completo: los servicios aceptados por el equipo del operario aparecen en `servicios_asignados`.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/sync/catalogo",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "personas": [
+                {
+                    "id": 1,
+                    "nombre": "Carlos Ferrufino Vaca",
+                    "rol": "dueno",
+                    "base_id": 1,
+                    "activo": true,
+                    "updated_at": "2026-11-24T05:44:55+00:00"
+                },
+                {
+                    "id": 2,
+                    "nombre": "Marcela Antelo Roca",
+                    "rol": "encargado_operaciones",
+                    "base_id": 1,
+                    "activo": true,
+                    "updated_at": "2026-11-24T05:44:56+00:00"
+                },
+                {
+                    "id": 3,
+                    "nombre": "Abraham Gutiérrez Contreras",
+                    "rol": "jefe_campo",
+                    "base_id": 2,
+                    "activo": true,
+                    "updated_at": "2026-11-24T05:44:57+00:00"
+                },
+                {
+                    "id": 4,
+                    "nombre": "Josué Haenke Paz",
+                    "rol": "piloto",
+                    "base_id": 2,
+                    "activo": true,
+                    "updated_at": "2026-11-24T05:44:58+00:00"
+                },
+                {
+                    "id": 5,
+                    "nombre": "Rodrigo Peña Suárez",
+                    "rol": "piloto",
+                    "base_id": 3,
+                    "activo": true,
+                    "updated_at": "2026-11-24T05:45:00+00:00"
+                },
+                {
+                    "id": 6,
+                    "nombre": "Luis Fernando Mamani Quispe",
+                    "rol": "auxiliar",
+                    "base_id": 2,
+                    "activo": true,
+                    "updated_at": "2026-11-24T05:45:01+00:00"
+                },
+                {
+                    "id": 7,
+                    "nombre": "Wilder Choque Flores",
+                    "rol": "auxiliar",
+                    "base_id": 2,
+                    "activo": true,
+                    "updated_at": "2026-11-24T05:45:03+00:00"
+                },
+                {
+                    "id": 8,
+                    "nombre": "Daniela Rojas Vaca",
+                    "rol": "auxiliar",
+                    "base_id": 3,
+                    "activo": true,
+                    "updated_at": "2026-11-24T05:45:03+00:00"
+                },
+                {
+                    "id": 9,
+                    "nombre": "Pedro Vaca Roca",
+                    "rol": "auxiliar",
+                    "base_id": 1,
+                    "activo": false,
+                    "updated_at": "2026-11-24T05:45:04+00:00"
+                }
+            ],
+            "servicios_asignados": [
+                {
+                    "id": 5,
+                    "uuid_cliente": "0533588b-4abc-5ac3-a105-d524ae9710ae",
+                    "estado": "asignada",
+                    "equipo_id": 1,
+                    "tipo_aplicacion": "herbicida",
+                    "hectareas_solicitadas": "60.0000",
+                    "cultivo": "Soya",
+                    "producto_indicado": "Glifosato 480 SL, 2 L/ha",
+                    "aporta_producto": "cliente",
+                    "ventana_desde": "2026-11-27",
+                    "ventana_hasta": "2026-12-06",
+                    "urgente": false,
+                    "observaciones": null,
+                    "terreno": {
+                        "nombre": "Lote Norte",
+                        "hectareas": "80.0000",
+                        "geometria": null,
+                        "referencias_acceso": "Camino vecinal a 3 km de la ruta principal.",
+                        "colindantes_sensibles": null,
+                        "acceso_dificil": false
+                    },
+                    "updated_at": "2026-11-24T05:45:29+00:00"
+                }
+            ],
+            "servicios_retirados": [],
+            "limites": {
+                "humedad_min_pct": null,
+                "viento_max_kmh": "17.00",
+                "temperatura_max_c": "30.00",
+                "humedad_max_pct": "90.00",
+                "altura_vuelo_m": null,
+                "velocidad_vuelo_kmh": null,
+                "ancho_pasada_m": null
+            },
+            "cursor": "eyJwZXJzb25hcyI6eyJ1IjoiMjAyNi0xMS0yNFQwNTo0NTowNCswMDowMCIsImlkIjo5fSwic2VydmljaW9zX2FzaWduYWRvcyI6eyJ1IjoiMjAyNi0xMS0yNFQwNTo0NToyOSswMDowMCIsImlkIjo1fSwic2VydmljaW9zX3JldGlyYWRvcyI6eyJ1IjoiMjAyNi0xMS0yNFQwNTo0NTo0NCswMDowMCIsImlkIjowfX0="
+        }
+    }
+}

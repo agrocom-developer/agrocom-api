@@ -1,0 +1,39 @@
+{
+    "operationId": "verOferta",
+    "descripcion": "Una oferta tal como la ve el proveedor: sin nombre del terreno ni contacto del cliente.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/ofertas/9",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "oferta": {
+                "id": 9,
+                "solicitud_id": 12,
+                "estado": "ofrecida",
+                "ronda": 4,
+                "grupo": "tercero",
+                "ofrecida_en": "2026-11-24T05:45:47+00:00",
+                "vence_en": "2026-11-24T07:45:47+00:00",
+                "segundos_restantes": 7196,
+                "respondida_en": null,
+                "motivo_rechazo": null,
+                "motivo_retiro": null,
+                "equipo_id": null,
+                "pago_estimado": "6732.00",
+                "distancia_km": null,
+                "servicio": {
+                    "tipo_aplicacion": "herbicida",
+                    "hectareas": "60.0000",
+                    "urgente": false,
+                    "ventana_desde": "2026-11-27",
+                    "ventana_hasta": "2026-12-06",
+                    "zona": null,
+                    "ubicacion_aproximada": null
+                }
+            }
+        }
+    }
+}

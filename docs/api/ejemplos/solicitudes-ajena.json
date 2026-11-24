@@ -1,0 +1,15 @@
+{
+    "operationId": "verSolicitud",
+    "descripcion": "Un id que no es del cliente responde 404, nunca 403 (invariante 5).",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/solicitudes/999999",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 404,
+        "cuerpo": {
+            "message": "La solicitud no existe."
+        }
+    }
+}

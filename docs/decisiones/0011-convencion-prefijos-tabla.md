@@ -1,10 +1,10 @@
 # ADR 0011 — Convención de prefijos de tabla: prefijo de módulo + prefijo global opcional
 
-**Estado:** Aceptada · **Resuelve:** la decisión diferida "mapeo de prefijos de tabla por módulo" registrada en `docs/gestion/estado_proyecto.md` (retomada el 26/8/2026).
+**Estado:** Aceptada · **Resuelve:** la decisión diferida "mapeo de prefijos de tabla por módulo" (retomada el 26/8/2026).
 
 ## Contexto
 
-El nombrado físico de tablas estaba explícitamente diferido: el esquema `sec_*` ya usa prefijo de módulo (ADR 0004), pero el resto de las tablas de la especificación (`docs/especificacion/especificacion_funcional_tecnica.md`, sección 4) aparece sin prefijo (`clientes`, `ordenes_aplicacion`, `trabajos`, `sesiones`). Con las migraciones del núcleo comercial por arrancar (TE-03), la convención tiene que quedar cerrada antes de crear la primera tabla — renombrar después es caro y ruidoso.
+El nombrado físico de tablas estaba explícitamente diferido: el esquema `sec_*` ya usa prefijo de módulo (ADR 0004), pero el resto de las tablas de la especificación (`docs/especificacion/marketplace.md`) aparece sin prefijo (`clientes`, `ordenes_aplicacion`, `trabajos`, `sesiones`). Con las migraciones del núcleo comercial por arrancar (TE-03), la convención tiene que quedar cerrada antes de crear la primera tabla — renombrar después es caro y ruidoso.
 
 Además, la regla 1 del ADR 0003 ("un módulo solo escribe sus propias tablas") hoy solo es visible en el árbol de código; en el esquema de la base no hay nada que diga a qué módulo pertenece cada tabla, ni que haga evidente en una migración que un módulo está creando o alterando una tabla ajena.
 
@@ -31,7 +31,7 @@ Doble nivel, estilo WordPress:
    | Campania | `cpn_` (asignado el 7/9/2026 — ver `cpn_campanias`, ADR 0015: la campaña es un eje transversal con estados y guardas propias, no cabe ni en `Comercial` ni en `Compartido`. **No `cmp_`**: el punto 11 de este mismo ADR ya lo descartó por parecerse a `com_` a simple vista, y el argumento vale igual acá) |
    | Notificaciones | `ntf_` (asignado el 23/9/2026 — ver `ntf_notificaciones`, ADR 0025. **No `not_`**: se lee como la palabra inglesa «not» y no como una abreviatura del módulo) |
 
-   Reportes y Portal no tienen prefijo propio porque no escriben tablas: son módulos de solo lectura (`docs/especificacion/insumos_modelo_datos.md`, sección 1) y sus lecturas van por vistas `vw_*`.
+   Reportes y Portal no tienen prefijo propio porque no escriben tablas: son módulos de solo lectura y sus lecturas van por vistas `vw_*`.
 
 2. **Prefijo global opcional a nivel de conexión**, como el `$table_prefix` de WordPress: `'prefix' => env('DB_TABLE_PREFIX', '')` en la conexión `pgsql` de `config/database.php`. Vacío por defecto; si algún día la base se comparte con otro sistema, se configura `agrocom_` en `.env` sin tocar código ni migraciones.
 
@@ -100,7 +100,7 @@ La base de datos es dedicada al sistema, así que el prefijo global no aporta ho
 - Los nombres físicos con prefijo se incorporan a la sección 4 de la especificación en su consolidación (pendiente de la reunión de cierre) — este ADR no modifica `docs/especificacion/`.
 - Queda abierto el prefijo de las tablas transversales de `Compartido/` (p. ej. la bitácora de auditoría del ADR 0007): se define al implementarlas, ampliando la tabla de este ADR. Todo módulo nuevo registra aquí su prefijo antes de su primera migración. **Resuelto (31/8/2026)**: el prefijo es `plt_` — ver la extensión de esa fecha y la fila agregada en el punto 1.
 - HU-01 crea `app/Dominios/Personal/` (`per_personas`, `per_bases`) y `app/Dominios/Seguridad/` (`sec_*`, ADR 0004) como primeros módulos nuevos desde ADR 0003; ambos quedan automáticamente cubiertos por `tests/Unit/ArquitecturaModulosTest.php` sin editar el test (descubrimiento por carpeta).
-- `tarifa_ha` y `sueldo_mensual` de `personas` quedan fuera de la migración de HU-01 — anotado como pendiente en `docs/gestion/estado_proyecto.md` para que no se pierda antes de implementar devengos/planilla.
+- `tarifa_ha` y `sueldo_mensual` de `personas` quedan fuera de la migración de HU-01 — anotado como pendiente para que no se pierda antes de implementar devengos/planilla.
 - HU-02 crea `sec_user_preferencia` (`tema`, `idioma`) dentro de `app/Dominios/Seguridad/` — no un módulo `Identidad` nuevo (extensión 27/8/2026). Queda pendiente, sin resolver por esta extensión, el destino de `profile_pic_url` e `initial_path` (columnas que ADR 0004 también listaba en `sec_user`) para cuando alguna historia los implemente.
 
 ### Extensión (1/9/2026) — prefijo `dis_` para el módulo `Distribucion`, para HU-20

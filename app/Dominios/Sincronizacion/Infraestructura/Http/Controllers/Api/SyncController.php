@@ -14,11 +14,10 @@ use OpenApi\Attributes as OA;
  */
 #[OA\Tag(
     name: 'Sincronizacion',
-    description: 'Push de escritura offline de la app de campo (espec §2.1, puntos 3 a 5; TE-05). '
-        .'Recorte de alcance de la tarea 09: solo `trabajo` y `sesion` — `incidencia` (tarea 22), '
-        .'`recarga` (tarea 23) y `mezcla` (HU-78, tarea 94, revierte CR-01 del 1/9/2026) se sumaron '
-        .'después como tipos de registro de este mismo endpoint; `acta` tiene sus propios endpoints '
-        .'(`ActaController`), fuera de este push (ver docs/gestion/cola_tareas.md).',
+    description: 'Push de escritura offline de la app de campo (especificación §13): `trabajo`, `sesion`, '
+        .'`condiciones`, `recepcion_caldo`, `mezcla`, `incidencia`, `recarga`, `evidencia_equipo` y los cierres '
+        .'de trabajo y de sesión, todos como tipos de registro de `POST /api/sync`. El acta de conformidad '
+        .'tiene sus propios endpoints (`ActaController`), fuera de este push.',
 )]
 #[OA\Schema(
     schema: 'RegistroSync',
@@ -34,11 +33,11 @@ use OpenApi\Attributes as OA;
         .'rechazan con `trabajo_no_existe_aun`, y `mezcla` con el `trabajo_no_existe` de Mezclas. `recepcion_caldo` '
         .'(HU-10 redefinida por CR-01, tarea 18) registra volumen de caldo entregado por el cliente — '
         .'nunca su composición: eso es lo que ahora registra `mezcla` por separado (ver abajo), no '
-        .'`recepcion_caldo`. `mezcla` (espec §7, HU-78, tarea 94, revierte CR-01 del 1/9/2026) registra '
+        .'`recepcion_caldo`. `mezcla` (especificación §4.6) registra '
         .'qué productos y en qué cantidad se cargaron en el caldo al crear una aplicación — cabecera '
         .'(`trabajo_uuid_cliente`, `hora`) más una lista `productos` (nombre de texto libre, cantidad, '
         .'unidad); nunca dosis por hectárea, orden de incorporación ni compatibilidad entre productos '
-        .'(§7.1 sigue vigente en eso, ver espec §7). `incidencia` (HU-08, tarea '
+        .'(especificación §4.6). `incidencia` (HU-08, tarea '
         .'22) registra un evento puntual de la sesión (caldo/ESC/batería/mecánica/clima/otro) con foto '
         .'SIEMPRE obligatoria, referenciada por `uuid_cliente` a una evidencia ya subida por '
         .'`POST /api/evidencias` con `tipo: foto_incidencia`. `recarga` (HU-13, tarea 23) registra cada '
@@ -76,11 +75,11 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'auxiliar_id', description: '`sesion`, opcional.', type: 'integer', nullable: true, example: null),
         new OA\Property(property: 'dron_id', description: '`sesion`, opcional (HU-07): id de servidor del dron (catálogo mínimo de `Operaciones`, sin pull de catálogo propio todavía).', type: 'integer', nullable: true, example: null),
         new OA\Property(property: 'hectareas_declaradas', description: 'DECIMAL como string (invariante 6). `0` si se omite.', type: 'string', example: '0'),
-        new OA\Property(property: 'hectarea_inicial_acumulada', description: '`sesion`, opcional (HU-07): acumulado de DJI al abrir la sesión, control de doble conteo (espec §5). DECIMAL como string.', type: 'string', nullable: true, example: null),
+        new OA\Property(property: 'hectarea_inicial_acumulada', description: '`sesion`, opcional (HU-07): acumulado de DJI al abrir la sesión, control de doble conteo (especificación §4.6). DECIMAL como string.', type: 'string', nullable: true, example: null),
         new OA\Property(property: 'inicio', type: 'string', format: 'date-time', example: '2026-09-01T10:00:00-04:00'),
         new OA\Property(property: 'fin', type: 'string', format: 'date-time', nullable: true, description: 'Requerido en `cierre_trabajo`/`cierre_sesion`.', example: null),
         new OA\Property(property: 'litros', description: '`recepcion_caldo`: litros entregados por el cliente. DECIMAL como string (invariante 6).', type: 'string', nullable: true, example: null),
-        new OA\Property(property: 'entregado_por', description: '`recepcion_caldo`: quién, del lado del cliente, entregó el caldo (espec §7.2).', type: 'string', nullable: true, example: null),
+        new OA\Property(property: 'entregado_por', description: '`recepcion_caldo`: quién, del lado del cliente, entregó el caldo (especificación §4.6).', type: 'string', nullable: true, example: null),
         new OA\Property(property: 'hora', description: '`recepcion_caldo`: cuándo se entregó. `mezcla`: cuándo se cargó el caldo. `incidencia`: cuándo ocurrió. `recarga`: cuándo ocurrió el ciclo de cambio de batería/recarga de caldo.', type: 'string', format: 'date-time', nullable: true, example: null),
         new OA\Property(
             property: 'productos',
@@ -100,18 +99,18 @@ use OpenApi\Attributes as OA;
                 type: 'object',
             ),
         ),
-        new OA\Property(property: 'litros_consumidos', description: '`cierre_sesion`, opcional: litros de caldo efectivamente rociados en la sesión (espec §7.2). DECIMAL como string.', type: 'string', nullable: true, example: null),
-        new OA\Property(property: 'litros_sobrante', description: '`cierre_trabajo`, opcional: litros que quedaron sin aplicar al cerrar el trabajo (espec §7.2). DECIMAL como string.', type: 'string', nullable: true, example: null),
+        new OA\Property(property: 'litros_consumidos', description: '`cierre_sesion`, opcional: litros de caldo efectivamente rociados en la sesión (especificación §4.6). DECIMAL como string.', type: 'string', nullable: true, example: null),
+        new OA\Property(property: 'litros_sobrante', description: '`cierre_trabajo`, opcional: litros que quedaron sin aplicar al cerrar el trabajo (especificación §4.6). DECIMAL como string.', type: 'string', nullable: true, example: null),
         new OA\Property(
             property: 'evidencia_imagen_campo_uuid_cliente',
-            description: '`cierre_trabajo`: REQUERIDO — `uuid_cliente` de una evidencia ya subida por `POST /api/evidencias` con `tipo: imagen_campo` (espec §9/§10, HU-09). Sin ella, referenciando una evidencia inexistente o de otro tipo, el cierre se rechaza ("sin captura no cierra").',
+            description: '`cierre_trabajo`: REQUERIDO — `uuid_cliente` de una evidencia ya subida por `POST /api/evidencias` con `tipo: imagen_campo` (especificación §4.6). Sin ella, referenciando una evidencia inexistente o de otro tipo, el cierre se rechaza ("sin captura no cierra").',
             type: 'string',
             nullable: true,
             example: null,
         ),
         new OA\Property(
             property: 'motivo_cierre',
-            description: '`cierre_sesion`: catálogo espec §4.3.',
+            description: '`cierre_sesion`: catálogo de la especificación §4.6.',
             type: 'string',
             enum: ['completado', 'relevo_piloto', 'cambio_dron', 'falla_equipo', 'clima', 'fin_jornada', 'otro'],
             nullable: true,
@@ -138,7 +137,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'firma_observacion', description: '`condiciones`: sin evidencia real todavía (TE-07), texto plano.', type: 'string', nullable: true, example: null),
         new OA\Property(
             property: 'tipo_incidencia',
-            description: '`incidencia`: catálogo espec §4.3. Campo separado de `tipo` (que en este objeto es el tipo de REGISTRO del lote) para evitar que ambos colisionen en la misma key.',
+            description: '`incidencia`: catálogo de la especificación §4.6. Campo separado de `tipo` (que en este objeto es el tipo de REGISTRO del lote) para evitar que ambos colisionen en la misma key.',
             type: 'string',
             enum: ['caldo', 'esc', 'bateria', 'mecanica', 'clima', 'otro'],
             nullable: true,
@@ -175,7 +174,7 @@ use OpenApi\Attributes as OA;
 #[OA\Schema(
     schema: 'ResultadoSync',
     title: 'Resultado de aplicar un registro del lote',
-    description: 'Uno por registro de entrada, en el mismo orden (espec §2.1, punto 3).',
+    description: 'Uno por registro de entrada, en el mismo orden (especificación §13).',
     required: ['uuid_cliente', 'tipo', 'estado'],
     properties: [
         new OA\Property(property: 'uuid_cliente', type: 'string', nullable: true, example: 'a1b2c3d4-0000-4000-8000-000000000001'),
@@ -190,7 +189,7 @@ final class SyncController
     #[OA\Post(
         path: '/api/sync',
         operationId: 'sincronizarLote',
-        description: 'Push en lote de la cola offline (espec §2.1). Cada registro se procesa en su propia '
+        description: 'Push en lote de la cola offline (especificación §13). Cada registro se procesa en su propia '
             .'transacción —nunca el lote completo en una— y se responde con uno de tres estados: `aplicado`, '
             .'`duplicado` (reintento del mismo `uuid_cliente` ya aplicado, se trata como éxito) o `rechazado` con '
             .'motivo. El servidor agrupa por tipo y aplica siempre en el orden `trabajo`, `sesion`, '

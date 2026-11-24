@@ -39,8 +39,8 @@ final class VersionController
                 content: new OA\JsonContent(
                     required: ['minima', 'vigente'],
                     properties: [
-                        new OA\Property(property: 'minima', ref: '#/components/schemas/VersionApk', nullable: true),
-                        new OA\Property(property: 'vigente', ref: '#/components/schemas/VersionApk', nullable: true),
+                        new OA\Property(property: 'minima', nullable: true, allOf: [new OA\Schema(ref: '#/components/schemas/VersionApk')]),
+                        new OA\Property(property: 'vigente', nullable: true, allOf: [new OA\Schema(ref: '#/components/schemas/VersionApk')]),
                     ],
                     type: 'object',
                 ),

@@ -43,7 +43,7 @@ on:
 
 (o patrón equivalente `v[0-9]+.[0-9]+.[0-9]+` si se necesita excluir sufijos de forma más estricta que el glob de tags de GitHub Actions). Empujar un tag es un acto deliberado del dueño — decide cuándo una versión pasa a producción beta, no lo decide el ritmo de los merges.
 
-**Nota sobre ADR 0006:** ADR 0006 dice, heredado de `docs/legacy/definicion_tecnica_repos_modulos_stack.md`, que "cada merge a `master` dispara el deploy continuo (staging → producción)". Esa cláusula queda **reemplazada** por el trigger de tag descrito acá: el merge a `master` sigue siendo la integración estable del código, pero ya no dispara despliegue por sí solo. El resto de ADR 0006 (ramas, PRs, convención de commits) no cambia.
+**Nota sobre ADR 0006:** ADR 0006 dice, heredado de la definición técnica inicial, que "cada merge a `master` dispara el deploy continuo (staging → producción)". Esa cláusula queda **reemplazada** por el trigger de tag descrito acá: el merge a `master` sigue siendo la integración estable del código, pero ya no dispara despliegue por sí solo. El resto de ADR 0006 (ramas, PRs, convención de commits) no cambia.
 
 ### 5. Sin dominio ni HTTPS por ahora
 

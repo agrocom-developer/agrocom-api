@@ -62,6 +62,6 @@ Si una librería no cumple las tres, se escribe propio y queda anotado en el PR 
 
 ## Consecuencias
 
-- El panel deja de estar en los ~5–6 días de Filament y pasa a ~10–12 días de construcción mínima — ya contemplado en `docs/gestion/plan_sprints.md`, sin afectar la ruta crítica de las primeras semanas (sync, spike de hardware, app piloto).
+- El panel deja de estar en los ~5–6 días de Filament y pasa a ~10–12 días de construcción mínima — ya contemplado en el plan de sprints, sin afectar la ruta crítica de las primeras semanas (sync, spike de hardware, app piloto).
 - Se necesita, desde el arranque del panel (Sprint 1, ver plan de sprints), el catálogo base de componentes Atomic Design antes de construir la primera pantalla real — es deuda de diseño que hay que pagar temprano para no repetirla en cada CRUD.
 - Cualquier funcionalidad nueva del panel (colas de validación, bandeja de alertas) se construye como componente Livewire dentro de este mismo layout, no como vista aislada.

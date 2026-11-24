@@ -1,0 +1,15 @@
+{
+    "operationId": "verSesionCampo",
+    "descripcion": "Una ruta protegida sin token responde 401.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/auth/sesion",
+        "autenticada": false
+    },
+    "respuesta": {
+        "estado": 401,
+        "cuerpo": {
+            "message": "Tu sesión no es válida o ya venció. Vuelve a ingresar."
+        }
+    }
+}

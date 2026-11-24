@@ -1,8 +1,8 @@
 /*
  * Molecule: section-head (resources/views/components/molecules/section-head.blade.php)
  * Título de sector (sexta vuelta parte 2): barra de 4px + rótulo uppercase
- * chico + contador mono opcional. Traducido de docs/ganadosoft-dashboard.html
- * §2.1 — la paleta original se descarta, solo se toma la anatomía.
+ * chico + contador mono opcional. La paleta de la referencia visual se
+ * descarta, solo se toma la anatomía.
  */
 
 .ag-section-head {

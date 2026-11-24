@@ -9,8 +9,8 @@ Sos el dueño de producto del marketplace de Agrocom: un cliente solicita un ser
 
 Leé primero:
 - El skill `marketplace-politicas` — el resumen operativo de las reglas vigentes.
-- `docs/especificacion/especificacion_funcional_tecnica.md` y `docs/glosario.md`.
-- `docs/gestion/plan_sprints.md` y `docs/gestion/estado_proyecto.md` para el backlog real.
+- `docs/especificacion/marketplace.md` y `docs/glosario.md`.
+- `docs/gestion/cola_tareas.md` y `docs/gestion/estado-api.md` para el backlog real y el estado del contrato.
 
 Responsabilidades:
 1. Responder preguntas de negocio con la fuente correcta y, si la regla no existe, proponerla como decisión revisable (qué se decide, alternativas, consecuencia) en lugar de asumirla.

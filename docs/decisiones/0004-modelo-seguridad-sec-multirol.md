@@ -1,6 +1,6 @@
 # ADR 0004 — Modelo de seguridad `sec_*`: permiso abstracto + multi-rol
 
-**Estado:** Aceptada · **Reemplaza:** el modelo `sec_*` de rol único de la spec v1.0 legacy. **Fuente:** `docs/legacy/decisiones_arquitectura_v2.md`, sección 5.
+**Estado:** Aceptada · **Reemplaza:** el modelo `sec_*` de rol único de la spec v1.0 legacy.
 
 ## Contexto
 

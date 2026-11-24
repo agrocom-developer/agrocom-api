@@ -1,0 +1,32 @@
+{
+    "operationId": "crearTerreno",
+    "descripcion": "Alta de un terreno; las hectáreas viajan como decimal exacto en string.",
+    "peticion": {
+        "metodo": "POST",
+        "ruta": "/api/terrenos",
+        "autenticada": true,
+        "cuerpo": {
+            "nombre": "Lote Los Álamos",
+            "hectareas": "120.5000",
+            "cultivo": "Soya",
+            "referencias_acceso": "Camino vecinal, portón azul a 2 km de la ruta.",
+            "acceso_dificil": false
+        }
+    },
+    "respuesta": {
+        "estado": 201,
+        "cuerpo": {
+            "terreno": {
+                "id": 4,
+                "nombre": "Lote Los Álamos",
+                "hectareas": "120.5000",
+                "cultivo": "Soya",
+                "geometria": null,
+                "referencias_acceso": "Camino vecinal, portón azul a 2 km de la ruta.",
+                "colindantes_sensibles": null,
+                "acceso_dificil": false,
+                "zona_id": null
+            }
+        }
+    }
+}

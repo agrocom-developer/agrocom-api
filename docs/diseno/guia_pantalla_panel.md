@@ -43,9 +43,9 @@ lang/es/<modulo>.php                                todo el copy — cero texto 
 3. **Vista** en `app/Dominios/<Modulo>/Infraestructura/Http/Views/pages/`.
 4. **Namespace de vista** — solo la primera vez que el módulo tiene una pantalla. En su `ServiceProvider::boot()`:
    ```php
-   View::addNamespace('comercial', app_path('Dominios/Comercial/Infraestructura/Http/Views'));
+   View::addNamespace('proveedores', app_path('Dominios/Proveedores/Infraestructura/Http/Views'));
    ```
-   y se consume como `view('comercial::pages.clientes.index')`. Namespace, no `View::addLocation`: evita que dos módulos con una `index.blade.php` colisionen.
+   y se consume como `view('proveedores::pages.pilotos.index')`. Namespace, no `View::addLocation`: evita que dos módulos con una `index.blade.php` colisionen.
 5. **Copy** en `lang/es/<modulo>.php`. **Ítem de menú** en `SecMenuSeeder`, con `ruta` y `codigoPermiso`.
 6. **CSS de página**, si hace falta, en `resources/css/pages/<pantalla>.css` + su `@import` en `pages/index.css`. Si el patrón se repite en dos pantallas, ya no es CSS de página: es un componente del catálogo y se lo pedís a `design-ui`.
 

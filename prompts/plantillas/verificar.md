@@ -17,7 +17,7 @@ Cargá los skills `verificacion` y los que correspondan al área que se tocó
    hallazgos.
 
    Una tarea del ciclo entrega **una HU o TE entera** de
-   `docs/gestion/plan_sprints.md`. Buscá ahí la historia que el prompt dice
+   `docs/gestion/cola_tareas.md`. Buscá ahí la historia que el prompt dice
    cubrir y andá criterio de aceptación por criterio de aceptación: si alguno
    quedó sin implementar o sin test, eso es alcance de menos y es `RECHAZADO`,
    por más que `./bin/verify` esté en verde. El único recorte admisible es el

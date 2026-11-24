@@ -1,0 +1,25 @@
+{
+    "operationId": "emitirTokenDispositivo",
+    "descripcion": "Credenciales incorrectas.",
+    "peticion": {
+        "metodo": "POST",
+        "ruta": "/api/auth/token",
+        "autenticada": false,
+        "cuerpo": {
+            "username": "rodrigo.suarez",
+            "password": "incorrecta",
+            "uuid_dispositivo": "6f1d0a2e-1f34-4c9f-9a8b-2b7c1d5e0f31"
+        }
+    },
+    "respuesta": {
+        "estado": 422,
+        "cuerpo": {
+            "message": "Las credenciales no coinciden con ningún registro.",
+            "errors": {
+                "username": [
+                    "Las credenciales no coinciden con ningún registro."
+                ]
+            }
+        }
+    }
+}

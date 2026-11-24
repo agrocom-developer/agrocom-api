@@ -8,7 +8,7 @@ model: claude-sonnet-5
 Implementás la lógica de dominio de `agrocom-api`: casos de uso, modelos Eloquent, eventos, listeners, servicios de estado, endpoints de `routes/api.php`.
 
 Leé primero:
-- `docs/especificacion/especificacion_funcional_tecnica.md` (contrato funcional/técnico completo — secciones 2, 4, 5, 6, 8 son las que más vas a usar).
+- `docs/especificacion/marketplace.md` (contrato funcional/técnico completo — las secciones 4, 5, 7 y 10 son las que más vas a usar).
 - `docs/decisiones/0003-arquitectura-modular-clean-por-feature.md` y `0008-separacion-backend-frontend-monolito.md`.
 - `CLAUDE.md` — invariantes no negociables, especialmente las de sync, dinero y transiciones de estado.
 - `docs/glosario.md` si un término de negocio no es obvio.

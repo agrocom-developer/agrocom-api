@@ -1,0 +1,30 @@
+{
+    "operationId": "listarCalificacionesRecibidas",
+    "descripcion": "Calificaciones que recibe el proveedor.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/calificaciones/recibidas",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "calificaciones": [],
+            "pagina": 1,
+            "paginas": 1,
+            "total": 0,
+            "resumen": {
+                "calificacion_promedio": "0.00",
+                "calificaciones_conteo": 0,
+                "por_estrellas": {
+                    "1": 0,
+                    "2": 0,
+                    "3": 0,
+                    "4": 0,
+                    "5": 0
+                },
+                "etiquetas": []
+            }
+        }
+    }
+}

@@ -1073,15 +1073,15 @@ paths:
                   - vigente
                 properties:
                   minima:
-                    oneOf:
+                    nullable: true
+                    allOf:
                       -
                         $ref: '#/components/schemas/VersionApk'
-                    nullable: true
                   vigente:
-                    oneOf:
+                    nullable: true
+                    allOf:
                       -
                         $ref: '#/components/schemas/VersionApk'
-                    nullable: true
                 type: object
   /api/disponibilidad:
     get:
@@ -1650,7 +1650,7 @@ paths:
       tags:
         - Operaciones
       summary: 'Genera el acta de conformidad de un trabajo'
-      description: 'Genera el acta de conformidad de un trabajo `cerrado` con todas sus sesiones vigentes `validado` (espec §4.3/§17). Idempotente por trabajo, no por `uuid_cliente`: un segundo pedido sobre un trabajo que ya tiene acta devuelve la MISMA fila y el MISMO PDF, sin regenerar nada. `estado: rechazado` cuando el trabajo no cumple las condiciones — nunca 422 de negocio.'
+      description: 'Genera el acta de conformidad de un trabajo `cerrado` con todas sus sesiones vigentes `validado` (especificación §3). Idempotente por trabajo, no por `uuid_cliente`: un segundo pedido sobre un trabajo que ya tiene acta devuelve la MISMA fila y el MISMO PDF, sin regenerar nada. `estado: rechazado` cuando el trabajo no cumple las condiciones — nunca 422 de negocio.'
       operationId: generarActaTrabajo
       parameters:
         -
@@ -2727,7 +2727,7 @@ paths:
       tags:
         - Sincronizacion
       summary: 'Push de sincronización en lote (trabajo, sesión)'
-      description: 'Push en lote de la cola offline (espec §2.1). Cada registro se procesa en su propia transacción —nunca el lote completo en una— y se responde con uno de tres estados: `aplicado`, `duplicado` (reintento del mismo `uuid_cliente` ya aplicado, se trata como éxito) o `rechazado` con motivo. El servidor agrupa por tipo y aplica siempre en el orden `trabajo`, `sesion`, `cierre_trabajo`, `cierre_sesion`, sin importar el orden del arreglo recibido, así que un registro puede referenciar otro del mismo lote aunque venga antes en el arreglo.'
+      description: 'Push en lote de la cola offline (especificación §13). Cada registro se procesa en su propia transacción —nunca el lote completo en una— y se responde con uno de tres estados: `aplicado`, `duplicado` (reintento del mismo `uuid_cliente` ya aplicado, se trata como éxito) o `rechazado` con motivo. El servidor agrupa por tipo y aplica siempre en el orden `trabajo`, `sesion`, `cierre_trabajo`, `cierre_sesion`, sin importar el orden del arreglo recibido, así que un registro puede referenciar otro del mismo lote aunque venga antes en el arreglo.'
       operationId: sincronizarLote
       requestBody:
         required: true
@@ -3289,36 +3289,7 @@ paths:
         content:
           application/json:
             schema:
-              required:
-                - nombre
-                - hectareas
-              properties:
-                nombre:
-                  type: string
-                  example: 'Lote Norte'
-                hectareas:
-                  type: string
-                  example: '120.5'
-                cultivo:
-                  type: string
-                  nullable: true
-                geometria:
-                  description: 'Polígono GeoJSON (`Polygon` o `MultiPolygon`).'
-                  type: object
-                  nullable: true
-                referencias_acceso:
-                  type: string
-                  nullable: true
-                colindantes_sensibles:
-                  type: string
-                  nullable: true
-                acceso_dificil:
-                  type: boolean
-                  nullable: true
-                zona_id:
-                  type: integer
-                  nullable: true
-              type: object
+              $ref: '#/components/schemas/TerrenoEntrada'
       responses:
         201:
           description: 'Terreno creado.'
@@ -3396,7 +3367,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Terreno'
+              $ref: '#/components/schemas/TerrenoEntrada'
       responses:
         200:
           description: 'Terreno actualizado.'
@@ -3611,10 +3582,10 @@ components:
               nombre:
                 type: string
               calificacion:
-                oneOf:
+                nullable: true
+                allOf:
                   -
                     $ref: '#/components/schemas/Calificacion'
-                nullable: true
             type: object
         etiquetas:
           description: 'Catálogo cerrado de etiquetas que puedes usar.'
@@ -4377,7 +4348,7 @@ components:
       type: object
     PersonaCatalogo:
       title: 'Persona operativa (catálogo)'
-      description: 'Persona vigente (no borrada) para el pull de catálogo (espec §4.2).'
+      description: 'Persona vigente (no borrada) para el pull de catálogo (especificación §4.3).'
       required:
         - id
         - nombre
@@ -4548,7 +4519,7 @@ components:
       type: object
     LimitesCondicionesCatalogo:
       title: 'Límites de condiciones de vuelo (catálogo)'
-      description: 'Los límites con los que el servidor valida el registro `condiciones` de `POST /api/sync` (espec §9.2); la app, que es offline, los muestra para que lo que ve y lo que se exige nunca se contradigan. DECIMAL como string (invariante 6). `viento_max_kmh`, `temperatura_max_c` y `humedad_max_pct` siempre traen valor; los demás son `null` si el sistema no fija un límite, y la app no debe aplicarlo.'
+      description: 'Los límites con los que el servidor valida el registro `condiciones` de `POST /api/sync` (especificación §9.2); la app, que es offline, los muestra para que lo que ve y lo que se exige nunca se contradigan. DECIMAL como string (invariante 6). `viento_max_kmh`, `temperatura_max_c` y `humedad_max_pct` siempre traen valor; los demás son `null` si el sistema no fija un límite, y la app no debe aplicarlo.'
       required:
         - viento_max_kmh
         - temperatura_max_c
@@ -4578,7 +4549,7 @@ components:
       type: object
     RegistroSync:
       title: 'Registro de entrada del lote de sync'
-      description: 'Un elemento del arreglo `registros`. La forma exacta de los campos depende de `tipo`; un registro con datos incompletos o inválidos se responde `rechazado` sin frenar el resto del lote — nunca un 422 para el lote completo. `cierre_trabajo`/`cierre_sesion` (HU-05) MUTAN una fila existente en vez de crear una nueva: `uuid_cliente` identifica el EVENTO de cierre — distinto del `uuid_cliente` de apertura del trabajo/sesión que referencian. Trabajo dado de baja por el panel mientras se volaba (2/10/2026): lo ya en curso se registra igual — `cierre_trabajo`, y `cierre_sesion`/`condiciones`/`incidencia`/`recarga` de una sesión que ya existía, con los límites con los que el equipo salió —, el trabajo sigue dado de baja; nada nuevo: `sesion`, `recepcion_caldo` y `evidencia_equipo` sobre ese trabajo se rechazan con `trabajo_no_existe_aun`, y `mezcla` con el `trabajo_no_existe` de Mezclas. `recepcion_caldo` (HU-10 redefinida por CR-01, tarea 18) registra volumen de caldo entregado por el cliente — nunca su composición: eso es lo que ahora registra `mezcla` por separado (ver abajo), no `recepcion_caldo`. `mezcla` (espec §7, HU-78, tarea 94, revierte CR-01 del 1/9/2026) registra qué productos y en qué cantidad se cargaron en el caldo al crear una aplicación — cabecera (`trabajo_uuid_cliente`, `hora`) más una lista `productos` (nombre de texto libre, cantidad, unidad); nunca dosis por hectárea, orden de incorporación ni compatibilidad entre productos (§7.1 sigue vigente en eso, ver espec §7). `incidencia` (HU-08, tarea 22) registra un evento puntual de la sesión (caldo/ESC/batería/mecánica/clima/otro) con foto SIEMPRE obligatoria, referenciada por `uuid_cliente` a una evidencia ya subida por `POST /api/evidencias` con `tipo: foto_incidencia`. `recarga` (HU-13, tarea 23) registra cada ciclo de cambio de batería/recarga de caldo durante el vuelo — temperatura de batería > 50°C se persiste con `alerta_temperatura = true` sin rechazar el registro; independiente del evento `mezcla` (sin vínculo entre ambos en esta tarea). `trabajo` abre la ejecución de una solicitud de servicio aceptada: referencia la `solicitud_id` del servicio asignado del catálogo (ADR 0037) y se rechaza si la solicitud no tiene equipo asignado o ya terminó; al abrirse el primero, la solicitud pasa a `en_ejecucion`, y al cerrarse los trabajos que cubren lo pedido, a `ejecutada`. `evidencia_equipo` (HU-80, tarea 86) registra el "Reporte de Equipos": horas de vuelo declaradas del dron y las tres fotos de chequeo (control, ciclo de batería y balanceo, dron limpio), cada una referenciada por `uuid_cliente` a una evidencia ya subida por `POST /api/evidencias` — las tres son obligatorias, falta cualquiera y se rechaza el registro completo.'
+      description: 'Un elemento del arreglo `registros`. La forma exacta de los campos depende de `tipo`; un registro con datos incompletos o inválidos se responde `rechazado` sin frenar el resto del lote — nunca un 422 para el lote completo. `cierre_trabajo`/`cierre_sesion` (HU-05) MUTAN una fila existente en vez de crear una nueva: `uuid_cliente` identifica el EVENTO de cierre — distinto del `uuid_cliente` de apertura del trabajo/sesión que referencian. Trabajo dado de baja por el panel mientras se volaba (2/10/2026): lo ya en curso se registra igual — `cierre_trabajo`, y `cierre_sesion`/`condiciones`/`incidencia`/`recarga` de una sesión que ya existía, con los límites con los que el equipo salió —, el trabajo sigue dado de baja; nada nuevo: `sesion`, `recepcion_caldo` y `evidencia_equipo` sobre ese trabajo se rechazan con `trabajo_no_existe_aun`, y `mezcla` con el `trabajo_no_existe` de Mezclas. `recepcion_caldo` (HU-10 redefinida por CR-01, tarea 18) registra volumen de caldo entregado por el cliente — nunca su composición: eso es lo que ahora registra `mezcla` por separado (ver abajo), no `recepcion_caldo`. `mezcla` (especificación §4.6) registra qué productos y en qué cantidad se cargaron en el caldo al crear una aplicación — cabecera (`trabajo_uuid_cliente`, `hora`) más una lista `productos` (nombre de texto libre, cantidad, unidad); nunca dosis por hectárea, orden de incorporación ni compatibilidad entre productos (especificación §4.6). `incidencia` (HU-08, tarea 22) registra un evento puntual de la sesión (caldo/ESC/batería/mecánica/clima/otro) con foto SIEMPRE obligatoria, referenciada por `uuid_cliente` a una evidencia ya subida por `POST /api/evidencias` con `tipo: foto_incidencia`. `recarga` (HU-13, tarea 23) registra cada ciclo de cambio de batería/recarga de caldo durante el vuelo — temperatura de batería > 50°C se persiste con `alerta_temperatura = true` sin rechazar el registro; independiente del evento `mezcla` (sin vínculo entre ambos en esta tarea). `trabajo` abre la ejecución de una solicitud de servicio aceptada: referencia la `solicitud_id` del servicio asignado del catálogo (ADR 0037) y se rechaza si la solicitud no tiene equipo asignado o ya terminó; al abrirse el primero, la solicitud pasa a `en_ejecucion`, y al cerrarse los trabajos que cubren lo pedido, a `ejecutada`. `evidencia_equipo` (HU-80, tarea 86) registra el "Reporte de Equipos": horas de vuelo declaradas del dron y las tres fotos de chequeo (control, ciclo de batería y balanceo, dron limpio), cada una referenciada por `uuid_cliente` a una evidencia ya subida por `POST /api/evidencias` — las tres son obligatorias, falta cualquiera y se rechaza el registro completo.'
       required:
         - tipo
         - uuid_cliente
@@ -4636,7 +4607,7 @@ components:
           type: string
           example: '0'
         hectarea_inicial_acumulada:
-          description: '`sesion`, opcional (HU-07): acumulado de DJI al abrir la sesión, control de doble conteo (espec §5). DECIMAL como string.'
+          description: '`sesion`, opcional (HU-07): acumulado de DJI al abrir la sesión, control de doble conteo (especificación §4.6). DECIMAL como string.'
           type: string
           example: null
           nullable: true
@@ -4656,7 +4627,7 @@ components:
           example: null
           nullable: true
         entregado_por:
-          description: '`recepcion_caldo`: quién, del lado del cliente, entregó el caldo (espec §7.2).'
+          description: '`recepcion_caldo`: quién, del lado del cliente, entregó el caldo (especificación §4.6).'
           type: string
           example: null
           nullable: true
@@ -4692,22 +4663,22 @@ components:
             type: object
           nullable: true
         litros_consumidos:
-          description: '`cierre_sesion`, opcional: litros de caldo efectivamente rociados en la sesión (espec §7.2). DECIMAL como string.'
+          description: '`cierre_sesion`, opcional: litros de caldo efectivamente rociados en la sesión (especificación §4.6). DECIMAL como string.'
           type: string
           example: null
           nullable: true
         litros_sobrante:
-          description: '`cierre_trabajo`, opcional: litros que quedaron sin aplicar al cerrar el trabajo (espec §7.2). DECIMAL como string.'
+          description: '`cierre_trabajo`, opcional: litros que quedaron sin aplicar al cerrar el trabajo (especificación §4.6). DECIMAL como string.'
           type: string
           example: null
           nullable: true
         evidencia_imagen_campo_uuid_cliente:
-          description: '`cierre_trabajo`: REQUERIDO — `uuid_cliente` de una evidencia ya subida por `POST /api/evidencias` con `tipo: imagen_campo` (espec §9/§10, HU-09). Sin ella, referenciando una evidencia inexistente o de otro tipo, el cierre se rechaza ("sin captura no cierra").'
+          description: '`cierre_trabajo`: REQUERIDO — `uuid_cliente` de una evidencia ya subida por `POST /api/evidencias` con `tipo: imagen_campo` (especificación §4.6). Sin ella, referenciando una evidencia inexistente o de otro tipo, el cierre se rechaza ("sin captura no cierra").'
           type: string
           example: null
           nullable: true
         motivo_cierre:
-          description: '`cierre_sesion`: catálogo espec §4.3.'
+          description: '`cierre_sesion`: catálogo de la especificación §4.6.'
           type: string
           example: null
           nullable: true
@@ -4749,7 +4720,7 @@ components:
           example: null
           nullable: true
         tipo_incidencia:
-          description: '`incidencia`: catálogo espec §4.3. Campo separado de `tipo` (que en este objeto es el tipo de REGISTRO del lote) para evitar que ambos colisionen en la misma key.'
+          description: '`incidencia`: catálogo de la especificación §4.6. Campo separado de `tipo` (que en este objeto es el tipo de REGISTRO del lote) para evitar que ambos colisionen en la misma key.'
           type: string
           example: null
           nullable: true
@@ -4830,7 +4801,7 @@ components:
       type: object
     ResultadoSync:
       title: 'Resultado de aplicar un registro del lote'
-      description: 'Uno por registro de entrada, en el mismo orden (espec §2.1, punto 3).'
+      description: 'Uno por registro de entrada, en el mismo orden (especificación §13).'
       required:
         - uuid_cliente
         - tipo
@@ -4897,6 +4868,40 @@ components:
         monto_estimado:
           type: string
           example: '11520.00'
+      type: object
+    TerrenoEntrada:
+      title: 'Terreno (datos que envía el cliente)'
+      description: 'Cuerpo de `POST /api/terrenos` y de `PUT /api/terrenos/{id}`: solo lo que el cliente escribe, sin `id`. Las hectáreas viajan como número o cadena decimal con hasta cuatro decimales (invariante 6).'
+      required:
+        - nombre
+        - hectareas
+      properties:
+        nombre:
+          description: "Terrenos del cliente (especificación §10.1, `GET/POST/PUT /terrenos`).\nAdaptador delgado (ADR 0008): la regla y el alcance (solo lo propio, un id\najeno es 404) viven en {@see GestionarTerrenos}."
+          type: string
+          example: 'Lote Norte'
+        hectareas:
+          type: string
+          example: '120.5'
+        cultivo:
+          type: string
+          nullable: true
+        geometria:
+          description: 'Polígono GeoJSON (`Polygon` o `MultiPolygon`).'
+          type: object
+          nullable: true
+        referencias_acceso:
+          type: string
+          nullable: true
+        colindantes_sensibles:
+          type: string
+          nullable: true
+        acceso_dificil:
+          type: boolean
+          nullable: true
+        zona_id:
+          type: integer
+          nullable: true
       type: object
     Cliente:
       title: Cliente
@@ -5164,10 +5169,10 @@ tags:
     description: 'Registro, personal, documentos y reenvío a revisión de proveedores del marketplace (ADR 0028, 0032).'
   -
     name: Seguridad
-    description: 'Sesión de la app de campo por token de dispositivo (espec §4.6, HU-03).'
+    description: 'Sesión de la app de campo por token de dispositivo (especificación §13).'
   -
     name: Sincronizacion
-    description: 'Push de escritura offline de la app de campo (espec §2.1, puntos 3 a 5; TE-05). Recorte de alcance de la tarea 09: solo `trabajo` y `sesion` — `incidencia` (tarea 22), `recarga` (tarea 23) y `mezcla` (HU-78, tarea 94, revierte CR-01 del 1/9/2026) se sumaron después como tipos de registro de este mismo endpoint; `acta` tiene sus propios endpoints (`ActaController`), fuera de este push (ver docs/gestion/cola_tareas.md).'
+    description: 'Push de escritura offline de la app de campo (especificación §13): `trabajo`, `sesion`, `condiciones`, `recepcion_caldo`, `mezcla`, `incidencia`, `recarga`, `evidencia_equipo` y los cierres de trabajo y de sesión, todos como tipos de registro de `POST /api/sync`. El acta de conformidad tiene sus propios endpoints (`ActaController`), fuera de este push.'
   -
     name: Clientes
     description: 'Registro y perfil del cliente del marketplace, que solicita el servicio y califica al proveedor (ADR 0027).'

@@ -1,0 +1,18 @@
+{
+    "operationId": "sincronizarLote",
+    "descripcion": "Sin token el lote no se procesa.",
+    "peticion": {
+        "metodo": "POST",
+        "ruta": "/api/sync",
+        "autenticada": false,
+        "cuerpo": {
+            "registros": []
+        }
+    },
+    "respuesta": {
+        "estado": 401,
+        "cuerpo": {
+            "message": "Tu sesión no es válida o ya venció. Vuelve a ingresar."
+        }
+    }
+}

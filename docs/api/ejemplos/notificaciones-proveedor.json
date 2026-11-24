@@ -1,0 +1,80 @@
+{
+    "operationId": "listarNotificaciones",
+    "descripcion": "Bandeja del proveedor.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/notificaciones",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "data": [
+                {
+                    "id": 68,
+                    "tipo": "oferta_creada",
+                    "titulo": "Nueva oferta de 60,00 ha (solicitud #12). Respóndela antes de las 07:45.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 12,
+                    "leida": false,
+                    "creada_en": "2026-11-24T05:45:47+00:00"
+                },
+                {
+                    "id": 65,
+                    "tipo": "oferta_creada",
+                    "titulo": "Nueva oferta de 60,00 ha (solicitud #10). Respóndela antes de las 07:45.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 10,
+                    "leida": false,
+                    "creada_en": "2026-11-24T05:45:46+00:00"
+                },
+                {
+                    "id": 62,
+                    "tipo": "oferta_creada",
+                    "titulo": "Nueva oferta de 60,00 ha (solicitud #2). Respóndela antes de las 07:45.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 2,
+                    "leida": false,
+                    "creada_en": "2026-11-24T05:45:45+00:00"
+                },
+                {
+                    "id": 9,
+                    "tipo": "sujeto_aprobado",
+                    "titulo": "El auxiliar «Esteban Choque Ramos» fue aprobado.",
+                    "recurso_tipo": "auxiliar",
+                    "recurso_id": 2,
+                    "leida": false,
+                    "creada_en": "2026-11-24T05:45:15+00:00"
+                },
+                {
+                    "id": 8,
+                    "tipo": "sujeto_aprobado",
+                    "titulo": "El dron «DJI Agras T40 (1WNDH2K00A0417)» fue aprobado.",
+                    "recurso_tipo": "dron",
+                    "recurso_id": 4,
+                    "leida": false,
+                    "creada_en": "2026-11-24T05:45:13+00:00"
+                },
+                {
+                    "id": 7,
+                    "tipo": "sujeto_aprobado",
+                    "titulo": "El piloto «Carlos Mamani Quispe» fue aprobado.",
+                    "recurso_tipo": "piloto",
+                    "recurso_id": 3,
+                    "leida": false,
+                    "creada_en": "2026-11-24T05:45:13+00:00"
+                },
+                {
+                    "id": 6,
+                    "tipo": "sujeto_aprobado",
+                    "titulo": "El proveedor «Mamani Agroservicios» fue aprobado.",
+                    "recurso_tipo": "proveedor",
+                    "recurso_id": 2,
+                    "leida": false,
+                    "creada_en": "2026-11-24T05:45:13+00:00"
+                }
+            ],
+            "no_leidas": 7
+        }
+    }
+}

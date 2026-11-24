@@ -1,0 +1,27 @@
+{
+    "operationId": "listarPilotos",
+    "descripcion": "Pilotos del proveedor.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/proveedores/pilotos",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "data": [
+                {
+                    "id": 3,
+                    "proveedor_id": 2,
+                    "usuario_id": 12,
+                    "nombre": "Carlos Mamani Quispe",
+                    "licencia_numero": "RPA-2291",
+                    "licencia_vence": "2028-05-24",
+                    "categoria_habilitacion": "RPAS agrícola",
+                    "estado": "aprobado",
+                    "motivo_estado": null
+                }
+            ]
+        }
+    }
+}

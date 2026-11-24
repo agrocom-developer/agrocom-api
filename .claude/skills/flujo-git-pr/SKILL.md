@@ -27,7 +27,7 @@ Nunca de la actividad ni del número de tarea (`feature/implementar-tests`,
 ## Un PR = una HU, con varios commits adentro
 
 La unidad de entrega es la **historia de usuario o tarea técnica completa** de
-`docs/gestion/plan_sprints.md`, con todos sus criterios de aceptación cubiertos.
+`docs/gestion/cola_tareas.md`, con todos sus criterios de aceptación cubiertos.
 No el commit, y no el pedazo que entró en una sesión de trabajo. Mientras se
 trabaje sobre el mismo objetivo se agregan commits a la misma rama y al mismo PR
 — **nunca un PR por commit**. Un PR nuevo se abre cuando cambia el objetivo.

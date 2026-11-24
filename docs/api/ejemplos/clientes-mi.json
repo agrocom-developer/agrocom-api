@@ -1,0 +1,26 @@
+{
+    "operationId": "verMiCliente",
+    "descripcion": "Perfil del cliente de la cuenta.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/clientes/mi",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "cliente": {
+                "id": 1,
+                "tipo": "empresa",
+                "razon_social": "Agropecuaria San Rafael SRL",
+                "documento_fiscal": "1029384027",
+                "telefono": "+591 76543210",
+                "estado": "activo",
+                "calificacion_promedio": "4.00",
+                "calificaciones_conteo": 1,
+                "publicacion_limitada": false,
+                "aviso_calificacion": false
+            }
+        }
+    }
+}

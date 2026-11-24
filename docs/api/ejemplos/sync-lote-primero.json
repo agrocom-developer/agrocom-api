@@ -1,0 +1,73 @@
+{
+    "operationId": "sincronizarLote",
+    "descripcion": "Lote en desorden: el servidor aplica en orden causal (trabajo, sesión, condiciones, cierre) sin importar el orden del arreglo.",
+    "peticion": {
+        "metodo": "POST",
+        "ruta": "/api/sync",
+        "autenticada": true,
+        "cuerpo": {
+            "registros": [
+                {
+                    "tipo": "cierre_sesion",
+                    "uuid_cliente": "0a1b2c3d-1111-4a11-8a11-000000000004",
+                    "sesion_uuid_cliente": "0a1b2c3d-1111-4a11-8a11-000000000002",
+                    "fin": "2026-11-24T11:40:00-04:00",
+                    "hectareas_declaradas": "42.5000",
+                    "litros_consumidos": "510.000",
+                    "motivo_cierre": "completado"
+                },
+                {
+                    "tipo": "trabajo",
+                    "uuid_cliente": "0a1b2c3d-1111-4a11-8a11-000000000001",
+                    "solicitud_id": 5,
+                    "inicio": "2026-11-24T08:00:00-04:00"
+                },
+                {
+                    "tipo": "condiciones",
+                    "uuid_cliente": "0a1b2c3d-1111-4a11-8a11-000000000003",
+                    "sesion_uuid_cliente": "0a1b2c3d-1111-4a11-8a11-000000000002",
+                    "momento": "inicio_sesion",
+                    "viento_kmh": "9.00",
+                    "temperatura_c": "24.00",
+                    "humedad_pct": "62.00"
+                },
+                {
+                    "tipo": "sesion",
+                    "uuid_cliente": "0a1b2c3d-1111-4a11-8a11-000000000002",
+                    "trabajo_uuid_cliente": "0a1b2c3d-1111-4a11-8a11-000000000001",
+                    "secuencia": 1,
+                    "piloto_id": 4,
+                    "inicio": "2026-11-24T08:05:00-04:00",
+                    "hectareas_declaradas": "0"
+                }
+            ]
+        }
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "resultados": [
+                {
+                    "uuid_cliente": "0a1b2c3d-1111-4a11-8a11-000000000004",
+                    "tipo": "cierre_sesion",
+                    "estado": "aplicado"
+                },
+                {
+                    "uuid_cliente": "0a1b2c3d-1111-4a11-8a11-000000000001",
+                    "tipo": "trabajo",
+                    "estado": "aplicado"
+                },
+                {
+                    "uuid_cliente": "0a1b2c3d-1111-4a11-8a11-000000000003",
+                    "tipo": "condiciones",
+                    "estado": "aplicado"
+                },
+                {
+                    "uuid_cliente": "0a1b2c3d-1111-4a11-8a11-000000000002",
+                    "tipo": "sesion",
+                    "estado": "aplicado"
+                }
+            ]
+        }
+    }
+}

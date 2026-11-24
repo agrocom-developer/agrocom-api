@@ -13,8 +13,7 @@ use Illuminate\Support\Facades\Auth;
  *
  * Guarda (invariante 2 de CLAUDE.md): un trabajo `validado` (TODAS sus
  * sesiones vigentes ya pasaron por HU-14) nunca se elimina — criterio por
- * defecto de `docs/negocio/observaciones_operaciones_comercial_2026-09-13.md`
- * §4.4. Un trabajo `abierto` o `cerrado` sin validar sí se da de baja
+ * defecto: eliminar solo antes de validar. Un trabajo `abierto` o `cerrado` sin validar sí se da de baja
  * libremente: sus sesiones (si las tiene) quedan colgando de un trabajo
  * borrado lógicamente, mismo criterio de soft delete que el resto del panel.
  *

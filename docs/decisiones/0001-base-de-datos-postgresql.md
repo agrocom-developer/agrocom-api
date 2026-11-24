@@ -20,4 +20,4 @@ El costo de este cambio es bajo: con Eloquent, el 95% del código no sabe qué m
 ## Consecuencias
 
 - Sin PostGIS en v1 — la geometría de los lotes se guarda y se dibuja, no se consulta espacialmente.
-- El protocolo de sync (`docs/especificacion/especificacion_funcional_tecnica.md`, sección 2) depende de `UNIQUE (uuid_cliente)` por tabla operativa como mecanismo real de idempotencia, no solo como validación de aplicación.
+- El protocolo de sync (`docs/especificacion/marketplace.md`) depende de `UNIQUE (uuid_cliente)` por tabla operativa como mecanismo real de idempotencia, no solo como validación de aplicación.

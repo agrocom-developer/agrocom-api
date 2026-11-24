@@ -1,0 +1,40 @@
+{
+    "operationId": "listarDocumentosProveedor",
+    "descripcion": "Documentos del proveedor: se consultan por sujeto.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/proveedores/documentos?sujeto_tipo=proveedor&sujeto_id=2",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "data": [
+                {
+                    "id": 21,
+                    "sujeto_tipo": "proveedor",
+                    "sujeto_id": 2,
+                    "tipo": "seguro_responsabilidad",
+                    "estado": "aprobado",
+                    "vence_en": "2027-09-24",
+                    "motivo_rechazo": null,
+                    "nombre_original": "seguro_responsabilidad-demo.pdf",
+                    "bytes": 246,
+                    "subido_en": "2026-11-24T05:45:13+00:00"
+                },
+                {
+                    "id": 20,
+                    "sujeto_tipo": "proveedor",
+                    "sujeto_id": 2,
+                    "tipo": "identidad",
+                    "estado": "aprobado",
+                    "vence_en": null,
+                    "motivo_rechazo": null,
+                    "nombre_original": "identidad-demo.pdf",
+                    "bytes": 233,
+                    "subido_en": "2026-11-24T05:45:13+00:00"
+                }
+            ]
+        }
+    }
+}

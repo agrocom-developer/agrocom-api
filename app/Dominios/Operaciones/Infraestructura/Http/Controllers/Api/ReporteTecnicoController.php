@@ -11,8 +11,8 @@ use Illuminate\Support\Facades\Storage;
 use OpenApi\Attributes as OA;
 
 /**
- * `GET /api/reportes/lote/{id}` (espec §8 línea 328, reinterpretada sobre el
- * `id` numérico del trabajo — HU-18, tarea 25): descarga el reporte técnico
+ * `GET /api/reportes/lote/{id}` (reinterpretada sobre el
+ * `id` numérico del trabajo): descarga el reporte técnico
  * ya generado al firmar el acta. Nunca CREA la fila: si el trabajo todavía
  * no tiene reporte (porque su acta no está firmada), responde 404 — mismo
  * criterio de solo-lectura que `ActaController::pdf()`. Si la fila existe

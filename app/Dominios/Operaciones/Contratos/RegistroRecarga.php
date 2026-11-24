@@ -17,7 +17,7 @@ namespace App\Dominios\Operaciones\Contratos;
  * `condiciones`/`recepcion_caldo`.
  *
  * `$motivoRetrasoCaldo` reencuadra el `problema_caldo` de la espec §4.3
- * (escrita antes de CR-01): la CA vigente (`plan_sprints.md`) lo pide como
+ * (escrita antes de CR-01): el criterio vigente lo pide como
  * "motivo del retraso/rechazo por caldo", nullable — solo se completa si
  * hubo retraso, no en cada recarga. Sin `mezcla_id`: la recarga (cambio de
  * batería o carga adicional de caldo durante el vuelo) es un evento

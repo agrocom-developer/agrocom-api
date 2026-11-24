@@ -1,6 +1,6 @@
 # ADR 0005 — App de campo: Flutter feature-first con BLoC
 
-**Estado:** Aceptada · **Fuente:** `docs/legacy/decisiones_arquitectura_v2.md`, sección 4.
+**Estado:** Aceptada
 
 ## Contexto
 
@@ -41,4 +41,4 @@ Ninguna evaluada formalmente — BLoC se adoptó directamente por el encaje entr
 ## Consecuencias
 
 - Los repositorios (`SesionRepository`, etc.) son el único punto que toca drift y outbox; ningún bloc de feature accede a la base local directamente.
-- El protocolo de sync completo (idempotencia por UUID, outbox, replay) está descrito en `docs/especificacion/especificacion_funcional_tecnica.md`, sección 2 — este ADR cubre solo cómo se organiza el código Flutter alrededor de él.
+- El protocolo de sync completo (idempotencia por UUID, outbox, replay) está descrito en `docs/especificacion/marketplace.md` — este ADR cubre solo cómo se organiza el código Flutter alrededor de él.

@@ -1,0 +1,45 @@
+{
+    "operationId": "sincronizarLote",
+    "descripcion": "Un registro inválido se rechaza con motivo sin frenar al resto del lote.",
+    "peticion": {
+        "metodo": "POST",
+        "ruta": "/api/sync",
+        "autenticada": true,
+        "cuerpo": {
+            "registros": [
+                {
+                    "tipo": "sesion",
+                    "uuid_cliente": "0a1b2c3d-1111-4a11-8a11-000000000009",
+                    "trabajo_uuid_cliente": "00000000-0000-4000-8000-000000000000",
+                    "secuencia": 1,
+                    "piloto_id": 4,
+                    "inicio": "2026-11-24T09:00:00-04:00"
+                },
+                {
+                    "tipo": "trabajo",
+                    "uuid_cliente": "0a1b2c3d-1111-4a11-8a11-000000000001",
+                    "solicitud_id": 5,
+                    "inicio": "2026-11-24T08:00:00-04:00"
+                }
+            ]
+        }
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "resultados": [
+                {
+                    "uuid_cliente": "0a1b2c3d-1111-4a11-8a11-000000000009",
+                    "tipo": "sesion",
+                    "estado": "rechazado",
+                    "motivo": "el trabajo referenciado no existe todavía"
+                },
+                {
+                    "uuid_cliente": "0a1b2c3d-1111-4a11-8a11-000000000001",
+                    "tipo": "trabajo",
+                    "estado": "duplicado"
+                }
+            ]
+        }
+    }
+}

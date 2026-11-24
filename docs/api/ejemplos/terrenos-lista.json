@@ -1,0 +1,27 @@
+{
+    "operationId": "listarTerrenos",
+    "descripcion": "Terrenos del cliente.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/terrenos",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "terrenos": [
+                {
+                    "id": 1,
+                    "nombre": "Lote Norte",
+                    "hectareas": "80.0000",
+                    "cultivo": "Soya",
+                    "geometria": null,
+                    "referencias_acceso": "Camino vecinal a 3 km de la ruta principal.",
+                    "colindantes_sensibles": null,
+                    "acceso_dificil": false,
+                    "zona_id": null
+                }
+            ]
+        }
+    }
+}

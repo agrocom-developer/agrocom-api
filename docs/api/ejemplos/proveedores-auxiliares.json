@@ -1,0 +1,25 @@
+{
+    "operationId": "listarAuxiliares",
+    "descripcion": "Auxiliares del proveedor.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/proveedores/auxiliares",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "data": [
+                {
+                    "id": 2,
+                    "proveedor_id": 2,
+                    "usuario_id": 13,
+                    "nombre": "Esteban Choque Ramos",
+                    "registrado_por_piloto_id": 3,
+                    "estado": "aprobado",
+                    "motivo_estado": null
+                }
+            ]
+        }
+    }
+}

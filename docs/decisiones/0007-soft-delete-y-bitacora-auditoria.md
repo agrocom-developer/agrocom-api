@@ -4,7 +4,7 @@
 
 ## Contexto
 
-El sistema es, por diseño, un registro de eventos operativos con consecuencias financieras (hectáreas, devengos, gastos, movimientos de stock). Perder un registro por un `DELETE` físico, o no saber quién cambió qué y cuándo, rompe exactamente el activo que el sistema existe para proteger: la trazabilidad (`docs/especificacion/especificacion_funcional_tecnica.md`, sección 6). Esto es más estricto que la inmutabilidad ya definida para los modelos operativos validados (sección 5 de la especificación): acá se trata de **toda** la base — incluyendo catálogos y datos maestros (clientes, productos, personas, drones) — no solo de sesiones y trabajos validados.
+El sistema es, por diseño, un registro de eventos operativos con consecuencias financieras (hectáreas, devengos, gastos, movimientos de stock). Perder un registro por un `DELETE` físico, o no saber quién cambió qué y cuándo, rompe exactamente el activo que el sistema existe para proteger: la trazabilidad (`docs/especificacion/marketplace.md`). Esto es más estricto que la inmutabilidad ya definida para los modelos operativos validados (sección 5 de la especificación): acá se trata de **toda** la base — incluyendo catálogos y datos maestros (clientes, productos, personas, drones) — no solo de sesiones y trabajos validados.
 
 ## Decisión
 
@@ -18,7 +18,7 @@ Implementación de referencia: un trait `Auditable` (o el paquete `spatie/larave
 ## Alternativas descartadas
 
 - **`DELETE` físico + tabla de auditoría manual por módulo**: exige que cada implementación (agente de IA incluido) recuerde escribir el registro de auditoría a mano; se descarta por ser una regla de disciplina, no una que la arquitectura defienda sola (mismo criterio que ADR 0003, sección de tests de arquitectura).
-- **Sin soft delete, con restauración desde el respaldo diario** (`docs/legacy/enfoque_desarrollo_sistema_fumigacion.md`, sección 3.4): el respaldo protege ante desastres, no ante un borrado accidental de un registro puntual en medio de la operación normal.
+- **Sin soft delete, con restauración desde el respaldo diario**: el respaldo protege ante desastres, no ante un borrado accidental de un registro puntual en medio de la operación normal.
 
 ## Consecuencias
 
