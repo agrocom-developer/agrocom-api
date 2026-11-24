@@ -32,4 +32,13 @@ interface LecturaEquipos
 
     /** Si el proveedor puede recibir ofertas hoy (tiene al menos un equipo apto). */
     public function tieneEquipoApto(int $proveedorId, ?DateTimeImmutable $hoy = null): bool;
+
+    /**
+     * Ids de los equipos vigentes hoy de un proveedor, sin juzgar su aptitud: el
+     * proveedor declara disponibilidad de todos los suyos, también de los que
+     * esperan aprobación.
+     *
+     * @return list<int>
+     */
+    public function vigentesDe(int $proveedorId, ?DateTimeImmutable $hoy = null): array;
 }

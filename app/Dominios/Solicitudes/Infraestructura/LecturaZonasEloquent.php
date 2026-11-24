@@ -12,4 +12,12 @@ final class LecturaZonasEloquent implements LecturaZonas
     {
         return Zona::query()->whereKey($id)->value('nombre');
     }
+
+    /** {@inheritDoc} */
+    public function centroide(int $id): ?array
+    {
+        $zona = Zona::query()->find($id);
+
+        return $zona === null ? null : ['lat' => (float) $zona->centroide_lat, 'lng' => (float) $zona->centroide_lng];
+    }
 }

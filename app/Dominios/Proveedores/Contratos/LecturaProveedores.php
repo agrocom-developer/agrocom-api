@@ -35,4 +35,24 @@ interface LecturaProveedores
      * @return list<DatosPiloto>
      */
     public function pilotosDe(int $proveedorId): array;
+
+    /**
+     * Proveedores aprobados de un grupo: `propio` (Agrocom) o `tercero`
+     * (independientes y terceros). Solo `Asignacion` lo usa, para armar la
+     * ronda; filtrar por equipo apto le toca a `Flota`.
+     *
+     * @return list<DatosProveedor>
+     */
+    public function aprobadosDelGrupo(string $grupo): array;
+
+    /**
+     * Cuentas a las que se avisa de una oferta o de un asunto del proveedor: el
+     * titular y las de sus pilotos aprobados, sin repetir.
+     *
+     * @return list<int>
+     */
+    public function usuariosDeAviso(int $proveedorId): array;
+
+    /** El proveedor al que pertenece la cuenta: el que titula o el de su registro de piloto. */
+    public function proveedorDeLaCuenta(int $usuarioId): ?DatosProveedor;
 }

@@ -102,6 +102,19 @@ final class LecturaEquiposEloquent implements LecturaEquipos
             ->all());
     }
 
+    public function vigentesDe(int $proveedorId, ?DateTimeImmutable $hoy = null): array
+    {
+        $fecha = ($hoy ?? new DateTimeImmutable('today'))->format('Y-m-d');
+
+        return array_map('intval', Equipo::query()
+            ->where('proveedor_id', $proveedorId)
+            ->whereDate('vigente_desde', '<=', $fecha)
+            ->where(fn ($consulta) => $consulta->whereNull('vigente_hasta')->orWhereDate('vigente_hasta', '>=', $fecha))
+            ->orderBy('id')
+            ->pluck('id')
+            ->all());
+    }
+
     public function tieneEquipoApto(int $proveedorId, ?DateTimeImmutable $hoy = null): bool
     {
         return $this->aptosDe($proveedorId, $hoy) !== [];
