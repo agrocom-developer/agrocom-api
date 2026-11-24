@@ -36,5 +36,10 @@ class CatalogoSeeder extends Seeder
         // (departamento → provincia → municipio) para com_propiedades — sin
         // dependencia de los anteriores.
         $this->call(GeografiaBoliviaSeeder::class);
+        // Marketplace (ADR 0028 y 0036): zonas de asignación y el proveedor
+        // propio (Agrocom). El proveedor propio referencia una zona, así que
+        // va después.
+        $this->call(ZonasSeeder::class);
+        $this->call(ProveedorPropioSeeder::class);
     }
 }
