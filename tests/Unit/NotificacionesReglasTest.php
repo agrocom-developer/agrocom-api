@@ -269,6 +269,16 @@ test('cada tipo de aviso tiene su texto en lang/es/notificaciones.php y usa solo
         'contrato_creado' => ['cliente', 'hectareas'],
         'orden_trabajo_creada' => ['orden', 'aplicacion', 'hectareas'],
         'trabajo_cerrado' => ['orden', 'aplicacion', 'hectareas'],
+        // Marketplace (ADR 0036): un solo evento de aprobación reparte seis tipos.
+        'sujeto_aprobado' => ['sujeto', 'nombre', 'motivo'],
+        'sujeto_rechazado' => ['sujeto', 'nombre', 'motivo'],
+        'sujeto_suspendido' => ['sujeto', 'nombre', 'motivo'],
+        'sujeto_rehabilitado' => ['sujeto', 'nombre', 'motivo'],
+        'sujeto_dado_de_baja' => ['sujeto', 'nombre', 'motivo'],
+        'sujeto_reenviado' => ['sujeto', 'nombre', 'motivo'],
+        'documento_por_vencer' => ['documento', 'sujeto', 'fecha', 'dias'],
+        'documento_vencido' => ['documento', 'sujeto', 'fecha'],
+        'proveedor_registrado' => ['tipo', 'nombre'],
     ];
 
     foreach (TipoNotificacion::cases() as $tipo) {
@@ -292,7 +302,11 @@ test('cada rol al que una regla puede dirigirse existe en el catálogo de roles 
 });
 
 test('cada recurso de un aviso tiene su valor permitido por el CHECK de la migración', function () use ($raizProyecto) {
-    $migracion = (string) file_get_contents(glob($raizProyecto.'/database/migrations/*_create_ntf_notificaciones_table.php')[0]);
+    // El `create` consolidado más las migraciones que ampliaron los catálogos cerrados.
+    $migracion = '';
+    foreach (glob($raizProyecto.'/database/migrations/*ntf_notificaciones*.php') ?: [] as $archivo) {
+        $migracion .= (string) file_get_contents($archivo);
+    }
 
     foreach (TipoNotificacion::cases() as $tipo) {
         expect($migracion)->toContain("'{$tipo->value}'");

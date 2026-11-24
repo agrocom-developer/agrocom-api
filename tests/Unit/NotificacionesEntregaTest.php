@@ -1,6 +1,7 @@
 <?php
 
 use App\Dominios\Comercial\Contratos\Eventos\ContratoCreado;
+use App\Dominios\Compartido\Contratos\Eventos\EstadoDeAprobacionCambiado;
 use App\Dominios\Compartido\Dominio\Excepciones\BorradoFisicoNoPermitido;
 use App\Dominios\Compartido\Infraestructura\Eloquent\Bitacora;
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModoSoloLectura;
@@ -24,6 +25,9 @@ use App\Dominios\Operaciones\Contratos\Eventos\OrdenTrabajoCreada;
 use App\Dominios\Operaciones\Contratos\Eventos\TrabajoCerrado;
 use App\Dominios\Personal\Contratos\DatosIntegranteEquipo;
 use App\Dominios\Personal\Contratos\LecturaEquipoTrabajo;
+use App\Dominios\Proveedores\Contratos\Eventos\DocumentoPorVencer;
+use App\Dominios\Proveedores\Contratos\Eventos\DocumentoVencido;
+use App\Dominios\Proveedores\Contratos\Eventos\ProveedorRegistrado;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Contratos\LecturaUsuariosPorRol;
 use App\Dominios\Seguridad\Dominio\TipoUsuario;
@@ -531,15 +535,22 @@ test('sin nadie autenticado (una consola, un job) no se excluye a nadie', functi
 });
 
 test('el listener está registrado para cada evento que tiene regla, y para ninguno más', function () {
-    foreach ([ContratoCreado::class, OrdenTrabajoCreada::class, TrabajoCerrado::class] as $evento) {
-        expect(Event::hasListeners($evento))->toBeTrue("sin listener para {$evento}");
-    }
-
-    expect(app(ReglasDeNotificacion::class)->eventos())->toEqualCanonicalizing([
+    $eventos = [
         ContratoCreado::class,
         OrdenTrabajoCreada::class,
         TrabajoCerrado::class,
-    ]);
+        // Marketplace (ADR 0036).
+        EstadoDeAprobacionCambiado::class,
+        DocumentoPorVencer::class,
+        DocumentoVencido::class,
+        ProveedorRegistrado::class,
+    ];
+
+    foreach ($eventos as $evento) {
+        expect(Event::hasListeners($evento))->toBeTrue("sin listener para {$evento}");
+    }
+
+    expect(app(ReglasDeNotificacion::class)->eventos())->toEqualCanonicalizing($eventos);
 });
 
 test('sin nadie a quien avisar el hecho no crea nada ni falla', function () {

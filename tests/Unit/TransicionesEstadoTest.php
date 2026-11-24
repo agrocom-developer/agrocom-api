@@ -190,6 +190,10 @@ const RUTAS_ESTADO_DESCRIPTIVO_SIN_MAQUINA = [
     // en `Aplicacion/MaquinaEstados/`). `CrearEquipoTrabajo`/
     // `ActualizarEquipoTrabajo` ya no escriben `estado` en absoluto, así que
     // no necesitan (ni les corresponde) esta segunda excepción.
+    // Marketplace (ADR 0036): `sol_clientes.estado` nace `activo` y en la v1 no
+    // tiene ninguna transición (`suspendido` aún no lo escribe ningún caso de
+    // uso). Cuando exista suspender un cliente, pasa a una máquina propia.
+    'app/Dominios/Solicitudes/Aplicacion/RegistrarCliente.php',
 ];
 
 /**
