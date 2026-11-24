@@ -6,12 +6,13 @@ namespace App\Dominios\Solicitudes\Contratos;
  * Forma de dato primitiva de un servicio asignado para el pull de catálogo de
  * la app de campo (ADR 0003, regla 2; ADR 0037): lo que el equipo lleva al lote
  * de una solicitud ya aceptada. Hectáreas como string (invariante 6 de
- * CLAUDE.md). No lleva datos de contacto del cliente.
+ * CLAUDE.md). El contacto del cliente se entrega solo porque el servicio ya está adjudicado.
  */
 final readonly class ServicioAsignadoCatalogo
 {
     /**
      * @param  array{nombre: string, hectareas: string, geometria: ?array<string, mixed>, referencias_acceso: ?string, colindantes_sensibles: ?string, acceso_dificil: bool}  $terreno
+     * @param  array{nombre: string, telefono: string|null}|null  $contacto  solo viaja con el servicio adjudicado.
      */
     public function __construct(
         public int $id,
@@ -29,6 +30,11 @@ final readonly class ServicioAsignadoCatalogo
         public ?string $observaciones,
         public array $terreno,
         public string $updatedAt,
+        public ?string $precioHaPropuesto = null,
+        public ?string $precioHaAcordado = null,
+        public ?string $hectareasEjecutadas = null,
+        public string $porcentajeAvance = '0.00',
+        public ?array $contacto = null,
     ) {}
 
     /** @return array<string, mixed> */
@@ -49,6 +55,11 @@ final readonly class ServicioAsignadoCatalogo
             'urgente' => $this->urgente,
             'observaciones' => $this->observaciones,
             'terreno' => $this->terreno,
+            'precio_ha_propuesto' => $this->precioHaPropuesto,
+            'precio_ha_acordado' => $this->precioHaAcordado,
+            'hectareas_ejecutadas' => $this->hectareasEjecutadas,
+            'porcentaje_avance' => $this->porcentajeAvance,
+            'contacto' => $this->contacto,
             'updated_at' => $this->updatedAt,
         ];
     }

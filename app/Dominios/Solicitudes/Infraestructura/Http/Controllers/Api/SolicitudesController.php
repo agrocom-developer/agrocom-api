@@ -4,8 +4,8 @@ namespace App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api;
 
 use App\Dominios\Compartido\Infraestructura\Http\RechazoDeDominio;
 use App\Dominios\Seguridad\Contratos\IdentidadOperarioToken;
+use App\Dominios\Solicitudes\Aplicacion\CambiarPrecioPropuesto;
 use App\Dominios\Solicitudes\Aplicacion\CancelarSolicitud;
-use App\Dominios\Solicitudes\Aplicacion\ConformarSolicitud;
 use App\Dominios\Solicitudes\Aplicacion\CrearSolicitud;
 use App\Dominios\Solicitudes\Aplicacion\EstimarSolicitudDelCliente;
 use App\Dominios\Solicitudes\Aplicacion\ListarSolicitudesDelCliente;
@@ -14,9 +14,9 @@ use App\Dominios\Solicitudes\Aplicacion\PublicarSolicitud;
 use App\Dominios\Solicitudes\Dominio\EstadoSolicitud;
 use App\Dominios\Solicitudes\Dominio\Excepciones\SolicitudInvalida;
 use App\Dominios\Solicitudes\Dominio\Excepciones\TransicionSolicitudNoPermitida;
+use App\Dominios\Solicitudes\Infraestructura\Http\Requests\CambiarPrecioRequest;
 use App\Dominios\Solicitudes\Infraestructura\Http\Requests\CancelarSolicitudRequest;
 use App\Dominios\Solicitudes\Infraestructura\Http\Requests\CrearSolicitudRequest;
-use App\Dominios\Solicitudes\Infraestructura\Http\Requests\PublicarSolicitudRequest;
 use App\Dominios\Solicitudes\Infraestructura\Http\Resources\SolicitudServicioResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -36,17 +36,13 @@ use OpenApi\Attributes as OA;
 #[OA\Schema(
     schema: 'EstimacionSolicitud',
     title: 'Estimación de una solicitud',
-    required: ['congelada', 'tarifa_hectarea', 'hectareas', 'monto_estimado'],
+    required: ['precio_acordado', 'hectareas'],
     properties: [
-        new OA\Property(property: 'congelada', description: 'Verdadero si la solicitud ya se publicó y la tarifa no cambia.', type: 'boolean'),
-        new OA\Property(property: 'tarifa_base_hectarea', type: 'string', nullable: true, example: '120.0000'),
-        new OA\Property(property: 'tarifa_hectarea', description: 'Tarifa por hectárea con los recargos incluidos.', type: 'string', example: '132.0000'),
+        new OA\Property(property: 'precio_ha', description: 'Precio por hectárea vigente: el acordado si ya se adjudicó; si no, el propuesto.', type: 'string', nullable: true, example: '125.0000'),
+        new OA\Property(property: 'precio_acordado', description: 'Verdadero si la solicitud ya se adjudicó y el precio no cambia.', type: 'boolean'),
         new OA\Property(property: 'hectareas', type: 'string', example: '80.0000'),
-        new OA\Property(property: 'subtotal_base', type: 'string', nullable: true, example: '9600.00'),
-        new OA\Property(property: 'recargo_urgente', type: 'string', nullable: true, example: '1920.00'),
-        new OA\Property(property: 'recargo_acceso_dificil', type: 'string', nullable: true, example: '0.00'),
-        new OA\Property(property: 'recargo_producto', type: 'string', nullable: true, example: '0.00'),
-        new OA\Property(property: 'monto_estimado', type: 'string', example: '11520.00'),
+        new OA\Property(property: 'monto_estimado', type: 'string', nullable: true, example: '10000.00'),
+        new OA\Property(property: 'precio_referencia_ha', description: 'Guía de mercado para el tipo de aplicación; no es un límite.', type: 'string', nullable: true, example: '120.00'),
     ],
     type: 'object',
 )]
@@ -61,7 +57,7 @@ final class SolicitudesController
         private readonly EstimarSolicitudDelCliente $estimar,
         private readonly PublicarSolicitud $publicar,
         private readonly CancelarSolicitud $cancelar,
-        private readonly ConformarSolicitud $conformar,
+        private readonly CambiarPrecioPropuesto $cambiarPrecio,
         private readonly IdentidadOperarioToken $identidad,
     ) {}
 
@@ -69,7 +65,7 @@ final class SolicitudesController
         path: '/api/solicitudes',
         operationId: 'crearSolicitud',
         description: 'Crea una solicitud en `borrador`, idempotente por `uuid_cliente`: reintentar el mismo uuid responde 200 con la solicitud ya creada (nunca una segunda). '
-            .'Las hectáreas no pueden superar las del terreno. La tarifa se calcula y se congela al publicar.',
+            .'Las hectáreas no pueden superar las del terreno. `precio_ha_propuesto` (precio por hectárea que propone el cliente) puede venir acá o fijarse con `POST /api/solicitudes/{id}/precio` antes de publicar.',
         summary: 'Crear una solicitud de servicio',
         security: [['tokenDispositivo' => []]],
         requestBody: new OA\RequestBody(
@@ -88,6 +84,7 @@ final class SolicitudesController
                     new OA\Property(property: 'ventana_hasta', description: 'Fecha deseada: fin de la ventana.', type: 'string', format: 'date'),
                     new OA\Property(property: 'urgente', type: 'boolean', nullable: true),
                     new OA\Property(property: 'observaciones', type: 'string', nullable: true),
+                    new OA\Property(property: 'precio_ha_propuesto', type: 'string', nullable: true, example: '125'),
                 ],
                 type: 'object',
             ),
@@ -121,7 +118,7 @@ final class SolicitudesController
         path: '/api/solicitudes',
         operationId: 'listarSolicitudes',
         description: 'Las solicitudes del cliente de la cuenta, de la más nueva a la más vieja. `vista=activas` deja las que siguen vivas; '
-            .'`vista=historial`, las que terminaron (`completada` o `cancelada`). `estado` filtra por un estado exacto.',
+            .'`vista=historial`, las que terminaron (`calificada`, `cancelada` o `expirada`). `estado` filtra por un estado exacto.',
         summary: 'Mis solicitudes e historial',
         security: [['tokenDispositivo' => []]],
         tags: ['Solicitudes'],
@@ -203,9 +200,8 @@ final class SolicitudesController
     #[OA\Get(
         path: '/api/solicitudes/{id}/estimacion',
         operationId: 'estimarSolicitud',
-        description: 'La tarifa estimada: hectáreas por tarifa por hectárea más recargos explícitos (urgencia, acceso difícil, producto del proveedor). '
-            .'Antes de publicar usa la tarifa vigente y desglosa cada recargo; publicada, devuelve la tarifa congelada (`congelada: true`) sin desglose.',
-        summary: 'Tarifa estimada de una solicitud',
+        description: 'El monto estimado: hectáreas solicitadas por el precio por hectárea vigente (el propuesto, o el acordado una vez adjudicada), con el precio de referencia como guía.',
+        summary: 'Monto estimado de una solicitud',
         security: [['tokenDispositivo' => []]],
         tags: ['Solicitudes'],
         parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
@@ -240,30 +236,26 @@ final class SolicitudesController
     #[OA\Post(
         path: '/api/solicitudes/{id}/publicar',
         operationId: 'publicarSolicitud',
-        description: 'Congela la tarifa por hectárea y el monto estimado y deja la solicitud `publicada` para que el motor de asignación la tome. '
-            .'También republica una `sin_proveedor`, opcionalmente ampliando `ventana_hasta`; la tarifa ya congelada no cambia.',
-        summary: 'Publicar una solicitud',
+        description: 'Abre la solicitud a los pilotos: `borrador` pasa a `abierta`, con su vigencia (7 días) y visible en el mapa. Exige precio por hectárea propuesto, hectáreas que no superen las del terreno, fecha deseada no pasada y un teléfono en la cuenta. '
+            .'Avisa a los pilotos cuyas preferencias coinciden con la zona y las hectáreas. Una solicitud `expirada` se renueva igual, dentro del plazo de renovación.',
+        summary: 'Abrir una solicitud al mercado',
         security: [['tokenDispositivo' => []]],
-        requestBody: new OA\RequestBody(
-            required: false,
-            content: new OA\JsonContent(properties: [new OA\Property(property: 'ventana_hasta', type: 'string', format: 'date', nullable: true)], type: 'object'),
-        ),
         tags: ['Solicitudes'],
         parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
         responses: [
-            new OA\Response(response: 200, description: 'Solicitud publicada.', content: new OA\JsonContent(required: ['solicitud'], properties: [new OA\Property(property: 'solicitud', ref: '#/components/schemas/SolicitudServicio')], type: 'object')),
+            new OA\Response(response: 200, description: 'Solicitud abierta.', content: new OA\JsonContent(required: ['solicitud'], properties: [new OA\Property(property: 'solicitud', ref: '#/components/schemas/SolicitudServicio')], type: 'object')),
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
             new OA\Response(response: 403, description: 'El rol del token no es de cliente.'),
             new OA\Response(response: 404, description: 'No existe o es de otro cliente.'),
-            new OA\Response(response: 422, description: 'La solicitud no está en un estado que se pueda publicar, o la ventana ya venció.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
+            new OA\Response(response: 422, description: 'Falta el precio o el teléfono, la solicitud no está en un estado que se pueda abrir o la fecha deseada ya pasó.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],
     )]
-    public function publicar(PublicarSolicitudRequest $request, int $id): JsonResponse
+    public function publicar(Request $request, int $id): JsonResponse
     {
         $this->exigirPermiso($request);
 
         try {
-            $solicitud = $this->publicar->ejecutar($this->usuarioId(), $id, $request->validated('ventana_hasta'));
+            $solicitud = $this->publicar->ejecutar($this->usuarioId(), $id);
         } catch (SolicitudInvalida|TransicionSolicitudNoPermitida $excepcion) {
             return RechazoDeDominio::respuesta($excepcion);
         }
@@ -274,8 +266,8 @@ final class SolicitudesController
     #[OA\Post(
         path: '/api/solicitudes/{id}/cancelar',
         operationId: 'cancelarSolicitud',
-        description: 'Cancela una solicitud propia con motivo. Es gratuita hasta que un proveedor acepta; después rige la política de cancelación (ADR 0033). '
-            .'Una solicitud en ejecución o ya ejecutada no se cancela por este camino.',
+        description: 'Cancela una solicitud propia con motivo. Es gratuita y sin penalidad en dinero; si ya estaba adjudicada, queda registrada en la tasa de cancelación del cliente y el proveedor queda libre. '
+            .'Una solicitud en ejecución o finalizada no se cancela por este camino: si hay desacuerdo, se abre una disputa.',
         summary: 'Cancelar una solicitud',
         security: [['tokenDispositivo' => []]],
         requestBody: new OA\RequestBody(
@@ -306,33 +298,57 @@ final class SolicitudesController
     }
 
     #[OA\Post(
-        path: '/api/solicitudes/{id}/conformidad',
-        operationId: 'conformarSolicitud',
-        description: 'El cliente da su conformidad a un servicio `ejecutada`: la solicitud pasa a `completada`, se congelan el monto final y la comisión que Agrocom devenga (se calcula, no se cobra en la app) y se abre la calificación durante 7 días. '
-            .'Si no hay observación, la conformidad es tácita al vencer el plazo (72 horas por defecto). Darla dos veces devuelve la misma solicitud. Para observar el servicio se abre una disputa (`POST /api/solicitudes/{id}/disputas`).',
-        summary: 'Dar la conformidad a un servicio',
+        path: '/api/solicitudes/{id}/precio',
+        operationId: 'cambiarPrecioSolicitud',
+        description: 'Cambia el precio por hectárea que propone el cliente, mientras la solicitud está en `borrador`, `abierta` o `con_ofertas`. Las ofertas vigentes no cambian; se avisa a los proveedores con una negociación vigente.',
+        summary: 'Cambiar el precio propuesto',
         security: [['tokenDispositivo' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(required: ['precio_ha_propuesto'], properties: [new OA\Property(property: 'precio_ha_propuesto', type: 'string', example: '130')], type: 'object'),
+        ),
         tags: ['Solicitudes'],
         parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
         responses: [
-            new OA\Response(response: 200, description: 'Solicitud completada.', content: new OA\JsonContent(required: ['solicitud'], properties: [new OA\Property(property: 'solicitud', ref: '#/components/schemas/SolicitudServicio')], type: 'object')),
+            new OA\Response(response: 200, description: 'Solicitud con el precio nuevo.', content: new OA\JsonContent(required: ['solicitud'], properties: [new OA\Property(property: 'solicitud', ref: '#/components/schemas/SolicitudServicio')], type: 'object')),
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
             new OA\Response(response: 403, description: 'El rol del token no es de cliente.'),
             new OA\Response(response: 404, description: 'No existe o es de otro cliente.'),
-            new OA\Response(response: 422, description: 'La solicitud todavía no está ejecutada o terminó de otra forma.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
+            new OA\Response(response: 422, description: 'Precio inválido o la solicitud ya no admite el cambio.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],
     )]
-    public function conformidad(Request $request, int $id): JsonResponse
+    public function precio(CambiarPrecioRequest $request, int $id): JsonResponse
     {
         $this->exigirPermiso($request);
 
         try {
-            $solicitud = $this->conformar->ejecutar($this->usuarioId(), $id);
-        } catch (SolicitudInvalida|TransicionSolicitudNoPermitida $excepcion) {
+            $solicitud = $this->cambiarPrecio->ejecutar($this->usuarioId(), $id, (string) $request->validated('precio_ha_propuesto'));
+        } catch (SolicitudInvalida $excepcion) {
             return RechazoDeDominio::respuesta($excepcion);
         }
 
         return response()->json(['solicitud' => new SolicitudServicioResource($solicitud)]);
+    }
+
+    #[OA\Post(
+        path: '/api/solicitudes/{id}/renovar',
+        operationId: 'renovarSolicitud',
+        description: 'Vuelve a abrir una solicitud `expirada`, dentro del plazo de renovación (30 días). Nueva vigencia; las ofertas anteriores siguen cerradas.',
+        summary: 'Renovar una solicitud expirada',
+        security: [['tokenDispositivo' => []]],
+        tags: ['Solicitudes'],
+        parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
+        responses: [
+            new OA\Response(response: 200, description: 'Solicitud abierta de nuevo.', content: new OA\JsonContent(required: ['solicitud'], properties: [new OA\Property(property: 'solicitud', ref: '#/components/schemas/SolicitudServicio')], type: 'object')),
+            new OA\Response(response: 401, description: 'Token ausente o revocado.'),
+            new OA\Response(response: 403, description: 'El rol del token no es de cliente.'),
+            new OA\Response(response: 404, description: 'No existe o es de otro cliente.'),
+            new OA\Response(response: 422, description: 'No está expirada o pasó el plazo de renovación.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
+        ],
+    )]
+    public function renovar(Request $request, int $id): JsonResponse
+    {
+        return $this->publicar($request, $id);
     }
 
     private function usuarioId(): int

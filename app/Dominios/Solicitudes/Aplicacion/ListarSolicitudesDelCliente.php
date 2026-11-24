@@ -23,7 +23,7 @@ final class ListarSolicitudesDelCliente
     public function ejecutar(int $usuarioId, ?string $vista = null, ?EstadoSolicitud $estado = null, int $porPagina = 20): LengthAwarePaginator
     {
         $cliente = $this->clientes->resolver($usuarioId);
-        $terminales = [EstadoSolicitud::Completada->value, EstadoSolicitud::Cancelada->value];
+        $terminales = [EstadoSolicitud::Calificada->value, EstadoSolicitud::Cancelada->value, EstadoSolicitud::Expirada->value];
 
         return SolicitudServicio::query()
             ->where('cliente_id', $cliente->id)

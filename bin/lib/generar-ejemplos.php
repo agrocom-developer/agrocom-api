@@ -16,7 +16,6 @@
  * credencial viva.
  */
 
-use App\Dominios\Asignacion\Aplicacion\ResponderOferta;
 use Database\Seeders\Demo\PersonalDemoSeeder;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;
@@ -171,8 +170,8 @@ function buscar(array $lista, callable $criterio): ?array
     return null;
 }
 
-$desde = Carbon::now()->addDays(4)->toDateString();
-$hasta = Carbon::now()->addDays(12)->toDateString();
+$desde = Carbon::now()->addDays(20)->toDateString();
+$hasta = Carbon::now()->addDays(26)->toDateString();
 
 try {
     // ------------------------------------------------------------------ acceso
@@ -236,10 +235,11 @@ try {
         'ventana_desde' => $desde,
         'ventana_hasta' => $hasta,
         'urgente' => false,
+        'precio_ha_propuesto' => '125.0000',
         'observaciones' => 'Entrar por el portón sur.',
     ];
 
-    [, $solicitud] = registrar('solicitudes-crear', 'crearSolicitud', 'Crea una solicitud en borrador con su uuid_cliente generado en el dispositivo.', 'POST', '/api/solicitudes', $cuerpoSolicitud, $tokenCliente, 201);
+    [, $solicitud] = registrar('solicitudes-crear', 'crearSolicitud', 'Crea una solicitud en borrador con su uuid_cliente generado en el dispositivo y el precio por hectárea que propone el cliente.', 'POST', '/api/solicitudes', $cuerpoSolicitud, $tokenCliente, 201);
     $solicitudId = $solicitud['solicitud']['id'] ?? null;
 
     registrar('solicitudes-crear-reintento', 'crearSolicitud', 'Reintento con el mismo uuid_cliente: no duplica la solicitud (idempotencia).', 'POST', '/api/solicitudes', $cuerpoSolicitud, $tokenCliente);
@@ -256,22 +256,21 @@ try {
     ], $tokenCliente, 422);
 
     if ($solicitudId !== null) {
-        registrar('solicitudes-estimacion', 'estimarSolicitud', 'Tarifa estimada antes de publicar.', 'GET', "/api/solicitudes/{$solicitudId}/estimacion", null, $tokenCliente, 200);
-        registrar('solicitudes-publicar', 'publicarSolicitud', 'Congela la tarifa y la deja publicada; el motor de asignación toma el trabajo.', 'POST', "/api/solicitudes/{$solicitudId}/publicar", null, $tokenCliente);
+        registrar('solicitudes-estimacion', 'estimarSolicitud', 'Monto estimado con el precio propuesto, antes de abrirla.', 'GET', "/api/solicitudes/{$solicitudId}/estimacion", null, $tokenCliente, 200);
+        registrar('solicitudes-publicar', 'publicarSolicitud', 'La deja abierta a ofertas: los pilotos la ven en el mapa y reciben el aviso de su zona.', 'POST', "/api/solicitudes/{$solicitudId}/publicar", null, $tokenCliente, 200);
+        registrar('solicitudes-precio', 'cambiarPrecioSolicitud', 'El cliente cambia el precio propuesto mientras la solicitud sigue abierta; las ofertas vigentes no cambian.', 'POST', "/api/solicitudes/{$solicitudId}/precio", ['precio_ha_propuesto' => '128.0000'], $tokenCliente, 200);
         registrar('solicitudes-ver', 'verSolicitud', 'Detalle con su historial de estados.', 'GET', "/api/solicitudes/{$solicitudId}", null, $tokenCliente, 200);
-        registrar('solicitudes-cancelar', 'cancelarSolicitud', 'El cliente cancela con motivo.', 'POST', "/api/solicitudes/{$solicitudId}/cancelar", ['motivo' => 'Se adelantó la lluvia y se pospone la aplicación.'], $tokenCliente);
     }
 
     registrar('solicitudes-ajena', 'verSolicitud', 'Un id que no es del cliente responde 404, nunca 403 (invariante 5).', 'GET', '/api/solicitudes/999999', null, $tokenCliente, 404);
 
-    // El cliente 1 tiene servicios ejecutados con posventa sembrada.
+    // El cliente tiene servicios finalizados y calificados en la demo.
     [, $lista] = llamar('GET', '/api/solicitudes?per_page=50', null, $tokenCliente);
     $filas = $lista['solicitudes'] ?? [];
-    $completada = buscar($filas, fn ($fila) => ($fila['estado'] ?? '') === 'completada');
-    $enDisputa = buscar($filas, fn ($fila) => in_array($fila['estado'] ?? '', ['en_disputa', 'completada'], true) && ($fila['id'] ?? 0) !== ($completada['id'] ?? 0));
+    $calificada = buscar($filas, fn ($fila) => ($fila['estado'] ?? '') === 'calificada');
 
-    if ($completada !== null) {
-        registrar('calificaciones-servicio', 'verCalificacionesDelServicio', 'Calificaciones de un servicio completado.', 'GET', "/api/solicitudes/{$completada['id']}/calificaciones", null, $tokenCliente, 200);
+    if ($calificada !== null) {
+        registrar('calificaciones-servicio', 'verCalificacionesDelServicio', 'Calificaciones de un servicio calificado.', 'GET', "/api/solicitudes/{$calificada['id']}/calificaciones", null, $tokenCliente, 200);
     }
 
     registrar('disputas-lista', 'listarDisputas', 'Disputas del cliente.', 'GET', '/api/disputas', null, $tokenCliente, 200);
@@ -282,7 +281,7 @@ try {
     registrar('seguridad-token-piloto', 'emitirTokenDispositivo', 'El piloto ingresa con su rol.', 'POST', '/api/auth/token', [
         'username' => 'rodrigo.suarez', 'password' => $clave, 'uuid_dispositivo' => UUID_DISPOSITIVO, 'nombre_dispositivo' => 'Control remoto del dron',
     ], null, 201);
-    [$tokenPiloto] = ingresar('rodrigo.suarez', $clave, 'Control remoto del dron');
+    [$tokenPiloto, $emisionPiloto] = ingresar('rodrigo.suarez', $clave, 'Control remoto del dron');
 
     registrar('seguridad-sesion-piloto', 'verSesionCampo', 'Sesión vigente del piloto.', 'GET', '/api/auth/sesion', null, $tokenPiloto, 200);
     registrar('seguridad-dispositivos', 'listarDispositivosPropios', 'Dispositivos con token vivo de la cuenta.', 'GET', '/api/dispositivos', null, $tokenPiloto, 200);
@@ -293,9 +292,11 @@ try {
         registrar('sync-catalogo-incremental', 'obtenerCatalogoSincronizacion', 'Pull incremental desde el cursor: sin cambios, listas vacías.', 'GET', '/api/sync/catalogo?desde='.urlencode($catalogo['cursor']), null, $tokenPiloto, 200);
     }
 
-    [, $catalogo] = registrar('sync-catalogo-con-servicio', 'obtenerCatalogoSincronizacion', 'Pull completo: los servicios aceptados por el equipo del operario aparecen en `servicios_asignados`.', 'GET', '/api/sync/catalogo', null, $tokenPiloto, 200);
-    $servicio = buscar($catalogo['servicios_asignados'] ?? [], fn ($fila) => in_array($fila['estado'] ?? '', ['asignada', 'en_camino', 'en_ejecucion'], true));
-    $persona = buscar($catalogo['personas'] ?? [], fn ($fila) => ($fila['rol'] ?? '') === 'piloto');
+    [, $catalogo] = registrar('sync-catalogo-con-servicio', 'obtenerCatalogoSincronizacion', 'Pull completo: las solicitudes adjudicadas o en ejecución del equipo del operario aparecen en `servicios_asignados`.', 'GET', '/api/sync/catalogo', null, $tokenPiloto, 200);
+    $servicio = buscar($catalogo['servicios_asignados'] ?? [], fn ($fila) => in_array($fila['estado'] ?? '', ['adjudicada', 'en_ejecucion'], true));
+    // La persona del piloto autenticado: la sesión declara a quien opera, y el servidor lo verifica.
+    $personaId = $emisionPiloto['usuario']['persona_id'] ?? null;
+    $persona = $personaId === null ? null : ['id' => $personaId];
 
     // -------------------------------------------------------------- lote (sync)
     if ($servicio !== null && $persona !== null) {
@@ -356,48 +357,129 @@ try {
     })();
 
     // --------------------------------------------------------------- proveedor
-    // Los propios de Agrocom ofrecen primero: para que la oferta llegue a un
-    // proveedor independiente, el titular propio rechaza la suya y el motor
-    // pasa a la ronda de terceros (ADR 0030).
-    $titularPropio = (int) DB::table('prv_proveedores')->where('tipo', 'propio')->value('usuario_titular_id');
-    $ofertasPropias = DB::table('asg_ofertas')->where('estado', 'ofrecida')->pluck('id');
-    foreach ($ofertasPropias as $idOferta) {
-        app(ResponderOferta::class)->rechazar($titularPropio, (int) $idOferta, 'Sin cupo esta semana.');
-    }
-
     $rolProveedor = (int) DB::table('sec_role')->where('name', 'proveedor')->value('id');
-    [$estadoToken, $emisionProveedor] = llamar('POST', '/api/auth/token', [
-        'username' => 'carlos.mamani', 'password' => $clave, 'uuid_dispositivo' => UUID_DISPOSITIVO, 'nombre_dispositivo' => 'Celular del proveedor', 'role_id' => $rolProveedor,
-    ]);
-    if ($estadoToken !== 201) {
-        throw new RuntimeException("No se pudo ingresar como proveedor: {$estadoToken}");
-    }
-    $tokenProveedor = $emisionProveedor['token'];
+    $rolPiloto = (int) DB::table('sec_role')->where('name', 'piloto')->value('id');
+    $emitir = function (string $usuario, int $rol, string $dispositivo, string $nombre) use ($clave): string {
+        [$estado, $emision] = llamar('POST', '/api/auth/token', [
+            'username' => $usuario, 'password' => $clave, 'uuid_dispositivo' => $dispositivo, 'nombre_dispositivo' => $nombre, 'role_id' => $rol,
+        ]);
+        if ($estado !== 201) {
+            throw new RuntimeException("No se pudo ingresar como {$usuario}: {$estado}");
+        }
+
+        return $emision['token'];
+    };
+    $tokenProveedor = $emitir('carlos.mamani', $rolProveedor, UUID_DISPOSITIVO, 'Celular del proveedor');
+    $tokenPilotoCarlos = $emitir('carlos.mamani', $rolPiloto, '7a2e1b3f-2a45-4d0a-8b9c-3c8d2e6f1a43', 'Control remoto del dron');
     registrar('seguridad-token-proveedor', 'emitirTokenDispositivo', 'El mismo usuario elige con qué rol opera mediante `role_id`.', 'POST', '/api/auth/token', [
         'username' => 'carlos.mamani', 'password' => $clave, 'uuid_dispositivo' => '7a2e1b3f-2a45-4d0a-8b9c-3c8d2e6f1a42', 'nombre_dispositivo' => 'Celular del proveedor', 'role_id' => $rolProveedor,
     ], null, 201);
 
     [, $mi] = registrar('proveedores-mi', 'verMiProveedor', 'El proveedor de la cuenta y su estado de aprobación.', 'GET', '/api/proveedores/mi', null, $tokenProveedor, 200);
     registrar('proveedores-documentos', 'listarDocumentosProveedor', 'Documentos del proveedor: se consultan por sujeto.', 'GET', '/api/proveedores/documentos?sujeto_tipo=proveedor&sujeto_id='.($mi['proveedor']['id'] ?? 0), null, $tokenProveedor, 200);
-    registrar('flota-drones', 'listarDrones', 'Drones del proveedor.', 'GET', '/api/proveedores/drones', null, $tokenProveedor, 200);
+    [, $drones] = registrar('flota-drones', 'listarDrones', 'Drones del proveedor, con su modelo.', 'GET', '/api/proveedores/drones', null, $tokenProveedor, 200);
     registrar('flota-equipos', 'listarEquipos', 'Equipos del proveedor.', 'GET', '/api/proveedores/equipos', null, $tokenProveedor, 200);
     registrar('proveedores-pilotos', 'listarPilotos', 'Pilotos del proveedor.', 'GET', '/api/proveedores/pilotos', null, $tokenProveedor, 200);
     registrar('proveedores-auxiliares', 'listarAuxiliares', 'Auxiliares del proveedor.', 'GET', '/api/proveedores/auxiliares', null, $tokenProveedor, 200);
-    registrar('flota-disponibilidad-declarar', 'declararDisponibilidad', 'El proveedor se pone en línea para recibir ofertas (requiere red).', 'PUT', '/api/disponibilidad', ['en_linea' => true], $tokenProveedor, 200);
-    registrar('flota-disponibilidad', 'consultarDisponibilidad', 'Disponibilidad de los equipos del proveedor.', 'GET', '/api/disponibilidad', null, $tokenProveedor, 200);
-    registrar('ofertas-reputacion', 'verReputacion', 'Calificación, tasas y sanciones propias.', 'GET', '/api/reputacion', null, $tokenProveedor, 200);
+    registrar('ofertas-reputacion', 'verReputacion', 'Calificación, tasa de cancelación y alertas propias; sin sanciones automáticas.', 'GET', '/api/reputacion', null, $tokenProveedor, 200);
     registrar('calificaciones-recibidas', 'listarCalificacionesRecibidas', 'Calificaciones que recibe el proveedor.', 'GET', '/api/calificaciones/recibidas', null, $tokenProveedor, 200);
-    registrar('notificaciones-proveedor', 'listarNotificaciones', 'Bandeja del proveedor.', 'GET', '/api/notificaciones', null, $tokenProveedor, 200);
+    registrar('notificaciones-proveedor', 'listarNotificaciones', 'Bandeja del proveedor: nuevas solicitudes en su zona, ofertas y mensajes.', 'GET', '/api/notificaciones', null, $tokenProveedor, 200);
+    registrar('notificaciones-preferencias', 'verPreferenciasDeAviso', 'Qué avisos recibe el piloto: nuevas solicitudes por zona, región y hectáreas mínimas.', 'GET', '/api/notificaciones/preferencias', null, $tokenProveedor, 200);
+    registrar('notificaciones-preferencias-guardar', 'guardarPreferenciasDeAviso', 'Activa o apaga los avisos de nuevas solicitudes y los acota a una región.', 'PUT', '/api/notificaciones/preferencias', [
+        'nuevas_solicitudes' => ['activo' => true, 'zonas' => [], 'macrorregiones' => ['chiquitania', 'valles'], 'hectareas_minimas' => '50.0000'], 'ofertas' => true, 'mensajes' => true, 'avance' => true, 'calificaciones' => true,
+    ], $tokenProveedor, 200);
 
-    [, $ofertas] = registrar('ofertas-lista', 'listarOfertas', 'Ofertas vivas del proveedor.', 'GET', '/api/ofertas', null, $tokenProveedor, 200);
-    $oferta = buscar($ofertas['ofertas'] ?? [], fn ($fila) => ($fila['estado'] ?? '') === 'ofrecida');
+    // Mapa de solicitudes abiertas: sin datos privados del cliente.
+    [, $mapa] = registrar('mercado-mapa', 'listarSolicitudesAbiertas', 'Solicitudes abiertas para el mapa del piloto, con sus filtros; sin nombre ni teléfono del cliente.', 'GET', '/api/solicitudes-abiertas?macrorregion=chiquitania&hectareas_min=50', null, $tokenProveedor, 200);
+    registrar('mercado-resumen-zonas', 'resumenZonasAbiertas', 'Cuántas solicitudes y hectáreas hay por zona y región (valles frente a Chiquitania).', 'GET', '/api/solicitudes-abiertas/resumen-zonas', null, $tokenProveedor, 200);
+    $abierta = $solicitudId !== null ? ['id' => $solicitudId] : buscar($mapa['solicitudes'] ?? [], fn ($fila) => ($fila['mi_negociacion'] ?? null) === null);
 
-    if ($oferta !== null) {
-        registrar('ofertas-ver', 'verOferta', 'Una oferta tal como la ve el proveedor: sin nombre del terreno ni contacto del cliente.', 'GET', "/api/ofertas/{$oferta['id']}", null, $tokenProveedor, 200);
-        registrar('ofertas-aceptar', 'aceptarOferta', 'Acepta la oferta: la aceptación es atómica y requiere red.', 'POST', "/api/ofertas/{$oferta['id']}/aceptar", null, $tokenProveedor);
-        registrar('ofertas-aceptar-otra-vez', 'aceptarOferta', 'Aceptar dos veces es idempotente: devuelve la misma oferta ya aceptada.', 'POST', "/api/ofertas/{$oferta['id']}/aceptar", null, $tokenProveedor);
-    } else {
-        $fallos[] = 'El proveedor independiente no recibió ninguna oferta viva tras el rechazo del propio.';
+    if ($abierta !== null) {
+        registrar('mercado-detalle', 'verSolicitudAbierta', 'Detalle previo a ofertar: lotes (polígonos), estado del terreno y datos del servicio, sin datos del cliente.', 'GET', "/api/solicitudes-abiertas/{$abierta['id']}", null, $tokenProveedor, 200);
+
+        [, $creada] = registrar('ofertas-ofertar', 'ofertarSolicitud', 'El proveedor contraoferta su precio por hectárea; idempotente por uuid_cliente.', 'POST', "/api/solicitudes/{$abierta['id']}/ofertas", [
+            'uuid_cliente' => '9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e11', 'tipo' => 'contraoferta', 'precio_ha' => '118.0000', 'nota' => 'Podemos ir la semana próxima.',
+        ], $tokenProveedor, 201);
+        registrar('ofertas-ofertar-reintento', 'ofertarSolicitud', 'Reintento con el mismo uuid_cliente: devuelve la misma oferta con 200.', 'POST', "/api/solicitudes/{$abierta['id']}/ofertas", [
+            'uuid_cliente' => '9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e11', 'tipo' => 'contraoferta', 'precio_ha' => '118.0000', 'nota' => 'Podemos ir la semana próxima.',
+        ], $tokenProveedor, 200);
+        $ofertaId = $creada['oferta']['id'] ?? null;
+
+        registrar('ofertas-lista', 'listarOfertas', 'Las negociaciones del proveedor: cada oferta con su estado y su ronda.', 'GET', '/api/ofertas', null, $tokenProveedor, 200);
+
+        if ($ofertaId !== null) {
+            registrar('ofertas-ver', 'verOferta', 'Una oferta con su historial de rondas.', 'GET', "/api/ofertas/{$ofertaId}", null, $tokenProveedor, 200);
+            registrar('ofertas-comparar', 'compararOfertas', 'El cliente compara las ofertas de una solicitud: precio, calificación, dron y distancia de cada proveedor.', 'GET', "/api/solicitudes/{$abierta['id']}/ofertas", null, $tokenCliente, 200);
+            [, $respuesta] = registrar('ofertas-contraofertar', 'contraofertarOferta', 'El cliente responde con su precio: la oferta anterior queda reemplazada y la nueva es la vigente.', 'POST', "/api/ofertas/{$ofertaId}/contraofertar", [
+                'precio_ha' => '121.0000', 'nota' => '¿Puedes acercarte a este precio?', 'uuid_cliente' => '9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e12',
+            ], $tokenCliente, 201);
+            $vigenteId = $respuesta['oferta']['id'] ?? null;
+
+            if ($vigenteId !== null) {
+                registrar('ofertas-aceptar', 'aceptarOferta', 'El proveedor acepta la contraoferta del cliente: la solicitud queda adjudicada y las demás ofertas se cierran.', 'POST', "/api/ofertas/{$vigenteId}/aceptar", null, $tokenProveedor, 200);
+                registrar('ofertas-aceptar-otra-vez', 'aceptarOferta', 'Aceptar dos veces es idempotente: devuelve la misma oferta ya aceptada.', 'POST', "/api/ofertas/{$vigenteId}/aceptar", null, $tokenProveedor, 200);
+            }
+
+            $solicitudNegociada = $abierta['id'];
+
+            registrar('solicitudes-adjudicada', 'verSolicitud', 'Tras adjudicar, la solicitud trae el precio acordado y los datos del proveedor.', 'GET', "/api/solicitudes/{$solicitudNegociada}", null, $tokenCliente, 200);
+
+            // Chat entre el cliente y el proveedor adjudicado.
+            registrar('mensajes-enviar', 'enviarMensaje', 'El cliente escribe al proveedor adjudicado; idempotente por uuid_cliente.', 'POST', "/api/solicitudes/{$solicitudNegociada}/mensajes", [
+                'uuid_cliente' => '9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e21', 'texto' => 'Hola, ¿qué día pueden venir?',
+            ], $tokenCliente, 201);
+            registrar('mensajes-responder', 'enviarMensaje', 'El proveedor responde.', 'POST', "/api/solicitudes/{$solicitudNegociada}/mensajes", [
+                'uuid_cliente' => '9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e22', 'texto' => 'El jueves temprano, si el viento lo permite.',
+            ], $tokenProveedor, 201);
+            [, $conversacion] = registrar('mensajes-lista', 'listarMensajes', 'Mensajes en orden con cursor: el cliente consulta cada pocos segundos con `despues`.', 'GET', "/api/solicitudes/{$solicitudNegociada}/mensajes", null, $tokenCliente, 200);
+
+            // Ejecución: inicio, avance con foto, última ubicación y cierre del piloto.
+            registrar('seguimiento-inicio', 'iniciarServicio', 'El piloto marca el inicio: la solicitud pasa a en ejecución.', 'POST', "/api/solicitudes/{$solicitudNegociada}/inicio", [
+                'uuid_cliente' => '9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e31', 'secuencia' => 1,
+            ], $tokenPilotoCarlos, 201);
+            registrar('seguimiento-avance', 'registrarAvance', 'El piloto marca el avance en porcentaje (o en hectáreas).', 'POST', "/api/solicitudes/{$solicitudNegociada}/avance", [
+                'uuid_cliente' => '9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e32', 'secuencia' => 2, 'porcentaje' => '40.00', 'nota' => 'Primera franja cubierta.',
+            ], $tokenPilotoCarlos, 201);
+
+            $foto = tempnam(sys_get_temp_dir(), 'avance');
+            $lienzoAvance = imagecreatetruecolor(320, 240);
+            imagefill($lienzoAvance, 0, 0, imagecolorallocate($lienzoAvance, 90, 140, 60));
+            imagejpeg($lienzoAvance, $foto, 70);
+            $peticionFoto = ['uuid_cliente' => '9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e33', 'tipo' => 'foto_avance'];
+            [$estadoFoto, $cuerpoFoto] = llamar('POST', "/api/solicitudes/{$solicitudNegociada}/evidencias", $peticionFoto, $tokenPilotoCarlos, ['archivo' => new UploadedFile($foto, 'avance.jpg', 'image/jpeg', null, true)]);
+            if ($estadoFoto === 201) {
+                file_put_contents("{$salida}/seguimiento-evidencia.json", json_encode([
+                    'operationId' => 'subirEvidenciaDeSolicitud',
+                    'descripcion' => 'Sube una foto de avance comprimida (multipart); cola separada de los registros livianos.',
+                    'peticion' => ['metodo' => 'POST', 'ruta' => "/api/solicitudes/{$solicitudNegociada}/evidencias", 'autenticada' => true, 'cuerpo' => $peticionFoto, 'multipart' => ['archivo' => 'avance.jpg (image/jpeg)']],
+                    'respuesta' => ['estado' => $estadoFoto, 'cuerpo' => sanear($cuerpoFoto)],
+                ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION)."\n");
+                $guardados++;
+            } else {
+                $fallos[] = "seguimiento-evidencia: {$estadoFoto} ".substr(json_encode($cuerpoFoto, JSON_UNESCAPED_UNICODE) ?: '', 0, 300);
+            }
+
+            registrar('seguimiento-ubicacion-enviar', 'enviarUbicacion', 'La app del piloto envía su última posición mientras el servicio está en ejecución.', 'PUT', '/api/ubicacion', [
+                'solicitud_id' => $solicitudNegociada, 'latitud' => -17.3395, 'longitud' => -63.2528, 'precision_m' => 12, 'capturado_en' => Carbon::now()->toIso8601String(),
+            ], $tokenPilotoCarlos, 204);
+            registrar('seguimiento-ubicacion-ver', 'verUbicacionDelPiloto', 'El cliente ve el último punto del piloto (sin ruta ni tiempo de llegada).', 'GET', "/api/solicitudes/{$solicitudNegociada}/ubicacion-piloto", null, $tokenCliente, 200);
+            registrar('seguimiento-avance-ver', 'verAvance', 'El cliente ve el avance, el monto estimado y las fotos.', 'GET', "/api/solicitudes/{$solicitudNegociada}/avance", null, $tokenCliente, 200);
+            registrar('seguimiento-cierre', 'cerrarServicio', 'El piloto cierra con las hectáreas ejecutadas: con su foto de avance la solicitud pasa a finalizada y se muestra el monto a pagar.', 'POST', "/api/solicitudes/{$solicitudNegociada}/cierre", [
+                'uuid_cliente' => '9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e34', 'secuencia' => 3, 'hectareas_ejecutadas' => '98.5000', 'nota' => 'Servicio terminado.',
+            ], $tokenPilotoCarlos, 201);
+            registrar('solicitudes-finalizada', 'verSolicitud', 'Finalizada: precio final = hectáreas ejecutadas por precio acordado; el pago se acuerda fuera de la app.', 'GET', "/api/solicitudes/{$solicitudNegociada}", null, $tokenCliente, 200);
+            registrar('seguimiento-ubicacion-sin-ejecucion', 'verUbicacionDelPiloto', 'Fuera de la ejecución no hay ubicación: la respuesta viene sin punto.', 'GET', "/api/solicitudes/{$solicitudNegociada}/ubicacion-piloto", null, $tokenCliente, 200);
+        }
+    }
+
+    // Una segunda solicitud para mostrar la cancelación del cliente.
+    if ($terrenoId !== null) {
+        [, $otra] = llamar('POST', '/api/solicitudes', [...$cuerpoSolicitud, 'uuid_cliente' => '5b0f6a52-0c1e-4b6c-9d57-7f9d3a1c2e02', 'hectareas_solicitadas' => '40.0000'], $tokenCliente);
+        $otraId = $otra['solicitud']['id'] ?? null;
+        if ($otraId !== null) {
+            llamar('POST', "/api/solicitudes/{$otraId}/publicar", null, $tokenCliente);
+            registrar('solicitudes-cancelar', 'cancelarSolicitud', 'El cliente cancela una solicitud abierta con motivo; sin penalidad.', 'POST', "/api/solicitudes/{$otraId}/cancelar", ['motivo' => 'Se adelantó la lluvia y se pospone la aplicación.'], $tokenCliente, 200);
+        }
     }
 
     // El proveedor no alcanza lo del cliente.

@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Notificaciones\Infraestructura;
 
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaAvisoDeNegociacion;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaCalificacionRegistrada;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaCalificacionReportada;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaClienteConAviso;
@@ -10,19 +11,9 @@ use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaDisputaApelada;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaDisputaResuelta;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaDocumentoPorVencer;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaDocumentoVencido;
-use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaEquipoEnCamino;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaEstadoDeAprobacionCambiado;
-use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaOfertaCreada;
-use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaOfertaRetirada;
-use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaOfertaVencida;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaProveedorRegistrado;
-use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaProveedorSancionado;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaPublicacionLimitada;
-use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaSolicitudAsignada;
-use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaSolicitudCompletada;
-use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaSolicitudEjecutada;
-use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaSolicitudReasignada;
-use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaSolicitudSinProveedor;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaTrabajoCerrado;
 use App\Dominios\Notificaciones\Aplicacion\ReglasDeNotificacion;
 use App\Dominios\Notificaciones\Contratos\LecturaNotificaciones;
@@ -46,18 +37,11 @@ final class NotificacionesServiceProvider extends ServiceProvider
     /** @var list<class-string<ReglaNotificacion>> */
     private const array REGLAS = [
         ReglaTrabajoCerrado::class,
+        ReglaAvisoDeNegociacion::class,
         ReglaEstadoDeAprobacionCambiado::class,
         ReglaDocumentoPorVencer::class,
         ReglaDocumentoVencido::class,
         ReglaProveedorRegistrado::class,
-        ReglaOfertaCreada::class,
-        ReglaOfertaVencida::class,
-        ReglaOfertaRetirada::class,
-        ReglaSolicitudAsignada::class,
-        ReglaSolicitudReasignada::class,
-        ReglaSolicitudSinProveedor::class,
-        ReglaProveedorSancionado::class,
-        ReglaSolicitudCompletada::class,
         ReglaCalificacionRegistrada::class,
         ReglaCalificacionReportada::class,
         ReglaDisputaAbierta::class,
@@ -65,8 +49,6 @@ final class NotificacionesServiceProvider extends ServiceProvider
         ReglaDisputaApelada::class,
         ReglaClienteConAviso::class,
         ReglaPublicacionLimitada::class,
-        ReglaEquipoEnCamino::class,
-        ReglaSolicitudEjecutada::class,
     ];
 
     public function register(): void

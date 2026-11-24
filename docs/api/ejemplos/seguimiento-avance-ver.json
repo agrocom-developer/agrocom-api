@@ -1,0 +1,59 @@
+{
+    "operationId": "verAvance",
+    "descripcion": "El cliente ve el avance, el monto estimado y las fotos.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/solicitudes/18/avance",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "avance": {
+                "solicitud_id": 18,
+                "estado": "en_ejecucion",
+                "lado": "cliente",
+                "hectareas_solicitadas": "100.0000",
+                "hectareas_ejecutadas": "40.0000",
+                "porcentaje_avance": "40.00",
+                "precio_ha_acordado": "121.0000",
+                "monto_estimado": "12100.00",
+                "monto_final": null,
+                "iniciada_en": "2026-11-24T15:58:53+00:00",
+                "ultimo_avance_en": "2026-11-24T15:58:53+00:00",
+                "cierre_solicitado_en": null,
+                "finalizada_en": null,
+                "registros": [
+                    {
+                        "id": 15,
+                        "uuid_cliente": "9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e31",
+                        "tipo": "inicio",
+                        "hectareas_ejecutadas": null,
+                        "porcentaje": null,
+                        "nota": null,
+                        "registrado_en": "2026-11-24T15:58:53+00:00"
+                    },
+                    {
+                        "id": 16,
+                        "uuid_cliente": "9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e32",
+                        "tipo": "avance",
+                        "hectareas_ejecutadas": "40.0000",
+                        "porcentaje": "40.00",
+                        "nota": "Primera franja cubierta.",
+                        "registrado_en": "2026-11-24T15:58:53+00:00"
+                    }
+                ],
+                "fotos": [
+                    {
+                        "id": 10,
+                        "uuid_cliente": "9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e33",
+                        "tipo": "foto_avance",
+                        "avance_id": null,
+                        "url": "/api/evidencias/10/archivo",
+                        "subida_en": "2026-11-24T15:58:54+00:00"
+                    }
+                ]
+            }
+        }
+    }
+}

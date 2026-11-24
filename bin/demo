@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 #
-# Demo local del marketplace: una API con datos de ejemplo para recorrer las
-# apps (cliente, piloto, auxiliar) en el simulador o en un teléfono.
+# Demo local del marketplace por negociación: una API con datos de ejemplo
+# (solicitudes en todos los estados, ofertas y contraofertas, chat, fotos y
+# ubicaciones) para recorrer las apps (cliente, piloto, auxiliar) en el
+# simulador o en un teléfono. Ver docs/gestion/demo-local.md.
 #
 #   bin/demo up      # postgres en docker + migra + siembra + sirve la API
-#   bin/demo seed    # (re)siembra catálogo y demo; renueva la vigencia de las ofertas
+#   bin/demo seed    # (re)siembra catálogo y demo; renueva la vigencia de lo abierto
 #   bin/demo reset   # borra la base, migra y siembra de cero
 #   bin/demo down    # detiene la API y el postgres (conserva los datos)
 #   bin/demo down --borrar   # además elimina el contenedor y sus datos
@@ -18,8 +20,8 @@
 #                    existe; si no, el primero libre desde 55440)
 #   DEMO_NOMBRE      nombre del contenedor de postgres         (agrocom-demo-pg)
 #   DEMO_PHP         binario de PHP del host                   (php)
-#   DEMO_SCHEDULER   1 para correr también `schedule:work`; las ofertas entonces
-#                    vencen y escalan como en producción      (0)
+#   DEMO_SCHEDULER   1 para correr también `schedule:work`; las ofertas y
+#                    solicitudes entonces vencen como en producción (0)
 #
 # No lee ni escribe el `.env` del repo: toda la configuración entra por
 # variables de entorno del proceso. El estado de la demo (clave de la app,
@@ -269,7 +271,7 @@ case "$orden" in
         exec tail -f "$LOG_API"
         ;;
     *)
-        sed -n '3,22p' "$0" | sed 's/^# \{0,1\}//'
+        sed -n '3,25p' "$0" | sed 's/^# \{0,1\}//'
         [ -z "$orden" ] || exit 2
         ;;
 esac

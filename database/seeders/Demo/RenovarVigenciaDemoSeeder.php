@@ -2,56 +2,53 @@
 
 namespace Database\Seeders\Demo;
 
-use App\Dominios\Asignacion\Infraestructura\Eloquent\Oferta;
+use App\Dominios\Negociacion\Infraestructura\Eloquent\Oferta;
 use App\Dominios\Solicitudes\Dominio\EstadoSolicitud;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\SolicitudServicio;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 
 /**
- * Mantiene la demo viva al volver a sembrar: las ofertas pendientes recuperan
- * una cuenta regresiva vigente y las solicitudes que siguen abiertas recuperan
- * una ventana de fechas futura. Todo es relativo a `now()`, así que correr
- * `bin/demo seed` días después deja el mismo recorrido que el primer día.
+ * Mantiene la demo viva al volver a sembrar: las solicitudes que siguen abiertas recuperan su
+ * vigencia, las ofertas vigentes recuperan sus horas de plazo y las ventanas de fechas caducadas
+ * vuelven a quedar hacia adelante. Todo es relativo a `now()`, así que correr `bin/demo seed` días
+ * después deja el mismo recorrido que el primer día.
  *
- * Lo ya terminado (completado, cancelado, en disputa) no se toca.
+ * Lo ya terminado (finalizado, calificado, cancelado, expirado, disputado) no se toca.
  */
 class RenovarVigenciaDemoSeeder extends Seeder
 {
-    /** Horas de cuenta regresiva que recupera cada oferta pendiente. */
-    public const HORAS_DE_OFERTA = 3;
+    /** Horas de plazo que recupera cada oferta vigente. */
+    public const HORAS_DE_OFERTA = 24;
+
+    /** Días de vigencia que recupera cada solicitud abierta. */
+    public const DIAS_DE_SOLICITUD = 5;
 
     public function run(): void
     {
         $ahora = Carbon::now();
 
-        Oferta::query()
-            ->where('estado', 'ofrecida')
-            ->update([
-                'ofrecida_en' => $ahora->copy()->subMinutes(5),
-                'vence_en' => $ahora->copy()->addHours(self::HORAS_DE_OFERTA),
-            ]);
-
-        // Lo que está ocurriendo hoy mantiene su ventana en torno a hoy; lo que aún no
-        // empieza recupera una ventana futura. Solo se corrigen las ventanas caducadas.
-        $enCurso = [EstadoSolicitud::EnCamino, EstadoSolicitud::EnEjecucion, EstadoSolicitud::SuspendidaPorClima];
-        $pendientes = [EstadoSolicitud::Publicada, EstadoSolicitud::EnAsignacion, EstadoSolicitud::SinProveedor, EstadoSolicitud::Asignada];
-        $valores = fn (array $estados): array => array_map(fn (EstadoSolicitud $e): string => $e->value, $estados);
+        $abiertas = array_map(fn (EstadoSolicitud $e): string => $e->value, [EstadoSolicitud::Abierta, EstadoSolicitud::ConOfertas]);
 
         SolicitudServicio::query()
-            ->whereIn('estado', $valores($enCurso))
+            ->whereIn('estado', $abiertas)
+            ->where('vence_en', '<', $ahora->copy()->addDays(2))
+            ->update(['vence_en' => $ahora->copy()->addDays(self::DIAS_DE_SOLICITUD)]);
+
+        Oferta::query()
+            ->where('estado', 'vigente')
+            ->where('vence_en', '<', $ahora->copy()->addHours(self::HORAS_DE_OFERTA))
+            ->update(['vence_en' => $ahora->copy()->addHours(self::HORAS_DE_OFERTA)]);
+
+        // Lo que está por ejecutarse o en curso mantiene su ventana en torno a hoy.
+        $enCurso = array_map(fn (EstadoSolicitud $e): string => $e->value, [EstadoSolicitud::Abierta, EstadoSolicitud::ConOfertas, EstadoSolicitud::Adjudicada, EstadoSolicitud::EnEjecucion]);
+
+        SolicitudServicio::query()
+            ->whereIn('estado', $enCurso)
             ->where('ventana_hasta', '<', $ahora->toDateString())
             ->update([
                 'ventana_desde' => $ahora->copy()->subDay()->toDateString(),
-                'ventana_hasta' => $ahora->copy()->addDays(2)->toDateString(),
-            ]);
-
-        SolicitudServicio::query()
-            ->whereIn('estado', $valores($pendientes))
-            ->where('ventana_hasta', '<', $ahora->toDateString())
-            ->update([
-                'ventana_desde' => $ahora->copy()->addDays(3)->toDateString(),
-                'ventana_hasta' => $ahora->copy()->addDays(10)->toDateString(),
+                'ventana_hasta' => $ahora->copy()->addDays(6)->toDateString(),
             ]);
     }
 }

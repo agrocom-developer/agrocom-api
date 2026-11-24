@@ -1,7 +1,5 @@
 <?php
 
-use App\Dominios\Asignacion\Infraestructura\Http\Controllers\Web\AsignacionesController;
-use App\Dominios\Asignacion\Infraestructura\Http\Controllers\Web\SancionesController;
 use App\Dominios\Calificaciones\Infraestructura\Http\Controllers\Web\CalificacionesController;
 use App\Dominios\Disputas\Infraestructura\Http\Controllers\Web\DisputasController;
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
@@ -512,28 +510,6 @@ Route::middleware('auth:interno')->group(function () {
         Route::post('/panel/solicitudes/{solicitud}/cancelar', [SolicitudesPanelController::class, 'cancelar'])
             ->whereNumber('solicitud')
             ->name('panel.solicitudes.cancelar');
-
-        // Asignación (ADR 0030 y 0038): la cola de solicitudes que esperan
-        // proveedor, las rondas y ofertas de cada una, la asignación a mano con
-        // motivo y las sanciones de los proveedores. El motor genera las ofertas;
-        // el panel las consulta y decide donde el motor no pudo.
-        Route::get('/panel/asignaciones', [AsignacionesController::class, 'index'])
-            ->name('panel.asignaciones.index');
-
-        Route::get('/panel/asignaciones/{solicitud}', [AsignacionesController::class, 'show'])
-            ->whereNumber('solicitud')
-            ->name('panel.asignaciones.show');
-
-        Route::post('/panel/asignaciones/{solicitud}/forzar', [AsignacionesController::class, 'forzar'])
-            ->whereNumber('solicitud')
-            ->name('panel.asignaciones.forzar');
-
-        Route::get('/panel/sanciones', [SancionesController::class, 'index'])
-            ->name('panel.sanciones.index');
-
-        Route::post('/panel/sanciones/{sancion}/levantar', [SancionesController::class, 'levantar'])
-            ->whereNumber('sancion')
-            ->name('panel.sanciones.levantar');
 
         // Calificaciones (ADR 0031 y 0039): la cola de moderación; ocultar con causa y
         // motivo o dejar visible. Ocultar no borra: deja de contar para el promedio.

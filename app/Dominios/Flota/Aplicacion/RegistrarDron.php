@@ -25,7 +25,7 @@ final class RegistrarDron
     ) {}
 
     /**
-     * @param  array{marca: string, modelo: string, numero_serie: string, capacidad_tanque_l: string, ancho_pasada_m: string}  $datos
+     * @param  array{marca: string, modelo: string, numero_serie: string, capacidad_tanque_l: string, ancho_pasada_m: string, anio?: int|string|null}  $datos
      *
      * @throws OperacionDeFlotaInvalida si la cuenta no es titular de un proveedor, el proveedor no admite altas o la serie ya existe.
      */
@@ -46,6 +46,7 @@ final class RegistrarDron
                 'numero_serie' => $datos['numero_serie'],
                 'capacidad_tanque_l' => $datos['capacidad_tanque_l'],
                 'ancho_pasada_m' => $datos['ancho_pasada_m'],
+                'anio' => isset($datos['anio']) ? (int) $datos['anio'] : null,
                 'ciclos_bateria' => 0,
                 'origen' => $proveedor->tipo === 'propio' ? OrigenDron::FlotaAgrocom : OrigenDron::Externo,
                 'created_by' => $actorUsuarioId,

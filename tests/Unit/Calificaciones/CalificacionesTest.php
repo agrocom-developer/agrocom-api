@@ -74,6 +74,7 @@ function calMundo(bool $conAuxiliar = true): CalificacionesGuardadas
         'create_sol_clientes_table',
         'create_sol_terrenos_table',
         'create_sol_solicitudes_servicio_table',
+        'agrega_negociacion_a_sol_solicitudes_servicio',
         'create_sol_solicitud_historial_table',
         'agrega_reputacion_a_sol_clientes',
         'create_cal_calificaciones_table',
@@ -114,13 +115,14 @@ function calMundo(bool $conAuxiliar = true): CalificacionesGuardadas
     return $guardadas;
 }
 
-function calCompletada(string $estado = 'completada', ?Carbon $completadaEn = null): int
+function calCompletada(string $estado = 'finalizada', ?Carbon $completadaEn = null): int
 {
     $id = DB::table('sol_solicitudes_servicio')->insertGetId([
         'uuid_cliente' => (string) Str::uuid(), 'cliente_id' => 1, 'terreno_id' => 1, 'tipo_aplicacion' => 'herbicida',
         'hectareas_solicitadas' => '100.0000', 'producto_indicado' => 'Glifosato', 'aporta_producto' => 'cliente',
         'ventana_desde' => '2026-12-01', 'ventana_hasta' => '2026-12-10', 'urgente' => false,
         'monto_estimado' => '12000.00', 'estado' => $estado, 'proveedor_id' => 7, 'equipo_id' => 70,
+        'finalizada_en' => in_array($estado, ['finalizada', 'calificada'], true) ? ($completadaEn ?? Carbon::now()->subDay()) : null,
         'created_at' => now(), 'updated_at' => now(),
     ]);
 
@@ -237,9 +239,9 @@ test('un uuid ya usado en otra calificación se rechaza', function () {
 
 test('solo se califica un servicio completado y dentro del plazo', function () {
     calMundo();
-    $ejecutada = calCompletada('ejecutada');
-    $vencida = calCompletada('completada', Carbon::now()->subDays(8));
-    $justo = calCompletada('completada', Carbon::now()->subDays(6));
+    $ejecutada = calCompletada('en_ejecucion');
+    $vencida = calCompletada('finalizada', Carbon::now()->subDays(8));
+    $justo = calCompletada('finalizada', Carbon::now()->subDays(6));
 
     expect(fn () => app(CalificarComoCliente::class)->ejecutar(CAL_CLIENTE_USUARIO, $ejecutada, [calItem('proveedor', 5)]))->toRechazarCon(CalificacionInvalida::class, 'calificaciones.errores.servicio_no_completado')
         ->and(fn () => app(CalificarComoCliente::class)->ejecutar(CAL_CLIENTE_USUARIO, $vencida, [calItem('proveedor', 5)]))->toRechazarCon(CalificacionInvalida::class, 'calificaciones.errores.plazo_vencido')
@@ -456,7 +458,7 @@ test('el estado del servicio dice a quién falta calificar y hasta cuándo', fun
         ->and($proveedor['sujetos'][0]['nombre'])->toBe('Cliente Ana')
         ->and($proveedor['sujetos'][0]['calificacion'])->toBeNull();
 
-    $ejecutada = calCompletada('ejecutada');
+    $ejecutada = calCompletada('en_ejecucion');
     expect(app(ConsultarCalificacionesDelServicio::class)->paraCliente(CAL_CLIENTE_USUARIO, $ejecutada)['puede_calificar'])->toBeFalse();
 });
 

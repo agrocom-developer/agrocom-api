@@ -3,36 +3,31 @@
     "descripcion": "Aceptar dos veces es idempotente: devuelve la misma oferta ya aceptada.",
     "peticion": {
         "metodo": "POST",
-        "ruta": "/api/ofertas/9/aceptar",
+        "ruta": "/api/ofertas/18/aceptar",
         "autenticada": true
     },
     "respuesta": {
         "estado": 200,
         "cuerpo": {
             "oferta": {
-                "id": 9,
-                "solicitud_id": 12,
-                "estado": "aceptada",
-                "ronda": 4,
-                "grupo": "tercero",
-                "ofrecida_en": "2026-11-24T05:45:47+00:00",
-                "vence_en": "2026-11-24T07:45:47+00:00",
-                "segundos_restantes": 0,
-                "respondida_en": "2026-11-24T05:45:50+00:00",
-                "motivo_rechazo": null,
-                "motivo_retiro": null,
+                "id": 18,
+                "uuid_cliente": "9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e12",
+                "solicitud_id": 18,
+                "proveedor_id": 2,
                 "equipo_id": 3,
-                "pago_estimado": "6732.00",
+                "numero": 2,
+                "autor": "cliente",
+                "tipo": "contraoferta",
+                "precio_ha": "121.0000",
+                "monto_estimado": "12100.00",
+                "estado": "aceptada",
+                "es_definitiva": false,
+                "nota": "¿Puedes acercarte a este precio?",
+                "oferta_anterior_id": 17,
                 "distancia_km": null,
-                "servicio": {
-                    "tipo_aplicacion": "herbicida",
-                    "hectareas": "60.0000",
-                    "urgente": false,
-                    "ventana_desde": "2026-11-27",
-                    "ventana_hasta": "2026-12-06",
-                    "zona": null,
-                    "ubicacion_aproximada": null
-                }
+                "vence_en": "2026-11-26T15:58:53+00:00",
+                "respondida_en": "2026-11-24T15:58:53+00:00",
+                "creada_en": "2026-11-24T15:58:53+00:00"
             }
         }
     }

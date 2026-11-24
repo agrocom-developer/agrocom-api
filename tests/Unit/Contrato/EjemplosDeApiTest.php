@@ -145,8 +145,13 @@ test('los ejemplos cubren las operaciones que las apps necesitan', function () {
         'emitirTokenDispositivo', 'verSesionCampo', 'cerrarSesionCampo', 'obtenerVersionVigente',
         // Sincronización del lote (piloto y auxiliar).
         'obtenerCatalogoSincronizacion', 'sincronizarLote', 'subirEvidencia',
-        // Proveedor: ofertas y disponibilidad (requieren red).
-        'listarOfertas', 'verOferta', 'aceptarOferta', 'declararDisponibilidad', 'consultarDisponibilidad', 'verReputacion',
+        // Negociación: mapa de abiertas, ofertas y contraofertas (requieren red).
+        'listarSolicitudesAbiertas', 'resumenZonasAbiertas', 'verSolicitudAbierta', 'ofertarSolicitud', 'compararOfertas',
+        'listarOfertas', 'verOferta', 'contraofertarOferta', 'aceptarOferta', 'verReputacion', 'cambiarPrecioSolicitud',
+        // Ejecución: avance con fotos, ubicación del piloto y chat.
+        'iniciarServicio', 'registrarAvance', 'cerrarServicio', 'verAvance', 'subirEvidenciaDeSolicitud',
+        'enviarUbicacion', 'verUbicacionDelPiloto', 'enviarMensaje', 'listarMensajes',
+        'verPreferenciasDeAviso', 'guardarPreferenciasDeAviso',
         // Cliente: terrenos y solicitudes.
         'listarTerrenos', 'crearTerreno', 'actualizarTerreno', 'listarSolicitudes', 'crearSolicitud', 'estimarSolicitud',
         'publicarSolicitud', 'verSolicitud', 'cancelarSolicitud',

@@ -17,10 +17,12 @@ use App\Dominios\Solicitudes\Dominio\TransicionesSolicitud;
 function pasosDeSolicitud(EstadoSolicitud $actual, bool $puedeCambiar = true): array
 {
     return PasosDeEstado::armar(
-        ruta: [EstadoSolicitud::Borrador, EstadoSolicitud::Publicada, EstadoSolicitud::EnAsignacion],
+        ruta: [EstadoSolicitud::Borrador, EstadoSolicitud::Abierta, EstadoSolicitud::Adjudicada],
         actual: $actual,
-        permitida: TransicionesSolicitud::permitida(...),
-        tonos: ['borrador' => 'neutral', 'publicada' => 'success', 'en_asignacion' => 'alert'],
+        // El regreso de una adjudicada a abierta es del proveedor (cancela el servicio), no un paso del flujo.
+        permitida: fn (EstadoSolicitud $desde, EstadoSolicitud $hacia): bool => TransicionesSolicitud::permitida($desde, $hacia)
+            && ! ($desde === EstadoSolicitud::Adjudicada && $hacia === EstadoSolicitud::Abierta),
+        tonos: ['borrador' => 'neutral', 'abierta' => 'success', 'adjudicada' => 'alert'],
         claveEtiqueta: 'solicitudes.estado',
         prefijoModal: 'solicitud-estado-modal',
         puedeCambiar: $puedeCambiar,
@@ -40,17 +42,17 @@ test('pasos: planificada es el actual, abierta es accionable y cerrada está blo
     $pasos = pasosDeSolicitud(EstadoSolicitud::Borrador);
 
     expect(situaciones($pasos))->toBe(['current', 'next', 'blocked'])
-        ->and($pasos[1]['modal'])->toBe('solicitud-estado-modal-publicada')
+        ->and($pasos[1]['modal'])->toBe('solicitud-estado-modal-abierta')
         ->and($pasos[0]['modal'])->toBeNull()
         ->and($pasos[2]['modal'])->toBeNull();
 });
 
 test('pasos: abierta deja planificada completada y cerrada accionable', function () {
-    expect(situaciones(pasosDeSolicitud(EstadoSolicitud::Publicada)))->toBe(['completed', 'current', 'next']);
+    expect(situaciones(pasosDeSolicitud(EstadoSolicitud::Abierta)))->toBe(['completed', 'current', 'next']);
 });
 
 test('pasos: cerrada es terminal, todo lo anterior queda completado y nada es accionable', function () {
-    $pasos = pasosDeSolicitud(EstadoSolicitud::EnAsignacion);
+    $pasos = pasosDeSolicitud(EstadoSolicitud::Adjudicada);
 
     expect(situaciones($pasos))->toBe(['completed', 'completed', 'current'])
         ->and(array_column($pasos, 'modal'))->each->toBeNull();
@@ -73,16 +75,16 @@ test('pasos: el paso bloqueado explica por cuál hay que pasar antes', function 
 });
 
 test('pasos: cada paso trae su clave, su etiqueta y el tono de su estado', function () {
-    $pasos = pasosDeSolicitud(EstadoSolicitud::Publicada);
+    $pasos = pasosDeSolicitud(EstadoSolicitud::Abierta);
 
-    expect(array_column($pasos, 'key'))->toBe(['borrador', 'publicada', 'en_asignacion'])
-        ->and($pasos[1]['label'])->toBe('solicitudes.estado.publicada')
+    expect(array_column($pasos, 'key'))->toBe(['borrador', 'abierta', 'adjudicada'])
+        ->and($pasos[1]['label'])->toBe('solicitudes.estado.abierta')
         ->and(array_column($pasos, 'tone'))->toBe(['neutral', 'success', 'alert']);
 });
 
 test('pasos: un estado sin tono declarado cae en neutral', function () {
     $pasos = PasosDeEstado::armar(
-        ruta: [EstadoSolicitud::Borrador, EstadoSolicitud::Publicada],
+        ruta: [EstadoSolicitud::Borrador, EstadoSolicitud::Abierta],
         actual: EstadoSolicitud::Borrador,
         permitida: TransicionesSolicitud::permitida(...),
         tonos: [],
@@ -116,14 +118,14 @@ test('ayuda: con permiso lleva el texto del estado y la invitación a hacer clic
 });
 
 test('ayuda: sin permiso avisa que el rol no puede cambiar el estado, en vez de invitar a hacer clic', function () {
-    $ayuda = PasosDeEstado::ayuda(pasosDeSolicitud(EstadoSolicitud::Publicada, puedeCambiar: false), 'solicitudes.estado_ayuda');
+    $ayuda = PasosDeEstado::ayuda(pasosDeSolicitud(EstadoSolicitud::Abierta, puedeCambiar: false), 'solicitudes.estado_ayuda');
 
-    expect($ayuda)->toBe('solicitudes.estado_ayuda.publicada ui.pasos.ayuda_sin_permiso');
+    expect($ayuda)->toBe('solicitudes.estado_ayuda.abierta ui.pasos.ayuda_sin_permiso');
 });
 
 test('ayuda: un estado final lleva solo el texto del objeto, sin paso al que ir', function () {
-    expect(PasosDeEstado::ayuda(pasosDeSolicitud(EstadoSolicitud::EnAsignacion), 'solicitudes.estado_ayuda'))
-        ->toBe('solicitudes.estado_ayuda.en_asignacion');
+    expect(PasosDeEstado::ayuda(pasosDeSolicitud(EstadoSolicitud::Adjudicada), 'solicitudes.estado_ayuda'))
+        ->toBe('solicitudes.estado_ayuda.adjudicada');
 });
 
 test('ayuda: sin estado actual entre los pasos no hay párrafo', function () {
@@ -138,9 +140,10 @@ test('ayuda: sin estado actual entre los pasos no hay párrafo', function () {
 function pasosDeSolicitudCon(EstadoSolicitud $actual, mixed ...$opciones): array
 {
     return PasosDeEstado::armar(...[
-        'ruta' => [EstadoSolicitud::Borrador, EstadoSolicitud::Publicada, EstadoSolicitud::EnAsignacion],
+        'ruta' => [EstadoSolicitud::Borrador, EstadoSolicitud::Abierta, EstadoSolicitud::Adjudicada],
         'actual' => $actual,
-        'permitida' => TransicionesSolicitud::permitida(...),
+        'permitida' => fn (EstadoSolicitud $desde, EstadoSolicitud $hacia): bool => TransicionesSolicitud::permitida($desde, $hacia)
+            && ! ($desde === EstadoSolicitud::Adjudicada && $hacia === EstadoSolicitud::Abierta),
         'tonos' => [],
         'claveEtiqueta' => 'solicitudes.estado',
         'prefijoModal' => 'm',
@@ -152,13 +155,13 @@ function pasosDeSolicitudCon(EstadoSolicitud $actual, mixed ...$opciones): array
 test('pasos: los recorridos explícitos reemplazan a la posición para decidir qué está completado', function () {
     // Por posición, cerrada deja planificada y abierta completadas; diciendo que
     // no se recorrió ninguna, quedan bloqueadas.
-    expect(situaciones(pasosDeSolicitudCon(EstadoSolicitud::EnAsignacion)))->toBe(['completed', 'completed', 'current'])
-        ->and(situaciones(pasosDeSolicitudCon(EstadoSolicitud::EnAsignacion, recorridos: [])))->toBe(['blocked', 'blocked', 'current'])
-        ->and(situaciones(pasosDeSolicitudCon(EstadoSolicitud::EnAsignacion, recorridos: [EstadoSolicitud::Borrador])))->toBe(['completed', 'blocked', 'current']);
+    expect(situaciones(pasosDeSolicitudCon(EstadoSolicitud::Adjudicada)))->toBe(['completed', 'completed', 'current'])
+        ->and(situaciones(pasosDeSolicitudCon(EstadoSolicitud::Adjudicada, recorridos: [])))->toBe(['blocked', 'blocked', 'current'])
+        ->and(situaciones(pasosDeSolicitudCon(EstadoSolicitud::Adjudicada, recorridos: [EstadoSolicitud::Borrador])))->toBe(['completed', 'blocked', 'current']);
 });
 
 test('pasos: una pista propia reemplaza al «pasa antes por…» del paso bloqueado, y solo a ese', function () {
-    $pasos = pasosDeSolicitudCon(EstadoSolicitud::Borrador, pistas: ['en_asignacion' => 'Motivo propio', 'publicada' => 'No se usa']);
+    $pasos = pasosDeSolicitudCon(EstadoSolicitud::Borrador, pistas: ['adjudicada' => 'Motivo propio', 'abierta' => 'No se usa']);
 
     expect($pasos[2]['hint'])->toBe('Motivo propio')
         // `abierta` no está bloqueado: la pista no le corresponde.
@@ -166,7 +169,7 @@ test('pasos: una pista propia reemplaza al «pasa antes por…» del paso bloque
 });
 
 test('pasos: el ícono de un paso se toma de la lista y por defecto no hay', function () {
-    $pasos = pasosDeSolicitudCon(EstadoSolicitud::Publicada, iconos: ['en_asignacion' => 'cancel']);
+    $pasos = pasosDeSolicitudCon(EstadoSolicitud::Abierta, iconos: ['adjudicada' => 'cancel']);
 
     expect(array_column($pasos, 'icon'))->toBe([null, null, 'cancel']);
 });
@@ -178,30 +181,30 @@ test('pasos: el «pasa antes por…» nombra el primer paso al que sí se puede 
 
 test('pasos: el permiso por destino se suma al general, y sin él el paso queda pendiente', function () {
     // Puede cambiar de estado en general, pero no ir a «cerrada»: solo ese paso queda pendiente.
-    $sinCerrar = fn (EstadoSolicitud $hacia): bool => $hacia !== EstadoSolicitud::EnAsignacion;
+    $sinCerrar = fn (EstadoSolicitud $hacia): bool => $hacia !== EstadoSolicitud::Adjudicada;
 
-    expect(situaciones(pasosDeSolicitudCon(EstadoSolicitud::Publicada, puedeIrA: $sinCerrar)))->toBe(['completed', 'current', 'pending'])
-        ->and(pasosDeSolicitudCon(EstadoSolicitud::Publicada, puedeIrA: $sinCerrar)[2]['hint'])->toBe('ui.pasos.pista_sin_permiso')
-        ->and(pasosDeSolicitudCon(EstadoSolicitud::Publicada, puedeIrA: $sinCerrar)[2]['modal'])->toBeNull();
+    expect(situaciones(pasosDeSolicitudCon(EstadoSolicitud::Abierta, puedeIrA: $sinCerrar)))->toBe(['completed', 'current', 'pending'])
+        ->and(pasosDeSolicitudCon(EstadoSolicitud::Abierta, puedeIrA: $sinCerrar)[2]['hint'])->toBe('ui.pasos.pista_sin_permiso')
+        ->and(pasosDeSolicitudCon(EstadoSolicitud::Abierta, puedeIrA: $sinCerrar)[2]['modal'])->toBeNull();
 
     // Sin el permiso general, ningún permiso por destino lo devuelve.
-    expect(situaciones(pasosDeSolicitudCon(EstadoSolicitud::Publicada, puedeCambiar: false, puedeIrA: fn (): bool => true)))->toBe(['completed', 'current', 'pending']);
+    expect(situaciones(pasosDeSolicitudCon(EstadoSolicitud::Abierta, puedeCambiar: false, puedeIrA: fn (): bool => true)))->toBe(['completed', 'current', 'pending']);
 });
 
 test('pasos: un modal propio reemplaza al «prefijo-valor» del paso accionable, y solo a ese', function () {
-    $pasos = pasosDeSolicitudCon(EstadoSolicitud::Borrador, modales: ['publicada' => 'modal-propio', 'en_asignacion' => 'no-se-usa']);
+    $pasos = pasosDeSolicitudCon(EstadoSolicitud::Borrador, modales: ['abierta' => 'modal-propio', 'adjudicada' => 'no-se-usa']);
 
     expect($pasos[1]['modal'])->toBe('modal-propio')
         // `cerrada` está bloqueado: no abre ningún modal aunque figure en la lista.
         ->and($pasos[2]['modal'])->toBeNull()
         // Sin entrada en la lista, vale el prefijo de siempre.
-        ->and(pasosDeSolicitudCon(EstadoSolicitud::Borrador, modales: [])[1]['modal'])->toBe('m-publicada');
+        ->and(pasosDeSolicitudCon(EstadoSolicitud::Borrador, modales: [])[1]['modal'])->toBe('m-abierta');
 });
 
 test('ayuda: el paso del cierre puede nombrarse aparte del primero accionable', function () {
     $pasos = pasosDeSolicitud(EstadoSolicitud::Borrador);
 
-    // `publicada` es accionable: el cierre lo nombra. `en_asignacion` está bloqueado: el párrafo no invita a hacer clic.
-    expect(PasosDeEstado::ayuda($pasos, 'solicitudes.estado_ayuda', 'publicada'))->toBe('solicitudes.estado_ayuda.borrador ui.pasos.ayuda_accion')
-        ->and(PasosDeEstado::ayuda($pasos, 'solicitudes.estado_ayuda', 'en_asignacion'))->toBe('solicitudes.estado_ayuda.borrador');
+    // `abierta` es accionable: el cierre lo nombra. `adjudicada` está bloqueado: el párrafo no invita a hacer clic.
+    expect(PasosDeEstado::ayuda($pasos, 'solicitudes.estado_ayuda', 'abierta'))->toBe('solicitudes.estado_ayuda.borrador ui.pasos.ayuda_accion')
+        ->and(PasosDeEstado::ayuda($pasos, 'solicitudes.estado_ayuda', 'adjudicada'))->toBe('solicitudes.estado_ayuda.borrador');
 });

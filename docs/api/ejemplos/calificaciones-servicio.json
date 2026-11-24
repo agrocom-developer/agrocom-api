@@ -1,35 +1,56 @@
 {
     "operationId": "verCalificacionesDelServicio",
-    "descripcion": "Calificaciones de un servicio completado.",
+    "descripcion": "Calificaciones de un servicio calificado.",
     "peticion": {
         "metodo": "GET",
-        "ruta": "/api/solicitudes/8/calificaciones",
+        "ruta": "/api/solicitudes/13/calificaciones",
         "autenticada": true
     },
     "respuesta": {
         "estado": 200,
         "cuerpo": {
-            "puede_calificar": true,
-            "vence_en": "2026-12-01T05:45:32+00:00",
+            "puede_calificar": false,
+            "vence_en": "2026-11-29T03:58:45+00:00",
             "plazo_dias": 7,
             "sujetos": [
                 {
                     "tipo": "proveedor",
                     "id": 1,
                     "nombre": "Agrocom SRL",
-                    "calificacion": null
+                    "calificacion": {
+                        "id": 1,
+                        "uuid_cliente": "55a5a9db-6445-59f9-8e2e-d0c9df621834",
+                        "solicitud_id": 13,
+                        "sujeto_tipo": "proveedor",
+                        "sujeto_id": 1,
+                        "estrellas": 5,
+                        "etiquetas": [
+                            "puntualidad",
+                            "cobertura_pareja"
+                        ],
+                        "comentario": "Cumplieron el precio y la cobertura quedó pareja.",
+                        "estado": "visible",
+                        "creada_en": "2026-11-24T15:58:45+00:00"
+                    }
                 },
                 {
                     "tipo": "piloto",
-                    "id": 1,
-                    "nombre": "Rodrigo Suárez Peña",
-                    "calificacion": null
-                },
-                {
-                    "tipo": "auxiliar",
-                    "id": 1,
-                    "nombre": "Diego Parada Cuéllar",
-                    "calificacion": null
+                    "id": 2,
+                    "nombre": "Valeria Montaño Roca",
+                    "calificacion": {
+                        "id": 2,
+                        "uuid_cliente": "0564c03e-c614-5960-ae9f-3a34880a79ab",
+                        "solicitud_id": 13,
+                        "sujeto_tipo": "piloto",
+                        "sujeto_id": 2,
+                        "estrellas": 4,
+                        "etiquetas": [
+                            "comunicacion"
+                        ],
+                        "comentario": null,
+                        "estado": "visible",
+                        "creada_en": "2026-11-24T15:58:45+00:00"
+                    }
                 }
             ],
             "etiquetas": [

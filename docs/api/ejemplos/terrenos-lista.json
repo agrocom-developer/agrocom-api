@@ -11,15 +11,78 @@
         "cuerpo": {
             "terrenos": [
                 {
+                    "id": 2,
+                    "nombre": "Las Palmas",
+                    "hectareas": "120.0000",
+                    "cultivo": "Maíz",
+                    "geometria": {
+                        "type": "Polygon",
+                        "coordinates": [
+                            [
+                                [
+                                    -63.2171,
+                                    -17.7883
+                                ],
+                                [
+                                    -63.2071,
+                                    -17.7883
+                                ],
+                                [
+                                    -63.2071,
+                                    -17.7783
+                                ],
+                                [
+                                    -63.2171,
+                                    -17.7783
+                                ],
+                                [
+                                    -63.2171,
+                                    -17.7883
+                                ]
+                            ]
+                        ]
+                    },
+                    "referencias_acceso": "Camino vecinal a 3 km de la ruta principal.",
+                    "colindantes_sensibles": null,
+                    "acceso_dificil": false,
+                    "zona_id": 1
+                },
+                {
                     "id": 1,
                     "nombre": "Lote Norte",
                     "hectareas": "80.0000",
                     "cultivo": "Soya",
-                    "geometria": null,
+                    "geometria": {
+                        "type": "Polygon",
+                        "coordinates": [
+                            [
+                                [
+                                    -63.2018,
+                                    -17.5391
+                                ],
+                                [
+                                    -63.1918,
+                                    -17.5391
+                                ],
+                                [
+                                    -63.1918,
+                                    -17.5291
+                                ],
+                                [
+                                    -63.2018,
+                                    -17.5291
+                                ],
+                                [
+                                    -63.2018,
+                                    -17.5391
+                                ]
+                            ]
+                        ]
+                    },
                     "referencias_acceso": "Camino vecinal a 3 km de la ruta principal.",
                     "colindantes_sensibles": null,
                     "acceso_dificil": false,
-                    "zona_id": null
+                    "zona_id": 2
                 }
             ]
         }

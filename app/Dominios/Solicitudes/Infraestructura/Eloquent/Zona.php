@@ -15,6 +15,7 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
  * @property string $centroide_lat
  * @property string $centroide_lng
  * @property string $radio_km
+ * @property string|null $macrorregion
  */
 class Zona extends ModeloDominio
 {
@@ -28,5 +29,6 @@ class Zona extends ModeloDominio
         'centroide_lat',
         'centroide_lng',
         'radio_km',
+        'macrorregion',
     ];
 }

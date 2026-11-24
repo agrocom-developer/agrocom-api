@@ -1,0 +1,72 @@
+{
+    "operationId": "compararOfertas",
+    "descripcion": "El cliente compara las ofertas de una solicitud: precio, calificación, dron y distancia de cada proveedor.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/solicitudes/18/ofertas",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "ofertas": [
+                {
+                    "id": 17,
+                    "uuid_cliente": "9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e11",
+                    "solicitud_id": 18,
+                    "proveedor_id": 2,
+                    "equipo_id": 3,
+                    "numero": 1,
+                    "autor": "proveedor",
+                    "tipo": "contraoferta",
+                    "precio_ha": "118.0000",
+                    "monto_estimado": "11800.00",
+                    "estado": "vigente",
+                    "es_definitiva": false,
+                    "nota": "Podemos ir la semana próxima.",
+                    "oferta_anterior_id": null,
+                    "distancia_km": null,
+                    "vence_en": "2026-11-26T15:58:53+00:00",
+                    "respondida_en": null,
+                    "creada_en": "2026-11-24T15:58:53+00:00",
+                    "proveedor": {
+                        "id": 2,
+                        "nombre": "Mamani Agroservicios",
+                        "calificacion_promedio": "0.00",
+                        "calificaciones_conteo": 0,
+                        "tasa_cancelacion": "0.3333",
+                        "dron": {
+                            "marca": "DJI",
+                            "modelo": "Agras T40",
+                            "anio": null,
+                            "capacidad_tanque_l": "40.00",
+                            "fotos": []
+                        }
+                    },
+                    "historial": [
+                        {
+                            "id": 17,
+                            "uuid_cliente": "9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e11",
+                            "solicitud_id": 18,
+                            "proveedor_id": 2,
+                            "equipo_id": 3,
+                            "numero": 1,
+                            "autor": "proveedor",
+                            "tipo": "contraoferta",
+                            "precio_ha": "118.0000",
+                            "monto_estimado": "11800.00",
+                            "estado": "vigente",
+                            "es_definitiva": false,
+                            "nota": "Podemos ir la semana próxima.",
+                            "oferta_anterior_id": null,
+                            "distancia_km": null,
+                            "vence_en": "2026-11-26T15:58:53+00:00",
+                            "respondida_en": null,
+                            "creada_en": "2026-11-24T15:58:53+00:00"
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}

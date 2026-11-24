@@ -7,14 +7,15 @@
         "autenticada": true,
         "cuerpo": {
             "uuid_cliente": "5b0f6a52-0c1e-4b6c-9d57-7f9d3a1c2e01",
-            "terreno_id": 4,
+            "terreno_id": 10,
             "tipo_aplicacion": "herbicida",
             "hectareas_solicitadas": "100.0000",
             "producto_indicado": "Glifosato 480 SL, 2 L/ha",
             "aporta_producto": "cliente",
-            "ventana_desde": "2026-11-28",
-            "ventana_hasta": "2026-12-06",
+            "ventana_desde": "2026-12-14",
+            "ventana_hasta": "2026-12-20",
             "urgente": false,
+            "precio_ha_propuesto": "125.0000",
             "observaciones": "Entrar por el portón sur."
         }
     },
@@ -22,28 +23,33 @@
         "estado": 200,
         "cuerpo": {
             "solicitud": {
-                "id": 13,
+                "id": 18,
                 "uuid_cliente": "5b0f6a52-0c1e-4b6c-9d57-7f9d3a1c2e01",
-                "terreno_id": 4,
+                "terreno_id": 10,
                 "tipo_aplicacion": "herbicida",
                 "hectareas_solicitadas": "100.0000",
                 "cultivo": "Soya",
                 "producto_indicado": "Glifosato 480 SL, 2 L/ha",
                 "aporta_producto": "cliente",
-                "ventana_desde": "2026-11-28",
-                "ventana_hasta": "2026-12-06",
+                "ventana_desde": "2026-12-14",
+                "ventana_hasta": "2026-12-20",
                 "urgente": false,
                 "observaciones": "Entrar por el portón sur.",
-                "tarifa_hectarea": null,
+                "precio_ha_propuesto": "125.0000",
+                "precio_ha_acordado": null,
                 "monto_estimado": null,
+                "hectareas_ejecutadas": null,
+                "porcentaje_avance": "0.00",
                 "monto_final": null,
                 "estado": "borrador",
+                "oferta_adjudicada_id": null,
+                "vence_en": null,
                 "proveedor_id": null,
                 "publicada_en": null,
                 "motivo_cancelacion": null,
                 "cancelada_por": null,
                 "terreno": {
-                    "id": 4,
+                    "id": 10,
                     "nombre": "Lote Los Álamos",
                     "hectareas": "118.2500",
                     "cultivo": "Soya",
@@ -59,7 +65,7 @@
                         "estado_nuevo": "borrador",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-24T05:45:39+00:00"
+                        "creado_en": "2026-11-24T15:58:51+00:00"
                     }
                 ]
             }

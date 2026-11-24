@@ -1,24 +1,20 @@
 {
     "operationId": "estimarSolicitud",
-    "descripcion": "Tarifa estimada antes de publicar.",
+    "descripcion": "Monto estimado con el precio propuesto, antes de abrirla.",
     "peticion": {
         "metodo": "GET",
-        "ruta": "/api/solicitudes/13/estimacion",
+        "ruta": "/api/solicitudes/18/estimacion",
         "autenticada": true
     },
     "respuesta": {
         "estado": 200,
         "cuerpo": {
             "estimacion": {
-                "congelada": false,
-                "tarifa_base_hectarea": "120.0000",
-                "tarifa_hectarea": "120.0000",
+                "precio_ha": "125.0000",
+                "precio_acordado": false,
                 "hectareas": "100.0000",
-                "subtotal_base": "12000.00",
-                "recargo_urgente": "0.00",
-                "recargo_acceso_dificil": "0.00",
-                "recargo_producto": "0.00",
-                "monto_estimado": "12000.00"
+                "monto_estimado": "12500.00",
+                "precio_referencia_ha": "120.00"
             }
         }
     }

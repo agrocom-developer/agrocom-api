@@ -4,18 +4,19 @@ namespace App\Dominios\Solicitudes\Aplicacion;
 
 use App\Dominios\Solicitudes\Aplicacion\MaquinaEstados\MaquinaEstadosSolicitud;
 use App\Dominios\Solicitudes\Contratos\DatosSolicitudParaTrabajo;
-use App\Dominios\Solicitudes\Contratos\Eventos\SolicitudEjecutada;
 use App\Dominios\Solicitudes\Contratos\SolicitudParaTrabajo;
 use App\Dominios\Solicitudes\Dominio\ActorSolicitud;
 use App\Dominios\Solicitudes\Dominio\EstadoSolicitud;
 use App\Dominios\Solicitudes\Dominio\Excepciones\TransicionSolicitudNoPermitida;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\SolicitudServicio;
-use Brick\Math\BigDecimal;
-use Brick\Math\RoundingMode;
+use Illuminate\Support\Carbon;
 
 /**
- * Implementa {@see SolicitudParaTrabajo}: lo que la ejecución en el lote
- * (sincronización) hace avanzar en la solicitud. Todo cambio de estado pasa por
+ * Implementa {@see SolicitudParaTrabajo}: lo que el trabajo operativo detallado
+ * (sesión de vuelo, mezcla, recarga) hace avanzar en la solicitud. Ese registro
+ * no condiciona ningún estado más allá de iniciar la ejecución
+ * (`negociacion-contrato.md` §4, «Compatibilidad»): el cierre lo da el registro
+ * `cierre` de la negociación. Todo cambio de estado pasa por
  * {@see MaquinaEstadosSolicitud} con origen `sistema`.
  */
 final class AvanceDeSolicitud implements SolicitudParaTrabajo
@@ -43,23 +44,12 @@ final class AvanceDeSolicitud implements SolicitudParaTrabajo
     {
         $solicitud = SolicitudServicio::query()->find($solicitudId);
 
-        if ($solicitud === null) {
+        if ($solicitud === null || $solicitud->estado !== EstadoSolicitud::Adjudicada) {
             return;
         }
 
-        // Camino por la tabla de transiciones: una suspendida por clima se
-        // reprograma como asignada, sale en camino y entra a ejecución.
-        $destinos = match ($solicitud->estado) {
-            EstadoSolicitud::Asignada => [EstadoSolicitud::EnCamino, EstadoSolicitud::EnEjecucion],
-            EstadoSolicitud::EnCamino => [EstadoSolicitud::EnEjecucion],
-            EstadoSolicitud::SuspendidaPorClima => [EstadoSolicitud::Asignada, EstadoSolicitud::EnCamino, EstadoSolicitud::EnEjecucion],
-            default => [],
-        };
-
         try {
-            foreach ($destinos as $destino) {
-                $solicitud = $this->estados->transicionar($solicitud, $destino, ActorSolicitud::Sistema, null);
-            }
+            $this->estados->transicionar($solicitud, EstadoSolicitud::EnEjecucion, ActorSolicitud::Sistema, null, null, ['iniciada_en' => Carbon::now()]);
         } catch (TransicionSolicitudNoPermitida) {
             // Cambió de estado en paralelo (p. ej. la cancelaron): lo volado en el
             // lote se registra igual y la solicitud queda como la dejó ese cambio.
@@ -68,28 +58,7 @@ final class AvanceDeSolicitud implements SolicitudParaTrabajo
 
     public function registrarCobertura(int $solicitudId, string $hectareasCerradas): void
     {
-        $solicitud = SolicitudServicio::query()->find($solicitudId);
-
-        if ($solicitud === null || $solicitud->estado !== EstadoSolicitud::EnEjecucion) {
-            return;
-        }
-
-        $minimo = BigDecimal::of($solicitud->hectareas_solicitadas)
-            ->multipliedBy(BigDecimal::of((string) config('solicitudes.cobertura_minima_pct')))
-            ->dividedBy(100, 4, RoundingMode::HalfUp);
-
-        if (BigDecimal::of($hectareasCerradas)->isLessThan($minimo)) {
-            return;
-        }
-
-        try {
-            $ejecutada = $this->estados->transicionar($solicitud, EstadoSolicitud::Ejecutada, ActorSolicitud::Sistema, null);
-        } catch (TransicionSolicitudNoPermitida) {
-            return;
-        }
-
-        $ejecutada->loadMissing('cliente');
-
-        event(new SolicitudEjecutada($ejecutada->id, $ejecutada->cliente_id, $ejecutada->cliente->usuario_id, $ejecutada->proveedor_id));
+        // El cierre del servicio es el registro `cierre` de la negociación, no la cobertura
+        // de las sesiones de vuelo: acá no cambia ningún estado.
     }
 }

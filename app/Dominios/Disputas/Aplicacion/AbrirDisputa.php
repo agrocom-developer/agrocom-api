@@ -119,11 +119,11 @@ final class AbrirDisputa
     private function exigirDisputable(DatosServicio $servicio, ParteDeDisputa $parte, MotivoDisputa $motivo, DateTimeImmutable $ahora): void
     {
         if ($parte === ParteDeDisputa::Cliente) {
-            if ($servicio->estado !== 'ejecutada' || $servicio->ejecutadaEn === null) {
+            if (! in_array($servicio->estado, ['finalizada', 'calificada'], true) || $servicio->finalizadaEn === null) {
                 throw DisputaInvalida::servicioNoDisputable($servicio->estado);
             }
 
-            if (! PlazosDeDisputa::clientePuedeAbrir(new DateTimeImmutable($servicio->ejecutadaEn), $ahora, $this->parametros->aperturaClienteHoras())) {
+            if (! PlazosDeDisputa::clientePuedeAbrir(new DateTimeImmutable($servicio->finalizadaEn), $ahora, $this->parametros->aperturaClienteHoras())) {
                 throw DisputaInvalida::plazoVencido();
             }
 
@@ -134,7 +134,7 @@ final class AbrirDisputa
             throw DisputaInvalida::servicioNoDisputable($servicio->estado);
         }
 
-        $desde = $servicio->completadaEn ?? $servicio->ejecutadaEn;
+        $desde = $servicio->finalizadaEn;
 
         if (! PlazosDeDisputa::proveedorPuedeAbrir($desde === null ? null : new DateTimeImmutable($desde), $ahora, $this->parametros->aperturaProveedorDias())) {
             throw DisputaInvalida::plazoVencido();

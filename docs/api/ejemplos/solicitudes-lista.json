@@ -11,24 +11,29 @@
         "cuerpo": {
             "solicitudes": [
                 {
-                    "id": 8,
-                    "uuid_cliente": "8655660e-6125-5879-b05b-d8b57221d25c",
+                    "id": 16,
+                    "uuid_cliente": "f6cdd863-874d-5a8e-9325-cb9ba4fb9775",
                     "terreno_id": 1,
                     "tipo_aplicacion": "herbicida",
-                    "hectareas_solicitadas": "60.0000",
+                    "hectareas_solicitadas": "40.0000",
                     "cultivo": "Soya",
                     "producto_indicado": "Glifosato 480 SL, 2 L/ha",
                     "aporta_producto": "cliente",
-                    "ventana_desde": "2026-11-27",
-                    "ventana_hasta": "2026-12-06",
+                    "ventana_desde": "2026-12-06",
+                    "ventana_hasta": "2026-12-09",
                     "urgente": false,
                     "observaciones": null,
-                    "tarifa_hectarea": "120.0000",
-                    "monto_estimado": "7200.00",
-                    "monto_final": "7200.00",
-                    "estado": "completada",
-                    "proveedor_id": 1,
-                    "publicada_en": "2026-11-24T05:45:31+00:00",
+                    "precio_ha_propuesto": "121.0000",
+                    "precio_ha_acordado": null,
+                    "monto_estimado": "4840.00",
+                    "hectareas_ejecutadas": null,
+                    "porcentaje_avance": "0.00",
+                    "monto_final": null,
+                    "estado": "abierta",
+                    "oferta_adjudicada_id": null,
+                    "vence_en": "2026-12-01T03:58:45+00:00",
+                    "proveedor_id": null,
+                    "publicada_en": "2026-11-23T03:58:49+00:00",
                     "motivo_cancelacion": null,
                     "cancelada_por": null,
                     "terreno": {
@@ -36,32 +41,127 @@
                         "nombre": "Lote Norte",
                         "hectareas": "80.0000",
                         "cultivo": "Soya",
-                        "geometria": null,
+                        "geometria": {
+                            "type": "Polygon",
+                            "coordinates": [
+                                [
+                                    [
+                                        -63.2018,
+                                        -17.5391
+                                    ],
+                                    [
+                                        -63.1918,
+                                        -17.5391
+                                    ],
+                                    [
+                                        -63.1918,
+                                        -17.5291
+                                    ],
+                                    [
+                                        -63.2018,
+                                        -17.5291
+                                    ],
+                                    [
+                                        -63.2018,
+                                        -17.5391
+                                    ]
+                                ]
+                            ]
+                        },
                         "referencias_acceso": "Camino vecinal a 3 km de la ruta principal.",
                         "colindantes_sensibles": null,
                         "acceso_dificil": false,
-                        "zona_id": null
+                        "zona_id": 2
                     }
                 },
                 {
-                    "id": 7,
-                    "uuid_cliente": "bf4faf8f-f3e8-5f4e-9f9d-0e2fd0192199",
+                    "id": 13,
+                    "uuid_cliente": "e9f34f6f-bacc-5af6-a08d-b60d911f46d5",
+                    "terreno_id": 2,
+                    "tipo_aplicacion": "herbicida",
+                    "hectareas_solicitadas": "120.0000",
+                    "cultivo": "Maíz",
+                    "producto_indicado": "Glifosato 480 SL, 2 L/ha",
+                    "aporta_producto": "cliente",
+                    "ventana_desde": "2026-11-16",
+                    "ventana_hasta": "2026-11-17",
+                    "urgente": false,
+                    "observaciones": null,
+                    "precio_ha_propuesto": "118.0000",
+                    "precio_ha_acordado": "124.0000",
+                    "monto_estimado": "14880.00",
+                    "hectareas_ejecutadas": "120.0000",
+                    "porcentaje_avance": "100.00",
+                    "monto_final": "14880.00",
+                    "estado": "calificada",
+                    "oferta_adjudicada_id": 14,
+                    "vence_en": "2026-11-23T07:58:48+00:00",
+                    "proveedor_id": 1,
+                    "publicada_en": "2026-11-16T07:58:48+00:00",
+                    "motivo_cancelacion": null,
+                    "cancelada_por": null,
+                    "terreno": {
+                        "id": 2,
+                        "nombre": "Las Palmas",
+                        "hectareas": "120.0000",
+                        "cultivo": "Maíz",
+                        "geometria": {
+                            "type": "Polygon",
+                            "coordinates": [
+                                [
+                                    [
+                                        -63.2171,
+                                        -17.7883
+                                    ],
+                                    [
+                                        -63.2071,
+                                        -17.7883
+                                    ],
+                                    [
+                                        -63.2071,
+                                        -17.7783
+                                    ],
+                                    [
+                                        -63.2171,
+                                        -17.7783
+                                    ],
+                                    [
+                                        -63.2171,
+                                        -17.7883
+                                    ]
+                                ]
+                            ]
+                        },
+                        "referencias_acceso": "Camino vecinal a 3 km de la ruta principal.",
+                        "colindantes_sensibles": null,
+                        "acceso_dificil": false,
+                        "zona_id": 1
+                    }
+                },
+                {
+                    "id": 10,
+                    "uuid_cliente": "baf58aac-6e05-5aa4-8cda-d11afe5b57b5",
                     "terreno_id": 1,
                     "tipo_aplicacion": "herbicida",
-                    "hectareas_solicitadas": "60.0000",
+                    "hectareas_solicitadas": "80.0000",
                     "cultivo": "Soya",
                     "producto_indicado": "Glifosato 480 SL, 2 L/ha",
                     "aporta_producto": "cliente",
-                    "ventana_desde": "2026-11-27",
-                    "ventana_hasta": "2026-12-06",
+                    "ventana_desde": "2026-11-23",
+                    "ventana_hasta": "2026-11-26",
                     "urgente": false,
                     "observaciones": null,
-                    "tarifa_hectarea": "120.0000",
-                    "monto_estimado": "7200.00",
+                    "precio_ha_propuesto": "115.0000",
+                    "precio_ha_acordado": "115.0000",
+                    "monto_estimado": "9200.00",
+                    "hectareas_ejecutadas": "51.2000",
+                    "porcentaje_avance": "64.00",
                     "monto_final": null,
-                    "estado": "en_disputa",
+                    "estado": "en_ejecucion",
+                    "oferta_adjudicada_id": 11,
+                    "vence_en": "2026-11-29T03:58:47+00:00",
                     "proveedor_id": 1,
-                    "publicada_en": "2026-11-24T05:45:30+00:00",
+                    "publicada_en": "2026-11-22T03:58:47+00:00",
                     "motivo_cancelacion": null,
                     "cancelada_por": null,
                     "terreno": {
@@ -69,65 +169,127 @@
                         "nombre": "Lote Norte",
                         "hectareas": "80.0000",
                         "cultivo": "Soya",
-                        "geometria": null,
+                        "geometria": {
+                            "type": "Polygon",
+                            "coordinates": [
+                                [
+                                    [
+                                        -63.2018,
+                                        -17.5391
+                                    ],
+                                    [
+                                        -63.1918,
+                                        -17.5391
+                                    ],
+                                    [
+                                        -63.1918,
+                                        -17.5291
+                                    ],
+                                    [
+                                        -63.2018,
+                                        -17.5291
+                                    ],
+                                    [
+                                        -63.2018,
+                                        -17.5391
+                                    ]
+                                ]
+                            ]
+                        },
                         "referencias_acceso": "Camino vecinal a 3 km de la ruta principal.",
                         "colindantes_sensibles": null,
                         "acceso_dificil": false,
-                        "zona_id": null
+                        "zona_id": 2
                     }
                 },
                 {
                     "id": 6,
-                    "uuid_cliente": "dd64cb6c-8080-536b-bd7c-883445962526",
-                    "terreno_id": 1,
+                    "uuid_cliente": "23ffae79-1b18-5c8a-95b3-81fc6da7ffec",
+                    "terreno_id": 2,
                     "tipo_aplicacion": "herbicida",
-                    "hectareas_solicitadas": "60.0000",
-                    "cultivo": "Soya",
+                    "hectareas_solicitadas": "100.0000",
+                    "cultivo": "Maíz",
                     "producto_indicado": "Glifosato 480 SL, 2 L/ha",
                     "aporta_producto": "cliente",
-                    "ventana_desde": "2026-11-27",
-                    "ventana_hasta": "2026-12-06",
+                    "ventana_desde": "2026-11-26",
+                    "ventana_hasta": "2026-12-03",
                     "urgente": false,
-                    "observaciones": null,
-                    "tarifa_hectarea": "120.0000",
-                    "monto_estimado": "7200.00",
-                    "monto_final": "7200.00",
-                    "estado": "completada",
-                    "proveedor_id": 1,
-                    "publicada_en": "2026-11-24T05:45:29+00:00",
+                    "observaciones": "Entrar por el portón de la calle lateral. Maíz de 1,8 m de altura.",
+                    "precio_ha_propuesto": "125.0000",
+                    "precio_ha_acordado": null,
+                    "monto_estimado": "12500.00",
+                    "hectareas_ejecutadas": null,
+                    "porcentaje_avance": "0.00",
+                    "monto_final": null,
+                    "estado": "con_ofertas",
+                    "oferta_adjudicada_id": null,
+                    "vence_en": "2026-11-30T09:58:46+00:00",
+                    "proveedor_id": null,
+                    "publicada_en": "2026-11-23T09:58:46+00:00",
                     "motivo_cancelacion": null,
                     "cancelada_por": null,
                     "terreno": {
-                        "id": 1,
-                        "nombre": "Lote Norte",
-                        "hectareas": "80.0000",
-                        "cultivo": "Soya",
-                        "geometria": null,
+                        "id": 2,
+                        "nombre": "Las Palmas",
+                        "hectareas": "120.0000",
+                        "cultivo": "Maíz",
+                        "geometria": {
+                            "type": "Polygon",
+                            "coordinates": [
+                                [
+                                    [
+                                        -63.2171,
+                                        -17.7883
+                                    ],
+                                    [
+                                        -63.2071,
+                                        -17.7883
+                                    ],
+                                    [
+                                        -63.2071,
+                                        -17.7783
+                                    ],
+                                    [
+                                        -63.2171,
+                                        -17.7783
+                                    ],
+                                    [
+                                        -63.2171,
+                                        -17.7883
+                                    ]
+                                ]
+                            ]
+                        },
                         "referencias_acceso": "Camino vecinal a 3 km de la ruta principal.",
                         "colindantes_sensibles": null,
                         "acceso_dificil": false,
-                        "zona_id": null
+                        "zona_id": 1
                     }
                 },
                 {
                     "id": 5,
-                    "uuid_cliente": "0533588b-4abc-5ac3-a105-d524ae9710ae",
+                    "uuid_cliente": "74affe0c-98b3-50f8-8001-d8d5ff842254",
                     "terreno_id": 1,
                     "tipo_aplicacion": "herbicida",
-                    "hectareas_solicitadas": "60.0000",
+                    "hectareas_solicitadas": "70.0000",
                     "cultivo": "Soya",
                     "producto_indicado": "Glifosato 480 SL, 2 L/ha",
                     "aporta_producto": "cliente",
-                    "ventana_desde": "2026-11-27",
-                    "ventana_hasta": "2026-12-06",
-                    "urgente": false,
-                    "observaciones": null,
-                    "tarifa_hectarea": "120.0000",
-                    "monto_estimado": "7200.00",
+                    "ventana_desde": "2026-11-26",
+                    "ventana_hasta": "2026-12-03",
+                    "urgente": true,
+                    "observaciones": "Hay una línea de alta tensión en el borde este.",
+                    "precio_ha_propuesto": "120.0000",
+                    "precio_ha_acordado": null,
+                    "monto_estimado": "8400.00",
+                    "hectareas_ejecutadas": null,
+                    "porcentaje_avance": "0.00",
                     "monto_final": null,
-                    "estado": "asignada",
-                    "proveedor_id": 1,
-                    "publicada_en": "2026-11-24T05:45:29+00:00",
+                    "estado": "abierta",
+                    "oferta_adjudicada_id": null,
+                    "vence_en": "2026-12-01T14:58:45+00:00",
+                    "proveedor_id": null,
+                    "publicada_en": "2026-11-24T14:58:45+00:00",
                     "motivo_cancelacion": null,
                     "cancelada_por": null,
                     "terreno": {
@@ -135,149 +297,107 @@
                         "nombre": "Lote Norte",
                         "hectareas": "80.0000",
                         "cultivo": "Soya",
-                        "geometria": null,
+                        "geometria": {
+                            "type": "Polygon",
+                            "coordinates": [
+                                [
+                                    [
+                                        -63.2018,
+                                        -17.5391
+                                    ],
+                                    [
+                                        -63.1918,
+                                        -17.5391
+                                    ],
+                                    [
+                                        -63.1918,
+                                        -17.5291
+                                    ],
+                                    [
+                                        -63.2018,
+                                        -17.5291
+                                    ],
+                                    [
+                                        -63.2018,
+                                        -17.5391
+                                    ]
+                                ]
+                            ]
+                        },
                         "referencias_acceso": "Camino vecinal a 3 km de la ruta principal.",
                         "colindantes_sensibles": null,
                         "acceso_dificil": false,
-                        "zona_id": null
-                    }
-                },
-                {
-                    "id": 4,
-                    "uuid_cliente": "42745dc3-8386-56d9-b120-689e71e01434",
-                    "terreno_id": 1,
-                    "tipo_aplicacion": "herbicida",
-                    "hectareas_solicitadas": "60.0000",
-                    "cultivo": "Soya",
-                    "producto_indicado": "Glifosato 480 SL, 2 L/ha",
-                    "aporta_producto": "cliente",
-                    "ventana_desde": "2026-11-27",
-                    "ventana_hasta": "2026-12-06",
-                    "urgente": false,
-                    "observaciones": null,
-                    "tarifa_hectarea": null,
-                    "monto_estimado": null,
-                    "monto_final": null,
-                    "estado": "cancelada",
-                    "proveedor_id": null,
-                    "publicada_en": null,
-                    "motivo_cancelacion": "Cambió la fecha de siembra del lote.",
-                    "cancelada_por": "cliente",
-                    "terreno": {
-                        "id": 1,
-                        "nombre": "Lote Norte",
-                        "hectareas": "80.0000",
-                        "cultivo": "Soya",
-                        "geometria": null,
-                        "referencias_acceso": "Camino vecinal a 3 km de la ruta principal.",
-                        "colindantes_sensibles": null,
-                        "acceso_dificil": false,
-                        "zona_id": null
-                    }
-                },
-                {
-                    "id": 3,
-                    "uuid_cliente": "1f34bb41-944b-582e-b840-e8a405f1c049",
-                    "terreno_id": 1,
-                    "tipo_aplicacion": "herbicida",
-                    "hectareas_solicitadas": "60.0000",
-                    "cultivo": "Soya",
-                    "producto_indicado": "Glifosato 480 SL, 2 L/ha",
-                    "aporta_producto": "cliente",
-                    "ventana_desde": "2026-11-27",
-                    "ventana_hasta": "2026-12-06",
-                    "urgente": false,
-                    "observaciones": null,
-                    "tarifa_hectarea": "120.0000",
-                    "monto_estimado": "7200.00",
-                    "monto_final": null,
-                    "estado": "sin_proveedor",
-                    "proveedor_id": null,
-                    "publicada_en": "2026-11-24T05:45:29+00:00",
-                    "motivo_cancelacion": null,
-                    "cancelada_por": null,
-                    "terreno": {
-                        "id": 1,
-                        "nombre": "Lote Norte",
-                        "hectareas": "80.0000",
-                        "cultivo": "Soya",
-                        "geometria": null,
-                        "referencias_acceso": "Camino vecinal a 3 km de la ruta principal.",
-                        "colindantes_sensibles": null,
-                        "acceso_dificil": false,
-                        "zona_id": null
-                    }
-                },
-                {
-                    "id": 2,
-                    "uuid_cliente": "cbec24f4-cf25-5f2f-b99e-966e856f8d11",
-                    "terreno_id": 1,
-                    "tipo_aplicacion": "herbicida",
-                    "hectareas_solicitadas": "60.0000",
-                    "cultivo": "Soya",
-                    "producto_indicado": "Glifosato 480 SL, 2 L/ha",
-                    "aporta_producto": "cliente",
-                    "ventana_desde": "2026-11-27",
-                    "ventana_hasta": "2026-12-06",
-                    "urgente": false,
-                    "observaciones": null,
-                    "tarifa_hectarea": "120.0000",
-                    "monto_estimado": "7200.00",
-                    "monto_final": null,
-                    "estado": "en_asignacion",
-                    "proveedor_id": null,
-                    "publicada_en": "2026-11-24T05:45:28+00:00",
-                    "motivo_cancelacion": null,
-                    "cancelada_por": null,
-                    "terreno": {
-                        "id": 1,
-                        "nombre": "Lote Norte",
-                        "hectareas": "80.0000",
-                        "cultivo": "Soya",
-                        "geometria": null,
-                        "referencias_acceso": "Camino vecinal a 3 km de la ruta principal.",
-                        "colindantes_sensibles": null,
-                        "acceso_dificil": false,
-                        "zona_id": null
+                        "zona_id": 2
                     }
                 },
                 {
                     "id": 1,
-                    "uuid_cliente": "a31ede08-ebc4-5aaa-9217-fc7787c9ea20",
-                    "terreno_id": 1,
+                    "uuid_cliente": "8c5a1392-3daa-5872-be11-c425b6d70578",
+                    "terreno_id": 2,
                     "tipo_aplicacion": "herbicida",
-                    "hectareas_solicitadas": "60.0000",
-                    "cultivo": "Soya",
+                    "hectareas_solicitadas": "30.0000",
+                    "cultivo": "Maíz",
                     "producto_indicado": "Glifosato 480 SL, 2 L/ha",
                     "aporta_producto": "cliente",
-                    "ventana_desde": "2026-11-27",
-                    "ventana_hasta": "2026-12-06",
+                    "ventana_desde": "2026-11-26",
+                    "ventana_hasta": "2026-12-03",
                     "urgente": false,
                     "observaciones": null,
-                    "tarifa_hectarea": null,
+                    "precio_ha_propuesto": "125.0000",
+                    "precio_ha_acordado": null,
                     "monto_estimado": null,
+                    "hectareas_ejecutadas": null,
+                    "porcentaje_avance": "0.00",
                     "monto_final": null,
                     "estado": "borrador",
+                    "oferta_adjudicada_id": null,
+                    "vence_en": null,
                     "proveedor_id": null,
                     "publicada_en": null,
                     "motivo_cancelacion": null,
                     "cancelada_por": null,
                     "terreno": {
-                        "id": 1,
-                        "nombre": "Lote Norte",
-                        "hectareas": "80.0000",
-                        "cultivo": "Soya",
-                        "geometria": null,
+                        "id": 2,
+                        "nombre": "Las Palmas",
+                        "hectareas": "120.0000",
+                        "cultivo": "Maíz",
+                        "geometria": {
+                            "type": "Polygon",
+                            "coordinates": [
+                                [
+                                    [
+                                        -63.2171,
+                                        -17.7883
+                                    ],
+                                    [
+                                        -63.2071,
+                                        -17.7883
+                                    ],
+                                    [
+                                        -63.2071,
+                                        -17.7783
+                                    ],
+                                    [
+                                        -63.2171,
+                                        -17.7783
+                                    ],
+                                    [
+                                        -63.2171,
+                                        -17.7883
+                                    ]
+                                ]
+                            ]
+                        },
                         "referencias_acceso": "Camino vecinal a 3 km de la ruta principal.",
                         "colindantes_sensibles": null,
                         "acceso_dificil": false,
-                        "zona_id": null
+                        "zona_id": 1
                     }
                 }
             ],
             "pagina": 1,
             "paginas": 1,
-            "total": 8
+            "total": 6
         }
     }
 }

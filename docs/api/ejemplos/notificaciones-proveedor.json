@@ -1,6 +1,6 @@
 {
     "operationId": "listarNotificaciones",
-    "descripcion": "Bandeja del proveedor.",
+    "descripcion": "Bandeja del proveedor: nuevas solicitudes en su zona, ofertas y mensajes.",
     "peticion": {
         "metodo": "GET",
         "ruta": "/api/notificaciones",
@@ -11,31 +11,13 @@
         "cuerpo": {
             "data": [
                 {
-                    "id": 68,
-                    "tipo": "oferta_creada",
-                    "titulo": "Nueva oferta de 60,00 ha (solicitud #12). Respóndela antes de las 07:45.",
+                    "id": 184,
+                    "tipo": "nueva_solicitud_abierta",
+                    "titulo": "Nueva solicitud #18 de 100.0000 ha en , a 125.0000 por hectárea. Revísala en el mapa y ofrece tu precio.",
                     "recurso_tipo": "solicitud",
-                    "recurso_id": 12,
+                    "recurso_id": 18,
                     "leida": false,
-                    "creada_en": "2026-11-24T05:45:47+00:00"
-                },
-                {
-                    "id": 65,
-                    "tipo": "oferta_creada",
-                    "titulo": "Nueva oferta de 60,00 ha (solicitud #10). Respóndela antes de las 07:45.",
-                    "recurso_tipo": "solicitud",
-                    "recurso_id": 10,
-                    "leida": false,
-                    "creada_en": "2026-11-24T05:45:46+00:00"
-                },
-                {
-                    "id": 62,
-                    "tipo": "oferta_creada",
-                    "titulo": "Nueva oferta de 60,00 ha (solicitud #2). Respóndela antes de las 07:45.",
-                    "recurso_tipo": "solicitud",
-                    "recurso_id": 2,
-                    "leida": false,
-                    "creada_en": "2026-11-24T05:45:45+00:00"
+                    "creada_en": "2026-11-24T15:58:51+00:00"
                 },
                 {
                     "id": 9,
@@ -44,7 +26,7 @@
                     "recurso_tipo": "auxiliar",
                     "recurso_id": 2,
                     "leida": false,
-                    "creada_en": "2026-11-24T05:45:15+00:00"
+                    "creada_en": "2026-11-24T15:58:42+00:00"
                 },
                 {
                     "id": 8,
@@ -53,7 +35,7 @@
                     "recurso_tipo": "dron",
                     "recurso_id": 4,
                     "leida": false,
-                    "creada_en": "2026-11-24T05:45:13+00:00"
+                    "creada_en": "2026-11-24T15:58:42+00:00"
                 },
                 {
                     "id": 7,
@@ -62,7 +44,7 @@
                     "recurso_tipo": "piloto",
                     "recurso_id": 3,
                     "leida": false,
-                    "creada_en": "2026-11-24T05:45:13+00:00"
+                    "creada_en": "2026-11-24T15:58:42+00:00"
                 },
                 {
                     "id": 6,
@@ -71,10 +53,217 @@
                     "recurso_tipo": "proveedor",
                     "recurso_id": 2,
                     "leida": false,
-                    "creada_en": "2026-11-24T05:45:13+00:00"
+                    "creada_en": "2026-11-24T15:58:42+00:00"
+                },
+                {
+                    "id": 44,
+                    "tipo": "nueva_solicitud_abierta",
+                    "titulo": "Nueva solicitud #5 de 70.0000 ha en Warnes, a 120.0000 por hectárea. Revísala en el mapa y ofrece tu precio.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 5,
+                    "leida": false,
+                    "creada_en": "2026-11-24T14:58:45+00:00"
+                },
+                {
+                    "id": 39,
+                    "tipo": "nueva_solicitud_abierta",
+                    "titulo": "Nueva solicitud #4 de 60.0000 ha en Vallegrande, a 130.0000 por hectárea. Revísala en el mapa y ofrece tu precio.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 4,
+                    "leida": false,
+                    "creada_en": "2026-11-24T13:58:45+00:00"
+                },
+                {
+                    "id": 29,
+                    "tipo": "nueva_solicitud_abierta",
+                    "titulo": "Nueva solicitud #2 de 180.0000 ha en San José de Chiquitos, a 118.0000 por hectárea. Revísala en el mapa y ofrece tu precio.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 2,
+                    "leida": false,
+                    "creada_en": "2026-11-24T10:58:45+00:00"
+                },
+                {
+                    "id": 56,
+                    "tipo": "oferta_recibida",
+                    "titulo": "«Mamani Agroservicios» ofrece 115.0000 por hectárea en la solicitud #6. Acéptala, contraoferta o recházala antes de que venza.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 6,
+                    "leida": false,
+                    "creada_en": "2026-11-24T07:58:45+00:00"
+                },
+                {
+                    "id": 34,
+                    "tipo": "nueva_solicitud_abierta",
+                    "titulo": "Nueva solicitud #3 de 250.0000 ha en San Ignacio de Velasco, a 105.0000 por hectárea. Revísala en el mapa y ofrece tu precio.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 3,
+                    "leida": false,
+                    "creada_en": "2026-11-24T06:58:45+00:00"
+                },
+                {
+                    "id": 85,
+                    "tipo": "mensaje_nuevo",
+                    "titulo": "Tienes un mensaje nuevo en la solicitud #9.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 9,
+                    "leida": false,
+                    "creada_en": "2026-11-23T23:58:45+00:00"
+                },
+                {
+                    "id": 59,
+                    "tipo": "nueva_solicitud_abierta",
+                    "titulo": "Nueva solicitud #7 de 90.0000 ha en Montero, a 115.0000 por hectárea. Revísala en el mapa y ofrece tu precio.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 7,
+                    "leida": false,
+                    "creada_en": "2026-11-23T19:58:46+00:00"
+                },
+                {
+                    "id": 82,
+                    "tipo": "solicitud_adjudicada",
+                    "titulo": "La solicitud #9 quedó adjudicada a «Mamani Agroservicios» a 120.0000 por hectárea. Ya pueden coordinar por el chat.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 9,
+                    "leida": false,
+                    "creada_en": "2026-11-23T19:58:45+00:00"
+                },
+                {
+                    "id": 79,
+                    "tipo": "nueva_solicitud_abierta",
+                    "titulo": "Nueva solicitud #9 de 65.0000 ha en Montero, a 120.0000 por hectárea. Revísala en el mapa y ofrece tu precio.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 9,
+                    "leida": false,
+                    "creada_en": "2026-11-23T13:58:47+00:00"
+                },
+                {
+                    "id": 120,
+                    "tipo": "solicitud_finalizada",
+                    "titulo": "El servicio #12 quedó finalizado. Monto a pagar al proveedor: 12320.00. Puedes calificarlo durante 7 días o abrir una disputa.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 12,
+                    "leida": false,
+                    "creada_en": "2026-11-23T10:58:45+00:00"
+                },
+                {
+                    "id": 103,
+                    "tipo": "nueva_solicitud_abierta",
+                    "titulo": "Nueva solicitud #11 de 150.0000 ha en Cuatro Cañadas, a 110.0000 por hectárea. Revísala en el mapa y ofrece tu precio.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 11,
+                    "leida": false,
+                    "creada_en": "2026-11-23T09:58:47+00:00"
+                },
+                {
+                    "id": 48,
+                    "tipo": "nueva_solicitud_abierta",
+                    "titulo": "Nueva solicitud #6 de 100.0000 ha en Santa Cruz de la Sierra, a 125.0000 por hectárea. Revísala en el mapa y ofrece tu precio.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 6,
+                    "leida": false,
+                    "creada_en": "2026-11-23T09:58:46+00:00"
+                },
+                {
+                    "id": 173,
+                    "tipo": "solicitud_adjudicada",
+                    "titulo": "La solicitud #16 quedó adjudicada a «Mamani Agroservicios» a 121.0000 por hectárea. Ya pueden coordinar por el chat.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 16,
+                    "leida": false,
+                    "creada_en": "2026-11-23T09:58:45+00:00"
+                },
+                {
+                    "id": 170,
+                    "tipo": "nueva_solicitud_abierta",
+                    "titulo": "Nueva solicitud #16 de 40.0000 ha en Warnes, a 121.0000 por hectárea. Revísala en el mapa y ofrece tu precio.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 16,
+                    "leida": false,
+                    "creada_en": "2026-11-23T03:58:49+00:00"
+                },
+                {
+                    "id": 65,
+                    "tipo": "nueva_solicitud_abierta",
+                    "titulo": "Nueva solicitud #8 de 90.0000 ha en San Julián, a 122.0000 por hectárea. Revísala en el mapa y ofrece tu precio.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 8,
+                    "leida": false,
+                    "creada_en": "2026-11-22T23:58:46+00:00"
+                },
+                {
+                    "id": 88,
+                    "tipo": "nueva_solicitud_abierta",
+                    "titulo": "Nueva solicitud #10 de 80.0000 ha en Warnes, a 115.0000 por hectárea. Revísala en el mapa y ofrece tu precio.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 10,
+                    "leida": false,
+                    "creada_en": "2026-11-22T03:58:47+00:00"
+                },
+                {
+                    "id": 122,
+                    "tipo": "mensaje_nuevo",
+                    "titulo": "Tienes un mensaje nuevo en la solicitud #12.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 12,
+                    "leida": false,
+                    "creada_en": "2026-11-21T20:58:45+00:00"
+                },
+                {
+                    "id": 166,
+                    "tipo": "nueva_solicitud_abierta",
+                    "titulo": "Nueva solicitud #15 de 50.0000 ha en Montero, a 119.0000 por hectárea. Revísala en el mapa y ofrece tu precio.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 15,
+                    "leida": false,
+                    "creada_en": "2026-11-21T17:58:49+00:00"
+                },
+                {
+                    "id": 116,
+                    "tipo": "solicitud_adjudicada",
+                    "titulo": "La solicitud #12 quedó adjudicada a «Mamani Agroservicios» a 112.0000 por hectárea. Ya pueden coordinar por el chat.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 12,
+                    "leida": false,
+                    "creada_en": "2026-11-21T01:58:45+00:00"
+                },
+                {
+                    "id": 113,
+                    "tipo": "nueva_solicitud_abierta",
+                    "titulo": "Nueva solicitud #12 de 110.0000 ha en Montero, a 112.0000 por hectárea. Revísala en el mapa y ofrece tu precio.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 12,
+                    "leida": false,
+                    "creada_en": "2026-11-20T15:58:48+00:00"
+                },
+                {
+                    "id": 146,
+                    "tipo": "nueva_solicitud_abierta",
+                    "titulo": "Nueva solicitud #14 de 140.0000 ha en Cuatro Cañadas, a 108.0000 por hectárea. Revísala en el mapa y ofrece tu precio.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 14,
+                    "leida": false,
+                    "creada_en": "2026-11-19T15:58:49+00:00"
+                },
+                {
+                    "id": 126,
+                    "tipo": "nueva_solicitud_abierta",
+                    "titulo": "Nueva solicitud #13 de 120.0000 ha en Santa Cruz de la Sierra, a 118.0000 por hectárea. Revísala en el mapa y ofrece tu precio.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 13,
+                    "leida": false,
+                    "creada_en": "2026-11-16T07:58:48+00:00"
+                },
+                {
+                    "id": 178,
+                    "tipo": "nueva_solicitud_abierta",
+                    "titulo": "Nueva solicitud #17 de 55.0000 ha en San Julián, a 100.0000 por hectárea. Revísala en el mapa y ofrece tu precio.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 17,
+                    "leida": false,
+                    "creada_en": "2026-11-15T15:58:50+00:00"
                 }
             ],
-            "no_leidas": 7
+            "no_leidas": 28
         }
     }
 }

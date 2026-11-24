@@ -4,7 +4,6 @@ namespace App\Dominios\Flota\Infraestructura;
 
 use App\Dominios\Flota\Aplicacion\IncrementarCiclosBateriaDron;
 use App\Dominios\Flota\Aplicacion\ReaccionarADocumentosDeDron;
-use App\Dominios\Flota\Contratos\LecturaDisponibilidad;
 use App\Dominios\Flota\Contratos\LecturaDrones;
 use App\Dominios\Flota\Contratos\LecturaEquipos;
 use App\Dominios\Flota\Contratos\LecturaIntegrantesDeEquipo;
@@ -31,7 +30,6 @@ final class FlotaServiceProvider extends ServiceProvider
     {
         $this->app->bind(LecturaDrones::class, LecturaDronesEloquent::class);
         $this->app->bind(LecturaEquipos::class, LecturaEquiposEloquent::class);
-        $this->app->bind(LecturaDisponibilidad::class, LecturaDisponibilidadEloquent::class);
         $this->app->bind(LecturaIntegrantesDeEquipo::class, LecturaIntegrantesDeEquipoEloquent::class);
     }
 

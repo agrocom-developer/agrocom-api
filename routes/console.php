@@ -19,35 +19,24 @@ Schedule::command('proveedores:vencimientos')
     ->onOneServer();
 
 /*
- * Motor de asignación (ADR 0030 y 0038): cada minuto toma las solicitudes
- * publicadas que el oyente no alcanzó a tomar, vence las ofertas sin respuesta
- * y abre la ronda siguiente. Idempotente; sin solaparse consigo mismo.
+ * Negociación (`negociacion-contrato.md` §1): cada minuto vence las ofertas sin respuesta, reevalúa
+ * las solicitudes que se quedaron sin ofertas y expira las que pasaron su vigencia. Idempotente;
+ * sin solaparse consigo mismo. Cada hora avisa a las partes de un servicio en ejecución sin avance.
  */
-Schedule::command('asignacion:procesar')
+Schedule::command('negociacion:procesar')
     ->everyMinute()
     ->withoutOverlapping()
     ->onOneServer();
 
-/*
- * Política de sanciones (ADR 0038): una vez al día, de madrugada, recalcula las
- * tasas y aplica las sanciones de calificación, aceptación y cancelación.
- */
-Schedule::command('asignacion:evaluar-proveedores')
-    ->dailyAt('04:00')
-    ->withoutOverlapping()
-    ->onOneServer();
-
-/*
- * Cierre del servicio (especificación §5.1, ADR 0039): cada hora completa por
- * conformidad tácita las solicitudes que llevan más del plazo en `ejecutada` sin
- * conformidad ni disputa, y una vez al día aplica la política de calificación a
- * los clientes con aviso vigente. Ambos son idempotentes.
- */
-Schedule::command('solicitudes:completar-vencidas')
+Schedule::command('seguimiento:avisar-inactividad')
     ->hourly()
     ->withoutOverlapping()
     ->onOneServer();
 
+/*
+ * Política de calificación del cliente (ADR 0039): una vez al día aplica el aviso y la limitación
+ * a los clientes con promedio bajo. Idempotente.
+ */
 Schedule::command('solicitudes:evaluar-clientes')
     ->dailyAt('04:30')
     ->withoutOverlapping()

@@ -8,11 +8,12 @@ use App\Dominios\Calificaciones\Dominio\SujetoCalificacion;
 use App\Dominios\Calificaciones\Infraestructura\Eloquent\Calificacion;
 use App\Dominios\Solicitudes\Contratos\DatosServicio;
 use App\Dominios\Solicitudes\Contratos\LecturaServicios;
+use App\Dominios\Solicitudes\Contratos\ResolucionDeServicio;
 use Illuminate\Support\Facades\DB;
 
 /**
  * El cliente califica al proveedor, al piloto y al auxiliar de un servicio
- * `completada` (`POST /solicitudes/{id}/calificaciones`, especificación §10.1,
+ * `finalizada` (que pasa a `calificada`) (`POST /solicitudes/{id}/calificaciones`, especificación §10.1,
  * política de calificación). Parte del servicio del cliente de la cuenta
  * (invariante 5 de CLAUDE.md): el de otro cliente responde 404. Varias
  * calificaciones en una llamada se guardan juntas o ninguna; la reputación del
@@ -25,6 +26,7 @@ final class CalificarComoCliente
         private readonly SujetosDelServicio $sujetos,
         private readonly EmitirCalificacion $emitir,
         private readonly RecalcularReputacion $reputacion,
+        private readonly ResolucionDeServicio $solicitudes,
     ) {}
 
     /**
@@ -60,6 +62,10 @@ final class CalificarComoCliente
 
         if ($servicio->proveedorId !== null && array_filter($resultado, fn (array $r): bool => $r['creada']) !== []) {
             $this->reputacion->deProveedor($servicio->proveedorId);
+        }
+
+        if (array_filter($resultado, fn (array $r): bool => $r['creada']) !== []) {
+            $this->solicitudes->marcarCalificada($servicio->id, $usuarioId);
         }
 
         return $resultado;

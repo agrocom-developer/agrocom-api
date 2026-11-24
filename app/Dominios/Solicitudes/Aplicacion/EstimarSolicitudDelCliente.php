@@ -2,23 +2,21 @@
 
 namespace App\Dominios\Solicitudes\Aplicacion;
 
+use App\Dominios\Compartido\Dominio\MontoDelServicio;
 use App\Dominios\Solicitudes\Dominio\Excepciones\SolicitudInvalida;
 
 /**
- * Tarifa estimada de una solicitud del cliente (`GET /solicitudes/{id}/estimacion`).
- * Antes de publicar es una estimación con la tarifa vigente y el desglose de
- * cada recargo; ya publicada, es la tarifa congelada (sin desglose): el cliente
- * ve siempre lo que de verdad va a pagar y nunca cambia después de publicar.
+ * Monto estimado de una solicitud propia (`GET /solicitudes/{id}/estimacion`):
+ * hectáreas solicitadas por el precio por hectárea vigente, que es el acordado
+ * una vez adjudicada y el propuesto antes. Sin recargos ni tarifa: el precio lo
+ * pone la negociación. Importes como decimal exacto en string.
  */
 final class EstimarSolicitudDelCliente
 {
-    public function __construct(
-        private readonly ObtenerSolicitudDelCliente $solicitudes,
-        private readonly EstimarTarifa $tarifa,
-    ) {}
+    public function __construct(private readonly ObtenerSolicitudDelCliente $solicitudes) {}
 
     /**
-     * @return array<string, string|bool|null>
+     * @return array{precio_ha: string|null, precio_acordado: bool, hectareas: string, monto_estimado: string|null, precio_referencia_ha: string|null}
      *
      * @throws SolicitudInvalida
      */
@@ -26,28 +24,14 @@ final class EstimarSolicitudDelCliente
     {
         $solicitud = $this->solicitudes->ejecutar($usuarioId, $solicitudId);
 
-        if ($solicitud->tarifa_hectarea !== null && $solicitud->monto_estimado !== null) {
-            return [
-                'congelada' => true,
-                'tarifa_base_hectarea' => null,
-                'tarifa_hectarea' => $solicitud->tarifa_hectarea,
-                'hectareas' => $solicitud->hectareas_solicitadas,
-                'subtotal_base' => null,
-                'recargo_urgente' => null,
-                'recargo_acceso_dificil' => null,
-                'recargo_producto' => null,
-                'monto_estimado' => $solicitud->monto_estimado,
-            ];
-        }
+        $precio = $solicitud->precio_ha_acordado ?? $solicitud->precio_ha_propuesto;
 
-        $estimacion = $this->tarifa->ejecutar(
-            $solicitud->tipo_aplicacion,
-            $solicitud->hectareas_solicitadas,
-            $solicitud->urgente,
-            $solicitud->terreno->acceso_dificil,
-            $solicitud->aporta_producto,
-        );
-
-        return ['congelada' => false, ...$estimacion->toArray()];
+        return [
+            'precio_ha' => $precio === null ? null : (string) $precio,
+            'precio_acordado' => $solicitud->precio_ha_acordado !== null,
+            'hectareas' => $solicitud->hectareas_solicitadas,
+            'monto_estimado' => $precio === null ? null : MontoDelServicio::monto($solicitud->hectareas_solicitadas, (string) $precio),
+            'precio_referencia_ha' => config('negociacion.precio_referencia_ha.'.$solicitud->tipo_aplicacion->value),
+        ];
     }
 }

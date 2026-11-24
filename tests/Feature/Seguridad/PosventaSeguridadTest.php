@@ -10,7 +10,6 @@
  */
 
 dataset('rutas del posventa', [
-    ['POST', '/api/solicitudes/1/conformidad'],
     ['GET', '/api/solicitudes/1/calificaciones'],
     ['POST', '/api/solicitudes/1/calificaciones'],
     ['GET', '/api/solicitudes/1/calificar-cliente'],

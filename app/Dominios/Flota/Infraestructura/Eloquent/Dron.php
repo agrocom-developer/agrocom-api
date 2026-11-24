@@ -22,6 +22,7 @@ use Illuminate\Support\Carbon;
  * @property string $modelo
  * @property string $numero_serie
  * @property string $capacidad_tanque_l
+ * @property int|null $anio
  * @property string $ancho_pasada_m
  * @property int $ciclos_bateria
  * @property EstadoAprobacion $estado
@@ -46,6 +47,7 @@ class Dron extends ModeloDominio
         'modelo',
         'numero_serie',
         'capacidad_tanque_l',
+        'anio',
         'ancho_pasada_m',
         'ciclos_bateria',
         'estado',

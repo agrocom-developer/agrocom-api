@@ -1,0 +1,29 @@
+{
+    "operationId": "cerrarServicio",
+    "descripcion": "El piloto cierra con las hectáreas ejecutadas: con su foto de avance la solicitud pasa a finalizada y se muestra el monto a pagar.",
+    "peticion": {
+        "metodo": "POST",
+        "ruta": "/api/solicitudes/18/cierre",
+        "autenticada": true,
+        "cuerpo": {
+            "uuid_cliente": "9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e34",
+            "secuencia": 3,
+            "hectareas_ejecutadas": "98.5000",
+            "nota": "Servicio terminado."
+        }
+    },
+    "respuesta": {
+        "estado": 201,
+        "cuerpo": {
+            "registro": {
+                "id": 17,
+                "uuid_cliente": "9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e34",
+                "tipo": "cierre",
+                "hectareas_ejecutadas": "98.5000",
+                "porcentaje": "98.50",
+                "nota": "Servicio terminado.",
+                "registrado_en": "2026-11-24T15:58:54+00:00"
+            }
+        }
+    }
+}

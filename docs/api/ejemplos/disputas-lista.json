@@ -9,37 +9,10 @@
     "respuesta": {
         "estado": 200,
         "cuerpo": {
-            "disputas": [
-                {
-                    "id": 2,
-                    "solicitud_id": 8,
-                    "abierta_por": "cliente",
-                    "motivo": "mala_aplicacion",
-                    "detalle": "Hubo doble pasada en una franja y se quemó el cultivo.",
-                    "monto_en_disputa": "7200.00",
-                    "estado": "resuelta",
-                    "ronda": 1,
-                    "responde_antes_de": "2026-11-26T05:45:31+00:00",
-                    "apelable_hasta": "2026-12-01T05:45:32+00:00",
-                    "creada_en": "2026-11-24T05:45:31+00:00"
-                },
-                {
-                    "id": 1,
-                    "solicitud_id": 7,
-                    "abierta_por": "cliente",
-                    "motivo": "cobertura_incompleta",
-                    "detalle": "Quedaron franjas sin cubrir en el lado norte del lote.",
-                    "monto_en_disputa": "7200.00",
-                    "estado": "abierta",
-                    "ronda": 1,
-                    "responde_antes_de": "2026-11-26T05:45:31+00:00",
-                    "apelable_hasta": null,
-                    "creada_en": "2026-11-24T05:45:31+00:00"
-                }
-            ],
+            "disputas": [],
             "pagina": 1,
             "paginas": 1,
-            "total": 2
+            "total": 0
         }
     }
 }

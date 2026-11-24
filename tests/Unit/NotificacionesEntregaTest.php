@@ -1,13 +1,5 @@
 <?php
 
-use App\Dominios\Asignacion\Contratos\Eventos\EquipoEnCamino;
-use App\Dominios\Asignacion\Contratos\Eventos\OfertaCreada;
-use App\Dominios\Asignacion\Contratos\Eventos\OfertaRetirada;
-use App\Dominios\Asignacion\Contratos\Eventos\OfertaVencida;
-use App\Dominios\Asignacion\Contratos\Eventos\ProveedorSancionado;
-use App\Dominios\Asignacion\Contratos\Eventos\SolicitudAsignada;
-use App\Dominios\Asignacion\Contratos\Eventos\SolicitudReasignada;
-use App\Dominios\Asignacion\Contratos\Eventos\SolicitudSinProveedor;
 use App\Dominios\Calificaciones\Contratos\Eventos\CalificacionRegistrada;
 use App\Dominios\Calificaciones\Contratos\Eventos\CalificacionReportada;
 use App\Dominios\Compartido\Contratos\Eventos\EstadoDeAprobacionCambiado;
@@ -17,6 +9,7 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\ModoSoloLectura;
 use App\Dominios\Disputas\Contratos\Eventos\DisputaAbierta;
 use App\Dominios\Disputas\Contratos\Eventos\DisputaApelada;
 use App\Dominios\Disputas\Contratos\Eventos\DisputaResuelta;
+use App\Dominios\Negociacion\Contratos\Eventos\AvisoDeNegociacion;
 use App\Dominios\Notificaciones\Aplicacion\AbrirNotificacion;
 use App\Dominios\Notificaciones\Aplicacion\EntregarNotificacion;
 use App\Dominios\Notificaciones\Aplicacion\MarcarTodasLeidas;
@@ -44,8 +37,6 @@ use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\CascaraPanel;
 use App\Dominios\Solicitudes\Contratos\Eventos\ClienteAvisadoPorCalificacion;
 use App\Dominios\Solicitudes\Contratos\Eventos\PublicacionDeClienteLimitada;
-use App\Dominios\Solicitudes\Contratos\Eventos\SolicitudCompletada;
-use App\Dominios\Solicitudes\Contratos\Eventos\SolicitudEjecutada;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -504,16 +495,9 @@ test('el listener está registrado para cada evento que tiene regla, y para ning
         DocumentoPorVencer::class,
         DocumentoVencido::class,
         ProveedorRegistrado::class,
-        // Asignación (ADR 0030 y 0038).
-        OfertaCreada::class,
-        OfertaVencida::class,
-        OfertaRetirada::class,
-        SolicitudAsignada::class,
-        SolicitudReasignada::class,
-        SolicitudSinProveedor::class,
-        ProveedorSancionado::class,
+        // Negociación (ADR 0030, 0038 y 0041).
+        AvisoDeNegociacion::class,
         // Calificaciones, disputas y cierre del servicio (ADR 0031, 0033 y 0039).
-        SolicitudCompletada::class,
         CalificacionRegistrada::class,
         CalificacionReportada::class,
         DisputaAbierta::class,
@@ -521,9 +505,6 @@ test('el listener está registrado para cada evento que tiene regla, y para ning
         DisputaApelada::class,
         ClienteAvisadoPorCalificacion::class,
         PublicacionDeClienteLimitada::class,
-        // Avance del servicio hacia el cliente.
-        EquipoEnCamino::class,
-        SolicitudEjecutada::class,
     ];
 
     foreach ($eventos as $evento) {

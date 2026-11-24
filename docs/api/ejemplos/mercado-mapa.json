@@ -1,0 +1,59 @@
+{
+    "operationId": "listarSolicitudesAbiertas",
+    "descripcion": "Solicitudes abiertas para el mapa del piloto, con sus filtros; sin nombre ni teléfono del cliente.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/solicitudes-abiertas?macrorregion=chiquitania&hectareas_min=50",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "solicitudes": [
+                {
+                    "id": 3,
+                    "centro": {
+                        "latitud": -16.3543,
+                        "longitud": -60.93430000000001
+                    },
+                    "hectareas_solicitadas": "250.0000",
+                    "precio_ha_propuesto": "105.0000",
+                    "zona": "San Ignacio de Velasco",
+                    "zona_id": 10,
+                    "macrorregion": "chiquitania",
+                    "cultivo": "Soya",
+                    "tipo_aplicacion": "fungicida",
+                    "ventana_desde": "2026-11-26",
+                    "ventana_hasta": "2026-12-03",
+                    "ofertas_vigentes": 0,
+                    "mi_negociacion": null,
+                    "distancia_km": null,
+                    "publicada_en": "2026-11-24T06:58:45+00:00",
+                    "vence_en": "2026-12-01T06:58:45+00:00"
+                },
+                {
+                    "id": 2,
+                    "centro": {
+                        "latitud": -17.846000000000004,
+                        "longitud": -60.74000000000001
+                    },
+                    "hectareas_solicitadas": "180.0000",
+                    "precio_ha_propuesto": "118.0000",
+                    "zona": "San José de Chiquitos",
+                    "zona_id": 9,
+                    "macrorregion": "chiquitania",
+                    "cultivo": "Soya",
+                    "tipo_aplicacion": "herbicida",
+                    "ventana_desde": "2026-11-26",
+                    "ventana_hasta": "2026-12-03",
+                    "ofertas_vigentes": 0,
+                    "mi_negociacion": null,
+                    "distancia_km": null,
+                    "publicada_en": "2026-11-24T10:58:45+00:00",
+                    "vence_en": "2026-12-01T10:58:45+00:00"
+                }
+            ],
+            "siguiente_cursor": null
+        }
+    }
+}

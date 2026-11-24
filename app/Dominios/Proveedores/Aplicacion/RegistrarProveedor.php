@@ -30,7 +30,7 @@ final class RegistrarProveedor
     ) {}
 
     /**
-     * @param  array{tipo: string, nombre: string, username: string, email: ?string, password: string, telefono: ?string, razon_social: string, documento_fiscal: ?string, zona_base_id: ?int, radio_operacion_km: ?string, licencia_numero?: ?string, licencia_vence?: ?string, categoria_habilitacion?: ?string}  $datos
+     * @param  array{tipo: string, nombre: string, username: string, email: ?string, password: string, telefono: ?string, razon_social: string, documento_fiscal: ?string, zona_base_id: ?int, radio_operacion_km: ?string, licencia_numero?: ?string, licencia_vence?: ?string, categoria_habilitacion?: ?string, nombres?: ?string, apellidos?: ?string, documento_identidad?: ?string, fecha_nacimiento?: ?string}  $datos
      *
      * @throws CuentaDuplicada si el `username` o el `email` ya existen.
      * @throws RegistroDuplicado si el documento fiscal ya pertenece a otro proveedor.
@@ -55,6 +55,10 @@ final class RegistrarProveedor
                     'razon_social' => $datos['razon_social'],
                     'documento_fiscal' => $datos['documento_fiscal'] ?? null,
                     'telefono' => $datos['telefono'] ?? null,
+                    'nombres' => $datos['nombres'] ?? null,
+                    'apellidos' => $datos['apellidos'] ?? null,
+                    'documento_identidad' => $datos['documento_identidad'] ?? null,
+                    'fecha_nacimiento' => $datos['fecha_nacimiento'] ?? null,
                     'zona_base_id' => $datos['zona_base_id'] ?? null,
                     'radio_operacion_km' => $datos['radio_operacion_km'] ?? config('proveedores.radio_operacion_defecto_km'),
                     'created_by' => $usuarioId,

@@ -41,6 +41,16 @@ enum TipoNotificacion: string
     case PublicacionLimitada = 'publicacion_limitada';
     case EquipoEnCamino = 'equipo_en_camino';
     case SolicitudEjecutada = 'solicitud_ejecutada';
+    case NuevaSolicitudAbierta = 'nueva_solicitud_abierta';
+    case OfertaRecibida = 'oferta_recibida';
+    case PrecioCambiado = 'precio_cambiado';
+    case SolicitudAdjudicada = 'solicitud_adjudicada';
+    case SolicitudReabierta = 'solicitud_reabierta';
+    case SolicitudExpirada = 'solicitud_expirada';
+    case EjecucionIniciada = 'ejecucion_iniciada';
+    case AvanceRegistrado = 'avance_registrado';
+    case SolicitudFinalizada = 'solicitud_finalizada';
+    case MensajeNuevo = 'mensaje_nuevo';
 
     /** Nombre del ícono de Material Symbols que rotula el aviso en la campana. */
     public function icono(): string
@@ -68,6 +78,15 @@ enum TipoNotificacion: string
             self::ClienteConAviso, self::PublicacionLimitada => 'person_alert',
             self::EquipoEnCamino => 'local_shipping',
             self::SolicitudEjecutada => 'fact_check',
+            self::NuevaSolicitudAbierta => 'map',
+            self::OfertaRecibida, self::PrecioCambiado => 'request_quote',
+            self::SolicitudAdjudicada => 'handshake',
+            self::SolicitudReabierta => 'sync_alt',
+            self::SolicitudExpirada => 'timer_off',
+            self::EjecucionIniciada => 'flight_takeoff',
+            self::AvanceRegistrado => 'photo_camera',
+            self::SolicitudFinalizada => 'task_alt',
+            self::MensajeNuevo => 'chat',
         };
     }
 

@@ -17,7 +17,7 @@
         "estado": 201,
         "cuerpo": {
             "terreno": {
-                "id": 4,
+                "id": 10,
                 "nombre": "Lote Los Álamos",
                 "hectareas": "120.5000",
                 "cultivo": "Soya",

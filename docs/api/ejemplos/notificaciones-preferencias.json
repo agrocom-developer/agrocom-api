@@ -1,0 +1,26 @@
+{
+    "operationId": "verPreferenciasDeAviso",
+    "descripcion": "Qué avisos recibe el piloto: nuevas solicitudes por zona, región y hectáreas mínimas.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/notificaciones/preferencias",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "preferencias": {
+                "nuevas_solicitudes": {
+                    "activo": true,
+                    "zonas": [],
+                    "macrorregiones": [],
+                    "hectareas_minimas": null
+                },
+                "ofertas": true,
+                "mensajes": true,
+                "avance": true,
+                "calificaciones": true
+            }
+        }
+    }
+}

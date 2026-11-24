@@ -1,0 +1,29 @@
+{
+    "operationId": "registrarAvance",
+    "descripcion": "El piloto marca el avance en porcentaje (o en hectáreas).",
+    "peticion": {
+        "metodo": "POST",
+        "ruta": "/api/solicitudes/18/avance",
+        "autenticada": true,
+        "cuerpo": {
+            "uuid_cliente": "9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e32",
+            "secuencia": 2,
+            "porcentaje": "40.00",
+            "nota": "Primera franja cubierta."
+        }
+    },
+    "respuesta": {
+        "estado": 201,
+        "cuerpo": {
+            "registro": {
+                "id": 16,
+                "uuid_cliente": "9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e32",
+                "tipo": "avance",
+                "hectareas_ejecutadas": "40.0000",
+                "porcentaje": "40.00",
+                "nota": "Primera franja cubierta.",
+                "registrado_en": "2026-11-24T15:58:53+00:00"
+            }
+        }
+    }
+}

@@ -6,23 +6,22 @@ use App\Dominios\Solicitudes\Aplicacion\EstimarSolicitudDelCliente;
 use App\Dominios\Solicitudes\Aplicacion\ListarSolicitudesDelCliente;
 use App\Dominios\Solicitudes\Aplicacion\ObtenerSolicitudDelCliente;
 use App\Dominios\Solicitudes\Aplicacion\PublicarSolicitud;
+use App\Dominios\Solicitudes\Contratos\Eventos\SolicitudAbierta;
 use App\Dominios\Solicitudes\Contratos\Eventos\SolicitudCancelada;
-use App\Dominios\Solicitudes\Contratos\Eventos\SolicitudPublicada;
 use App\Dominios\Solicitudes\Dominio\EstadoSolicitud;
 use App\Dominios\Solicitudes\Dominio\Excepciones\SolicitudInvalida;
 use App\Dominios\Solicitudes\Dominio\Excepciones\TransicionSolicitudNoPermitida;
-use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Tests\Soporte\Esquema;
 use Tests\TestCase;
 
 /*
- * La API del cliente sobre sus solicitudes (especificación §10.1, ADR 0027): crear es
+ * La API del cliente sobre sus solicitudes (especificación §10.1, ADR 0027 y 0030): crear es
  * idempotente por `uuid_cliente`, todo parte del cliente de la cuenta (un id ajeno es
- * 404, invariante 5 de CLAUDE.md), la tarifa se congela al publicar y cancelar exige
+ * 404, invariante 5 de CLAUDE.md), abrir exige precio propuesto y teléfono, y cancelar exige
  * motivo. Contra el ESQUEMA REAL (las migraciones, en SQLite en memoria) y los casos de
  * uso reales.
  */
@@ -34,35 +33,17 @@ const USUARIO_BETO = 102;
 
 function clienteEsquema(): void
 {
-    Schema::disableForeignKeyConstraints();
-
-    $migraciones = [
+    Esquema::migrar([
         'create_plt_bitacoras_table',
+        'create_sol_zonas_table',
         'create_sol_clientes_table',
         'create_sol_terrenos_table',
         'create_sol_solicitudes_servicio_table',
         'create_sol_solicitud_historial_table',
-    ];
-
-    static $instancias = [];
-
-    foreach ($migraciones as $nombre) {
-        $archivos = glob(database_path("migrations/*_{$nombre}.php")) ?: [];
-
-        if (count($archivos) !== 1) {
-            throw new RuntimeException("Se esperaba exactamente una migración {$nombre}.");
-        }
-
-        $instancias[$archivos[0]] ??= require $archivos[0];
-
-        try {
-            $instancias[$archivos[0]]->up();
-        } catch (QueryException $excepcion) {
-            if (! str_contains($excepcion->getMessage(), 'already exists')) {
-                throw $excepcion;
-            }
-        }
-    }
+        'agrega_reputacion_a_sol_clientes',
+        'agrega_negociacion_a_sol_solicitudes_servicio',
+        'create_neg_tablas_de_negociacion',
+    ]);
 }
 
 /** Un cliente con su cuenta y un terreno de `$hectareas`. @return array{0: int, 1: int} cliente_id y terreno_id */
@@ -72,6 +53,7 @@ function clienteConTerreno(int $usuarioId, string $hectareas = '100.0000', bool 
         'usuario_id' => $usuarioId,
         'tipo' => 'persona',
         'razon_social' => "Cliente {$usuarioId}",
+        'telefono' => '70012345',
         'estado' => 'activo',
         'created_at' => now(),
         'updated_at' => now(),
@@ -99,27 +81,28 @@ function datosSolicitud(int $terrenoId, array $cambios = []): array
         'tipo_aplicacion' => 'herbicida',
         'hectareas_solicitadas' => '80',
         'producto_indicado' => 'Glifosato 480 SL, 2 L/ha',
-        'aporta_producto' => 'cliente',
         'ventana_desde' => '2026-12-05',
         'ventana_hasta' => '2026-12-15',
-        'urgente' => false,
+        'precio_ha_propuesto' => '125',
         ...$cambios,
     ];
 }
 
 beforeEach(function () {
     clienteEsquema();
-    foreach (['sol_solicitud_historial', 'sol_solicitudes_servicio', 'sol_terrenos', 'sol_clientes'] as $tabla) {
+    foreach (['neg_ofertas', 'sol_solicitud_historial', 'sol_solicitudes_servicio', 'sol_terrenos', 'sol_clientes'] as $tabla) {
         DB::table($tabla)->delete();
     }
     Carbon::setTestNow('2026-12-02 10:00:00');
+    // Los oyentes de la negociación (avisos a pilotos) tienen su propia prueba.
+    Event::fake([SolicitudAbierta::class, SolicitudCancelada::class]);
 });
 
 afterEach(function () {
     Carbon::setTestNow();
 });
 
-test('crear una solicitud la deja en borrador con su primer paso de historial y sin tarifa', function () {
+test('crear una solicitud la deja en borrador con el precio propuesto, su primer paso de historial y sin monto', function () {
     [, $terreno] = clienteConTerreno(USUARIO_ANA);
 
     [$solicitud, $creada] = app(CrearSolicitud::class)->ejecutar(USUARIO_ANA, datosSolicitud($terreno));
@@ -128,7 +111,7 @@ test('crear una solicitud la deja en borrador con su primer paso de historial y 
         ->and($solicitud->estado)->toBe(EstadoSolicitud::Borrador)
         ->and($solicitud->hectareas_solicitadas)->toBe('80.0000')
         ->and($solicitud->cultivo)->toBe('Soya')
-        ->and($solicitud->tarifa_hectarea)->toBeNull()
+        ->and((string) $solicitud->precio_ha_propuesto)->toBe('125.0000')
         ->and($solicitud->monto_estimado)->toBeNull()
         ->and(DB::table('sol_solicitud_historial')->where('solicitud_id', $solicitud->id)->count())->toBe(1);
 });
@@ -196,86 +179,6 @@ test('un cliente suspendido no pide servicios', function () {
     expect(fn () => app(CrearSolicitud::class)->ejecutar(USUARIO_ANA, datosSolicitud($terreno)))->toThrow(SolicitudInvalida::class);
 });
 
-test('publicar congela la tarifa por hectárea con sus recargos y el monto estimado, y anuncia el hecho', function () {
-    Event::fake([SolicitudPublicada::class]);
-    [, $terreno] = clienteConTerreno(USUARIO_ANA, '100', accesoDificil: true);
-    [$solicitud] = app(CrearSolicitud::class)->ejecutar(USUARIO_ANA, datosSolicitud($terreno, ['urgente' => true]));
-
-    $publicada = app(PublicarSolicitud::class)->ejecutar(USUARIO_ANA, $solicitud->id);
-
-    // 80 ha × 120,00 = 9.600,00; +20 % urgente = 1.920,00; +10 % acceso difícil = 960,00.
-    expect($publicada->estado)->toBe(EstadoSolicitud::Publicada)
-        ->and($publicada->monto_estimado)->toBe('12480.00')
-        ->and($publicada->tarifa_hectarea)->toBe('156.0000')
-        ->and($publicada->publicada_en)->not->toBeNull();
-    Event::assertDispatched(SolicitudPublicada::class, fn (SolicitudPublicada $e): bool => $e->solicitudId === $solicitud->id && $e->urgente && ! $e->republicada);
-});
-
-test('una vez publicada la estimación es la tarifa congelada aunque cambie la configuración', function () {
-    [, $terreno] = clienteConTerreno(USUARIO_ANA);
-    [$solicitud] = app(CrearSolicitud::class)->ejecutar(USUARIO_ANA, datosSolicitud($terreno));
-
-    $antes = app(EstimarSolicitudDelCliente::class)->ejecutar(USUARIO_ANA, $solicitud->id);
-    app(PublicarSolicitud::class)->ejecutar(USUARIO_ANA, $solicitud->id);
-    config(['solicitudes.tarifa_hectarea.herbicida' => '999.00']);
-    $despues = app(EstimarSolicitudDelCliente::class)->ejecutar(USUARIO_ANA, $solicitud->id);
-
-    expect($antes['congelada'])->toBeFalse()
-        ->and($antes['monto_estimado'])->toBe('9600.00')
-        ->and($despues['congelada'])->toBeTrue()
-        ->and($despues['monto_estimado'])->toBe('9600.00')
-        ->and($despues['tarifa_hectarea'])->toBe('120.0000');
-});
-
-test('una publicada no se vuelve a publicar', function () {
-    [, $terreno] = clienteConTerreno(USUARIO_ANA);
-    [$solicitud] = app(CrearSolicitud::class)->ejecutar(USUARIO_ANA, datosSolicitud($terreno));
-    app(PublicarSolicitud::class)->ejecutar(USUARIO_ANA, $solicitud->id);
-
-    expect(fn () => app(PublicarSolicitud::class)->ejecutar(USUARIO_ANA, $solicitud->id))
-        ->toThrow(TransicionSolicitudNoPermitida::class);
-});
-
-test('sin proveedor el cliente republica ampliando la fecha y la tarifa congelada no cambia', function () {
-    [, $terreno] = clienteConTerreno(USUARIO_ANA);
-    [$solicitud] = app(CrearSolicitud::class)->ejecutar(USUARIO_ANA, datosSolicitud($terreno));
-    $publicada = app(PublicarSolicitud::class)->ejecutar(USUARIO_ANA, $solicitud->id);
-    DB::table('sol_solicitudes_servicio')->where('id', $solicitud->id)->update(['estado' => 'sin_proveedor']);
-    config(['solicitudes.tarifa_hectarea.herbicida' => '500.00']);
-
-    $republicada = app(PublicarSolicitud::class)->ejecutar(USUARIO_ANA, $solicitud->id, '2026-12-30');
-
-    expect($republicada->estado)->toBe(EstadoSolicitud::Publicada)
-        ->and($republicada->ventana_hasta->toDateString())->toBe('2026-12-30')
-        ->and($republicada->tarifa_hectarea)->toBe($publicada->tarifa_hectarea)
-        ->and($republicada->monto_estimado)->toBe($publicada->monto_estimado);
-});
-
-test('cancelar exige motivo, guarda quién y por qué, y anuncia el hecho', function () {
-    Event::fake([SolicitudCancelada::class]);
-    [, $terreno] = clienteConTerreno(USUARIO_ANA);
-    [$solicitud] = app(CrearSolicitud::class)->ejecutar(USUARIO_ANA, datosSolicitud($terreno));
-    app(PublicarSolicitud::class)->ejecutar(USUARIO_ANA, $solicitud->id);
-
-    expect(fn () => app(CancelarSolicitud::class)->porCliente(USUARIO_ANA, $solicitud->id, '   '))->toThrow(SolicitudInvalida::class);
-
-    $cancelada = app(CancelarSolicitud::class)->porCliente(USUARIO_ANA, $solicitud->id, 'Cambió la fecha de siembra');
-
-    expect($cancelada->estado)->toBe(EstadoSolicitud::Cancelada)
-        ->and($cancelada->cancelada_por->value)->toBe('cliente')
-        ->and($cancelada->motivo_cancelacion)->toBe('Cambió la fecha de siembra');
-    Event::assertDispatched(SolicitudCancelada::class, fn (SolicitudCancelada $e): bool => $e->estadoPrevio === 'publicada' && $e->canceladaPor === 'cliente');
-});
-
-test('una solicitud en ejecución no se cancela por el camino del cliente', function () {
-    [, $terreno] = clienteConTerreno(USUARIO_ANA);
-    [$solicitud] = app(CrearSolicitud::class)->ejecutar(USUARIO_ANA, datosSolicitud($terreno));
-    DB::table('sol_solicitudes_servicio')->where('id', $solicitud->id)->update(['estado' => 'en_ejecucion']);
-
-    expect(fn () => app(CancelarSolicitud::class)->porCliente(USUARIO_ANA, $solicitud->id, 'Ya no la quiero'))
-        ->toThrow(TransicionSolicitudNoPermitida::class);
-});
-
 test('un administrador cancela con su nombre como origen', function () {
     [, $terreno] = clienteConTerreno(USUARIO_ANA);
     [$solicitud] = app(CrearSolicitud::class)->ejecutar(USUARIO_ANA, datosSolicitud($terreno));
@@ -326,6 +229,93 @@ test('el listado es solo del cliente y separa lo activo del historial', function
         ->and($listar->ejecutar(USUARIO_ANA, null, EstadoSolicitud::Borrador)->pluck('id')->all())->toBe([$viva->id]);
 });
 
+test('abrir congela el monto estimado con el precio propuesto, fija la vigencia y anuncia el hecho', function () {
+    Event::fake([SolicitudAbierta::class, SolicitudCancelada::class]);
+    [, $terreno] = clienteConTerreno(USUARIO_ANA, '100');
+    [$solicitud] = app(CrearSolicitud::class)->ejecutar(USUARIO_ANA, datosSolicitud($terreno));
+
+    $abierta = app(PublicarSolicitud::class)->ejecutar(USUARIO_ANA, $solicitud->id);
+
+    // 80 ha × 125,00 = 10.000,00; sin recargos: el precio lo pone la negociación.
+    expect($abierta->estado)->toBe(EstadoSolicitud::Abierta)
+        ->and($abierta->monto_estimado)->toBe('10000.00')
+        ->and($abierta->publicada_en)->not->toBeNull()
+        ->and($abierta->vence_en->toDateTimeString())->toBe('2026-12-09 10:00:00');
+    Event::assertDispatched(SolicitudAbierta::class, fn (SolicitudAbierta $e): bool => $e->solicitudId === $solicitud->id);
+});
+
+test('abrir exige precio propuesto y teléfono en la cuenta', function () {
+    [$cliente, $terreno] = clienteConTerreno(USUARIO_ANA);
+    [$sinPrecio] = app(CrearSolicitud::class)->ejecutar(USUARIO_ANA, datosSolicitud($terreno, ['precio_ha_propuesto' => null]));
+
+    expect(fn () => app(PublicarSolicitud::class)->ejecutar(USUARIO_ANA, $sinPrecio->id))->toThrow(SolicitudInvalida::class);
+
+    [$conPrecio] = app(CrearSolicitud::class)->ejecutar(USUARIO_ANA, datosSolicitud($terreno));
+    DB::table('sol_clientes')->where('id', $cliente)->update(['telefono' => null]);
+
+    expect(fn () => app(PublicarSolicitud::class)->ejecutar(USUARIO_ANA, $conPrecio->id))->toThrow(SolicitudInvalida::class);
+});
+
+test('la estimación es el monto con el precio propuesto', function () {
+    [, $terreno] = clienteConTerreno(USUARIO_ANA);
+    [$solicitud] = app(CrearSolicitud::class)->ejecutar(USUARIO_ANA, datosSolicitud($terreno));
+
+    $estimacion = app(EstimarSolicitudDelCliente::class)->ejecutar(USUARIO_ANA, $solicitud->id);
+
+    expect($estimacion['precio_acordado'])->toBeFalse()
+        ->and($estimacion['monto_estimado'])->toBe('10000.00');
+});
+
+test('una abierta no se vuelve a abrir', function () {
+    [, $terreno] = clienteConTerreno(USUARIO_ANA);
+    [$solicitud] = app(CrearSolicitud::class)->ejecutar(USUARIO_ANA, datosSolicitud($terreno));
+    app(PublicarSolicitud::class)->ejecutar(USUARIO_ANA, $solicitud->id);
+
+    expect(fn () => app(PublicarSolicitud::class)->ejecutar(USUARIO_ANA, $solicitud->id))
+        ->toThrow(TransicionSolicitudNoPermitida::class);
+});
+
+test('una expirada se renueva dentro del plazo y no después, sin cambiar el precio propuesto', function () {
+    [, $terreno] = clienteConTerreno(USUARIO_ANA);
+    [$solicitud] = app(CrearSolicitud::class)->ejecutar(USUARIO_ANA, datosSolicitud($terreno));
+    app(PublicarSolicitud::class)->ejecutar(USUARIO_ANA, $solicitud->id);
+    DB::table('sol_solicitudes_servicio')->where('id', $solicitud->id)->update(['estado' => 'expirada', 'expirada_en' => now()->subDays(3)]);
+
+    $renovada = app(PublicarSolicitud::class)->ejecutar(USUARIO_ANA, $solicitud->id);
+
+    expect($renovada->estado)->toBe(EstadoSolicitud::Abierta)
+        ->and((string) $renovada->precio_ha_propuesto)->toBe('125.0000');
+
+    DB::table('sol_solicitudes_servicio')->where('id', $solicitud->id)->update(['estado' => 'expirada', 'expirada_en' => now()->subDays(31)]);
+
+    expect(fn () => app(PublicarSolicitud::class)->ejecutar(USUARIO_ANA, $solicitud->id))->toThrow(SolicitudInvalida::class);
+});
+
+test('cancelar exige motivo, guarda quién y por qué, y anuncia el hecho', function () {
+    Event::fake([SolicitudAbierta::class, SolicitudCancelada::class]);
+    [, $terreno] = clienteConTerreno(USUARIO_ANA);
+    [$solicitud] = app(CrearSolicitud::class)->ejecutar(USUARIO_ANA, datosSolicitud($terreno));
+    app(PublicarSolicitud::class)->ejecutar(USUARIO_ANA, $solicitud->id);
+
+    expect(fn () => app(CancelarSolicitud::class)->porCliente(USUARIO_ANA, $solicitud->id, '   '))->toThrow(SolicitudInvalida::class);
+
+    $cancelada = app(CancelarSolicitud::class)->porCliente(USUARIO_ANA, $solicitud->id, 'Cambió la fecha de siembra');
+
+    expect($cancelada->estado)->toBe(EstadoSolicitud::Cancelada)
+        ->and($cancelada->cancelada_por->value)->toBe('cliente')
+        ->and($cancelada->motivo_cancelacion)->toBe('Cambió la fecha de siembra');
+    Event::assertDispatched(SolicitudCancelada::class, fn (SolicitudCancelada $e): bool => $e->estadoPrevio === 'abierta' && $e->canceladaPor === 'cliente');
+});
+
+test('una solicitud en ejecución no se cancela por el camino del cliente', function () {
+    [, $terreno] = clienteConTerreno(USUARIO_ANA);
+    [$solicitud] = app(CrearSolicitud::class)->ejecutar(USUARIO_ANA, datosSolicitud($terreno));
+    DB::table('sol_solicitudes_servicio')->where('id', $solicitud->id)->update(['estado' => 'en_ejecucion']);
+
+    expect(fn () => app(CancelarSolicitud::class)->porCliente(USUARIO_ANA, $solicitud->id, 'Ya no la quiero'))
+        ->toThrow(TransicionSolicitudNoPermitida::class);
+});
+
 test('el detalle trae el historial de cada cambio de estado en orden', function () {
     [, $terreno] = clienteConTerreno(USUARIO_ANA);
     [$solicitud] = app(CrearSolicitud::class)->ejecutar(USUARIO_ANA, datosSolicitud($terreno));
@@ -335,5 +325,5 @@ test('el detalle trae el historial de cada cambio de estado en orden', function 
     $detalle = app(ObtenerSolicitudDelCliente::class)->ejecutar(USUARIO_ANA, $solicitud->id);
 
     expect($detalle->historial->map(fn ($paso): string => ($paso->estado_anterior?->value ?? 'nada').'>'.$paso->estado_nuevo->value)->all())
-        ->toBe(['nada>borrador', 'borrador>publicada', 'publicada>cancelada']);
+        ->toBe(['nada>borrador', 'borrador>abierta', 'abierta>cancelada']);
 });

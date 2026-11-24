@@ -1,0 +1,22 @@
+{
+    "operationId": "verUbicacionDelPiloto",
+    "descripcion": "El cliente ve el último punto del piloto (sin ruta ni tiempo de llegada).",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/solicitudes/18/ubicacion-piloto",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "ubicacion": {
+                "latitud": -17.3395,
+                "longitud": -63.2528,
+                "precision_m": 12,
+                "capturado_en": "2026-11-24T15:58:54+00:00",
+                "antiguedad_s": 0,
+                "vigente": true
+            }
+        }
+    }
+}

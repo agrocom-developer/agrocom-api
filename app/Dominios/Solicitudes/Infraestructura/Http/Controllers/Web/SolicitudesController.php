@@ -54,7 +54,7 @@ final class SolicitudesController
                     }
                 });
             })
-            ->orderByRaw("CASE estado WHEN 'sin_proveedor' THEN 0 WHEN 'en_asignacion' THEN 1 WHEN 'publicada' THEN 2 ELSE 3 END")
+            ->orderByRaw("CASE estado WHEN 'expirada' THEN 0 WHEN 'abierta' THEN 1 WHEN 'con_ofertas' THEN 2 ELSE 3 END")
             ->orderByDesc('id')
             ->paginate(15)
             ->withQueryString();

@@ -34,7 +34,7 @@ final class DestinoDeNotificacion
             RecursoNotificable::Dron => ['panel.drones-flota.show', 'flota.dron.ver', true],
             // La cola de documentos no tiene ficha por documento: lleva a la cola.
             RecursoNotificable::Documento => ['panel.documentos.index', 'proveedores.documento.ver', false],
-            RecursoNotificable::Solicitud => ['panel.asignaciones.show', 'asignacion.asignacion.ver', true],
+            RecursoNotificable::Solicitud => ['panel.solicitudes.show', 'solicitudes.solicitud.ver', true],
             RecursoNotificable::Disputa => ['panel.disputas.show', 'disputas.disputa.ver', true],
             // Un cliente no tiene ficha propia en el panel: el aviso lleva a la cola de solicitudes.
             RecursoNotificable::Cliente => ['panel.solicitudes.index', 'solicitudes.solicitud.ver', false],

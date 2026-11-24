@@ -21,10 +21,9 @@ final readonly class DatosServicio
         public string $hectareasSolicitadas,
         public ?string $montoEstimado,
         public ?string $montoFinal,
-        public ?string $comisionPorcentaje,
-        public ?string $comisionMonto,
-        public ?string $ejecutadaEn,
-        public ?string $completadaEn,
+        public ?string $precioHaAcordado,
+        public ?string $hectareasEjecutadas,
+        public ?string $finalizadaEn,
     ) {}
 
     /** Importe sobre el que se calculan reembolsos: el monto final si ya existe y, si no, el estimado congelado. */

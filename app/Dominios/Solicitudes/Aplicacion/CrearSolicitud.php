@@ -16,7 +16,8 @@ use Illuminate\Support\Carbon;
  * Crea una solicitud de servicio en `borrador` (especificación §10.1,
  * `POST /solicitudes`). Es idempotente por `uuid_cliente` (invariante 1 de
  * CLAUDE.md): reintentar el mismo uuid devuelve la solicitud ya creada y nunca
- * una segunda. La tarifa no se fija acá sino al publicar.
+ * una segunda. El precio por hectárea propuesto puede venir al crearla o fijarse
+ * antes de publicar; es obligatorio para abrirla al mercado.
  */
 final class CrearSolicitud
 {
@@ -26,7 +27,7 @@ final class CrearSolicitud
     ) {}
 
     /**
-     * @param  array{uuid_cliente: string, terreno_id: int, tipo_aplicacion: string, hectareas_solicitadas: string|int|float, cultivo?: ?string, producto_indicado: string, aporta_producto?: ?string, ventana_desde: string, ventana_hasta: string, urgente?: ?bool, observaciones?: ?string}  $datos
+     * @param  array{uuid_cliente: string, terreno_id: int, tipo_aplicacion: string, hectareas_solicitadas: string|int|float, cultivo?: ?string, producto_indicado: string, aporta_producto?: ?string, ventana_desde: string, ventana_hasta: string, urgente?: ?bool, observaciones?: ?string, precio_ha_propuesto?: string|int|float|null}  $datos
      * @return array{0: SolicitudServicio, 1: bool} la solicitud y si se creó ahora (`false` = reintento).
      *
      * @throws SolicitudInvalida
@@ -55,6 +56,11 @@ final class CrearSolicitud
             throw SolicitudInvalida::ventanaVencida();
         }
 
+        $precio = isset($datos['precio_ha_propuesto']) ? (string) $datos['precio_ha_propuesto'] : null;
+        if ($precio !== null) {
+            PublicarSolicitud::validarPrecioDe($precio);
+        }
+
         $atributos = [
             'uuid_cliente' => $datos['uuid_cliente'],
             'cliente_id' => $cliente->id,
@@ -68,6 +74,7 @@ final class CrearSolicitud
             'ventana_hasta' => $datos['ventana_hasta'],
             'urgente' => (bool) ($datos['urgente'] ?? false),
             'observaciones' => $datos['observaciones'] ?? null,
+            'precio_ha_propuesto' => $precio,
         ];
 
         try {

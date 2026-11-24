@@ -33,6 +33,7 @@ return [
         'sin_equipos' => 'No tienes equipos vigentes para declarar disponibilidad.',
         'proveedor_no_admite_altas' => 'Tu proveedor ya no admite altas: está rechazado, suspendido o dado de baja.',
         'dron_ajeno' => 'No encontramos ese dron entre los tuyos.',
+        'motivo_requerido' => 'Indica el motivo del rechazo.',
         'equipo_ajeno' => 'No encontramos ese equipo entre los tuyos.',
         'dron_no_editable' => 'Un dron aprobado no se edita. Si es otro dron, regístralo como uno nuevo.',
         'numero_serie_duplicado' => 'Ya hay un dron registrado con el número de serie :serie.',

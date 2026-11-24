@@ -1,0 +1,38 @@
+{
+    "operationId": "listarMensajes",
+    "descripcion": "Mensajes en orden con cursor: el cliente consulta cada pocos segundos con `despues`.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/solicitudes/18/mensajes",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "mensajes": [
+                {
+                    "id": 16,
+                    "uuid_cliente": "9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e21",
+                    "solicitud_id": 18,
+                    "autor_rol": "cliente",
+                    "propio": true,
+                    "texto": "Hola, ¿qué día pueden venir?",
+                    "leido_en": null,
+                    "creado_en": "2026-11-24T15:58:53+00:00"
+                },
+                {
+                    "id": 17,
+                    "uuid_cliente": "9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e22",
+                    "solicitud_id": 18,
+                    "autor_rol": "proveedor",
+                    "propio": false,
+                    "texto": "El jueves temprano, si el viento lo permite.",
+                    "leido_en": null,
+                    "creado_en": "2026-11-24T15:58:53+00:00"
+                }
+            ],
+            "cursor": 17,
+            "solo_lectura": false
+        }
+    }
+}

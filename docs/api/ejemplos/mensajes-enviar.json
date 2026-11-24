@@ -1,0 +1,28 @@
+{
+    "operationId": "enviarMensaje",
+    "descripcion": "El cliente escribe al proveedor adjudicado; idempotente por uuid_cliente.",
+    "peticion": {
+        "metodo": "POST",
+        "ruta": "/api/solicitudes/18/mensajes",
+        "autenticada": true,
+        "cuerpo": {
+            "uuid_cliente": "9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e21",
+            "texto": "Hola, ¿qué día pueden venir?"
+        }
+    },
+    "respuesta": {
+        "estado": 201,
+        "cuerpo": {
+            "mensaje": {
+                "id": 16,
+                "uuid_cliente": "9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e21",
+                "solicitud_id": 18,
+                "autor_rol": "cliente",
+                "propio": true,
+                "texto": "Hola, ¿qué día pueden venir?",
+                "leido_en": null,
+                "creado_en": "2026-11-24T15:58:53+00:00"
+            }
+        }
+    }
+}

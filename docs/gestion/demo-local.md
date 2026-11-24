@@ -2,7 +2,7 @@
 
 **Agrocom SRL · Documento vigente**
 
-Una API local con datos de ejemplo para recorrer las tres apps (`cliente`, `piloto` y `auxiliar` de `agrocom-field`) de punta a punta: el cliente pide un servicio, el proveedor lo recibe como oferta con cuenta regresiva, lo acepta, sale en camino, lo ejecuta en el lote, el cliente da su conformidad, califica y, si hace falta, abre una disputa.
+Una API local con datos de ejemplo para recorrer las tres apps (`cliente`, `piloto` y `auxiliar` de `agrocom-field`) de punta a punta: el cliente abre una solicitud con su precio por hectárea, los pilotos la ven en el mapa y ofertan o contraofertan, el cliente compara y elige, el piloto ejecuta y sube fotos de avance, el cliente ve el avance, conversa por el chat y ve la última ubicación del piloto, y al final califica o abre una disputa.
 
 ## Un solo comando
 
@@ -12,14 +12,14 @@ bin/demo up      # postgres en docker + migra + siembra + sirve la API
 
 | Subcomando | Qué hace |
 |---|---|
-| `bin/demo up` | Levanta postgres en docker (un puerto libre desde el 55440), migra, siembra catálogo y demo, y sirve la API en `0.0.0.0:8000`. Se puede repetir: solo completa lo que falta y renueva la vigencia de las ofertas. |
-| `bin/demo seed` | Vuelve a sembrar sobre la base actual (idempotente) y renueva la cuenta regresiva de las ofertas y las ventanas de fechas que caducaron. |
+| `bin/demo up` | Levanta postgres en docker (un puerto libre desde el 55440), migra, siembra catálogo y demo, y sirve la API en `0.0.0.0:8000`. Se puede repetir: solo completa lo que falta y renueva la vigencia de las solicitudes y ofertas abiertas. |
+| `bin/demo seed` | Vuelve a sembrar sobre la base actual (idempotente) y renueva la vigencia de las solicitudes y ofertas abiertas y las ventanas de fechas que caducaron. |
 | `bin/demo reset` | Borra todos los esquemas de la base, migra y siembra de cero. |
 | `bin/demo down` | Detiene la API y postgres; los datos se conservan. Con `--borrar` elimina también el contenedor y su volumen. |
 | `bin/demo estado` | Dice qué está corriendo. |
 | `bin/demo logs` | Sigue el log de la API (`storage/demo/`). |
 
-Variables de entorno opcionales: `DEMO_PORT` (puerto de la API, 8000), `DEMO_HOST` (interfaz, `0.0.0.0`), `DEMO_DB_PORT` (puerto de postgres), `DEMO_NOMBRE` (nombre del contenedor, `agrocom-demo-pg`), `DEMO_PHP` (binario de PHP) y `DEMO_SCHEDULER=1` para correr también el planificador: con él las ofertas vencen y escalan de ronda como en producción; sin él quedan vigentes mientras recorres la demo.
+Variables de entorno opcionales: `DEMO_PORT` (puerto de la API, 8000), `DEMO_HOST` (interfaz, `0.0.0.0`), `DEMO_DB_PORT` (puerto de postgres), `DEMO_NOMBRE` (nombre del contenedor, `agrocom-demo-pg`), `DEMO_PHP` (binario de PHP) y `DEMO_SCHEDULER=1` para correr también el planificador: con él las ofertas y solicitudes vencen como en producción (`negociacion:procesar` cada minuto); sin él quedan vigentes mientras recorres la demo.
 
 El comando no lee ni escribe el `.env`: toda la configuración entra por variables de entorno del proceso y el estado (clave de la app, pid, log) vive en `storage/demo/`, fuera de git. Para levantar una segunda demo en paralelo basta con otro nombre y otros puertos: `DEMO_NOMBRE=agrocom-demo-2 DEMO_PORT=8001 bin/demo up`.
 
@@ -35,59 +35,58 @@ El tráfico `http` a `localhost` en iOS necesita la excepción de transporte sol
 
 ## Usuarios
 
-Contraseña de todos: `0000`. El login es por `username` y pide `uuid_dispositivo`; si la cuenta tiene más de un rol, la respuesta `4xx` los lista y se repite el pedido con `role_id`.
+Contraseña de todos: `0000`. El login es por `username` y pide `uuid_dispositivo`; si la cuenta tiene más de un rol, la respuesta lista los roles y se repite el pedido con `role_id`.
 
 | Usuario | Rol | Qué muestra |
 |---|---|---|
-| `agro.sanrafael` | cliente | El recorrido completo: solicitudes en casi todos los estados, calificada y disputas. |
-| `luis.antelo` | cliente | Servicios de Mamani Agroservicios y dos solicitudes ofertadas a terceros. |
-| `coop.valle.grande` | cliente | Servicios de Fumigaciones del Oriente, uno sin proveedor. |
-| `rodrigo.suarez` | piloto (Agrocom, equipo con auxiliar) | Ofertas vigentes, un servicio asignado y uno en ejecución. |
-| `valeria.montano` | piloto (Agrocom, equipo sin auxiliar) | Un servicio en camino y otro suspendido por clima. |
+| `agro.sanrafael` | cliente | Una solicitud con cuatro ofertas y contraofertas en curso, una en ejecución con fotos y ubicación, una calificada, una reabierta y un borrador. |
+| `luis.antelo` | cliente | Solicitudes abiertas en la Chiquitania, una con una oferta rechazada, una adjudicada con chat, una finalizada sin calificar y una cancelada. |
+| `coop.valle.grande` | cliente | Abiertas en valles y en la Chiquitania, una adjudicada con chat, una en ejecución, una disputada y una expirada. |
+| `rodrigo.suarez` | piloto (Agrocom, equipo con auxiliar) | El mapa de abiertas, su negociación por 100 ha y su servicio en ejecución. |
+| `valeria.montano` | piloto (Agrocom, equipo sin auxiliar) | Un servicio ya calificado por el cliente. |
 | `diego.parada` | auxiliar (Agrocom) | Los servicios del equipo de Rodrigo. |
-| `carlos.mamani` | piloto `1` y proveedor `7` (independiente) | Ofertas vigentes de terceros, un servicio asignado y uno en ejecución, calificaciones recibidas. |
+| `carlos.mamani` | piloto y proveedor (independiente) | Ofertas vigentes, un servicio adjudicado y uno finalizado, calificaciones recibidas. |
 | `esteban.choque` | auxiliar de Carlos | Los servicios del equipo de Carlos. |
-| `fumigaciones.oriente` | proveedor (tercero) | Su flota, su oferta vigente y un servicio asignado. |
-| `marcelo.terrazas`, `ivan.cuellar` | pilotos del tercero | Marcelo vuela en el equipo; Iván tiene documentos pendientes. |
+| `fumigaciones.oriente` | proveedor (tercero) | Su flota y sus negociaciones. |
+| `marcelo.terrazas`, `ivan.cuellar` | pilotos del tercero | Marcelo recibe avisos solo de la Chiquitania y los valles, desde 50 ha; Iván tiene documentos pendientes. |
 | `lucia.flores` | auxiliar del tercero | Los servicios del equipo de Marcelo. |
-| `rosa.condori` | proveedor independiente **pendiente** | La app no le muestra ofertas hasta que se apruebe. |
+| `rosa.condori` | proveedor independiente **pendiente** | La app no le muestra solicitudes hasta que se apruebe. |
 | `alberto.hurtado` | proveedor tercero **rechazado** | El motivo del rechazo y cómo reenviar. |
 
 La cuenta de panel del administrador es `miguelo` (la crea el catálogo de arranque).
 
 ## Qué hay sembrado
 
-Cada solicitud nace con un `uuid_cliente` determinista, así que volver a sembrar no duplica nada. Todas las fechas son relativas a hoy.
+Cada solicitud nace con un `uuid_cliente` determinista, así que volver a sembrar no duplica nada. Los pasos de cada una (oferta, contraoferta, mensaje, foto, avance) llevan marcas de hora espaciadas hacia atrás desde el momento de la siembra: todo es relativo a `now()`.
 
-| Estado | Dónde verlo |
-|---|---|
-| `borrador` | `agro.sanrafael` (dos), `luis.antelo`, `coop.valle.grande` (dos) |
-| `en_asignacion` con ofertas a propios | `agro.sanrafael`, `luis.antelo` y `coop.valle.grande`; el equipo de Agrocom las ve en `GET /api/ofertas` |
-| `en_asignacion` con ofertas a terceros | `luis.antelo` (una programada y una urgente para `carlos.mamani`) y `coop.valle.grande` (una para `fumigaciones.oriente`) |
-| `sin_proveedor` | `agro.sanrafael`, `coop.valle.grande` |
-| `asignada` | `agro.sanrafael` (Rodrigo), `luis.antelo` (Carlos), `coop.valle.grande` (Oriente) |
-| `en_camino` | `agro.sanrafael` (Valeria) |
-| `en_ejecucion` | `agro.sanrafael` (Rodrigo), `luis.antelo` (Carlos) |
-| `suspendida_por_clima` | `agro.sanrafael` (Valeria) |
-| `ejecutada`, a la espera de conformidad | `agro.sanrafael`, `luis.antelo`, `coop.valle.grande` |
-| `completada`, calificada por ambas partes | `agro.sanrafael`, `luis.antelo`, `coop.valle.grande` |
-| `completada`, aún sin calificar | `luis.antelo` |
-| `en_disputa` y disputa resuelta con reembolso parcial | `agro.sanrafael` |
-| `cancelada` | `agro.sanrafael`, `luis.antelo` |
+| Estado | Solicitud | Qué muestra |
+|---|---|---|
+| `borrador` | `agro.sanrafael`, Las Palmas, 30 ha | Antes de abrirla. |
+| `abierta`, sin ofertas | `luis.antelo` (Estancia El Cerro, Chiquitania), `coop.valle.grande` (Hacienda Velasco, Chiquitania; Fundo Los Valles, valles), `agro.sanrafael` (Lote Norte, norte integrado) | El mapa del piloto repartido por región; la de Warnes es urgente y otra se reabrió porque el proveedor devolvió el servicio. |
+| `con_ofertas` | `agro.sanrafael`, Las Palmas, 100 ha | Tres proveedores ofertan; el cliente y Agrocom negocian por rondas (135, 122, 128) y Carlos baja a 118 y recibe 115. |
+| `con_ofertas` | `luis.antelo`, Lote Sur, 90 ha | Una oferta que acepta el precio propuesto y otra que el cliente rechazó. |
+| `adjudicada` | `coop.valle.grande` (Marcelo, 118 por ha), `luis.antelo` (Carlos, 120 por ha) | Precio acordado congelado, datos de contacto entregados y chat con mensajes. |
+| `en_ejecucion` | `agro.sanrafael` (Rodrigo, 64 %), `coop.valle.grande` (Marcelo, 25 %) | Fotos de avance, chat y la última ubicación del piloto. |
+| `finalizada` | `luis.antelo`, Lote Sur (Carlos) | Hectáreas ejecutadas y monto final a pagar; el cliente aún no califica. |
+| `calificada` | `agro.sanrafael`, Las Palmas (Valeria) | Calificación del cliente y del proveedor. |
+| `disputada` | `coop.valle.grande`, Lote Este (Marcelo) | Una disputa abierta con un mensaje de soporte. |
+| `cancelada` | `luis.antelo`, La Esperanza | Sin penalidad. |
+| `expirada` | `coop.valle.grande`, Parcela Central | Se puede renovar dentro de 30 días. |
 
-Además: seis terrenos con zona y polígono (la oferta muestra la zona y la ubicación aproximada), proveedores en cada estado de aprobación con sus documentos, drones, equipos y disponibilidad en línea, calificaciones y reputación de cada proveedor, y avisos in-app para cada cuenta. Cada piloto y auxiliar tiene su persona operativa vinculada (`usuario.persona_id` en `GET /api/auth/sesion`): es el `piloto_id` y el `auxiliar_id` de las sesiones de vuelo.
+Además: nueve terrenos con zona, región y polígono (valles, Chiquitania, norte integrado y Chaco), proveedores en cada estado de aprobación con sus documentos, drones y equipos, calificaciones y reputación, y avisos in-app para cada cuenta (nuevas solicitudes en su zona, ofertas, mensajes, avance). Cada piloto y auxiliar tiene su persona operativa vinculada (`usuario.persona_id` en `GET /api/auth/sesion`).
 
-Las ofertas pendientes recuperan 3 horas de cuenta regresiva cada vez que corre `bin/demo up` o `bin/demo seed`.
+Cada vez que corre `bin/demo up` o `bin/demo seed`, las solicitudes y ofertas abiertas recuperan su vigencia (cinco días y 24 horas).
 
 ## El recorrido
 
-1. **Cliente.** `agro.sanrafael` crea una solicitud sobre su terreno (`POST /api/solicitudes`), ve la estimación (`GET /api/solicitudes/{id}/estimacion`) y la publica (`POST /api/solicitudes/{id}/publicar`). El motor de asignación la ofrece a los propios.
-2. **Oferta.** `rodrigo.suarez` o `valeria.montano` ven la oferta con su cuenta regresiva (`GET /api/ofertas`) y la aceptan (`POST /api/ofertas/{id}/aceptar`). Si la rechazan o vence, escala a independientes y terceros: `carlos.mamani` (con `role_id` 7) recibe las de su zona.
-3. **Asignada.** El cliente recibe el aviso y ve la solicitud `asignada` con su proveedor. El equipo la baja del lote con `GET /api/sync/catalogo`.
-4. **En camino.** El proveedor avisa con `POST /api/solicitudes/{id}/en-camino`; el cliente recibe el aviso.
-5. **En el lote.** El piloto abre el trabajo y las sesiones (`POST /api/sync` con `trabajo`, `sesion`, `condiciones`, `mezcla`, `recarga`, `incidencia` y los cierres) y sube las evidencias (`POST /api/evidencias`). Al cerrar los trabajos que cubren lo pedido, la solicitud pasa a `ejecutada` y el cliente recibe el aviso.
-6. **Conformidad.** El cliente da su conformidad (`POST /api/solicitudes/{id}/conformidad`) o abre una disputa (`POST /api/solicitudes/{id}/disputas`).
-7. **Calificación.** El cliente califica al proveedor, al piloto y al auxiliar (`POST /api/solicitudes/{id}/calificaciones`); el proveedor califica al cliente en privado (`POST /api/solicitudes/{id}/calificar-cliente`) y ve su reputación (`GET /api/reputacion`, `GET /api/calificaciones/recibidas`).
+1. **Cliente.** `agro.sanrafael` crea una solicitud sobre su terreno con `precio_ha_propuesto` (`POST /api/solicitudes`), ve la estimación (`GET /api/solicitudes/{id}/estimacion`) y la abre (`POST /api/solicitudes/{id}/publicar`). Los pilotos con avisos activos de esa zona reciben la notificación.
+2. **Mapa.** Un piloto o proveedor ve las solicitudes abiertas (`GET /api/solicitudes-abiertas`, con filtros de zona, región, hectáreas y precio), el resumen por región (`GET /api/solicitudes-abiertas/resumen-zonas`) y el detalle con los lotes antes de ofertar (`GET /api/solicitudes-abiertas/{id}`). Nada de eso trae datos del cliente.
+3. **Oferta.** El proveedor acepta el precio propuesto o contraoferta el suyo (`POST /api/solicitudes/{id}/ofertas`).
+4. **Negociación.** El cliente compara (`GET /api/solicitudes/{id}/ofertas`), contraoferta (`POST /api/ofertas/{id}/contraofertar`), rechaza o acepta (`POST /api/ofertas/{id}/aceptar`). Aceptar adjudica: las demás ofertas se cierran y se abren el contacto y el chat.
+5. **Chat.** Cliente y proveedor conversan (`GET` y `POST /api/solicitudes/{id}/mensajes`, con `despues` como cursor).
+6. **Ejecución.** El piloto marca el inicio (`POST /api/solicitudes/{id}/inicio`), el avance (`POST /api/solicitudes/{id}/avance`), sube fotos (`POST /api/solicitudes/{id}/evidencias`) y envía su última ubicación (`PUT /api/ubicacion`). El cliente ve el avance (`GET /api/solicitudes/{id}/avance`) y el punto del piloto (`GET /api/solicitudes/{id}/ubicacion-piloto`).
+7. **Cierre.** El piloto cierra con las hectáreas ejecutadas (`POST /api/solicitudes/{id}/cierre`): la solicitud queda `finalizada` con el monto a pagar. El pago se acuerda fuera de la app.
+8. **Calificación.** El cliente califica al proveedor, al piloto y al auxiliar (`POST /api/solicitudes/{id}/calificaciones`); el proveedor califica al cliente en privado (`POST /api/solicitudes/{id}/calificar-cliente`) y ve su reputación (`GET /api/reputacion`). Cualquiera de las partes puede abrir una disputa.
 
 Para probar a mano:
 
@@ -102,6 +101,6 @@ La respuesta trae `token`; las demás peticiones llevan `Authorization: Bearer <
 ## Lo que no hace la demo
 
 - No envía notificaciones push del sistema operativo: los avisos viven en la campana de la app (`GET /api/notificaciones`).
-- Las evidencias se guardan en el disco local, no en el almacenamiento de objetos.
+- Las fotos se guardan en el disco local, no en el almacenamiento de objetos.
 - Las contraseñas de las cuentas demo (`0000`) no cumplen la política de registro público (8 caracteres y una letra): se siembran por los casos de uso, no por el endpoint de registro.
 - La lista `personas` de `GET /api/sync/catalogo` es global: incluye al personal de Agrocom y a los operarios de los demás proveedores.

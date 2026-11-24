@@ -109,7 +109,7 @@
                     :label="__('solicitudes.panel.kpi_monto')"
                     icon="payments"
                     :value="$solicitud->monto_estimado !== null ? number_format((float) $solicitud->monto_estimado, 2, ',', '.') : '—'"
-                    :foot="$solicitud->tarifa_hectarea !== null ? __('solicitudes.panel.kpi_tarifa_pie', ['tarifa' => number_format((float) $solicitud->tarifa_hectarea, 2, ',', '.')]) : __('solicitudes.panel.kpi_sin_publicar')"
+                    :foot="$solicitud->precio_ha_propuesto !== null ? __('solicitudes.panel.kpi_tarifa_pie', ['tarifa' => number_format((float) $solicitud->precio_ha_propuesto, 2, ',', '.')]) : __('solicitudes.panel.kpi_sin_publicar')"
                     state="success"
                 />
                 <x-molecules.stat-card
