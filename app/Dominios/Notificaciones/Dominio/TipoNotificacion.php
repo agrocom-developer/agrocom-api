@@ -31,6 +31,14 @@ enum TipoNotificacion: string
     case SolicitudReasignada = 'solicitud_reasignada';
     case SolicitudSinProveedor = 'solicitud_sin_proveedor';
     case ProveedorSancionado = 'proveedor_sancionado';
+    case SolicitudCompletada = 'solicitud_completada';
+    case CalificacionRegistrada = 'calificacion_registrada';
+    case CalificacionReportada = 'calificacion_reportada';
+    case DisputaAbierta = 'disputa_abierta';
+    case DisputaResuelta = 'disputa_resuelta';
+    case DisputaApelada = 'disputa_apelada';
+    case ClienteConAviso = 'cliente_con_aviso';
+    case PublicacionLimitada = 'publicacion_limitada';
 
     /** Nombre del ícono de Material Symbols que rotula el aviso en la campana. */
     public function icono(): string
@@ -49,6 +57,13 @@ enum TipoNotificacion: string
             self::SolicitudReasignada => 'sync_alt',
             self::SolicitudSinProveedor => 'person_off',
             self::ProveedorSancionado => 'gavel',
+            self::SolicitudCompletada => 'task_alt',
+            self::CalificacionRegistrada => 'star',
+            self::CalificacionReportada => 'flag',
+            self::DisputaAbierta => 'report',
+            self::DisputaResuelta => 'balance',
+            self::DisputaApelada => 'undo',
+            self::ClienteConAviso, self::PublicacionLimitada => 'person_alert',
         };
     }
 

@@ -7,10 +7,15 @@ use App\Dominios\Asignacion\Contratos\Eventos\ProveedorSancionado;
 use App\Dominios\Asignacion\Contratos\Eventos\SolicitudAsignada;
 use App\Dominios\Asignacion\Contratos\Eventos\SolicitudReasignada;
 use App\Dominios\Asignacion\Contratos\Eventos\SolicitudSinProveedor;
+use App\Dominios\Calificaciones\Contratos\Eventos\CalificacionRegistrada;
+use App\Dominios\Calificaciones\Contratos\Eventos\CalificacionReportada;
 use App\Dominios\Compartido\Contratos\Eventos\EstadoDeAprobacionCambiado;
 use App\Dominios\Compartido\Dominio\Excepciones\BorradoFisicoNoPermitido;
 use App\Dominios\Compartido\Infraestructura\Eloquent\Bitacora;
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModoSoloLectura;
+use App\Dominios\Disputas\Contratos\Eventos\DisputaAbierta;
+use App\Dominios\Disputas\Contratos\Eventos\DisputaApelada;
+use App\Dominios\Disputas\Contratos\Eventos\DisputaResuelta;
 use App\Dominios\Notificaciones\Aplicacion\AbrirNotificacion;
 use App\Dominios\Notificaciones\Aplicacion\EntregarNotificacion;
 use App\Dominios\Notificaciones\Aplicacion\MarcarTodasLeidas;
@@ -36,6 +41,9 @@ use App\Dominios\Seguridad\Contratos\LecturaUsuariosPorRol;
 use App\Dominios\Seguridad\Dominio\TipoUsuario;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\CascaraPanel;
+use App\Dominios\Solicitudes\Contratos\Eventos\ClienteAvisadoPorCalificacion;
+use App\Dominios\Solicitudes\Contratos\Eventos\PublicacionDeClienteLimitada;
+use App\Dominios\Solicitudes\Contratos\Eventos\SolicitudCompletada;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -502,6 +510,15 @@ test('el listener está registrado para cada evento que tiene regla, y para ning
         SolicitudReasignada::class,
         SolicitudSinProveedor::class,
         ProveedorSancionado::class,
+        // Calificaciones, disputas y cierre del servicio (ADR 0031, 0033 y 0039).
+        SolicitudCompletada::class,
+        CalificacionRegistrada::class,
+        CalificacionReportada::class,
+        DisputaAbierta::class,
+        DisputaResuelta::class,
+        DisputaApelada::class,
+        ClienteAvisadoPorCalificacion::class,
+        PublicacionDeClienteLimitada::class,
     ];
 
     foreach ($eventos as $evento) {

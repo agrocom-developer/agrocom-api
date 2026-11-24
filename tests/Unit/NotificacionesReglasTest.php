@@ -259,6 +259,15 @@ test('cada tipo de aviso tiene su texto en lang/es/notificaciones.php y usa solo
         'solicitud_reasignada' => ['solicitud'],
         'solicitud_sin_proveedor' => ['solicitud'],
         'proveedor_sancionado' => ['proveedor', 'sancion', 'causa'],
+        // Calificaciones, disputas y cierre del servicio (ADR 0031, 0033 y 0039).
+        'solicitud_completada' => ['solicitud'],
+        'calificacion_registrada' => ['solicitud', 'estrellas'],
+        'calificacion_reportada' => ['solicitud', 'proveedor'],
+        'disputa_abierta' => ['solicitud', 'motivo'],
+        'disputa_resuelta' => ['solicitud', 'resultado', 'monto'],
+        'disputa_apelada' => ['solicitud'],
+        'cliente_con_aviso' => ['promedio'],
+        'publicacion_limitada' => ['cliente', 'promedio'],
     ];
 
     foreach (TipoNotificacion::cases() as $tipo) {

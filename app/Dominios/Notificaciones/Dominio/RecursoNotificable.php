@@ -17,4 +17,6 @@ enum RecursoNotificable: string
     case Dron = 'dron';
     case Documento = 'documento';
     case Solicitud = 'solicitud';
+    case Disputa = 'disputa';
+    case Cliente = 'cliente';
 }
