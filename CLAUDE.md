@@ -1,6 +1,6 @@
 # CLAUDE.md — invariantes de `agrocom-api`
 
-Este repo es el backend (Laravel + PostgreSQL) y el panel web (AdminLTE + Blade/Livewire) de Agrocom SRL. El desarrollo lo hace una sola persona con agentes de IA como implementadores principales; estas invariantes existen para que la coherencia no dependa de la memoria de nadie. La fuente de verdad funcional/técnica es `docs/especificacion/marketplace.md`; el porqué de cada decisión de arquitectura está en `docs/decisiones/` (ADRs). Léelos antes de implementar algo que los toque.
+Este repo es el backend (Laravel + PostgreSQL) y el panel web (AdminLTE + Blade/Livewire) de Agrocom SRL. El desarrollo lo hace una sola persona con agentes de IA como implementadores principales; estas invariantes existen para que la coherencia no dependa de la memoria de nadie. La fuente de verdad funcional/técnica es `docs/especificacion/marketplace.md`, con los estados, reglas y recursos de la negociación en `docs/especificacion/negociacion-contrato.md`; el porqué de cada decisión de arquitectura está en `docs/decisiones/` (ADRs). Léelos antes de implementar algo que los toque.
 
 ## Invariantes no negociables
 
@@ -8,13 +8,17 @@ Este repo es el backend (Laravel + PostgreSQL) y el panel web (AdminLTE + Blade/
 2. **El servidor nunca sobrescribe un registro validado.** Las correcciones son registros nuevos con `anula_a_id`, motivo y autor — nunca un `UPDATE` sobre lo validado.
 3. **Una sesión se valida una sola vez, nunca al cerrarla.** Validar es una transición de estado que anuncia el evento de dominio `SesionValidada`; validar de nuevo una sesión ya validada no hace nada y no repite el aviso.
 4. **Validador ≠ piloto de esa sesión, a nivel de persona — no de rol.** Un jefe de campo que también es piloto no valida sus propias sesiones (ver `docs/decisiones/0004-modelo-seguridad-sec-multirol.md`).
-5. **El cliente solo alcanza lo suyo.** Toda consulta de la API del cliente y del portal parte del `cliente_id` de la cuenta autenticada (solicitudes, terrenos, actas, reportes), nunca de la tabla global con un `where` agregado después, y un id ajeno responde 404. La garantía es de código (scoping en el caso de uso), no de un test de endpoint — ver §Testing.
+5. **El cliente solo alcanza lo suyo.** Toda consulta de la API del cliente y del portal parte del `cliente_id` de la cuenta autenticada (solicitudes, terrenos, ofertas, avance, mensajes), nunca de la tabla global con un `where` agregado después, y un id ajeno responde 404. La garantía es de código (scoping en el caso de uso), no de un test de endpoint — ver §Testing.
 6. **Dinero y hectáreas en `DECIMAL`, jamás `float`.** Todo monto derivado debe poder recalcularse desde los registros de origen y cuadrar exacto.
 7. **Toda transición de estado pasa por el servicio de dominio de la máquina de estados correspondiente** (tabla de transiciones permitidas + guardas) — nunca un `estado = ...` suelto en un controlador.
 8. **Soft delete por defecto en todo modelo de dominio.** Ningún `DELETE` físico salvo excepción justificada explícitamente en el PR (`docs/decisiones/0007-soft-delete-y-bitacora-auditoria.md`).
 9. **Bitácora de auditoría en toda mutación relevante**: quién, cuándo, qué entidad, qué acción, valores antes/después donde aplique. Es un trait/observer de plataforma — no una llamada manual que cada caso de uso deba recordar.
 10. **Un usuario, un login, múltiples roles, un rol activo por sesión.** Nunca se crean cuentas duplicadas por rol. Un usuario puede tener varios roles asignados vía `sec_user_role`, pero en cada sesión opera bajo un único **rol activo** (elegido al iniciar sesión entre los roles asignados); los permisos efectivos son los de ese rol activo, nunca la unión de todos los roles del usuario. Cambiar de rol activo no requiere volver a loguearse.
 11. **Ningún color hardcodeado en el panel.** Todo color se referencia por token CSS — es lo que permite el theming por usuario (`docs/decisiones/0002-panel-web-adminlte-livewire-atomic-design.md`).
+12. **Una sola oferta aceptada por solicitud, y la adjudicación es atómica.** Toda decisión sobre una oferta bloquea primero la fila de la solicitud y después las de sus ofertas; el precio acordado se congela al adjudicar y solo lo ajusta la resolución de una disputa, como registro nuevo (`docs/decisiones/0030-negociacion-oferta-demanda.md`, `0038-motor-de-negociacion.md`).
+13. **Contacto y ubicación mínimos.** Nombre, teléfono, documento y dirección del cliente se entregan al proveedor solo tras adjudicar; la ubicación del piloto se guarda solo como última posición durante `en_ejecucion` y se elimina al finalizar; nunca se escribe en logs, bitácora ni historial (`docs/decisiones/0040-seguimiento-fotos-mensajes-y-ubicacion.md`).
+14. **Sin penalidades ni comisión automáticas.** La plataforma no cobra ni calcula comisión; cancelar, rechazar o dejar vencer una oferta no restringe cuentas por sí solo. Los umbrales generan alertas al panel y un administrador decide.
+15. **Los datos que dejan de usarse se mueven a un esquema `respaldo_*`, no se borran.** Ninguna migración de este modelo hace `DROP` de datos; cada una trae `down()` verificado contra PostgreSQL.
 
 ## Convenciones
 
@@ -37,6 +41,6 @@ Lo que sí hay que escribir y mantener es una suite de **no funcionales de segur
 
 ## Qué no delegar sin revisión línea por línea
 
-El motor de sync, el servicio de estados y el scoping del portal del cliente. El resto (CRUDs, pantallas no críticas, recursos de listado, plantillas PDF) se revisa por diff en el PR y por prueba manual del usuario.
+El motor de sync, el servicio de estados, la adjudicación atómica de ofertas, el scoping del portal del cliente y la entrega de datos de contacto y ubicación. El resto (CRUDs, pantallas no críticas, recursos de listado, plantillas PDF) se revisa por diff en el PR y por prueba manual del usuario.
 
 **Esa revisión es posterior a la integración, no previa.** Se hace sobre `develop`, con el cambio ya mergeado, y queda anotada en `runs/revision-pendiente.txt`. Retener el PR en borrador hasta que una persona lo mirara fue peor que el problema que resolvía: el PR #46 (motor de sync) quedó esperando, y como toda rama nueva sale de `develop`, bloqueó doce HU de los sprints 2 a 5 hasta que el ciclo se quedó sin trabajo y se detuvo solo. Un cambio crítico sin revisar es un riesgo acotado y visible; una rama que no entra bloquea todo lo que viene detrás.

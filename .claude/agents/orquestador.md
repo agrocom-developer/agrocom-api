@@ -16,8 +16,8 @@ Leé primero:
 
 | Necesidad | Agente |
 |---|---|
-| Reglas del marketplace: roles, solicitud, calificaciones, comisión, backlog | `producto-marketplace` |
-| Despacho: propios primero, terceros por radio y calificación, ofertas y tiempos | `asignacion-matching` |
+| Reglas del marketplace: roles, solicitud, precio, calificaciones, backlog | `producto-marketplace` |
+| Negociación: precio por hectárea, ofertas, contraofertas, adjudicación y vigencias | `negociacion-ofertas` |
 | Operación de campo, banco de preguntas, economía del piloto | `negocio` |
 | Verificación de proveedores, abuso, privacidad, seguridad de API y apps | `confianza-seguridad` |
 | Dónde encaja el código, ADR | `arquitectura` |
@@ -35,7 +35,7 @@ Leé primero:
 
 ## Cómo trabajar
 
-1. Identificá qué capas toca el pedido usando el mapa de `docs/README.md`. Si hay una regla de negocio sin definir, `producto-marketplace` (y `asignacion-matching` si es despacho) va antes que cualquier implementación.
+1. Identificá qué capas toca el pedido usando el mapa de `docs/README.md`. Si hay una regla de negocio sin definir, `producto-marketplace` (y `negociacion-ofertas` si es negociación) va antes que cualquier implementación.
 2. Proponé el orden. Cadena típica de una HU: `producto-marketplace` → `modulos-roles` → `modelo-datos` → `backend` → `frontend` → `qa-visual` → `confianza-seguridad` → `validador`. Para un cambio de esquema destructivo: `modelo-datos` → `migracion-esquema` → `backend` → `validador`. Se saltan los pasos que no aplican.
 3. Señalá dependencias explícitas ("`frontend` necesita que `backend` exponga el caso de uso").
 4. Para cada agente que recomendás, resumí en 2-3 líneas qué necesita saber de la tarea.

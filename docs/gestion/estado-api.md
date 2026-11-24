@@ -37,16 +37,18 @@ Corren siempre en CI (son parte del humo del selector de impacto):
 
 ## Falta
 
+### Negociación de ofertas
+
+La especificación vigente (`docs/especificacion/marketplace.md`, ADR 0030 a 0042) y su lista de recursos (`docs/especificacion/negociacion-contrato.md`) definen el modelo de negociación. Queda por implementar en la API, en este orden: estados de la solicitud y precio propuesto; módulo `Negociacion` (ofertas, contraofertas, adjudicación atómica, vencimientos); mapa de solicitudes abiertas y resumen por zona; seguimiento (inicio, avance, cierre, fotos, mensajes y ubicación del piloto); preferencias de notificación y dispositivos; datos de la persona y fotos del dron en el registro; retiro de la comisión, las penalidades y las sanciones automáticas con sus datos movidos a esquemas `respaldo_*`. Hasta entonces, lo descrito en «Hecho» sobre asignación, comisión y conformidad corresponde al código que esas tareas reemplazan.
+
 ### Endpoints de la especificación sin implementar
 
 La especificación §10 los define y la API no los expone:
 
 | Endpoint | Para qué | Quién lo necesita |
 |---|---|---|
-| `POST /api/solicitudes/{id}/en-camino` | El equipo avisa que salió; pasa la solicitud de `asignada` a `en_camino` y avisa al cliente. | App `piloto` y seguimiento del `cliente` |
 | `POST /api/incidencias` | Reporte de incidencia del cliente fuera del lote (el piloto ya la registra por `POST /api/sync`). | App `cliente` |
 | `POST /api/emergencias` | SOS con aviso de máxima prioridad a soporte y al contacto de emergencia. | Las tres apps |
-| `POST /api/solicitudes/{id}/acta/firmar` | La firma de conformidad existe como `POST /api/actas/{uuid_cliente}/firmar`; falta alinear la ruta con la especificación o corregir la especificación. | App `cliente` |
 
 ### Contrato y ejemplos
 

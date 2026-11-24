@@ -45,5 +45,5 @@ Las apps de campo quedan instaladas durante semanas sin actualizar. Por eso:
 
 - Editar `docs/api/openapi.yaml` a mano.
 - Dejar un endpoint sin atributos `OA\...`.
-- Devolver campos internos en un resource (comisión, calificaciones sin moderar, datos personales de otros): revisión de `confianza-seguridad`.
+- Devolver campos internos en un resource (calificaciones sin moderar, precios de ofertas de otros proveedores, datos personales de otros): revisión de `confianza-seguridad`.
 - Habilitar `/api/documentation` en producción sin actualizar el ADR 0014.

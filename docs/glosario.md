@@ -8,45 +8,41 @@ Referencia rápida de vocabulario, de negocio y técnico, para que cualquier per
 
 | Término | Definición | Referencia |
 |---|---|---|
-| **Marketplace** | Plataforma donde clientes solicitan servicios de fumigación con drones y proveedores los ejecutan. Agrocom capta clientes, es el nexo y también proveedor | `especificacion/marketplace.md` |
-| **Cliente** | Quien solicita el servicio, firma la conformidad y califica | especificación §2 |
-| **Solicitud de servicio** | Pedido del cliente sobre un terreno: hectáreas, tipo de aplicación, producto, ventana de fechas y tarifa. Es la unidad de negocio | especificación §4.2; ADR 0027 |
+| **Marketplace** | Plataforma donde clientes publican solicitudes de fumigación con drones y proveedores ofertan; el precio se negocia. Agrocom es el nexo y el registro del resultado | `especificacion/marketplace.md` |
+| **Cliente** | Quien publica la solicitud, elige la oferta, sigue el avance y califica | especificación §2 |
+| **Solicitud de servicio** | Pedido del cliente sobre sus lotes: hectáreas, tipo de aplicación, producto, fecha deseada y precio por hectárea propuesto. Es la unidad de negocio | especificación §4.2; ADR 0027 |
 | **Terreno** | Superficie del cliente con geometría y hectáreas, sobre la que se pide un servicio | especificación §4.1 |
 | **Proveedor** | Entidad que presta el servicio: propio, independiente o tercero | ADR 0028 |
-| **Proveedor propio** | Agrocom como proveedor, con sus pilotos y drones; recibe la primera oferta | ADR 0028, 0030 |
+| **Proveedor propio** | Agrocom como proveedor, con sus pilotos y drones; compite como cualquier otro | ADR 0028 |
 | **Proveedor independiente** | Piloto que es su propio proveedor; se registra solo y lo aprueba un administrador | ADR 0028, 0032 |
 | **Proveedor tercero** | Empresa o dueño de drones con pilotos y auxiliares a su cargo | ADR 0028 |
-| **Piloto** | Persona que opera el dron y escribe la sesión de vuelo | especificación §2 |
-| **Auxiliar** | Persona que prepara la mezcla y asiste en el lote; lo registra el piloto o el proveedor y lo aprueba un administrador | ADR 0032 |
+| **Piloto** | Persona que opera el dron, ve el mapa de solicitudes abiertas, ofrece y marca el avance | especificación §2 |
+| **Auxiliar** | Persona que asiste al piloto en el lote y puede subir fotos de avance; lo registra el piloto o el proveedor y lo aprueba un administrador | ADR 0032 |
 | **Dron (vehículo)** | Activo que presta el servicio, con dueño y operador; requiere aprobación | ADR 0029 |
 | **Dueño del dron** | Proveedor que posee el dron, aunque lo opere otro | ADR 0029 |
 | **Equipo** | Combinación operativa de piloto, dron y auxiliar opcional que ejecuta una solicitud | especificación §4.4 |
-| **En línea** | Estado en que un proveedor declara estar disponible para recibir ofertas | especificación §4.4 |
-| **Oferta** | Propuesta de una solicitud a un proveedor, con vencimiento; se acepta o se rechaza | especificación §4.5, §5.3 |
-| **Ronda** | Tanda de ofertas a un grupo de proveedores (propios primero, luego terceros por radio) | ADR 0030 |
-| **Escalado** | Ampliación del radio y del grupo de proveedores cuando una ronda no consigue aceptación | ADR 0030 |
-| **Sin proveedor** | Estado de la solicitud cuando se agotaron las rondas | especificación §5.1 |
-| **Tarifa por hectárea** | Precio del servicio por hectárea, con recargos explícitos y congelado al publicar | ADR 0027 |
-| **Comisión** | Porcentaje del monto final que Agrocom devenga por solicitud completada | ADR 0034 |
-| **Acta de conformidad** | Documento que el cliente firma para confirmar la ejecución; el silencio durante el plazo equivale a conformidad | especificación §4.6, §5.1 |
-| **Sesión de vuelo** | Unidad continua de trabajo de un equipo en el lote con hectáreas, litros, condiciones y evidencias; se registra sin conexión | especificación §4.6, §5.4 |
-| **Mezcla (caldo)** | Tanque de caldo preparado por el auxiliar según la receta de la solicitud, ligado a una sesión | especificación §4.6 |
-| **Condición forzada** | Vuelo realizado fuera de los límites de clima, con motivo registrado y visible | `politicas/seguridad.md` |
-| **Evidencia** | Foto o registro comprimido (menos de 300 KB) que respalda una sesión, incidencia o disputa | especificación §4.6 |
+| **Mapa de solicitudes abiertas** | Vista del piloto con las solicitudes `abierta` y `con_ofertas`, filtros por zona, hectáreas y precio, y resumen por zona | ADR 0041 |
+| **Oferta** | Precio por hectárea que una parte propone en una negociación, con vencimiento; se acepta, se contraoferta o se rechaza | especificación §4.5, §5.3 |
+| **Negociación** | Conjunto de ofertas entre el cliente y un proveedor sobre una solicitud; hay una sola oferta vigente y un máximo de ofertas | ADR 0030 |
+| **Adjudicación** | Aceptar la oferta vigente de la contraparte: fija el precio acordado, el proveedor y el equipo y cierra las demás negociaciones | ADR 0030 |
+| **Expirada** | Estado de la solicitud que venció sin adjudicar; el cliente puede renovarla | especificación §5.1 |
+| **Precio por hectárea** | Precio que el cliente propone y que se negocia; se congela al adjudicar como precio acordado | ADR 0030, 0034 |
+| **Precio final** | Hectáreas ejecutadas por precio acordado; es el monto a pagar, fuera de la app | ADR 0034 |
+| **Avance** | Registro del piloto con hectáreas acumuladas o porcentaje, junto con fotos; lo ve el cliente | ADR 0040 |
+| **Mensajes** | Chat de texto entre el cliente y el proveedor adjudicado | ADR 0040 |
+| **Ubicación del piloto** | Última posición de la app del piloto durante la ejecución; se elimina al finalizar | ADR 0040 |
+| **Preferencias de notificación** | Categorías de aviso que cada cuenta activa o desactiva, con zonas de interés para las nuevas solicitudes | ADR 0041 |
+| **Evidencia** | Foto comprimida (menos de 300 KB) que respalda un avance, una incidencia o una disputa | especificación §4.6 |
 | **Calificación** | Valoración de 1 a 5 estrellas con etiquetas que el cliente da a un proveedor; el proveedor la ve y un administrador la modera | ADR 0031 |
 | **Moderación** | Ocultamiento con motivo y autor de una calificación que incumple la política | `politicas/calificacion.md` |
-| **Disputa** | Reclamo sobre un servicio ejecutado, resuelto por un administrador con evidencia | ADR 0033 |
+| **Disputa** | Reclamo sobre un servicio finalizado, resuelto por un administrador con evidencia y un monto ajustado | ADR 0033 |
 | **Incidencia** | Evento anómalo (deriva, caída, lesión, derrame, conflicto) reportado durante o tras un servicio | `politicas/seguridad.md` |
 | **SOS** | Botón de emergencia que avisa a soporte con la ubicación | `politicas/seguridad.md` |
-| **Tasa de aceptación y de cancelación** | Proporción de ofertas aceptadas y de solicitudes canceladas por el proveedor; entran en la puntuación y en las restricciones | especificación §6 |
-| **Suspensión** | Retiro temporal de ofertas por calificación, documentos vencidos, incidencia grave o comisión vencida | `politicas/verificacion_proveedores.md` |
+| **Tasa de cancelación** | Proporción de servicios adjudicados que cancela una parte; es visible y alimenta alertas, no sanciones automáticas | ADR 0033 |
+| **Suspensión** | Retiro de la cuenta por documentos vencidos, incidencia grave o decisión de un administrador | `politicas/verificacion_proveedores.md` |
 | **Ciclos de batería** | Contador conservado dentro del dron | ADR 0029 |
 | **Deriva** | Arrastre de la gota fuera del lote por viento; riesgo para vecinos y colmenas | `politicas/seguridad.md` |
-| **Caldo / calda** | Mezcla líquida de agua y productos que aplica el dron | especificación §4.6 |
-| **Tanque del dron** | Depósito líquido del dron; su capacidad entra en la elegibilidad | especificación §4.4 |
-| **Boleo** | Aplicación de sólidos al voleo con dron | especificación §4.2 |
-| **Captura del RC** | Foto de la pantalla del control remoto al cerrar el lote: hectáreas, tiempo, caudal y altura | especificación §4.6 |
-| **Zona GEO** | Geocerca donde el dron no puede volar | `politicas/seguridad.md` |
+| **Tanque del dron** | Depósito líquido del dron; su capacidad se muestra en la oferta | especificación §4.4 |
 
 ## Técnico
 
