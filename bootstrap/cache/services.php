@@ -48,6 +48,7 @@
     44 => 'App\\Dominios\\Proveedores\\Infraestructura\\ProveedoresServiceProvider',
     45 => 'App\\Dominios\\Flota\\Infraestructura\\FlotaServiceProvider',
     46 => 'App\\Dominios\\Solicitudes\\Infraestructura\\SolicitudesServiceProvider',
+    47 => 'App\\Dominios\\Asignacion\\Infraestructura\\AsignacionServiceProvider',
   ),
   'eager' => 
   array (
@@ -83,6 +84,7 @@
     29 => 'App\\Dominios\\Proveedores\\Infraestructura\\ProveedoresServiceProvider',
     30 => 'App\\Dominios\\Flota\\Infraestructura\\FlotaServiceProvider',
     31 => 'App\\Dominios\\Solicitudes\\Infraestructura\\SolicitudesServiceProvider',
+    32 => 'App\\Dominios\\Asignacion\\Infraestructura\\AsignacionServiceProvider',
   ),
   'deferred' => 
   array (

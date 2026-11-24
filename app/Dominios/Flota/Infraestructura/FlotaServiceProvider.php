@@ -7,6 +7,7 @@ use App\Dominios\Flota\Aplicacion\ReaccionarADocumentosDeDron;
 use App\Dominios\Flota\Contratos\LecturaDisponibilidad;
 use App\Dominios\Flota\Contratos\LecturaDrones;
 use App\Dominios\Flota\Contratos\LecturaEquipos;
+use App\Dominios\Flota\Contratos\LecturaIntegrantesDeEquipo;
 use App\Dominios\Operaciones\Contratos\Eventos\RecargaRegistrada;
 use App\Dominios\Proveedores\Contratos\Eventos\DocumentoAprobado;
 use App\Dominios\Proveedores\Contratos\Eventos\DocumentoVencido;
@@ -31,6 +32,7 @@ final class FlotaServiceProvider extends ServiceProvider
         $this->app->bind(LecturaDrones::class, LecturaDronesEloquent::class);
         $this->app->bind(LecturaEquipos::class, LecturaEquiposEloquent::class);
         $this->app->bind(LecturaDisponibilidad::class, LecturaDisponibilidadEloquent::class);
+        $this->app->bind(LecturaIntegrantesDeEquipo::class, LecturaIntegrantesDeEquipoEloquent::class);
     }
 
     public function boot(): void

@@ -2,11 +2,14 @@
 
 use App\Dominios\Asignacion\Infraestructura\Http\Controllers\Web\AsignacionesController;
 use App\Dominios\Asignacion\Infraestructura\Http\Controllers\Web\SancionesController;
+use App\Dominios\Calificaciones\Infraestructura\Http\Controllers\Web\CalificacionesController;
+use App\Dominios\Disputas\Infraestructura\Http\Controllers\Web\DisputasController;
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Web\DronesController as DronesFlotaController;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Web\EquiposController as EquiposFlotaController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\BateriasController;
 use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\FichasDronController;
+use App\Dominios\Metricas\Infraestructura\Http\Controllers\Web\MetricasController;
 use App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Web\NotificacionesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\DronesController;
@@ -531,6 +534,45 @@ Route::middleware('auth:interno')->group(function () {
         Route::post('/panel/sanciones/{sancion}/levantar', [SancionesController::class, 'levantar'])
             ->whereNumber('sancion')
             ->name('panel.sanciones.levantar');
+
+        // Calificaciones (ADR 0031 y 0039): la cola de moderación; ocultar con causa y
+        // motivo o dejar visible. Ocultar no borra: deja de contar para el promedio.
+        Route::get('/panel/calificaciones', [CalificacionesController::class, 'index'])
+            ->name('panel.calificaciones.index');
+
+        Route::post('/panel/calificaciones/{calificacion}/ocultar', [CalificacionesController::class, 'ocultar'])
+            ->whereNumber('calificacion')
+            ->name('panel.calificaciones.ocultar');
+
+        Route::post('/panel/calificaciones/{calificacion}/restablecer', [CalificacionesController::class, 'restablecer'])
+            ->whereNumber('calificacion')
+            ->name('panel.calificaciones.restablecer');
+
+        // Disputas (ADR 0033 y 0039): la cola, la ficha con la conversación, la
+        // mediación de soporte y la resolución con resultado, reembolso y motivo.
+        Route::get('/panel/disputas', [DisputasController::class, 'index'])
+            ->name('panel.disputas.index');
+
+        Route::get('/panel/disputas/{disputa}', [DisputasController::class, 'show'])
+            ->whereNumber('disputa')
+            ->name('panel.disputas.show');
+
+        Route::post('/panel/disputas/{disputa}/tomar', [DisputasController::class, 'tomar'])
+            ->whereNumber('disputa')
+            ->name('panel.disputas.tomar');
+
+        Route::post('/panel/disputas/{disputa}/mensajes', [DisputasController::class, 'mensaje'])
+            ->whereNumber('disputa')
+            ->name('panel.disputas.mensaje');
+
+        Route::post('/panel/disputas/{disputa}/resolver', [DisputasController::class, 'resolver'])
+            ->whereNumber('disputa')
+            ->name('panel.disputas.resolver');
+
+        // Métricas del mercado (especificación §14): solicitudes, asignación, aceptación,
+        // calificación, disputas, tiempos e ingreso. Solo lectura.
+        Route::get('/panel/metricas', [MetricasController::class, 'index'])
+            ->name('panel.metricas.index');
 
         // Marketplace (ADR 0028, 0029, 0032): cola de aprobación de proveedores,
         // pilotos, auxiliares, drones y documentos. Los permisos son de grano

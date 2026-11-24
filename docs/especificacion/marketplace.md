@@ -236,9 +236,11 @@ Prefijo `/api/v1`. Autenticación por token. El contrato publicado es `docs/api/
 | `POST /solicitudes/{id}/publicar` | Congela tarifa y la deja `publicada` |
 | `POST /solicitudes/{id}/cancelar` | Cancela con motivo |
 | `GET /solicitudes/{id}/estimacion` | Tarifa estimada |
-| `POST /solicitudes/{id}/acta/firmar` | Conformidad |
-| `POST /solicitudes/{id}/calificaciones` | Califica al proveedor, piloto o auxiliar |
-| `POST /solicitudes/{id}/disputas` | Abre disputa |
+| `POST /solicitudes/{id}/conformidad` | Conformidad: pasa `ejecutada` a `completada` y congela monto final y comisión (la conformidad por acta firmada llama al mismo caso de uso) |
+| `POST /solicitudes/{id}/acta/firmar` | Conformidad con las hectáreas del acta |
+| `GET /solicitudes/{id}/calificaciones`, `POST /solicitudes/{id}/calificaciones` | A quién se puede calificar y calificar al proveedor, piloto o auxiliar (7 días) |
+| `POST /solicitudes/{id}/disputas`, `GET /solicitudes/{id}/disputa` | Abre y consulta la disputa |
+| `GET /disputas`, `GET /disputas/{id}`, `POST /disputas/{id}/mensajes`, `POST /disputas/{id}/retirar`, `POST /disputas/{id}/apelar` | Sigue la disputa, argumenta, la retira o apela la resolución una vez |
 | `POST /incidencias`, `POST /emergencias` | Reporte y SOS |
 
 ### 10.2 Proveedor
@@ -253,7 +255,10 @@ Prefijo `/api/v1`. Autenticación por token. El contrato publicado es `docs/api/
 | `POST /ofertas/{id}/aceptar`, `POST /ofertas/{id}/rechazar` | Respuesta (requiere red) |
 | `POST /solicitudes/{id}/en-camino` | El equipo salió |
 | `POST /solicitudes/{id}/cancelar-proveedor` | Cancelación del proveedor con motivo |
-| `GET /reputacion` | Calificaciones y tasas propias |
+| `GET /reputacion` | Calificación, tasas y sanciones propias |
+| `GET /calificaciones/recibidas`, `POST /calificaciones/{id}/reportar` | Calificaciones que recibe, con su resumen, y reporte de una abusiva |
+| `GET /solicitudes/{id}/calificar-cliente`, `POST /solicitudes/{id}/calificar-cliente` | Califica al cliente en privado (7 días) |
+| `POST /solicitudes/{id}/disputas`, `GET /solicitudes/{id}/disputa`, `GET /disputas`, `GET /disputas/{id}`, `POST /disputas/{id}/mensajes`, `POST /disputas/{id}/retirar`, `POST /disputas/{id}/apelar` | Las mismas rutas de disputa del cliente; el lado lo decide el rol del token |
 
 ### 10.3 Sincronización del lote (piloto y auxiliar)
 
@@ -268,7 +273,7 @@ La sincronización es idempotente: reaplicar un lote dos, tres o diez veces, en 
 
 ### 10.4 Administración y soporte
 
-`GET/POST /admin/proveedores/{id}/aprobar|rechazar|suspender`, `/admin/pilotos`, `/admin/auxiliares`, `/admin/drones` (mismas acciones), `/admin/documentos/{id}/revisar`, `/admin/calificaciones/{id}/moderar`, `/admin/disputas/{id}/resolver`, `/admin/solicitudes` (consulta y reasignación manual), `/admin/parametros`, `/admin/metricas`.
+Son pantallas del panel (ADR 0008), no endpoints de la API de las apps: `panel/proveedores`, `panel/pilotos`, `panel/auxiliares`, `panel/drones-flota` (aprobar, rechazar, suspender), `panel/documentos` (revisar), `panel/solicitudes` y `panel/asignaciones` (consulta y reasignación manual), `panel/calificaciones` (ocultar o dejar visible con causa y motivo), `panel/disputas` (tomar, mensajear y resolver con resultado, reembolso y motivo), `panel/sanciones`, `panel/metricas` y la configuración de parámetros.
 
 ## 11. Parámetros configurables
 

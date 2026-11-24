@@ -40,6 +40,7 @@ return [
         'documento_fiscal_duplicado' => 'El documento fiscal :documento ya pertenece a otro cliente.',
         'sin_cliente' => 'Tu cuenta no tiene un perfil de cliente.',
         'cliente_suspendido' => 'Tu cuenta de cliente está suspendida y no puede pedir servicios.',
+        'publicacion_limitada' => 'Tu publicación de solicitudes está limitada hasta una revisión por la calificación que reciben tus servicios. Contacta a soporte.',
         'terreno_ajeno' => 'El terreno no existe.',
         'solicitud_ajena' => 'La solicitud no existe.',
         'uuid_en_uso' => 'Ese identificador de solicitud ya se usó. Genera uno nuevo.',
@@ -49,6 +50,10 @@ return [
         'no_se_puede_editar' => 'La solicitud ya no admite ese cambio.',
         'terreno_con_solicitudes_vivas' => 'El terreno tiene solicitudes en curso.',
         'transicion_no_permitida' => 'La solicitud no puede pasar de «:desde» a «:hacia».',
+    ],
+
+    'conformidad' => [
+        'tacita' => 'Conformidad tácita: venció el plazo sin observaciones del cliente.',
     ],
 
     'estado' => [

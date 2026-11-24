@@ -2,6 +2,9 @@
 
 use App\Dominios\Asignacion\Infraestructura\Http\Controllers\Api\OfertasController;
 use App\Dominios\Asignacion\Infraestructura\Http\Controllers\Api\ServiciosDelProveedorController;
+use App\Dominios\Calificaciones\Infraestructura\Http\Controllers\Api\CalificacionesDelClienteController;
+use App\Dominios\Calificaciones\Infraestructura\Http\Controllers\Api\CalificacionesDelProveedorController;
+use App\Dominios\Disputas\Infraestructura\Http\Controllers\Api\DisputasController;
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Api\VersionController;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Api\DisponibilidadController;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Api\DronesController;
@@ -214,6 +217,54 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/solicitudes/{id}/cancelar', [SolicitudesController::class, 'cancelar'])
         ->whereNumber('id')
         ->name('api.solicitudes.cancelar');
+    Route::post('/solicitudes/{id}/conformidad', [SolicitudesController::class, 'conformidad'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.conformidad');
+
+    // Calificaciones (ADR 0031 y 0039): el cliente califica al proveedor, al piloto y
+    // al auxiliar de un servicio completado; el proveedor califica al cliente en
+    // privado, ve lo que recibe y reporta lo abusivo. Requieren red; el alcance lo
+    // hacen los casos de uso (un id ajeno es 404).
+    Route::get('/solicitudes/{id}/calificaciones', [CalificacionesDelClienteController::class, 'show'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.calificaciones.show');
+    Route::post('/solicitudes/{id}/calificaciones', [CalificacionesDelClienteController::class, 'store'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.calificaciones.store');
+    Route::get('/solicitudes/{id}/calificar-cliente', [CalificacionesDelProveedorController::class, 'show'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.calificar-cliente.show');
+    Route::post('/solicitudes/{id}/calificar-cliente', [CalificacionesDelProveedorController::class, 'store'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.calificar-cliente.store');
+    Route::get('/calificaciones/recibidas', [CalificacionesDelProveedorController::class, 'recibidas'])->name('api.calificaciones.recibidas');
+    Route::post('/calificaciones/{id}/reportar', [CalificacionesDelProveedorController::class, 'reportar'])
+        ->whereNumber('id')
+        ->name('api.calificaciones.reportar');
+
+    // Disputas (ADR 0033 y 0039): el cliente o el proveedor abren una disputa por
+    // servicio, la argumentan, la retiran o apelan la resolución. Ambas apps comparten
+    // la superficie; el lado lo decide el permiso del rol del token. Requieren red; el
+    // alcance lo hacen los casos de uso (una disputa ajena es 404).
+    Route::post('/solicitudes/{id}/disputas', [DisputasController::class, 'store'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.disputas.store');
+    Route::get('/solicitudes/{id}/disputa', [DisputasController::class, 'deLaSolicitud'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.disputa.show');
+    Route::get('/disputas', [DisputasController::class, 'index'])->name('api.disputas.index');
+    Route::get('/disputas/{id}', [DisputasController::class, 'show'])
+        ->whereNumber('id')
+        ->name('api.disputas.show');
+    Route::post('/disputas/{id}/mensajes', [DisputasController::class, 'mensaje'])
+        ->whereNumber('id')
+        ->name('api.disputas.mensajes');
+    Route::post('/disputas/{id}/retirar', [DisputasController::class, 'retirar'])
+        ->whereNumber('id')
+        ->name('api.disputas.retirar');
+    Route::post('/disputas/{id}/apelar', [DisputasController::class, 'apelar'])
+        ->whereNumber('id')
+        ->name('api.disputas.apelar');
 
     // Avisos in-app de la cuenta (ADR 0025): las apps no tienen campana de panel.
     Route::get('/notificaciones', [NotificacionesController::class, 'index'])->name('api.notificaciones.index');

@@ -22,6 +22,8 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'estado', type: 'string', enum: ['activo', 'suspendido'], example: 'activo'),
         new OA\Property(property: 'calificacion_promedio', description: 'Decimal exacto en string (0 a 5).', type: 'string', example: '0.00'),
         new OA\Property(property: 'calificaciones_conteo', type: 'integer', example: 0),
+        new OA\Property(property: 'publicacion_limitada', description: 'Verdadero si la publicación de solicitudes está limitada hasta una revisión por calificación baja (política de calificación).', type: 'boolean', example: false),
+        new OA\Property(property: 'aviso_calificacion', description: 'Verdadero si el promedio bajó del umbral y hay un aviso vigente.', type: 'boolean', example: false),
     ],
     type: 'object',
 )]
@@ -39,6 +41,8 @@ final class ClienteResource extends JsonResource
             'estado' => $this->estado->value,
             'calificacion_promedio' => $this->calificacion_promedio,
             'calificaciones_conteo' => $this->calificaciones_conteo,
+            'publicacion_limitada' => $this->publicacion_limitada_en !== null,
+            'aviso_calificacion' => $this->aviso_calificacion_en !== null,
         ];
     }
 }

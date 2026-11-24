@@ -6,6 +6,7 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
 use App\Dominios\Solicitudes\Dominio\EstadoCliente;
 use App\Dominios\Solicitudes\Dominio\TipoCliente;
+use Illuminate\Support\Carbon;
 
 /**
  * Cliente del marketplace (`sol_clientes`, especificación §4.1): la ficha de
@@ -21,6 +22,8 @@ use App\Dominios\Solicitudes\Dominio\TipoCliente;
  * @property EstadoCliente $estado
  * @property string $calificacion_promedio
  * @property int $calificaciones_conteo
+ * @property Carbon|null $aviso_calificacion_en
+ * @property Carbon|null $publicacion_limitada_en
  */
 class Cliente extends ModeloDominio
 {
@@ -46,6 +49,8 @@ class Cliente extends ModeloDominio
             'estado' => EstadoCliente::class,
             'usuario_id' => 'integer',
             'calificaciones_conteo' => 'integer',
+            'aviso_calificacion_en' => 'datetime',
+            'publicacion_limitada_en' => 'datetime',
         ];
     }
 }

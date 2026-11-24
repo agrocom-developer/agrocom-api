@@ -35,7 +35,12 @@ final class PublicarSolicitud
      */
     public function ejecutar(int $usuarioId, int $solicitudId, ?string $ventanaHasta = null): SolicitudServicio
     {
-        $this->clientes->activo($usuarioId);
+        $cliente = $this->clientes->activo($usuarioId);
+
+        if ($cliente->publicacion_limitada_en !== null) {
+            throw SolicitudInvalida::publicacionLimitada();
+        }
+
         $solicitud = $this->solicitudes->ejecutar($usuarioId, $solicitudId);
         $republica = $solicitud->estado === EstadoSolicitud::SinProveedor;
 

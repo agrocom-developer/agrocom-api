@@ -5,7 +5,7 @@ Este `docs/` contiene la documentación vigente de Agrocom, un marketplace de se
 ## Estructura
 
 - **`especificacion/marketplace.md`**: la fuente de verdad funcional y técnica. Actores, flujo, modelo de datos, máquinas de estado, asignación, endpoints, eventos, notificaciones, métricas y alcance de la primera versión.
-- **`decisiones/`**: ADRs (contexto, decisión, alternativas descartadas, consecuencias). Los ADR 0027 a 0038 definen el marketplace:
+- **`decisiones/`**: ADRs (contexto, decisión, alternativas descartadas, consecuencias). Los ADR 0027 a 0039 definen el marketplace:
   - 0027 solicitud de servicio
   - 0028 proveedores propio, independiente y tercero
   - 0029 dron como vehículo con dueño
@@ -18,6 +18,7 @@ Este `docs/` contiene la documentación vigente de Agrocom, un marketplace de se
   - 0036 dominio de proveedores y flota: módulos, roles, registro público y aprobación
   - 0037 solicitud de servicio y trabajo: el trabajo nace de una solicitud aceptada y se retira el modelo de contratos
   - 0038 motor de asignación: ofertas, rondas, aceptación atómica, sanciones y asignación a mano
+  - 0039 calificaciones, disputas, comisión y métricas: cierre del servicio, reputación ponderada, moderación, reembolsos y panel de métricas
 - **`politicas/`**: una política por tema, que operan lo decidido: `cancelacion.md`, `calificacion.md`, `verificacion_proveedores.md`, `seguridad.md`, `disputas.md`, `comision.md`.
 - **`gestion/`**: cola de tareas del ciclo automático, entornos, automatización del desarrollo y el plan de homogeneización del panel; `respuestas_campo/capturas_rc/` guarda las capturas del control remoto del dron.
 - **`diseno/`**: sistema de diseño del panel (tokens CSS, catálogo Atomic Design) y guía de construcción de pantallas.
@@ -27,7 +28,7 @@ Este `docs/` contiene la documentación vigente de Agrocom, un marketplace de se
 ## Cómo leer
 
 1. `especificacion/marketplace.md` para el producto.
-2. `decisiones/0027` a `0038` para el porqué de cada pieza.
+2. `decisiones/0027` a `0039` para el porqué de cada pieza.
 3. `politicas/` para las reglas de operación.
 4. `glosario.md` ante cualquier término.
 

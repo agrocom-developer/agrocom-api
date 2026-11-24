@@ -186,6 +186,8 @@ function panelHomogeneoMaquinasSinFicha(): array
         'TransicionesTrabajo' => 'los trabajos nacen en la app de campo; el panel los consulta y los da de baja, no los edita',
         'TransicionesSolicitud' => 'la crea el cliente desde la app; el panel solo la consulta y la cancela con motivo en un modal',
         'TransicionesOferta' => 'las genera el motor de asignación; el panel las consulta y asigna a mano, con motivo en un modal',
+        'TransicionesCalificacion' => 'las escriben los clientes y los proveedores desde la app; el panel las modera (ocultar o dejar visible) con causa y motivo en un modal',
+        'TransicionesDisputa' => 'las abren las partes desde la app; el panel las toma, media y resuelve con resultado, reembolso y motivo en un modal',
     ];
 }
 

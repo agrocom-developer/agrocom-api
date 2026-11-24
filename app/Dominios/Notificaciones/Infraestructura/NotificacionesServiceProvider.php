@@ -2,6 +2,12 @@
 
 namespace App\Dominios\Notificaciones\Infraestructura;
 
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaCalificacionRegistrada;
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaCalificacionReportada;
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaClienteConAviso;
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaDisputaAbierta;
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaDisputaApelada;
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaDisputaResuelta;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaDocumentoPorVencer;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaDocumentoVencido;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaEstadoDeAprobacionCambiado;
@@ -10,7 +16,9 @@ use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaOfertaRetirada;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaOfertaVencida;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaProveedorRegistrado;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaProveedorSancionado;
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaPublicacionLimitada;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaSolicitudAsignada;
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaSolicitudCompletada;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaSolicitudReasignada;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaSolicitudSinProveedor;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaTrabajoCerrado;
@@ -47,6 +55,14 @@ final class NotificacionesServiceProvider extends ServiceProvider
         ReglaSolicitudReasignada::class,
         ReglaSolicitudSinProveedor::class,
         ReglaProveedorSancionado::class,
+        ReglaSolicitudCompletada::class,
+        ReglaCalificacionRegistrada::class,
+        ReglaCalificacionReportada::class,
+        ReglaDisputaAbierta::class,
+        ReglaDisputaResuelta::class,
+        ReglaDisputaApelada::class,
+        ReglaClienteConAviso::class,
+        ReglaPublicacionLimitada::class,
     ];
 
     public function register(): void

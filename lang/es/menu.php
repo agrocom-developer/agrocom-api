@@ -40,6 +40,9 @@ return [
         'items' => [
             'solicitudes' => 'Solicitudes de servicio',
             'asignaciones' => 'Asignaciones',
+            'calificaciones' => 'Calificaciones',
+            'disputas' => 'Disputas',
+            'metricas' => 'Métricas del mercado',
         ],
     ],
 
