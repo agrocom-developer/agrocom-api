@@ -1,14 +1,24 @@
 <?php
 
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Api\VersionController;
+use App\Dominios\Flota\Infraestructura\Http\Controllers\Api\DronesController;
+use App\Dominios\Flota\Infraestructura\Http\Controllers\Api\EquiposController;
+use App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Api\NotificacionesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Api\ActaController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Api\EvidenciaController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Api\OrdenAplicacionController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Api\ReporteTecnicoController;
+use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\AuxiliaresController;
+use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\DocumentosController;
+use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\MiProveedorController;
+use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\PilotosController;
+use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\RegistroProveedorController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\DispositivoController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\SesionCampoController;
 use App\Dominios\Sincronizacion\Infraestructura\Http\Controllers\Api\CatalogoController;
 use App\Dominios\Sincronizacion\Infraestructura\Http\Controllers\Api\SyncController;
+use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\ClientesController;
+use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\ZonasController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -43,6 +53,23 @@ Route::post('/auth/token', [SesionCampoController::class, 'store'])
 Route::get('/version', [VersionController::class, 'show'])
     ->middleware('throttle:6,1')
     ->name('api.version.show');
+
+// Marketplace (ADR 0036): registro público de clientes y proveedores. Crean
+// cuentas sin autenticación, así que llevan el límite `registro-publico`
+// (SeguridadServiceProvider): 5 por minuto y 20 por hora por IP.
+Route::post('/clientes/registro', [ClientesController::class, 'store'])
+    ->middleware('throttle:registro-publico')
+    ->name('api.clientes.registro');
+
+Route::post('/proveedores/registro', [RegistroProveedorController::class, 'store'])
+    ->middleware('throttle:registro-publico')
+    ->name('api.proveedores.registro');
+
+// Catálogo de zonas: el formulario de registro lo necesita antes de tener
+// cuenta. Mismo throttle suave que /version: es lectura pública.
+Route::get('/zonas', [ZonasController::class, 'index'])
+    ->middleware('throttle:60,1')
+    ->name('api.zonas.index');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/auth/sesion', [SesionCampoController::class, 'show'])->name('api.auth.sesion');
@@ -94,4 +121,52 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/reportes/lote/{trabajo}', [ReporteTecnicoController::class, 'mostrar'])
         ->whereNumber('trabajo')
         ->name('api.reportes.lote');
+
+    // Marketplace (ADR 0036): el proveedor gestiona lo SUYO. El permiso del rol
+    // del token es la puerta; el alcance (solo sus registros, un id ajeno es
+    // 404) lo hacen los casos de uso.
+    Route::get('/proveedores/mi', [MiProveedorController::class, 'show'])->name('api.proveedores.mi');
+    Route::post('/proveedores/mi/reenviar', [MiProveedorController::class, 'reenviar'])->name('api.proveedores.mi.reenviar');
+
+    Route::get('/proveedores/pilotos', [PilotosController::class, 'index'])->name('api.proveedores.pilotos.index');
+    Route::post('/proveedores/pilotos', [PilotosController::class, 'store'])->name('api.proveedores.pilotos.store');
+    Route::post('/proveedores/pilotos/{id}/reenviar', [PilotosController::class, 'reenviar'])
+        ->whereNumber('id')
+        ->name('api.proveedores.pilotos.reenviar');
+
+    Route::get('/proveedores/auxiliares', [AuxiliaresController::class, 'index'])->name('api.proveedores.auxiliares.index');
+    Route::post('/proveedores/auxiliares', [AuxiliaresController::class, 'store'])->name('api.proveedores.auxiliares.store');
+    Route::post('/proveedores/auxiliares/{id}/reenviar', [AuxiliaresController::class, 'reenviar'])
+        ->whereNumber('id')
+        ->name('api.proveedores.auxiliares.reenviar');
+
+    Route::get('/proveedores/documentos', [DocumentosController::class, 'index'])->name('api.proveedores.documentos.index');
+    Route::post('/proveedores/documentos', [DocumentosController::class, 'store'])->name('api.proveedores.documentos.store');
+
+    Route::get('/proveedores/drones', [DronesController::class, 'index'])->name('api.proveedores.drones.index');
+    Route::post('/proveedores/drones', [DronesController::class, 'store'])->name('api.proveedores.drones.store');
+    Route::put('/proveedores/drones/{id}', [DronesController::class, 'update'])
+        ->whereNumber('id')
+        ->name('api.proveedores.drones.update');
+    Route::post('/proveedores/drones/{id}/reenviar', [DronesController::class, 'reenviar'])
+        ->whereNumber('id')
+        ->name('api.proveedores.drones.reenviar');
+    Route::post('/proveedores/drones/{id}/documentos', [DronesController::class, 'cargarDocumento'])
+        ->whereNumber('id')
+        ->name('api.proveedores.drones.documentos');
+
+    Route::get('/proveedores/equipos', [EquiposController::class, 'index'])->name('api.proveedores.equipos.index');
+    Route::post('/proveedores/equipos', [EquiposController::class, 'store'])->name('api.proveedores.equipos.store');
+    Route::put('/proveedores/equipos/{id}', [EquiposController::class, 'update'])
+        ->whereNumber('id')
+        ->name('api.proveedores.equipos.update');
+
+    // Cliente: su propio perfil (el alta es pública, arriba).
+    Route::get('/clientes/mi', [ClientesController::class, 'show'])->name('api.clientes.mi');
+
+    // Avisos in-app de la cuenta (ADR 0025): las apps no tienen campana de panel.
+    Route::get('/notificaciones', [NotificacionesController::class, 'index'])->name('api.notificaciones.index');
+    Route::post('/notificaciones/{id}/leida', [NotificacionesController::class, 'leer'])
+        ->whereNumber('id')
+        ->name('api.notificaciones.leida');
 });

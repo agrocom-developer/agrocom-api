@@ -48,6 +48,9 @@
     44 => 'App\\Dominios\\Portal\\Infraestructura\\PortalServiceProvider',
     45 => 'App\\Dominios\\Campania\\Infraestructura\\CampaniaServiceProvider',
     46 => 'App\\Dominios\\Notificaciones\\Infraestructura\\NotificacionesServiceProvider',
+    47 => 'App\\Dominios\\Proveedores\\Infraestructura\\ProveedoresServiceProvider',
+    48 => 'App\\Dominios\\Flota\\Infraestructura\\FlotaServiceProvider',
+    49 => 'App\\Dominios\\Solicitudes\\Infraestructura\\SolicitudesServiceProvider',
   ),
   'eager' => 
   array (
@@ -83,6 +86,9 @@
     29 => 'App\\Dominios\\Portal\\Infraestructura\\PortalServiceProvider',
     30 => 'App\\Dominios\\Campania\\Infraestructura\\CampaniaServiceProvider',
     31 => 'App\\Dominios\\Notificaciones\\Infraestructura\\NotificacionesServiceProvider',
+    32 => 'App\\Dominios\\Proveedores\\Infraestructura\\ProveedoresServiceProvider',
+    33 => 'App\\Dominios\\Flota\\Infraestructura\\FlotaServiceProvider',
+    34 => 'App\\Dominios\\Solicitudes\\Infraestructura\\SolicitudesServiceProvider',
   ),
   'deferred' => 
   array (
