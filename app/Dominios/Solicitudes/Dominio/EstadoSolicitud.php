@@ -3,35 +3,37 @@
 namespace App\Dominios\Solicitudes\Dominio;
 
 /**
- * Estado de una solicitud de servicio (especificación del marketplace §5.1,
- * ADR 0027). Solo `MaquinaEstadosSolicitud` lo cambia, consultando
- * {@see TransicionesSolicitud}.
+ * Estado de una solicitud de servicio (`negociacion-contrato.md` §1): el cliente
+ * la abre con un precio por hectárea, los pilotos ofertan, el cliente adjudica y
+ * el piloto ejecuta y finaliza. Solo `MaquinaEstadosSolicitud` lo cambia,
+ * consultando {@see TransicionesSolicitud}.
  */
 enum EstadoSolicitud: string
 {
     case Borrador = 'borrador';
-    case Publicada = 'publicada';
-    case EnAsignacion = 'en_asignacion';
-    case SinProveedor = 'sin_proveedor';
-    case Asignada = 'asignada';
-    case EnCamino = 'en_camino';
+    case Abierta = 'abierta';
+    case ConOfertas = 'con_ofertas';
+    case Adjudicada = 'adjudicada';
     case EnEjecucion = 'en_ejecucion';
-    case SuspendidaPorClima = 'suspendida_por_clima';
-    case Ejecutada = 'ejecutada';
-    case EnDisputa = 'en_disputa';
-    case Completada = 'completada';
+    case Finalizada = 'finalizada';
+    case Calificada = 'calificada';
     case Cancelada = 'cancelada';
+    case Expirada = 'expirada';
+    case Disputada = 'disputada';
 
-    /** `completada` y `cancelada` son terminales. */
+    /** Sin más pasos posibles (salvo la disputa, que sale de `finalizada` y `calificada`). */
     public function esTerminal(): bool
     {
-        return $this === self::Completada || $this === self::Cancelada;
+        return in_array($this, [self::Calificada, self::Cancelada, self::Expirada], true);
     }
 
-    /**
-     * Si un proveedor ya aceptó: hay equipo fijado y el servicio puede llevarse
-     * al lote. La app de campo recibe solo las solicitudes en estos estados.
-     */
+    /** Visible en el mapa de los pilotos y abierta a ofertas. */
+    public function enMercado(): bool
+    {
+        return $this === self::Abierta || $this === self::ConOfertas;
+    }
+
+    /** Hay un proveedor y un equipo fijados: la app de campo recibe solo estas. */
     public function tieneEquipo(): bool
     {
         return in_array($this, self::conEquipo(), true);
@@ -44,10 +46,10 @@ enum EstadoSolicitud: string
      */
     public static function conEquipo(): array
     {
-        return [self::Asignada, self::EnCamino, self::EnEjecucion, self::SuspendidaPorClima];
+        return [self::Adjudicada, self::EnEjecucion];
     }
 
-    /** Estados en que el cliente aún puede cancelar sin que haya un servicio liquidado. */
+    /** Estados en que el cliente aún puede cancelar. */
     public function admiteCancelacion(): bool
     {
         return TransicionesSolicitud::permitida($this, self::Cancelada);
@@ -58,10 +60,10 @@ enum EstadoSolicitud: string
     {
         return match ($this) {
             self::Borrador => 'neutral',
-            self::Publicada, self::EnAsignacion => 'info',
-            self::SinProveedor, self::SuspendidaPorClima, self::EnDisputa => 'warning',
-            self::Asignada, self::EnCamino, self::EnEjecucion, self::Ejecutada => 'primary-2',
-            self::Completada => 'success',
+            self::Abierta, self::ConOfertas => 'info',
+            self::Expirada, self::Disputada => 'warning',
+            self::Adjudicada, self::EnEjecucion, self::Finalizada => 'primary-2',
+            self::Calificada => 'success',
             self::Cancelada => 'danger',
         };
     }

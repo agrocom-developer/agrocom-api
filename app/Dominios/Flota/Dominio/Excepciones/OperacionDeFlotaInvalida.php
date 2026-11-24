@@ -32,6 +32,11 @@ final class OperacionDeFlotaInvalida extends RuntimeException
         return new self(Texto::de('flota.errores.proveedor_no_admite_altas'));
     }
 
+    public static function motivoRequerido(): self
+    {
+        return new self(Texto::de('flota.errores.motivo_requerido'), 'motivo');
+    }
+
     public static function dronAjeno(): self
     {
         return new self(Texto::de('flota.errores.dron_ajeno'), null, true);

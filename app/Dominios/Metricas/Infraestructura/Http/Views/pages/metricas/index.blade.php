@@ -77,7 +77,6 @@
             <h2 class="ag-detalle__campo-label">{{ __('metricas.seccion_ingreso') }}</h2>
             <div class="ag-detalle__kpis">
                 <x-molecules.stat-card :label="__('metricas.volumen')" icon="payments" :value="$dinero($m['ingreso']['volumen_bruto'])" :foot="__('metricas.volumen_pie', ['servicios' => $m['ingreso']['servicios_completados']])" state="success" />
-                <x-molecules.stat-card :label="__('metricas.comision')" icon="account_balance" :value="$dinero($m['ingreso']['comision_devengada'])" :foot="__('metricas.comision_pie', ['ajuste' => $dinero($m['ingreso']['comision_ajustada_por_disputas'])])" state="primary-2" />
                 <x-molecules.stat-card :label="__('metricas.ingreso_hectarea')" icon="grass" :value="$dinero($m['ingreso']['ingreso_por_hectarea'])" :foot="__('metricas.ingreso_hectarea_pie')" state="distintivo-1" />
             </div>
             <p class="ag-solicitudes__sub">{{ __('metricas.sin_cobro') }}</p>

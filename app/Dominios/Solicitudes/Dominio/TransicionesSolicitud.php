@@ -4,24 +4,23 @@ namespace App\Dominios\Solicitudes\Dominio;
 
 /**
  * Tabla de transiciones permitidas de la solicitud de servicio (invariante 7
- * de CLAUDE.md; especificación del marketplace §5.1): nunca un `estado = ...`
- * suelto en un controlador. Pura, sin Eloquent ni base.
+ * de CLAUDE.md; `negociacion-contrato.md` §1): nunca un `estado = ...` suelto en
+ * un controlador. Pura, sin Eloquent ni base. Las guardas (precio, equipo apto,
+ * plazos) las aplica el caso de uso que pide la transición.
  */
 final class TransicionesSolicitud
 {
     /** @var array<string, list<EstadoSolicitud>> */
     private const array PERMITIDAS = [
-        'borrador' => [EstadoSolicitud::Publicada, EstadoSolicitud::Cancelada],
-        'publicada' => [EstadoSolicitud::EnAsignacion, EstadoSolicitud::Cancelada],
-        'en_asignacion' => [EstadoSolicitud::Asignada, EstadoSolicitud::SinProveedor, EstadoSolicitud::Cancelada],
-        'sin_proveedor' => [EstadoSolicitud::Publicada, EstadoSolicitud::Cancelada],
-        'asignada' => [EstadoSolicitud::EnCamino, EstadoSolicitud::EnAsignacion, EstadoSolicitud::Cancelada],
-        'en_camino' => [EstadoSolicitud::EnEjecucion, EstadoSolicitud::EnAsignacion, EstadoSolicitud::Cancelada],
-        'en_ejecucion' => [EstadoSolicitud::Ejecutada, EstadoSolicitud::SuspendidaPorClima],
-        'suspendida_por_clima' => [EstadoSolicitud::Asignada, EstadoSolicitud::Cancelada],
-        'ejecutada' => [EstadoSolicitud::Completada, EstadoSolicitud::EnDisputa],
-        'en_disputa' => [EstadoSolicitud::Completada, EstadoSolicitud::Cancelada],
-        'completada' => [],
+        'borrador' => [EstadoSolicitud::Abierta, EstadoSolicitud::Cancelada],
+        'abierta' => [EstadoSolicitud::ConOfertas, EstadoSolicitud::Adjudicada, EstadoSolicitud::Expirada, EstadoSolicitud::Cancelada],
+        'con_ofertas' => [EstadoSolicitud::Abierta, EstadoSolicitud::Adjudicada, EstadoSolicitud::Expirada, EstadoSolicitud::Cancelada],
+        'adjudicada' => [EstadoSolicitud::EnEjecucion, EstadoSolicitud::Abierta, EstadoSolicitud::Cancelada],
+        'en_ejecucion' => [EstadoSolicitud::Finalizada],
+        'finalizada' => [EstadoSolicitud::Calificada, EstadoSolicitud::Disputada],
+        'calificada' => [EstadoSolicitud::Disputada],
+        'disputada' => [EstadoSolicitud::Finalizada, EstadoSolicitud::Calificada, EstadoSolicitud::Cancelada],
+        'expirada' => [EstadoSolicitud::Abierta],
         'cancelada' => [],
     ];
 

@@ -10,19 +10,20 @@ use App\Dominios\Solicitudes\Contratos\ResolucionDeServicio;
 use App\Dominios\Solicitudes\Dominio\ActorSolicitud;
 use App\Dominios\Solicitudes\Dominio\EstadoSolicitud;
 use App\Dominios\Solicitudes\Dominio\Excepciones\TransicionSolicitudNoPermitida;
+use App\Dominios\Solicitudes\Infraestructura\Eloquent\HistorialSolicitud;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\SolicitudServicio;
 
 /**
- * Implementa los pasos que una disputa decide sobre la solicitud, siempre por
- * {@see MaquinaEstadosSolicitud} (invariante 7 de CLAUDE.md): abrirla mueve
- * `ejecutada` a `en_disputa`; cerrarla completa la solicitud (con monto final y
- * comisión) o, con reembolso total, la cancela.
+ * Implementa los pasos que una disputa o una calificación deciden sobre la
+ * solicitud, siempre por {@see MaquinaEstadosSolicitud} (invariante 7 de
+ * CLAUDE.md): abrir la disputa mueve `finalizada` o `calificada` a `disputada`;
+ * cerrarla devuelve la solicitud al estado que tenía o, con reembolso total, la
+ * cancela; calificar mueve `finalizada` a `calificada`.
  */
 final class ResolucionDeServicioPorMaquina implements ResolucionDeServicio
 {
     public function __construct(
         private readonly MaquinaEstadosSolicitud $estados,
-        private readonly CompletarServicio $completar,
         private readonly LecturaServicios $servicios,
     ) {}
 
@@ -30,14 +31,14 @@ final class ResolucionDeServicioPorMaquina implements ResolucionDeServicio
     {
         $solicitud = SolicitudServicio::query()->find($solicitudId);
 
-        if ($solicitud === null || $solicitud->estado !== EstadoSolicitud::Ejecutada) {
+        if ($solicitud === null || ! in_array($solicitud->estado, [EstadoSolicitud::Finalizada, EstadoSolicitud::Calificada], true)) {
             return false;
         }
 
         try {
-            $this->estados->transicionar($solicitud, EstadoSolicitud::EnDisputa, ActorSolicitud::from($origen), $actorUsuarioId, $motivo);
+            $this->estados->transicionar($solicitud, EstadoSolicitud::Disputada, ActorSolicitud::from($origen), $actorUsuarioId, $motivo);
         } catch (TransicionSolicitudNoPermitida) {
-            // Se completó o se disputó entre la lectura y el paso: la solicitud ya no está `ejecutada`.
+            // Cambió de estado entre la lectura y el paso: la solicitud ya no admite la disputa.
             return false;
         }
 
@@ -48,7 +49,7 @@ final class ResolucionDeServicioPorMaquina implements ResolucionDeServicio
     {
         $solicitud = SolicitudServicio::query()->find($solicitudId);
 
-        if ($solicitud !== null && $solicitud->estado === EstadoSolicitud::EnDisputa) {
+        if ($solicitud !== null && $solicitud->estado === EstadoSolicitud::Disputada) {
             if ($reembolsoTotal) {
                 $cancelada = $this->estados->transicionar(
                     $solicitud,
@@ -63,15 +64,41 @@ final class ResolucionDeServicioPorMaquina implements ResolucionDeServicio
                     $cancelada->id,
                     $cancelada->cliente_id,
                     $cancelada->proveedor_id,
-                    EstadoSolicitud::EnDisputa->value,
+                    EstadoSolicitud::Disputada->value,
                     ActorSolicitud::Administrador->value,
                     $motivo,
                 ));
             } else {
-                $this->completar->ejecutar($solicitud, ActorSolicitud::Administrador, $actorUsuarioId, $motivo);
+                $this->estados->transicionar($solicitud, $this->estadoAntesDeLaDisputa($solicitud), ActorSolicitud::Administrador, $actorUsuarioId, $motivo);
             }
         }
 
         return $this->servicios->datos($solicitudId);
+    }
+
+    public function marcarCalificada(int $solicitudId, ?int $actorUsuarioId): void
+    {
+        $solicitud = SolicitudServicio::query()->find($solicitudId);
+
+        if ($solicitud === null || $solicitud->estado !== EstadoSolicitud::Finalizada) {
+            return;
+        }
+
+        try {
+            $this->estados->transicionar($solicitud, EstadoSolicitud::Calificada, ActorSolicitud::Sistema, $actorUsuarioId);
+        } catch (TransicionSolicitudNoPermitida) {
+            // Otro actor la movió entre la lectura y el paso (una disputa): nada que hacer.
+        }
+    }
+
+    private function estadoAntesDeLaDisputa(SolicitudServicio $solicitud): EstadoSolicitud
+    {
+        $paso = HistorialSolicitud::query()
+            ->where('solicitud_id', $solicitud->id)
+            ->where('estado_nuevo', EstadoSolicitud::Disputada->value)
+            ->orderByDesc('id')
+            ->first();
+
+        return $paso?->estado_anterior === EstadoSolicitud::Calificada ? EstadoSolicitud::Calificada : EstadoSolicitud::Finalizada;
     }
 }

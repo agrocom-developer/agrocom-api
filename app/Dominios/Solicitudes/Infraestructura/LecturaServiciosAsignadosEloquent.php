@@ -21,7 +21,7 @@ final class LecturaServiciosAsignadosEloquent implements LecturaServiciosAsignad
 
         return $this->consulta($cursorActualizadoEn, $cursorId, $equipoIds)
             ->whereIn('estado', array_map(fn (EstadoSolicitud $estado): string => $estado->value, EstadoSolicitud::conEquipo()))
-            ->with('terreno')
+            ->with(['terreno', 'cliente'])
             ->limit($limite)
             ->get()
             ->map(fn (SolicitudServicio $solicitud): ServicioAsignadoCatalogo => new ServicioAsignadoCatalogo(
@@ -47,6 +47,12 @@ final class LecturaServiciosAsignadosEloquent implements LecturaServiciosAsignad
                     'acceso_dificil' => $solicitud->terreno->acceso_dificil,
                 ],
                 updatedAt: Carbon::parse($solicitud->updated_at)->toIso8601String(),
+                precioHaPropuesto: $solicitud->precio_ha_propuesto,
+                precioHaAcordado: $solicitud->precio_ha_acordado,
+                hectareasEjecutadas: $solicitud->hectareas_ejecutadas,
+                porcentajeAvance: $solicitud->porcentaje_avance,
+                // El contacto del cliente se entrega solo con el servicio adjudicado (§3.4).
+                contacto: ['nombre' => $solicitud->cliente->razon_social, 'telefono' => $solicitud->cliente->telefono],
             ))
             ->all();
     }
@@ -69,7 +75,7 @@ final class LecturaServiciosAsignadosEloquent implements LecturaServiciosAsignad
                 uuidCliente: $solicitud->uuid_cliente,
                 motivo: match ($solicitud->estado) {
                     EstadoSolicitud::Cancelada => 'cancelada',
-                    EstadoSolicitud::Ejecutada, EstadoSolicitud::EnDisputa, EstadoSolicitud::Completada => 'ejecutada',
+                    EstadoSolicitud::Finalizada, EstadoSolicitud::Calificada, EstadoSolicitud::Disputada => 'ejecutada',
                     default => 'reasignada',
                 },
                 updatedAt: Carbon::parse($solicitud->updated_at)->toIso8601String(),

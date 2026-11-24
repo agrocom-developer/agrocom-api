@@ -30,6 +30,7 @@ final class CrearSolicitudRequest extends FormRequest
             'ventana_hasta' => ['required', 'date_format:Y-m-d', 'after_or_equal:ventana_desde'],
             'urgente' => ['nullable', 'boolean'],
             'observaciones' => ['nullable', 'string', 'max:1000'],
+            'precio_ha_propuesto' => ['nullable', 'numeric', 'gt:0', 'max:99999999', 'decimal:0,4'],
         ];
     }
 

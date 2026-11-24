@@ -31,17 +31,17 @@ final class EmitirCalificacion
     ) {}
 
     /**
-     * El servicio admite calificaciones: está `completada` y el plazo sigue abierto.
+     * El servicio admite calificaciones: está `finalizada` o `calificada` y el plazo sigue abierto.
      *
      * @throws CalificacionInvalida
      */
     public function exigirCalificable(DatosServicio $servicio, ?DateTimeImmutable $ahora = null): void
     {
-        if ($servicio->estado !== 'completada' || $servicio->completadaEn === null) {
+        if (! in_array($servicio->estado, ['finalizada', 'calificada'], true) || $servicio->finalizadaEn === null) {
             throw CalificacionInvalida::servicioNoCompletado();
         }
 
-        if (! PlazoDeCalificacion::estaAbierto(new DateTimeImmutable($servicio->completadaEn), $ahora ?? new DateTimeImmutable, $this->parametros->plazoDias())) {
+        if (! PlazoDeCalificacion::estaAbierto(new DateTimeImmutable($servicio->finalizadaEn), $ahora ?? new DateTimeImmutable, $this->parametros->plazoDias())) {
             throw CalificacionInvalida::plazoVencido($this->parametros->plazoDias());
         }
     }

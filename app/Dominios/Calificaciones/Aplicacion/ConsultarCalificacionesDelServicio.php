@@ -65,8 +65,8 @@ final class ConsultarCalificacionesDelServicio
      */
     private function estado(DatosServicio $servicio, array $sujetos): array
     {
-        $completada = $servicio->estado === 'completada' && $servicio->completadaEn !== null;
-        $vence = $completada ? PlazoDeCalificacion::venceEn(new DateTimeImmutable($servicio->completadaEn), $this->parametros->plazoDias()) : null;
+        $completada = in_array($servicio->estado, ['finalizada', 'calificada'], true) && $servicio->finalizadaEn !== null;
+        $vence = $completada ? PlazoDeCalificacion::venceEn(new DateTimeImmutable($servicio->finalizadaEn), $this->parametros->plazoDias()) : null;
 
         $abierto = false;
         if ($completada) {

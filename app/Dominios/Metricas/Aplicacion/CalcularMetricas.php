@@ -68,32 +68,34 @@ final class CalcularMetricas
         $asignadas = $publicadas()->whereNotNull('proveedor_id')->count();
         $porEstado = $publicadas()->selectRaw('estado, COUNT(*) as cantidad')->groupBy('estado')->pluck('cantidad', 'estado')->map(fn ($n): int => (int) $n)->all();
 
-        $aceptadas = DB::table('asg_ofertas as o')
+        $aceptadas = DB::table('neg_ofertas as o')
             ->join('sol_solicitudes_servicio as s', 's.id', '=', 'o.solicitud_id')
+            ->join('prv_proveedores as p', 'p.id', '=', 'o.proveedor_id')
             ->whereNull('o.deleted_at')
-            ->where('o.estado', 'aceptada')
-            ->where('o.origen', 'motor')
+            ->whereIn('o.estado', ['aceptada', 'cerrada'])
             ->whereNotNull('s.publicada_en')
-            ->whereBetween('o.respondida_en', [$desde, $hasta])
+            ->whereNotNull('s.adjudicada_en')
+            ->whereBetween('s.adjudicada_en', [$desde, $hasta])
+            ->where('o.id', DB::raw('s.oferta_adjudicada_id'))
             ->orderBy('o.id')
             ->limit(self::LIMITE_FILAS)
-            ->get(['o.respondida_en', 'o.grupo', 's.publicada_en']);
+            ->get(['s.adjudicada_en as respondida_en', 'p.tipo', 's.publicada_en']);
 
         $minutos = $aceptadas
             ->map(fn ($fila): float => max(0, Carbon::parse($fila->publicada_en)->diffInSeconds(Carbon::parse($fila->respondida_en), false)) / 60)
             ->values()
             ->all();
 
-        $aPropios = $aceptadas->where('grupo', 'propio')->count();
+        $aPropios = $aceptadas->where('tipo', 'propio')->count();
 
         return [
             'solicitudes_publicadas' => $total,
             'por_estado' => $porEstado,
             'asignadas' => $asignadas,
             'tasa_asignacion' => Razones::tasa($asignadas, $total),
-            'sin_proveedor' => (int) ($porEstado['sin_proveedor'] ?? 0),
+            'sin_proveedor' => (int) ($porEstado['expirada'] ?? 0),
             'hectareas_solicitadas' => $this->suma($publicadas(), 'hectareas_solicitadas', 4),
-            'hectareas_servidas' => $this->suma($publicadas()->where('estado', 'completada'), 'hectareas_solicitadas', 4),
+            'hectareas_servidas' => $this->suma($publicadas()->whereIn('estado', ['finalizada', 'calificada']), 'hectareas_ejecutadas', 4),
             'tiempo_aceptacion_promedio_min' => Razones::promedio($minutos),
             'tiempo_aceptacion_mediana_min' => Razones::mediana($minutos),
             'aceptaciones' => $aceptadas->count(),
@@ -106,8 +108,8 @@ final class CalcularMetricas
     /** @return array<string, mixed> */
     private function calidad(Carbon $desde, Carbon $hasta): array
     {
-        $ejecutadas = DB::table('sol_solicitud_historial')->whereNull('deleted_at')->where('estado_nuevo', 'ejecutada')->whereBetween('created_at', [$desde, $hasta])->distinct()->count('solicitud_id');
-        $completadas = DB::table('sol_solicitud_historial')->whereNull('deleted_at')->where('estado_nuevo', 'completada')->whereBetween('created_at', [$desde, $hasta])->pluck('solicitud_id')->unique()->all();
+        $ejecutadas = DB::table('sol_solicitud_historial')->whereNull('deleted_at')->where('estado_nuevo', 'finalizada')->whereBetween('created_at', [$desde, $hasta])->distinct()->count('solicitud_id');
+        $completadas = DB::table('sol_solicitud_historial')->whereNull('deleted_at')->where('estado_nuevo', 'finalizada')->whereBetween('created_at', [$desde, $hasta])->pluck('solicitud_id')->unique()->all();
 
         $calificaciones = DB::table('cal_calificaciones')
             ->whereNull('deleted_at')
@@ -143,11 +145,11 @@ final class CalcularMetricas
     /** @return array<string, mixed> */
     private function oferta(Carbon $desde, Carbon $hasta): array
     {
-        $ofertas = fn (): Builder => DB::table('asg_ofertas')->whereNull('deleted_at')->where('origen', 'motor')->whereBetween('ofrecida_en', [$desde, $hasta]);
+        $ofertas = fn (): Builder => DB::table('neg_ofertas')->whereNull('deleted_at')->where('autor', 'proveedor')->whereBetween('created_at', [$desde, $hasta]);
 
-        $aceptadas = $ofertas()->where('estado', 'aceptada')->count();
+        $aceptadas = $ofertas()->whereIn('estado', ['aceptada', 'cerrada', 'reemplazada'])->whereNotNull('respondida_en')->count();
         $respondidas = $aceptadas + $ofertas()->whereIn('estado', ['rechazada', 'vencida'])->count();
-        $cancelaciones = DB::table('asg_cancelaciones_proveedor')->whereNull('deleted_at')->whereBetween('cancelada_en', [$desde, $hasta])->count();
+        $cancelaciones = DB::table('neg_cancelaciones')->whereNull('deleted_at')->where('parte', 'proveedor')->whereBetween('created_at', [$desde, $hasta])->count();
 
         return [
             'proveedores_aprobados' => DB::table('prv_proveedores')->whereNull('deleted_at')->where('estado', 'aprobado')->count(),
@@ -157,33 +159,26 @@ final class CalcularMetricas
             'tasa_aceptacion' => Razones::tasa($aceptadas, $respondidas),
             'cancelaciones_proveedor' => $cancelaciones,
             'tasa_cancelacion' => Razones::tasa($cancelaciones, $aceptadas),
-            'sanciones_vigentes' => DB::table('asg_sanciones')->whereNull('deleted_at')->whereNull('levantada_en')->where(fn (Builder $q) => $q->whereNull('hasta')->orWhere('hasta', '>', Carbon::now()))->count(),
+            'sanciones_vigentes' => 0,
         ];
     }
 
     /** @return array<string, mixed> */
     private function ingreso(Carbon $desde, Carbon $hasta): array
     {
-        $completadas = DB::table('sol_solicitud_historial')->whereNull('deleted_at')->where('estado_nuevo', 'completada')->whereBetween('created_at', [$desde, $hasta])->pluck('solicitud_id')->unique()->all();
+        $completadas = DB::table('sol_solicitud_historial')->whereNull('deleted_at')->where('estado_nuevo', 'finalizada')->whereBetween('created_at', [$desde, $hasta])->pluck('solicitud_id')->unique()->all();
 
         $filas = $completadas === []
             ? collect()
-            : DB::table('sol_solicitudes_servicio')->whereNull('deleted_at')->whereIn('id', $completadas)->get(['monto_final', 'comision_monto', 'hectareas_solicitadas']);
+            : DB::table('sol_solicitudes_servicio')->whereNull('deleted_at')->whereIn('id', $completadas)->get(['monto_final', 'hectareas_ejecutadas']);
 
         $volumen = Razones::suma(...$filas->pluck('monto_final')->all());
-        $comision = Razones::suma(...$filas->pluck('comision_monto')->all());
-        $hectareas = (string) BigDecimal::of(Razones::suma(...$filas->pluck('hectareas_solicitadas')->all()))->toScale(2);
-
-        $ajustes = $this->reembolsos($desde, $hasta)['ajuste_comision'];
-        $devengada = (string) BigDecimal::of($comision)->minus(BigDecimal::of($ajustes))->toScale(2, RoundingMode::HalfUp);
+        $hectareas = (string) BigDecimal::of(Razones::suma(...$filas->pluck('hectareas_ejecutadas')->all()))->toScale(2);
 
         return [
             'servicios_completados' => count($completadas),
             'volumen_bruto' => $volumen,
-            'comision_congelada' => $comision,
-            'comision_ajustada_por_disputas' => $ajustes,
-            'comision_devengada' => $devengada,
-            'ingreso_por_hectarea' => Razones::cociente($devengada, $hectareas),
+            'ingreso_por_hectarea' => Razones::cociente($volumen, $hectareas),
         ];
     }
 
@@ -194,7 +189,7 @@ final class CalcularMetricas
      */
     private function porProveedor(Carbon $desde, Carbon $hasta): array
     {
-        $completadas = DB::table('sol_solicitud_historial')->whereNull('deleted_at')->where('estado_nuevo', 'completada')->whereBetween('created_at', [$desde, $hasta])->pluck('solicitud_id')->unique()->all();
+        $completadas = DB::table('sol_solicitud_historial')->whereNull('deleted_at')->where('estado_nuevo', 'finalizada')->whereBetween('created_at', [$desde, $hasta])->pluck('solicitud_id')->unique()->all();
 
         if ($completadas === []) {
             return [];
@@ -210,14 +205,14 @@ final class CalcularMetricas
             ->limit(self::PROVEEDORES_EN_TABLA)
             ->get();
 
-        $respuestas = DB::table('asg_ofertas')
+        $respuestas = DB::table('neg_ofertas')
             ->whereNull('deleted_at')
-            ->where('origen', 'motor')
-            ->whereIn('estado', ['aceptada', 'rechazada'])
+            ->where('autor', 'cliente')
+            ->whereNotNull('respondida_en')
             ->whereIn('proveedor_id', $filas->pluck('proveedor_id')->all())
-            ->whereBetween('ofrecida_en', [$desde, $hasta])
+            ->whereBetween('created_at', [$desde, $hasta])
             ->limit(self::LIMITE_FILAS)
-            ->get(['proveedor_id', 'ofrecida_en', 'respondida_en'])
+            ->get(['proveedor_id', 'created_at as ofrecida_en', 'respondida_en'])
             ->groupBy('proveedor_id');
 
         return $filas->map(function ($fila) use ($respuestas): array {

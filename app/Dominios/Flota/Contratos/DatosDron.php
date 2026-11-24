@@ -13,6 +13,8 @@ final readonly class DatosDron
         public string $modelo,
         public string $numeroSerie,
         public string $estado,
+        public ?int $anio = null,
+        public string $capacidadTanqueL = '0.00',
     ) {}
 
     /** Cómo se nombra el dron en un aviso: «DJI Agras T40 (serie)». */

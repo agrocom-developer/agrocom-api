@@ -55,11 +55,11 @@ class DemoSeeder extends Seeder
         $this->call(CuadrillasDemoSeeder::class);
         // Marketplace: usa los drones de `ope_drones` que siembra FlotaDemoSeeder.
         $this->call(ProveedoresDemoSeeder::class);
-        $this->call(SolicitudesDemoSeeder::class);
         // Cada piloto y auxiliar del marketplace necesita su persona para abrir sesiones.
         $this->call(PersonasDeOperariosDemoSeeder::class);
-        // Recorrido completo para las apps y vigencia de ofertas relativa a ahora.
-        $this->call(RecorridoDemoSeeder::class);
+        // Negociación completa para las apps (solicitudes en cada estado, ofertas, chat, fotos y
+        // ubicación), con las marcas de hora relativas a ahora, y vigencias que se renuevan al re-sembrar.
+        $this->call(NegociacionDemoSeeder::class);
         $this->call(RenovarVigenciaDemoSeeder::class);
     }
 }

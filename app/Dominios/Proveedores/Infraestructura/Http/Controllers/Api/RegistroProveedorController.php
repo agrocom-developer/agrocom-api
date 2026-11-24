@@ -34,7 +34,7 @@ final class RegistroProveedorController
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ['tipo', 'nombre', 'username', 'password', 'telefono', 'razon_social', 'documento_fiscal'],
+                required: ['tipo', 'nombre', 'username', 'password', 'telefono', 'razon_social', 'documento_fiscal', 'nombres', 'apellidos', 'documento_identidad', 'fecha_nacimiento'],
                 properties: [
                     new OA\Property(property: 'tipo', type: 'string', enum: ['independiente', 'tercero'], example: 'independiente'),
                     new OA\Property(property: 'nombre', description: 'Nombre del titular.', type: 'string', example: 'Carlos Mamani Quispe'),
@@ -43,6 +43,10 @@ final class RegistroProveedorController
                     new OA\Property(property: 'password', description: 'Mínimo 8 caracteres con letras y números.', type: 'string', format: 'password'),
                     new OA\Property(property: 'telefono', type: 'string', example: '+591 70012345'),
                     new OA\Property(property: 'razon_social', type: 'string', example: 'Mamani Agroservicios'),
+                    new OA\Property(property: 'nombres', description: 'Datos de la persona (piloto o titular); el administrador los revisa al aprobar.', type: 'string', example: 'Carlos'),
+                    new OA\Property(property: 'apellidos', type: 'string', example: 'Mamani Quispe'),
+                    new OA\Property(property: 'documento_identidad', type: 'string', example: '7845123 SC'),
+                    new OA\Property(property: 'fecha_nacimiento', type: 'string', format: 'date', example: '1988-04-12'),
                     new OA\Property(property: 'documento_fiscal', description: 'NIT o documento de identidad.', type: 'string', example: '4521897012'),
                     new OA\Property(property: 'zona_base_id', description: 'Zona base (ver `GET /api/zonas`).', type: 'integer', nullable: true),
                     new OA\Property(property: 'radio_operacion_km', description: 'Decimal exacto; por defecto 50.', type: 'string', example: '80', nullable: true),

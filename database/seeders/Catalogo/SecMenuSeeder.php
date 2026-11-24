@@ -206,11 +206,6 @@ class SecMenuSeeder extends Seeder
         // el botón de la ficha, no la visibilidad del ítem.
         $this->item($solicitudes, 'solicitudes', 'solicitudes', 'request_quote', 1, ruta: 'panel.solicitudes.index', codigoPermiso: 'solicitudes.solicitud.ver');
 
-        // Asignación (ADR 0030): la cola de solicitudes que esperan proveedor y sus
-        // ofertas. Gateado por el permiso de LISTADO; asignar a mano rige el botón
-        // de la ficha.
-        $this->item($solicitudes, 'solicitudes', 'asignaciones', 'alt_route', 2, ruta: 'panel.asignaciones.index', codigoPermiso: 'asignacion.asignacion.ver');
-
         // Posventa (ADR 0031, 0033 y 0039): moderación de calificaciones, disputas de
         // los servicios y métricas del mercado. Gateados por el permiso de LISTADO;
         // moderar y resolver rigen los botones de cada pantalla.
@@ -261,7 +256,6 @@ class SecMenuSeeder extends Seeder
         $this->item($proveedores, 'proveedores', 'auxiliares', 'support_agent', 4, ruta: 'panel.auxiliares.index', codigoPermiso: 'proveedores.auxiliar.ver');
         $this->item($proveedores, 'proveedores', 'drones_flota', 'airplanemode_active', 5, ruta: 'panel.drones-flota.index', codigoPermiso: 'flota.dron.ver');
         $this->item($proveedores, 'proveedores', 'equipos_flota', 'groups', 6, ruta: 'panel.equipos-flota.index', codigoPermiso: 'flota.equipo.ver');
-        $this->item($proveedores, 'proveedores', 'sanciones', 'gavel', 7, ruta: 'panel.sanciones.index', codigoPermiso: 'asignacion.sancion.ver');
 
         // Reportes (cap. 9 y 10)
         // HU-43 (tarea 57): "como encargado, quiero listar y descargar los

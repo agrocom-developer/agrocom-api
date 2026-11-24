@@ -20,7 +20,7 @@ final class ActualizarDron
     public function __construct(private readonly LecturaProveedores $proveedores) {}
 
     /**
-     * @param  array{marca: string, modelo: string, numero_serie: string, capacidad_tanque_l: string, ancho_pasada_m: string}  $datos
+     * @param  array{marca: string, modelo: string, numero_serie: string, capacidad_tanque_l: string, ancho_pasada_m: string, anio?: int|string|null}  $datos
      *
      * @throws OperacionDeFlotaInvalida si el dron no es del titular, ya no se puede editar o la serie ya existe.
      */
@@ -40,6 +40,7 @@ final class ActualizarDron
             'numero_serie' => $datos['numero_serie'],
             'capacidad_tanque_l' => $datos['capacidad_tanque_l'],
             'ancho_pasada_m' => $datos['ancho_pasada_m'],
+            'anio' => isset($datos['anio']) ? (int) $datos['anio'] : $dron->anio,
         ]);
         $dron->updated_by = $actorUsuarioId;
 

@@ -10,4 +10,11 @@ namespace App\Dominios\Flota\Contratos;
 interface LecturaDrones
 {
     public function dron(int $id): ?DatosDron;
+
+    /**
+     * Fotos del dron que el administrador aprobó: lo que el cliente ve al comparar ofertas.
+     *
+     * @return list<array{id: int, tipo: string}>
+     */
+    public function fotosAprobadas(int $dronId): array;
 }

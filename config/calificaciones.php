@@ -8,8 +8,8 @@
 | Parámetros de la política de calificación (`docs/politicas/calificacion.md`):
 | el plazo para calificar un servicio completado, cuántas calificaciones entran al
 | promedio y el peso de cada sujeto en la reputación del proveedor. Los umbrales
-| de suspensión del proveedor viven en `config/asignacion.php` (los aplica el
-| motor de sanciones) y los del cliente en `config/solicitudes.php`. Los pesos son
+| de alerta del proveedor viven en `config/negociacion.php` (alertan al panel; el
+| administrador decide) y los del cliente en `config/solicitudes.php`. Los pesos son
 | cadenas decimales exactas: nada de lo que pondera el promedio pasa por `float`.
 |
 */

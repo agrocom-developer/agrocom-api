@@ -34,8 +34,18 @@ use Illuminate\Support\Carbon;
  * @property string|null $tarifa_hectarea
  * @property string|null $monto_estimado
  * @property string|null $monto_final
- * @property string|null $comision_porcentaje
- * @property string|null $comision_monto
+ * @property string|null $precio_ha_propuesto
+ * @property string|null $precio_ha_acordado
+ * @property int|null $oferta_adjudicada_id
+ * @property string|null $hectareas_ejecutadas
+ * @property string $porcentaje_avance
+ * @property Carbon|null $vence_en
+ * @property Carbon|null $adjudicada_en
+ * @property Carbon|null $iniciada_en
+ * @property Carbon|null $cierre_solicitado_en
+ * @property Carbon|null $finalizada_en
+ * @property Carbon|null $expirada_en
+ * @property Carbon|null $ultimo_avance_en
  * @property EstadoSolicitud $estado
  * @property int|null $proveedor_id
  * @property int|null $equipo_id
@@ -52,9 +62,9 @@ class SolicitudServicio extends ModeloDominio
     protected $table = 'sol_solicitudes_servicio';
 
     /**
-     * Sin `estado`, `proveedor_id`, `equipo_id`, `tarifa_*`, `monto_*`,
-     * `comision_*`, `motivo_cancelacion` ni `cancelada_por`: los fijan la
-     * máquina de estados y los casos de uso, no la entrada del cliente.
+     * Sin `estado`, `proveedor_id`, `equipo_id`, `precio_ha_acordado`,
+     * `monto_*`, avance ni `motivo_cancelacion`: los fijan la máquina de
+     * estados y los casos de uso, no la entrada del cliente.
      *
      * @var list<string>
      */
@@ -71,6 +81,7 @@ class SolicitudServicio extends ModeloDominio
         'ventana_hasta',
         'urgente',
         'observaciones',
+        'precio_ha_propuesto',
     ];
 
     /** @return array<string, string> */
@@ -89,8 +100,18 @@ class SolicitudServicio extends ModeloDominio
             'tarifa_hectarea' => 'decimal:4',
             'monto_estimado' => 'decimal:2',
             'monto_final' => 'decimal:2',
-            'comision_porcentaje' => 'decimal:2',
-            'comision_monto' => 'decimal:2',
+            'precio_ha_propuesto' => 'decimal:4',
+            'precio_ha_acordado' => 'decimal:4',
+            'oferta_adjudicada_id' => 'integer',
+            'hectareas_ejecutadas' => 'decimal:4',
+            'porcentaje_avance' => 'decimal:2',
+            'vence_en' => 'datetime',
+            'adjudicada_en' => 'datetime',
+            'iniciada_en' => 'datetime',
+            'cierre_solicitado_en' => 'datetime',
+            'finalizada_en' => 'datetime',
+            'expirada_en' => 'datetime',
+            'ultimo_avance_en' => 'datetime',
             'urgente' => 'boolean',
             'ventana_desde' => 'date',
             'ventana_hasta' => 'date',

@@ -24,6 +24,11 @@ final class RegistrarProveedorRequest extends FormRequest
             ...ReglasDeCuenta::reglas(),
             'telefono' => ['required', 'string', 'max:30', 'regex:/^[0-9 +().-]{6,30}$/'],
             'razon_social' => ['required', 'string', 'max:150'],
+            // Datos de la persona (el piloto o el titular): el administrador los revisa al aprobar.
+            'nombres' => ['required', 'string', 'max:80'],
+            'apellidos' => ['required', 'string', 'max:80'],
+            'documento_identidad' => ['required', 'string', 'max:30'],
+            'fecha_nacimiento' => ['required', 'date_format:Y-m-d', 'before:-18 years'],
             'documento_fiscal' => ['required', 'string', 'max:30'],
             'zona_base_id' => ['nullable', 'integer', Rule::exists('sol_zonas', 'id')->whereNull('deleted_at')],
             'radio_operacion_km' => ['nullable', 'numeric', 'between:1,500'],

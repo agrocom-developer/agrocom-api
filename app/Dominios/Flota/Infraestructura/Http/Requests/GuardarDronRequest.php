@@ -20,6 +20,7 @@ final class GuardarDronRequest extends FormRequest
             'modelo' => ['required', 'string', 'max:60'],
             'numero_serie' => ['required', 'string', 'max:60', 'regex:/^[A-Za-z0-9._\/-]+$/'],
             // Decimales exactos: viajan como string y se guardan en DECIMAL, nunca float.
+            'anio' => ['nullable', 'integer', 'between:1990,2100'],
             'capacidad_tanque_l' => ['required', 'decimal:0,2', 'gt:0', 'max:999.99'],
             'ancho_pasada_m' => ['required', 'decimal:0,2', 'gt:0', 'max:99.99'],
         ];

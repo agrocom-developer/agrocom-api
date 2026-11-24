@@ -46,9 +46,9 @@ enum MotivoDisputa: string
     public function estadosDeSolicitudDelProveedor(): array
     {
         return match ($this) {
-            self::CobroPendiente => ['ejecutada', 'en_disputa', 'completada'],
-            self::AccesoNegado => ['en_camino', 'en_ejecucion', 'suspendida_por_clima', 'ejecutada', 'en_disputa', 'completada', 'cancelada'],
-            self::CalificacionAbusiva => ['completada'],
+            self::CobroPendiente => ['finalizada', 'calificada', 'disputada'],
+            self::AccesoNegado => ['adjudicada', 'en_ejecucion', 'finalizada', 'calificada', 'disputada', 'cancelada'],
+            self::CalificacionAbusiva => ['finalizada', 'calificada'],
             default => [],
         };
     }

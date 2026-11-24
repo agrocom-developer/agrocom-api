@@ -71,4 +71,29 @@ final class SolicitudInvalida extends RuntimeException
     {
         return new self(Texto::de('solicitudes.errores.terreno_con_solicitudes_vivas'));
     }
+
+    public static function sinTelefono(): self
+    {
+        return new self(Texto::de('solicitudes.errores.sin_telefono'), false, 'telefono');
+    }
+
+    public static function precioRequerido(): self
+    {
+        return new self(Texto::de('solicitudes.errores.precio_requerido'), false, 'precio_ha_propuesto');
+    }
+
+    public static function precioExcedeMaximo(string $maximo): self
+    {
+        return new self(Texto::de('solicitudes.errores.precio_excede_maximo', ['maximo' => $maximo]), false, 'precio_ha_propuesto');
+    }
+
+    public static function precioNoEditable(): self
+    {
+        return new self(Texto::de('solicitudes.errores.precio_no_editable'));
+    }
+
+    public static function noRenovable(): self
+    {
+        return new self(Texto::de('solicitudes.errores.no_renovable'));
+    }
 }

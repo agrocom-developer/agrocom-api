@@ -102,7 +102,7 @@ final class ResolverDisputa
                     'ronda' => $disputa->ronda,
                     'resultado' => $resultado->value,
                     'monto_reembolso' => $reembolso,
-                    'comision_ajuste' => ReglaDeResolucion::ajusteDeComision($despues->comisionMonto, $despues->montoFinal, $reembolso),
+                    'comision_ajuste' => '0.00',
                     'derivada_a_seguro' => $derivadaASeguro,
                     'mala_fe_cliente' => $malaFeCliente && $resultado === ResultadoDisputa::SinLugar,
                     'motivo' => $motivo,

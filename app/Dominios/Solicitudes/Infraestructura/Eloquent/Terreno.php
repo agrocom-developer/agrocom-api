@@ -53,6 +53,12 @@ class Terreno extends ModeloDominio
         ];
     }
 
+    /** @return BelongsTo<Zona, $this> */
+    public function zona(): BelongsTo
+    {
+        return $this->belongsTo(Zona::class, 'zona_id');
+    }
+
     /** @return BelongsTo<Cliente, $this> */
     public function cliente(): BelongsTo
     {

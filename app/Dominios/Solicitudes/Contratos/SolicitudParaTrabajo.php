@@ -22,12 +22,9 @@ interface SolicitudParaTrabajo
     public function iniciarEjecucion(int $solicitudId): void;
 
     /**
-     * Un trabajo se cerró: si lo declarado por los trabajos cerrados cubre al
-     * menos el porcentaje mínimo de lo pedido (`solicitudes.cobertura_minima_pct`),
-     * la solicitud pasa de `en_ejecucion` a `ejecutada` y falta la conformidad
-     * del cliente. Si no, sigue en ejecución a la espera de más trabajo.
-     * Idempotente y tolerante: una solicitud que ya no está `en_ejecucion` (por
-     * ejemplo, cancelada mientras el equipo volaba sin señal) no cambia.
+     * Un trabajo se cerró. No cambia ningún estado: el servicio se finaliza con el
+     * registro `cierre` de la negociación, no con la cobertura de las sesiones.
+     * Se conserva para que el trabajo operativo detallado siga sincronizando.
      *
      * @param  string  $hectareasCerradas  suma decimal exacta de `hectareas_declaradas` de los trabajos cerrados.
      */

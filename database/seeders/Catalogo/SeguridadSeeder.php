@@ -329,18 +329,17 @@ class SeguridadSeeder extends Seeder
         // cancelación por soporte, con motivo.
         'solicitudes.solicitud.ver' => 'Ver el listado y la ficha de las solicitudes de servicio',
         'solicitudes.solicitud.cancelar' => 'Cancelar una solicitud de servicio desde el panel, con motivo',
-        // Asignación (ADR 0030 y 0038), lado app: el proveedor ve y responde las
-        // ofertas de su proveedor y se declara en línea. El alcance lo hacen los
-        // casos de uso; el permiso es la puerta.
-        'asignacion.oferta.ver' => 'Ver las ofertas de su proveedor y su reputación desde la app',
-        'asignacion.oferta.responder' => 'Aceptar o rechazar una oferta y cancelar un servicio aceptado desde la app',
-        'flota.disponibilidad.gestionar' => 'Declararse en línea o fuera de línea desde la app',
-        // Asignación, panel: cola, ofertas y asignación a mano con motivo; sanciones
-        // de los proveedores y su levantamiento (apelación).
-        'asignacion.asignacion.ver' => 'Ver la cola de asignación y las rondas y ofertas de cada solicitud',
-        'asignacion.asignacion.forzar' => 'Asignar o reasignar una solicitud a un proveedor a mano, con motivo',
-        'asignacion.sancion.ver' => 'Ver las sanciones de los proveedores',
-        'asignacion.sancion.levantar' => 'Levantar una sanción de un proveedor, con motivo',
+        // Negociación oferta-demanda (`negociacion-contrato.md`), lado app: el proveedor ve el mapa de
+        // solicitudes abiertas, ofrece su precio y registra el seguimiento; el cliente compara y elige;
+        // ambos usan el chat y eligen sus avisos. El alcance lo hacen los casos de uso (un id ajeno es 404).
+        'negociacion.mercado.ver' => 'Ver el mapa de solicitudes abiertas y su detalle antes de ofertar desde la app',
+        'negociacion.oferta.proveedor' => 'Ofertar, contraofertar, aceptar, rechazar y retirar ofertas, y cancelar un servicio adjudicado, desde la app del proveedor',
+        'negociacion.oferta.cliente' => 'Comparar las ofertas de sus solicitudes, contraofertar, aceptar y rechazar, y ver dónde está el piloto, desde la app del cliente',
+        'negociacion.seguimiento.registrar' => 'Marcar el inicio, el avance y el cierre de un servicio adjudicado y enviar la ubicación del piloto desde la app',
+        'negociacion.seguimiento.ver' => 'Ver el avance y las fotos de un servicio propio desde la app',
+        'negociacion.evidencia.subir' => 'Subir fotos de avance, finales y de incidencia de un servicio adjudicado desde la app',
+        'negociacion.mensaje.usar' => 'Leer y escribir mensajes con la otra parte de un servicio adjudicado desde la app',
+        'negociacion.preferencias.gestionar' => 'Activar o desactivar los avisos de la cuenta, y las zonas de las nuevas solicitudes, desde la app',
         // Calificaciones (ADR 0031 y 0039), lado app: el cliente califica al proveedor,
         // al piloto y al auxiliar; el proveedor califica al cliente en privado, ve lo
         // que recibe y reporta lo abusivo. El alcance lo hacen los casos de uso.
@@ -408,9 +407,13 @@ class SeguridadSeeder extends Seeder
         'proveedores.cuenta.gestionar',
         'proveedores.auxiliar.registrar',
         'proveedores.documento.cargar',
-        'asignacion.oferta.ver',
-        'asignacion.oferta.responder',
-        'flota.disponibilidad.gestionar',
+        'negociacion.mercado.ver',
+        'negociacion.oferta.proveedor',
+        'negociacion.seguimiento.registrar',
+        'negociacion.seguimiento.ver',
+        'negociacion.evidencia.subir',
+        'negociacion.mensaje.usar',
+        'negociacion.preferencias.gestionar',
         'calificaciones.calificacion.calificar_cliente',
         'calificaciones.calificacion.ver_recibidas',
         'calificaciones.calificacion.reportar',
@@ -422,6 +425,10 @@ class SeguridadSeeder extends Seeder
         'solicitudes.cliente.gestionar',
         'solicitudes.terreno.gestionar',
         'solicitudes.solicitud.gestionar',
+        'negociacion.oferta.cliente',
+        'negociacion.seguimiento.ver',
+        'negociacion.mensaje.usar',
+        'negociacion.preferencias.gestionar',
         'calificaciones.calificacion.calificar_proveedor',
         'disputas.disputa.gestionar_cliente',
     ];
@@ -436,20 +443,6 @@ class SeguridadSeeder extends Seeder
     private const PERMISOS_ADMINISTRACION_SOLICITUDES = [
         'solicitudes.solicitud.ver',
         'solicitudes.solicitud.cancelar',
-    ];
-
-    /**
-     * Asignación en el panel (ADR 0030 y 0038): el encargado de operaciones ve
-     * la cola, asigna a mano y atiende las sanciones. El dueño recibe todo el
-     * catálogo.
-     *
-     * @var list<string>
-     */
-    private const PERMISOS_ADMINISTRACION_ASIGNACION = [
-        'asignacion.asignacion.ver',
-        'asignacion.asignacion.forzar',
-        'asignacion.sancion.ver',
-        'asignacion.sancion.levantar',
     ];
 
     /**
@@ -478,10 +471,14 @@ class SeguridadSeeder extends Seeder
         // Marketplace: el piloto registra a su auxiliar y carga sus documentos.
         'proveedores.auxiliar.registrar',
         'proveedores.documento.cargar',
-        // Asignación (ADR 0030): el piloto de un proveedor responde sus ofertas.
-        'asignacion.oferta.ver',
-        'asignacion.oferta.responder',
-        'flota.disponibilidad.gestionar',
+        // Negociación: el piloto de un proveedor ofrece, ejecuta y sube las fotos de su proveedor.
+        'negociacion.mercado.ver',
+        'negociacion.oferta.proveedor',
+        'negociacion.seguimiento.registrar',
+        'negociacion.seguimiento.ver',
+        'negociacion.evidencia.subir',
+        'negociacion.mensaje.usar',
+        'negociacion.preferencias.gestionar',
         // Calificaciones y disputas (ADR 0031 y 0033): el piloto habla por su proveedor.
         'calificaciones.calificacion.calificar_cliente',
         'calificaciones.calificacion.ver_recibidas',
@@ -502,8 +499,10 @@ class SeguridadSeeder extends Seeder
      * @var list<string>
      */
     private const PERMISOS_AUXILIAR = [
-        // Marketplace: el auxiliar carga sus propios documentos.
+        // Marketplace: el auxiliar carga sus propios documentos y sube fotos del servicio de su equipo.
         'proveedores.documento.cargar',
+        'negociacion.evidencia.subir',
+        'negociacion.seguimiento.ver',
         // Tarea 67, mismo motivo que el piloto: ve sus propias sesiones (como
         // auxiliar de ellas), nada de la operación global.
         'seguridad.dashboard.ver',
@@ -831,7 +830,7 @@ class SeguridadSeeder extends Seeder
         // encargado_operaciones: todo salvo asignar_rol_dueno.
         $this->asignar(
             $roles['encargado_operaciones'],
-            $permisos->only([...self::PERMISOS_ENCARGADO_OPERACIONES, ...self::PERMISOS_ADMINISTRACION_PROVEEDORES, ...self::PERMISOS_ADMINISTRACION_SOLICITUDES, ...self::PERMISOS_ADMINISTRACION_ASIGNACION, ...self::PERMISOS_ADMINISTRACION_POSTVENTA])->values()->all(),
+            $permisos->only([...self::PERMISOS_ENCARGADO_OPERACIONES, ...self::PERMISOS_ADMINISTRACION_PROVEEDORES, ...self::PERMISOS_ADMINISTRACION_SOLICITUDES, ...self::PERMISOS_ADMINISTRACION_POSTVENTA])->values()->all(),
         );
 
         // Marketplace (ADR 0036): proveedor y cliente operan por la API con lo suyo.

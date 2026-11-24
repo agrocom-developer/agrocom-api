@@ -1,14 +1,17 @@
 <?php
 
-use App\Dominios\Asignacion\Infraestructura\Http\Controllers\Api\OfertasController;
-use App\Dominios\Asignacion\Infraestructura\Http\Controllers\Api\ServiciosDelProveedorController;
 use App\Dominios\Calificaciones\Infraestructura\Http\Controllers\Api\CalificacionesDelClienteController;
 use App\Dominios\Calificaciones\Infraestructura\Http\Controllers\Api\CalificacionesDelProveedorController;
 use App\Dominios\Disputas\Infraestructura\Http\Controllers\Api\DisputasController;
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Api\VersionController;
-use App\Dominios\Flota\Infraestructura\Http\Controllers\Api\DisponibilidadController;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Api\DronesController;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Api\EquiposController;
+use App\Dominios\Flota\Infraestructura\Http\Controllers\Api\FotosDeDronController;
+use App\Dominios\Negociacion\Infraestructura\Http\Controllers\Api\MensajesController;
+use App\Dominios\Negociacion\Infraestructura\Http\Controllers\Api\MercadoController;
+use App\Dominios\Negociacion\Infraestructura\Http\Controllers\Api\OfertasController;
+use App\Dominios\Negociacion\Infraestructura\Http\Controllers\Api\PreferenciasController;
+use App\Dominios\Negociacion\Infraestructura\Http\Controllers\Api\SeguimientoController;
 use App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Api\NotificacionesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Api\ActaController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Api\EvidenciaController;
@@ -159,36 +162,101 @@ Route::middleware('auth:sanctum')->group(function () {
         ->whereNumber('id')
         ->name('api.proveedores.drones.documentos');
 
+    Route::post('/proveedores/drones/{id}/fotos', [FotosDeDronController::class, 'store'])
+        ->whereNumber('id')
+        ->name('api.proveedores.drones.fotos.store');
+    Route::get('/proveedores/drones/{id}/fotos', [FotosDeDronController::class, 'index'])
+        ->whereNumber('id')
+        ->name('api.proveedores.drones.fotos.index');
+    Route::delete('/proveedores/drones/{id}/fotos/{foto}', [FotosDeDronController::class, 'destroy'])
+        ->whereNumber(['id', 'foto'])
+        ->name('api.proveedores.drones.fotos.destroy');
+    Route::get('/drones/fotos/{foto}/archivo', [FotosDeDronController::class, 'archivo'])
+        ->whereNumber('foto')
+        ->name('api.drones.fotos.archivo');
+
     Route::get('/proveedores/equipos', [EquiposController::class, 'index'])->name('api.proveedores.equipos.index');
     Route::post('/proveedores/equipos', [EquiposController::class, 'store'])->name('api.proveedores.equipos.store');
     Route::put('/proveedores/equipos/{id}', [EquiposController::class, 'update'])
         ->whereNumber('id')
         ->name('api.proveedores.equipos.update');
 
-    // Marketplace (ADR 0030 y 0038): disponibilidad «en línea» y ofertas del
-    // proveedor. Requieren red: aceptar o rechazar es la única acción de negocio
-    // sin outbox (ADR 0028). El alcance (solo lo de su proveedor, un id ajeno es
-    // 404) lo hacen los casos de uso; el permiso del rol del token es la puerta.
-    Route::get('/disponibilidad', [DisponibilidadController::class, 'show'])->name('api.disponibilidad.show');
-    Route::put('/disponibilidad', [DisponibilidadController::class, 'update'])->name('api.disponibilidad.update');
+    // Negociación oferta-demanda (`negociacion-contrato.md`): el piloto ve el mapa de solicitudes
+    // abiertas, ofrece su precio por hectárea y negocia por rondas con el cliente, que elige. Requieren
+    // red (no pasan por el outbox). El permiso del rol del token es la puerta; el alcance (solo lo
+    // propio, un id ajeno es 404) lo hacen los casos de uso.
+    Route::get('/solicitudes-abiertas', [MercadoController::class, 'index'])->name('api.solicitudes-abiertas.index');
+    Route::get('/solicitudes-abiertas/resumen-zonas', [MercadoController::class, 'resumen'])->name('api.solicitudes-abiertas.resumen');
+    Route::get('/solicitudes-abiertas/{id}', [MercadoController::class, 'show'])
+        ->whereNumber('id')
+        ->name('api.solicitudes-abiertas.show');
 
     Route::get('/ofertas', [OfertasController::class, 'index'])->name('api.ofertas.index');
     Route::get('/ofertas/{id}', [OfertasController::class, 'show'])
         ->whereNumber('id')
         ->name('api.ofertas.show');
+    Route::post('/ofertas/{id}/contraofertar', [OfertasController::class, 'contraofertar'])
+        ->whereNumber('id')
+        ->name('api.ofertas.contraofertar');
     Route::post('/ofertas/{id}/aceptar', [OfertasController::class, 'aceptar'])
         ->whereNumber('id')
         ->name('api.ofertas.aceptar');
     Route::post('/ofertas/{id}/rechazar', [OfertasController::class, 'rechazar'])
         ->whereNumber('id')
         ->name('api.ofertas.rechazar');
-    Route::post('/solicitudes/{id}/en-camino', [ServiciosDelProveedorController::class, 'enCamino'])
+    Route::post('/ofertas/{id}/retirar', [OfertasController::class, 'retirar'])
         ->whereNumber('id')
-        ->name('api.solicitudes.en-camino');
-    Route::post('/solicitudes/{id}/cancelar-proveedor', [ServiciosDelProveedorController::class, 'cancelar'])
+        ->name('api.ofertas.retirar');
+    Route::post('/solicitudes/{id}/ofertas', [OfertasController::class, 'store'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.ofertas.store');
+    Route::get('/solicitudes/{id}/ofertas', [OfertasController::class, 'deLaSolicitud'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.ofertas.index');
+
+    // Ejecución: el piloto marca inicio, avance y cierre (idempotentes por `uuid_cliente`), sube
+    // fotos y envía su última ubicación; el cliente ve el avance, las fotos y dónde está el piloto.
+    Route::post('/solicitudes/{id}/inicio', [SeguimientoController::class, 'inicio'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.inicio');
+    Route::post('/solicitudes/{id}/avance', [SeguimientoController::class, 'avance'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.avance.store');
+    Route::post('/solicitudes/{id}/cierre', [SeguimientoController::class, 'cierre'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.cierre');
+    Route::get('/solicitudes/{id}/avance', [SeguimientoController::class, 'mostrar'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.avance.show');
+    Route::post('/solicitudes/{id}/evidencias', [SeguimientoController::class, 'subirEvidencia'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.evidencias.store');
+    Route::get('/evidencias/{id}/archivo', [SeguimientoController::class, 'archivo'])
+        ->whereNumber('id')
+        ->name('api.evidencias.archivo');
+    Route::put('/ubicacion', [SeguimientoController::class, 'enviarUbicacion'])->name('api.ubicacion.update');
+    Route::get('/solicitudes/{id}/ubicacion-piloto', [SeguimientoController::class, 'verUbicacion'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.ubicacion-piloto');
+    Route::post('/solicitudes/{id}/cancelar-proveedor', [SeguimientoController::class, 'cancelarProveedor'])
         ->whereNumber('id')
         ->name('api.solicitudes.cancelar-proveedor');
-    Route::get('/reputacion', [ServiciosDelProveedorController::class, 'reputacion'])->name('api.reputacion.show');
+    Route::get('/reputacion', [SeguimientoController::class, 'reputacion'])->name('api.reputacion.show');
+
+    // Chat sencillo entre el cliente y el proveedor adjudicado: consulta incremental por cursor.
+    Route::get('/solicitudes/{id}/mensajes', [MensajesController::class, 'index'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.mensajes.index');
+    Route::post('/solicitudes/{id}/mensajes', [MensajesController::class, 'store'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.mensajes.store');
+    Route::post('/solicitudes/{id}/mensajes/leidos', [MensajesController::class, 'leidos'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.mensajes.leidos');
+
+    // Preferencias de aviso: el piloto activa o desactiva las nuevas solicitudes en sus zonas.
+    Route::get('/notificaciones/preferencias', [PreferenciasController::class, 'show'])->name('api.notificaciones.preferencias.show');
+    Route::put('/notificaciones/preferencias', [PreferenciasController::class, 'update'])->name('api.notificaciones.preferencias.update');
 
     // Cliente: su propio perfil (el alta es pública, arriba).
     Route::get('/clientes/mi', [ClientesController::class, 'show'])->name('api.clientes.mi');
@@ -220,9 +288,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/solicitudes/{id}/cancelar', [SolicitudesController::class, 'cancelar'])
         ->whereNumber('id')
         ->name('api.solicitudes.cancelar');
-    Route::post('/solicitudes/{id}/conformidad', [SolicitudesController::class, 'conformidad'])
+    Route::post('/solicitudes/{id}/precio', [SolicitudesController::class, 'precio'])
         ->whereNumber('id')
-        ->name('api.solicitudes.conformidad');
+        ->name('api.solicitudes.precio');
+    Route::post('/solicitudes/{id}/renovar', [SolicitudesController::class, 'renovar'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.renovar');
 
     // Calificaciones (ADR 0031 y 0039): el cliente califica al proveedor, al piloto y
     // al auxiliar de un servicio completado; el proveedor califica al cliente en
