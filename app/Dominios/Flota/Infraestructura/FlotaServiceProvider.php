@@ -7,6 +7,7 @@ use App\Dominios\Flota\Aplicacion\ReaccionarADocumentosDeDron;
 use App\Dominios\Flota\Contratos\LecturaDrones;
 use App\Dominios\Flota\Contratos\LecturaEquipos;
 use App\Dominios\Flota\Contratos\LecturaIntegrantesDeEquipo;
+use App\Dominios\Flota\Infraestructura\Busqueda\BusquedaDrones;
 use App\Dominios\Operaciones\Contratos\Eventos\RecargaRegistrada;
 use App\Dominios\Proveedores\Contratos\Eventos\DocumentoAprobado;
 use App\Dominios\Proveedores\Contratos\Eventos\DocumentoVencido;
@@ -31,6 +32,10 @@ final class FlotaServiceProvider extends ServiceProvider
         $this->app->bind(LecturaDrones::class, LecturaDronesEloquent::class);
         $this->app->bind(LecturaEquipos::class, LecturaEquiposEloquent::class);
         $this->app->bind(LecturaIntegrantesDeEquipo::class, LecturaIntegrantesDeEquipoEloquent::class);
+
+        // Buscador global (`busqueda.proveedores`): el agregador de Seguridad
+        // no conoce estas clases, las recibe por tag.
+        $this->app->tag(BusquedaDrones::class, 'busqueda.proveedores');
     }
 
     public function boot(): void

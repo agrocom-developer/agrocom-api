@@ -31,19 +31,30 @@ final class MaquinaEstadosOferta
         return $oferta;
     }
 
-    /** @throws NegociacionInvalida `oferta_no_vigente` (409) si la tabla no admite el paso. */
-    public function transicionar(Oferta $oferta, EstadoOferta $hacia): Oferta
+    /**
+     * @param  string|null  $motivo  lo escribe solo quien cierra a la fuerza (el administrador, con motivo).
+     *
+     * @throws NegociacionInvalida `oferta_no_vigente` (409) si la tabla no admite el paso.
+     */
+    public function transicionar(Oferta $oferta, EstadoOferta $hacia, ?string $motivo = null): Oferta
     {
         if (! TransicionesOferta::permitida($oferta->estado, $hacia)) {
             throw NegociacionInvalida::conflicto('oferta_no_vigente');
         }
 
-        $oferta->forceFill([
+        $cambios = [
             'estado' => $hacia,
             'respondida_en' => $hacia === EstadoOferta::Aceptada || $hacia === EstadoOferta::Rechazada || $hacia === EstadoOferta::Reemplazada
                 ? Carbon::now()
                 : $oferta->respondida_en,
-        ])->save();
+        ];
+
+        // Solo se escribe cuando alguien lo da: el cierre de un participante o del reloj no lleva motivo.
+        if ($motivo !== null) {
+            $cambios['motivo'] = $motivo;
+        }
+
+        $oferta->forceFill($cambios)->save();
 
         return $oferta;
     }

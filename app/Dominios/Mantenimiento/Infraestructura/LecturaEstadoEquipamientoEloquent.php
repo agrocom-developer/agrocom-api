@@ -7,7 +7,6 @@ use App\Dominios\Mantenimiento\Contratos\LecturaEquipamiento;
 use App\Dominios\Mantenimiento\Contratos\LecturaEstadoEquipamiento;
 use App\Dominios\Mantenimiento\Dominio\EstadoBateria;
 use App\Dominios\Mantenimiento\Infraestructura\Eloquent\Bateria;
-use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\BateriasController;
 
 /**
  * Implementación Eloquent de {@see LecturaEstadoEquipamiento}. Vive fuera de
@@ -21,6 +20,13 @@ use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\BateriasCont
  */
 final class LecturaEstadoEquipamientoEloquent implements LecturaEstadoEquipamiento
 {
+    /** Tono del badge de cada estado de batería. */
+    private const array TONO_POR_ESTADO = [
+        'activa' => 'success',
+        'retirada' => 'neutral',
+        'mantenimiento' => 'neutral',
+    ];
+
     private const ESTADO_DRON_OPERATIVO = 'operativo';
 
     public function porIds(string $tipo, array $ids): array
@@ -53,7 +59,7 @@ final class LecturaEstadoEquipamientoEloquent implements LecturaEstadoEquipamien
                 id: $id,
                 estado: $estado,
                 etiqueta: __("mantenimiento.estado_bateria.{$estado}"),
-                tono: BateriasController::TONO_POR_ESTADO[$estado] ?? 'neutral',
+                tono: self::TONO_POR_ESTADO[$estado] ?? 'neutral',
                 operativo: $estado === EstadoBateria::Activa->value,
             );
         }

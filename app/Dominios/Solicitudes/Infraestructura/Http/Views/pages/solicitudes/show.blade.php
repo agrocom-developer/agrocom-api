@@ -8,14 +8,21 @@
     Datos esperados (ver SolicitudesController::show()): la cáscara de
     CascaraPanel, más $solicitud (con `terreno`, `cliente` e `historial`),
     $puedeCancelar (bool, ya cruzado con que el estado admita cancelación),
-    $lineaDeTiempo (list<array{title, meta, tone}>) y $contexto
-    (?DatosContextoSolicitud).
+    $puedeIntervenir (bool: permiso de intervenir y solicitud abierta a
+    ofertas), $lineaDeTiempo (list<array{title, meta, tone}>), $contexto
+    (?DatosContextoSolicitud) y $negocia (forma de
+    LecturaNegociacionParaPanel::deLaSolicitud()): negociaciones con sus
+    rondas, chat, avance, fotos y última ubicación del piloto.
 
     Gateada por `solicitudes.solicitud.ver`, verificado server-side en el
-    controlador; cancelar exige además `solicitudes.solicitud.cancelar`.
+    controlador; cancelar exige además `solicitudes.solicitud.cancelar` y
+    cerrar la negociación de un proveedor, `solicitudes.solicitud.intervenir`.
 --}}
 @php
     $titulo = __('solicitudes.panel.detalle_titulo', ['id' => $solicitud->id]);
+    $fecha = fn (?\DateTimeInterface $momento): string => $momento === null
+        ? '—'
+        : \Illuminate\Support\Carbon::instance($momento)->timezone($zonaHoraria ?: config('app.timezone'))->format('d/m/Y H:i');
 @endphp
 <x-templates.panel-shell :title="$titulo" :tema="$tema">
     <x-templates.panel-layout
@@ -175,6 +182,24 @@
                     <div class="ag-detalle__campo">
                         <p class="ag-detalle__campo-label">{{ __('solicitudes.panel.campo_colindantes') }}</p>
                         <p class="ag-detalle__campo-valor">{{ $solicitud->terreno->colindantes_sensibles ?? '—' }}</p>
+                    </div>
+                </x-molecules.form-section>
+
+                <x-molecules.form-section accent="success" :title="__('solicitudes.panel.seccion_negociacion')" :count="(string) count($negocia['negociaciones'])">
+                    <div class="ag-form-section__field--full">
+                        @include('solicitudes::pages.solicitudes._negociacion', ['negociaciones' => $negocia['negociaciones']])
+                    </div>
+                </x-molecules.form-section>
+
+                <x-molecules.form-section accent="primary-2" :title="__('solicitudes.panel.seccion_seguimiento')" :count="(string) (count($negocia['avances']) + count($negocia['fotos']))">
+                    <div class="ag-form-section__field--full">
+                        @include('solicitudes::pages.solicitudes._seguimiento', ['avances' => $negocia['avances'], 'fotos' => $negocia['fotos'], 'ubicacion' => $negocia['ubicacion']])
+                    </div>
+                </x-molecules.form-section>
+
+                <x-molecules.form-section accent="info" :title="__('solicitudes.panel.seccion_chat')" :count="(string) count($negocia['mensajes'])">
+                    <div class="ag-form-section__field--full">
+                        @include('solicitudes::pages.solicitudes._chat', ['mensajes' => $negocia['mensajes']])
                     </div>
                 </x-molecules.form-section>
 

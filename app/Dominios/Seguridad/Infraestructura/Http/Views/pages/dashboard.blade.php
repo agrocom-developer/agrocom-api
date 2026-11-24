@@ -1,39 +1,26 @@
 {{--
-    Page: dashboard del panel (GET /panel/dashboard, panel.dashboard).
+    Page: tablero del panel (GET /panel/dashboard, panel.dashboard) — arquetipo
+    Tablero (§6.1 de docs/diseno/guia_pantalla_panel.md).
 
-    Desde la tarea 67 esta página NO tiene contenido propio: es la cáscara
-    (encabezado + pestañas) y decide qué parciales incluir a partir de
-    `$secciones`, que `ArmarDashboard` armó según los permisos del ROL
-    ACTIVO. Un piloto y un dueño abren la misma ruta y reciben distintas
-    claves en ese arreglo — no hay una Blade por rol que mantener en
-    paralelo.
+    Muestra cómo está el mercado: KPIs, solicitudes por estado, solicitudes por
+    región y la cola de lo que espera una decisión del administrador. Acá no se
+    calcula nada: todo llega resuelto de `LecturaTableroDeMercado`.
 
-    Cada pestaña y cada sección viven en su propio parcial bajo
-    pages/dashboard/, con una responsabilidad cada uno. Acá no se calcula
-    nada: ni porcentajes, ni tonos, ni totales — todo llega resuelto.
-
-    Datos esperados: la cáscara de CascaraPanel (menu/roles/…/tema/periodo/
-    version) + `secciones` (array<string, mixed>) y `visibles` (list<string>)
-    de ArmarDashboard, más `tabs` (list<array{id: string, label: string,
-    claves: list<string>}>) de ArmarDashboard::tabsPara() (tarea 135): el
-    agrupamiento en pestañas, ya resuelto por rol activo — acá solo se decide
-    si cada tab tiene contenido (alguna de sus claves cayó en `visibles`).
-    `tecnico` (bool, tarea 139): el rol activo no es del negocio, así que el
-    encabezado no habla de operación. `puedeVerComo` (bool) y
-    `candidatosVerComo` (array|null, forma de ListarCandidatosVerComo::ejecutar()):
-    el botón «Cambiar vista» del encabezado y su modal solo se pintan con el
-    permiso `seguridad.usuario.ver_como` — mismo permiso reservado del flujo
-    ya existente en Seguridad → Usuarios, este es otro punto de entrada al
-    mismo POST, no una función nueva.
+    Datos esperados: la cáscara de CascaraPanel (menu/roles/…/tema/version), más
+    `tablero` (forma de LecturaTableroDeMercado::tablero()), `pendientes`
+    (list<array{clave, cantidad, ruta, permiso}> ya filtrada por permiso del
+    rol activo), `puedeVerSolicitudes` (bool), y `puedeVerComo` (bool) y
+    `candidatosVerComo` (array|null) para el botón «Cambiar vista».
 --}}
 @php
-    $tabs = collect($tabs)
-        ->map(fn (array $tab) => [...$tab, 'visible' => (bool) array_intersect($visibles, $tab['claves'])])
-        ->where('visible')
-        ->values();
+    $porEstado = collect($tablero['por_estado']);
+    $enMercado = $porEstado->whereIn('estado', ['abierta', 'con_ofertas'])->sum('cantidad');
+    $enCurso = $porEstado->whereIn('estado', ['adjudicada', 'en_ejecucion', 'disputada'])->sum('cantidad');
+    $totalPendientes = (int) collect($pendientes)->sum('cantidad');
+    $hectareas = fn (string $valor): string => number_format((float) $valor, 2, ',', '.');
 @endphp
 
-<x-templates.panel-shell :title="__($tecnico ? 'seguridad.dashboard.titulo_tecnico' : 'seguridad.dashboard.titulo')" :tema="$tema">
+<x-templates.panel-shell :title="__('seguridad.dashboard.titulo')" :tema="$tema">
     <x-templates.panel-layout
         :menu="$menu"
         :roles="$roles"
@@ -44,12 +31,11 @@
         :notifications="$notifications"
         :menu-badges="$menuBadges"
         :version="$version"
-        :vista-actual="__('seguridad.dashboard.tab_resumen')"
+        :vista-actual="__('seguridad.dashboard.titulo')"
     >
         <div class="ag-dash">
             @include('seguridad::pages.dashboard._encabezado', [
                 'rol' => $activeRoleLabel,
-                'tecnico' => $tecnico,
                 'puedeVerComo' => $puedeVerComo,
             ])
 
@@ -57,40 +43,114 @@
                 @include('seguridad::pages.dashboard._modal-cambiar-vista', ['candidatos' => $candidatosVerComo])
             @endif
 
-            @if ($tabs->isEmpty())
-                @include('seguridad::pages.dashboard._sin-secciones')
-            @else
-                {{-- La barra de pestañas se omite cuando hay una sola: un
-                     tablero de piloto con "Resumen" como única pestaña es una
-                     pestaña decorativa, no navegación. --}}
-                @if ($tabs->count() > 1)
-                    <div class="ag-tabs" role="tablist" aria-label="{{ __('seguridad.dashboard.tabs_aria') }}">
-                        @foreach ($tabs as $indice => $tab)
-                            <button
-                                type="button"
-                                class="ag-tabs__tab {{ $indice === 0 ? 'active' : '' }}"
-                                data-bs-toggle="tab"
-                                data-bs-target="#ag-tab-{{ $tab['id'] }}"
-                                role="tab"
-                                aria-controls="ag-tab-{{ $tab['id'] }}"
-                                aria-selected="{{ $indice === 0 ? 'true' : 'false' }}"
-                            >{{ $tab['label'] }}</button>
-                        @endforeach
-                    </div>
-                @endif
+            <div class="ag-tablero__kpis">
+                <x-molecules.stat-card :label="__('seguridad.dashboard.kpi_solicitudes')" icon="request_quote" :value="number_format($tablero['total_solicitudes'], 0, ',', '.')" state="info" />
+                <x-molecules.stat-card :label="__('seguridad.dashboard.kpi_en_mercado')" icon="storefront" :value="number_format($enMercado, 0, ',', '.')" state="success" />
+                <x-molecules.stat-card :label="__('seguridad.dashboard.kpi_en_curso')" icon="flight" :value="number_format($enCurso, 0, ',', '.')" state="primary-2" />
+                <x-molecules.stat-card :label="__('seguridad.dashboard.kpi_hectareas')" icon="landscape" :value="$hectareas($tablero['hectareas_en_mercado'])" value-suffix="ha" state="distintivo-1" />
+                <x-molecules.stat-card :label="__('seguridad.dashboard.kpi_pendientes')" icon="pending_actions" :value="number_format($totalPendientes, 0, ',', '.')" :state="$totalPendientes > 0 ? 'warning' : null" />
+            </div>
 
-                <div class="tab-content ag-dash__panes">
-                    @foreach ($tabs as $indice => $tab)
-                        <div
-                            class="tab-pane fade {{ $indice === 0 ? 'show active' : '' }}"
-                            id="ag-tab-{{ $tab['id'] }}"
-                            role="tabpanel"
-                            tabindex="0"
-                        >
-                            @include('seguridad::pages.dashboard._tab-'.$tab['id'], ['secciones' => $secciones])
+            @if ($tablero['total_solicitudes'] === 0)
+                <x-molecules.empty-state
+                    icon="request_quote"
+                    :title="__('seguridad.dashboard.vacio_titulo')"
+                    :detail="__('seguridad.dashboard.vacio_detalle')"
+                />
+            @else
+                <div class="ag-tablero__columnas">
+                    <section class="ag-card ag-card--padded">
+                        <header class="ag-card__head">
+                            <h2 class="ag-card__title">{{ __('seguridad.dashboard.por_estado_titulo') }}</h2>
+                        </header>
+
+                        <div class="ag-tablero__scroll">
+                            <table class="ag-tablero__tabla">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">{{ __('seguridad.dashboard.col_estado') }}</th>
+                                        <th scope="col" class="ag-tablero__num">{{ __('seguridad.dashboard.col_cantidad') }}</th>
+                                        <th scope="col" class="ag-tablero__num">{{ __('seguridad.dashboard.col_hectareas') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($tablero['por_estado'] as $fila)
+                                        <tr>
+                                            <th scope="row">
+                                                @if ($puedeVerSolicitudes)
+                                                    <a class="ag-dash__link" href="{{ route('panel.solicitudes.index', ['estado' => $fila['estado']]) }}">{{ __('solicitudes.estado.'.$fila['estado']) }}</a>
+                                                @else
+                                                    {{ __('solicitudes.estado.'.$fila['estado']) }}
+                                                @endif
+                                            </th>
+                                            <td class="ag-tablero__num">{{ $fila['cantidad'] }}</td>
+                                            <td class="ag-tablero__num">{{ $hectareas($fila['hectareas']) }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
-                    @endforeach
+                    </section>
+
+                    <section class="ag-card ag-card--padded">
+                        <header class="ag-card__head">
+                            <div>
+                                <h2 class="ag-card__title">{{ __('seguridad.dashboard.por_region_titulo') }}</h2>
+                                <p class="ag-tablero__ayuda">{{ __('seguridad.dashboard.por_region_ayuda') }}</p>
+                            </div>
+                        </header>
+
+                        <div class="ag-tablero__scroll">
+                            <table class="ag-tablero__tabla">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">{{ __('seguridad.dashboard.col_region') }}</th>
+                                        <th scope="col" class="ag-tablero__num">{{ __('seguridad.dashboard.col_abiertas') }}</th>
+                                        <th scope="col" class="ag-tablero__num">{{ __('seguridad.dashboard.col_en_curso') }}</th>
+                                        <th scope="col" class="ag-tablero__num">{{ __('seguridad.dashboard.col_cerradas') }}</th>
+                                        <th scope="col" class="ag-tablero__num">{{ __('seguridad.dashboard.col_canceladas') }}</th>
+                                        <th scope="col" class="ag-tablero__num">{{ __('seguridad.dashboard.col_total') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($tablero['por_region'] as $fila)
+                                        <tr>
+                                            <th scope="row">{{ $fila['region'] === 'sin_region' ? __('seguridad.dashboard.region_sin_zona') : __('solicitudes.region.'.$fila['region']) }}</th>
+                                            <td class="ag-tablero__num">{{ $fila['abiertas'] }}</td>
+                                            <td class="ag-tablero__num">{{ $fila['en_curso'] }}</td>
+                                            <td class="ag-tablero__num">{{ $fila['cerradas'] }}</td>
+                                            <td class="ag-tablero__num">{{ $fila['canceladas'] }}</td>
+                                            <td class="ag-tablero__num">{{ $fila['total'] }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
                 </div>
+            @endif
+
+            @if ($pendientes !== [])
+                <section class="ag-card ag-card--padded">
+                    <header class="ag-card__head">
+                        <h2 class="ag-card__title">{{ __('seguridad.dashboard.pendientes_titulo') }}</h2>
+                    </header>
+
+                    @if ($totalPendientes === 0)
+                        <p class="ag-tablero__ayuda">{{ __('seguridad.dashboard.pendientes_vacio') }}</p>
+                    @else
+                        <ul class="ag-tablero__pendientes">
+                            @foreach ($pendientes as $pendiente)
+                                @continue($pendiente['cantidad'] === 0)
+                                <li class="ag-tablero__pendiente">
+                                    <span class="ag-tablero__pendiente-cifra">{{ $pendiente['cantidad'] }}</span>
+                                    <span class="ag-tablero__pendiente-texto">{{ __('seguridad.dashboard.pendiente.'.$pendiente['clave']) }}</span>
+                                    <a class="ag-dash__link" href="{{ route($pendiente['ruta']) }}">{{ __('seguridad.dashboard.pendientes_ver') }}</a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
+                </section>
             @endif
         </div>
     </x-templates.panel-layout>

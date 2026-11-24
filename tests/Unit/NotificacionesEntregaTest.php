@@ -731,7 +731,8 @@ test('el click lleva al recurso si el rol activo puede verlo y, si no, a su prim
     expect($conPermiso)->toBe(route($rutaEsperada, 42))
         ->and($sinPermiso)->toBe('http://localhost/panel/dashboard');
 })->with([
-    'trabajo' => [RecursoNotificable::Trabajo, 'operaciones.trabajo.ver', 'panel.trabajos.detalle'],
+    'cliente' => [RecursoNotificable::Cliente, 'solicitudes.cliente.ver', 'panel.clientes.show'],
+    'solicitud' => [RecursoNotificable::Solicitud, 'solicitudes.solicitud.ver', 'panel.solicitudes.show'],
     'proveedor' => [RecursoNotificable::Proveedor, 'proveedores.proveedor.ver', 'panel.proveedores.show'],
 ]);
 

@@ -2,9 +2,8 @@
  * Molecule: empty-state (`.ag-empty-state`).
  *
  * No depende de `.ag-card` — esa clase es local a `pages/dashboard.css`
- * (ver la nota de deuda técnica en `pages/personas.css`, junto a
- * `.ag-persona-desempeno__vacio`), no un componente compartido. Declara su
- * propio look de tarjeta con los mismos tokens que ya usa esa migración.
+ * no un componente compartido. Declara su propio look de tarjeta con los
+ * mismos tokens.
  */
 .ag-empty-state {
     display: flex;

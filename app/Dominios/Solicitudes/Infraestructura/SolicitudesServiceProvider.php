@@ -15,6 +15,7 @@ use App\Dominios\Solicitudes\Contratos\PasosDeSolicitud;
 use App\Dominios\Solicitudes\Contratos\ReputacionDeClientes;
 use App\Dominios\Solicitudes\Contratos\ResolucionDeServicio;
 use App\Dominios\Solicitudes\Contratos\SolicitudParaTrabajo;
+use App\Dominios\Solicitudes\Infraestructura\Busqueda\BusquedaClientes;
 use App\Dominios\Solicitudes\Infraestructura\Console\EvaluarClientesCommand;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -39,6 +40,10 @@ final class SolicitudesServiceProvider extends ServiceProvider
         $this->app->bind(LecturaServicios::class, LecturaServiciosEloquent::class);
         $this->app->bind(ResolucionDeServicio::class, ResolucionDeServicioPorMaquina::class);
         $this->app->bind(ReputacionDeClientes::class, ReputacionDeClientePorSolicitudes::class);
+
+        // Buscador global (`busqueda.proveedores`): el agregador de Seguridad
+        // no conoce estas clases, las recibe por tag.
+        $this->app->tag(BusquedaClientes::class, 'busqueda.proveedores');
     }
 
     public function boot(): void

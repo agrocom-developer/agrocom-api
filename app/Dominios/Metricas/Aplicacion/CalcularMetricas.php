@@ -13,17 +13,16 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Las métricas del mercado del panel (especificación §14): mercado (solicitudes,
- * asignación y tiempo hasta la aceptación), calidad (calificación, disputas y
+ * adjudicación, rondas de negociación y tiempo hasta la adjudicación), calidad (calificación, disputas y
  * reembolsos), oferta (proveedores, drones, tasa de aceptación y de cancelación) e
- * ingreso (volumen, comisión devengada). Módulo de solo lectura (ADR 0012): agrega
+ * volumen (monto final de los servicios finalizados). Módulo de solo lectura (ADR 0012): agrega
  * con consultas de lectura sobre las tablas de los módulos dueños y no escribe
  * nada; los nombres y las tasas de cada proveedor llegan por el contrato de
  * `Proveedores`. Todo importe y toda tasa en decimal exacto (invariante 6 de
  * CLAUDE.md); sin divisor, `null` («sin datos»), nunca cero.
  *
- * La comisión devengada es la congelada en las solicitudes completadas menos los
- * ajustes de la última resolución de cada disputa. No hay cobro en la aplicación en
- * la versión 1 (ADR 0034): es lo que Agrocom tiene por cobrar a los proveedores.
+ * No hay cobro en la aplicación (ADR 0034): el volumen es la suma del precio final y el
+ * pago ocurre fuera de ella.
  */
 final class CalcularMetricas
 {
@@ -79,29 +78,43 @@ final class CalcularMetricas
             ->where('o.id', DB::raw('s.oferta_adjudicada_id'))
             ->orderBy('o.id')
             ->limit(self::LIMITE_FILAS)
-            ->get(['s.adjudicada_en as respondida_en', 'p.tipo', 's.publicada_en']);
+            ->get(['s.adjudicada_en as respondida_en', 's.publicada_en']);
 
         $minutos = $aceptadas
             ->map(fn ($fila): float => max(0, Carbon::parse($fila->publicada_en)->diffInSeconds(Carbon::parse($fila->respondida_en), false)) / 60)
             ->values()
             ->all();
 
-        $aPropios = $aceptadas->where('tipo', 'propio')->count();
+        $ids = $publicadas()->pluck('id')->all();
+        $ofertas = $ids === [] ? collect() : DB::table('neg_ofertas')->whereNull('deleted_at')->whereIn('solicitud_id', $ids)->get(['solicitud_id', 'proveedor_id', 'numero']);
+        $rondas = $ofertas->groupBy(fn ($fila): string => $fila->solicitud_id.'-'.$fila->proveedor_id)->map(fn ($grupo): int => (int) $grupo->max('numero'))->values()->all();
+
+        $porRegion = DB::table('sol_solicitudes_servicio as s')
+            ->leftJoin('sol_terrenos as t', 't.id', '=', 's.terreno_id')
+            ->leftJoin('sol_zonas as z', 'z.id', '=', 't.zona_id')
+            ->whereNull('s.deleted_at')
+            ->whereBetween('s.publicada_en', [$desde, $hasta])
+            ->selectRaw("COALESCE(z.macrorregion, 'sin_region') as region, COUNT(*) as cantidad")
+            ->groupBy('z.macrorregion')
+            ->pluck('cantidad', 'region')
+            ->map(fn ($n): int => (int) $n)
+            ->all();
 
         return [
             'solicitudes_publicadas' => $total,
             'por_estado' => $porEstado,
-            'asignadas' => $asignadas,
-            'tasa_asignacion' => Razones::tasa($asignadas, $total),
-            'sin_proveedor' => (int) ($porEstado['expirada'] ?? 0),
+            'por_region' => $porRegion,
+            'adjudicadas' => $asignadas,
+            'tasa_adjudicacion' => Razones::tasa($asignadas, $total),
+            'expiradas' => (int) ($porEstado['expirada'] ?? 0),
             'hectareas_solicitadas' => $this->suma($publicadas(), 'hectareas_solicitadas', 4),
             'hectareas_servidas' => $this->suma($publicadas()->whereIn('estado', ['finalizada', 'calificada']), 'hectareas_ejecutadas', 4),
             'tiempo_aceptacion_promedio_min' => Razones::promedio($minutos),
             'tiempo_aceptacion_mediana_min' => Razones::mediana($minutos),
             'aceptaciones' => $aceptadas->count(),
-            'aceptadas_por_propios' => $aPropios,
-            'aceptadas_por_terceros' => $aceptadas->count() - $aPropios,
-            'proporcion_propios' => Razones::tasa($aPropios, $aceptadas->count()),
+            'ofertas_por_solicitud' => $total === 0 ? null : (string) BigDecimal::of($ofertas->count())->dividedBy($total, 2, RoundingMode::HalfUp),
+            'rondas_promedio' => Razones::promedio($rondas),
+            'negociaciones' => count($rondas),
         ];
     }
 
@@ -237,7 +250,7 @@ final class CalcularMetricas
     }
 
     /**
-     * Reembolso y ajuste de comisión de las disputas resueltas en el período, contando
+     * Reembolso de las disputas resueltas en el período, contando
      * solo la última resolución de cada una (la apelación reemplaza a la primera).
      *
      * @return array{monto: string, ajuste_comision: string}

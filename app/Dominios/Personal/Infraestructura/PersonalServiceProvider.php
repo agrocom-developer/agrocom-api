@@ -8,10 +8,6 @@ use App\Dominios\Personal\Contratos\LecturaEquipoTrabajo;
 use App\Dominios\Personal\Contratos\LecturaFichaPersona;
 use App\Dominios\Personal\Contratos\LecturaPanelPersonal;
 use App\Dominios\Personal\Contratos\LecturaPersonas;
-use App\Dominios\Personal\Infraestructura\Busqueda\BusquedaBases;
-use App\Dominios\Personal\Infraestructura\Busqueda\BusquedaEquiposTrabajo;
-use App\Dominios\Personal\Infraestructura\Busqueda\BusquedaPersonas;
-use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -35,17 +31,5 @@ final class PersonalServiceProvider extends ServiceProvider
         $this->app->bind(LecturaPanelPersonal::class, LecturaPanelPersonalEloquent::class);
         $this->app->bind(LecturaEquipoTrabajo::class, LecturaEquipoTrabajoEloquent::class);
         $this->app->bind(LecturaCuadrillasPorRecurso::class, LecturaCuadrillasPorRecursoEloquent::class);
-
-        // Buscador global (`busqueda.proveedores`): el agregador de Seguridad
-        // no conoce estas clases, las recibe por tag. Sumar una entidad al
-        // buscador es escribir su proveedor y taggearlo acá.
-        $this->app->tag(BusquedaPersonas::class, 'busqueda.proveedores');
-        $this->app->tag(BusquedaBases::class, 'busqueda.proveedores');
-        $this->app->tag(BusquedaEquiposTrabajo::class, 'busqueda.proveedores');
-    }
-
-    public function boot(): void
-    {
-        View::addNamespace('personal', app_path('Dominios/Personal/Infraestructura/Http/Views'));
     }
 }

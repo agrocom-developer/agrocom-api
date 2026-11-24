@@ -2,31 +2,27 @@
 
 namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 
-use App\Dominios\Seguridad\Aplicacion\ArmarDashboard;
+use App\Dominios\Metricas\Contratos\LecturaTableroDeMercado;
 use App\Dominios\Seguridad\Aplicacion\ListarCandidatosVerComo;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
-use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use App\Dominios\Seguridad\Infraestructura\Http\Middleware\ResolverRolActivo;
 use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\CascaraPanel;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 /**
  * `GET /panel/dashboard` (`panel.dashboard`): página de aterrizaje del panel
- * tras el login. Gateada por `seguridad.dashboard.ver` (tarea 62, fuga 2).
+ * tras el login. Gateada por `seguridad.dashboard.ver`.
  *
  * Middleware `auth:interno` + `rol.activo`: para cuando este controlador se
  * ejecuta, `session('sec_rol_activo_id')` ya es un rol vivo válido de este
- * usuario ({@see ResolverRolActivo} lo garantiza) — acá no se vuelve a
- * revalidar esa pertenencia.
+ * usuario ({@see ResolverRolActivo} lo garantiza).
  *
  * Adaptador delgado (ADR 0008): la cáscara la resuelve {@see CascaraPanel} y
- * el contenido {@see ArmarDashboard}. Desde la tarea 67 no queda ningún dato
- * de maqueta: cada sección la sirve el módulo dueño por su contrato de
- * lectura, y qué secciones aparecen lo decide el ROL ACTIVO — un piloto y un
- * dueño abren la misma ruta y ven tableros distintos.
+ * los datos del mercado los entrega el contrato {@see LecturaTableroDeMercado}.
+ * De la cola de pendientes solo se muestran los tipos cuya pantalla puede abrir
+ * el rol activo: el tablero nunca abre una ventana a lo que el menú no deja ver.
  */
 final class DashboardController
 {
@@ -34,11 +30,23 @@ final class DashboardController
 
     private const PERMISO_VER_COMO = 'seguridad.usuario.ver_como';
 
+    /** Cada tipo de pendiente, su pantalla y el permiso que la abre. */
+    private const PENDIENTES = [
+        'proveedores' => ['panel.proveedores.index', 'proveedores.proveedor.ver'],
+        'pilotos' => ['panel.pilotos.index', 'proveedores.piloto.ver'],
+        'auxiliares' => ['panel.auxiliares.index', 'proveedores.auxiliar.ver'],
+        'drones' => ['panel.drones-flota.index', 'flota.dron.ver'],
+        'fotos_de_dron' => ['panel.drones-flota.index', 'flota.dron.ver'],
+        'documentos' => ['panel.documentos.index', 'proveedores.documento.ver'],
+        'calificaciones' => ['panel.calificaciones.index', 'calificaciones.calificacion.ver'],
+        'disputas' => ['panel.disputas.index', 'disputas.disputa.ver'],
+    ];
+
     public function index(
         Request $request,
         AutorizacionPanelWeb $autorizacion,
         CascaraPanel $cascara,
-        ArmarDashboard $armarDashboard,
+        LecturaTableroDeMercado $mercado,
         ListarCandidatosVerComo $listarCandidatosVerComo,
     ): View {
         abort_unless($autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
@@ -47,17 +55,14 @@ final class DashboardController
         $usuario = $request->user('interno');
         $idRolActivo = (int) $request->session()->get('sec_rol_activo_id');
 
-        $datosCascara = $cascara->para($usuario, $idRolActivo);
+        $tablero = $mercado->tablero();
 
-        // La clave del rol activo (`dueno`, `piloto`...) ya la resolvió
-        // `CascaraPanel::para()` para armar `activeRoleLabel` — se relee de
-        // `roles` (ya en memoria, sin consulta nueva) en vez de duplicar esa
-        // búsqueda. `tabsPara()` (tarea 135) decide el agrupamiento de tabs
-        // por rol; sin rol resuelto, cae en el agrupamiento por defecto.
-        /** @var Collection<int, SecRole> $roles */
-        $roles = $datosCascara['roles'];
-        $rolActivo = $roles->firstWhere('id', $idRolActivo);
-        $rolClave = $rolActivo->name ?? '';
+        $pendientes = [];
+        foreach (self::PENDIENTES as $clave => [$ruta, $permiso]) {
+            if ($autorizacion->tienePermiso($request, $permiso)) {
+                $pendientes[] = ['clave' => $clave, 'cantidad' => $tablero['pendientes'][$clave] ?? 0, 'ruta' => $ruta];
+            }
+        }
 
         // Acceso directo a «ver como» (botón junto al chip de rol activo del
         // encabezado): mismo permiso reservado que ya gatea el flujo desde
@@ -66,10 +71,10 @@ final class DashboardController
         $puedeVerComo = $autorizacion->tienePermiso($request, self::PERMISO_VER_COMO);
 
         return view('seguridad::pages.dashboard', [
-            ...$datosCascara,
-            ...$armarDashboard->ejecutar($usuario, $idRolActivo),
-            'tabs' => $armarDashboard->tabsPara($rolClave),
-            'tecnico' => $armarDashboard->esTecnico($rolClave),
+            ...$cascara->para($usuario, $idRolActivo),
+            'tablero' => $tablero,
+            'pendientes' => $pendientes,
+            'puedeVerSolicitudes' => $autorizacion->tienePermiso($request, 'solicitudes.solicitud.ver'),
             'puedeVerComo' => $puedeVerComo,
             'candidatosVerComo' => $puedeVerComo ? $listarCandidatosVerComo->ejecutar($usuario) : null,
         ]);

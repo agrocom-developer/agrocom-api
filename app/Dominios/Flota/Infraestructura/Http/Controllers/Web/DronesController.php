@@ -11,7 +11,10 @@ use App\Dominios\Compartido\Dominio\TipoDocumento;
 use App\Dominios\Compartido\Dominio\TransicionesAprobacion;
 use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
+use App\Dominios\Flota\Aplicacion\FotosObligatorias;
+use App\Dominios\Flota\Aplicacion\GestionarFotosDeDron;
 use App\Dominios\Flota\Aplicacion\ResolverAprobacionDron;
+use App\Dominios\Flota\Dominio\Excepciones\OperacionDeFlotaInvalida;
 use App\Dominios\Flota\Dominio\OrigenDron;
 use App\Dominios\Flota\Infraestructura\Eloquent\Dron;
 use App\Dominios\Flota\Infraestructura\Eloquent\Equipo;
@@ -28,16 +31,18 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
  * `GET /panel/drones-flota` y su ficha: los drones del marketplace de todos los
  * proveedores, con su dueño, su estado de aprobación y sus ciclos de batería
- * (ADR 0029). Se llama `drones-flota` para no chocar con `panel.drones.*`, el
- * catálogo operativo de `ope_drones` que usa la ejecución en el lote.
+ * (ADR 0029) y la revisión de sus fotos (ADR 0042).
  *
- * Gateada por `flota.dron.ver`; las acciones, por `.aprobar`, `.suspender` y
- * `.dar_baja`, todas contra el ROL ACTIVO.
+ * Gateada por `flota.dron.ver`; las acciones, por `.aprobar`, `.suspender`,
+ * `.dar_baja` y `.revisar_foto`, todas contra el ROL ACTIVO.
  */
 final class DronesController
 {
@@ -81,7 +86,7 @@ final class DronesController
         ]);
     }
 
-    public function show(Request $request, Dron $dron, LecturaCuentas $cuentas, VerificacionDocumental $documentos): View
+    public function show(Request $request, Dron $dron, LecturaCuentas $cuentas, VerificacionDocumental $documentos, FotosObligatorias $obligatorias): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
@@ -112,6 +117,10 @@ final class DronesController
             'equipos' => $equipos,
             'pilotos' => $pilotos,
             'acciones' => $acciones,
+            'fotos' => DB::table('flo_dron_fotos')->where('dron_id', $dron->id)->whereNull('deleted_at')->orderBy('id')->get(['id', 'tipo', 'estado', 'motivo'])->all(),
+            'fotosObligatorias' => $obligatorias->tipos(),
+            'fotosFaltantes' => $obligatorias->faltantes($dron->id),
+            'puedeRevisarFotos' => $this->autorizacion->tienePermiso($request, 'flota.dron.revisar_foto'),
             'puedeRevisarDocumentos' => $this->autorizacion->tienePermiso($request, 'proveedores.documento.revisar'),
             'puedeVerDocumentos' => $this->autorizacion->tienePermiso($request, 'proveedores.documento.ver'),
             'puedeVerProveedor' => $this->autorizacion->tienePermiso($request, 'proveedores.proveedor.ver'),
@@ -142,11 +151,50 @@ final class DronesController
 
         try {
             $resolver->ejecutar($dron->id, $accion, (int) Auth::guard('interno')->id(), $request->validated('motivo'));
-        } catch (TransicionDeAprobacionInvalida|MotivoRequerido|DocumentosIncompletos $excepcion) {
+        } catch (TransicionDeAprobacionInvalida|MotivoRequerido|DocumentosIncompletos|OperacionDeFlotaInvalida $excepcion) {
             return $volver->withErrors(['aprobacion' => $excepcion->getMessage()]);
         }
 
         return $volver->with('estado', __('proveedores.aprobacion.resuelta.'.$accion->value));
+    }
+
+    /** `GET /panel/drones-flota/fotos/{foto}/archivo`: la foto, desde el disco privado (nunca una URL pública). */
+    public function foto(Request $request, int $foto): BinaryFileResponse
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
+
+        $fila = DB::table('flo_dron_fotos')->whereNull('deleted_at')->where('id', $foto)->first();
+
+        abort_unless($fila !== null && Storage::disk('local')->exists($fila->archivo), 404);
+
+        return response()->file(Storage::disk('local')->path($fila->archivo), ['Cache-Control' => 'private, no-store']);
+    }
+
+    /** `POST /panel/drones-flota/fotos/{foto}/revisar`: aprueba o rechaza una foto (el rechazo lleva motivo). */
+    public function revisarFoto(Request $request, int $foto, GestionarFotosDeDron $fotos): RedirectResponse
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, 'flota.dron.revisar_foto'), 403);
+
+        $datos = $request->validate([
+            'decision' => ['required', 'in:aprobar,rechazar'],
+            'motivo' => ['required_if:decision,rechazar', 'nullable', 'string', 'max:500'],
+        ], [
+            'motivo.required_if' => __('flota.fotos.motivo_requerido'),
+        ]);
+
+        $dronId = (int) DB::table('flo_dron_fotos')->whereNull('deleted_at')->where('id', $foto)->value('dron_id');
+        abort_if($dronId === 0, 404);
+
+        $volver = redirect()->route('panel.drones-flota.show', $dronId);
+        $aprobar = $datos['decision'] === 'aprobar';
+
+        try {
+            $fotos->revisar((int) Auth::guard('interno')->id(), $foto, $aprobar, $datos['motivo'] ?? null);
+        } catch (OperacionDeFlotaInvalida $excepcion) {
+            return $volver->withErrors(['foto' => $excepcion->getMessage()]);
+        }
+
+        return $volver->with('estado', __($aprobar ? 'flota.fotos.aprobada' : 'flota.fotos.rechazada'));
     }
 
     /** Aprobar, rechazar y rehabilitar comparten `aprobar`; suspender y dar de baja tienen el suyo. */

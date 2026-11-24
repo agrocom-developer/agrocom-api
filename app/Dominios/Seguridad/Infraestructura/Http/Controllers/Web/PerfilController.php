@@ -127,7 +127,7 @@ final class PerfilController
                 ['label' => __('seguridad.perfil.persona_direccion'), 'value' => $datos->direccion ?? $sinDato],
             ],
             'nota' => $puedeEditar ? __('seguridad.perfil.persona_nota_editable') : __('seguridad.perfil.persona_nota'),
-            'editarHref' => $datos !== null && $puedeEditar ? route('panel.personas.edit', $datos->id) : null,
+            'editarHref' => null,
             'vacioTitulo' => $usuario->persona_id === null
                 ? __('seguridad.perfil.persona_vacio_titulo')
                 : __('seguridad.perfil.persona_baja_titulo'),

@@ -11,6 +11,7 @@ use App\Dominios\Compartido\Dominio\Excepciones\TransicionDeAprobacionInvalida;
 use App\Dominios\Compartido\Dominio\OrigenCambio;
 use App\Dominios\Compartido\Dominio\TipoDocumento;
 use App\Dominios\Flota\Aplicacion\MaquinaEstados\MaquinaEstadosDron;
+use App\Dominios\Flota\Dominio\Excepciones\OperacionDeFlotaInvalida;
 use App\Dominios\Flota\Infraestructura\Eloquent\Dron;
 use App\Dominios\Flota\Infraestructura\Eloquent\HistorialEstadoDron;
 use App\Dominios\Proveedores\Contratos\LecturaProveedores;
@@ -22,7 +23,7 @@ use Illuminate\Support\Facades\DB;
  * ADR 0029 y 0032). Misma regla que `ResolverAprobacion` de Proveedores: la
  * transición se valida contra la tabla compartida, rechazar, suspender y dar de
  * baja exigen motivo, aprobar exige los documentos del dron (registro,
- * habilitación y seguro) aprobados y vigentes, y cada cambio deja su fila de
+ * habilitación y seguro) aprobados y vigentes y las fotos obligatorias aprobadas, y cada cambio deja su fila de
  * historial y el aviso al titular del dueño.
  */
 final class ResolverAprobacionDron
@@ -31,12 +32,14 @@ final class ResolverAprobacionDron
         private readonly VerificacionDocumental $documentos,
         private readonly LecturaProveedores $proveedores,
         private readonly MaquinaEstadosDron $estados,
+        private readonly FotosObligatorias $fotos,
     ) {}
 
     /**
      * @throws TransicionDeAprobacionInvalida
      * @throws MotivoRequerido
      * @throws DocumentosIncompletos
+     * @throws OperacionDeFlotaInvalida si se aprueba sin las fotos obligatorias aprobadas (ADR 0042).
      */
     public function ejecutar(
         int $dronId,
@@ -56,6 +59,13 @@ final class ResolverAprobacionDron
 
                 if ($faltantes !== []) {
                     throw new DocumentosIncompletos(array_map(static fn (string $tipo): TipoDocumento => TipoDocumento::from($tipo), $faltantes));
+                }
+
+                // Rehabilitar a uno que ya estuvo aprobado no vuelve a pedir las fotos: las pidió la primera vez.
+                $fotosFaltantes = $accion === AccionAprobacion::Aprobar ? $this->fotos->faltantes($dronId) : [];
+
+                if ($fotosFaltantes !== []) {
+                    throw OperacionDeFlotaInvalida::fotosIncompletas($fotosFaltantes);
                 }
             }
 

@@ -52,10 +52,10 @@
 
             <h2 class="ag-detalle__campo-label">{{ __('metricas.seccion_mercado') }}</h2>
             <div class="ag-detalle__kpis">
-                <x-molecules.stat-card :label="__('metricas.solicitudes')" icon="request_quote" :value="$entero($m['mercado']['solicitudes_publicadas'])" :foot="__('metricas.solicitudes_pie', ['sin' => $m['mercado']['sin_proveedor']])" state="info" />
-                <x-molecules.stat-card :label="__('metricas.tasa_asignacion')" icon="handshake" :value="$pct($m['mercado']['tasa_asignacion'])" :foot="__('metricas.tasa_asignacion_pie', ['asignadas' => $m['mercado']['asignadas']])" state="success" />
+                <x-molecules.stat-card :label="__('metricas.solicitudes')" icon="request_quote" :value="$entero($m['mercado']['solicitudes_publicadas'])" :foot="__('metricas.solicitudes_pie', ['sin' => $m['mercado']['expiradas']])" state="info" />
+                <x-molecules.stat-card :label="__('metricas.tasa_adjudicacion')" icon="handshake" :value="$pct($m['mercado']['tasa_adjudicacion'])" :foot="__('metricas.tasa_adjudicacion_pie', ['adjudicadas' => $m['mercado']['adjudicadas']])" state="success" />
                 <x-molecules.stat-card :label="__('metricas.tiempo_aceptacion')" icon="timer" :value="$min($m['mercado']['tiempo_aceptacion_promedio_min'])" :foot="__('metricas.tiempo_aceptacion_pie', ['mediana' => $min($m['mercado']['tiempo_aceptacion_mediana_min']), 'cantidad' => $m['mercado']['aceptaciones']])" state="distintivo-1" />
-                <x-molecules.stat-card :label="__('metricas.propios')" icon="verified" :value="$pct($m['mercado']['proporcion_propios'])" :foot="__('metricas.propios_pie', ['propios' => $m['mercado']['aceptadas_por_propios'], 'terceros' => $m['mercado']['aceptadas_por_terceros']])" state="primary-2" />
+                <x-molecules.stat-card :label="__('metricas.ofertas_por_solicitud')" icon="forum" :value="$m['mercado']['ofertas_por_solicitud'] ?? $sinDatos" :foot="__('metricas.rondas_pie', ['rondas' => $m['mercado']['rondas_promedio'] ?? $sinDatos, 'cantidad' => $m['mercado']['negociaciones']])" state="primary-2" />
                 <x-molecules.stat-card :label="__('metricas.hectareas')" icon="landscape" :value="number_format((float) $m['mercado']['hectareas_servidas'], 2, ',', '.')" value-suffix="ha" :foot="__('metricas.hectareas_pie', ['solicitadas' => number_format((float) $m['mercado']['hectareas_solicitadas'], 2, ',', '.')])" state="success" />
             </div>
 

@@ -37,6 +37,14 @@ final class OperacionDeFlotaInvalida extends RuntimeException
         return new self(Texto::de('flota.errores.motivo_requerido'), 'motivo');
     }
 
+    /** @param  list<string>  $tipos tipos de foto obligatorios que aún no están aprobados. */
+    public static function fotosIncompletas(array $tipos): self
+    {
+        $nombres = array_map(static fn (string $tipo): string => Texto::de('flota.fotos.tipo.'.$tipo), $tipos);
+
+        return new self(Texto::de('flota.errores.fotos_incompletas', ['fotos' => implode(', ', $nombres)]), 'fotos');
+    }
+
     public static function dronAjeno(): self
     {
         return new self(Texto::de('flota.errores.dron_ajeno'), null, true);

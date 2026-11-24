@@ -200,28 +200,33 @@ return [
         'meta' => [
             'dueno' => [
                 'nombre' => 'Dueño',
-                'descripcion' => 'Acceso total: personas, contratos y gestión de otros dueños.',
-                'permisos' => ['Todos los módulos', 'Validar sesiones', 'Ver contratos'],
+                'descripcion' => 'Acceso total: proveedores, solicitudes, roles y gestión de otros dueños.',
+                'permisos' => ['Todos los módulos', 'Aprobaciones', 'Roles y permisos'],
+            ],
+            'encargado_operaciones' => [
+                'nombre' => 'Administrador',
+                'descripcion' => 'Aprueba proveedores, pilotos, drones y documentos, modera calificaciones y resuelve disputas.',
+                'permisos' => ['Aprobaciones', 'Solicitudes', 'Calificaciones y disputas'],
+            ],
+            'soporte' => [
+                'nombre' => 'Soporte',
+                'descripcion' => 'Atiende solicitudes, clientes y disputas, e interviene en una negociación con motivo.',
+                'permisos' => ['Solicitudes', 'Clientes', 'Disputas'],
             ],
             'piloto' => [
                 'nombre' => 'Piloto de dron',
-                'descripcion' => 'Ejecuta sesiones de vuelo en campo y carga la evidencia del RC.',
-                'permisos' => ['Programación', 'Sesiones', 'Mezclas'],
+                'descripcion' => 'Ofrece, ejecuta los servicios adjudicados y sube las fotos desde la app.',
+                'permisos' => ['Ofertas', 'Servicios', 'Fotos'],
             ],
             'auxiliar' => [
-                'nombre' => 'Ayudante',
-                'descripcion' => 'Apoya la preparación de mezclas y la logística de cada sesión.',
-                'permisos' => ['Mezclas', 'Checklist', 'Evidencias'],
+                'nombre' => 'Auxiliar',
+                'descripcion' => 'Apoya al piloto en el lote y sube fotos de avance desde la app.',
+                'permisos' => ['Servicios', 'Fotos'],
             ],
             'jefe_campo' => [
                 'nombre' => 'Jefe de campo',
-                'descripcion' => 'Coordina la cuadrilla y valida sesiones ajenas — nunca las propias.',
-                'permisos' => ['Programación', 'Validación', 'Pausas'],
-            ],
-            'encargado_operaciones' => [
-                'nombre' => 'Encargado de operaciones',
-                'descripcion' => 'Administra usuarios, órdenes y la planificación de la base.',
-                'permisos' => ['Operación', 'Recursos', 'Usuarios'],
+                'descripcion' => 'Rol retirado del marketplace; se conserva mientras tenga cuentas asignadas.',
+                'permisos' => [],
             ],
             'admin_plataforma' => [
                 'nombre' => 'Administrador de plataforma',
@@ -231,226 +236,47 @@ return [
         ],
     ],
 
-    // Dashboard "Operación de hoy" (quinta vuelta — maquetas 4a/5a/5b):
-    // copy fijo de pantalla; los DATOS (cifras, sesiones, causas) viajan por
-    // DatosDemoPanel, nunca por acá.
-    // Copy del dashboard. Desde la tarea 67 todo dato viene de la base: acá
-    // solo vive el texto fijo de pantalla. Las claves de la maqueta que ya no
-    // tienen sección (ventana volable, alerta de RC fija, avance de meta,
-    // vistas de carrusel/tabla de multimedia) se retiraron con ella.
+    // Tablero del panel: cómo está el mercado por estado y por región, y qué
+    // espera una decisión del administrador.
     'dashboard' => [
-        'titulo' => 'Operación de hoy',
-        'bajada' => ':fecha · lo que falta cerrar hoy.',
+        'titulo' => 'Tablero del mercado',
+        'bajada' => ':fecha · solicitudes por estado y por región, y lo que espera tu decisión.',
         'viendo_como' => 'Viendo como :rol',
-        'tabs_aria' => 'Vistas del dashboard',
-        'tab_resumen' => 'Resumen',
-        'tab_solicitudes' => 'Solicitudes',
-        'solicitudes_titulo' => 'Solicitudes por estado',
-        'col_solicitud' => 'Solicitud',
-        'col_cantidad' => 'Cantidad',
-        'tab_multimedia' => 'Multimedia',
-        'ver_todas' => 'Ver todas',
-
-        // Estado vacío de la página entera: el rol entra al dashboard pero no
-        // tiene ninguna sección habilitada, o ninguna con datos todavía.
-        'vacio_titulo' => 'Todavía no hay nada que mostrar acá',
-        'vacio_detalle' => 'Tu rol activo no tiene secciones habilitadas en el tablero, o aún no se registró actividad. Usa el menú lateral para ir a tus pantallas.',
-
-        // Estado vacío por falta de campaña abierta (causa más común en una
-        // instalación nueva: sin campaña, no hay contratos, órdenes ni
-        // sesiones que mostrar). Ver `puedeCrearCampania` en `_sin-secciones`.
-
-        // Columnas compartidas por la tabla de sesiones (cola de validación y
-        // "mis sesiones" usan el mismo parcial).
-        'col_hora' => 'Fecha',
-        'col_piloto' => 'Piloto',
-        'col_dron' => 'Dron',
-        'col_vuelo' => 'Vuelo',
-        'col_ha' => 'Ha',
+        'kpi_solicitudes' => 'Solicitudes',
+        'kpi_en_mercado' => 'Abiertas a ofertas',
+        'kpi_en_curso' => 'En curso',
+        'kpi_hectareas' => 'Hectáreas en el mercado',
+        'kpi_pendientes' => 'Esperan tu decisión',
+        'por_estado_titulo' => 'Solicitudes por estado',
+        'por_region_titulo' => 'Solicitudes por región',
+        'por_region_ayuda' => 'La región es la de la zona del terreno de cada solicitud.',
         'col_estado' => 'Estado',
-
-        'alertas_ver' => 'Ver alertas',
-
-        'cola_validacion_titulo' => 'Sesiones esperando validación',
-
-        // Encabezado del bloque personal. Sin él, en el tablero de un dueño
-        // estas cifras se confunden con las de la operación entera.
-        'mi_actividad' => 'Mi actividad',
-        'mis_sesiones_titulo' => 'Mis últimas sesiones',
-        'mis_sesiones_mes' => 'Mis sesiones del mes',
-        'mis_sesiones_validadas' => 'Mías validadas',
-        // "Validadas" y no "del mes" a secas: solo la hectárea validada cuenta
-        // como trabajo hecho, y es la que se paga. Con el rótulo genérico, un
-        // 0,00 junto a sesiones cerradas parecía un error de cálculo.
-        'mis_hectareas_mes' => 'Mis hectáreas validadas',
-
-        'mis_equipos_titulo' => 'Mis equipos este mes',
-        'equipos_col_sesiones' => 'Sesiones',
-        'equipos_col_ultimo' => 'Último vuelo',
-
-        'seccion_sesiones_estado' => 'Sesiones por estado',
-        'seccion_hectareas_periodo' => 'Hectáreas aplicadas por día',
-
-        'seccion_clientes' => 'Avance por contrato',
-        'clientes_col_cliente' => 'Cliente',
-        'clientes_col_ejecucion' => 'Ejecución',
-        'clientes_col_aplicadas' => 'Aplicadas',
-        'clientes_col_contratadas' => 'Contratadas',
-
-        'pausas_titulo' => 'Pausas por causa',
-        'pausas_minutos' => ':minutos min',
-        // Días efectivos en hacienda del mes, por cuadrilla y por propiedad.
-        'dias_hacienda_cuadrilla_titulo' => 'Días en hacienda por cuadrilla',
-        'dias_hacienda_propiedad_titulo' => 'Días en hacienda por propiedad',
-        'dias_hacienda_valor' => ':dias días',
-        'dias_hacienda_en_curso' => '{0} ninguna en curso|{1} :cantidad en curso|[2,*] :cantidad en curso',
-        'dias_hacienda_solo_en_curso' => '{1} Hay :cantidad estadía en curso; sus días se suman al finalizarla.|[2,*] Hay :cantidad estadías en curso; sus días se suman al finalizarlas.',
-
-        // Vocabulario compartido por la leyenda del mapa y los badges del
-        // resumen por lote: son los mismos estados operativos.
-        //
-        // El tono verde dice "ninguna sesión pendiente de validar", NO "lote
-        // terminado": un lote con el 7 % aplicado y todas sus sesiones
-        // validadas cae acá. Decía "Completado" y contradecía la barra de
-        // avance de su propia tarjeta.
-        'mapa_leyenda_en_vuelo' => 'En vuelo',
-        'mapa_leyenda_atencion' => 'Pendiente de validar',
-        'mapa_leyenda_programado' => 'Sin sesiones',
-        'mapa_leyenda_completado' => 'Al día',
-
-        // Pantalla completa del mapa operativo (tarea 79): mismo mecanismo
-        // que el editor de perímetro del lote, solo el botón de expandir —
-        // este mapa es de solo lectura.
-        'mapa_pantalla_completa' => 'Pantalla completa',
-        'mapa_salir_pantalla_completa' => 'Salir de pantalla completa',
-
-        'seccion_resumen_lote' => 'Avance por lote',
-        'lote_col_completadas' => 'Aplicadas',
-        'lote_col_pendientes' => 'Pendientes',
-        'lote_col_total' => 'Total',
-        'lote_col_litros' => 'Litros',
-        'lote_col_litros_ha' => 'L/ha',
-        'lote_col_tiempo' => 'Vuelo',
-
-        // Tabs del dueño (tarea 135): estado de cuentas, trabajos actuales
-        // por equipo y progreso de toda la campaña.
-
-        'seccion_estado_cuentas' => 'Estado de cuenta por contrato',
-        'cuentas_col_cliente' => 'Cliente',
-        'cuentas_col_contratado' => 'Contratado',
-        'cuentas_col_facturado' => 'Facturado',
-        'cuentas_col_adelanto' => 'Adelanto',
-        'cuentas_col_saldo' => 'Saldo pendiente',
-
-        'seccion_trabajos_equipo' => 'Trabajos abiertos por equipo',
-        'trabajos_equipo_col_equipo' => 'Equipo',
-        'trabajos_equipo_col_abiertos' => 'Abiertos',
-        'trabajos_equipo_col_hectareas' => 'Hectáreas',
-        'trabajos_equipo_col_ultimo' => 'Último inicio',
-
-        'seccion_progreso_campania' => 'Progreso de la campaña',
-        'progreso_campania_kpi_totales' => 'Hectáreas totales',
-        'progreso_campania_kpi_aplicadas' => 'Hectáreas aplicadas',
-        'progreso_campania_kpi_pendientes' => 'Hectáreas pendientes',
-        'progreso_campania_kpi_pct' => 'Completado',
-        'progreso_campania_unidad_hectareas' => 'ha',
-        'progreso_campania_lotes' => '{0} sin lotes con actividad|{1} :cantidad lote con actividad|[2,*] :cantidad lotes con actividad',
-
-        // Tabs del encargado de operaciones (tarea 136): cómo van las órdenes
-        // de aplicación, el proceso de los trabajos y el resumen de vuelos.
-        'tab_proceso_trabajos' => 'Proceso de los trabajos',
-        'tab_resumen_vuelos' => 'Resumen de vuelos',
-
-        'tab_mis_trabajos' => 'Mis trabajos',
-
-        // Tabs del jefe de campo (tarea 138): los recursos que se ocupan o
-        // faltan, las órdenes de trabajo de cada cuadrilla y cómo van las
-        // órdenes de aplicación con su equipamiento.
-
-        'seccion_recursos_en_uso' => 'Recursos en uso ahora',
-        'recursos_en_uso_total' => '{1} :cantidad recurso en uso|[0,*] :cantidad recursos en uso',
-        'recursos_en_uso_carga' => '{1} :cantidad trabajo abierto · :hectareas ha|[2,*] :cantidad trabajos abiertos · :hectareas ha',
-        'recursos_en_uso_integrantes' => 'Integrantes',
-        'recursos_en_uso_sin_integrantes' => 'Sin integrantes vigentes',
-        'recursos_en_uso_sin_equipamiento' => 'Sin equipamiento asignado',
-        'recursos_en_uso_ver' => 'Ver cuadrillas',
-
-        'seccion_ordenes_cuadrillas' => 'Órdenes de trabajo por cuadrilla',
-        'ordenes_cuadrillas_ver' => 'Ver órdenes de trabajo',
-        'ordenes_cuadrillas_col_trabajo' => 'Orden de trabajo',
-        'ordenes_cuadrillas_col_aplicacion' => 'Orden de aplicación',
-        'ordenes_cuadrillas_col_trabajos' => 'Abiertos',
-        'ordenes_cuadrillas_col_hectareas' => 'Hectáreas',
-        'ordenes_cuadrillas_col_estado' => 'Estado',
-        'ordenes_cuadrillas_tandas' => '{1} :cantidad orden de trabajo|[2,*] :cantidad órdenes de trabajo',
-        'ordenes_cuadrillas_aplicacion' => 'Orden #:id · aplicación :nro',
-        'ordenes_cuadrillas_abiertos' => ':abiertos de :total',
-
-        'seccion_ordenes_equipamiento' => 'Estado de las órdenes de aplicación',
-        'ordenes_equipamiento_ver' => 'Ver órdenes',
-        'ordenes_equipamiento_col_orden' => 'Orden',
-        'ordenes_equipamiento_col_estado' => 'Estado',
-        'ordenes_equipamiento_col_haciendas' => 'Haciendas',
-        'ordenes_equipamiento_col_cuadrillas' => 'Cuadrillas',
-        'ordenes_equipamiento_col_equipamiento' => 'Equipamiento',
-        'ordenes_equipamiento_numero' => '#:id · aplicación :nro',
-        'ordenes_equipamiento_hectareas' => ':hectareas ha',
-        'ordenes_equipamiento_cuadrillas' => ':asignadas de :necesarias',
-        'ordenes_equipamiento_sin_cuadrillas' => 'Sin cuadrillas asignadas',
-        'ordenes_equipamiento_todo_operativo' => '{1} :cantidad recurso operativo|[0,*] :cantidad recursos operativos',
-        'ordenes_equipamiento_fuera' => ':cantidad de :total fuera de servicio',
-
-        'seccion_ordenes_estado' => 'Órdenes de aplicación por estado',
-        'ordenes_estado_total' => 'Órdenes en total',
-        'ordenes_estado_ver' => 'Ver órdenes',
-
-        'seccion_resumen_vuelos' => 'Hectáreas aplicadas',
-        'vuelos_granularidad_aria' => 'Agrupar las hectáreas por',
-        'vuelos_dia' => 'Diario',
-        'vuelos_semana' => 'Semanal',
-        'vuelos_mes' => 'Mensual',
-        'vuelos_serie' => 'Hectáreas validadas',
-        'vuelos_periodo_dia' => 'Últimos :cantidad días',
-        'vuelos_periodo_semana' => 'Últimas :cantidad semanas',
-        'vuelos_periodo_mes' => 'Últimos :cantidad meses',
-        'vuelos_nota_semana' => 'Cada punto es una semana, de lunes a domingo; la fecha es la del lunes.',
-
-        // Tablero del administrador de plataforma (tarea 139): el título y la
-        // bajada no hablan de operación; y sus dos tabs, las
-        // cuentas y los accesos, y la bitácora con los atajos a la
-        // configuración.
-        'titulo_tecnico' => 'Estado de la plataforma',
-        'bajada_tecnica' => ':fecha · usuarios, accesos y registros del sistema.',
-        'tab_usuarios_accesos' => 'Usuarios y accesos',
-        'tab_bitacora_configuracion' => 'Bitácora y configuración',
-
-        'seccion_usuarios_por_rol' => 'Usuarios activos por rol',
-        'usuarios_por_rol_col_rol' => 'Rol',
-        'usuarios_por_rol_col_usuarios' => 'Usuarios',
-        'usuarios_por_rol_total' => 'Cuentas internas activas',
-        'usuarios_por_rol_portal' => 'Cuentas del portal de clientes',
-        'usuarios_por_rol_nota' => 'Una cuenta con varios roles cuenta en cada uno.',
-        'usuarios_por_rol_ver' => 'Ver usuarios',
-
-        'seccion_dispositivos' => 'Dispositivos con sesión abierta',
-        'dispositivos_ver' => '{1} Ver el dispositivo|[2,*] Ver los :cantidad dispositivos',
-
-        'seccion_versiones_apk' => 'Versiones del APK',
-        'versiones_apk_vigente' => 'Versión autorizada',
-        'versiones_apk_sin_vigente' => 'Ninguna versión autorizada',
-        'versiones_apk_pendientes' => 'Pendientes de autorizar',
-        'versiones_apk_sin_pendientes' => 'No hay versiones pendientes de autorizar',
-        'versiones_apk_codigo' => 'código :codigo',
-        'versiones_apk_ver' => 'Ver versiones',
-
-        'seccion_bitacora_reciente' => 'Últimos cambios en la bitácora',
-        'bitacora_reciente_ver' => 'Ver bitácora',
-
-        'seccion_accesos' => 'Accesos directos',
-        'acceso_configuracion_titulo' => 'Configuración del sistema',
-        'acceso_configuracion_detalle' => 'Mapas y correo',
-        'acceso_organizacion_titulo' => 'Organización',
-        'acceso_organizacion_detalle' => 'Empresa, plan y facturación',
+        'col_cantidad' => 'Solicitudes',
+        'col_hectareas' => 'Hectáreas',
+        'col_region' => 'Región',
+        'col_abiertas' => 'Abiertas',
+        'col_en_curso' => 'En curso',
+        'col_cerradas' => 'Finalizadas',
+        'col_canceladas' => 'Canceladas o vencidas',
+        'col_total' => 'Total',
+        'region_sin_zona' => 'Sin zona',
+        'pendientes_titulo' => 'Pendiente de tu decisión',
+        'pendientes_vacio' => 'No hay nada pendiente. Cuando un proveedor, un dron, un documento o una disputa necesite tu decisión, aparecerá aquí.',
+        'pendientes_ver' => 'Revisar',
+        'pendiente' => [
+            'proveedores' => 'Proveedores por aprobar',
+            'pilotos' => 'Pilotos por aprobar',
+            'auxiliares' => 'Auxiliares por aprobar',
+            'drones' => 'Drones por aprobar',
+            'fotos_de_dron' => 'Fotos de dron por revisar',
+            'documentos' => 'Documentos por revisar',
+            'calificaciones' => 'Calificaciones en moderación',
+            'disputas' => 'Disputas abiertas',
+        ],
+        'vacio_titulo' => 'Todavía no hay solicitudes',
+        'vacio_detalle' => 'Cuando un cliente publique una solicitud, verás aquí cómo avanza por estado y por región.',
+        'sin_permiso_titulo' => 'No tienes pantallas de mercado habilitadas',
+        'sin_permiso_detalle' => 'Tu rol activo no incluye el tablero. Usa el menú lateral para ir a tus pantallas.',
     ],
 
     // HU-45 (tarea 39): alta y mantenimiento de usuarios internos del panel,

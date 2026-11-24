@@ -340,9 +340,7 @@ final class UsuariosController
             'vacioDetalle' => $usuario->persona_id === null
                 ? __('seguridad.usuarios.aside_persona_vacio_detalle')
                 : __('seguridad.usuarios.aside_persona_baja_detalle'),
-            'acciones' => $ficha !== null
-                ? [['label' => __('seguridad.usuarios.aside_persona_accion'), 'href' => route('panel.personas.index', ['q' => $ficha->nombre]), 'icono' => 'list']]
-                : [],
+            'acciones' => [],
         ];
     }
 

@@ -30,7 +30,7 @@ $raizProyecto = dirname(__DIR__, 2);
 /**
  * Todo `.blade.php` bajo `app/Dominios/<Módulo>/Infraestructura/Http/Views/pages`.
  * `ruta` es la forma en que se nombra en la lista de pendientes:
- * `<Módulo>/<carpeta>/<archivo>` (p. ej. `Mantenimiento/baterias/index.blade.php`).
+ * `<Módulo>/<carpeta>/<archivo>` (p. ej. `Solicitudes/zonas/index.blade.php`).
  *
  * @return list<array{ruta: string, modulo: string, directorio: string, archivo: string, absoluta: string}>
  */
@@ -165,9 +165,7 @@ function panelHomogeneoPantallas(string $raiz): array
  */
 function panelHomogeneoMaquinasConFicha(): array
 {
-    return [
-        'TransicionesEquipoTrabajo' => 'Personal/cuadrillas',
-    ];
+    return [];
 }
 
 /**
@@ -178,6 +176,7 @@ function panelHomogeneoMaquinasConFicha(): array
 function panelHomogeneoMaquinasSinFicha(): array
 {
     return [
+        'TransicionesEquipoTrabajo' => 'el panel ya no administra equipos de trabajo',
         'TransicionesVersionApk' => 'solo listado; badge y acciones de fila con el tono del estado',
         'TransicionesActa' => 'se valida desde pantallas propias',
         'TransicionesSesion' => 'se valida desde pantallas propias',
@@ -185,7 +184,7 @@ function panelHomogeneoMaquinasSinFicha(): array
         'TransicionesAprobacion' => 'la aprobación se resuelve con acciones de la ficha y de la cola, con motivo en un modal',
         'TransicionesTrabajo' => 'los trabajos nacen en la app de campo; el panel los consulta y los da de baja, no los edita',
         'TransicionesSolicitud' => 'la crea el cliente desde la app; el panel solo la consulta y la cancela con motivo en un modal',
-        'TransicionesOferta' => 'las genera el motor de asignación; el panel las consulta y asigna a mano, con motivo en un modal',
+        'TransicionesOferta' => 'las generan el cliente y el proveedor al negociar; el panel las consulta y cierra la negociación de un proveedor con motivo en un modal',
         'TransicionesCalificacion' => 'las escriben los clientes y los proveedores desde la app; el panel las modera (ocultar o dejar visible) con causa y motivo en un modal',
         'TransicionesDisputa' => 'las abren las partes desde la app; el panel las toma, media y resuelve con resultado, reembolso y motivo en un modal',
     ];
@@ -219,10 +218,8 @@ function panelHomogeneoMaquinasExistentes(string $raiz): array
 /**
  * Directorios cuyo LISTADO y/o FORMULARIO es la pantalla de referencia (plan
  * §1). Un directorio puede ser referencia de esto sin serlo de su ficha
- * (arquetipo Detalle) — `Personal/cuadrillas` es la referencia de "tabla de
- * detalle con paginación dentro del formulario", pero su `show.blade.php`
- * todavía no sigue el arquetipo Detalle (tarea 125): ver
- * `panelHomogeneoReferenciasFicha()`, que es la lista aparte para eso.
+ * (arquetipo Detalle) — ver `panelHomogeneoReferenciasFicha()`,
+ * que es la lista aparte para eso.
  *
  * @return list<string>
  */
@@ -231,7 +228,6 @@ function panelHomogeneoReferencias(): array
     return [
         'Proveedores/proveedores',
         'Solicitudes/solicitudes',
-        'Personal/cuadrillas',
     ];
 }
 
@@ -770,10 +766,8 @@ test('el descubrimiento encuentra las pantallas de referencia y deja afuera las 
         ->toContain('Solicitudes/solicitudes/index.blade.php')
         ->toContain('Solicitudes/solicitudes/show.blade.php')
         ->toContain('Proveedores/proveedores/index.blade.php')
-        ->toContain('Mantenimiento/baterias/_formulario.blade.php')
-        ->toContain('Operaciones/trabajos/index.blade.php')
-        ->toContain('Operaciones/trabajos/show.blade.php')
-        ->toContain('Personal/personas/desempeno.blade.php')
+        ->toContain('Solicitudes/zonas/_formulario.blade.php')
+        ->toContain('Solicitudes/clientes/show.blade.php')
         ->not->toContain('Seguridad/roles/index.blade.php')
         ->not->toContain('Seguridad/usuarios/create.blade.php')
         ->not->toContain('Portal/actas/index.blade.php');
@@ -1111,22 +1105,6 @@ test('las reglas de formulario detectan cada incumplimiento', function () {
     $flashSuelto = str_replace('x-molecules.alert-strip', 'div', PANEL_HOMOGENEO_FORMULARIO_CONFORME);
 
     expect(panelHomogeneoReglasSinteticas('formulario', $flashSuelto, ['edit.blade.php' => '']))->toBe(['flash']);
-});
-
-test('un objeto con máquina de estados y ficha de edición debe mostrar los pasos', function () {
-    // `Personal/cuadrillas` está en la tabla de máquinas con ficha de edición.
-    expect(panelHomogeneoReglasSinteticas('formulario', PANEL_HOMOGENEO_FORMULARIO_CONFORME, ['edit.blade.php' => ''], 'Personal', 'cuadrillas'))
-        ->toBe(['step-arrow']);
-
-    $conPasos = str_replace('</x-organisms.page-header>', '', PANEL_HOMOGENEO_FORMULARIO_CONFORME);
-    $conPasos = str_replace('<x-molecules.form-layout>', "<x-molecules.step-arrow :steps=\"\$pasos\" />\n<x-molecules.form-layout>", $conPasos);
-
-    expect(panelHomogeneoReglasSinteticas('formulario', $conPasos, ['edit.blade.php' => ''], 'Personal', 'cuadrillas'))->toBe([]);
-
-    // Los pasos pueden venir de un parcial que el formulario incluye.
-    $conParcial = str_replace('<x-molecules.form-layout>', "@include('personal::pages.cuadrillas._pasos')\n<x-molecules.form-layout>", PANEL_HOMOGENEO_FORMULARIO_CONFORME);
-
-    expect(panelHomogeneoReglasSinteticas('formulario', $conParcial, ['edit.blade.php' => '', '_pasos.blade.php' => '<x-molecules.step-arrow :steps="$pasos" />'], 'Personal', 'cuadrillas'))->toBe([]);
 });
 
 const PANEL_HOMOGENEO_FICHA_CONFORME = <<<'BLADE'

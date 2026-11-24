@@ -4,6 +4,7 @@ namespace App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
+use App\Dominios\Negociacion\Contratos\LecturaNegociacionParaPanel;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Contratos\LecturaCuentas;
 use App\Dominios\Solicitudes\Aplicacion\CancelarSolicitud;
@@ -20,7 +21,8 @@ use Illuminate\View\View;
 
 /**
  * Panel de solicitudes de servicio (ADR 0027): `GET /panel/solicitudes` (cola y
- * seguimiento), `GET /panel/solicitudes/{solicitud}` (ficha con su historial) y
+ * seguimiento), `GET /panel/solicitudes/{solicitud}` (ficha con su historial, sus
+ * negociaciones, el chat, las fotos y la última ubicación del piloto) y
  * `POST /panel/solicitudes/{solicitud}/cancelar` (soporte cancela con motivo).
  * El cliente las crea desde la app; el panel solo las consulta y las cancela.
  *
@@ -32,6 +34,8 @@ final class SolicitudesController
     private const PERMISO_VER = 'solicitudes.solicitud.ver';
 
     private const PERMISO_CANCELAR = 'solicitudes.solicitud.cancelar';
+
+    private const PERMISO_INTERVENIR = 'solicitudes.solicitud.intervenir';
 
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
@@ -67,7 +71,7 @@ final class SolicitudesController
         ]);
     }
 
-    public function show(Request $request, SolicitudServicio $solicitud, LecturaCuentas $cuentas, LecturaContextoSolicitudes $contexto): View
+    public function show(Request $request, SolicitudServicio $solicitud, LecturaCuentas $cuentas, LecturaContextoSolicitudes $contexto, LecturaNegociacionParaPanel $negociacion): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
@@ -78,6 +82,8 @@ final class SolicitudesController
             ...$cascara,
             'solicitud' => $solicitud,
             'puedeCancelar' => $this->autorizacion->tienePermiso($request, self::PERMISO_CANCELAR) && $solicitud->estado->admiteCancelacion(),
+            'puedeIntervenir' => $this->autorizacion->tienePermiso($request, self::PERMISO_INTERVENIR) && $solicitud->estado->enMercado(),
+            'negocia' => $negociacion->deLaSolicitud($solicitud->id),
             'lineaDeTiempo' => $this->lineaDeTiempo($solicitud, $cuentas, $cascara['zonaHoraria'] ?? null),
             'contexto' => $contexto->porIds([$solicitud->id])[$solicitud->id] ?? null,
         ]);

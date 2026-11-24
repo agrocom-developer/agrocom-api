@@ -32,6 +32,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon $vence_en
  * @property Carbon|null $respondida_en
  * @property string|null $distancia_km
+ * @property string|null $motivo
  */
 class Oferta extends ModeloDominio
 {

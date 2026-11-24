@@ -12,9 +12,8 @@ use Illuminate\Http\Request;
  * Al aviso solo se le guarda el recurso; la URL se resuelve acá, al abrir,
  * contra el ROL ACTIVO de la sesión (invariante 10): si ese rol puede ver el
  * recurso, va a él; si no, cae en la primera pantalla que sí puede ver
- * (`primerDestinoVisible`), nunca en un 403. Un piloto que recibe un
- * aviso de un trabajo cerrado no tiene `operaciones.trabajo.ver`: aterriza en
- * su tablero.
+ * (`primerDestinoVisible`), nunca en un 403. Un rol sin permiso
+ * sobre el recurso aterriza en su primera pantalla visible.
  *
  * Es el único lugar que conoce las rutas y los permisos de los recursos de los
  * demás módulos; el aviso mismo no sabe nada de ellos. El click nunca concede
@@ -27,7 +26,8 @@ final class DestinoDeNotificacion
     public function url(Request $request, Notificacion $notificacion): string
     {
         [$ruta, $permiso, $conId] = match ($notificacion->recurso_tipo) {
-            RecursoNotificable::Trabajo => ['panel.trabajos.detalle', 'operaciones.trabajo.ver', true],
+            // El trabajo ya no tiene pantalla en el panel: el aviso cae en la primera pantalla visible.
+            RecursoNotificable::Trabajo => [null, null, false],
             RecursoNotificable::Proveedor => ['panel.proveedores.show', 'proveedores.proveedor.ver', true],
             RecursoNotificable::Piloto => ['panel.pilotos.show', 'proveedores.piloto.ver', true],
             RecursoNotificable::Auxiliar => ['panel.auxiliares.show', 'proveedores.auxiliar.ver', true],
@@ -36,11 +36,10 @@ final class DestinoDeNotificacion
             RecursoNotificable::Documento => ['panel.documentos.index', 'proveedores.documento.ver', false],
             RecursoNotificable::Solicitud => ['panel.solicitudes.show', 'solicitudes.solicitud.ver', true],
             RecursoNotificable::Disputa => ['panel.disputas.show', 'disputas.disputa.ver', true],
-            // Un cliente no tiene ficha propia en el panel: el aviso lleva a la cola de solicitudes.
-            RecursoNotificable::Cliente => ['panel.solicitudes.index', 'solicitudes.solicitud.ver', false],
+            RecursoNotificable::Cliente => ['panel.clientes.show', 'solicitudes.cliente.ver', true],
         };
 
-        if ($this->autorizacion->tienePermiso($request, $permiso)) {
+        if ($ruta !== null && $this->autorizacion->tienePermiso($request, $permiso)) {
             return $conId ? route($ruta, $notificacion->recurso_id) : route($ruta);
         }
 
