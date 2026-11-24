@@ -188,6 +188,7 @@ function panelHomogeneoMaquinasSinFicha(): array
         'TransicionesSesion' => 'se valida desde pantallas propias',
         'TransicionesDocumento' => 'se revisa desde la cola de documentos, con motivo en el rechazo',
         'TransicionesAprobacion' => 'la aprobación se resuelve con acciones de la ficha y de la cola, con motivo en un modal',
+        'TransicionesSolicitud' => 'la crea el cliente desde la app; el panel solo la consulta y la cancela con motivo en un modal',
     ];
 }
 
