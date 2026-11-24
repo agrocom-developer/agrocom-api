@@ -1,8 +1,6 @@
 <?php
 
-use App\Dominios\Comercial\Contratos\Eventos\ContratoCreado;
-use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaContratoCreado;
-use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaOrdenTrabajoCreada;
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaProveedorRegistrado;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaTrabajoCerrado;
 use App\Dominios\Notificaciones\Aplicacion\ReglasDeNotificacion;
 use App\Dominios\Notificaciones\Aplicacion\ResolverDestinatarios;
@@ -12,7 +10,6 @@ use App\Dominios\Notificaciones\Dominio\RecursoNotificable;
 use App\Dominios\Notificaciones\Dominio\ReglaNotificacion;
 use App\Dominios\Notificaciones\Dominio\RolDestinatario;
 use App\Dominios\Notificaciones\Dominio\TipoNotificacion;
-use App\Dominios\Operaciones\Contratos\Eventos\OrdenTrabajoCreada;
 use App\Dominios\Operaciones\Contratos\Eventos\TrabajoCerrado;
 use App\Dominios\Personal\Contratos\DatosIntegranteEquipo;
 use App\Dominios\Personal\Contratos\LecturaEquipoTrabajo;
@@ -34,36 +31,14 @@ $raizProyecto = dirname(__DIR__, 2);
 
 // ── Las reglas: qué se dice, a quién y a qué recurso ─────────────────────────
 
-test('contrato creado avisa al rol encargado de operaciones y lleva al contrato', function () {
-    $armada = (new ReglaContratoCreado)->armar(new ContratoCreado(12, 4, 'Colonia Menonita', '1250.5'));
-
-    expect($armada->tipo)->toBe(TipoNotificacion::ContratoCreado)
-        ->and($armada->claveEvento)->toBe('contrato_creado:12')
-        ->and($armada->recurso)->toBe(RecursoNotificable::Contrato)
-        ->and($armada->recursoId)->toBe(12)
-        ->and($armada->parametros)->toBe(['cliente' => 'Colonia Menonita', 'hectareas' => '1.250,50'])
-        ->and($armada->destinatarios)->toEqual([Destinatario::rol(RolDestinatario::EncargadoOperaciones)]);
-});
-
-test('orden de trabajo creada avisa a cada equipo asignado y lleva a la orden de trabajo', function () {
-    $armada = (new ReglaOrdenTrabajoCreada)->armar(new OrdenTrabajoCreada(7, 3, 2, [1, 4], '140'));
-
-    expect($armada->tipo)->toBe(TipoNotificacion::OrdenTrabajoCreada)
-        ->and($armada->claveEvento)->toBe('orden_trabajo_creada:7')
-        ->and($armada->recurso)->toBe(RecursoNotificable::OrdenTrabajo)
-        ->and($armada->recursoId)->toBe(7)
-        ->and($armada->parametros)->toBe(['orden' => 3, 'aplicacion' => 2, 'hectareas' => '140,00'])
-        ->and($armada->destinatarios)->toEqual([Destinatario::equipo(1), Destinatario::equipo(4)]);
-});
-
 test('trabajo cerrado avisa a jefe de campo y a encargado de operaciones, y lleva al trabajo', function () {
-    $armada = (new ReglaTrabajoCerrado)->armar(new TrabajoCerrado(9, 3, 7, 2, '12.5'));
+    $armada = (new ReglaTrabajoCerrado)->armar(new TrabajoCerrado(9, 3, '12.5'));
 
     expect($armada->tipo)->toBe(TipoNotificacion::TrabajoCerrado)
         ->and($armada->claveEvento)->toBe('trabajo_cerrado:9')
         ->and($armada->recurso)->toBe(RecursoNotificable::Trabajo)
         ->and($armada->recursoId)->toBe(9)
-        ->and($armada->parametros)->toBe(['orden' => 3, 'aplicacion' => 2, 'hectareas' => '12,50'])
+        ->and($armada->parametros)->toBe(['solicitud' => 3, 'hectareas' => '12,50'])
         ->and($armada->destinatarios)->toEqual([
             Destinatario::rol(RolDestinatario::JefeCampo),
             Destinatario::rol(RolDestinatario::EncargadoOperaciones),
@@ -71,7 +46,7 @@ test('trabajo cerrado avisa a jefe de campo y a encargado de operaciones, y llev
 });
 
 test('el dueño no recibe el aviso de trabajo cerrado (ADR 0025, punto 10: es el más frecuente)', function () {
-    $armada = (new ReglaTrabajoCerrado)->armar(new TrabajoCerrado(9, 3, null, 2, '12'));
+    $armada = (new ReglaTrabajoCerrado)->armar(new TrabajoCerrado(9, 3, '12'));
 
     expect($armada->destinatarios)->not->toContainEqual(Destinatario::rol(RolDestinatario::Dueno));
 });
@@ -79,9 +54,9 @@ test('el dueño no recibe el aviso de trabajo cerrado (ADR 0025, punto 10: es el
 test('la identidad del hecho es estable: el mismo hecho da la misma clave y hechos distintos, claves distintas', function () {
     $regla = new ReglaTrabajoCerrado;
 
-    $a = $regla->armar(new TrabajoCerrado(9, 3, 7, 2, '12.5'));
-    $otraVez = $regla->armar(new TrabajoCerrado(9, 3, 7, 2, '12.5'));
-    $otroTrabajo = $regla->armar(new TrabajoCerrado(10, 3, 7, 2, '12.5'));
+    $a = $regla->armar(new TrabajoCerrado(9, 3, '12.5'));
+    $otraVez = $regla->armar(new TrabajoCerrado(9, 3, '12.5'));
+    $otroTrabajo = $regla->armar(new TrabajoCerrado(10, 3, '12.5'));
 
     expect($otraVez->claveEvento)->toBe($a->claveEvento)
         ->and($otroTrabajo->claveEvento)->not->toBe($a->claveEvento);
@@ -91,7 +66,7 @@ test('la identidad del hecho es estable: el mismo hecho da la misma clave y hech
 });
 
 test('una regla rechaza un evento que no es el suyo', function () {
-    (new ReglaContratoCreado)->armar(new TrabajoCerrado(1, 1, null, 1, '1'));
+    (new ReglaTrabajoCerrado)->armar(new stdClass);
 })->throws(InvalidArgumentException::class);
 
 test('el formato de hectáreas redondea al centésimo con decimales exactos, sin float en el cálculo', function (string $entrada, string $esperado) {
@@ -113,16 +88,15 @@ test('el formato de hectáreas redondea al centésimo con decimales exactos, sin
 // ── El registro de reglas ────────────────────────────────────────────────────
 
 test('el registro indexa cada regla por su evento y devuelve nulo para un evento sin regla', function () {
-    $registro = new ReglasDeNotificacion([new ReglaContratoCreado, new ReglaTrabajoCerrado]);
+    $registro = new ReglasDeNotificacion([new ReglaTrabajoCerrado]);
 
-    expect($registro->para(new ContratoCreado(1, 1, 'X', '1')))->toBeInstanceOf(ReglaContratoCreado::class)
-        ->and($registro->para(new TrabajoCerrado(1, 1, null, 1, '1')))->toBeInstanceOf(ReglaTrabajoCerrado::class)
-        ->and($registro->para(new OrdenTrabajoCreada(1, 1, 1, [1], '1')))->toBeNull()
-        ->and($registro->eventos())->toBe([ContratoCreado::class, TrabajoCerrado::class]);
+    expect($registro->para(new TrabajoCerrado(1, 1, '1')))->toBeInstanceOf(ReglaTrabajoCerrado::class)
+        ->and($registro->para(new stdClass))->toBeNull()
+        ->and($registro->eventos())->toBe([TrabajoCerrado::class]);
 });
 
 test('dos reglas para el mismo evento se rechazan al armar el registro', function () {
-    new ReglasDeNotificacion([new ReglaContratoCreado, new ReglaContratoCreado]);
+    new ReglasDeNotificacion([new ReglaTrabajoCerrado, new ReglaTrabajoCerrado]);
 })->throws(LogicException::class);
 
 // ── Convertir roles, personas y equipos en cuentas ───────────────────────────
@@ -266,9 +240,7 @@ test('cada tipo de aviso tiene su texto en lang/es/notificaciones.php y usa solo
     $catalogo = require $raizProyecto.'/lang/es/notificaciones.php';
 
     $parametrosQueEntregaCadaRegla = [
-        'contrato_creado' => ['cliente', 'hectareas'],
-        'orden_trabajo_creada' => ['orden', 'aplicacion', 'hectareas'],
-        'trabajo_cerrado' => ['orden', 'aplicacion', 'hectareas'],
+        'trabajo_cerrado' => ['solicitud', 'hectareas'],
         // Marketplace (ADR 0036): un solo evento de aprobación reparte seis tipos.
         'sujeto_aprobado' => ['sujeto', 'nombre', 'motivo'],
         'sujeto_rechazado' => ['sujeto', 'nombre', 'motivo'],
@@ -320,14 +292,14 @@ test('cada recurso de un aviso tiene su valor permitido por el CHECK de la migra
 // ── Los eventos son DTO de primitivos que se anuncian al confirmar ───────────
 
 arch('los eventos de dominio de la primera cadena son DTO readonly que se anuncian al confirmar la transacción')
-    ->expect([ContratoCreado::class, OrdenTrabajoCreada::class, TrabajoCerrado::class])
+    ->expect([TrabajoCerrado::class])
     ->toBeReadonly()
     ->toImplement(ShouldDispatchAfterCommit::class)
     ->not->toUse('Illuminate\Database');
 
 test('cada regla atiende un evento y todas las reglas del proveedor tienen un evento distinto', function () {
-    $reglas = [new ReglaContratoCreado, new ReglaOrdenTrabajoCreada, new ReglaTrabajoCerrado];
+    $reglas = [new ReglaTrabajoCerrado, new ReglaProveedorRegistrado];
     $eventos = array_map(static fn (ReglaNotificacion $r): string => $r->evento(), $reglas);
 
-    expect(array_unique($eventos))->toHaveCount(3);
+    expect(array_unique($eventos))->toHaveCount(2);
 });

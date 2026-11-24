@@ -21,6 +21,15 @@ interface LecturaProveedores
     public function auxiliar(int $id): ?DatosAuxiliar;
 
     /**
+     * Ids de los registros de piloto y de auxiliar de una cuenta (una cuenta
+     * puede ser ambos). El equipo de flota los referencia por esos ids; la app
+     * de campo conoce a la persona por su cuenta.
+     *
+     * @return array{pilotos: list<int>, auxiliares: list<int>}
+     */
+    public function registrosDeCuenta(int $usuarioId): array;
+
+    /**
      * Pilotos vivos de un proveedor.
      *
      * @return list<DatosPiloto>

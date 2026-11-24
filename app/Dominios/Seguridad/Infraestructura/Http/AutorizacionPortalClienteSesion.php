@@ -16,14 +16,6 @@ use Illuminate\Http\Request;
  */
 final class AutorizacionPortalClienteSesion implements AutorizacionPortalCliente
 {
-    public function contratoId(Request $request): ?int
-    {
-        /** @var SecUser|null $usuario */
-        $usuario = $request->user('cliente');
-
-        return $usuario?->contrato_id;
-    }
-
     /** @return array<string, mixed> */
     public function cascara(Request $request): array
     {

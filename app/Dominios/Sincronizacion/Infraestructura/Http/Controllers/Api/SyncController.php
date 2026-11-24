@@ -30,8 +30,7 @@ use OpenApi\Attributes as OA;
         .'distinto del `uuid_cliente` de apertura del trabajo/sesión que referencian. Trabajo dado de '
         .'baja por el panel mientras se volaba (2/10/2026): lo ya en curso se registra igual — '
         .'`cierre_trabajo`, y `cierre_sesion`/`condiciones`/`incidencia`/`recarga` de una sesión que ya '
-        .'existía, con los límites de su Orden de Trabajo —, el trabajo sigue dado de baja y no vuelve a '
-        .'`trabajos[]`; nada nuevo: `sesion`, `recepcion_caldo` y `evidencia_equipo` sobre ese trabajo se '
+        .'existía, con los límites con los que el equipo salió —, el trabajo sigue dado de baja; nada nuevo: `sesion`, `recepcion_caldo` y `evidencia_equipo` sobre ese trabajo se '
         .'rechazan con `trabajo_no_existe_aun`, y `mezcla` con el `trabajo_no_existe` de Mezclas. `recepcion_caldo` '
         .'(HU-10 redefinida por CR-01, tarea 18) registra volumen de caldo entregado por el cliente — '
         .'nunca su composición: eso es lo que ahora registra `mezcla` por separado (ver abajo), no '
@@ -45,22 +44,19 @@ use OpenApi\Attributes as OA;
         .'`POST /api/evidencias` con `tipo: foto_incidencia`. `recarga` (HU-13, tarea 23) registra cada '
         .'ciclo de cambio de batería/recarga de caldo durante el vuelo — temperatura de batería > 50°C '
         .'se persiste con `alerta_temperatura = true` sin rechazar el registro; independiente del evento '
-        .'`mezcla` (sin vínculo entre ambos en esta tarea). `estadia_entrada`/`estadia_salida` (HU-51, tarea 74) registran '
-        .'cuándo un equipo de trabajo llega y se va de una hacienda — sin `campania_id` (la estadía es '
-        .'del campo, no de una campaña) y sin verificación de pertenencia a una persona (es del equipo). '
-        .'`estadia_salida` referencia la estadía por el `uuid_cliente` de su `estadia_entrada`, igual '
-        .'criterio que `cierre_trabajo`/`cierre_sesion`. `evidencia_equipo` (HU-80, tarea 86) registra el '
+        .'`mezcla` (sin vínculo entre ambos en esta tarea). `trabajo` abre la ejecución de una solicitud '
+        .'de servicio aceptada: referencia la `solicitud_id` del servicio asignado del catálogo (ADR 0037) y se '
+        .'rechaza si la solicitud no tiene equipo asignado o ya terminó; al abrirse el primero, la solicitud '
+        .'pasa a `en_ejecucion`, y al cerrarse los trabajos que cubren lo pedido, a `ejecutada`. `evidencia_equipo` (HU-80, tarea 86) registra el '
         .'"Reporte de Equipos": horas de vuelo declaradas del dron y las tres fotos de chequeo (control, '
         .'ciclo de batería y balanceo, dron limpio), cada una referenciada por `uuid_cliente` a una '
         .'evidencia ya subida por `POST /api/evidencias` — las tres son obligatorias, falta cualquiera y '
         .'se rechaza el registro completo.',
     required: ['tipo', 'uuid_cliente'],
     properties: [
-        new OA\Property(property: 'tipo', type: 'string', enum: ['trabajo', 'recepcion_caldo', 'evidencia_equipo', 'mezcla', 'sesion', 'condiciones', 'incidencia', 'recarga', 'cierre_trabajo', 'cierre_sesion', 'estadia_entrada', 'estadia_salida'], example: 'trabajo'),
+        new OA\Property(property: 'tipo', type: 'string', enum: ['trabajo', 'recepcion_caldo', 'evidencia_equipo', 'mezcla', 'sesion', 'condiciones', 'incidencia', 'recarga', 'cierre_trabajo', 'cierre_sesion'], example: 'trabajo'),
         new OA\Property(property: 'uuid_cliente', type: 'string', example: 'a1b2c3d4-0000-4000-8000-000000000001'),
-        new OA\Property(property: 'orden_id', description: '`trabajo`: id de servidor de la orden (del pull de catálogo).', type: 'integer', example: 1),
-        new OA\Property(property: 'lote_id', description: '`trabajo`: id de servidor del lote (del pull de catálogo).', type: 'integer', example: 3),
-        new OA\Property(property: 'nro_aplicacion', description: '`trabajo`.', type: 'integer', example: 1),
+        new OA\Property(property: 'solicitud_id', description: '`trabajo`: id de servidor de la solicitud de servicio (`id` de `servicios_asignados` del pull de catálogo).', type: 'integer', example: 31),
         new OA\Property(
             property: 'trabajo_uuid_cliente',
             description: '`sesion`/`cierre_trabajo`/`recepcion_caldo`/`evidencia_equipo`/`mezcla`: `uuid_cliente` '
@@ -134,7 +130,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'humedad_pct', description: '`condiciones`.', type: 'string', example: '65.00'),
         new OA\Property(
             property: 'observacion_agronomo',
-            description: '`condiciones`: obligatoria junto con `firma_observacion` cuando alguna medición cae fuera de los límites EFECTIVOS del trabajo de la sesión (los mismos que entrega `TrabajoCatalogo`: los de su Orden de Trabajo o, en blanco, el default del sistema — viento > 17 km/h, temperatura > 30°C, humedad > 90%; la humedad mínima solo si la Orden de Trabajo la fija) — sin ambas, el registro se rechaza.',
+            description: '`condiciones`: obligatoria junto con `firma_observacion` cuando alguna medición cae fuera de los límites EFECTIVOS (los mismos que entrega `limites` del pull de catálogo — viento > 17 km/h, temperatura > 30°C, humedad > 90%; la humedad mínima solo si el sistema la fija) — sin ambas, el registro se rechaza.',
             type: 'string',
             nullable: true,
             example: null,
@@ -169,18 +165,6 @@ use OpenApi\Attributes as OA;
         ),
         new OA\Property(property: 'hora_retraso', description: '`recarga`, opcional: cuándo ocurrió el retraso/rechazo por caldo.', type: 'string', format: 'date-time', nullable: true, example: null),
         new OA\Property(property: 'litros_combustible_generador', description: '`recarga`, opcional: litros de combustible cargados al generador en ese ciclo. Informativo, sin costeo (Fase 3). DECIMAL como string.', type: 'string', nullable: true, example: null),
-        new OA\Property(property: 'equipo_trabajo_id', description: '`estadia_entrada`: id de servidor del equipo de trabajo (del pull de catálogo).', type: 'integer', nullable: true, example: null),
-        new OA\Property(property: 'propiedad_id', description: '`estadia_entrada`: id de servidor de la propiedad (del pull de catálogo).', type: 'integer', nullable: true, example: null),
-        new OA\Property(property: 'entrada', description: '`estadia_entrada`: cuándo llegó el equipo.', type: 'string', format: 'date-time', nullable: true, example: null),
-        new OA\Property(property: 'observacion', description: '`estadia_entrada`, opcional: texto libre.', type: 'string', nullable: true, example: null),
-        new OA\Property(
-            property: 'estadia_uuid_cliente',
-            description: '`estadia_salida`: `uuid_cliente` de apertura de la estadía (el `estadia_entrada` que se cierra) — nunca el id de servidor, que puede no existir todavía si la entrada llegó en este mismo lote.',
-            type: 'string',
-            nullable: true,
-            example: null,
-        ),
-        new OA\Property(property: 'salida', description: '`estadia_salida`: cuándo se fue el equipo. Anterior o igual a la `entrada` de la estadía rechaza el registro.', type: 'string', format: 'date-time', nullable: true, example: null),
         new OA\Property(property: 'horas_vuelo_dron', description: '`evidencia_equipo`: horas de vuelo del dron declaradas por el auxiliar/piloto (no calculadas). DECIMAL como string (invariante 6).', type: 'string', nullable: true, example: null),
         new OA\Property(property: 'foto_control_uuid_cliente', description: '`evidencia_equipo`, obligatorio: `uuid_cliente` de una evidencia ya subida por `POST /api/evidencias` con `tipo: foto_control`.', type: 'string', nullable: true, example: null),
         new OA\Property(property: 'foto_ciclo_bateria_balanceo_uuid_cliente', description: '`evidencia_equipo`, obligatorio: `uuid_cliente` de una evidencia con `tipo: foto_ciclo_bateria_balanceo`.', type: 'string', nullable: true, example: null),

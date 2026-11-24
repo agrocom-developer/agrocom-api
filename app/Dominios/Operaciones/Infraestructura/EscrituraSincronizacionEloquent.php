@@ -6,10 +6,8 @@ use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use App\Dominios\Operaciones\Aplicacion\GenerarAlertaExcepcion;
 use App\Dominios\Operaciones\Aplicacion\MaquinaEstados\MaquinaEstadosSesion;
 use App\Dominios\Operaciones\Aplicacion\MaquinaEstados\MaquinaEstadosTrabajo;
-use App\Dominios\Operaciones\Contratos\AperturaEstadiaHacienda;
 use App\Dominios\Operaciones\Contratos\AperturaSesion;
 use App\Dominios\Operaciones\Contratos\AperturaTrabajo;
-use App\Dominios\Operaciones\Contratos\CierreEstadiaHacienda;
 use App\Dominios\Operaciones\Contratos\CierreSesion;
 use App\Dominios\Operaciones\Contratos\CierreTrabajo;
 use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
@@ -20,7 +18,6 @@ use App\Dominios\Operaciones\Contratos\RegistroIncidencia;
 use App\Dominios\Operaciones\Contratos\RegistroRecarga;
 use App\Dominios\Operaciones\Contratos\RegistroRecepcionCaldo;
 use App\Dominios\Operaciones\Contratos\ResultadoSincronizacion;
-use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
 use App\Dominios\Operaciones\Dominio\EstadoTrabajo;
 use App\Dominios\Operaciones\Dominio\Excepciones\TransicionSesionNoPermitida;
@@ -28,16 +25,14 @@ use App\Dominios\Operaciones\Dominio\Excepciones\TransicionTrabajoNoPermitida;
 use App\Dominios\Operaciones\Dominio\LimitesEfectivos;
 use App\Dominios\Operaciones\Dominio\TipoEvidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Condiciones;
-use App\Dominios\Operaciones\Infraestructura\Eloquent\EstadiaHacienda;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Evidencia;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\EvidenciaEquipo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Incidencia;
-use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Recarga;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\RecepcionCaldo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
-use Carbon\CarbonImmutable;
+use App\Dominios\Solicitudes\Contratos\SolicitudParaTrabajo;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
@@ -69,47 +64,53 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
         private readonly MaquinaEstadosTrabajo $maquinaTrabajo,
         private readonly MaquinaEstadosSesion $maquinaSesion,
         private readonly GenerarAlertaExcepcion $alertas,
+        private readonly SolicitudParaTrabajo $solicitudes,
     ) {}
 
     /**
-     * Antes de aplicar (tarea 12, hallazgo 2), verifica que `orden_id` y
-     * `lote_id` formen un par legítimo: la orden debe existir, estar
-     * `Vigente`, y el `lote_id` declarado debe pertenecer a sus lotes
-     * (`ope_orden_lotes`, HU-92 tarea 107 — antes un único `lote_id` por
-     * orden). La espec (§4.3: "el trabajo no lleva piloto propio — un lote
-     * puede tener varios pilotos y drones por relevo, falla o logística")
-     * descarta que exista una noción de "lote del operario"; lo único
-     * verificable con lo que hay en el repo es que el par orden/lote sea
-     * consistente con el catálogo vigente que cualquier operario legítimo
-     * puede operar — un `lote_id` que no integra esa orden (o una orden ya
-     * consumida/vencida/emitida sin vigencia) no es algo que el operario
-     * pueda tocar, aunque ambos ids existan físicamente y la FK los acepte.
+     * El trabajo nace de una solicitud de servicio aceptada (ADR 0037): antes
+     * de aplicar se verifica que `solicitud_id` exista y tenga un equipo
+     * asignado (`asignada`, `en_camino`, `en_ejecucion` o `suspendida_por_clima`);
+     * una solicitud sin equipo o ya terminada no es algo que un operario pueda
+     * ejecutar, aunque el id exista físicamente y la FK lo acepte. La espec
+     * (§4.3: "el trabajo no lleva piloto propio — puede haber varios pilotos y
+     * drones por relevo, falla o logística") descarta una noción de "trabajo
+     * del operario": el catálogo ya entrega al operario solo los servicios de
+     * su equipo.
+     *
+     * Idempotencia (invariante 1 de CLAUDE.md): un reintento del mismo
+     * `uuid_cliente` es `duplicado` aunque la solicitud ya haya avanzado de
+     * estado (el trabajo se abrió y hasta se cerró), por eso se comprueba
+     * ANTES de mirar el estado de la solicitud; el `UNIQUE` parcial sigue siendo
+     * la garantía real contra la condición de carrera.
+     *
+     * Al abrirse el primer trabajo, la solicitud pasa a `en_ejecucion` (la
+     * máquina de estados de `Solicitudes`, por el contrato
+     * {@see SolicitudParaTrabajo}), en la misma transacción.
      */
     public function abrirTrabajo(AperturaTrabajo $datos): ResultadoSincronizacion
     {
-        $orden = OrdenAplicacion::query()->find($datos->ordenId);
-
-        if ($orden === null || $orden->estado !== EstadoOrdenAplicacion::Vigente) {
-            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.orden_lote_no_vigente'));
+        if (Trabajo::withTrashed()->where('uuid_cliente', $datos->uuidCliente)->exists()) {
+            return ResultadoSincronizacion::duplicado();
         }
 
-        $loteEsDeLaOrden = $orden->ordenLotes()->where('lote_id', $datos->loteId)->exists();
+        $solicitud = $this->solicitudes->datos($datos->solicitudId);
 
-        if (! $loteEsDeLaOrden) {
-            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.orden_lote_no_vigente'));
+        if ($solicitud === null || ! $solicitud->admiteTrabajo) {
+            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.solicitud_no_vigente'));
         }
 
         try {
             DB::transaction(function () use ($datos): void {
                 $this->maquinaTrabajo->abrir([
                     'uuid_cliente' => $datos->uuidCliente,
-                    'orden_id' => $datos->ordenId,
-                    'lote_id' => $datos->loteId,
-                    'nro_aplicacion' => $datos->nroAplicacion,
+                    'solicitud_id' => $datos->solicitudId,
                     'hectareas_declaradas' => $datos->hectareasDeclaradas,
                     'inicio' => $datos->inicio,
                     'fin' => $datos->fin,
                 ]);
+
+                $this->solicitudes->iniciarEjecucion($datos->solicitudId);
             });
         } catch (QueryException $excepcion) {
             return $this->resultadoDesdeExcepcion($excepcion, 'ope_trabajos');
@@ -173,7 +174,7 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
         // Trabajo con los que el equipo salió a volar — no contra los
         // defaults.
         $sesion = Sesion::query()
-            ->with(['trabajo' => fn ($trabajo) => $trabajo->withTrashed(), 'trabajo.ordenTrabajo'])
+            ->with(['trabajo' => fn ($trabajo) => $trabajo->withTrashed()])
             ->where('uuid_cliente', $datos->sesionUuidCliente)
             ->first();
 
@@ -544,6 +545,12 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
 
                 $this->maquinaTrabajo->cerrar($trabajo, $datos->uuidCliente, $datos->fin);
 
+                // La solicitud pasa a `ejecutada` cuando lo declarado en sus
+                // trabajos cerrados cubre lo pedido (ver `SolicitudParaTrabajo`).
+                if ($trabajo->solicitud_id !== null) {
+                    $this->solicitudes->registrarCobertura((int) $trabajo->solicitud_id, $this->hectareasCerradasDeLaSolicitud((int) $trabajo->solicitud_id));
+                }
+
                 return ResultadoSincronizacion::aplicado();
             });
         } catch (QueryException) {
@@ -654,136 +661,18 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
         $this->alertas->porSumaExcedidaSiCorresponde($trabajo);
     }
 
+    /** Hectáreas declaradas por los trabajos ya cerrados de la solicitud (decimal exacto). */
+    private function hectareasCerradasDeLaSolicitud(int $solicitudId): string
+    {
+        return (string) Trabajo::query()
+            ->where('solicitud_id', $solicitudId)
+            ->where('estado', EstadoTrabajo::Cerrado)
+            ->sum('hectareas_declaradas');
+    }
+
     private function sumaHectareasSesiones(int $trabajoId): string
     {
         return (string) Sesion::query()->where('trabajo_id', $trabajoId)->sum('hectareas_declaradas');
-    }
-
-    /**
-     * Estadía del equipo en una hacienda (HU-51, tarea 74): crea una fila
-     * nueva, mismo mecanismo de idempotencia que `abrirTrabajo()` — el
-     * `UNIQUE` parcial de `uuid_cliente` resuelve el reintento, nunca un
-     * `SELECT` previo. Un segundo `UNIQUE` parcial (`equipo_trabajo_id` con
-     * `salida IS NULL`) rechaza un `estadia_entrada` si el equipo ya tiene
-     * una estadía abierta — sin verificarlo antes, mismo criterio que el
-     * resto del contrato.
-     *
-     * `tipo_alojamiento` (19/9/2026): se persiste tal cual llega del DTO —
-     * `null` si la app de campo no lo trae todavía, ya validado contra el
-     * catálogo cerrado por `AperturaEstadiaHacienda::intentarDesdeArreglo()`
-     * (un valor desconocido nunca llega hasta acá, el registro se rechazó
-     * antes). Nada más del motor de sync cambia con este campo.
-     */
-    public function abrirEstadia(AperturaEstadiaHacienda $datos): ResultadoSincronizacion
-    {
-        try {
-            DB::transaction(function () use ($datos): void {
-                EstadiaHacienda::query()->create([
-                    'uuid_cliente' => $datos->uuidCliente,
-                    'equipo_trabajo_id' => $datos->equipoTrabajoId,
-                    'propiedad_id' => $datos->propiedadId,
-                    'entrada' => self::normalizarUtc($datos->entrada),
-                    'tipo_alojamiento' => $datos->tipoAlojamiento,
-                    'observacion' => $datos->observacion,
-                ]);
-            });
-        } catch (QueryException $excepcion) {
-            return $this->resultadoAperturaEstadiaDesdeExcepcion($excepcion, $datos->uuidCliente);
-        }
-
-        return ResultadoSincronizacion::aplicado();
-    }
-
-    /**
-     * Cierre de estadía (HU-51, tarea 74): MUTA una fila existente, mismo
-     * mecanismo de idempotencia que `cerrarTrabajo()`/`cerrarSesion()` (lock +
-     * comparar `cierre_uuid_cliente` antes de decidir). `entrada`/`salida`
-     * inválidas (salida anterior o igual a la entrada) se rechazan acá, antes
-     * del `save()` — el `CHECK` de la migración es solo una red de seguridad
-     * adicional para pgsql, no el mecanismo primario (no existe en SQLite,
-     * el motor de los tests).
-     */
-    public function cerrarEstadia(CierreEstadiaHacienda $datos): ResultadoSincronizacion
-    {
-        $estadiaId = EstadiaHacienda::query()->where('uuid_cliente', $datos->estadiaUuidCliente)->value('id');
-
-        if ($estadiaId === null) {
-            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.estadia_no_existe'));
-        }
-
-        try {
-            return DB::transaction(function () use ($estadiaId, $datos): ResultadoSincronizacion {
-                /** @var EstadiaHacienda $estadia */
-                $estadia = EstadiaHacienda::query()->whereKey($estadiaId)->lockForUpdate()->firstOrFail();
-
-                if ($estadia->salida !== null) {
-                    return $estadia->cierre_uuid_cliente === $datos->uuidCliente
-                        ? ResultadoSincronizacion::duplicado()
-                        : ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.estadia_ya_cerrada'));
-                }
-
-                $salida = self::normalizarUtc($datos->salida);
-
-                if ($salida->lessThanOrEqualTo($estadia->entrada)) {
-                    return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.salida_anterior_a_entrada'));
-                }
-
-                $estadia->salida = $salida;
-                $estadia->cierre_uuid_cliente = $datos->uuidCliente;
-                $estadia->save();
-
-                return ResultadoSincronizacion::aplicado();
-            });
-        } catch (QueryException) {
-            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.estadia_cierre_invalido'));
-        }
-    }
-
-    /**
-     * `CarbonImmutable::parse()` conserva el offset original del string
-     * entrante (p. ej. `-04:00`) como huso horario del objeto, no lo
-     * normaliza — y `ope_estadias_hacienda.entrada`/`salida` son `dateTime`
-     * sin tz. Sin este `->utc()`, `format()` escribiría la hora LOCAL literal
-     * y una relectura posterior la interpretaría como UTC, corriendo el
-     * instante real por el valor del offset. Mismo mecanismo (y mismo fix)
-     * que `MaquinaEstadosTrabajo::normalizarUtc()`/`MaquinaEstadosActa::firmar()`
-     * (runs/24.md) — acá vive en esta clase y no en una máquina de estados
-     * porque `ope_estadias_hacienda` no tiene una (ver docblock de la
-     * migración).
-     */
-    private static function normalizarUtc(string $valor): CarbonImmutable
-    {
-        return CarbonImmutable::parse($valor)->utc();
-    }
-
-    /**
-     * Variante de {@see resultadoDesdeExcepcion()} para `ope_estadias_hacienda`
-     * (HU-51, tarea 74): esa tabla también tiene DOS índices únicos parciales
-     * que un mismo `INSERT` puede violar a la vez —un reintento EXACTO del
-     * mismo evento de entrada repite `uuid_cliente` Y dispara el de
-     * `equipo_trabajo_id` (la fila original, si no se cerró, sigue con
-     * `salida IS NULL`)— mismo criterio que
-     * {@see resultadoIncidenciaDesdeExcepcion()}: si el mensaje no matchea el
-     * patrón de `uuid_cliente` pero YA EXISTE una fila con ese valor, es igual
-     * `duplicado`.
-     */
-    private function resultadoAperturaEstadiaDesdeExcepcion(QueryException $excepcion, string $uuidCliente): ResultadoSincronizacion
-    {
-        $mensaje = $excepcion->getMessage();
-
-        if (str_contains($mensaje, 'ope_estadias_hacienda_uuid_cliente_unico') || str_contains($mensaje, 'ope_estadias_hacienda.uuid_cliente')) {
-            return ResultadoSincronizacion::duplicado();
-        }
-
-        if (EstadiaHacienda::query()->where('uuid_cliente', $uuidCliente)->exists()) {
-            return ResultadoSincronizacion::duplicado();
-        }
-
-        if (str_contains($mensaje, 'ope_estadias_hacienda_equipo_abierta_unico') || str_contains($mensaje, 'ope_estadias_hacienda.equipo_trabajo_id')) {
-            return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.equipo_con_estadia_abierta'));
-        }
-
-        return ResultadoSincronizacion::rechazado(Texto::de('operaciones.sync.registro_invalido'));
     }
 
     /**
@@ -864,7 +753,7 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
     }
 
     /**
-     * Mismo criterio que {@see resultadoAperturaEstadiaDesdeExcepcion()}:
+     * Mismo criterio que {@see resultadoIncidenciaDesdeExcepcion()}:
      * `ope_evidencias_equipo` tiene CUATRO índices únicos parciales
      * (`uuid_cliente` y los tres `foto_*_id`) que un mismo `INSERT` puede
      * violar A LA VEZ — un reintento EXACTO del mismo evento repite las

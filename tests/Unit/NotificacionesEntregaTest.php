@@ -1,6 +1,5 @@
 <?php
 
-use App\Dominios\Comercial\Contratos\Eventos\ContratoCreado;
 use App\Dominios\Compartido\Contratos\Eventos\EstadoDeAprobacionCambiado;
 use App\Dominios\Compartido\Dominio\Excepciones\BorradoFisicoNoPermitido;
 use App\Dominios\Compartido\Infraestructura\Eloquent\Bitacora;
@@ -21,10 +20,7 @@ use App\Dominios\Notificaciones\Infraestructura\DestinoDeNotificacion;
 use App\Dominios\Notificaciones\Infraestructura\Eloquent\Notificacion;
 use App\Dominios\Notificaciones\Infraestructura\EntregarNotificacionDelEvento;
 use App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Web\NotificacionesController;
-use App\Dominios\Operaciones\Contratos\Eventos\OrdenTrabajoCreada;
 use App\Dominios\Operaciones\Contratos\Eventos\TrabajoCerrado;
-use App\Dominios\Personal\Contratos\DatosIntegranteEquipo;
-use App\Dominios\Personal\Contratos\LecturaEquipoTrabajo;
 use App\Dominios\Proveedores\Contratos\Eventos\DocumentoPorVencer;
 use App\Dominios\Proveedores\Contratos\Eventos\DocumentoVencido;
 use App\Dominios\Proveedores\Contratos\Eventos\ProveedorRegistrado;
@@ -169,10 +165,10 @@ function ntfAviso(int $usuarioId, string $clave, array $extra = []): Notificacio
 {
     return Notificacion::create([
         'usuario_id' => $usuarioId,
-        'tipo' => TipoNotificacion::ContratoCreado,
+        'tipo' => TipoNotificacion::TrabajoCerrado,
         'clave_evento' => $clave,
         'parametros' => ['cliente' => 'Cliente', 'hectareas' => '10,00'],
-        'recurso_tipo' => RecursoNotificable::Contrato,
+        'recurso_tipo' => RecursoNotificable::Trabajo,
         'recurso_id' => 1,
         ...$extra,
     ]);
@@ -182,7 +178,7 @@ function ntfAviso(int $usuarioId, string $clave, array $extra = []): Notificacio
 
 test('el mismo evento repartido dos veces por el listener no genera avisos duplicados', function () {
     $encargado = ntfCuenta([ntfRol('encargado_operaciones')]);
-    $evento = new ContratoCreado(12, 4, 'Colonia Menonita', '100');
+    $evento = new TrabajoCerrado(12, 12, '100');
 
     event($evento);
     event($evento);
@@ -190,7 +186,7 @@ test('el mismo evento repartido dos veces por el listener no genera avisos dupli
     $avisos = Notificacion::query()->deUsuario($encargado->id)->get();
 
     expect($avisos)->toHaveCount(1)
-        ->and($avisos[0]->clave_evento)->toBe('contrato_creado:12');
+        ->and($avisos[0]->clave_evento)->toBe('trabajo_cerrado:12');
 });
 
 test('correr el caso de uso dos veces con el mismo evento deja las mismas filas: la segunda no crea nada', function () {
@@ -211,15 +207,15 @@ test('correr el caso de uso dos veces con el mismo evento deja las mismas filas:
 test('hechos distintos sí generan avisos distintos para la misma cuenta', function () {
     $cuenta = ntfCuenta([ntfRol('encargado_operaciones')]);
 
-    event(new ContratoCreado(1, 1, 'A', '1'));
-    event(new ContratoCreado(2, 1, 'B', '1'));
+    event(new TrabajoCerrado(1, 1, '1'));
+    event(new TrabajoCerrado(2, 2, '1'));
 
     expect(Notificacion::query()->deUsuario($cuenta->id)->count())->toBe(2);
 });
 
 test('un reintento no resucita ni duplica un aviso que la cuenta ya dio de baja', function () {
     $cuenta = ntfCuenta([ntfRol('encargado_operaciones')]);
-    $evento = new ContratoCreado(12, 4, 'Colonia', '100');
+    $evento = new TrabajoCerrado(12, 12, '100');
 
     event($evento);
     Notificacion::query()->deUsuario($cuenta->id)->firstOrFail()->delete();
@@ -232,21 +228,21 @@ test('un reintento no resucita ni duplica un aviso que la cuenta ya dio de baja'
 
 test('la base rechaza un aviso repetido para la misma cuenta y el mismo hecho, también si el original está dado de baja', function () {
     $cuenta = ntfCuenta();
-    $original = ntfAviso($cuenta->id, 'contrato_creado:1');
+    $original = ntfAviso($cuenta->id, 'trabajo_cerrado:1');
 
-    expect(fn () => ntfAviso($cuenta->id, 'contrato_creado:1'))->toThrow(UniqueConstraintViolationException::class);
+    expect(fn () => ntfAviso($cuenta->id, 'trabajo_cerrado:1'))->toThrow(UniqueConstraintViolationException::class);
 
     $original->delete();
 
-    expect(fn () => ntfAviso($cuenta->id, 'contrato_creado:1'))->toThrow(UniqueConstraintViolationException::class);
+    expect(fn () => ntfAviso($cuenta->id, 'trabajo_cerrado:1'))->toThrow(UniqueConstraintViolationException::class);
 });
 
 test('la misma clave de hecho para OTRA cuenta sí es un aviso distinto', function () {
     $uno = ntfCuenta();
     $otro = ntfCuenta();
 
-    ntfAviso($uno->id, 'contrato_creado:1');
-    ntfAviso($otro->id, 'contrato_creado:1');
+    ntfAviso($uno->id, 'trabajo_cerrado:1');
+    ntfAviso($otro->id, 'trabajo_cerrado:1');
 
     expect(Notificacion::query()->count())->toBe(2);
 });
@@ -266,16 +262,16 @@ test('si dos procesos se cruzan y el otro gana la carrera, el reparto lo toma co
         $otroProceso = true;
         DB::table('ntf_notificaciones')->insert([
             'usuario_id' => $cuenta->id,
-            'tipo' => 'contrato_creado',
-            'clave_evento' => 'contrato_creado:12',
-            'recurso_tipo' => 'contrato',
+            'tipo' => 'trabajo_cerrado',
+            'clave_evento' => 'trabajo_cerrado:12',
+            'recurso_tipo' => 'trabajo',
             'recurso_id' => 12,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
     });
 
-    $creadas = app(EntregarNotificacion::class)->ejecutar(new ContratoCreado(12, 4, 'Colonia', '100'));
+    $creadas = app(EntregarNotificacion::class)->ejecutar(new TrabajoCerrado(12, 12, '100'));
 
     expect($otroProceso)->toBeTrue()
         ->and($creadas)->toBe(0)
@@ -287,9 +283,9 @@ test('si dos procesos se cruzan y el otro gana la carrera, el reparto lo toma co
 test('una cuenta ve solo sus avisos: la lectura de la campana nunca incluye los de otra', function () {
     $ana = ntfCuenta();
     $beto = ntfCuenta();
-    ntfAviso($ana->id, 'contrato_creado:1');
-    ntfAviso($ana->id, 'contrato_creado:2');
-    ntfAviso($beto->id, 'contrato_creado:3');
+    ntfAviso($ana->id, 'trabajo_cerrado:1');
+    ntfAviso($ana->id, 'trabajo_cerrado:2');
+    ntfAviso($beto->id, 'trabajo_cerrado:3');
 
     $lectura = app(LecturaNotificaciones::class);
 
@@ -306,7 +302,7 @@ test('una cuenta ve solo sus avisos: la lectura de la campana nunca incluye los 
 test('abrir el aviso de otra cuenta responde como si no existiera y no lo marca leído', function () {
     $ana = ntfCuenta();
     $beto = ntfCuenta();
-    $deBeto = ntfAviso($beto->id, 'contrato_creado:1');
+    $deBeto = ntfAviso($beto->id, 'trabajo_cerrado:1');
 
     expect(fn () => app(AbrirNotificacion::class)->ejecutar($ana->id, $deBeto->id))->toThrow(ModelNotFoundException::class);
     // Y un id que no existe da exactamente lo mismo: no se distingue «es de otro» de «no existe».
@@ -317,7 +313,7 @@ test('abrir el aviso de otra cuenta responde como si no existiera y no lo marca 
 
 test('abrir el aviso propio lo marca leído una sola vez y no pisa la hora de la primera lectura', function () {
     $ana = ntfCuenta();
-    $aviso = ntfAviso($ana->id, 'contrato_creado:1');
+    $aviso = ntfAviso($ana->id, 'trabajo_cerrado:1');
 
     $this->travelTo(now()->setTime(10, 0));
     app(AbrirNotificacion::class)->ejecutar($ana->id, $aviso->id);
@@ -332,7 +328,7 @@ test('abrir el aviso propio lo marca leído una sola vez y no pisa la hora de la
 
 test('abrir un aviso con la vista «como otro usuario» activa no lo marca leído ni falla: el destino sigue alcanzable', function () {
     $ana = ntfCuenta();
-    $aviso = ntfAviso($ana->id, 'contrato_creado:1');
+    $aviso = ntfAviso($ana->id, 'trabajo_cerrado:1');
 
     ModoSoloLectura::activar();
 
@@ -349,9 +345,9 @@ test('abrir un aviso con la vista «como otro usuario» activa no lo marca leíd
 test('marcar todas como leídas afecta solo a la cuenta que lo pide', function () {
     $ana = ntfCuenta();
     $beto = ntfCuenta();
-    ntfAviso($ana->id, 'contrato_creado:1');
-    ntfAviso($ana->id, 'contrato_creado:2');
-    ntfAviso($beto->id, 'contrato_creado:3');
+    ntfAviso($ana->id, 'trabajo_cerrado:1');
+    ntfAviso($ana->id, 'trabajo_cerrado:2');
+    ntfAviso($beto->id, 'trabajo_cerrado:3');
 
     expect(app(MarcarTodasLeidas::class)->ejecutar($ana->id))->toBe(2)
         ->and(Notificacion::query()->deUsuario($ana->id)->sinLeer()->count())->toBe(0)
@@ -362,7 +358,7 @@ test('marcar todas como leídas afecta solo a la cuenta que lo pide', function (
 test('el controlador toma la cuenta de la sesión: el id de aviso de la petición no le da acceso a lo ajeno', function () {
     $ana = ntfCuenta();
     $beto = ntfCuenta();
-    $deBeto = ntfAviso($beto->id, 'contrato_creado:1');
+    $deBeto = ntfAviso($beto->id, 'trabajo_cerrado:1');
 
     $peticion = Request::create("/panel/notificaciones/{$deBeto->id}/abrir");
     $peticion->setUserResolver(static fn (?string $guard = null) => $guard === 'interno' ? $ana : null);
@@ -432,57 +428,6 @@ test('quedan fuera del reparto por rol: cuenta bloqueada, de portal, dada de baj
         ->and(app(LecturaUsuariosPorRol::class)->idsConRol('rol_que_no_existe'))->toBe([]);
 });
 
-test('el equipo asignado alcanza a los integrantes con cuenta de una orden de trabajo, y a nadie más', function () {
-    $piloto = ntfCuenta([ntfRol('piloto')], ['persona_id' => 40]);
-    $auxiliar = ntfCuenta([ntfRol('auxiliar')], ['persona_id' => 41]);
-    $ajeno = ntfCuenta([ntfRol('jefe_campo')], ['persona_id' => 42]);
-    // La persona 43 integra el equipo pero no tiene cuenta.
-
-    app()->instance(LecturaEquipoTrabajo::class, new class implements LecturaEquipoTrabajo
-    {
-        public function vigentesAFecha(string $fecha): array
-        {
-            return [];
-        }
-
-        public function porIds(array $ids): array
-        {
-            return [];
-        }
-
-        public function integrantesAFecha(int $equipoTrabajoId, string $fecha): array
-        {
-            return $equipoTrabajoId === 1
-                ? array_map(static fn (int $p): DatosIntegranteEquipo => new DatosIntegranteEquipo($p, $p, "P{$p}", 'piloto', '2026-01-01', null), [40, 41, 43])
-                : [];
-        }
-
-        public function equiposDePersonaAFecha(int $personaId, string $fecha): array
-        {
-            return [];
-        }
-
-        public function equiposHistoricosDePersona(int $personaId): array
-        {
-
-            return [];
-
-        }
-
-        public function recursosAFecha(int $equipoTrabajoId, string $fecha): array
-        {
-            return [];
-        }
-    });
-
-    event(new OrdenTrabajoCreada(7, 3, 2, [1], '140'));
-
-    expect(Notificacion::query()->deUsuario($piloto->id)->count())->toBe(1)
-        ->and(Notificacion::query()->deUsuario($auxiliar->id)->count())->toBe(1)
-        ->and(Notificacion::query()->deUsuario($ajeno->id)->count())->toBe(0)
-        ->and(Notificacion::query()->count())->toBe(2);
-});
-
 // ── 4. Un fallo no rompe el negocio; el autor no se avisa a sí mismo ────────
 
 test('un error al repartir se reporta pero nunca llega a quien anunció el hecho', function () {
@@ -492,7 +437,7 @@ test('un error al repartir se reporta pero nunca llega a quien anunció el hecho
     {
         public function evento(): string
         {
-            return ContratoCreado::class;
+            return TrabajoCerrado::class;
         }
 
         public function armar(object $evento): NotificacionArmada
@@ -506,7 +451,7 @@ test('un error al repartir se reporta pero nunca llega a quien anunció el hecho
         app(ResolverDestinatarios::class),
     ));
 
-    $listener->handle(new ContratoCreado(1, 1, 'A', '1'));
+    $listener->handle(new TrabajoCerrado(1, 1, '1'));
 
     Exceptions::assertReported(RuntimeException::class);
     expect(Notificacion::query()->count())->toBe(0);
@@ -520,7 +465,7 @@ test('quien dispara el hecho no se avisa a sí mismo, aunque tenga el rol', func
     Auth::guard('interno')->setUser($autor);
     Auth::shouldUse('interno');
 
-    event(new ContratoCreado(12, 4, 'Colonia', '100'));
+    event(new TrabajoCerrado(12, 12, '100'));
 
     expect(Notificacion::query()->deUsuario($autor->id)->count())->toBe(0)
         ->and(Notificacion::query()->deUsuario($colega->id)->count())->toBe(1);
@@ -529,15 +474,13 @@ test('quien dispara el hecho no se avisa a sí mismo, aunque tenga el rol', func
 test('sin nadie autenticado (una consola, un job) no se excluye a nadie', function () {
     $cuenta = ntfCuenta([ntfRol('encargado_operaciones')]);
 
-    event(new ContratoCreado(12, 4, 'Colonia', '100'));
+    event(new TrabajoCerrado(12, 12, '100'));
 
     expect(Notificacion::query()->deUsuario($cuenta->id)->count())->toBe(1);
 });
 
 test('el listener está registrado para cada evento que tiene regla, y para ninguno más', function () {
     $eventos = [
-        ContratoCreado::class,
-        OrdenTrabajoCreada::class,
         TrabajoCerrado::class,
         // Marketplace (ADR 0036).
         EstadoDeAprobacionCambiado::class,
@@ -554,63 +497,12 @@ test('el listener está registrado para cada evento que tiene regla, y para ning
 });
 
 test('sin nadie a quien avisar el hecho no crea nada ni falla', function () {
-    event(new ContratoCreado(12, 4, 'Colonia', '100'));
+    event(new TrabajoCerrado(12, 12, '100'));
 
     expect(Notificacion::query()->count())->toBe(0);
 });
 
 // ── Un destinatario roto no anula el aviso de los demás ────────────────────
-
-test('un equipo con datos rotos se reporta y no anula el aviso de los otros equipos de la misma orden de trabajo', function () {
-    $this->esperaErroresReportados = true;
-
-    $delEquipoSano = ntfCuenta([ntfRol('piloto')], ['persona_id' => 41]);
-
-    app()->instance(LecturaEquipoTrabajo::class, new class implements LecturaEquipoTrabajo
-    {
-        public function vigentesAFecha(string $fecha): array
-        {
-            return [];
-        }
-
-        public function porIds(array $ids): array
-        {
-            return [];
-        }
-
-        public function integrantesAFecha(int $equipoTrabajoId, string $fecha): array
-        {
-            // Como `LecturaEquipoTrabajoEloquent` con un integrante cuya persona se dio de baja.
-            if ($equipoTrabajoId === 1) {
-                throw new ErrorException('Attempt to read property "nombre" on null');
-            }
-
-            return [new DatosIntegranteEquipo(1, 41, 'P41', 'piloto', '2026-01-01', null)];
-        }
-
-        public function equiposDePersonaAFecha(int $personaId, string $fecha): array
-        {
-            return [];
-        }
-
-        public function equiposHistoricosDePersona(int $personaId): array
-        {
-
-            return [];
-
-        }
-
-        public function recursosAFecha(int $equipoTrabajoId, string $fecha): array
-        {
-            return [];
-        }
-    });
-
-    event(new OrdenTrabajoCreada(7, 3, 2, [1, 2], '100'));
-
-    Exceptions::assertReported(ErrorException::class);
-    expect(Notificacion::query()->deUsuario($delEquipoSano->id)->count())->toBe(1);
-});
 
 // ── El aviso sale al confirmar, no antes ni si se revierte ──────────────────
 
@@ -619,7 +511,7 @@ test('dentro de una transacción el aviso NO sale hasta que se confirma', functi
     $vistoAdentro = null;
 
     DB::transaction(function () use ($cuenta, &$vistoAdentro): void {
-        event(new ContratoCreado(12, 4, 'Colonia', '100'));
+        event(new TrabajoCerrado(12, 12, '100'));
 
         $vistoAdentro = Notificacion::query()->deUsuario($cuenta->id)->count();
     });
@@ -633,7 +525,7 @@ test('si la transacción se revierte, el hecho no se anuncia: ningún aviso de a
 
     try {
         DB::transaction(function (): void {
-            event(new ContratoCreado(12, 4, 'Colonia', '100'));
+            event(new TrabajoCerrado(12, 12, '100'));
 
             throw new RuntimeException('el alta falló después de anunciar');
         });
@@ -650,7 +542,7 @@ test('el aviso de una tanda anidada sale recién cuando confirma la transacción
 
     DB::transaction(function () use ($cuenta, &$visto): void {
         DB::transaction(function (): void {
-            event(new ContratoCreado(12, 4, 'Colonia', '100'));
+            event(new TrabajoCerrado(12, 12, '100'));
         });
 
         $visto[] = Notificacion::query()->deUsuario($cuenta->id)->count();
@@ -689,37 +581,24 @@ test('si falla la lectura de avisos, la cáscara del panel los reporta y sigue c
 
 test('la cáscara arma la campana con enlace, id y el texto ya traducido', function () {
     $cuenta = ntfCuenta([ntfRol('encargado_operaciones')]);
-    $aviso = ntfAviso($cuenta->id, 'contrato_creado:1', ['parametros' => ['cliente' => 'Colonia', 'hectareas' => '10,00']]);
+    $aviso = ntfAviso($cuenta->id, 'trabajo_cerrado:1', ['parametros' => ['solicitud' => '12', 'hectareas' => '10,00']]);
 
     $campana = (new ReflectionMethod(CascaraPanel::class, 'notificaciones'))->invoke(app(CascaraPanel::class), $cuenta, 1);
 
     expect($campana)->toHaveCount(1)
         ->and($campana[0])->toMatchArray([
             'id' => $aviso->id,
-            'icon' => 'description',
-            'title' => 'Contrato nuevo de Colonia (10,00 ha).',
+            'icon' => 'task_alt',
+            'title' => 'Se cerró un trabajo de 10,00 ha (solicitud #12).',
             'unread' => true,
             'href' => route('panel.notificaciones.abrir', $aviso->id),
         ]);
 });
 
-test('el texto del aviso de orden de trabajo aclara que las hectáreas son las de toda la tanda', function () {
-    $cuenta = ntfCuenta();
-    ntfAviso($cuenta->id, 'orden_trabajo_creada:1', [
-        'tipo' => TipoNotificacion::OrdenTrabajoCreada,
-        'recurso_tipo' => RecursoNotificable::OrdenTrabajo,
-        'parametros' => ['orden' => 3, 'aplicacion' => 2, 'hectareas' => '100,00'],
-    ]);
-
-    $titulo = app(LecturaNotificaciones::class)->recientesDe($cuenta->id, 1)[0]->titulo;
-
-    expect($titulo)->toBe('Tu cuadrilla tiene una orden de trabajo nueva: aplicación 2 de la orden #3 (100,00 ha en total).');
-});
-
 // ── 5. Soft delete y bitácora ───────────────────────────────────────────────
 
 test('el borrado físico de un aviso está bloqueado (invariante 8)', function () {
-    $aviso = ntfAviso(ntfCuenta()->id, 'contrato_creado:1');
+    $aviso = ntfAviso(ntfCuenta()->id, 'trabajo_cerrado:1');
 
     expect(fn () => $aviso->forceDelete())->toThrow(BorradoFisicoNoPermitido::class);
 });
@@ -727,7 +606,7 @@ test('el borrado físico de un aviso está bloqueado (invariante 8)', function (
 test('repartir un aviso y abrirlo dejan huella en la bitácora, sin que ningún caso de uso la llame (invariante 9)', function () {
     $cuenta = ntfCuenta([ntfRol('encargado_operaciones')]);
 
-    event(new ContratoCreado(12, 4, 'Colonia', '100'));
+    event(new TrabajoCerrado(12, 12, '100'));
     $aviso = Notificacion::query()->deUsuario($cuenta->id)->firstOrFail();
 
     expect(Bitacora::query()->where('tabla', 'ntf_notificaciones')->where('registro_id', $aviso->id)->where('accion', 'creado')->count())->toBe(1);
@@ -739,8 +618,8 @@ test('repartir un aviso y abrirlo dejan huella en la bitácora, sin que ningún 
 
 test('marcar todas como leídas deja una fila de bitácora por aviso, no un UPDATE masivo que se la salte', function () {
     $cuenta = ntfCuenta();
-    ntfAviso($cuenta->id, 'contrato_creado:1');
-    ntfAviso($cuenta->id, 'contrato_creado:2');
+    ntfAviso($cuenta->id, 'trabajo_cerrado:1');
+    ntfAviso($cuenta->id, 'trabajo_cerrado:2');
 
     app(MarcarTodasLeidas::class)->ejecutar($cuenta->id);
 
@@ -753,7 +632,7 @@ test('la autoría queda en la fila: quién disparó el hecho es created_by', fun
     Auth::guard('interno')->setUser($autor);
     Auth::shouldUse('interno');
 
-    event(new ContratoCreado(12, 4, 'Colonia', '100'));
+    event(new TrabajoCerrado(12, 12, '100'));
 
     expect(Notificacion::query()->deUsuario($destinatario->id)->firstOrFail()->created_by)->toBe($autor->id);
 });
@@ -763,11 +642,11 @@ test('la autoría queda en la fila: quién disparó el hecho es created_by', fun
 test('la lectura prioriza los no leídos: uno viejo sin leer no queda afuera por culpa de leídos más nuevos', function () {
     $cuenta = ntfCuenta();
     $this->travelTo(now()->subDays(3));
-    ntfAviso($cuenta->id, 'contrato_creado:1');            // el viejo, sin leer
+    ntfAviso($cuenta->id, 'trabajo_cerrado:1');            // el viejo, sin leer
     $this->travelTo(now()->addDays(3));
 
     foreach (range(2, 6) as $n) {
-        ntfAviso($cuenta->id, "contrato_creado:{$n}", ['leida_en' => now()]);   // cinco leídos nuevos
+        ntfAviso($cuenta->id, "trabajo_cerrado:{$n}", ['leida_en' => now()]);   // cinco leídos nuevos
     }
 
     $lectura = app(LecturaNotificaciones::class)->recientesDe($cuenta->id, 3);
@@ -779,26 +658,17 @@ test('la lectura prioriza los no leídos: uno viejo sin leer no queda afuera por
 test('la lectura respeta el tope, va del más nuevo al más viejo y devuelve el texto ya traducido y el ícono', function () {
     $cuenta = ntfCuenta();
     $this->travelTo(now()->subHours(2));
-    ntfAviso($cuenta->id, 'contrato_creado:1', ['parametros' => ['cliente' => 'Viejo', 'hectareas' => '1,00']]);
+    ntfAviso($cuenta->id, 'trabajo_cerrado:1', ['parametros' => ['solicitud' => '5', 'hectareas' => '1,00']]);
     $this->travelTo(now()->addHours(2));
-    ntfAviso($cuenta->id, 'contrato_creado:2', ['parametros' => ['cliente' => 'Nuevo', 'hectareas' => '2,00']]);
+    ntfAviso($cuenta->id, 'trabajo_cerrado:2', ['parametros' => ['solicitud' => '6', 'hectareas' => '2,00']]);
 
     $lectura = app(LecturaNotificaciones::class)->recientesDe($cuenta->id, 10);
 
-    expect($lectura[0]->titulo)->toBe('Contrato nuevo de Nuevo (2,00 ha).')
-        ->and($lectura[1]->titulo)->toBe('Contrato nuevo de Viejo (1,00 ha).')
-        ->and($lectura[0]->icono)->toBe('description')
+    expect($lectura[0]->titulo)->toBe('Se cerró un trabajo de 2,00 ha (solicitud #6).')
+        ->and($lectura[1]->titulo)->toBe('Se cerró un trabajo de 1,00 ha (solicitud #5).')
+        ->and($lectura[0]->icono)->toBe('task_alt')
         ->and(app(LecturaNotificaciones::class)->recientesDe($cuenta->id, 1))->toHaveCount(1)
         ->and(app(LecturaNotificaciones::class)->recientesDe($cuenta->id, 0))->toBe([]);
-});
-
-test('el nombre del cliente entra al texto tal cual, sin que sus «:» sean tomados por parámetros', function () {
-    $cuenta = ntfCuenta();
-    ntfAviso($cuenta->id, 'contrato_creado:1', ['parametros' => ['cliente' => 'Agro :hectareas S.A.', 'hectareas' => '5,00']]);
-
-    $titulo = app(LecturaNotificaciones::class)->recientesDe($cuenta->id, 1)[0]->titulo;
-
-    expect($titulo)->toBe('Contrato nuevo de Agro :hectareas S.A. (5,00 ha).');
 });
 
 // ── A dónde lleva el click, según el rol activo ─────────────────────────────
@@ -843,9 +713,8 @@ test('el click lleva al recurso si el rol activo puede verlo y, si no, a su prim
     expect($conPermiso)->toBe(route($rutaEsperada, 42))
         ->and($sinPermiso)->toBe('http://localhost/panel/dashboard');
 })->with([
-    'contrato' => [RecursoNotificable::Contrato, 'comercial.contrato.editar', 'panel.contratos.edit'],
-    'orden de trabajo' => [RecursoNotificable::OrdenTrabajo, 'operaciones.trabajo.ver', 'panel.trabajos.show'],
     'trabajo' => [RecursoNotificable::Trabajo, 'operaciones.trabajo.ver', 'panel.trabajos.detalle'],
+    'proveedor' => [RecursoNotificable::Proveedor, 'proveedores.proveedor.ver', 'panel.proveedores.show'],
 ]);
 
 test('cada recurso que un aviso puede nombrar tiene destino: el match del destino cubre todos los casos', function () {
@@ -957,8 +826,6 @@ test('el módulo Notificaciones no escribe en tablas ajenas: solo ntf_notificaci
 test('cada evento de la primera cadena lo anuncia un solo archivo, el del módulo dueño de esa transición', function () {
     $raiz = dirname(__DIR__, 2);
     $emisores = [
-        'ContratoCreado' => 'app/Dominios/Comercial/Aplicacion/CrearContrato.php',
-        'OrdenTrabajoCreada' => 'app/Dominios/Operaciones/Aplicacion/CrearOrdenTrabajo.php',
         'TrabajoCerrado' => 'app/Dominios/Operaciones/Aplicacion/MaquinaEstados/MaquinaEstadosTrabajo.php',
     ];
 
@@ -972,7 +839,7 @@ test('cada evento de la primera cadena lo anuncia un solo archivo, el del módul
     }
 });
 
-test('el trabajo cerrado se anuncia DESPUÉS de persistir la transición y el contrato y la orden de trabajo DESPUÉS de confirmar el alta', function () {
+test('el trabajo cerrado se anuncia DESPUÉS de persistir la transición', function () {
     $raiz = dirname(__DIR__, 2);
 
     // Posición de cada marca; `false` (la marca desapareció) tiene que hacer fallar la prueba, no pasar.
@@ -987,6 +854,4 @@ test('el trabajo cerrado se anuncia DESPUÉS de persistir la transición y el co
     };
 
     $despues('app/Dominios/Operaciones/Aplicacion/MaquinaEstados/MaquinaEstadosTrabajo.php', 'event(new TrabajoCerrado(', '$trabajo->save();');
-    $despues('app/Dominios/Comercial/Aplicacion/CrearContrato.php', 'event(new ContratoCreado(', 'DB::transaction(');
-    $despues('app/Dominios/Operaciones/Aplicacion/CrearOrdenTrabajo.php', 'event(new OrdenTrabajoCreada(', 'DB::transaction(');
 });

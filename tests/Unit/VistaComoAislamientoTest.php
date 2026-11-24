@@ -4,9 +4,6 @@ use App\Dominios\Compartido\Dominio\AccionBitacora;
 use App\Dominios\Compartido\Dominio\Excepciones\EscrituraEnModoSoloLectura;
 use App\Dominios\Compartido\Infraestructura\Eloquent\Bitacora;
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModoSoloLectura;
-use App\Dominios\Operaciones\Contratos\DatosActaConformada;
-use App\Dominios\Operaciones\Contratos\LecturaActaConformada;
-use App\Dominios\Portal\Infraestructura\Http\Controllers\Web\ActasPortalController;
 use App\Dominios\Seguridad\Aplicacion\IniciarVistaComo;
 use App\Dominios\Seguridad\Aplicacion\TerminarVistaComo;
 use App\Dominios\Seguridad\Dominio\Excepciones\PermisoDenegado;
@@ -25,7 +22,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route as Rutas;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Session;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Tests\TestCase;
 
 /*
@@ -42,16 +38,10 @@ use Tests\TestCase;
  *   3. La vista se revalida en cada request: si deja de valer, se cierra.
  *   4. Solo lectura con el middleware real: una escritura colada en un GET falla
  *      cerrado y el estado del request se restaura.
- *   5. El portal, visto como el cliente X, solo consulta el contrato de X y
- *      jamás el de otro (invariante 5): mismo camino real del guard `cliente`.
+ *   5. La vista de una cuenta de portal y la del panel no se mezclan: una no
+ *      recorre las rutas de la otra.
  *   6. Toda ruta con sesión pasa por el middleware, en el orden correcto —el
  *      barrido que garantiza que ninguna ruta de escritura escape al rechazo—.
- *
- * Qué NO prueba (y dónde se prueba): la consulta de actas en sí
- * (`LecturaActaConformadaEloquent`) no cambió con esta tarea y depende de
- * tablas de Operaciones; acá se reemplaza por una lectura en memoria que
- * respeta su contrato, para probar lo que esta tarea sí tocó: de dónde sale el
- * contrato y que nada lee "todo" y filtra después.
  */
 
 uses(TestCase::class);
@@ -190,45 +180,6 @@ function vistaComoBitacora(int $registroId): array
         ->all();
 }
 
-/**
- * Lectura de actas en memoria, con el mismo contrato que la de Operaciones:
- * la lista por contrato ya viene acotada. Todo otro camino de lectura falla,
- * para que un `where` aparte o una lectura global no pasen inadvertidos.
- *
- * @param  list<DatosActaConformada>  $actas
- */
-function vistaComoActasEnMemoria(array $actas): object
-{
-    return new class($actas) implements LecturaActaConformada
-    {
-        /** @var list<int> */
-        public array $contratosPedidos = [];
-
-        /** @param  list<DatosActaConformada>  $actas */
-        public function __construct(private readonly array $actas) {}
-
-        public function obtenerPorActaId(int $actaId): ?DatosActaConformada
-        {
-            throw new LogicException('El portal no busca un acta por id fuera de la lista de su contrato.');
-        }
-
-        public function listarFirmadas(): array
-        {
-            throw new LogicException('El portal no lee la lista global de actas.');
-        }
-
-        public function listarFirmadasPorContrato(int $contratoId): array
-        {
-            $this->contratosPedidos[] = $contratoId;
-
-            return array_values(array_filter(
-                $this->actas,
-                static fn (DatosActaConformada $acta): bool => $acta->contratoId === $contratoId,
-            ));
-        }
-    };
-}
-
 beforeEach(function () {
     vistaComoEsquema();
     Session::start();
@@ -242,7 +193,7 @@ afterEach(function () {
 
 it('la entrada y la salida de una vista quedan en la bitácora, ambas a nombre del administrador real', function () {
     [$admin, $rolAdmin] = vistaComoAdministrador();
-    $cliente = vistaComoCuenta(TipoUsuario::Cliente, [], ['contrato_id' => 7]);
+    $cliente = vistaComoCuenta(TipoUsuario::Cliente);
 
     $vista = (new IniciarVistaComo)->ejecutar($admin, $rolAdmin, $cliente->id, null);
 
@@ -289,7 +240,7 @@ it('la salida devuelve al administrador el rol activo con el que entró y borra 
 
 it('una vista se cierra una sola vez: cerrarla de nuevo no escribe una segunda salida', function () {
     [$admin, $rolAdmin] = vistaComoAdministrador();
-    $cliente = vistaComoCuenta(TipoUsuario::Cliente, [], ['contrato_id' => 7]);
+    $cliente = vistaComoCuenta(TipoUsuario::Cliente);
 
     $vista = (new IniciarVistaComo)->ejecutar($admin, $rolAdmin, $cliente->id, null);
     app(TerminarVistaComo::class)->ejecutar($vista, MotivoFinVistaComo::Manual);
@@ -303,7 +254,7 @@ it('una vista se cierra una sola vez: cerrarla de nuevo no escribe una segunda s
 
 it('no se cierra una vista con el guard interno siendo otra persona: la salida quedaría firmada por quien no la hizo', function () {
     [$admin, $rolAdmin] = vistaComoAdministrador();
-    $cliente = vistaComoCuenta(TipoUsuario::Cliente, [], ['contrato_id' => 7]);
+    $cliente = vistaComoCuenta(TipoUsuario::Cliente);
     $vista = (new IniciarVistaComo)->ejecutar($admin, $rolAdmin, $cliente->id, null);
 
     Auth::guard('interno')->setUser(vistaComoCuenta(TipoUsuario::Interno));
@@ -319,7 +270,7 @@ it('no se cierra una vista con el guard interno siendo otra persona: la salida q
 it('sin el permiso en el rol activo no se abre nada: ni fila, ni bandera, ni bitácora', function () {
     $rolSinPermiso = vistaComoRol('dueno');
     $dueno = vistaComoCuenta(TipoUsuario::Interno, [$rolSinPermiso]);
-    $cliente = vistaComoCuenta(TipoUsuario::Cliente, [], ['contrato_id' => 7]);
+    $cliente = vistaComoCuenta(TipoUsuario::Cliente);
 
     expect(fn () => (new IniciarVistaComo)->ejecutar($dueno, $rolSinPermiso, $cliente->id, null))
         ->toThrow(PermisoDenegado::class);
@@ -333,7 +284,7 @@ it('el permiso se evalúa contra el rol activo, no contra la unión de los roles
     $rolConPermiso = vistaComoRol('admin_plataforma', [VISTA_COMO_PERMISO]);
     $rolSinPermiso = vistaComoRol('encargado_operaciones');
     $usuario = vistaComoCuenta(TipoUsuario::Interno, [$rolConPermiso, $rolSinPermiso]);
-    $cliente = vistaComoCuenta(TipoUsuario::Cliente, [], ['contrato_id' => 7]);
+    $cliente = vistaComoCuenta(TipoUsuario::Cliente);
 
     // Con el rol que no lo tiene como activo: denegado, aunque el OTRO rol sí lo tenga.
     expect(fn () => (new IniciarVistaComo)->ejecutar($usuario, $rolSinPermiso, $cliente->id, null))
@@ -346,7 +297,7 @@ it('el permiso se evalúa contra el rol activo, no contra la unión de los roles
 it('un rol activo que el usuario no tiene asignado no sirve, aunque ese rol tenga el permiso', function () {
     $rolAjeno = vistaComoRol('admin_plataforma', [VISTA_COMO_PERMISO]);
     $usuario = vistaComoCuenta(TipoUsuario::Interno, [vistaComoRol('piloto')]);
-    $cliente = vistaComoCuenta(TipoUsuario::Cliente, [], ['contrato_id' => 7]);
+    $cliente = vistaComoCuenta(TipoUsuario::Cliente);
 
     expect(fn () => (new IniciarVistaComo)->ejecutar($usuario, $rolAjeno, $cliente->id, null))
         ->toThrow(PermisoDenegado::class);
@@ -354,8 +305,8 @@ it('un rol activo que el usuario no tiene asignado no sirve, aunque ese rol teng
 
 it('una cuenta de portal no puede abrir una vista aunque su id llegue al caso de uso', function () {
     $rol = vistaComoRol('admin_plataforma', [VISTA_COMO_PERMISO]);
-    $cliente = vistaComoCuenta(TipoUsuario::Cliente, [$rol], ['contrato_id' => 7]);
-    $otro = vistaComoCuenta(TipoUsuario::Cliente, [], ['contrato_id' => 8]);
+    $cliente = vistaComoCuenta(TipoUsuario::Cliente, [$rol], []);
+    $otro = vistaComoCuenta(TipoUsuario::Cliente);
 
     expect(fn () => (new IniciarVistaComo)->ejecutar($cliente, $rol, $otro->id, null))
         ->toThrow(PermisoDenegado::class);
@@ -372,9 +323,8 @@ it('hay cuentas que no se pueden mirar', function (string $caso, Closure $prepar
 })->with([
     'la propia' => ['propia', fn (SecUser $admin) => [$admin->id, null, null]],
     'una que no existe' => ['inexistente', fn () => [99999, null, null]],
-    'una bloqueada' => ['bloqueada', fn () => [vistaComoCuenta(TipoUsuario::Cliente, [], ['contrato_id' => 7, 'state' => false])->id, null, null]],
-    'una dada de baja' => ['baja', fn () => [vistaComoCuenta(TipoUsuario::Cliente, [], ['contrato_id' => 7, 'deleted_at' => now()])->id, null, null]],
-    'una de portal sin contrato' => ['sin contrato', fn () => [vistaComoCuenta(TipoUsuario::Cliente)->id, null, null]],
+    'una bloqueada' => ['bloqueada', fn () => [vistaComoCuenta(TipoUsuario::Cliente, [], ['state' => false])->id, null, null]],
+    'una dada de baja' => ['baja', fn () => [vistaComoCuenta(TipoUsuario::Cliente, [], ['deleted_at' => now()])->id, null, null]],
     'una interna sin roles' => ['sin roles', fn () => [vistaComoCuenta(TipoUsuario::Interno)->id, null, null]],
     'una interna con dos roles sin elegir uno' => ['dos roles', fn () => [vistaComoCuenta(TipoUsuario::Interno, [vistaComoRol('piloto'), vistaComoRol('auxiliar')])->id, null, null]],
     'una interna bajo un rol que no tiene' => ['rol ajeno', fn () => [vistaComoCuenta(TipoUsuario::Interno, [vistaComoRol('piloto')])->id, vistaComoRol('dueno'), null]],
@@ -382,8 +332,8 @@ it('hay cuentas que no se pueden mirar', function (string $caso, Closure $prepar
 
 it('no se abre una segunda vista mientras hay una abierta', function () {
     [$admin, $rolAdmin] = vistaComoAdministrador();
-    $primero = vistaComoCuenta(TipoUsuario::Cliente, [], ['contrato_id' => 7]);
-    $segundo = vistaComoCuenta(TipoUsuario::Cliente, [], ['contrato_id' => 8]);
+    $primero = vistaComoCuenta(TipoUsuario::Cliente);
+    $segundo = vistaComoCuenta(TipoUsuario::Cliente);
 
     (new IniciarVistaComo)->ejecutar($admin, $rolAdmin, $primero->id, null);
 
@@ -397,7 +347,7 @@ it('no se abre una segunda vista mientras hay una abierta', function () {
 
 it('si la cuenta observada se bloquea a mitad de la vista, el request no sigue como ella: la vista se cierra', function () {
     [$admin, $rolAdmin] = vistaComoAdministrador();
-    $cliente = vistaComoCuenta(TipoUsuario::Cliente, [], ['contrato_id' => 7]);
+    $cliente = vistaComoCuenta(TipoUsuario::Cliente);
     $vista = (new IniciarVistaComo)->ejecutar($admin, $rolAdmin, $cliente->id, null);
 
     DB::table('sec_user')->where('id', $cliente->id)->update(['state' => false]);
@@ -422,7 +372,7 @@ it('si la cuenta observada se bloquea a mitad de la vista, el request no sigue c
 
 it('si al administrador le quitan el permiso a mitad de la vista, se cierra igual', function () {
     [$admin, $rolAdmin] = vistaComoAdministrador();
-    $cliente = vistaComoCuenta(TipoUsuario::Cliente, [], ['contrato_id' => 7]);
+    $cliente = vistaComoCuenta(TipoUsuario::Cliente);
     $vista = (new IniciarVistaComo)->ejecutar($admin, $rolAdmin, $cliente->id, null);
 
     DB::table('sec_role_permission')->where('id_role', $rolAdmin)->update(['deleted_at' => now()]);
@@ -437,7 +387,7 @@ it('si al administrador le quitan el permiso a mitad de la vista, se cierra igua
 
 it('una bandera de otro administrador no sustituye a nadie ni escribe a su nombre', function () {
     [$admin, $rolAdmin] = vistaComoAdministrador();
-    $cliente = vistaComoCuenta(TipoUsuario::Cliente, [], ['contrato_id' => 7]);
+    $cliente = vistaComoCuenta(TipoUsuario::Cliente);
     (new IniciarVistaComo)->ejecutar($admin, $rolAdmin, $cliente->id, null);
 
     // La sesión autenticada pasa a ser de otra persona, con la bandera colgada.
@@ -503,103 +453,11 @@ it('una escritura colada en un GET falla cerrado, no queda guardada y el request
         ->and(Auth::guard('interno')->id())->toBe($admin->id);
 });
 
-// --- 5. El portal, visto como el cliente X, solo consulta el contrato de X -------------------
-
-/** @return array{0: SecUser, 1: int, 2: object} el administrador, su rol y una lectura con actas de tres contratos */
-function vistaComoPortalPreparado(): array
-{
-    [$admin, $rolAdmin] = vistaComoAdministrador();
-
-    $lectura = vistaComoActasEnMemoria([
-        new DatosActaConformada(actaId: 11, contratoId: 7, hectareasConformadas: '100.00', firmada: true, pdfPath: 'actas/11.pdf'),
-        new DatosActaConformada(actaId: 12, contratoId: 7, hectareasConformadas: '50.50', firmada: true, pdfPath: 'actas/12.pdf'),
-        new DatosActaConformada(actaId: 21, contratoId: 8, hectareasConformadas: '75.00', firmada: true, pdfPath: 'actas/21.pdf'),
-        new DatosActaConformada(actaId: 31, contratoId: 9, hectareasConformadas: '20.00', firmada: true, pdfPath: 'actas/31.pdf'),
-    ]);
-
-    return [$admin, $rolAdmin, $lectura];
-}
-
-it('visto como un cliente, el listado de actas es exactamente el de su contrato', function (int $contrato, array $actasEsperadas) {
-    [$admin, $rolAdmin, $lectura] = vistaComoPortalPreparado();
-    $cliente = vistaComoCuenta(TipoUsuario::Cliente, [], ['contrato_id' => $contrato]);
-    (new IniciarVistaComo)->ejecutar($admin, $rolAdmin, $cliente->id, null);
-
-    $vista = null;
-    app(AplicarVistaComo::class)->handle(
-        vistaComoPeticion('GET', '/portal/actas', 'portal.actas.index'),
-        function (Request $peticion) use ($lectura, &$vista) {
-            $vista = app(ActasPortalController::class)->index($peticion, $lectura);
-
-            return response('ok');
-        },
-    );
-
-    $actas = array_map(static fn (DatosActaConformada $acta): int => $acta->actaId, $vista->getData()['actas']);
-
-    expect($actas)->toBe($actasEsperadas)
-        // La lectura se pidió UNA vez, con el contrato de la cuenta observada, y con ningún otro.
-        ->and($lectura->contratosPedidos)->toBe([$contrato]);
-})->with([
-    'el cliente del contrato 7' => [7, [11, 12]],
-    'el cliente del contrato 8' => [8, [21]],
-    'el cliente del contrato 9' => [9, [31]],
-]);
-
-it('visto como un cliente, pedir el PDF de un acta de otro contrato es un 404, sin leer nada global', function () {
-    [$admin, $rolAdmin, $lectura] = vistaComoPortalPreparado();
-    $cliente = vistaComoCuenta(TipoUsuario::Cliente, [], ['contrato_id' => 7]);
-    (new IniciarVistaComo)->ejecutar($admin, $rolAdmin, $cliente->id, null);
-
-    foreach ([21, 31, 999] as $actaAjena) {
-        expect(fn () => app(AplicarVistaComo::class)->handle(
-            vistaComoPeticion('GET', "/portal/actas/{$actaAjena}/pdf", 'portal.actas.pdf'),
-            fn (Request $peticion) => app(ActasPortalController::class)->pdf($peticion, $actaAjena, $lectura),
-        ))->toThrow(NotFoundHttpException::class);
-    }
-
-    // Cada intento consultó solo el contrato 7: nunca `listarFirmadas()` ni un acta suelta por id
-    // (la lectura en memoria lanza si alguien lo hace).
-    expect($lectura->contratosPedidos)->toBe([7, 7, 7]);
-});
-
-it('durante la vista de portal la cuenta observada ocupa el guard cliente y el administrador sigue siendo el interno; al volver no queda nada', function () {
-    [$admin, $rolAdmin] = vistaComoAdministrador();
-    $cliente = vistaComoCuenta(TipoUsuario::Cliente, [], ['contrato_id' => 7]);
-    (new IniciarVistaComo)->ejecutar($admin, $rolAdmin, $cliente->id, null);
-
-    $dentro = [];
-    app(AplicarVistaComo::class)->handle(
-        vistaComoPeticion('GET', '/portal/actas', 'portal.actas.index'),
-        function (Request $peticion) use (&$dentro) {
-            $dentro = [
-                'cliente' => $peticion->user('cliente')?->id,
-                'contrato' => $peticion->user('cliente')?->contrato_id,
-                'interno' => $peticion->user('interno')?->id,
-            ];
-
-            return response('ok');
-        },
-    );
-
-    expect($dentro)->toBe(['cliente' => $cliente->id, 'contrato' => 7, 'interno' => $admin->id])
-        ->and(Auth::guard('cliente')->user())->toBeNull()
-        ->and(Auth::guard('interno')->id())->toBe($admin->id);
-});
-
-it('el portal sin una cuenta de cliente en el guard no devuelve nada: 404, nunca un contrato por omisión', function () {
-    [, , $lectura] = vistaComoPortalPreparado();
-
-    // Un administrador que pide el portal por su cuenta, sin vista abierta: no tiene contrato.
-    expect(fn () => app(ActasPortalController::class)->index(vistaComoPeticion('GET', '/portal/actas', 'portal.actas.index'), $lectura))
-        ->toThrow(NotFoundHttpException::class);
-
-    expect($lectura->contratosPedidos)->toBe([]);
-});
+// --- 5. La vista de una cuenta de portal y la del panel no se mezclan ---------------------------
 
 it('una vista de portal no deja recorrer el panel, y una del panel no deja entrar al portal', function () {
     [$admin, $rolAdmin] = vistaComoAdministrador();
-    $cliente = vistaComoCuenta(TipoUsuario::Cliente, [], ['contrato_id' => 7]);
+    $cliente = vistaComoCuenta(TipoUsuario::Cliente);
     $jefe = vistaComoCuenta(TipoUsuario::Interno, [vistaComoRol('jefe_campo')]);
 
     (new IniciarVistaComo)->ejecutar($admin, $rolAdmin, $cliente->id, null);

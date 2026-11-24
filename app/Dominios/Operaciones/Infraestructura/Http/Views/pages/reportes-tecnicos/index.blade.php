@@ -11,7 +11,7 @@
 
     Datos esperados (ver ReportesTecnicosController::index()): la cáscara de
     CascaraPanel, más:
-    - $reportes (list<array{reporteId, trabajoId, loteCodigo, nroAplicacion,
+    - $reportes (list<array{reporteId, trabajoId, solicitud,
       clienteId, clienteNombre, generadoEn}>): ya agregado por
       ListarReportesTecnicos, la vista no calcula nada.
     - $filtros (array{cliente_id: ?int, desde: ?string, hasta: ?string}):
@@ -113,7 +113,7 @@
                         <div class="ag-index-table__row" role="row">
                             <span role="cell" class="ag-index-table__indice">{{ $loop->iteration }}</span>
                             <span role="cell" class="ag-reportes-tecnicos__trabajo">
-                                {{ __('operaciones.reportes_tecnicos.trabajo_lote', ['lote' => $fila['loteCodigo'], 'aplicacion' => $fila['nroAplicacion']]) }}
+                                {{ __('operaciones.reportes_tecnicos.trabajo_solicitud', ['solicitud' => $fila['solicitud']]) }}
                             </span>
                             <span role="cell">{{ $fila['clienteNombre'] }}</span>
                             <span role="cell" class="ag-reportes-tecnicos__mono">{{ $fila['generadoEn']->format('d/m/Y H:i') }}</span>

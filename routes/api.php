@@ -6,7 +6,6 @@ use App\Dominios\Flota\Infraestructura\Http\Controllers\Api\EquiposController;
 use App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Api\NotificacionesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Api\ActaController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Api\EvidenciaController;
-use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Api\OrdenAplicacionController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Api\ReporteTecnicoController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\AuxiliaresController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\DocumentosController;
@@ -18,6 +17,8 @@ use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\SesionCampoContr
 use App\Dominios\Sincronizacion\Infraestructura\Http\Controllers\Api\CatalogoController;
 use App\Dominios\Sincronizacion\Infraestructura\Http\Controllers\Api\SyncController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\ClientesController;
+use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\SolicitudesController;
+use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\TerrenosController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\ZonasController;
 use Illuminate\Support\Facades\Route;
 
@@ -87,12 +88,9 @@ Route::middleware('auth:sanctum')->group(function () {
         ->whereNumber('id')
         ->name('api.dispositivos.show');
 
-    // Espec §8: GET /api/ordenes?lote_id=&estado= — órdenes para el piloto.
-    Route::get('/ordenes', [OrdenAplicacionController::class, 'index'])->name('api.ordenes.index');
-
     // Espec §2.1 punto 6: GET /api/sync/catalogo?desde= — pull de catálogo
-    // con cursor (TE-06 parcial: órdenes, lotes y personas; ver
-    // runs/08-diseno.md para lo que queda afuera y por qué).
+    // con cursor: personas, servicios asignados al equipo del operario (ADR 0037)
+    // y límites de condiciones de vuelo.
     Route::get('/sync/catalogo', [CatalogoController::class, 'index'])->name('api.sync.catalogo');
 
     // Espec §2.1 puntos 3 a 5: POST /api/sync — push en lote de la cola
@@ -163,6 +161,34 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Cliente: su propio perfil (el alta es pública, arriba).
     Route::get('/clientes/mi', [ClientesController::class, 'show'])->name('api.clientes.mi');
+
+    // Marketplace (ADR 0027): el cliente registra sus terrenos y pide servicios.
+    // Superficie online, sin outbox (ADR 0028). El alcance (solo lo propio, un
+    // id ajeno es 404) lo hacen los casos de uso; el permiso del rol del token
+    // es la puerta.
+    Route::get('/terrenos', [TerrenosController::class, 'index'])->name('api.terrenos.index');
+    Route::post('/terrenos', [TerrenosController::class, 'store'])->name('api.terrenos.store');
+    Route::get('/terrenos/{id}', [TerrenosController::class, 'show'])
+        ->whereNumber('id')
+        ->name('api.terrenos.show');
+    Route::put('/terrenos/{id}', [TerrenosController::class, 'update'])
+        ->whereNumber('id')
+        ->name('api.terrenos.update');
+
+    Route::get('/solicitudes', [SolicitudesController::class, 'index'])->name('api.solicitudes.index');
+    Route::post('/solicitudes', [SolicitudesController::class, 'store'])->name('api.solicitudes.store');
+    Route::get('/solicitudes/{id}', [SolicitudesController::class, 'show'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.show');
+    Route::get('/solicitudes/{id}/estimacion', [SolicitudesController::class, 'estimacion'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.estimacion');
+    Route::post('/solicitudes/{id}/publicar', [SolicitudesController::class, 'publicar'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.publicar');
+    Route::post('/solicitudes/{id}/cancelar', [SolicitudesController::class, 'cancelar'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.cancelar');
 
     // Avisos in-app de la cuenta (ADR 0025): las apps no tienen campana de panel.
     Route::get('/notificaciones', [NotificacionesController::class, 'index'])->name('api.notificaciones.index');

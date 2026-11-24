@@ -3,9 +3,7 @@
 namespace App\Dominios\Operaciones\Infraestructura;
 
 use App\Dominios\Operaciones\Contratos\LecturaContadoresPanel;
-use App\Dominios\Operaciones\Dominio\EstadoOrdenAplicacion;
 use App\Dominios\Operaciones\Dominio\EstadoSesion;
-use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Pausa;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use Illuminate\Support\Carbon;
@@ -18,13 +16,6 @@ use Illuminate\Support\Carbon;
  */
 final class LecturaContadoresPanelEloquent implements LecturaContadoresPanel
 {
-    public function ordenesVigentes(): int
-    {
-        return OrdenAplicacion::query()
-            ->where('estado', EstadoOrdenAplicacion::Vigente)
-            ->count();
-    }
-
     public function sesionesPendientesValidacion(): int
     {
         return Sesion::query()

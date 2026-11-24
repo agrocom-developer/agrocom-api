@@ -2,10 +2,8 @@
 
 namespace App\Dominios\Operaciones\Aplicacion;
 
-use App\Dominios\Comercial\Contratos\LecturaContrato;
-use App\Dominios\Comercial\Contratos\LecturaLotes;
 use App\Dominios\Operaciones\Contratos\LecturaReporteTecnico;
-use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
+use App\Dominios\Solicitudes\Contratos\LecturaContextoSolicitudes;
 use Carbon\CarbonImmutable;
 
 /**
@@ -14,18 +12,14 @@ use Carbon\CarbonImmutable;
  * para reenviarlos al agrónomo" (`plan_sprints.md` Sprint 12, §252). Solo
  * lectura, filtrable por cliente y por período de generación.
  *
- * Compone tres fuentes sin JOIN cross-módulo (ADR 0003, regla 2):
+ * Compone dos fuentes sin JOIN cross-módulo (ADR 0003, regla 2):
  * `LecturaReporteTecnico` (este módulo) trae el universo de reportes con su
- * `contratoId` ya resuelto; `LecturaContrato` (Comercial, contrato inverso)
- * resuelve cliente por contrato — memoizado por `contratoId` porque varios
- * reportes comparten contrato; `LecturaLotes` (Comercial) resuelve el código
- * de lote para mostrar en la tabla, mismo contrato que ya usa
- * `ArmarContenidoReporteTecnico`. `nro_aplicacion` sale directo de
- * `Trabajo` (mismo módulo, sin cruce) con una única consulta `whereIn`.
+ * `solicitudId` ya resuelto; `LecturaContextoSolicitudes` (Solicitudes)
+ * resuelve terreno y cliente de todas las solicitudes en una sola consulta.
  *
  * El filtro por cliente y por período se aplica acá, en PHP, no en la
  * consulta SQL de `ReporteTecnico`: el `cliente_id` no existe en esa tabla
- * (vive en `Comercial`), así que no hay forma de empujarlo a la base sin
+ * (vive en `Solicitudes`), así que no hay forma de empujarlo a la base sin
  * romper la frontera modular. El volumen de reportes no lo justifica (mismo
  * criterio que `LecturaActaConformadaEloquent`).
  */
@@ -33,16 +27,14 @@ final class ListarReportesTecnicos
 {
     public function __construct(
         private readonly LecturaReporteTecnico $lecturaReporte,
-        private readonly LecturaContrato $lecturaContrato,
-        private readonly LecturaLotes $lecturaLotes,
+        private readonly LecturaContextoSolicitudes $solicitudes,
     ) {}
 
     /**
      * @return list<array{
      *     reporteId: int,
      *     trabajoId: int,
-     *     loteCodigo: string,
-     *     nroAplicacion: int,
+     *     solicitud: string,
      *     clienteId: int,
      *     clienteNombre: string,
      *     generadoEn: CarbonImmutable,
@@ -56,13 +48,7 @@ final class ListarReportesTecnicos
             return [];
         }
 
-        $trabajosPorId = Trabajo::query()
-            ->whereIn('id', array_unique(array_map(fn ($reporte) => $reporte->trabajoId, $reportes)))
-            ->get()
-            ->keyBy('id');
-
-        $resumenesContratoPorId = [];
-        $lotesPorId = [];
+        $contexto = $this->solicitudes->porIds(array_map(fn ($reporte): int => $reporte->solicitudId, $reportes));
         $filas = [];
 
         foreach ($reportes as $reporte) {
@@ -74,28 +60,22 @@ final class ListarReportesTecnicos
                 continue;
             }
 
-            $resumenesContratoPorId[$reporte->contratoId] ??= $this->lecturaContrato->obtenerResumen($reporte->contratoId);
-            $resumenContrato = $resumenesContratoPorId[$reporte->contratoId];
+            $solicitud = $contexto[$reporte->solicitudId] ?? null;
 
-            if ($resumenContrato === null) {
+            if ($solicitud === null) {
                 continue;
             }
 
-            if ($clienteId !== null && $resumenContrato->clienteId !== $clienteId) {
+            if ($clienteId !== null && $solicitud->clienteId !== $clienteId) {
                 continue;
             }
-
-            $lotesPorId[$reporte->loteId] ??= $this->lecturaLotes->obtenerPorId($reporte->loteId);
-            $lote = $lotesPorId[$reporte->loteId];
-            $trabajo = $trabajosPorId->get($reporte->trabajoId);
 
             $filas[] = [
                 'reporteId' => $reporte->reporteId,
                 'trabajoId' => $reporte->trabajoId,
-                'loteCodigo' => $lote === null ? '—' : $lote->codigo,
-                'nroAplicacion' => $trabajo === null ? 0 : $trabajo->nro_aplicacion,
-                'clienteId' => $resumenContrato->clienteId,
-                'clienteNombre' => $resumenContrato->clienteNombre,
+                'solicitud' => $solicitud->etiqueta(),
+                'clienteId' => $solicitud->clienteId,
+                'clienteNombre' => $solicitud->clienteNombre,
                 'generadoEn' => $reporte->generadoEn,
             ];
         }

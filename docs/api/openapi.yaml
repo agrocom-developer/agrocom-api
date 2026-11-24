@@ -769,110 +769,6 @@ paths:
       security:
         -
           tokenDispositivo: []
-  /api/ordenes:
-    get:
-      tags:
-        - Operaciones
-      summary: 'Lista las órdenes de aplicación con filtros'
-      description: 'Listado paginado de órdenes de aplicación para la app de campo (espec §8). Exige el token del dispositivo desde HU-03: dejó de ser público. Todos los filtros se combinan por AND; si `vigentes` y `estado` se contradicen, el resultado es vacío — no hay prevalencia silenciosa entre filtros. Las órdenes borradas lógicamente nunca aparecen.'
-      operationId: listarOrdenes
-      parameters:
-        -
-          name: estado
-          in: query
-          description: 'Filtra por estado de la orden.'
-          required: false
-          schema:
-            type: string
-            enum:
-              - emitida
-              - vigente
-              - pausada
-              - consumida
-              - cancelada
-              - vencida
-        -
-          name: lote_id
-          in: query
-          description: 'Filtra por lote (ID del módulo Comercial).'
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-        -
-          name: contrato_id
-          in: query
-          description: 'Filtra por contrato (ID del módulo Comercial).'
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-        -
-          name: nro_aplicacion
-          in: query
-          description: 'Filtra por número de aplicación dentro del contrato (1..n).'
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-        -
-          name: vigentes
-          in: query
-          description: 'Con valor verdadero devuelve solo las órdenes vigentes (atajo para la app del piloto; equivale a `estado=vigente`).'
-          required: false
-          schema:
-            type: boolean
-            default: false
-        -
-          name: per_page
-          in: query
-          description: 'Registros por página.'
-          required: false
-          schema:
-            type: integer
-            default: 15
-            maximum: 100
-            minimum: 1
-        -
-          name: page
-          in: query
-          description: 'Número de página.'
-          required: false
-          schema:
-            type: integer
-            default: 1
-            minimum: 1
-      responses:
-        200:
-          description: 'Listado paginado de órdenes, ordenado por fecha de emisión descendente.'
-          content:
-            application/json:
-              schema:
-                required:
-                  - data
-                  - links
-                  - meta
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/OrdenAplicacion'
-                  links:
-                    $ref: '#/components/schemas/PaginacionLinks'
-                  meta:
-                    $ref: '#/components/schemas/PaginacionMeta'
-                type: object
-        401:
-          description: 'Token ausente, revocado o ya sin rol válido.'
-        422:
-          description: 'Algún filtro no pasó la validación (estado desconocido, per_page fuera de 1..100, etc.).'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorValidacion'
-      security:
-        -
-          tokenDispositivo: []
   '/api/reportes/lote/{id}':
     get:
       tags:
@@ -1639,8 +1535,8 @@ paths:
     get:
       tags:
         - Sincronizacion
-      summary: 'Pull de catálogo con cursor (órdenes, lotes, personas, trabajos y sus retirados)'
-      description: 'Baja el catálogo de órdenes vigentes, lotes, personas y trabajos asignados desde el panel (solo los de los equipos vigentes hoy del operario del token, ver `TrabajoCatalogo`) modificados desde la posición del cursor recibido, con paginación por cursor (`updated_at`, `id`) — nunca por número de página, para no perder ni repetir registros entre pulls. `desde` vacío o ausente trae todo lo vigente (primera sincronización). Un `desde` no decodificable se trata igual que vacío, nunca como error de validación. Compatible hacia atrás: `ordenes_retiradas` y `trabajos_retirados` (opción B de la propuesta de #312) son secciones nuevas que una app que no las lee puede ignorar. Cada sección, retirados incluidos, avanza su propia posición dentro del mismo cursor opaco y entrega como máximo 200 filas por pull; no hay flag "hay más": la sección que llenó su página se completa en el pull siguiente con el cursor devuelto. Con cursor vacío las dos secciones de retirados vienen vacías y su posición arranca en el momento del pull (un retiro en ese mismo segundo puede llegar en el pull siguiente aunque el dispositivo nunca haya tenido la fila: se prefiere repetir a perder). Un cursor anterior a estas secciones las trae desde el principio, paginadas.'
+      summary: 'Pull de catálogo con cursor (personas, servicios asignados y retirados, límites)'
+      description: 'Baja el catálogo de personas, los servicios asignados al equipo del operario del token y los límites de condiciones de vuelo, modificado desde la posición del cursor recibido, con paginación por cursor (`updated_at`, `id`) — nunca por número de página, para no perder ni repetir registros entre pulls. `desde` vacío o ausente trae todo lo vigente (primera sincronización). Un `desde` no decodificable se trata igual que vacío, nunca como error de validación. Cada sección, `servicios_retirados` incluida, avanza su propia posición dentro del mismo cursor opaco y entrega como máximo 200 filas por pull; no hay flag "hay más": la sección que llenó su página se completa en el pull siguiente con el cursor devuelto. Con cursor vacío `servicios_retirados` viene vacía y su posición arranca en el momento del pull (un retiro en ese mismo segundo puede llegar en el pull siguiente aunque el dispositivo nunca haya tenido la fila: se prefiere repetir a perder). Un cursor anterior a esa sección la trae desde el principio, paginada.'
       operationId: obtenerCatalogoSincronizacion
       parameters:
         -
@@ -1657,51 +1553,34 @@ paths:
             application/json:
               schema:
                 required:
-                  - ordenes
-                  - lotes
                   - personas
-                  - trabajos
-                  - ordenes_retiradas
-                  - trabajos_retirados
+                  - servicios_asignados
+                  - servicios_retirados
+                  - limites
                   - cursor
                 properties:
-                  ordenes:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/OrdenCatalogo'
-                  lotes:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/LoteCatalogo'
                   personas:
                     type: array
                     items:
                       $ref: '#/components/schemas/PersonaCatalogo'
-                  trabajos:
+                  servicios_asignados:
+                    description: 'Solicitudes aceptadas que el equipo del operario lleva al lote, modificadas desde el cursor.'
                     type: array
                     items:
-                      $ref: '#/components/schemas/TrabajoCatalogo'
-                  ordenes_retiradas:
-                    description: 'Órdenes que dejaron de estar vigentes desde el cursor. Vacía en el primer pull (cursor vacío).'
+                      $ref: '#/components/schemas/ServicioAsignadoCatalogo'
+                  servicios_retirados:
+                    description: 'Servicios que el operario tuvo y ya no debe llevar, desde el cursor. Vacía en el primer pull (cursor vacío) y sin equipo.'
                     type: array
                     items:
-                      $ref: '#/components/schemas/OrdenRetiradaCatalogo'
+                      $ref: '#/components/schemas/ServicioRetiradoCatalogo'
                     example:
                       -
-                        id: 1
-                        estado: pausada
-                        updated_at: '2026-10-01T11:00:00+00:00'
-                  trabajos_retirados:
-                    description: 'Trabajos que el operario tuvo y ya no debe tener como asignados, desde el cursor. Vacía en el primer pull (cursor vacío) y sin persona operativa.'
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/TrabajoRetiradoCatalogo'
-                    example:
-                      -
-                        id: 42
+                        id: 31
                         uuid_cliente: 9a1b7e3e-2f7a-4b3d-8c1e-6f2a1d9c4b0a
-                        motivo: reasignado
-                        updated_at: '2026-10-01T11:00:00+00:00'
+                        motivo: cancelada
+                        updated_at: '2026-12-02T11:00:00+00:00'
+                  limites:
+                    $ref: '#/components/schemas/LimitesCondicionesCatalogo'
                   cursor:
                     description: 'Cursor opaco a reenviar tal cual en `desde` en el próximo pull.'
                     type: string
@@ -1853,6 +1732,525 @@ paths:
       security:
         -
           tokenDispositivo: []
+  /api/solicitudes:
+    get:
+      tags:
+        - Solicitudes
+      summary: 'Mis solicitudes e historial'
+      description: 'Las solicitudes del cliente de la cuenta, de la más nueva a la más vieja. `vista=activas` deja las que siguen vivas; `vista=historial`, las que terminaron (`completada` o `cancelada`). `estado` filtra por un estado exacto.'
+      operationId: listarSolicitudes
+      parameters:
+        -
+          name: vista
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - activas
+              - historial
+        -
+          name: estado
+          in: query
+          required: false
+          schema:
+            type: string
+        -
+          name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        200:
+          description: 'Página de solicitudes.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - solicitudes
+                  - pagina
+                  - paginas
+                  - total
+                properties:
+                  solicitudes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SolicitudServicio'
+                  pagina:
+                    type: integer
+                    example: 1
+                  paginas:
+                    type: integer
+                    example: 1
+                  total:
+                    type: integer
+                    example: 4
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no es de cliente.'
+        404:
+          description: 'La cuenta no tiene ficha de cliente.'
+      security:
+        -
+          tokenDispositivo: []
+    post:
+      tags:
+        - Solicitudes
+      summary: 'Crear una solicitud de servicio'
+      description: 'Crea una solicitud en `borrador`, idempotente por `uuid_cliente`: reintentar el mismo uuid responde 200 con la solicitud ya creada (nunca una segunda). Las hectáreas no pueden superar las del terreno. La tarifa se calcula y se congela al publicar.'
+      operationId: crearSolicitud
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - uuid_cliente
+                - terreno_id
+                - tipo_aplicacion
+                - hectareas_solicitadas
+                - producto_indicado
+                - ventana_desde
+                - ventana_hasta
+              properties:
+                uuid_cliente:
+                  type: string
+                  format: uuid
+                terreno_id:
+                  type: integer
+                  example: 12
+                tipo_aplicacion:
+                  type: string
+                  enum:
+                    - herbicida
+                    - insecticida
+                    - fungicida
+                    - fertilizante_foliar
+                    - desecante
+                    - otro
+                hectareas_solicitadas:
+                  type: string
+                  example: '80'
+                cultivo:
+                  type: string
+                  nullable: true
+                producto_indicado:
+                  type: string
+                  example: 'Glifosato 480 SL, 2 L/ha'
+                aporta_producto:
+                  type: string
+                  nullable: true
+                  enum:
+                    - cliente
+                    - proveedor
+                ventana_desde:
+                  description: 'Fecha deseada: inicio de la ventana.'
+                  type: string
+                  format: date
+                ventana_hasta:
+                  description: 'Fecha deseada: fin de la ventana.'
+                  type: string
+                  format: date
+                urgente:
+                  type: boolean
+                  nullable: true
+                observaciones:
+                  type: string
+                  nullable: true
+              type: object
+      responses:
+        201:
+          description: 'Solicitud creada en `borrador`.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - solicitud
+                properties:
+                  solicitud:
+                    $ref: '#/components/schemas/SolicitudServicio'
+                type: object
+        200:
+          description: 'Reintento: el `uuid_cliente` ya estaba creado; devuelve esa misma solicitud.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - solicitud
+                properties:
+                  solicitud:
+                    $ref: '#/components/schemas/SolicitudServicio'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no es de cliente.'
+        404:
+          description: 'El terreno no existe o es de otro cliente.'
+        422:
+          description: 'Datos inválidos, hectáreas mayores a las del terreno o cliente suspendido.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/solicitudes/{id}':
+    get:
+      tags:
+        - Solicitudes
+      summary: 'Detalle de una solicitud'
+      description: 'El detalle de una solicitud propia con su terreno y el historial de cada cambio de estado.'
+      operationId: verSolicitud
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'La solicitud.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - solicitud
+                properties:
+                  solicitud:
+                    $ref: '#/components/schemas/SolicitudServicio'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no es de cliente.'
+        404:
+          description: 'No existe o es de otro cliente.'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/solicitudes/{id}/estimacion':
+    get:
+      tags:
+        - Solicitudes
+      summary: 'Tarifa estimada de una solicitud'
+      description: 'La tarifa estimada: hectáreas por tarifa por hectárea más recargos explícitos (urgencia, acceso difícil, producto del proveedor). Antes de publicar usa la tarifa vigente y desglosa cada recargo; publicada, devuelve la tarifa congelada (`congelada: true`) sin desglose.'
+      operationId: estimarSolicitud
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'Estimación. Importes como decimal exacto en string.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - estimacion
+                properties:
+                  estimacion:
+                    $ref: '#/components/schemas/EstimacionSolicitud'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no es de cliente.'
+        404:
+          description: 'No existe o es de otro cliente.'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/solicitudes/{id}/publicar':
+    post:
+      tags:
+        - Solicitudes
+      summary: 'Publicar una solicitud'
+      description: 'Congela la tarifa por hectárea y el monto estimado y deja la solicitud `publicada` para que el motor de asignación la tome. También republica una `sin_proveedor`, opcionalmente ampliando `ventana_hasta`; la tarifa ya congelada no cambia.'
+      operationId: publicarSolicitud
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              properties:
+                ventana_hasta:
+                  type: string
+                  format: date
+                  nullable: true
+              type: object
+      responses:
+        200:
+          description: 'Solicitud publicada.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - solicitud
+                properties:
+                  solicitud:
+                    $ref: '#/components/schemas/SolicitudServicio'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no es de cliente.'
+        404:
+          description: 'No existe o es de otro cliente.'
+        422:
+          description: 'La solicitud no está en un estado que se pueda publicar, o la ventana ya venció.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/solicitudes/{id}/cancelar':
+    post:
+      tags:
+        - Solicitudes
+      summary: 'Cancelar una solicitud'
+      description: 'Cancela una solicitud propia con motivo. Es gratuita hasta que un proveedor acepta; después rige la política de cancelación (ADR 0033). Una solicitud en ejecución o ya ejecutada no se cancela por este camino.'
+      operationId: cancelarSolicitud
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - motivo
+              properties:
+                motivo:
+                  type: string
+                  example: 'Cambió la fecha de siembra'
+              type: object
+      responses:
+        200:
+          description: 'Solicitud cancelada.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - solicitud
+                properties:
+                  solicitud:
+                    $ref: '#/components/schemas/SolicitudServicio'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no es de cliente.'
+        404:
+          description: 'No existe o es de otro cliente.'
+        422:
+          description: 'Falta el motivo o la solicitud ya no admite cancelación.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  /api/terrenos:
+    get:
+      tags:
+        - Terrenos
+      summary: 'Mis terrenos'
+      description: 'Los terrenos del cliente de la cuenta del token, por nombre.'
+      operationId: listarTerrenos
+      responses:
+        200:
+          description: 'Terrenos del cliente.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - terrenos
+                properties:
+                  terrenos:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Terreno'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no es de cliente.'
+        404:
+          description: 'La cuenta no tiene ficha de cliente.'
+      security:
+        -
+          tokenDispositivo: []
+    post:
+      tags:
+        - Terrenos
+      summary: 'Registrar un terreno'
+      description: 'Registra un terreno del cliente. Las hectáreas se envían como número o cadena decimal con hasta cuatro decimales.'
+      operationId: crearTerreno
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - nombre
+                - hectareas
+              properties:
+                nombre:
+                  type: string
+                  example: 'Lote Norte'
+                hectareas:
+                  type: string
+                  example: '120.5'
+                cultivo:
+                  type: string
+                  nullable: true
+                geometria:
+                  description: 'Polígono GeoJSON (`Polygon` o `MultiPolygon`).'
+                  type: object
+                  nullable: true
+                referencias_acceso:
+                  type: string
+                  nullable: true
+                colindantes_sensibles:
+                  type: string
+                  nullable: true
+                acceso_dificil:
+                  type: boolean
+                  nullable: true
+                zona_id:
+                  type: integer
+                  nullable: true
+              type: object
+      responses:
+        201:
+          description: 'Terreno creado.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - terreno
+                properties:
+                  terreno:
+                    $ref: '#/components/schemas/Terreno'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no es de cliente.'
+        422:
+          description: 'Datos inválidos o cliente suspendido.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/terrenos/{id}':
+    get:
+      tags:
+        - Terrenos
+      summary: 'Un terreno mío'
+      operationId: verTerreno
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'El terreno.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - terreno
+                properties:
+                  terreno:
+                    $ref: '#/components/schemas/Terreno'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no es de cliente.'
+        404:
+          description: 'No existe o es de otro cliente.'
+      security:
+        -
+          tokenDispositivo: []
+    put:
+      tags:
+        - Terrenos
+      summary: 'Actualizar un terreno'
+      description: 'Corrige los datos de un terreno propio. Las solicitudes ya creadas conservan sus propias hectáreas.'
+      operationId: actualizarTerreno
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Terreno'
+      responses:
+        200:
+          description: 'Terreno actualizado.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - terreno
+                properties:
+                  terreno:
+                    $ref: '#/components/schemas/Terreno'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no es de cliente.'
+        404:
+          description: 'No existe o es de otro cliente.'
+        422:
+          description: 'Datos inválidos.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
   /api/zonas:
     get:
       tags:
@@ -1910,11 +2308,11 @@ components:
         first:
           description: 'URL de la primera página.'
           type: string
-          example: 'http://localhost:8000/api/ordenes?page=1'
+          example: 'http://localhost:8000/api/solicitudes?page=1'
         last:
           description: 'URL de la última página.'
           type: string
-          example: 'http://localhost:8000/api/ordenes?page=3'
+          example: 'http://localhost:8000/api/solicitudes?page=3'
         prev:
           description: 'URL de la página anterior; null en la primera.'
           type: string
@@ -1923,7 +2321,7 @@ components:
         next:
           description: 'URL de la página siguiente; null en la última.'
           type: string
-          example: 'http://localhost:8000/api/ordenes?page=2'
+          example: 'http://localhost:8000/api/solicitudes?page=2'
           nullable: true
       type: object
     PaginacionMeta:
@@ -1964,7 +2362,7 @@ components:
             properties:
               url:
                 type: string
-                example: 'http://localhost:8000/api/ordenes?page=1'
+                example: 'http://localhost:8000/api/solicitudes?page=1'
                 nullable: true
               label:
                 type: string
@@ -1980,7 +2378,7 @@ components:
         path:
           description: 'URL base del listado, sin query string.'
           type: string
-          example: 'http://localhost:8000/api/ordenes'
+          example: 'http://localhost:8000/api/solicitudes'
           nullable: true
         per_page:
           description: 'Registros por página.'
@@ -2133,86 +2531,6 @@ components:
           description: 'null = sin fin.'
           type: string
           format: date
-          nullable: true
-      type: object
-    OrdenAplicacion:
-      title: 'Orden de aplicación'
-      description: 'Una aplicación completa de un contrato: cubre TODOS los lotes del contrato (espec §4.3, ADR 0022). Los valores DECIMAL (dosis) viajan como string. Los límites climáticos y parámetros de vuelo ya no viajan acá: son del trabajo (equipo↔lote), ver el catálogo de sincronización.'
-      required:
-        - id
-        - contrato_id
-        - lotes
-        - nro_aplicacion
-        - litros_ha
-        - kilos_por_vuelo
-        - observaciones
-        - emitida_por_contacto_id
-        - fecha_emision
-        - estado
-        - created_at
-        - updated_at
-      properties:
-        id:
-          description: 'Identificador de la orden.'
-          type: integer
-          example: 1
-        contrato_id:
-          description: 'Contrato al que pertenece la orden (módulo Comercial, solo ID).'
-          type: integer
-          example: 1
-        lotes:
-          description: 'Lotes que cubre la orden (módulo Comercial, solo ID): copia automática, tomada al emitirla, de todos los lotes del contrato con las hectáreas completas de cada uno.'
-          type: array
-          items:
-            $ref: '#/components/schemas/LoteDeOrdenCatalogo'
-        nro_aplicacion:
-          description: 'Número de aplicación dentro del contrato (1..n), correlativo y calculado por el servidor: una cancelada por fuerza mayor no consume su número.'
-          type: integer
-          example: 1
-        litros_ha:
-          description: 'Dosis en litros por hectárea (insumo líquido). DECIMAL como string; null si la categoría de insumo es sólida (HU-79, tarea 110).'
-          type: string
-          example: '10.00'
-          nullable: true
-        kilos_por_vuelo:
-          description: 'Dosis en kilos por vuelo (insumo sólido). DECIMAL como string; null si la categoría de insumo es líquida (HU-79, tarea 110).'
-          type: string
-          example: '8.50'
-          nullable: true
-        observaciones:
-          description: 'Observaciones libres del emisor.'
-          type: string
-          example: 'Aplicar en horas de la mañana.'
-          nullable: true
-        emitida_por_contacto_id:
-          description: 'Contacto del cliente que emitió la orden (módulo Comercial, solo ID).'
-          type: integer
-          example: 2
-          nullable: true
-        fecha_emision:
-          description: 'Fecha de emisión de la orden.'
-          type: string
-          format: date
-          example: '2026-08-26'
-        estado:
-          description: 'Estado de la orden (espec §5, ADR 0022): emitida → vigente ⇄ pausada; vigente → consumida (cierre manual) o cancelada (con causa y motivo, decisión del panel). La app de campo solo recibe las vigentes y nunca pausa, cierra ni cancela.'
-          type: string
-          enum:
-            - emitida
-            - vigente
-            - pausada
-            - consumida
-            - cancelada
-            - vencida
-        created_at:
-          type: string
-          format: date-time
-          example: '2026-08-26T12:00:00+00:00'
-          nullable: true
-        updated_at:
-          type: string
-          format: date-time
-          example: '2026-08-26T12:00:00+00:00'
           nullable: true
       type: object
     Auxiliar:
@@ -2515,118 +2833,6 @@ components:
           example: 3
           nullable: true
       type: object
-    LoteDeOrdenCatalogo:
-      title: 'Lote de una orden (catálogo)'
-      description: 'Uno de los lotes que cubre una orden, con las hectáreas que le pidió a ESE lote (HU-92, tarea 107 — una orden puede cubrir varios lotes de la propiedad). DECIMAL como string (invariante 6).'
-      required:
-        - lote_id
-        - hectareas_solicitadas
-      properties:
-        lote_id:
-          description: 'Lote que cubre la orden (módulo Comercial, solo ID).'
-          type: integer
-          example: 3
-        hectareas_solicitadas:
-          description: 'Hectáreas que la orden le pidió a ESE lote. DECIMAL como string.'
-          type: string
-          example: '50.00'
-      type: object
-    OrdenCatalogo:
-      title: 'Orden de aplicación (catálogo)'
-      description: 'Orden vigente para el pull de catálogo (espec §4.3, ampliada HU-92 tarea 107: `lotes` reemplaza el `lote_id` único de antes; HU-79 tarea 110: `litros_ha`/`kilos_por_vuelo` son mutuamente excluyentes según la categoría de insumo). Los DECIMAL viajan como string (invariante 6). Los límites climáticos y parámetros de vuelo YA NO viajan acá (migración `2026_09_18_100001_mueve_clima_vuelo_de_ordenes_a_trabajos_table`): son del trabajo (equipo↔lote), ver `TrabajoCatalogo`.'
-      required:
-        - id
-        - contrato_id
-        - lotes
-        - nro_aplicacion
-        - litros_ha
-        - kilos_por_vuelo
-        - observaciones
-        - emitida_por_contacto_id
-        - fecha_emision
-        - estado
-        - updated_at
-      properties:
-        id:
-          type: integer
-          example: 1
-        contrato_id:
-          type: integer
-          example: 1
-        lotes:
-          type: array
-          items:
-            $ref: '#/components/schemas/LoteDeOrdenCatalogo'
-        nro_aplicacion:
-          type: integer
-          example: 1
-        litros_ha:
-          description: 'Dosis en litros por hectárea (insumo líquido); null si la categoría es sólida.'
-          type: string
-          example: '10.00'
-          nullable: true
-        kilos_por_vuelo:
-          description: 'Dosis en kilos por vuelo (insumo sólido); null si la categoría es líquida.'
-          type: string
-          example: '8.50'
-          nullable: true
-        observaciones:
-          type: string
-          example: 'Aplicar en horas de la mañana.'
-          nullable: true
-        emitida_por_contacto_id:
-          type: integer
-          example: 2
-          nullable: true
-        fecha_emision:
-          type: string
-          format: date
-          example: '2026-08-26'
-        estado:
-          type: string
-          example: vigente
-        updated_at:
-          type: string
-          format: date-time
-          example: '2026-08-26T12:00:00+00:00'
-      type: object
-    LoteCatalogo:
-      title: 'Lote (catálogo)'
-      description: 'Lote vigente (no borrado) para el pull de catálogo (espec §4.1; ADR 0020: cuelga directo de la propiedad, sin el nivel intermedio Campo). `hectareas` es DECIMAL como string (invariante 6).'
-      required:
-        - id
-        - propiedad_id
-        - codigo
-        - hectareas
-        - geometria
-        - restricciones
-        - updated_at
-      properties:
-        id:
-          type: integer
-          example: 3
-        propiedad_id:
-          description: 'Id de servidor de la propiedad.'
-          type: integer
-          example: 1
-        codigo:
-          type: string
-          example: L-01
-        hectareas:
-          type: string
-          example: '120.50'
-        geometria:
-          description: 'GeoJSON del lote, o null si no está cargado.'
-          type: object
-          nullable: true
-        restricciones:
-          type: string
-          nullable: true
-        updated_at:
-          type: string
-          format: date-time
-          example: '2026-08-26T12:00:00+00:00'
-      type: object
     PersonaCatalogo:
       title: 'Persona operativa (catálogo)'
       description: 'Persona vigente (no borrada) para el pull de catálogo (espec §4.2).'
@@ -2639,6 +2845,7 @@ components:
         - updated_at
       properties:
         id:
+          description: "Adaptador delgado (ADR 0008): valida la query string, invoca el caso de\nuso y devuelve la respuesta — ninguna regla de negocio vive acá."
           type: integer
           example: 5
         nombre:
@@ -2659,109 +2866,119 @@ components:
           format: date-time
           example: '2026-08-26T12:00:00+00:00'
       type: object
-    TrabajoCatalogo:
-      title: 'Trabajo asignado desde el panel (catálogo)'
-      description: 'Trabajo abierto por el jefe de campo al repartir una orden vigente entre equipos (HU-70, tarea 85) — nunca los que nacen por sync (`equipo_trabajo_id` siempre presente acá). Solo trabajos `abierto` cuya orden no esté cerrada (`consumida`, `cancelada`, `vencida`): los cerrados, dados de baja o de una orden cerrada llegan en `trabajos_retirados`. FILTRADO por el operario del token: solo llegan los trabajos de los equipos en los que su persona es integrante vigente HOY (`per_equipo_integrantes`: `desde` <= hoy y `hasta` nulo o >= hoy) — todos ellos, si está en varios; nunca los de otro equipo. Una cuenta sin persona operativa recibe `trabajos` vacío. Límite conocido del cursor: si la persona entra a un equipo nuevo, los trabajos de ese equipo que no cambiaron desde el último pull no llegan en el incremental; los trae un pull completo (`desde` vacío). `uuid_cliente` es el que generó el panel al confirmar la asignación: la app lo usa TAL CUAL para abrir sesiones sobre este trabajo. `hectareas_declaradas` es DECIMAL como string (invariante 6). Los 7 campos de límites climáticos y parámetros de vuelo llegaron acá desde `OrdenCatalogo` (migración `2026_09_18_100001_mueve_clima_vuelo_de_ordenes_a_trabajos_table`): son condiciones de la tanda (Orden de Trabajo) de ESTE equipo, y viajan con su valor EFECTIVO ya resuelto (`Operaciones\Dominio\LimitesEfectivos`): el de la Orden de Trabajo o, si quedó en blanco, el parámetro por defecto del sistema. El contrato no es un nivel de esa herencia (HU-91). `viento_max_kmh`, `temperatura_max_c` y `humedad_max_pct` siempre traen valor (defaults 17.00, 30.00 y 90.00). `humedad_min_pct`, `altura_vuelo_m`, `velocidad_vuelo_kmh` y `ancho_pasada_m` no tienen default del sistema: llegan `null` si la Orden de Trabajo no los trae, y la app no debe aplicar ese límite.'
+    TerrenoServicioCatalogo:
+      title: 'Terreno de un servicio (catálogo)'
+      description: 'El terreno sobre el que se ejecuta el servicio: dónde volar y qué cuidar. Hectáreas como decimal exacto en string (invariante 6).'
+      required:
+        - nombre
+        - hectareas
+        - acceso_dificil
+      properties:
+        nombre:
+          type: string
+          example: 'Lote Norte'
+        hectareas:
+          type: string
+          example: '120.5000'
+        geometria:
+          description: 'Polígono GeoJSON, o null si no está cargado.'
+          type: object
+          nullable: true
+        referencias_acceso:
+          type: string
+          nullable: true
+        colindantes_sensibles:
+          description: 'Apiarios, cultivos orgánicos, viviendas.'
+          type: string
+          nullable: true
+        acceso_dificil:
+          type: boolean
+          example: false
+      type: object
+    ServicioAsignadoCatalogo:
+      title: 'Servicio asignado (catálogo)'
+      description: 'Solicitud de servicio aceptada que el equipo del operario lleva al lote (ADR 0037). Solo estados de ejecución: `asignada`, `en_camino`, `en_ejecucion` o `suspendida_por_clima`. FILTRADO por el operario del token: solo los servicios de los equipos de flota en los que su cuenta es piloto o auxiliar con vigencia HOY; una cuenta sin equipo recibe la lista vacía. El `id` es el `solicitud_id` que la app envía en el registro `trabajo` de `POST /api/sync`. Sin datos de contacto del cliente. Límite conocido del cursor: si el operario entra a un equipo nuevo, los servicios de ese equipo que no cambiaron desde el último pull no llegan en el incremental; los trae un pull completo (`desde` vacío).'
       required:
         - id
         - uuid_cliente
-        - orden_id
-        - lote_id
-        - hectareas_declaradas
-        - equipo_trabajo_id
-        - humedad_min_pct
-        - viento_max_kmh
-        - temperatura_max_c
-        - humedad_max_pct
-        - altura_vuelo_m
-        - velocidad_vuelo_kmh
-        - ancho_pasada_m
+        - estado
+        - equipo_id
+        - tipo_aplicacion
+        - hectareas_solicitadas
+        - producto_indicado
+        - aporta_producto
+        - ventana_desde
+        - ventana_hasta
+        - urgente
+        - terreno
         - updated_at
       properties:
         id:
           type: integer
-          example: 42
+          example: 31
         uuid_cliente:
           type: string
           example: 9a1b7e3e-2f7a-4b3d-8c1e-6f2a1d9c4b0a
-        orden_id:
-          type: integer
-          example: 1
-        lote_id:
-          type: integer
-          example: 3
-        hectareas_declaradas:
-          type: string
-          example: '300.00'
-        equipo_trabajo_id:
-          type: integer
-          example: 7
-        humedad_min_pct:
-          description: 'Efectivo. Sin default del sistema: null si la Orden de Trabajo no lo trae.'
-          type: string
-          example: '60.00'
-          nullable: true
-        viento_max_kmh:
-          description: 'Efectivo: el de la Orden de Trabajo o el default del sistema (17.00). Nunca null.'
-          type: string
-          example: '15.00'
-        temperatura_max_c:
-          description: 'Efectivo: el de la Orden de Trabajo o el default del sistema (30.00). Nunca null.'
-          type: string
-          example: '32.00'
-        humedad_max_pct:
-          description: 'Efectivo: el de la Orden de Trabajo o el default del sistema (90.00). Nunca null.'
-          type: string
-          example: '90.00'
-        altura_vuelo_m:
-          description: 'Efectivo. Sin default del sistema: null si la Orden de Trabajo no lo trae.'
-          type: string
-          example: '3.00'
-          nullable: true
-        velocidad_vuelo_kmh:
-          description: 'Efectivo. Sin default del sistema: null si la Orden de Trabajo no lo trae.'
-          type: string
-          example: '18.00'
-          nullable: true
-        ancho_pasada_m:
-          description: 'Efectivo. Sin default del sistema: null si la Orden de Trabajo no lo trae.'
-          type: string
-          example: '7.00'
-          nullable: true
-        updated_at:
-          description: 'Última modificación del trabajo O de su Orden de Trabajo, la más reciente: editar (o dar de baja) la Orden de Trabajo cambia los límites efectivos y vuelve a entregar sus trabajos en el pull incremental siguiente. Es la posición del cursor de esta sección.'
-          type: string
-          format: date-time
-          example: '2026-09-13T12:00:00+00:00'
-      type: object
-    OrdenRetiradaCatalogo:
-      title: 'Orden retirada (catálogo)'
-      description: 'Orden que dejó de estar `vigente` desde la posición del cursor (opción B de la propuesta de #312): `pausada`, `consumida`, `cancelada` o `vencida` (ADR 0022). La app la OCULTA, no la borra. Si una `pausada` se reanuda, vuelve a llegar en `ordenes[]` en el pull siguiente con `estado: vigente`. Las `emitida` nunca salen acá: nunca llegaron al catálogo, y son las únicas que se dan de baja. Órdenes y trabajos solo se dan de baja lógicamente (ADR 0007), así que no hay borrados físicos que perseguir.'
-      required:
-        - id
-        - estado
-        - updated_at
-      properties:
-        id:
-          type: integer
-          example: 1
         estado:
           type: string
-          example: pausada
+          example: asignada
           enum:
-            - pausada
-            - consumida
-            - cancelada
-            - vencida
+            - asignada
+            - en_camino
+            - en_ejecucion
+            - suspendida_por_clima
+        equipo_id:
+          type: integer
+          example: 7
+        tipo_aplicacion:
+          type: string
+          enum:
+            - herbicida
+            - insecticida
+            - fungicida
+            - fertilizante_foliar
+            - desecante
+            - otro
+        hectareas_solicitadas:
+          type: string
+          example: '80.0000'
+        cultivo:
+          type: string
+          example: Soya
+          nullable: true
+        producto_indicado:
+          type: string
+          example: 'Glifosato 480 SL, 2 L/ha'
+        aporta_producto:
+          type: string
+          enum:
+            - cliente
+            - proveedor
+        ventana_desde:
+          type: string
+          format: date
+          example: '2026-12-01'
+        ventana_hasta:
+          type: string
+          format: date
+          example: '2026-12-10'
+        urgente:
+          type: boolean
+          example: false
+        observaciones:
+          type: string
+          nullable: true
+        terreno:
+          $ref: '#/components/schemas/TerrenoServicioCatalogo'
         updated_at:
           description: 'Posición del cursor de esta sección.'
           type: string
           format: date-time
-          example: '2026-10-01T11:00:00+00:00'
+          example: '2026-12-01T12:00:00+00:00'
       type: object
-    TrabajoRetiradoCatalogo:
-      title: 'Trabajo retirado (catálogo)'
-      description: 'Trabajo que el operario del token TUVO como asignado y ya no debe tener (opción B de la propuesta de #312). "Lo tuvo": es de uno de sus equipos vigentes hoy, o la bitácora de auditoría muestra que alguna vez estuvo asignado a un equipo que la persona integró — nunca llega el `uuid_cliente` de un trabajo de un equipo ajeno. Un trabajo nunca viaja a la vez en `trabajos[]` y acá: `trabajos[]` solo trae trabajos `abierto` de órdenes no cerradas. `motivo` (si aplican varios, gana el primero): `dado_de_baja` (baja lógica desde el panel), `reasignado` (su equipo ya no es uno en el que la persona esté vigente hoy, o quedó sin equipo), `cerrado` (el trabajo se cerró), `orden_cerrada` (su orden pasó a `consumida`, `cancelada` o `vencida` con el trabajo abierto). Una orden `pausada` NO retira sus trabajos: la app la oculta por `ordenes_retiradas`. Límite conocido: un trabajo que sigue en el mismo equipo cuando la PERSONA deja ese equipo no se detecta por cursor (no cambia ninguna fila del trabajo); lo resuelve un pull completo.'
+    ServicioRetiradoCatalogo:
+      title: 'Servicio retirado (catálogo)'
+      description: 'Servicio que el equipo del operario tuvo y ya no debe llevar al lote. La app lo OCULTA, no lo borra: puede tener trabajo capturado sin sincronizar. `motivo`: `cancelada`, `reasignada` (volvió a asignación: el proveedor canceló o soporte lo reasignó) o `ejecutada` (cerrado por el servidor, a la espera de conformidad o terminado). Un servicio nunca viaja a la vez en `servicios_asignados` y acá.'
       required:
         - id
         - uuid_cliente
@@ -2770,27 +2987,56 @@ components:
       properties:
         id:
           type: integer
-          example: 42
+          example: 31
         uuid_cliente:
           type: string
           example: 9a1b7e3e-2f7a-4b3d-8c1e-6f2a1d9c4b0a
         motivo:
           type: string
-          example: reasignado
+          example: cancelada
           enum:
-            - dado_de_baja
-            - reasignado
-            - cerrado
-            - orden_cerrada
+            - cancelada
+            - reasignada
+            - ejecutada
         updated_at:
-          description: 'Última modificación del trabajo O de su orden de aplicación, la más reciente. Posición del cursor de esta sección.'
+          description: 'Posición del cursor de esta sección.'
           type: string
           format: date-time
-          example: '2026-10-01T11:00:00+00:00'
+          example: '2026-12-02T11:00:00+00:00'
+      type: object
+    LimitesCondicionesCatalogo:
+      title: 'Límites de condiciones de vuelo (catálogo)'
+      description: 'Los límites con los que el servidor valida el registro `condiciones` de `POST /api/sync` (espec §9.2); la app, que es offline, los muestra para que lo que ve y lo que se exige nunca se contradigan. DECIMAL como string (invariante 6). `viento_max_kmh`, `temperatura_max_c` y `humedad_max_pct` siempre traen valor; los demás son `null` si el sistema no fija un límite, y la app no debe aplicarlo.'
+      required:
+        - viento_max_kmh
+        - temperatura_max_c
+        - humedad_max_pct
+      properties:
+        humedad_min_pct:
+          type: string
+          nullable: true
+        viento_max_kmh:
+          type: string
+          example: '17.00'
+        temperatura_max_c:
+          type: string
+          example: '30.00'
+        humedad_max_pct:
+          type: string
+          example: '90.00'
+        altura_vuelo_m:
+          type: string
+          nullable: true
+        velocidad_vuelo_kmh:
+          type: string
+          nullable: true
+        ancho_pasada_m:
+          type: string
+          nullable: true
       type: object
     RegistroSync:
       title: 'Registro de entrada del lote de sync'
-      description: 'Un elemento del arreglo `registros`. La forma exacta de los campos depende de `tipo`; un registro con datos incompletos o inválidos se responde `rechazado` sin frenar el resto del lote — nunca un 422 para el lote completo. `cierre_trabajo`/`cierre_sesion` (HU-05) MUTAN una fila existente en vez de crear una nueva: `uuid_cliente` identifica el EVENTO de cierre — distinto del `uuid_cliente` de apertura del trabajo/sesión que referencian. Trabajo dado de baja por el panel mientras se volaba (2/10/2026): lo ya en curso se registra igual — `cierre_trabajo`, y `cierre_sesion`/`condiciones`/`incidencia`/`recarga` de una sesión que ya existía, con los límites de su Orden de Trabajo —, el trabajo sigue dado de baja y no vuelve a `trabajos[]`; nada nuevo: `sesion`, `recepcion_caldo` y `evidencia_equipo` sobre ese trabajo se rechazan con `trabajo_no_existe_aun`, y `mezcla` con el `trabajo_no_existe` de Mezclas. `recepcion_caldo` (HU-10 redefinida por CR-01, tarea 18) registra volumen de caldo entregado por el cliente — nunca su composición: eso es lo que ahora registra `mezcla` por separado (ver abajo), no `recepcion_caldo`. `mezcla` (espec §7, HU-78, tarea 94, revierte CR-01 del 1/9/2026) registra qué productos y en qué cantidad se cargaron en el caldo al crear una aplicación — cabecera (`trabajo_uuid_cliente`, `hora`) más una lista `productos` (nombre de texto libre, cantidad, unidad); nunca dosis por hectárea, orden de incorporación ni compatibilidad entre productos (§7.1 sigue vigente en eso, ver espec §7). `incidencia` (HU-08, tarea 22) registra un evento puntual de la sesión (caldo/ESC/batería/mecánica/clima/otro) con foto SIEMPRE obligatoria, referenciada por `uuid_cliente` a una evidencia ya subida por `POST /api/evidencias` con `tipo: foto_incidencia`. `recarga` (HU-13, tarea 23) registra cada ciclo de cambio de batería/recarga de caldo durante el vuelo — temperatura de batería > 50°C se persiste con `alerta_temperatura = true` sin rechazar el registro; independiente del evento `mezcla` (sin vínculo entre ambos en esta tarea). `estadia_entrada`/`estadia_salida` (HU-51, tarea 74) registran cuándo un equipo de trabajo llega y se va de una hacienda — sin `campania_id` (la estadía es del campo, no de una campaña) y sin verificación de pertenencia a una persona (es del equipo). `estadia_salida` referencia la estadía por el `uuid_cliente` de su `estadia_entrada`, igual criterio que `cierre_trabajo`/`cierre_sesion`. `evidencia_equipo` (HU-80, tarea 86) registra el "Reporte de Equipos": horas de vuelo declaradas del dron y las tres fotos de chequeo (control, ciclo de batería y balanceo, dron limpio), cada una referenciada por `uuid_cliente` a una evidencia ya subida por `POST /api/evidencias` — las tres son obligatorias, falta cualquiera y se rechaza el registro completo.'
+      description: 'Un elemento del arreglo `registros`. La forma exacta de los campos depende de `tipo`; un registro con datos incompletos o inválidos se responde `rechazado` sin frenar el resto del lote — nunca un 422 para el lote completo. `cierre_trabajo`/`cierre_sesion` (HU-05) MUTAN una fila existente en vez de crear una nueva: `uuid_cliente` identifica el EVENTO de cierre — distinto del `uuid_cliente` de apertura del trabajo/sesión que referencian. Trabajo dado de baja por el panel mientras se volaba (2/10/2026): lo ya en curso se registra igual — `cierre_trabajo`, y `cierre_sesion`/`condiciones`/`incidencia`/`recarga` de una sesión que ya existía, con los límites con los que el equipo salió —, el trabajo sigue dado de baja; nada nuevo: `sesion`, `recepcion_caldo` y `evidencia_equipo` sobre ese trabajo se rechazan con `trabajo_no_existe_aun`, y `mezcla` con el `trabajo_no_existe` de Mezclas. `recepcion_caldo` (HU-10 redefinida por CR-01, tarea 18) registra volumen de caldo entregado por el cliente — nunca su composición: eso es lo que ahora registra `mezcla` por separado (ver abajo), no `recepcion_caldo`. `mezcla` (espec §7, HU-78, tarea 94, revierte CR-01 del 1/9/2026) registra qué productos y en qué cantidad se cargaron en el caldo al crear una aplicación — cabecera (`trabajo_uuid_cliente`, `hora`) más una lista `productos` (nombre de texto libre, cantidad, unidad); nunca dosis por hectárea, orden de incorporación ni compatibilidad entre productos (§7.1 sigue vigente en eso, ver espec §7). `incidencia` (HU-08, tarea 22) registra un evento puntual de la sesión (caldo/ESC/batería/mecánica/clima/otro) con foto SIEMPRE obligatoria, referenciada por `uuid_cliente` a una evidencia ya subida por `POST /api/evidencias` con `tipo: foto_incidencia`. `recarga` (HU-13, tarea 23) registra cada ciclo de cambio de batería/recarga de caldo durante el vuelo — temperatura de batería > 50°C se persiste con `alerta_temperatura = true` sin rechazar el registro; independiente del evento `mezcla` (sin vínculo entre ambos en esta tarea). `trabajo` abre la ejecución de una solicitud de servicio aceptada: referencia la `solicitud_id` del servicio asignado del catálogo (ADR 0037) y se rechaza si la solicitud no tiene equipo asignado o ya terminó; al abrirse el primero, la solicitud pasa a `en_ejecucion`, y al cerrarse los trabajos que cubren lo pedido, a `ejecutada`. `evidencia_equipo` (HU-80, tarea 86) registra el "Reporte de Equipos": horas de vuelo declaradas del dron y las tres fotos de chequeo (control, ciclo de batería y balanceo, dron limpio), cada una referenciada por `uuid_cliente` a una evidencia ya subida por `POST /api/evidencias` — las tres son obligatorias, falta cualquiera y se rechaza el registro completo.'
       required:
         - tipo
         - uuid_cliente
@@ -2810,23 +3056,13 @@ components:
             - recarga
             - cierre_trabajo
             - cierre_sesion
-            - estadia_entrada
-            - estadia_salida
         uuid_cliente:
           type: string
           example: a1b2c3d4-0000-4000-8000-000000000001
-        orden_id:
-          description: '`trabajo`: id de servidor de la orden (del pull de catálogo).'
+        solicitud_id:
+          description: '`trabajo`: id de servidor de la solicitud de servicio (`id` de `servicios_asignados` del pull de catálogo).'
           type: integer
-          example: 1
-        lote_id:
-          description: '`trabajo`: id de servidor del lote (del pull de catálogo).'
-          type: integer
-          example: 3
-        nro_aplicacion:
-          description: '`trabajo`.'
-          type: integer
-          example: 1
+          example: 31
         trabajo_uuid_cliente:
           description: '`sesion`/`cierre_trabajo`/`recepcion_caldo`/`evidencia_equipo`/`mezcla`: `uuid_cliente` de apertura del trabajo — nunca el id de servidor, que puede no existir todavía si el trabajo llegó en este mismo lote.'
           type: string
@@ -2961,7 +3197,7 @@ components:
           type: string
           example: '65.00'
         observacion_agronomo:
-          description: '`condiciones`: obligatoria junto con `firma_observacion` cuando alguna medición cae fuera de los límites EFECTIVOS del trabajo de la sesión (los mismos que entrega `TrabajoCatalogo`: los de su Orden de Trabajo o, en blanco, el default del sistema — viento > 17 km/h, temperatura > 30°C, humedad > 90%; la humedad mínima solo si la Orden de Trabajo la fija) — sin ambas, el registro se rechaza.'
+          description: '`condiciones`: obligatoria junto con `firma_observacion` cuando alguna medición cae fuera de los límites EFECTIVOS (los mismos que entrega `limites` del pull de catálogo — viento > 17 km/h, temperatura > 30°C, humedad > 90%; la humedad mínima solo si el sistema la fija) — sin ambas, el registro se rechaza.'
           type: string
           example: null
           nullable: true
@@ -3029,38 +3265,6 @@ components:
           type: string
           example: null
           nullable: true
-        equipo_trabajo_id:
-          description: '`estadia_entrada`: id de servidor del equipo de trabajo (del pull de catálogo).'
-          type: integer
-          example: null
-          nullable: true
-        propiedad_id:
-          description: '`estadia_entrada`: id de servidor de la propiedad (del pull de catálogo).'
-          type: integer
-          example: null
-          nullable: true
-        entrada:
-          description: '`estadia_entrada`: cuándo llegó el equipo.'
-          type: string
-          format: date-time
-          example: null
-          nullable: true
-        observacion:
-          description: '`estadia_entrada`, opcional: texto libre.'
-          type: string
-          example: null
-          nullable: true
-        estadia_uuid_cliente:
-          description: '`estadia_salida`: `uuid_cliente` de apertura de la estadía (el `estadia_entrada` que se cierra) — nunca el id de servidor, que puede no existir todavía si la entrada llegó en este mismo lote.'
-          type: string
-          example: null
-          nullable: true
-        salida:
-          description: '`estadia_salida`: cuándo se fue el equipo. Anterior o igual a la `entrada` de la estadía rechaza el registro.'
-          type: string
-          format: date-time
-          example: null
-          nullable: true
         horas_vuelo_dron:
           description: '`evidencia_equipo`: horas de vuelo del dron declaradas por el auxiliar/piloto (no calculadas). DECIMAL como string (invariante 6).'
           type: string
@@ -3110,6 +3314,48 @@ components:
           type: string
           example: 'el trabajo referenciado no existe todavía'
       type: object
+    EstimacionSolicitud:
+      title: 'Estimación de una solicitud'
+      required:
+        - congelada
+        - tarifa_hectarea
+        - hectareas
+        - monto_estimado
+      properties:
+        congelada:
+          description: 'Verdadero si la solicitud ya se publicó y la tarifa no cambia.'
+          type: boolean
+        tarifa_base_hectarea:
+          type: string
+          example: '120.0000'
+          nullable: true
+        tarifa_hectarea:
+          description: 'Tarifa por hectárea con los recargos incluidos.'
+          type: string
+          example: '132.0000'
+        hectareas:
+          type: string
+          example: '80.0000'
+        subtotal_base:
+          type: string
+          example: '9600.00'
+          nullable: true
+        recargo_urgente:
+          type: string
+          example: '1920.00'
+          nullable: true
+        recargo_acceso_dificil:
+          type: string
+          example: '0.00'
+          nullable: true
+        recargo_producto:
+          type: string
+          example: '0.00'
+          nullable: true
+        monto_estimado:
+          type: string
+          example: '11520.00'
+      type: object
     Cliente:
       title: Cliente
       description: 'Quien solicita el servicio de fumigación y califica al proveedor (especificación §4.1).'
@@ -3153,6 +3399,191 @@ components:
           type: integer
           example: 0
       type: object
+    SolicitudServicio:
+      title: 'Solicitud de servicio'
+      description: 'La unidad de negocio del marketplace (especificación §4.2, ADR 0027). Hectáreas, tarifa y montos son decimales exactos en string. `tarifa_hectarea` y `monto_estimado` son nulos hasta publicar y quedan congelados desde entonces. `terreno` e `historial` solo viajan en el detalle.'
+      required:
+        - id
+        - uuid_cliente
+        - terreno_id
+        - tipo_aplicacion
+        - hectareas_solicitadas
+        - producto_indicado
+        - aporta_producto
+        - ventana_desde
+        - ventana_hasta
+        - urgente
+        - estado
+      properties:
+        id:
+          type: integer
+          example: 31
+        uuid_cliente:
+          description: 'Nace en el dispositivo; hace idempotente la creación.'
+          type: string
+          format: uuid
+        terreno_id:
+          type: integer
+          example: 12
+        tipo_aplicacion:
+          type: string
+          enum:
+            - herbicida
+            - insecticida
+            - fungicida
+            - fertilizante_foliar
+            - desecante
+            - otro
+        hectareas_solicitadas:
+          type: string
+          example: '80.0000'
+        cultivo:
+          type: string
+          example: Soya
+          nullable: true
+        producto_indicado:
+          type: string
+          example: 'Glifosato 480 SL, 2 L/ha'
+        aporta_producto:
+          type: string
+          enum:
+            - cliente
+            - proveedor
+        ventana_desde:
+          type: string
+          format: date
+          example: '2026-12-01'
+        ventana_hasta:
+          type: string
+          format: date
+          example: '2026-12-10'
+        urgente:
+          type: boolean
+          example: false
+        observaciones:
+          type: string
+          nullable: true
+        tarifa_hectarea:
+          description: 'Congelada al publicar; incluye recargos por hectárea.'
+          type: string
+          example: '132.0000'
+          nullable: true
+        monto_estimado:
+          description: 'Congelado al publicar.'
+          type: string
+          example: '10560.00'
+          nullable: true
+        monto_final:
+          type: string
+          nullable: true
+        estado:
+          type: string
+          enum:
+            - borrador
+            - publicada
+            - en_asignacion
+            - sin_proveedor
+            - asignada
+            - en_camino
+            - en_ejecucion
+            - suspendida_por_clima
+            - ejecutada
+            - en_disputa
+            - completada
+            - cancelada
+        proveedor_id:
+          type: integer
+          nullable: true
+        publicada_en:
+          type: string
+          format: date-time
+          nullable: true
+        motivo_cancelacion:
+          type: string
+          nullable: true
+        cancelada_por:
+          type: string
+          nullable: true
+          enum:
+            - cliente
+            - proveedor
+            - administrador
+            - sistema
+        terreno:
+          $ref: '#/components/schemas/Terreno'
+        historial:
+          type: array
+          items:
+            $ref: '#/components/schemas/HistorialSolicitud'
+      type: object
+    HistorialSolicitud:
+      title: 'Paso del historial de una solicitud'
+      description: 'Cada transición deja una fila inmutable con quién, por qué y cuándo (ADR 0027, punto 4).'
+      required:
+        - estado_nuevo
+        - origen
+        - creado_en
+      properties:
+        estado_anterior:
+          type: string
+          nullable: true
+        estado_nuevo:
+          type: string
+        origen:
+          type: string
+          enum:
+            - cliente
+            - proveedor
+            - administrador
+            - sistema
+        motivo:
+          type: string
+          nullable: true
+        creado_en:
+          type: string
+          format: date-time
+      type: object
+    Terreno:
+      title: Terreno
+      description: 'Terreno de un cliente sobre el que pide servicios (especificación §4.1). Hectáreas como decimal exacto en string.'
+      required:
+        - id
+        - nombre
+        - hectareas
+        - acceso_dificil
+      properties:
+        id:
+          type: integer
+          example: 12
+        nombre:
+          type: string
+          example: 'Lote Norte'
+        hectareas:
+          type: string
+          example: '120.5000'
+        cultivo:
+          type: string
+          example: Soya
+          nullable: true
+        geometria:
+          description: 'Polígono GeoJSON del terreno.'
+          type: object
+          nullable: true
+        referencias_acceso:
+          type: string
+          nullable: true
+        colindantes_sensibles:
+          description: 'Apiarios, cultivos orgánicos, viviendas.'
+          type: string
+          nullable: true
+        acceso_dificil:
+          type: boolean
+          example: false
+        zona_id:
+          type: integer
+          example: 1
+          nullable: true
+      type: object
   securitySchemes:
     tokenDispositivo:
       type: http
@@ -3180,6 +3611,12 @@ tags:
   -
     name: Clientes
     description: 'Registro y perfil del cliente del marketplace, que solicita el servicio y califica al proveedor (ADR 0027).'
+  -
+    name: Solicitudes
+    description: 'El cliente pide, consulta, publica y cancela servicios de fumigación (ADR 0027). Sin cobro en la app en la versión 1.'
+  -
+    name: Terrenos
+    description: 'Terrenos que el cliente registra una vez y reutiliza en cada solicitud de servicio (ADR 0027).'
   -
     name: Flota
     description: Flota

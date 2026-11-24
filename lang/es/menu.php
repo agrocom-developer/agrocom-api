@@ -24,28 +24,21 @@ return [
 
     'operacion' => [
         'label' => 'Operación',
-        'descripcion' => 'Órdenes, trabajos, cuadrillas, estadías y seguimiento de vuelos de cada jornada.',
+        'descripcion' => 'Trabajos, cuadrillas y seguimiento de vuelos de cada servicio.',
         'items' => [
             'tablero' => 'Tablero',
-            'ordenes' => 'Órdenes de aplicación',
-            'orden_trabajo' => 'Orden de Trabajo',
+            'orden_trabajo' => 'Trabajos',
             'cuadrillas' => 'Cuadrillas',
-            'estadias' => 'Estadías en hacienda',
             'seguimiento_vuelos' => 'Seguimiento de vuelos',
         ],
     ],
 
-    'comercial' => [
-        'label' => 'Comercial',
-        'descripcion' => 'Clientes, contratos, propiedades, lotes, cultivos y campañas.',
+    // Marketplace (ADR 0027): la solicitud de servicio es la unidad de negocio.
+    'solicitudes' => [
+        'label' => 'Solicitudes',
+        'descripcion' => 'Solicitudes de servicio de los clientes y su ciclo hasta la conformidad.',
         'items' => [
-            'clientes' => 'Clientes',
-            'contratos' => 'Contratos',
-            'propiedades' => 'Propiedades',
-            'campos' => 'Campos',
-            'lotes' => 'Lotes',
-            'cultivos' => 'Cultivos',
-            'campanias' => 'Campañas',
+            'solicitudes' => 'Solicitudes de servicio',
         ],
     ],
 
@@ -75,20 +68,11 @@ return [
         ],
     ],
 
-    'financiero' => [
-        'label' => 'Financiero',
-        'descripcion' => 'Facturación.',
-        'items' => [
-            'facturas' => 'Facturas y cobranzas',
-        ],
-    ],
-
     'reportes' => [
         'label' => 'Reportes',
-        'descripcion' => 'Reportes técnicos y comerciales, alertas por excepción.',
+        'descripcion' => 'Reportes técnicos y alertas por excepción.',
         'items' => [
             'tecnicos' => 'Técnicos',
-            'comerciales' => 'Comerciales',
             'alertas' => 'Alertas',
         ],
     ],

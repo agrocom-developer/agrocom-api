@@ -19,13 +19,6 @@ use Illuminate\Http\Request;
 interface AutorizacionPortalCliente
 {
     /**
-     * `contrato_id` de la cuenta de portal autenticada, o `null` si no hay
-     * sesión de portal vigente (fail-closed: sin contrato resuelto, ningún
-     * endpoint de `Portal` puede armar una consulta).
-     */
-    public function contratoId(Request $request): ?int;
-
-    /**
      * Datos de cáscara mínimos del portal: tema persistido y nombre de la
      * cuenta — sin menú, sin roles: una cuenta de portal no tiene `sec_menu`
      * que listar (ADR 0002, punto 6).

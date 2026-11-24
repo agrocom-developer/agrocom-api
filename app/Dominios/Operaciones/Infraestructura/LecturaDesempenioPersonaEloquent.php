@@ -2,17 +2,15 @@
 
 namespace App\Dominios\Operaciones\Infraestructura;
 
-use App\Dominios\Comercial\Contratos\LecturaContrato;
-use App\Dominios\Comercial\Contratos\LecturaPanelComercial;
 use App\Dominios\Operaciones\Contratos\DatosDesempenioPersona;
 use App\Dominios\Operaciones\Contratos\DatosIncidenciaDesempenio;
 use App\Dominios\Operaciones\Contratos\DatosRechazoDesempenio;
 use App\Dominios\Operaciones\Contratos\DatosSesionDesempenio;
 use App\Dominios\Operaciones\Contratos\LecturaDesempenioPersona;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Incidencia;
-use App\Dominios\Operaciones\Infraestructura\Eloquent\OrdenAplicacion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\SesionRechazo;
+use App\Dominios\Solicitudes\Contratos\LecturaContextoSolicitudes;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -24,11 +22,9 @@ use Illuminate\Database\Eloquent\Builder;
  *
  * Compone tres fuentes sin JOIN cross-módulo (ADR 0003, regla 2), mismo
  * patrón que `Operaciones\Aplicacion\ListarReportesTecnicos`: `Sesion`/
- * `SesionRechazo`/`Incidencia`/`Trabajo`/`OrdenAplicacion` son todas de este
- * módulo (consulta directa); `LecturaPanelComercial::lotesPorId()` resuelve
- * lote/campo y `LecturaContrato::obtenerResumen()` resuelve cliente/campaña
- * — la ruta exacta `orden → contrato → campania_id` que pide ADR 0015 punto
- * 1, memoizada por `contrato_id` porque varias sesiones comparten contrato.
+ * `SesionRechazo`/`Incidencia`/`Trabajo` son todas de este módulo (consulta
+ * directa); `LecturaContextoSolicitudes::porIds()` resuelve terreno y cliente
+ * de las solicitudes de los trabajos en una sola consulta.
  *
  * Todo se recalcula desde los registros de origen en cada llamada
  * (invariante 6) — sin totales cacheados. Las sumas de hectáreas las hace el
@@ -37,10 +33,7 @@ use Illuminate\Database\Eloquent\Builder;
  */
 final class LecturaDesempenioPersonaEloquent implements LecturaDesempenioPersona
 {
-    public function __construct(
-        private readonly LecturaPanelComercial $lecturaPanelComercial,
-        private readonly LecturaContrato $lecturaContrato,
-    ) {}
+    public function __construct(private readonly LecturaContextoSolicitudes $solicitudes) {}
 
     public function ejecutar(int $personaId, string $desde, string $hasta): DatosDesempenioPersona
     {
@@ -58,10 +51,9 @@ final class LecturaDesempenioPersonaEloquent implements LecturaDesempenioPersona
             return new DatosDesempenioPersona([], [], []);
         }
 
-        $lotesPorId = $this->lecturaPanelComercial->lotesPorId();
-
-        $ordenIds = $sesiones->pluck('trabajo.orden_id')->unique()->values();
-        $contratoIdPorOrdenId = OrdenAplicacion::query()->whereIn('id', $ordenIds)->pluck('contrato_id', 'id');
+        $contexto = $this->solicitudes->porIds(
+            $sesiones->pluck('trabajo.solicitud_id')->filter()->map(fn ($id): int => (int) $id)->unique()->values()->all(),
+        );
 
         $rechazosPorSesionId = SesionRechazo::query()
             ->whereIn('anula_a_id', $sesiones->whereNotNull('anulada_en')->pluck('id'))
@@ -81,22 +73,13 @@ final class LecturaDesempenioPersonaEloquent implements LecturaDesempenioPersona
             ))
             ->all();
 
-        $resumenPorContratoId = [];
         $filasSesiones = [];
         $filasRechazos = [];
 
         foreach ($sesiones as $sesion) {
             $trabajo = $sesion->trabajo;
             $rol = $sesion->piloto_id === $personaId ? 'piloto' : 'auxiliar';
-            $lote = $lotesPorId[$trabajo->lote_id] ?? null;
-            $contratoId = $contratoIdPorOrdenId[$trabajo->orden_id] ?? null;
-
-            $resumen = null;
-
-            if ($contratoId !== null) {
-                $resumenPorContratoId[$contratoId] ??= $this->lecturaContrato->obtenerResumen($contratoId);
-                $resumen = $resumenPorContratoId[$contratoId];
-            }
+            $solicitud = $contexto[(int) $trabajo->solicitud_id] ?? null;
 
             if ($sesion->anulada_en === null) {
                 $filasSesiones[] = new DatosSesionDesempenio(
@@ -104,13 +87,10 @@ final class LecturaDesempenioPersonaEloquent implements LecturaDesempenioPersona
                     fecha: $sesion->inicio->toDateString(),
                     rol: $rol,
                     trabajoId: $trabajo->id,
-                    loteId: $trabajo->lote_id,
-                    loteCodigo: $lote === null ? '—' : $lote->codigo,
-                    propiedadNombre: $lote === null ? '—' : $lote->propiedadNombre,
-                    clienteId: $resumen === null ? 0 : $resumen->clienteId,
-                    clienteNombre: $resumen === null ? '—' : $resumen->clienteNombre,
-                    campaniaId: $resumen?->campaniaId,
-                    campaniaCodigo: $resumen?->campaniaCodigo,
+                    solicitudId: (int) $trabajo->solicitud_id,
+                    solicitudEtiqueta: $solicitud === null ? '—' : $solicitud->etiqueta(),
+                    clienteId: $solicitud === null ? 0 : $solicitud->clienteId,
+                    clienteNombre: $solicitud === null ? '—' : $solicitud->clienteNombre,
                     dronId: $sesion->dron_id,
                     hectareasDeclaradas: (string) $sesion->hectareas_declaradas,
                     estado: $sesion->estado->value,
@@ -129,13 +109,10 @@ final class LecturaDesempenioPersonaEloquent implements LecturaDesempenioPersona
                 sesionId: $sesion->id,
                 fecha: $sesion->inicio->toDateString(),
                 rol: $rol,
-                loteId: $trabajo->lote_id,
-                loteCodigo: $lote === null ? '—' : $lote->codigo,
-                propiedadNombre: $lote === null ? '—' : $lote->propiedadNombre,
-                clienteId: $resumen === null ? 0 : $resumen->clienteId,
-                clienteNombre: $resumen === null ? '—' : $resumen->clienteNombre,
-                campaniaId: $resumen?->campaniaId,
-                campaniaCodigo: $resumen?->campaniaCodigo,
+                solicitudId: (int) $trabajo->solicitud_id,
+                solicitudEtiqueta: $solicitud === null ? '—' : $solicitud->etiqueta(),
+                clienteId: $solicitud === null ? 0 : $solicitud->clienteId,
+                clienteNombre: $solicitud === null ? '—' : $solicitud->clienteNombre,
                 hectareasDeclaradas: (string) $sesion->hectareas_declaradas,
                 motivo: $rechazo->motivo,
                 rechazadoPorPersonaId: $rechazo->rechazado_por,

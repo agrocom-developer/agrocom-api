@@ -166,7 +166,7 @@ final class AplicarVistaComo
     private function desvioPorAlcance(Request $request, VistaComoActiva $vista): ?Response
     {
         if ($vista->tipo === TipoUsuario::Cliente) {
-            return $request->routeIs('portal.*') ? null : redirect()->route('portal.avance.index');
+            return $request->routeIs('portal.*') ? null : redirect()->route('portal.perfil.edit');
         }
 
         return $request->routeIs('portal.*', 'panel.rol-activo.*') ? redirect('/') : null;

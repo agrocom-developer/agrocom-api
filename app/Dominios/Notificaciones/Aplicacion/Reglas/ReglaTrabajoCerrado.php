@@ -15,7 +15,7 @@ use InvalidArgumentException;
 /**
  * Trabajo cerrado en campo → le importa a quien dirige y a quien planifica:
  * jefe de campo y encargado de operaciones. El dueño NO lo recibe (ADR 0025,
- * punto 10): es el aviso más frecuente (uno por equipo×lote) y su tablero ya
+ * punto 10): es el aviso más frecuente (uno por trabajo cerrado) y su tablero ya
  * muestra el avance. Si algún día lo quisiera, es sumar
  * `Destinatario::rol(RolDestinatario::Dueno)` a esta lista. Lleva al trabajo.
  */
@@ -36,8 +36,7 @@ final class ReglaTrabajoCerrado implements ReglaNotificacion
             tipo: TipoNotificacion::TrabajoCerrado,
             claveEvento: NotificacionArmada::claveDe(TipoNotificacion::TrabajoCerrado, $evento->trabajoId),
             parametros: [
-                'orden' => $evento->ordenId,
-                'aplicacion' => $evento->nroAplicacion,
+                'solicitud' => $evento->solicitudId,
                 'hectareas' => FormatoNotificacion::hectareas($evento->hectareas),
             ],
             recurso: RecursoNotificable::Trabajo,

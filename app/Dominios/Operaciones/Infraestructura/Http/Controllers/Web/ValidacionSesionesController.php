@@ -11,10 +11,10 @@ use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use App\Dominios\Operaciones\Infraestructura\Http\Requests\RechazarSesionRequest;
 use App\Dominios\Personal\Contratos\LecturaPanelPersonal;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
+use App\Dominios\Solicitudes\Contratos\LecturaContextoSolicitudes;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 /**
@@ -36,7 +36,7 @@ use Illuminate\View\View;
  * Tarea 131: la fila deja de mostrar códigos crudos sin contexto. El nombre
  * del piloto llega por {@see LecturaPanelPersonal} (Personal, ADR 0003 regla
  * 2 — nunca `PerPersona` directo), en lote para las N sesiones de la cola en
- * una sola consulta. El lote del trabajo (subtítulo, opcional) y el enlace a
+ * una sola consulta. La solicitud del trabajo (subtítulo, opcional) y el enlace a
  * la ficha del trabajo son el mismo mecanismo que ya usa `TrabajosController`.
  */
 final class ValidacionSesionesController
@@ -46,7 +46,10 @@ final class ValidacionSesionesController
     /** Tarea 131: gatea SOLO el enlace de la columna «Trabajo» a su ficha, no la cola entera. */
     private const PERMISO_VER_TRABAJOS = 'operaciones.trabajo.ver';
 
-    public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
+    public function __construct(
+        private readonly AutorizacionPanelWeb $autorizacion,
+        private readonly LecturaContextoSolicitudes $solicitudes,
+    ) {}
 
     public function index(Request $request, LecturaPanelPersonal $lecturaPersonal): View
     {
@@ -71,7 +74,7 @@ final class ValidacionSesionesController
             'etiquetasPiloto' => $lecturaPersonal->nombresDePersonas(
                 $sesiones->pluck('piloto_id')->unique()->values()->all()
             ),
-            'loteLabelPorTrabajo' => $this->loteLabelPorTrabajo($sesiones),
+            'solicitudPorTrabajo' => $this->solicitudPorTrabajo($sesiones),
             'puedeVerTrabajos' => $this->autorizacion->tienePermiso($request, self::PERMISO_VER_TRABAJOS),
         ]);
     }
@@ -126,57 +129,26 @@ final class ValidacionSesionesController
     }
 
     /**
-     * Subtítulo chico de lote para la columna «Trabajo» (tarea 131) — barato
-     * porque `$sesiones` ya trae `trabajo` precargado (un solo `with()`, sin
-     * N+1 por fila) y esto agrega una única consulta más, en lote.
+     * Subtítulo chico de solicitud para la columna «Trabajo» (tarea 131) —
+     * barato porque `$sesiones` ya trae `trabajo` precargado (un solo `with()`,
+     * sin N+1 por fila) y esto agrega una única consulta más, en lote.
      *
      * @param  Collection<int, Sesion>  $sesiones
      * @return array<int, string> indexado por `trabajo_id`
      */
-    private function loteLabelPorTrabajo(Collection $sesiones): array
+    private function solicitudPorTrabajo(Collection $sesiones): array
     {
-        $loteIds = $sesiones
-            ->map(fn (Sesion $sesion): ?int => $sesion->trabajo?->lote_id)
-            ->filter()
-            ->unique()
-            ->values()
-            ->all();
-
-        $etiquetasLote = $this->etiquetasLote($loteIds);
+        $contexto = $this->solicitudes->porIds(
+            $sesiones->map(fn (Sesion $sesion): ?int => $sesion->trabajo?->solicitud_id)->filter()->map(fn ($id): int => (int) $id)->unique()->values()->all(),
+        );
 
         return $sesiones
-            ->mapWithKeys(function (Sesion $sesion) use ($etiquetasLote): array {
-                $loteId = $sesion->trabajo?->lote_id;
+            ->mapWithKeys(function (Sesion $sesion) use ($contexto): array {
+                $solicitudId = $sesion->trabajo?->solicitud_id;
 
-                return [$sesion->trabajo_id => $loteId !== null ? ($etiquetasLote[$loteId] ?? null) : null];
+                return [$sesion->trabajo_id => $solicitudId !== null ? ($contexto[(int) $solicitudId] ?? null)?->etiqueta() : null];
             })
             ->filter()
-            ->all();
-    }
-
-    /**
-     * Etiquetas legibles de lote por id — mismo criterio que
-     * `TrabajosController::etiquetasLote()`.
-     *
-     * @param  list<int>  $ids
-     * @return array<int, string>
-     */
-    private function etiquetasLote(array $ids): array
-    {
-        if ($ids === []) {
-            return [];
-        }
-
-        return DB::table('com_lotes as l')
-            ->join('com_propiedades as p', 'p.id', '=', 'l.propiedad_id')
-            ->whereIn('l.id', $ids)
-            ->get(['l.id', 'p.nombre', 'l.codigo'])
-            ->mapWithKeys(fn (object $fila): array => [
-                (int) $fila->id => __('operaciones.ordenes.campo_lote_opcion', [
-                    'campo' => $fila->nombre,
-                    'codigo' => $fila->codigo,
-                ]),
-            ])
             ->all();
     }
 }

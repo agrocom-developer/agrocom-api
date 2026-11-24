@@ -1,8 +1,8 @@
 {{--
     Page: trabajos/show (GET /panel/trabajos/detalle/{trabajo}, panel.trabajos.detalle)
-    Detalle de UN trabajo (equipo×lote) — HU-15, tarea 15; homogeneizada a
+    Detalle de UN trabajo (solicitud) — HU-15, tarea 15; homogeneizada a
     arquetipo Detalle en la tarea 124 (§6.4 de docs/diseno/guia_pantalla_panel.md,
-    misma anatomía que `ordenes-trabajo/show.blade.php`, con Editar/Eliminar en
+    misma anatomía que `ordenes-trabajo/show.blade.php`, con Eliminar en
     la cabecera como ya tenía esta ficha — HU-93, tarea 108).
 
     Sus sesiones (piloto, dron, hectáreas, estado, motivo de cierre y el motivo
@@ -25,11 +25,11 @@
     CascaraPanel, más:
     - $trabajo (Trabajo, con `sesiones.rechazo`, `sesiones.dron`, `acta`,
       `reporteTecnico` precargadas).
-    - $loteLabel (string), $cuadrillaLabel (?string, null si no tiene equipo
+    - $solicitud (?DatosContextoSolicitud), $cuadrillaLabel (?string, null si no tiene equipo
       asignado).
     - $hectareasAplicadas (string, ya formateada), $porcentajeCobertura (int,
       0-100), $sesionesValidadas / $sesionesTotal (int).
-    - $puedeEditar / $puedeEliminar (bool, ya cruzados con "no validado"),
+    - $puedeEliminar (bool, ya cruzados con "no validado"),
       $puedeVerReporte (bool).
     - $vinculos (list), $actividad (list).
     - $etiquetasPiloto (array<int, string>): nombre real por `piloto_id`
@@ -53,7 +53,7 @@
     $estadoTablero = $trabajo->estadoTablero();
     $coberturaCompleta = $porcentajeCobertura >= 100;
     $sesionesCompletas = $sesionesTotal > 0 && $sesionesValidadas === $sesionesTotal;
-    $turnoTexto = $trabajo->turno ? __('operaciones.asignacion_equipos.turno_'.$trabajo->turno->value) : __('operaciones.trabajos.turno_sin_definir');
+    $turnoTexto = $trabajo->turno ? __('operaciones.trabajos.turno_'.$trabajo->turno->value) : __('operaciones.trabajos.turno_sin_definir');
     $horarioTexto = $trabajo->turno_hora_inicio && $trabajo->turno_hora_fin
         ? $trabajo->turno_hora_inicio->format('H:i').' – '.$trabajo->turno_hora_fin->format('H:i')
         : null;
@@ -74,7 +74,7 @@
         <div class="ag-detalle">
             <x-organisms.page-header
                 :title="__('operaciones.trabajos.detalle_titulo', ['id' => $trabajo->id])"
-                :subtitle="__('operaciones.trabajos.detalle_subtitulo', ['lote' => $loteLabel, 'cuadrilla' => $cuadrillaLabel ?? __('operaciones.trabajos.campo_equipo_sin_asignar')])"
+                :subtitle="__('operaciones.trabajos.detalle_subtitulo', ['solicitud' => $solicitud?->etiqueta() ?? '—', 'cuadrilla' => $cuadrillaLabel ?? __('operaciones.trabajos.campo_equipo_sin_asignar')])"
             >
                 <x-slot:chip>
                     <x-atoms.badge :variant="$variantePorEstadoTablero[$estadoTablero->value] ?? 'neutral'">
@@ -83,17 +83,7 @@
                 </x-slot:chip>
 
                 <x-slot:actions>
-                    @if ($trabajo->ordenTrabajo !== null)
-                        <x-molecules.boton-volver :href="route('panel.trabajos.show', $trabajo->ordenTrabajo)" :label="__('operaciones.trabajos.volver_a_ot', ['id' => $trabajo->orden_trabajo_id])" />
-                    @else
-                        <x-molecules.boton-volver :href="route('panel.trabajos.index')" :label="__('operaciones.trabajos.volver_al_listado')" />
-                    @endif
-
-                    @if ($puedeEditar)
-                        <x-atoms.button :href="route('panel.trabajos.detalle-editar', $trabajo)" variant="warning-outline" icon="edit">
-                            {{ __('operaciones.trabajos.editar') }}
-                        </x-atoms.button>
-                    @endif
+                    <x-molecules.boton-volver :href="route('panel.trabajos.index')" :label="__('operaciones.trabajos.volver_al_listado')" />
 
                     @if ($puedeEliminar)
                         <x-atoms.button
@@ -118,7 +108,7 @@
                 <x-molecules.confirm-modal
                     id="trabajo-eliminar-modal"
                     form-id="trabajo-eliminar"
-                    :title="__('operaciones.ordenes_trabajo.baja_trabajo_titulo', ['id' => $trabajo->id])"
+                    :title="__('operaciones.trabajos.baja_titulo', ['id' => $trabajo->id])"
                     :message="__('operaciones.trabajos.confirmar_baja')"
                     :confirm-label="__('operaciones.trabajos.eliminar_accion')"
                     tone="danger"
@@ -170,18 +160,14 @@
             </div>
 
             <x-molecules.form-layout>
-                <x-molecules.form-section accent="primary-2" :title="__('operaciones.trabajos.seccion_datos')" :count="__('operaciones.trabajos.campos_contador', ['cantidad' => 6])">
+                <x-molecules.form-section accent="primary-2" :title="__('operaciones.trabajos.seccion_datos')" :count="__('operaciones.trabajos.campos_contador', ['cantidad' => 5])">
                     <div class="ag-detalle__campo">
-                        <p class="ag-detalle__campo-label">{{ __('operaciones.trabajos.campo_orden_aplicacion') }}</p>
-                        <p class="ag-detalle__campo-valor">{{ __('operaciones.trabajos.filtro_orden_opcion', ['id' => $trabajo->orden_id, 'aplicacion' => $trabajo->nro_aplicacion]) }}</p>
+                        <p class="ag-detalle__campo-label">{{ __('operaciones.trabajos.campo_solicitud') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ $solicitud?->etiqueta() ?? '—' }}</p>
                     </div>
                     <div class="ag-detalle__campo">
-                        <p class="ag-detalle__campo-label">{{ __('operaciones.trabajos.campo_orden_trabajo') }}</p>
-                        <p class="ag-detalle__campo-valor">{{ $trabajo->orden_trabajo_id !== null ? "#{$trabajo->orden_trabajo_id}" : __('operaciones.ordenes_trabajo.sin_dato') }}</p>
-                    </div>
-                    <div class="ag-detalle__campo">
-                        <p class="ag-detalle__campo-label">{{ __('operaciones.trabajos.campo_lote') }}</p>
-                        <p class="ag-detalle__campo-valor">{{ $loteLabel }}</p>
+                        <p class="ag-detalle__campo-label">{{ __('operaciones.trabajos.campo_cliente') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ $solicitud?->clienteNombre ?? '—' }}</p>
                     </div>
                     <div class="ag-detalle__campo">
                         <p class="ag-detalle__campo-label">{{ __('operaciones.trabajos.campo_equipo') }}</p>
@@ -193,7 +179,7 @@
                     </div>
                     <div class="ag-detalle__campo">
                         <p class="ag-detalle__campo-label">{{ __('operaciones.trabajos.campo_horario') }}</p>
-                        <p class="ag-detalle__campo-valor">{{ $horarioTexto ?? __('operaciones.ordenes_trabajo.sin_dato') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ $horarioTexto ?? __('operaciones.trabajos.sin_dato') }}</p>
                     </div>
                 </x-molecules.form-section>
 
@@ -256,7 +242,7 @@
                     />
 
                     @if (count($vinculos))
-                        <x-molecules.form-section accent="alert" :title="__('operaciones.ordenes.seccion_vinculos')">
+                        <x-molecules.form-section accent="alert" :title="__('operaciones.trabajos.seccion_vinculos')">
                             <div class="ag-form-section__field--full ag-detalle__vinculos">
                                 @foreach ($vinculos as $vinculo)
                                     <x-molecules.link-row
@@ -271,7 +257,7 @@
                         </x-molecules.form-section>
                     @endif
 
-                    <x-molecules.form-section accent="distintivo-2" :title="__('operaciones.ordenes.seccion_actividad')">
+                    <x-molecules.form-section accent="distintivo-2" :title="__('operaciones.trabajos.seccion_actividad')">
                         <div class="ag-form-section__field--full">
                             <x-molecules.timeline :items="$actividad" />
                         </div>

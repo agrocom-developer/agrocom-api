@@ -5,10 +5,8 @@ namespace App\Dominios\Sincronizacion\Aplicacion;
 use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use App\Dominios\Mezclas\Contratos\EscrituraMezclas;
 use App\Dominios\Mezclas\Contratos\RegistroMezcla;
-use App\Dominios\Operaciones\Contratos\AperturaEstadiaHacienda;
 use App\Dominios\Operaciones\Contratos\AperturaSesion;
 use App\Dominios\Operaciones\Contratos\AperturaTrabajo;
-use App\Dominios\Operaciones\Contratos\CierreEstadiaHacienda;
 use App\Dominios\Operaciones\Contratos\CierreSesion;
 use App\Dominios\Operaciones\Contratos\CierreTrabajo;
 use App\Dominios\Operaciones\Contratos\EscrituraSincronizacion;
@@ -58,11 +56,8 @@ final class SincronizarLote
      * esas tres no importa, ninguna referencia a las otras. `recarga` (tarea
      * 23) depende solo de `sesion`, igual que `condiciones` — el orden
      * relativo entre esas dos no importa, ninguna referencia a la otra.
-     * `estadia_entrada`/`estadia_salida` (HU-51, tarea 74) van al final: no
-     * son prerrequisito causal de nada — la estadía del equipo en la hacienda
-     * es independiente de trabajo/sesión.
      */
-    private const array ORDEN_CAUSAL = ['trabajo', 'recepcion_caldo', 'evidencia_equipo', 'mezcla', 'sesion', 'condiciones', 'incidencia', 'recarga', 'cierre_trabajo', 'cierre_sesion', 'estadia_entrada', 'estadia_salida'];
+    private const array ORDEN_CAUSAL = ['trabajo', 'recepcion_caldo', 'evidencia_equipo', 'mezcla', 'sesion', 'condiciones', 'incidencia', 'recarga', 'cierre_trabajo', 'cierre_sesion'];
 
     public function __construct(
         private readonly EscrituraSincronizacion $operaciones,
@@ -126,8 +121,6 @@ final class SincronizarLote
             'recarga' => $this->aplicarRecarga($registro),
             'cierre_trabajo' => $this->aplicarCierreTrabajo($registro, $operarioPersonaId),
             'cierre_sesion' => $this->aplicarCierreSesion($registro, $operarioPersonaId),
-            'estadia_entrada' => $this->aplicarEstadiaEntrada($registro),
-            'estadia_salida' => $this->aplicarEstadiaSalida($registro),
             default => ResultadoSincronizacion::rechazado(Texto::de('sincronizacion.sync.tipo_desconocido')),
         };
     }
@@ -294,37 +287,6 @@ final class SincronizarLote
         return $datos === null
             ? ResultadoSincronizacion::rechazado(Texto::de('sincronizacion.sync.cierre_sesion_invalido'))
             : $this->operaciones->cerrarSesion($datos, $operarioPersonaId);
-    }
-
-    /**
-     * @param  array<string, mixed>  $registro
-     *
-     * Sin verificación de pertenencia (ver docblock de
-     * `EscrituraSincronizacion::abrirEstadia()`): la estadía es del equipo,
-     * no de una persona — no hay nada que comparar contra el operario del
-     * token.
-     */
-    private function aplicarEstadiaEntrada(array $registro): ResultadoSincronizacion
-    {
-        $datos = AperturaEstadiaHacienda::intentarDesdeArreglo($registro);
-
-        return $datos === null
-            ? ResultadoSincronizacion::rechazado(Texto::de('sincronizacion.sync.estadia_invalida'))
-            : $this->operaciones->abrirEstadia($datos);
-    }
-
-    /**
-     * @param  array<string, mixed>  $registro
-     *
-     * Sin verificación de pertenencia, mismo motivo que `aplicarEstadiaEntrada()`.
-     */
-    private function aplicarEstadiaSalida(array $registro): ResultadoSincronizacion
-    {
-        $datos = CierreEstadiaHacienda::intentarDesdeArreglo($registro);
-
-        return $datos === null
-            ? ResultadoSincronizacion::rechazado(Texto::de('sincronizacion.sync.cierre_estadia_invalido'))
-            : $this->operaciones->cerrarEstadia($datos);
     }
 
     /**

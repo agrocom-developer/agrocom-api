@@ -62,7 +62,7 @@ final class VistaComoController
         // `/` elige el primer ítem visible del rol observado (no se conoce acá
         // sin sustituir al usuario) y el portal arranca en su avance.
         return $vista->tipo === TipoUsuario::Cliente
-            ? redirect()->route('portal.avance.index')
+            ? redirect()->route('portal.perfil.edit')
             : redirect('/');
     }
 

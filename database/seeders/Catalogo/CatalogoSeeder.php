@@ -8,15 +8,9 @@ use Illuminate\Database\Seeder;
  * Orquestador de la familia catálogo (insumos §7.1): corre en todos los
  * entornos, producción incluida.
  *
- * El núcleo comercial (clientes, contratos, campos, lotes, órdenes) no tiene
- * tablas de catálogo propias: todo su contenido es dato del negocio, no dato
- * semilla — salvo `com_cultivos` (HU-48, tarea 71), que sí es un catálogo
- * real (soya, maíz, girasol...) sembrado por `ComercialCultivosSeeder`. Los
- * demás seeders de catálogo llegan con sus módulos: roles y permisos sec_*
- * (Seguridad, HU-01), modelos de dron (Recursos), productos y formulaciones
- * (Mezcla), enums operativos y parámetros de
- * negocio, y el catálogo geográfico de Bolivia (Comercial, adenda 16/9/2026
- * a ADR 0018) sembrado por `GeografiaBoliviaSeeder`.
+ * Los seeders de catálogo llegan con sus módulos: roles y permisos sec_*
+ * (Seguridad, HU-01), el menú del panel, las categorías de insumo
+ * (Operaciones), las zonas de asignación y el proveedor propio (marketplace).
  */
 class CatalogoSeeder extends Seeder
 {
@@ -26,16 +20,9 @@ class CatalogoSeeder extends Seeder
         // Depende de sec_permission ya sembrado por SeguridadSeeder (arriba):
         // gatea el ítem "Usuarios" con seguridad.usuario.ver.
         $this->call(SecMenuSeeder::class);
-        // HU-48 (tarea 71): catálogo de cultivos — sin dependencia de los
-        // anteriores, cualquier orden relativo sirve.
-        $this->call(ComercialCultivosSeeder::class);
         // HU-79 (tarea 110): categorías de insumo (sólido/líquido) de la
         // orden de aplicación — sin dependencia de los anteriores.
         $this->call(OperacionesCategoriasInsumoSeeder::class);
-        // Adenda 16/9/2026 a ADR 0018: catálogo geográfico de Bolivia
-        // (departamento → provincia → municipio) para com_propiedades — sin
-        // dependencia de los anteriores.
-        $this->call(GeografiaBoliviaSeeder::class);
         // Marketplace (ADR 0028 y 0036): zonas de asignación y el proveedor
         // propio (Agrocom). El proveedor propio referencia una zona, así que
         // va después.

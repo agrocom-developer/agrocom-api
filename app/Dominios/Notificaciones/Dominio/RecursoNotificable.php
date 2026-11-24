@@ -10,8 +10,6 @@ namespace App\Dominios\Notificaciones\Dominio;
  */
 enum RecursoNotificable: string
 {
-    case Contrato = 'contrato';
-    case OrdenTrabajo = 'orden_trabajo';
     case Trabajo = 'trabajo';
     case Proveedor = 'proveedor';
     case Piloto = 'piloto';

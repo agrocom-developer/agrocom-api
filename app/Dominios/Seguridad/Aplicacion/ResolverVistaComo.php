@@ -56,9 +56,7 @@ final class ResolverVistaComo
         }
 
         if ($vista->tipo === TipoUsuario::Cliente) {
-            return $observado->contrato_id !== null
-                ? new VistaComoResuelta($adminReal, $observado, null)
-                : null;
+            return new VistaComoResuelta($adminReal, $observado, null);
         }
 
         if ($vista->rolId === null || ! in_array($vista->rolId, $observado->idsDeRolesActivos(), true)) {

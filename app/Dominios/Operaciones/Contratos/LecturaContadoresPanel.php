@@ -10,9 +10,6 @@ namespace App\Dominios\Operaciones\Contratos;
  */
 interface LecturaContadoresPanel
 {
-    /** Órdenes de aplicación en estado `vigente` (mismo filtro que `ListarOrdenesAplicacion::$soloVigentes`). */
-    public function ordenesVigentes(): int;
-
     /** Sesiones `cerrado` sin anular, pendientes en la cola de `ValidacionSesionesController`. */
     public function sesionesPendientesValidacion(): int;
 

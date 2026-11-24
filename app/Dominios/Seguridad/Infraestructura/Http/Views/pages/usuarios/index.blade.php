@@ -149,13 +149,13 @@
                             $modalIdBloqueo = "usuario-bloqueo-modal-{$usuario->id}";
                             $modalIdEliminar = "usuario-eliminar-modal-{$usuario->id}";
 
-                            // «Ver como» (tarea 140): solo cuentas habilitadas y ajenas; una de
-                            // portal necesita contrato, una interna al menos un rol vivo.
+                            // «Ver como» (tarea 140): solo cuentas habilitadas y ajenas; una interna
+                            // necesita al menos un rol vivo.
                             $esCuentaDePortal = $usuario->type->value === 'cliente';
                             $rolesVerComo = $rolesVerComoPorUsuario[$usuario->id] ?? [];
                             $puedeVerComoEsta = $usuario->state
                                 && $usuario->id !== auth('interno')->id()
-                                && ($esCuentaDePortal ? $usuario->contrato_id !== null : $rolesVerComo !== []);
+                                && ($esCuentaDePortal || $rolesVerComo !== []);
                             $formIdVerComo = "usuario-ver-como-{$usuario->id}";
                             $modalIdVerComo = "usuario-ver-como-modal-{$usuario->id}";
                         @endphp

@@ -42,20 +42,6 @@ interface LecturaPanelOperaciones
     public function distribucionPorEstado(?int $pilotoId = null): array;
 
     /**
-     * Conteo de órdenes de aplicación por estado, para el donut del
-     * encargado (tarea 136). Devuelve SIEMPRE los seis estados de
-     * `EstadoOrdenAplicacion`, incluidos los que están en cero, en el
-     * orden del ciclo de vida. `tono` es el mismo que pinta el badge del
-     * listado de órdenes: un estado, un color en toda la app.
-     *
-     * No es la {@see distribucionPorEstado()} de las sesiones: las órdenes
-     * tienen su propia máquina de estados (ADR 0022) y son otra tabla.
-     *
-     * @return list<array{estado: string, tono: string, valor: int}>
-     */
-    public function distribucionOrdenesPorEstado(): array;
-
-    /**
      * Hectáreas validadas por período: los últimos `$periodos` períodos de la
      * granularidad pedida (el actual incluido, aunque venga a medias), con
      * los períodos sin vuelo en `'0.00'`, en orden cronológico — el área del
@@ -69,15 +55,6 @@ interface LecturaPanelOperaciones
      * @return list<array{fecha: string, hectareas: string}>
      */
     public function hectareasPorPeriodo(GranularidadVuelos $granularidad, int $periodos, ?int $pilotoId = null): array;
-
-    /**
-     * Avance operativo por lote, indexado por `loteId` — el consumidor lo
-     * cruza con los lotes de `Comercial` (que es quien conoce el nombre y la
-     * geometría) sin que este módulo tenga que leer `com_lotes`.
-     *
-     * @return array<int, ResumenLotePanel>
-     */
-    public function resumenPorLote(): array;
 
     /**
      * Últimas sesiones que dejaron alguna evidencia gráfica, con esas
@@ -123,17 +100,6 @@ interface LecturaPanelOperaciones
     public function pausasPorCausaDelMes(): array;
 
     /**
-     * Días efectivos en hacienda del mes en curso, por cuadrilla y por
-     * propiedad, con las MISMAS cuentas que el listado de estadías (estadías
-     * ya finalizadas cuya entrada cae en el mes), más cuántas siguen en curso.
-     * Las claves son ids de `per_equipos_trabajo` y de `com_propiedades`: los
-     * nombres los resuelve quien llama, por el contrato de cada módulo.
-     *
-     * @return array{total_dias: float, en_curso: int, por_cuadrilla: array<int, float>, por_propiedad: array<int, float>}
-     */
-    public function diasEnHaciendaDelMes(): array;
-
-    /**
      * Drones que la persona operó en el mes en curso, del más usado al
      * menos: "de qué equipos respondo" resuelto desde las sesiones, que es
      * el único registro que liga persona y dron.
@@ -149,37 +115,4 @@ interface LecturaPanelOperaciones
      * @return array{sesiones: int, hectareas: string, sesionesValidadas: int}
      */
     public function totalesDelMesPorPersona(int $personaId): array;
-
-    /**
-     * Trabajos abiertos ahora mismo, agrupados por el equipo al que el jefe
-     * de campo se los asignó (`equipo_trabajo_id`). Los trabajos sin equipo
-     * asignado (nacidos por sync sin pasar por `AsignarEquiposOrden`) quedan
-     * fuera: no hay "equipo sin nombre" que mostrar.
-     *
-     * @return array<int, ResumenEquipoTrabajoPanel> indexado por equipoTrabajoId
-     */
-    public function trabajosAbiertosPorEquipo(): array;
-
-    /**
-     * Las Órdenes de Trabajo (tandas) de las órdenes de aplicación que todavía
-     * se ejecutan (emitida, vigente, pausada), agrupadas por cada cuadrilla
-     * que trabaja en ellas (tarea 138). Una tanda con dos cuadrillas figura en
-     * las dos, cada vez con lo de esa cuadrilla. Las tandas sin cuadrilla
-     * asignada (trabajos nacidos por sync) no figuran: no hay a quién
-     * agruparlas. Dentro de cada cuadrilla, la tanda más nueva primero.
-     *
-     * @return array<int, list<TandaDeEquipoPanel>> indexado por equipoTrabajoId
-     */
-    public function tandasAbiertasPorEquipo(): array;
-
-    /**
-     * Las órdenes de aplicación con su estado, sus lotes y las cuadrillas que
-     * las trabajan (tarea 138): TODAS las abiertas (emitida, vigente,
-     * pausada), más nuevas primero, y después las `$cerradas` más recientes de
-     * las que ya terminaron (consumida, cancelada, vencida) para dar contexto
-     * sin listar todo el historial.
-     *
-     * @return list<OrdenAplicacionPanel>
-     */
-    public function ordenesAplicacionConEquipos(int $cerradas): array;
 }

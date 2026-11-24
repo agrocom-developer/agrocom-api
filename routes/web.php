@@ -1,18 +1,5 @@
 <?php
 
-use App\Dominios\Campania\Infraestructura\Http\Controllers\Web\CampaniasController;
-use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ClientesController;
-use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ContratosController;
-use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\CultivosController;
-use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\EditarLotesBloqueController;
-use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\FacturasController;
-use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\GenerarLotesController;
-use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\LotesController;
-use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\PropiedadesController;
-use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\PropiedadMapaController;
-use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\ReportesComercialesController;
-use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\SiembraController;
-use App\Dominios\Comercial\Infraestructura\Http\Controllers\Web\SiembraLoteController;
 use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Web\DronesController as DronesFlotaController;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Web\EquiposController as EquiposFlotaController;
@@ -21,20 +8,13 @@ use App\Dominios\Mantenimiento\Infraestructura\Http\Controllers\Web\FichasDronCo
 use App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Web\NotificacionesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\AlertasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\DronesController;
-use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\EstadiasHaciendaController;
-use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\OrdenesController;
-use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\OrdenesTrabajoController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\PausasController;
-use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\RepartoCuadrillasController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\ReportesTecnicosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\TrabajosController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Web\ValidacionSesionesController;
 use App\Dominios\Personal\Infraestructura\Http\Controllers\Web\BasesController;
 use App\Dominios\Personal\Infraestructura\Http\Controllers\Web\CuadrillasController;
 use App\Dominios\Personal\Infraestructura\Http\Controllers\Web\PersonasController;
-use App\Dominios\Portal\Infraestructura\Http\Controllers\Web\ActasPortalController;
-use App\Dominios\Portal\Infraestructura\Http\Controllers\Web\AvancePortalController;
-use App\Dominios\Portal\Infraestructura\Http\Controllers\Web\ReportesPortalController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web\AprobacionController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web\AuxiliaresController as AuxiliaresPanelController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web\DocumentosController as DocumentosPanelController;
@@ -60,6 +40,7 @@ use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\SesionController
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\SesionPortalController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\UsuariosController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\VistaComoController;
+use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Web\SolicitudesController as SolicitudesPanelController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -84,7 +65,7 @@ Route::get('/', function (AutorizacionPanelWeb $autorizacion, Request $request) 
         // Un solo login para todos (16/9/2026): quien ya entró como cliente
         // vuelve a su portal, no a un formulario de ingreso.
         return auth('cliente')->check()
-            ? redirect()->route('portal.avance.index')
+            ? redirect()->route('portal.perfil.edit')
             : redirect()->route('login.form');
     }
 
@@ -336,74 +317,16 @@ Route::middleware('auth:interno')->group(function () {
         Route::post('/panel/versiones-apk/{version}/autorizar', [VersionesApkController::class, 'autorizar'])
             ->name('panel.versiones-apk.autorizar');
 
-        // ADR 0015 punto 1 (tarea 69): alta y mantenimiento de campañas.
-        // Cinco permisos de grano fino
-        // (`campania.campania.ver`/`.crear`/`.editar`/`.cambiar_estado`/`.eliminar`)
-        // verificados DENTRO del controlador contra el ROL ACTIVO — mismo
-        // criterio que `contratos` arriba. `.cambiar_estado` es exclusivo del
-        // rol `dueno`: "solo el dueño cierra una campaña". `.eliminar` (baja
-        // lógica, 17/9/2026) es independiente de `.cambiar_estado` — no hace
-        // falta poder cerrar una campaña para poder eliminarla.
-        Route::get('/panel/campanias', [CampaniasController::class, 'index'])
-            ->name('panel.campanias.index');
-
-        Route::get('/panel/campanias/crear', [CampaniasController::class, 'create'])
-            ->name('panel.campanias.create');
-
-        Route::post('/panel/campanias', [CampaniasController::class, 'store'])
-            ->name('panel.campanias.store');
-
-        Route::get('/panel/campanias/{campania}/editar', [CampaniasController::class, 'edit'])
-            ->name('panel.campanias.edit');
-
-        Route::put('/panel/campanias/{campania}', [CampaniasController::class, 'update'])
-            ->name('panel.campanias.update');
-
-        Route::post('/panel/campanias/{campania}/estado', [CampaniasController::class, 'cambiarEstado'])
-            ->name('panel.campanias.cambiar-estado');
-
-        Route::delete('/panel/campanias/{campania}', [CampaniasController::class, 'destroy'])
-            ->name('panel.campanias.destroy');
-
-        // Reforma 18/9/2026 ("Orden de Trabajo"/tandas, HU-93 extendida):
-        // maestro de tandas (`OrdenTrabajo`) — reemplaza al viejo tablero
-        // plano de `Trabajo` (HU-05, tarea 13; HU-15, tarea 15). El ítem de
-        // menú ya apunta a `panel.trabajos.index`, sin cambios en `sec_menu`.
-        // Permiso `operaciones.trabajo.ver`/`.crear` verificado DENTRO del
-        // controlador contra el ROL ACTIVO, mismo criterio que el resto.
-        Route::get('/panel/trabajos', [OrdenesTrabajoController::class, 'index'])
+        // Trabajos (ADR 0037): los que los equipos abrieron sobre solicitudes de
+        // servicio. El listado es `panel.trabajos.index`; el detalle de UNO —
+        // sesiones, acta, reporte, evidencias y eliminar mientras no esté
+        // validado (HU-93)— cuelga del prefijo `detalle/`. Los trabajos nacen
+        // en la app de campo: el panel no los crea ni los edita.
+        Route::get('/panel/trabajos', [TrabajosController::class, 'index'])
             ->name('panel.trabajos.index');
 
-        Route::get('/panel/trabajos/crear', [OrdenesTrabajoController::class, 'create'])
-            ->name('panel.trabajos.create');
-
-        Route::post('/panel/trabajos', [OrdenesTrabajoController::class, 'store'])
-            ->name('panel.trabajos.store');
-
-        Route::get('/panel/trabajos/{ordenTrabajo}', [OrdenesTrabajoController::class, 'show'])
-            ->name('panel.trabajos.show');
-
-        // Tarea 127: edición de la cabecera de la tanda y de la condición de
-        // pago por equipo — mismo permiso que ya edita un `Trabajo` puntual
-        // (`operaciones.trabajo.editar`, sin permiso nuevo).
-        Route::get('/panel/trabajos/{ordenTrabajo}/editar', [OrdenesTrabajoController::class, 'edit'])
-            ->name('panel.trabajos.edit');
-
-        Route::put('/panel/trabajos/{ordenTrabajo}', [OrdenesTrabajoController::class, 'update'])
-            ->name('panel.trabajos.update');
-
-        // Detalle de UN `Trabajo` puntual (equipo×lote): sesiones, acta,
-        // reporte, evidencias, editar/eliminar (HU-93). Prefijo `detalle/`
-        // para no chocar con `panel.trabajos.show` del maestro de arriba
-        // (que antes de esta reforma era este mismo detalle).
         Route::get('/panel/trabajos/detalle/{trabajo}', [TrabajosController::class, 'show'])
             ->name('panel.trabajos.detalle');
-
-        Route::get('/panel/trabajos/detalle/{trabajo}/editar', [TrabajosController::class, 'edit'])
-            ->name('panel.trabajos.detalle-editar');
-
-        Route::put('/panel/trabajos/detalle/{trabajo}', [TrabajosController::class, 'update'])
-            ->name('panel.trabajos.detalle-actualizar');
 
         Route::delete('/panel/trabajos/detalle/{trabajo}', [TrabajosController::class, 'destroy'])
             ->name('panel.trabajos.detalle-eliminar');
@@ -459,33 +382,6 @@ Route::middleware('auth:interno')->group(function () {
         Route::post('/panel/pausas', [PausasController::class, 'store'])
             ->name('panel.pausas.store');
 
-        // HU-51 (tarea 74): estadías del equipo en cada hacienda. Reforma
-        // 19/9/2026: la oficina también registra, edita, finaliza y da de
-        // baja estadías desde el panel (antes era de solo lectura). Permisos
-        // `operaciones.estadia.ver`/`.crear`/`.editar`/`.eliminar`
-        // verificados DENTRO del controlador, mismo criterio que las rutas
-        // de arriba.
-        Route::get('/panel/estadias', [EstadiasHaciendaController::class, 'index'])
-            ->name('panel.estadias.index');
-
-        Route::get('/panel/estadias/crear', [EstadiasHaciendaController::class, 'create'])
-            ->name('panel.estadias.create');
-
-        Route::post('/panel/estadias', [EstadiasHaciendaController::class, 'store'])
-            ->name('panel.estadias.store');
-
-        Route::get('/panel/estadias/{estadia}/editar', [EstadiasHaciendaController::class, 'edit'])
-            ->name('panel.estadias.edit');
-
-        Route::put('/panel/estadias/{estadia}', [EstadiasHaciendaController::class, 'update'])
-            ->name('panel.estadias.update');
-
-        Route::post('/panel/estadias/{estadia}/finalizar', [EstadiasHaciendaController::class, 'finalizar'])
-            ->name('panel.estadias.finalizar');
-
-        Route::delete('/panel/estadias/{estadia}', [EstadiasHaciendaController::class, 'destroy'])
-            ->name('panel.estadias.destroy');
-
         // HU-19 (tarea 26): bandeja de alertas por excepción. Permiso
         // `operaciones.alerta.ver` gatea la pantalla,
         // `operaciones.alerta.atender` gatea la acción — ambos verificados
@@ -496,183 +392,6 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::post('/panel/alertas/{alerta}/atender', [AlertasController::class, 'atender'])
             ->name('panel.alertas.atender');
-
-        // HU-22 (tarea 33): alta y mantenimiento de clientes con sus
-        // contactos — primer ABM completo del panel. Cuatro permisos de
-        // grano fino (`comercial.cliente.ver`/`.crear`/`.editar`/`.eliminar`)
-        // verificados DENTRO del controlador contra el ROL ACTIVO, mismo
-        // criterio que las rutas de arriba.
-        Route::get('/panel/clientes', [ClientesController::class, 'index'])
-            ->name('panel.clientes.index');
-
-        Route::get('/panel/clientes/crear', [ClientesController::class, 'create'])
-            ->name('panel.clientes.create');
-
-        Route::post('/panel/clientes', [ClientesController::class, 'store'])
-            ->name('panel.clientes.store');
-
-        Route::get('/panel/clientes/{cliente}/editar', [ClientesController::class, 'edit'])
-            ->name('panel.clientes.edit');
-
-        Route::put('/panel/clientes/{cliente}', [ClientesController::class, 'update'])
-            ->name('panel.clientes.update');
-
-        Route::delete('/panel/clientes/{cliente}', [ClientesController::class, 'destroy'])
-            ->name('panel.clientes.destroy');
-
-        // HU-23 (tarea 34): administración de contratos con sus ventanas de
-        // aplicación. Sin `.destroy`: la baja es una transición de estado
-        // (`cambiarEstado` hacia `cancelado`), no un soft delete fuera de la
-        // máquina de estados (invariante 7). Cuatro permisos de grano fino
-        // (`comercial.contrato.ver`/`.crear`/`.editar`/`.cambiar_estado`)
-        // verificados DENTRO del controlador contra el ROL ACTIVO, mismo
-        // criterio que `clientes` arriba.
-        Route::get('/panel/contratos', [ContratosController::class, 'index'])
-            ->name('panel.contratos.index');
-
-        Route::get('/panel/contratos/crear', [ContratosController::class, 'create'])
-            ->name('panel.contratos.create');
-
-        Route::post('/panel/contratos', [ContratosController::class, 'store'])
-            ->name('panel.contratos.store');
-
-        Route::get('/panel/contratos/{contrato}/editar', [ContratosController::class, 'edit'])
-            ->name('panel.contratos.edit');
-
-        Route::put('/panel/contratos/{contrato}', [ContratosController::class, 'update'])
-            ->name('panel.contratos.update');
-
-        Route::post('/panel/contratos/{contrato}/estado', [ContratosController::class, 'cambiarEstado'])
-            ->name('panel.contratos.cambiar-estado');
-
-        // ADR 0018: propiedades del cliente — nivel de terreno entre
-        // `Cliente` y `Campo`. Sin sub-entidad propia en esta pantalla: los
-        // campos de una propiedad se cargan desde `campos` (abajo). Cuatro
-        // permisos de grano fino
-        // (`comercial.propiedad.ver`/`.crear`/`.editar`/`.eliminar`)
-        // verificados DENTRO del controlador contra el ROL ACTIVO, mismo
-        // criterio que `clientes`/`contratos` arriba.
-        Route::get('/panel/propiedades', [PropiedadesController::class, 'index'])
-            ->name('panel.propiedades.index');
-
-        Route::get('/panel/propiedades/crear', [PropiedadesController::class, 'create'])
-            ->name('panel.propiedades.create');
-
-        Route::post('/panel/propiedades', [PropiedadesController::class, 'store'])
-            ->name('panel.propiedades.store');
-
-        Route::get('/panel/propiedades/{propiedad}/editar', [PropiedadesController::class, 'edit'])
-            ->name('panel.propiedades.edit');
-
-        Route::put('/panel/propiedades/{propiedad}', [PropiedadesController::class, 'update'])
-            ->name('panel.propiedades.update');
-
-        Route::delete('/panel/propiedades/{propiedad}', [PropiedadesController::class, 'destroy'])
-            ->name('panel.propiedades.destroy');
-
-        // Tarea 77 (HU-54, etapa 2): ficha propia de un lote — antes solo se
-        // podía tocar entrando por su propiedad. Cuatro permisos de grano
-        // fino (`comercial.lote.ver`/`.crear`/`.editar`/`.eliminar`,
-        // sembrados en la etapa 1 de esta misma tarea) verificados DENTRO
-        // del controlador contra el ROL ACTIVO, mismo criterio que
-        // `campos` arriba. El caso de uso de guardado es el mismo que usa
-        // `CamposController` (ver docblock de `LotesController`).
-        Route::get('/panel/lotes', [LotesController::class, 'index'])
-            ->name('panel.lotes.index');
-
-        Route::get('/panel/lotes/crear', [LotesController::class, 'create'])
-            ->name('panel.lotes.create');
-
-        Route::post('/panel/lotes', [LotesController::class, 'store'])
-            ->name('panel.lotes.store');
-
-        Route::get('/panel/lotes/{lote}/editar', [LotesController::class, 'edit'])
-            ->name('panel.lotes.edit');
-
-        Route::put('/panel/lotes/{lote}', [LotesController::class, 'update'])
-            ->name('panel.lotes.update');
-
-        Route::delete('/panel/lotes/{lote}', [LotesController::class, 'destroy'])
-            ->name('panel.lotes.destroy');
-
-        // HU-48 (tarea 71, ADR 0015 punto 4): catálogo de cultivos, sin
-        // sub-entidad. Cuatro permisos de grano fino
-        // (`comercial.cultivo.ver`/`.crear`/`.editar`/`.eliminar`)
-        // verificados DENTRO del controlador contra el ROL ACTIVO, mismo
-        // criterio que `campos`/`lotes` arriba.
-        Route::get('/panel/cultivos', [CultivosController::class, 'index'])
-            ->name('panel.cultivos.index');
-
-        Route::get('/panel/cultivos/crear', [CultivosController::class, 'create'])
-            ->name('panel.cultivos.create');
-
-        Route::post('/panel/cultivos', [CultivosController::class, 'store'])
-            ->name('panel.cultivos.store');
-
-        Route::get('/panel/cultivos/{cultivo}/editar', [CultivosController::class, 'edit'])
-            ->name('panel.cultivos.edit');
-
-        Route::put('/panel/cultivos/{cultivo}', [CultivosController::class, 'update'])
-            ->name('panel.cultivos.update');
-
-        Route::delete('/panel/cultivos/{cultivo}', [CultivosController::class, 'destroy'])
-            ->name('panel.cultivos.destroy');
-
-        // HU-48 (tarea 71, etapa 3, ADR 0015 punto 4): qué se sembró en cada
-        // lote de la propiedad, por campaña. Entra desde la ficha de la propiedad, no
-        // desde `cultivos` (catálogo) ni desde `lotes` (estructura) — reusa
-        // el permiso `comercial.propiedad.editar`: no es un ABM propio, es parte
-        // de mantener los datos de ESA propiedad.
-        Route::get('/panel/propiedades/{propiedad}/siembra', [SiembraController::class, 'mostrar'])
-            ->name('panel.propiedades.siembra');
-
-        Route::post('/panel/propiedades/{propiedad}/siembra', [SiembraController::class, 'guardar'])
-            ->name('panel.propiedades.siembra.guardar');
-
-        // La misma pantalla sin propiedad elegida (21/9/2026): entrada desde la
-        // ficha de un cultivo. Cliente y propiedad se eligen ahí mismo.
-        Route::get('/panel/siembra', [SiembraController::class, 'elegir'])
-            ->name('panel.siembra');
-
-        // La siembra de UN lote, desde su ficha (21/9/2026): el formulario de
-        // un sector sin elegir lotes, con propiedad y campaña de solo lectura.
-        Route::get('/panel/lotes/{lote}/siembra', [SiembraLoteController::class, 'mostrar'])
-            ->name('panel.lotes.siembra');
-
-        Route::post('/panel/lotes/{lote}/siembra', [SiembraLoteController::class, 'guardar'])
-            ->name('panel.lotes.siembra.guardar');
-
-        // "Crear Lotes" con un solo botón (HU-72 reconstruida, 16/9/2026 —
-        // ver CrearLotesMasivo): entra desde la ficha de la propiedad,
-        // reusa el permiso de Lote (`comercial.lote.crear`), no el de
-        // Propiedad — mismo criterio que el resto del aside "Lotes".
-        Route::get('/panel/propiedades/{propiedad}/lotes/generar', [GenerarLotesController::class, 'mostrar'])
-            ->name('panel.propiedades.lotes.generar');
-
-        Route::post('/panel/propiedades/{propiedad}/lotes/generar', [GenerarLotesController::class, 'guardar'])
-            ->name('panel.propiedades.lotes.generar.guardar');
-
-        // "Editar en bloque" (19/9/2026): la contraparte de "Crear Lotes" para
-        // lotes que ya existen — hectáreas y terreno de todos a la vez, y
-        // sumar o quitar lotes cambiando la cantidad (ver
-        // EditarLotesEnBloque). Permisos de Lote: `.editar`, más `.crear`/
-        // `.eliminar` según lo que el cambio de cantidad implique.
-        Route::get('/panel/propiedades/{propiedad}/lotes/bloque', [EditarLotesBloqueController::class, 'mostrar'])
-            ->name('panel.propiedades.lotes.bloque');
-
-        Route::put('/panel/propiedades/{propiedad}/lotes/bloque', [EditarLotesBloqueController::class, 'guardar'])
-            ->name('panel.propiedades.lotes.bloque.guardar');
-
-        // Adenda 16/9/2026 a ADR 0018 / ADR 0020 ("el editor de mapa
-        // multi-polígono se construye en un feature aparte"): punto de
-        // referencia (latitud/longitud) y perímetro (`geometria`) de la
-        // propiedad, en pantalla propia — no en el formulario principal.
-        // Reusa `comercial.propiedad.editar`: no es un ABM propio.
-        Route::get('/panel/propiedades/{propiedad}/mapa', [PropiedadMapaController::class, 'mostrar'])
-            ->name('panel.propiedades.mapa');
-
-        Route::post('/panel/propiedades/{propiedad}/mapa', [PropiedadMapaController::class, 'guardar'])
-            ->name('panel.propiedades.mapa.guardar');
 
         // HU-27 (tarea 36): administración de la flota de drones con su
         // modelo y capacidad de carga. Sin sub-entidad (a diferencia de
@@ -698,68 +417,6 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::delete('/panel/drones/{dron}', [DronesController::class, 'destroy'])
             ->name('panel.drones.destroy');
-
-        // HU-25 (tarea 38): órdenes de aplicación con su propia máquina de
-        // estados (`emitida → vigente`). `activar` separada de `update`
-        // (invariante 7): cambiar el estado no es la misma responsabilidad
-        // que corregir un dato, mismo criterio que
-        // `panel.contratos.cambiar-estado`. Cinco permisos de grano fino
-        // (`operaciones.orden.ver`/`.crear`/`.editar`/`.activar`/`.eliminar`)
-        // verificados DENTRO del controlador contra el ROL ACTIVO, mismo
-        // criterio que `clientes`/`contratos`/`campos`/`drones` arriba.
-        Route::get('/panel/ordenes', [OrdenesController::class, 'index'])
-            ->name('panel.ordenes.index');
-
-        Route::get('/panel/ordenes/crear', [OrdenesController::class, 'create'])
-            ->name('panel.ordenes.create');
-
-        Route::post('/panel/ordenes', [OrdenesController::class, 'store'])
-            ->name('panel.ordenes.store');
-
-        // Detalle de solo lectura (homogeneización 17/9/2026): registrada
-        // DESPUÉS de /panel/ordenes/crear (literal) para que "crear" no
-        // quede capturado por {orden} — mismo criterio que panel.trabajos.show.
-        Route::get('/panel/ordenes/{orden}', [OrdenesController::class, 'show'])
-            ->name('panel.ordenes.show');
-
-        Route::get('/panel/ordenes/{orden}/editar', [OrdenesController::class, 'edit'])
-            ->name('panel.ordenes.edit');
-
-        Route::put('/panel/ordenes/{orden}', [OrdenesController::class, 'update'])
-            ->name('panel.ordenes.update');
-
-        Route::post('/panel/ordenes/{orden}/activar', [OrdenesController::class, 'activar'])
-            ->name('panel.ordenes.activar');
-
-        // ADR 0022: la ejecución de la aplicación se decide desde el panel — la
-        // app de campo nunca pausa, cierra ni cancela una orden.
-        Route::post('/panel/ordenes/{orden}/pausar', [OrdenesController::class, 'pausar'])
-            ->name('panel.ordenes.pausar');
-
-        Route::post('/panel/ordenes/{orden}/reanudar', [OrdenesController::class, 'reanudar'])
-            ->name('panel.ordenes.reanudar');
-
-        Route::post('/panel/ordenes/{orden}/cerrar', [OrdenesController::class, 'cerrar'])
-            ->name('panel.ordenes.cerrar');
-
-        Route::post('/panel/ordenes/{orden}/cancelar', [OrdenesController::class, 'cancelar'])
-            ->name('panel.ordenes.cancelar');
-
-        Route::delete('/panel/ordenes/{orden}', [OrdenesController::class, 'destroy'])
-            ->name('panel.ordenes.destroy');
-
-        // HU-70 (tarea 85): reparto de una orden vigente entre equipos de
-        // trabajo — ficha propia, no sub-recurso de `ordenes` (ver docblock
-        // de `RepartoCuadrillasController`). Un único permiso
-        // (`operaciones.orden.asignar_equipos`) gatea las tres rutas.
-        Route::get('/panel/reparto-cuadrillas', [RepartoCuadrillasController::class, 'index'])
-            ->name('panel.reparto-cuadrillas.index');
-
-        Route::get('/panel/reparto-cuadrillas/{orden}', [RepartoCuadrillasController::class, 'mostrar'])
-            ->name('panel.reparto-cuadrillas.show');
-
-        Route::post('/panel/reparto-cuadrillas/{orden}', [RepartoCuadrillasController::class, 'asignar'])
-            ->name('panel.reparto-cuadrillas.store');
 
         // HU-26 (tarea 37): administración de bases y personas operativas,
         // dos ABMs INDEPENDIENTES (una base es catálogo simple; una persona
@@ -836,6 +493,20 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::delete('/panel/baterias/{bateria}', [BateriasController::class, 'destroy'])
             ->name('panel.baterias.destroy');
+
+        // Solicitudes de servicio (ADR 0027): el administrador las consulta y, con
+        // el permiso de cancelar, las cancela con motivo. El cliente las crea
+        // desde la app; el panel no crea ni edita solicitudes.
+        Route::get('/panel/solicitudes', [SolicitudesPanelController::class, 'index'])
+            ->name('panel.solicitudes.index');
+
+        Route::get('/panel/solicitudes/{solicitud}', [SolicitudesPanelController::class, 'show'])
+            ->whereNumber('solicitud')
+            ->name('panel.solicitudes.show');
+
+        Route::post('/panel/solicitudes/{solicitud}/cancelar', [SolicitudesPanelController::class, 'cancelar'])
+            ->whereNumber('solicitud')
+            ->name('panel.solicitudes.cancelar');
 
         // Marketplace (ADR 0028, 0029, 0032): cola de aprobación de proveedores,
         // pilotos, auxiliares, drones y documentos. Los permisos son de grano
@@ -986,33 +657,6 @@ Route::middleware('auth:interno')->group(function () {
         Route::delete('/panel/fichas-dron/{fichaDron}', [FichasDronController::class, 'destroy'])
             ->name('panel.fichas-dron.destroy');
 
-        // HU-31 (tarea 45): "como encargado, quiero emitir la factura de un
-        // trabajo desde su acta conformada, para cobrar sobre hectáreas ya
-        // firmadas" — abre Sprint 9. Dos permisos de grano fino
-        // (`comercial.factura.ver`/`.crear`), verificados DENTRO del
-        // controlador contra el ROL ACTIVO, mismo criterio que las rutas de
-        // arriba. Sin edición ni baja: una factura emitida es un snapshot
-        // inmutable.
-        Route::get('/panel/facturas', [FacturasController::class, 'index'])
-            ->name('panel.facturas.index');
-
-        Route::get('/panel/facturas/crear', [FacturasController::class, 'create'])
-            ->name('panel.facturas.create');
-
-        Route::post('/panel/facturas', [FacturasController::class, 'store'])
-            ->name('panel.facturas.store');
-
-        // HU-52 (tarea 75, espec §9.1): informe de avance de contratos, por
-        // cultivo y por cliente — reemplaza en la misma ruta a la pantalla
-        // plana de HU-32 (tarea 46). Un único permiso (`comercial.reporte.ver`),
-        // exclusivo del dueño (no entra en `PERMISOS_ENCARGADO_OPERACIONES`),
-        // verificado DENTRO
-        // del controlador contra el ROL ACTIVO. Sin `exportar`: el CSV plano
-        // de HU-32 no tiene una forma razonable para un informe agrupado en
-        // dos niveles — fuera de alcance de esta tarea.
-        Route::get('/panel/reportes/comercial', [ReportesComercialesController::class, 'index'])
-            ->name('panel.reportes.comercial.index');
-
         // HU-43 (tarea 57): "como encargado, quiero listar y descargar los
         // reportes técnicos generados, para reenviarlos al agrónomo" — cierra
         // Sprint 12. Reusa el permiso `operaciones.reporte.ver` que ya gatea
@@ -1046,11 +690,4 @@ Route::middleware('auth:cliente')->group(function () {
     Route::post('/portal/preferencias/zona-horaria', [PreferenciasPortalController::class, 'actualizarZonaHoraria'])
         ->name('portal.preferencias.zona-horaria');
 
-    Route::get('/portal/avance', [AvancePortalController::class, 'index'])->name('portal.avance.index');
-
-    Route::get('/portal/actas', [ActasPortalController::class, 'index'])->name('portal.actas.index');
-    Route::get('/portal/actas/{acta}/pdf', [ActasPortalController::class, 'pdf'])->name('portal.actas.pdf');
-
-    Route::get('/portal/reportes', [ReportesPortalController::class, 'index'])->name('portal.reportes.index');
-    Route::get('/portal/reportes/{reporte}/pdf', [ReportesPortalController::class, 'pdf'])->name('portal.reportes.pdf');
 });

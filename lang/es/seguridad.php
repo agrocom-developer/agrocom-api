@@ -244,8 +244,10 @@ return [
         'viendo_como' => 'Viendo como :rol',
         'tabs_aria' => 'Vistas del dashboard',
         'tab_resumen' => 'Resumen',
-        'tab_mapa' => 'Mapa',
-        'tab_resumen_lote' => 'Resumen por lote',
+        'tab_solicitudes' => 'Solicitudes',
+        'solicitudes_titulo' => 'Solicitudes por estado',
+        'col_solicitud' => 'Solicitud',
+        'col_cantidad' => 'Cantidad',
         'tab_multimedia' => 'Multimedia',
         'ver_todas' => 'Ver todas',
 
@@ -257,14 +259,10 @@ return [
         // Estado vacío por falta de campaña abierta (causa más común en una
         // instalación nueva: sin campaña, no hay contratos, órdenes ni
         // sesiones que mostrar). Ver `puedeCrearCampania` en `_sin-secciones`.
-        'sin_campania_titulo' => 'Activa una campaña para empezar',
-        'sin_campania_detalle' => 'Los contratos, las órdenes de aplicación y el resto del panel dependen de que haya una campaña abierta. Crea la primera para empezar a cargar contratos.',
-        'sin_campania_accion' => 'Crear campaña',
 
         // Columnas compartidas por la tabla de sesiones (cola de validación y
         // "mis sesiones" usan el mismo parcial).
         'col_hora' => 'Fecha',
-        'col_lote' => 'Lote',
         'col_piloto' => 'Piloto',
         'col_dron' => 'Dron',
         'col_vuelo' => 'Vuelo',
@@ -336,9 +334,6 @@ return [
 
         // Tabs del dueño (tarea 135): estado de cuentas, trabajos actuales
         // por equipo y progreso de toda la campaña.
-        'tab_estado_cuentas' => 'Estado de cuentas',
-        'tab_trabajos_equipo' => 'Trabajos por equipo',
-        'tab_progreso_campania' => 'Progreso de campaña',
 
         'seccion_estado_cuentas' => 'Estado de cuenta por contrato',
         'cuentas_col_cliente' => 'Cliente',
@@ -351,7 +346,6 @@ return [
         'trabajos_equipo_col_equipo' => 'Equipo',
         'trabajos_equipo_col_abiertos' => 'Abiertos',
         'trabajos_equipo_col_hectareas' => 'Hectáreas',
-        'trabajos_equipo_col_lotes' => 'Lotes',
         'trabajos_equipo_col_ultimo' => 'Último inicio',
 
         'seccion_progreso_campania' => 'Progreso de la campaña',
@@ -364,7 +358,6 @@ return [
 
         // Tabs del encargado de operaciones (tarea 136): cómo van las órdenes
         // de aplicación, el proceso de los trabajos y el resumen de vuelos.
-        'tab_estado_aplicaciones' => 'Estados de las aplicaciones',
         'tab_proceso_trabajos' => 'Proceso de los trabajos',
         'tab_resumen_vuelos' => 'Resumen de vuelos',
 
@@ -373,9 +366,6 @@ return [
         // Tabs del jefe de campo (tarea 138): los recursos que se ocupan o
         // faltan, las órdenes de trabajo de cada cuadrilla y cómo van las
         // órdenes de aplicación con su equipamiento.
-        'tab_recursos' => 'Recursos',
-        'tab_ordenes_cuadrillas' => 'Órdenes de trabajo',
-        'tab_ordenes_equipamiento' => 'Órdenes y equipamiento',
 
         'seccion_recursos_en_uso' => 'Recursos en uso ahora',
         'recursos_en_uso_total' => '{1} :cantidad recurso en uso|[0,*] :cantidad recursos en uso',
@@ -389,7 +379,6 @@ return [
         'ordenes_cuadrillas_ver' => 'Ver órdenes de trabajo',
         'ordenes_cuadrillas_col_trabajo' => 'Orden de trabajo',
         'ordenes_cuadrillas_col_aplicacion' => 'Orden de aplicación',
-        'ordenes_cuadrillas_col_lotes' => 'Lotes',
         'ordenes_cuadrillas_col_trabajos' => 'Abiertos',
         'ordenes_cuadrillas_col_hectareas' => 'Hectáreas',
         'ordenes_cuadrillas_col_estado' => 'Estado',
@@ -944,8 +933,7 @@ return [
         'sesion_finalizada' => 'Sesión finalizada.',
         'rol_dispositivo_requerido' => 'Debes indicar con qué rol opera este dispositivo.',
         'rol_activo_requerido' => 'Debes seleccionar un rol activo antes de continuar.',
-        'badge_ordenes_vigentes' => ':cantidad vigentes',
-        'badge_contratos_en_ejecucion' => ':cantidad en ejecución',
+        'badge_solicitudes_esperando' => ':cantidad esperando proveedor',
         'badge_sesiones_pendientes' => ':cantidad sin validar',
         'badge_pausas_mes' => ':cantidad este mes',
     ],

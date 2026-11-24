@@ -2,47 +2,28 @@
 
 namespace App\Dominios\Seguridad\Aplicacion;
 
-use App\Dominios\Comercial\Contratos\LecturaPanelComercial;
-use App\Dominios\Comercial\Contratos\LotePanel;
 use App\Dominios\Personal\Contratos\LecturaPanelPersonal;
 
 /**
  * Resuelve los NOMBRES que el dashboard necesita y que ningún módulo puede
- * dar solo: `Operaciones` sabe que la sesión 7 es del lote 3 y del piloto 5,
- * pero el lote es de `Comercial` y la persona de `Personal` (ADR 0003, regla
+ * dar solo: `Operaciones` sabe que la sesión 7 es del piloto 5, pero la
+ * persona es de `Personal` (ADR 0003, regla
  * 3 — las FK cruzan como enteros pelados, sin relación Eloquent).
  *
  * Una sola responsabilidad: traducir ids a nombres, una vez por request y en
  * lote. Se instancia por request y cachea en memoria — el dashboard pide el
- * nombre del mismo lote en el mapa, en el resumen por lote y en la tabla de
- * sesiones, y sin esto serían tres consultas idénticas.
+ * nombre de la misma persona en varias tablas, y sin esto serían consultas
+ * idénticas.
  */
 final class CatalogoNombresPanel
 {
-    /** @var array<int, LotePanel>|null */
-    private ?array $lotes = null;
-
     /** @var array<int, string> */
     private array $personas = [];
 
     /** @var array<int, string> */
     private array $bases = [];
 
-    public function __construct(
-        private readonly LecturaPanelComercial $comercial,
-        private readonly LecturaPanelPersonal $personal,
-    ) {}
-
-    /** @return array<int, LotePanel> */
-    public function lotes(): array
-    {
-        return $this->lotes ??= $this->comercial->lotesPorId();
-    }
-
-    public function lote(?int $loteId): ?LotePanel
-    {
-        return $loteId === null ? null : ($this->lotes()[$loteId] ?? null);
-    }
+    public function __construct(private readonly LecturaPanelPersonal $personal) {}
 
     /**
      * Precarga los nombres de varias personas de una sola consulta. Se llama

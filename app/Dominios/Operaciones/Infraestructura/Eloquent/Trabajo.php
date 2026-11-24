@@ -17,24 +17,26 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
- * Trabajo (espec §4.3, tabla ope_trabajos; TE-05). Nace en la app de campo
- * con su `uuid_cliente` (invariante 1 de CLAUDE.md, resuelto por el motor de
- * sync).
+ * Trabajo (espec §4.3, tabla ope_trabajos; TE-05): la ejecución de una
+ * solicitud de servicio aceptada (ADR 0037). Nace en la app de campo con su
+ * `uuid_cliente` (invariante 1 de CLAUDE.md, resuelto por el motor de sync) y
+ * cuelga de la solicitud por `solicitud_id`: FK plana a `sol_solicitudes_servicio`
+ * (otro módulo, ADR 0003 regla 3), sin relación Eloquent; el módulo
+ * `Solicitudes` lo expone por `Contratos/`. La sesión de vuelo, las pausas,
+ * las condiciones, las recargas, las incidencias, las evidencias, el acta y el
+ * reporte técnico cuelgan de este trabajo.
  *
- * `orden_id` y `lote_id` referencian tablas de otro módulo (`Operaciones`
- * dueño de `ope_ordenes_aplicacion`, `Comercial` dueño de `com_lotes`) solo
- * por FK + entero plano (ADR 0003, regla 3) — sin relaciones Eloquent
- * cruzadas. `sesiones()`, en cambio, SÍ es una relación Eloquent normal:
- * `Sesion` vive en el mismo módulo (ADR 0003, regla 1).
+ * `sesiones()`, en cambio, SÍ es una relación Eloquent normal: `Sesion` vive
+ * en el mismo módulo (ADR 0003, regla 1).
  *
  * Las transiciones de `estado` (abierto → cerrado) pasan por
  * `Aplicacion/MaquinaEstados/MaquinaEstadosTrabajo.php` (invariante 7); este
  * modelo no ofrece atajos para mutarlas. `RegistraBitacora`: `estado` es un
- * estado operativo (ADR 0007), misma categoría que `ope_ordenes_aplicacion`.
+ * estado operativo (ADR 0007).
  *
  * `cierre_uuid_cliente` (HU-05, tarea 13): `uuid_cliente` del EVENTO de
  * cierre, distinto del de apertura — mecanismo de idempotencia de una
- * mutación sobre fila existente, documentado en runs/13.md.
+ * mutación sobre fila existente.
  *
  * `litros_sobrante` (espec §7.2, HU-10 redefinida por CR-01, tarea 18):
  * declarado al cerrar el trabajo, opcional (ver `Contratos/CierreTrabajo`).
@@ -43,50 +45,31 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  *
  * `imagen_campo_evidencia_id` (espec §9/§10, HU-09, tarea 21): FK a
  * `ope_evidencias.id`, completada al cerrar el trabajo — sin ella, el cierre
- * se rechaza (ver `EscrituraSincronizacionEloquent::cerrarTrabajo()`). A
- * diferencia de `orden_id`/`lote_id` (otro módulo, FK plano sin relación
- * Eloquent, ADR 0003 regla 3), `Evidencia` vive en el mismo módulo
- * `Operaciones`, así que sí tiene relación Eloquent normal
+ * se rechaza (ver `EscrituraSincronizacionEloquent::cerrarTrabajo()`). Como
+ * `Evidencia` vive en el mismo módulo, tiene relación Eloquent normal
  * ({@see self::imagenCampoEvidencia()}).
  *
- * `equipo_trabajo_id` (HU-70, tarea 85): equipo al que el jefe de campo le
- * asignó este trabajo desde el panel — `NULL` en los trabajos que nacen por
- * sync (ver `MaquinaEstadosTrabajo::abrir()`) o que existían antes de esta
- * tarea. FK plana a `per_equipos_trabajo` (otro módulo, ADR 0003 regla 3):
- * sin relación Eloquent, se lee por `Personal\Contratos\LecturaEquipoTrabajo`.
+ * `equipo_trabajo_id`: cuadrilla de `Personal` a la que se atribuye el trabajo
+ * (puede ser `NULL`). FK plana (otro módulo, ADR 0003 regla 3): se lee por
+ * `Personal\Contratos\LecturaEquipoTrabajo`. El equipo que ejecuta el servicio
+ * es el de la solicitud (`flo_equipos`), no este.
  *
- * `orden_trabajo_id` (reforma 18/9/2026, "Orden de Trabajo"/tandas): la tanda
- * a la que pertenece este trabajo — `NULL` en trabajos que nacen por sync sin
- * pasar por `AsignarEquiposOrden`. `OrdenTrabajo` es del mismo módulo →
- * relación Eloquent real (`ordenTrabajo()`, ADR 0003 regla 1), a diferencia
- * de `equipo_trabajo_id` (otro módulo, FK plana).
+ * Los límites climáticos y de vuelo salen de {@see LimitesEfectivos}: el
+ * parámetro por defecto del sistema, porque el trabajo ya no lleva una orden
+ * con condiciones propias.
  *
- * Los 8 campos de límites climáticos y parámetros de vuelo vivieron acá muy
- * brevemente (migración `2026_09_18_100001_mueve_clima_vuelo_de_ordenes_a_trabajos_table`,
- * el mismo día): describían el vuelo de ESE equipo ese día. La reforma
- * `create_ope_ordenes_trabajo_table` (mismo día) los mueve una vez más, esta
- * vez a `OrdenTrabajo` — son compartidos por TODA la tanda (que puede cubrir
- * varios equipos), no por cada `Trabajo` individual. Se leen vía
- * `$trabajo->ordenTrabajo?->humedad_min_pct` etc.
- *
- * `turno`/`turno_hora_inicio`/`turno_hora_fin` (misma reforma): qué turno
- * cubre ESTE equipo en ESTE lote dentro de la tanda — mañana, noche o todo
- * el día, con su horario. Propio de cada fila (mismo nivel que `lote_id`),
- * no de la cabecera. `NULL` en trabajos que nacen por sync sin pasar por
- * `AsignarEquiposOrden`, donde los tres son obligatorios juntos.
+ * `turno`/`turno_hora_inicio`/`turno_hora_fin`: qué turno cubre el trabajo,
+ * con su horario; opcionales.
  *
  * @property int $id
  * @property string $uuid_cliente
- * @property int $orden_id
- * @property int $lote_id
- * @property int|null $orden_trabajo_id
+ * @property int|null $solicitud_id
  * @property int|null $equipo_trabajo_id
- * @property int $nro_aplicacion
  * @property string $hectareas_declaradas
  * @property EstadoTrabajo $estado
  * @property Turno|null $turno
- * @property string|null $turno_hora_inicio
- * @property string|null $turno_hora_fin
+ * @property CarbonImmutable|null $turno_hora_inicio
+ * @property CarbonImmutable|null $turno_hora_fin
  * @property CarbonImmutable $inicio
  * @property CarbonImmutable|null $fin
  * @property string|null $cierre_uuid_cliente
@@ -103,11 +86,8 @@ class Trabajo extends ModeloDominio
     /** @var list<string> */
     protected $fillable = [
         'uuid_cliente',
-        'orden_id',
-        'lote_id',
-        'orden_trabajo_id',
+        'solicitud_id',
         'equipo_trabajo_id',
-        'nro_aplicacion',
         'hectareas_declaradas',
         'estado',
         'turno',
@@ -124,8 +104,7 @@ class Trabajo extends ModeloDominio
     protected function casts(): array
     {
         return [
-            'nro_aplicacion' => 'integer',
-            'orden_trabajo_id' => 'integer',
+            'solicitud_id' => 'integer',
             'equipo_trabajo_id' => 'integer',
             'hectareas_declaradas' => 'decimal:2',
             'estado' => EstadoTrabajo::class,
@@ -139,31 +118,14 @@ class Trabajo extends ModeloDominio
         ];
     }
 
-    /** @return BelongsTo<OrdenTrabajo, $this> */
-    public function ordenTrabajo(): BelongsTo
-    {
-        return $this->belongsTo(OrdenTrabajo::class, 'orden_trabajo_id');
-    }
-
     /**
-     * Límites efectivos de ESTE trabajo: los de su Orden de Trabajo o, en
-     * blanco (o sin Orden de Trabajo), el default del sistema
-     * ({@see LimitesEfectivos}). Lo leen el catálogo de la app y la
-     * validación de `condiciones` del sync — nunca cada uno por su lado.
+     * Límites efectivos de ESTE trabajo: el parámetro por defecto del sistema
+     * ({@see LimitesEfectivos}). Lo leen el catálogo de la app y la validación
+     * de `condiciones` del sync — nunca cada uno por su lado.
      */
     public function limitesEfectivos(): LimitesEfectivos
     {
-        $ordenTrabajo = $this->ordenTrabajo;
-
-        return LimitesEfectivos::resolver(
-            humedadMinPct: $ordenTrabajo?->humedad_min_pct,
-            humedadMaxPct: $ordenTrabajo?->humedad_max_pct,
-            vientoMaxKmh: $ordenTrabajo?->viento_max_kmh,
-            temperaturaMaxC: $ordenTrabajo?->temperatura_max_c,
-            alturaVueloM: $ordenTrabajo?->altura_vuelo_m,
-            velocidadVueloKmh: $ordenTrabajo?->velocidad_vuelo_kmh,
-            anchoPasadaM: $ordenTrabajo?->ancho_pasada_m,
-        );
+        return LimitesEfectivos::porDefecto();
     }
 
     /** @return HasMany<Sesion, $this> */

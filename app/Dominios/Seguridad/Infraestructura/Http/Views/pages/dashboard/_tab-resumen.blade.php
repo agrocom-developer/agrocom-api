@@ -9,6 +9,10 @@
     Espera: $secciones (array<string, mixed>).
 --}}
 <div class="ag-dash__stack">
+    @isset($secciones['solicitudes_por_estado'])
+        @include('seguridad::pages.dashboard._seccion-solicitudes', ['solicitudes' => $secciones['solicitudes_por_estado']])
+    @endisset
+
     @isset($secciones['alertas'])
         @include('seguridad::pages.dashboard._seccion-alertas', ['alertas' => $secciones['alertas']])
     @endisset
@@ -29,18 +33,10 @@
         </section>
     @endif
 
-    @isset($secciones['avance_clientes'])
-        @include('seguridad::pages.dashboard._seccion-avance-clientes', ['avances' => $secciones['avance_clientes']])
-    @endisset
-
     @isset($secciones['pausas'])
         <div class="ag-dash__grid ag-dash__grid--par">
             @include('seguridad::pages.dashboard._seccion-pausas', ['pausas' => $secciones['pausas']])
         </div>
-    @endisset
-
-    @isset($secciones['dias_en_hacienda'])
-        @include('seguridad::pages.dashboard._seccion-dias-hacienda', ['diasHacienda' => $secciones['dias_en_hacienda']])
     @endisset
 
     {{-- Bloque personal, SIEMPRE al final y bajo su propio encabezado.

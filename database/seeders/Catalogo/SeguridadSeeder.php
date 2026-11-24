@@ -57,7 +57,6 @@ class SeguridadSeeder extends Seeder
         // cliente) — exige este permiso ADEMÁS de crear/editar, restringido
         // a dueño y encargado_operaciones (ver PERMISOS_ENCARGADO_OPERACIONES
         // más abajo; dueño lo recibe con el resto del catálogo).
-        'seguridad.usuario.portal' => 'Crear/editar cuentas de portal del cliente (además de crear/editar)',
         // Tarea 140: mirar el panel o el portal COMO otro usuario, en solo
         // lectura. Permiso propio y a propósito fuera de `dueno` (ver
         // PERMISOS_SOLO_ADMIN_PLATAFORMA más abajo): es una herramienta de
@@ -133,8 +132,6 @@ class SeguridadSeeder extends Seeder
         // lotes por equipo) sobre una orden vigente, y editar/eliminar un
         // trabajo puntual mientras no esté `validado`. Grano fino, mismo
         // criterio que `operaciones.orden.crear/.editar/.eliminar`.
-        'operaciones.trabajo.crear' => 'Crear una Orden de Trabajo (tanda de equipos) sobre una orden vigente',
-        'operaciones.trabajo.editar' => 'Editar un trabajo (lote, equipo, hectáreas, turno) mientras no esté validado',
         'operaciones.trabajo.eliminar' => 'Dar de baja (lógica) un trabajo mientras no esté validado',
         // HU-14 (tarea 14): cola de validación — aprobar o rechazar una
         // sesión cerrada. Un único permiso gatea listar y decidir (mismo
@@ -169,27 +166,15 @@ class SeguridadSeeder extends Seeder
         // contactos. Grano fino (ver/crear/editar/eliminar separados, mismo
         // criterio que seguridad.usuario.*): permite que un rol futuro de
         // solo lectura exista sin tocar este catálogo.
-        'comercial.cliente.ver' => 'Ver el listado y detalle de clientes',
-        'comercial.cliente.crear' => 'Dar de alta un cliente con sus contactos',
-        'comercial.cliente.editar' => 'Editar los datos y contactos de un cliente',
-        'comercial.cliente.eliminar' => 'Dar de baja (lógica) un cliente',
         // ADR 0018: propiedades del cliente — nivel de terreno entre
         // `Cliente` y `Campo` (una propiedad puede tener más de un campo
         // físico delimitado, caso "Gamelera"). Grano fino, mismo criterio
         // que `comercial.cliente.*`.
-        'comercial.propiedad.ver' => 'Ver el listado y detalle de propiedades',
-        'comercial.propiedad.crear' => 'Dar de alta una propiedad',
-        'comercial.propiedad.editar' => 'Editar los datos de una propiedad',
-        'comercial.propiedad.eliminar' => 'Dar de baja (lógica) una propiedad sin campos asociados',
         // HU-23 (tarea 34): administración de contratos con sus ventanas de
         // aplicación. `cambiar_estado` separado de `.editar`, mismo criterio
         // que `usuario.bloquear` separado de `usuario.editar`: pasar un
         // contrato de `vigente` a `cancelado` no es la misma responsabilidad
         // que corregir un dato.
-        'comercial.contrato.ver' => 'Ver el listado y detalle de contratos',
-        'comercial.contrato.crear' => 'Dar de alta un contrato con sus ventanas de aplicación',
-        'comercial.contrato.editar' => 'Editar los datos y ventanas de un contrato',
-        'comercial.contrato.cambiar_estado' => 'Cambiar el estado de un contrato (vigente, finalizado, cancelado)',
         // ADR 0020 (15/9/2026): `Campo` se elimina como entidad — `Lote`
         // cuelga directo de `Propiedad`. Los cuatro permisos
         // `comercial.campo.*` que administraban "campos con sus lotes"
@@ -205,19 +190,11 @@ class SeguridadSeeder extends Seeder
         // el alta de una propiedad con sus lotes en la misma transacción
         // sigue siendo un único caso de uso, llamado desde cualquiera de los
         // dos formularios.
-        'comercial.lote.ver' => 'Ver el listado y detalle de lotes',
-        'comercial.lote.crear' => 'Dar de alta un lote suelto',
-        'comercial.lote.editar' => 'Editar los datos y el perímetro de un lote',
-        'comercial.lote.eliminar' => 'Dar de baja (lógica) un lote sin historial asociado',
         // HU-48 (tarea 71, ADR 0015 punto 4): catálogo de cultivos — el
         // cultivo no es columna de `com_lotes`, es un catálogo simple que se
         // vincula a un lote solo dentro de una campaña (etapa 2 de esta
         // tarea). Grano fino, mismo criterio que `comercial.campo.*`/
         // `comercial.lote.*`.
-        'comercial.cultivo.ver' => 'Ver el catálogo de cultivos',
-        'comercial.cultivo.crear' => 'Dar de alta un cultivo',
-        'comercial.cultivo.editar' => 'Editar los datos de un cultivo',
-        'comercial.cultivo.eliminar' => 'Dar de baja (lógica) un cultivo',
         // HU-27 (tarea 36): administración de la flota de drones con su
         // modelo y capacidad de carga. Grano fino, mismo criterio que
         // `comercial.campo.*`.
@@ -230,25 +207,16 @@ class SeguridadSeeder extends Seeder
         // `comercial.contrato.cambiar_estado` separado de `.editar`: pasar
         // una orden de `emitida` a `vigente` no es la misma responsabilidad
         // que corregir un dato.
-        'operaciones.orden.ver' => 'Ver el listado de órdenes de aplicación',
-        'operaciones.orden.crear' => 'Dar de alta una orden de aplicación',
-        'operaciones.orden.editar' => 'Editar los datos de una orden de aplicación',
-        'operaciones.orden.activar' => 'Activar una orden de aplicación (emitida → vigente)',
-        'operaciones.orden.eliminar' => 'Dar de baja (lógica) una orden de aplicación',
         // ADR 0022 (19/9/2026): la aplicación se pausa, se cierra o se cancela
         // desde el panel — nunca desde la app de campo. Grano propio por
         // acción, mismo criterio que `.activar` arriba: son decisiones de
         // ejecución (del operador, junto con el dueño), no correcciones de un
         // dato.
-        'operaciones.orden.pausar' => 'Pausar una orden de aplicación vigente y reanudarla',
-        'operaciones.orden.cerrar' => 'Cerrar una orden de aplicación cumplida (vigente → consumida)',
-        'operaciones.orden.cancelar' => 'Cancelar una orden de aplicación, con su causa y su motivo',
         // HU-70 (tarea 85): "dónde asignarle el trabajo al piloto" — repartir
         // las hectáreas de una orden vigente entre equipos de trabajo. Grano
         // propio, no parte de `.editar`: no corrige la orden, reparte su
         // trabajo; una ficha propia (`panel.reparto-cuadrillas.*`), no la
         // ficha de la orden, así que no depende de `operaciones.orden.ver`.
-        'operaciones.orden.asignar_equipos' => 'Asignar equipos de trabajo (con sus hectáreas) a una orden vigente',
         // HU-44 (tarea 58): pausas de sesión con causa atribuible (DS-01).
         // Grano fino (ver/registrar), mismo criterio que `operaciones.alerta.*`:
         // ver el tablero agregado y cargar una pausa no son la misma
@@ -262,10 +230,6 @@ class SeguridadSeeder extends Seeder
         // (pasar a "finalizada" con su fecha de salida) — mismo criterio que
         // `personal.equipo_trabajo.editar`, que cubre asignar/finalizar
         // integrantes: no es un permiso aparte, es parte de mantener el dato.
-        'operaciones.estadia.ver' => 'Ver el listado de estadías del equipo en cada hacienda',
-        'operaciones.estadia.crear' => 'Registrar una estadía del equipo en una hacienda',
-        'operaciones.estadia.editar' => 'Editar una estadía en curso y finalizarla (registrar su salida)',
-        'operaciones.estadia.eliminar' => 'Dar de baja (lógica) una estadía en hacienda',
         // HU-26 (tarea 37): administración de personas y bases, con su rol
         // operativo y tarifa. Dos recursos, cada uno con su grano fino
         // (ver/crear/editar/eliminar) — mismo criterio que
@@ -296,13 +260,10 @@ class SeguridadSeeder extends Seeder
         // firmadas" — abre Sprint 9. Grano fino sin `.editar` ni
         // `.eliminar`: una factura, una vez emitida, es un snapshot
         // inmutable (ver `Comercial/Aplicacion/EmitirFactura`).
-        'comercial.factura.ver' => 'Ver el listado de facturas emitidas',
-        'comercial.factura.crear' => 'Emitir la factura de un trabajo desde su acta conformada',
         // HU-32 (tarea 46): "como dueño, quiero un reporte comercial de
         // avance por cliente, contrato y campaña" — la HU lo dice literal.
         // NO entra en PERMISOS_ENCARGADO_OPERACIONES (ver más abajo):
         // exclusivo del dueño.
-        'comercial.reporte.ver' => 'Ver el reporte comercial de avance por contrato (exclusivo del dueño)',
         // HU-39 (tarea 51): "como encargado, quiero seguir las baterías con
         // sus ciclos y estado, para retirarlas antes de que fallen en
         // vuelo". Grano fino, mismo criterio que `operaciones.dron.*`.
@@ -331,11 +292,6 @@ class SeguridadSeeder extends Seeder
         // que sí comparte con el encargado (arma la campaña, el dueño decide
         // cuándo abrirla y cerrarla). `.eliminar` es soft delete sin guarda
         // de "tiene contratos asociados", mismo criterio que `comercial.cultivo.eliminar`.
-        'campania.campania.ver' => 'Ver el listado de campañas',
-        'campania.campania.crear' => 'Dar de alta una campaña',
-        'campania.campania.editar' => 'Editar los datos de una campaña',
-        'campania.campania.cambiar_estado' => 'Cambiar el estado de una campaña (abrir, cerrar) — exclusivo del dueño',
-        'campania.campania.eliminar' => 'Dar de baja (lógica) una campaña',
         // Marketplace (ADR 0032 y 0036): aprobación de proveedores, pilotos,
         // auxiliares y drones en el panel. Grano por acción, mismo criterio
         // que `comercial.contrato.cambiar_estado`: aprobar (o rechazar) un
@@ -367,6 +323,12 @@ class SeguridadSeeder extends Seeder
         'proveedores.auxiliar.registrar' => 'Registrar a un auxiliar (queda pendiente de aprobación)',
         'proveedores.documento.cargar' => 'Cargar los documentos propios o de lo que uno registró',
         'solicitudes.cliente.gestionar' => 'Gestionar su propio perfil de cliente desde la app',
+        'solicitudes.terreno.gestionar' => 'Registrar y consultar sus propios terrenos desde la app',
+        'solicitudes.solicitud.gestionar' => 'Crear, consultar, publicar y cancelar sus propias solicitudes de servicio desde la app',
+        // Marketplace, panel (ADR 0027): consulta de todas las solicitudes y
+        // cancelación por soporte, con motivo.
+        'solicitudes.solicitud.ver' => 'Ver el listado y la ficha de las solicitudes de servicio',
+        'solicitudes.solicitud.cancelar' => 'Cancelar una solicitud de servicio desde el panel, con motivo',
     ];
 
     /**
@@ -419,6 +381,20 @@ class SeguridadSeeder extends Seeder
     /** @var list<string> */
     private const PERMISOS_CLIENTE = [
         'solicitudes.cliente.gestionar',
+        'solicitudes.terreno.gestionar',
+        'solicitudes.solicitud.gestionar',
+    ];
+
+    /**
+     * Solicitudes de servicio en el panel (ADR 0027): el encargado de
+     * operaciones las consulta y cancela por soporte. El dueño recibe todo el
+     * catálogo.
+     *
+     * @var list<string>
+     */
+    private const PERMISOS_ADMINISTRACION_SOLICITUDES = [
+        'solicitudes.solicitud.ver',
+        'solicitudes.solicitud.cancelar',
     ];
 
     /**
@@ -462,7 +438,6 @@ class SeguridadSeeder extends Seeder
         'seguridad.usuario.eliminar',
         // Tarea 65 (HU-41): el encargado de operaciones es quien prueba y
         // mantiene las cuentas de portal en el día a día.
-        'seguridad.usuario.portal',
         // Tarea 62 (fuga 2): administra la operación diaria, aterriza en el
         // dashboard tras elegir rol y necesita la ficha de la compañía.
         'seguridad.dashboard.ver',
@@ -485,8 +460,6 @@ class SeguridadSeeder extends Seeder
         // HU-93 (tarea 108; reforma "Orden de Trabajo" 18/9/2026): administra
         // también el alta de tandas y la corrección de un trabajo cargado
         // mal — mismo criterio que `operaciones.orden.crear/.editar/.eliminar`.
-        'operaciones.trabajo.crear',
-        'operaciones.trabajo.editar',
         'operaciones.trabajo.eliminar',
         // HU-14: administra la operación diaria, así que también puede
         // destrabar la cola de validación — mismo criterio que trabajo.ver.
@@ -502,23 +475,11 @@ class SeguridadSeeder extends Seeder
         // HU-22 (tarea 33): "Como encargado, quiero dar de alta y mantener
         // clientes" — la HU lo dice literal, así que el rol encargado se
         // lleva el grano completo.
-        'comercial.cliente.ver',
-        'comercial.cliente.crear',
-        'comercial.cliente.editar',
-        'comercial.cliente.eliminar',
         // ADR 0018: administra también las propiedades del cliente — mismo
         // criterio que clientes arriba.
-        'comercial.propiedad.ver',
-        'comercial.propiedad.crear',
-        'comercial.propiedad.editar',
-        'comercial.propiedad.eliminar',
         // HU-23 (tarea 34): "Como encargado, quiero administrar contratos
         // con sus ventanas de aplicación" — la HU lo dice literal, mismo
         // criterio que clientes arriba.
-        'comercial.contrato.ver',
-        'comercial.contrato.crear',
-        'comercial.contrato.editar',
-        'comercial.contrato.cambiar_estado',
         // HU-24 (tarea 35): "Como encargado, quiero administrar campos y sus
         // lotes" — la HU lo dice literal, mismo criterio que clientes y
         // contratos arriba. ADR 0020 retira `comercial.campo.*` (entidad
@@ -527,16 +488,8 @@ class SeguridadSeeder extends Seeder
         // estos cuatro no le saca ninguna capacidad real.
         // HU-54 (tarea 77): administra también la entrada directa por
         // lote — mismo criterio que propiedades arriba.
-        'comercial.lote.ver',
-        'comercial.lote.crear',
-        'comercial.lote.editar',
-        'comercial.lote.eliminar',
         // HU-48 (tarea 71): administra también el catálogo de cultivos —
         // mismo criterio que campos y lotes arriba.
-        'comercial.cultivo.ver',
-        'comercial.cultivo.crear',
-        'comercial.cultivo.editar',
-        'comercial.cultivo.eliminar',
         // HU-27 (tarea 36): "Como encargado, quiero administrar la flota de
         // drones" — la HU lo dice literal, mismo criterio que clientes,
         // contratos y campos arriba.
@@ -547,19 +500,10 @@ class SeguridadSeeder extends Seeder
         // HU-25 (tarea 38): "Como encargado, quiero crear y seguir las
         // órdenes de aplicación desde el panel" — la HU lo dice literal,
         // mismo criterio que clientes, contratos, campos y drones arriba.
-        'operaciones.orden.ver',
-        'operaciones.orden.crear',
-        'operaciones.orden.editar',
-        'operaciones.orden.activar',
-        'operaciones.orden.eliminar',
         // ADR 0022: pausar/cerrar/cancelar una aplicación — el encargado
         // administra la ejecución diaria, mismo criterio que `.activar`.
-        'operaciones.orden.pausar',
-        'operaciones.orden.cerrar',
-        'operaciones.orden.cancelar',
         // HU-70 (tarea 85): administra también el reparto de equipos por
         // orden — mismo criterio que el resto de `operaciones.orden.*` arriba.
-        'operaciones.orden.asignar_equipos',
         // HU-44 (tarea 58): "jefe de campo, quiero registrar las pausas con
         // su causa atribuible" — el jefe de campo es dueño de la HU, pero el
         // encargado administra la operación diaria (mismo criterio que
@@ -572,10 +516,6 @@ class SeguridadSeeder extends Seeder
         // también el alta, edición y baja de estadías — mismo criterio que
         // el resto de `operaciones.orden.*`/`operaciones.dron.*` arriba
         // (`.eliminar` incluido, a diferencia del jefe de campo).
-        'operaciones.estadia.ver',
-        'operaciones.estadia.crear',
-        'operaciones.estadia.editar',
-        'operaciones.estadia.eliminar',
         // HU-26 (tarea 37): "Como encargado, quiero administrar personas y
         // bases" — la HU lo dice literal, mismo criterio que clientes,
         // contratos, campos y drones arriba.
@@ -600,8 +540,6 @@ class SeguridadSeeder extends Seeder
         // trabajo desde su acta conformada" — la HU lo dice literal, mismo
         // criterio que clientes, contratos, campos, drones, bases y personas
         // arriba.
-        'comercial.factura.ver',
-        'comercial.factura.crear',
         // HU-39 (tarea 51): "como encargado, quiero seguir las baterías con
         // sus ciclos y estado" — la HU lo dice literal, mismo criterio que
         // clientes, contratos, campos, drones, bases, personas y facturas
@@ -620,10 +558,6 @@ class SeguridadSeeder extends Seeder
         // HU-46 (tarea 69, ADR 0015 punto 1): arma la campaña (código,
         // nombre, fechas) — sin `.cambiar_estado`, exclusivo del dueño (ver
         // el comentario en PERMISOS de arriba).
-        'campania.campania.ver',
-        'campania.campania.crear',
-        'campania.campania.editar',
-        'campania.campania.eliminar',
     ];
 
     /**
@@ -642,14 +576,12 @@ class SeguridadSeeder extends Seeder
         // (`panel.reparto-cuadrillas.*`), no la de la orden: no necesita
         // `operaciones.orden.ver` (CRUD completo de la orden) para repartir
         // equipos.
-        'operaciones.orden.asignar_equipos',
         // Reforma "Orden de Trabajo" (18/9/2026): mismo reclamo de HU-70,
         // ahora con tanda/turno — el jefe de campo arma la tanda igual que
         // antes repartía equipos, así que se lleva el permiso nuevo con el
         // mismo criterio que `operaciones.orden.asignar_equipos` arriba. Sin
         // `.editar`/`.eliminar`: corregir un trabajo cargado mal es del
         // encargado (`PERMISOS_ENCARGADO_OPERACIONES`), no del jefe de campo.
-        'operaciones.trabajo.crear',
         // Tarea 62 (fuga 2): coordina la cuadrilla, aterriza en el dashboard
         // tras elegir rol y necesita la ficha de la compañía.
         'seguridad.dashboard.ver',
@@ -671,16 +603,12 @@ class SeguridadSeeder extends Seeder
         // edita las estadías de sus cuadrillas — mismo criterio que
         // `operaciones.trabajo.crear` arriba (sin `.eliminar`, exclusivo de
         // los roles de gestión, ver `PERMISOS_ENCARGADO_OPERACIONES`).
-        'operaciones.estadia.ver',
-        'operaciones.estadia.crear',
-        'operaciones.estadia.editar',
         // Tarea 138 (dashboard del jefe de campo): el dueño le pidió ver los
         // recursos que se ocupan o faltan, qué lleva cada cuadrilla y cómo van
         // todas las órdenes de aplicación. Solo lectura, un permiso por cada
         // pantalla que el tablero resume: `ArmarDashboard` gatea cada sección
         // con el permiso de su pantalla completa (tarea 62), así que sin estos
         // tres el jefe no vería esas pestañas. Sin `.crear`/`.editar` de ninguno.
-        'operaciones.orden.ver',
         'personal.equipo_trabajo.ver',
     ];
 
@@ -698,6 +626,50 @@ class SeguridadSeeder extends Seeder
      * @var list<string>
      */
     private const PERMISOS_RETIRADOS = [
+        'seguridad.usuario.portal',
+        'operaciones.trabajo.crear',
+        'operaciones.trabajo.editar',
+        'comercial.cliente.ver',
+        'comercial.cliente.crear',
+        'comercial.cliente.editar',
+        'comercial.cliente.eliminar',
+        'comercial.propiedad.ver',
+        'comercial.propiedad.crear',
+        'comercial.propiedad.editar',
+        'comercial.propiedad.eliminar',
+        'comercial.contrato.ver',
+        'comercial.contrato.crear',
+        'comercial.contrato.editar',
+        'comercial.contrato.cambiar_estado',
+        'comercial.lote.ver',
+        'comercial.lote.crear',
+        'comercial.lote.editar',
+        'comercial.lote.eliminar',
+        'comercial.cultivo.ver',
+        'comercial.cultivo.crear',
+        'comercial.cultivo.editar',
+        'comercial.cultivo.eliminar',
+        'operaciones.orden.ver',
+        'operaciones.orden.crear',
+        'operaciones.orden.editar',
+        'operaciones.orden.activar',
+        'operaciones.orden.eliminar',
+        'operaciones.orden.pausar',
+        'operaciones.orden.cerrar',
+        'operaciones.orden.cancelar',
+        'operaciones.orden.asignar_equipos',
+        'operaciones.estadia.ver',
+        'operaciones.estadia.crear',
+        'operaciones.estadia.editar',
+        'operaciones.estadia.eliminar',
+        'comercial.factura.ver',
+        'comercial.factura.crear',
+        'comercial.reporte.ver',
+        'campania.campania.ver',
+        'campania.campania.crear',
+        'campania.campania.editar',
+        'campania.campania.cambiar_estado',
+        'campania.campania.eliminar',
         'comercial.campo.ver',
         'comercial.campo.crear',
         'comercial.campo.editar',
@@ -779,7 +751,7 @@ class SeguridadSeeder extends Seeder
         // encargado_operaciones: todo salvo asignar_rol_dueno.
         $this->asignar(
             $roles['encargado_operaciones'],
-            $permisos->only([...self::PERMISOS_ENCARGADO_OPERACIONES, ...self::PERMISOS_ADMINISTRACION_PROVEEDORES])->values()->all(),
+            $permisos->only([...self::PERMISOS_ENCARGADO_OPERACIONES, ...self::PERMISOS_ADMINISTRACION_PROVEEDORES, ...self::PERMISOS_ADMINISTRACION_SOLICITUDES])->values()->all(),
         );
 
         // Marketplace (ADR 0036): proveedor y cliente operan por la API con lo suyo.

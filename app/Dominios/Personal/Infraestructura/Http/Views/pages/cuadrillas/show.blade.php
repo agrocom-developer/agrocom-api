@@ -23,7 +23,7 @@
       identificador, ya resuelto por el controlador (ADR 0003 regla 3 — un
       recurso cruza a `Operaciones`/`Mantenimiento`).
     - $tonoPorEstado (array<string, string>): estado → tono del badge.
-    - $diasVigencia (int), $estadiasEnCurso (?int, null si no llega por
+    - $diasVigencia (int), $estadiasEnCurso (retirado)
       permiso), $creadaPor (?string).
     - $vinculos (list), $actividad (list).
     - $puedeEditar (bool): gatea el botón "Editar" de la cabecera.
@@ -97,14 +97,6 @@
                     :value-suffix="__('personal.equipos_trabajo.kpi_vigencia_sufijo')"
                     :foot="$vigenciaTexto"
                 />
-                @if ($estadiasEnCurso !== null)
-                    <x-molecules.stat-card
-                        :label="__('personal.equipos_trabajo.kpi_estadias')"
-                        icon="holiday_village"
-                        :value="$estadiasEnCurso"
-                        :state="$estadiasEnCurso > 0 ? 'success' : null"
-                    />
-                @endif
             </div>
 
             <div class="ag-table-toolbar">

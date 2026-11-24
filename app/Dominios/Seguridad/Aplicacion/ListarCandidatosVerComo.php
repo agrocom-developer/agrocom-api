@@ -2,7 +2,6 @@
 
 namespace App\Dominios\Seguridad\Aplicacion;
 
-use App\Dominios\Comercial\Contratos\LecturaContrato;
 use App\Dominios\Seguridad\Dominio\TipoUsuario;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use Illuminate\Support\Collection;
@@ -22,10 +21,6 @@ use Illuminate\Support\Facades\Lang;
  */
 final class ListarCandidatosVerComo
 {
-    public function __construct(
-        private readonly LecturaContrato $lecturaContrato,
-    ) {}
-
     /**
      * @return array{
      *     grupos: list<array{clave: string, nombre: string, idRol: int, usuarioIds: list<int>}>,
@@ -45,10 +40,9 @@ final class ListarCandidatosVerComo
         $portal = SecUser::query()
             ->where('type', TipoUsuario::Cliente)
             ->where('state', true)
-            ->whereNotNull('contrato_id')
             ->where('id', '!=', $admin->id)
             ->orderBy('name')
-            ->get(['id', 'name', 'username', 'contrato_id']);
+            ->get(['id', 'name', 'username']);
 
         $rolesPorUsuario = $this->rolesVivosPorUsuario($internos->pluck('id')->all());
 
@@ -80,9 +74,7 @@ final class ListarCandidatosVerComo
                 'username' => $cuenta->username,
                 'esPortal' => true,
                 'roles' => [],
-                'detalle' => $cuenta->contrato_id !== null
-                    ? $this->lecturaContrato->obtenerResumen($cuenta->contrato_id)?->clienteNombre
-                    : null,
+                'detalle' => null,
             ];
         }
 

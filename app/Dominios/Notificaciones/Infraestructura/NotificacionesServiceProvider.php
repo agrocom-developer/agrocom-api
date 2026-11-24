@@ -2,11 +2,9 @@
 
 namespace App\Dominios\Notificaciones\Infraestructura;
 
-use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaContratoCreado;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaDocumentoPorVencer;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaDocumentoVencido;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaEstadoDeAprobacionCambiado;
-use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaOrdenTrabajoCreada;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaProveedorRegistrado;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaTrabajoCerrado;
 use App\Dominios\Notificaciones\Aplicacion\ReglasDeNotificacion;
@@ -30,8 +28,6 @@ final class NotificacionesServiceProvider extends ServiceProvider
 {
     /** @var list<class-string<ReglaNotificacion>> */
     private const array REGLAS = [
-        ReglaContratoCreado::class,
-        ReglaOrdenTrabajoCreada::class,
         ReglaTrabajoCerrado::class,
         ReglaEstadoDeAprobacionCambiado::class,
         ReglaDocumentoPorVencer::class,

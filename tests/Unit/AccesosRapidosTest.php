@@ -37,13 +37,13 @@ test('ofrece las pantallas preferidas del rol, en su orden, y no las que el men�
         moduloMenu('operacion', [
             itemMenu('panel.dashboard'),
             itemMenu('panel.trabajos.index'),
-            itemMenu('panel.ordenes.index'),
+            itemMenu('panel.solicitudes.index'),
         ]),
     ];
 
-    // `encargado_operaciones` prefiere órdenes → trabajos → …; sin vuelos ni cuadrillas en su menú, no aparecen.
+    // `encargado_operaciones` prefiere solicitudes → trabajos → …; sin vuelos ni cuadrillas en su menú, no aparecen.
     expect(rutasDe(AccesosRapidos::para('encargado_operaciones', $menu)))
-        ->toBe(['panel.ordenes.index', 'panel.trabajos.index']);
+        ->toBe(['panel.solicitudes.index', 'panel.trabajos.index']);
 });
 
 test('un permiso que el menú no muestra no se ofrece, aunque el rol lo prefiera', function () {
@@ -53,19 +53,19 @@ test('un permiso que el menú no muestra no se ofrece, aunque el rol lo prefiera
 });
 
 test('cada acceso lleva ícono, etiqueta y módulo del menú, sin traducir', function () {
-    $menu = [moduloMenu('comercial', [itemMenu('panel.contratos.index', 'menu.comercial.items.contratos', 'description')])];
+    $menu = [moduloMenu('solicitudes', [itemMenu('panel.solicitudes.index', 'menu.solicitudes.items.solicitudes', 'request_quote')])];
 
     expect(AccesosRapidos::para('dueno', $menu))->toBe([[
-        'ruta' => 'panel.contratos.index',
-        'icono' => 'description',
-        'etiqueta' => 'menu.comercial.items.contratos',
-        'modulo' => 'menu.comercial.label',
+        'ruta' => 'panel.solicitudes.index',
+        'icono' => 'request_quote',
+        'etiqueta' => 'menu.solicitudes.items.solicitudes',
+        'modulo' => 'menu.solicitudes.label',
     ]]);
 });
 
 test('no pasa de seis accesos', function () {
-    $rutas = ['panel.contratos.index', 'panel.clientes.index', 'panel.ordenes.index', 'panel.campanias.index', 'panel.reportes.comercial.index', 'panel.facturas.index'];
-    $menu = [moduloMenu('todo', [...array_map(itemMenu(...), $rutas), itemMenu('panel.trabajos.index')])];
+    $rutas = ['panel.solicitudes.index', 'panel.proveedores.index', 'panel.trabajos.index', 'panel.documentos.index', 'panel.reportes.tecnicos.index', 'panel.alertas.index'];
+    $menu = [moduloMenu('todo', [...array_map(itemMenu(...), $rutas), itemMenu('panel.cuadrillas.index')])];
 
     expect(AccesosRapidos::para('dueno', $menu))->toHaveCount(AccesosRapidos::MAXIMO)
         ->and(rutasDe(AccesosRapidos::para('dueno', $menu)))->toBe($rutas);
@@ -73,12 +73,12 @@ test('no pasa de seis accesos', function () {
 
 test('un rol sin lista propia cae en las primeras pantallas de su menú, sin repetir el tablero', function () {
     $menu = [
-        moduloMenu('operacion', [itemMenu('panel.dashboard'), itemMenu('panel.ordenes.index')]),
+        moduloMenu('operacion', [itemMenu('panel.dashboard'), itemMenu('panel.solicitudes.index')]),
         moduloMenu('recursos', [itemMenu('panel.drones.index')]),
     ];
 
-    expect(rutasDe(AccesosRapidos::para('un_rol_nuevo', $menu)))->toBe(['panel.ordenes.index', 'panel.drones.index'])
-        ->and(rutasDe(AccesosRapidos::para(null, $menu)))->toBe(['panel.ordenes.index', 'panel.drones.index']);
+    expect(rutasDe(AccesosRapidos::para('un_rol_nuevo', $menu)))->toBe(['panel.solicitudes.index', 'panel.drones.index'])
+        ->and(rutasDe(AccesosRapidos::para(null, $menu)))->toBe(['panel.solicitudes.index', 'panel.drones.index']);
 });
 
 test('un rol con lista propia pero sin ninguna de sus pantallas también cae en el menú', function () {
@@ -106,9 +106,9 @@ test('encuentra las pantallas anidadas a cualquier profundidad y una pantalla su
 });
 
 test('una ruta repetida en el menú se ofrece una sola vez, y sin menú no hay accesos', function () {
-    $menu = [moduloMenu('a', [itemMenu('panel.ordenes.index')]), moduloMenu('b', [itemMenu('panel.ordenes.index')])];
+    $menu = [moduloMenu('a', [itemMenu('panel.solicitudes.index')]), moduloMenu('b', [itemMenu('panel.solicitudes.index')])];
 
-    expect(rutasDe(AccesosRapidos::para('encargado_operaciones', $menu)))->toBe(['panel.ordenes.index'])
+    expect(rutasDe(AccesosRapidos::para('encargado_operaciones', $menu)))->toBe(['panel.solicitudes.index'])
         ->and(AccesosRapidos::para('dueno', []))->toBe([]);
 });
 

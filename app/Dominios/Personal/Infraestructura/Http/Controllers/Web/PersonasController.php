@@ -163,16 +163,13 @@ final class PersonasController
         $clienteQuery = $request->string('cliente_id')->toString();
         $clienteId = $clienteQuery !== '' ? (int) $clienteQuery : null;
 
-        $campaniaQuery = $request->string('campania_id')->toString();
-        $campaniaId = $campaniaQuery !== '' ? (int) $campaniaQuery : null;
-
-        $resultado = $obtenerDesempenio->ejecutar($persona->id, $desde, $hasta, $clienteId, $campaniaId);
+        $resultado = $obtenerDesempenio->ejecutar($persona->id, $desde, $hasta, $clienteId);
 
         return view('personal::pages.personas.desempeno', [
             ...$this->autorizacion->cascara($request),
             'persona' => $persona,
             'resultado' => $resultado,
-            'filtros' => ['desde' => $desde, 'hasta' => $hasta, 'cliente_id' => $clienteId, 'campania_id' => $campaniaId],
+            'filtros' => ['desde' => $desde, 'hasta' => $hasta, 'cliente_id' => $clienteId],
             'vinculos' => $this->vinculosDeDesempenio($persona, $request),
         ]);
     }

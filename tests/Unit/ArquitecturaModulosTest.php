@@ -58,21 +58,9 @@ foreach ($modulos as $modulo) {
     );
 
     if ($aplicacionAjena !== []) {
-        // Excepción puntual (tarea 68, revisión del PR #106): Operaciones\Contratos\ResumenLotePanel
-        // referencia Comercial\Aplicacion\ObtenerAvanceComercial SOLO en un
-        // `{@see}` de docblock (comparación de fórmula, no dependencia de
-        // código — la clase no se instancia ni se tipa en ningún lado del
-        // archivo). Preexistente y fuera del alcance de la tarea 68
-        // ("Puede tocar" no incluye Operaciones/Contratos); documentado en
-        // runs/68.md.
-        $ignorar = $modulo === 'Operaciones'
-            ? ['App\Dominios\Operaciones\Contratos\ResumenLotePanel']
-            : [];
-
         arch("{$modulo} no importa Aplicacion de otros módulos, solo su Contratos/ o eventos de dominio (ADR 0003, regla 2)")
             ->expect("App\\Dominios\\{$modulo}")
-            ->not->toUse($aplicacionAjena)
-            ->ignoring($ignorar);
+            ->not->toUse($aplicacionAjena);
     }
 
     $dominioAjeno = array_map(
@@ -86,18 +74,3 @@ foreach ($modulos as $modulo) {
             ->not->toUse($dominioAjeno);
     }
 }
-
-// Dirección de dependencia entre módulos concretos (revisión 3/9/2026, ADR
-// 0003): Comercial no conoce la lógica interna de Operaciones (Aplicacion,
-// Dominio, Infraestructura — sus modelos Eloquent ya están cubiertos arriba
-// por la regla genérica), pero sí puede leer su Contratos/, el mismo cruce
-// síncrono sancionado por ADR 0003 regla 2 que ya usa Sincronizacion
-// para leer Operaciones (HU-31, tarea 45: `Comercial\Aplicacion\EmitirFactura`
-// consume `Operaciones\Contratos\LecturaActaConformada`).
-arch('Comercial no usa la lógica interna de Operaciones, solo su Contratos/ (ADR 0003, regla 2)')
-    ->expect('App\Dominios\Comercial')
-    ->not->toUse([
-        'App\Dominios\Operaciones\Aplicacion',
-        'App\Dominios\Operaciones\Dominio',
-        'App\Dominios\Operaciones\Infraestructura',
-    ]);

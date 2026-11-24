@@ -5,49 +5,41 @@ namespace App\Dominios\Sincronizacion\Dominio;
 /**
  * Cursor opaco de `GET /api/sync/catalogo?desde={cursor}` (espec §2.1, punto
  * 6). Un solo parámetro `desde` en la URL, pero internamente compuesto: cada
- * sección (`ordenes`, `lotes`, `personas`) avanza a su propio ritmo, así que
+ * sección (`personas`, `servicios_asignados`, `servicios_retirados`) avanza a su propio ritmo, así que
  * mezclar sus posiciones en una sola tupla `(updated_at, id)` compararía
  * filas de tablas distintas entre sí — cada sección lleva la suya.
  *
- * Formato de serialización: `base64(json_encode(['ordenes' => ['u' =>
- * <updated_at ISO8601>, 'id' => <int>], 'lotes' => [...], 'personas' =>
- * [...], 'trabajos' => [...]]))`. Una sección ausente (nunca hubo registros,
+ * Formato de serialización: `base64(json_encode(['personas' => ['u' =>
+ * <updated_at ISO8601>, 'id' => <int>], 'servicios_asignados' => [...],
+ * 'servicios_retirados' => [...]]))`. Una sección ausente (nunca hubo registros,
  * o el `desde` no decodifica) se trata como "sin posición": esa sección trae
  * todo lo vigente desde el principio — nunca un error. Un cursor corrupto en
  * un cliente offline no debe romper la sincronización, el peor caso
  * aceptable es una resincronización completa.
  *
- * `TRABAJOS` (HU-70, tarea 85): trabajos abiertos por asignación de equipo
- * desde el panel — ver `Operaciones\Contratos\LecturaTrabajosAsignados`.
+ * `SERVICIOS`: solicitudes aceptadas que el equipo del operario lleva al lote
+ * (ADR 0037) — ver `Solicitudes\Contratos\LecturaServiciosAsignados`.
  *
- * `ORDENES_RETIRADAS` y `TRABAJOS_RETIRADOS` (opción B de la propuesta de
- * #312): lo que el dispositivo ya no debe mostrar — ver
- * `Operaciones\Contratos\LecturaRetirosCatalogo`. Mismo formato que las
- * demás; un cursor de antes de que existieran simplemente no las trae.
+ * `SERVICIOS_RETIRADOS`: lo que el dispositivo ya no debe mostrar (cancelado,
+ * devuelto a asignación o ya ejecutado). Mismo formato que las demás; un cursor
+ * anterior simplemente no las trae.
  *
  * Clase pura: sin Eloquent, sin `Illuminate\Database` (verificado por
  * `tests/Unit/ArquitecturaModulosTest.php`).
  */
 final readonly class CursorCatalogo
 {
-    public const string ORDENES = 'ordenes';
-
-    public const string LOTES = 'lotes';
-
     public const string PERSONAS = 'personas';
 
-    public const string TRABAJOS = 'trabajos';
+    /** Solicitudes aceptadas que el equipo del operario lleva al lote (ADR 0037). */
+    public const string SERVICIOS = 'servicios_asignados';
 
-    /** Opción B de la propuesta de #312: órdenes que dejaron de estar vigentes. */
-    public const string ORDENES_RETIRADAS = 'ordenes_retiradas';
-
-    /** Opción B de la propuesta de #312: trabajos que el operario ya no tiene asignados. */
-    public const string TRABAJOS_RETIRADOS = 'trabajos_retirados';
+    /** Servicios que el dispositivo ya no debe mostrar: cancelados, devueltos a asignación o ya ejecutados. */
+    public const string SERVICIOS_RETIRADOS = 'servicios_retirados';
 
     /** @var list<string> */
     private const array SECCIONES = [
-        self::ORDENES, self::LOTES, self::PERSONAS, self::TRABAJOS,
-        self::ORDENES_RETIRADAS, self::TRABAJOS_RETIRADOS,
+        self::PERSONAS, self::SERVICIOS, self::SERVICIOS_RETIRADOS,
     ];
 
     /** @param array<string, PosicionCursor|null> $posiciones */

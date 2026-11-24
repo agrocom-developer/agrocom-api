@@ -14,8 +14,6 @@ namespace App\Dominios\Notificaciones\Dominio;
  */
 enum TipoNotificacion: string
 {
-    case ContratoCreado = 'contrato_creado';
-    case OrdenTrabajoCreada = 'orden_trabajo_creada';
     case TrabajoCerrado = 'trabajo_cerrado';
     case SujetoAprobado = 'sujeto_aprobado';
     case SujetoRechazado = 'sujeto_rechazado';
@@ -31,8 +29,6 @@ enum TipoNotificacion: string
     public function icono(): string
     {
         return match ($this) {
-            self::ContratoCreado => 'description',
-            self::OrdenTrabajoCreada => 'assignment',
             self::TrabajoCerrado => 'task_alt',
             self::SujetoAprobado, self::SujetoRehabilitado => 'verified',
             self::SujetoRechazado => 'cancel',

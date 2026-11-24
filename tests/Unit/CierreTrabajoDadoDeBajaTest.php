@@ -1,10 +1,10 @@
 <?php
 
-use App\Dominios\Comercial\Contratos\LecturaLotes;
 use App\Dominios\Operaciones\Aplicacion\EliminarTrabajo;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Sesion;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Trabajo;
 use App\Dominios\Sincronizacion\Aplicacion\SincronizarLote;
+use App\Dominios\Solicitudes\Contratos\SolicitudParaTrabajo;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -23,8 +23,7 @@ use Tests\TestCase;
  *   1. Con una sesión abierta ANTES de la baja, se aceptan sus condiciones,
  *      su incidencia, su cierre y el cierre del trabajo con su imagen de
  *      campo. El trabajo sigue dado de baja.
- *   2. Las condiciones de esa sesión se deciden con los límites de la Orden
- *      de Trabajo, no con los defaults.
+ *   2. Las condiciones de esa sesión se deciden con los límites del sistema.
  *   3. Una sesión NUEVA después de la baja se sigue rechazando.
  *   4. Reenviar los mismos registros no duplica nada (idempotencia por
  *      `uuid_cliente`, invariante 1).
@@ -38,8 +37,8 @@ function bajaEsquema(): void
 
     $migraciones = [
         'create_plt_bitacoras_table',
-        'create_ope_ordenes_trabajo_table',
         'create_ope_trabajos_table',
+        'vincula_trabajos_a_solicitudes',
         'create_ope_sesiones_table',
         'create_ope_condiciones_table',
         'create_ope_evidencias_table',
@@ -78,28 +77,17 @@ function bajaEsquema(): void
 }
 
 /**
- * Trabajo asignado (con Orden de Trabajo de viento máximo 12) y una sesión
- * abierta del piloto 5, ambos creados ANTES de la baja.
+ * Trabajo de la solicitud 31 y una sesión abierta del piloto 5, ambos
+ * creados ANTES de la baja.
  *
  * @return array{trabajo: Trabajo, sesion: Sesion}
  */
 function bajaTrabajoConSesionAbierta(): array
 {
-    $ordenTrabajoId = DB::table('ope_ordenes_trabajo')->insertGetId([
-        'orden_id' => 1,
-        'nro_aplicacion' => 1,
-        'viento_max_kmh' => '12.00',
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
-
     $trabajo = Trabajo::query()->create([
         'uuid_cliente' => (string) Str::uuid(),
-        'orden_id' => 1,
-        'lote_id' => 3,
-        'orden_trabajo_id' => $ordenTrabajoId,
+        'solicitud_id' => 31,
         'equipo_trabajo_id' => 7,
-        'nro_aplicacion' => 1,
         'hectareas_declaradas' => '0.00',
         'estado' => 'abierto',
         'inicio' => now(),
@@ -140,8 +128,6 @@ function bajaEvidencia(string $tipo): string
  */
 function bajaSync(array $registros, ?int $operarioPersonaId = 5): array
 {
-    test()->mock(LecturaLotes::class)->shouldReceive('obtenerPorId')->andReturn(null);
-
     $resultados = app(SincronizarLote::class)->ejecutar($registros, $operarioPersonaId);
 
     return array_column($resultados, 'estado', 'uuid_cliente');
@@ -197,6 +183,12 @@ function bajaRegistrosDeCierre(array $enCurso): array
 
 beforeEach(function () {
     bajaEsquema();
+    // `Solicitudes` es otro módulo y otra base: acá solo importa que el motor de
+    // sync le avise del cierre sin que eso cambie lo que se registra.
+    $this->mock(SolicitudParaTrabajo::class, function ($mock): void {
+        $mock->shouldReceive('datos')->andReturnNull();
+        $mock->shouldReceive('registrarCobertura')->andReturnNull();
+    });
     Carbon::setTestNow('2026-10-02 10:00:00');
 });
 
@@ -233,17 +225,17 @@ test('con la sesión abierta antes de la baja se aceptan sus condiciones, su inc
         ->and(DB::table('ope_incidencias')->count())->toBe(1);
 });
 
-test('las condiciones de esa sesión se deciden con los límites de su Orden de Trabajo, no con los defaults', function () {
+test('las condiciones de esa sesión se deciden con los límites vigentes del sistema', function () {
     $enCurso = bajaTrabajoConSesionAbierta();
     app(EliminarTrabajo::class)->ejecutar($enCurso['trabajo']);
 
-    // 15 km/h entra en el default (17) pero no en la Orden de Trabajo (12).
+    // 18 km/h supera el límite de viento del sistema (17) y no trae observación firmada.
     $estados = bajaSync([[
         'tipo' => 'condiciones',
         'uuid_cliente' => 'condiciones-fuera',
         'sesion_uuid_cliente' => $enCurso['sesion']->uuid_cliente,
         'momento' => 'inicio_sesion',
-        'viento_kmh' => '15.00',
+        'viento_kmh' => '18.00',
         'temperatura_c' => '25.00',
         'humedad_pct' => '60.00',
     ]]);

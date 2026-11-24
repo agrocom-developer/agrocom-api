@@ -80,6 +80,28 @@ final class LecturaEquiposEloquent implements LecturaEquipos
         return $aptos;
     }
 
+    public function equiposDeCuenta(int $usuarioId, bool $soloVigentes = true, ?DateTimeImmutable $hoy = null): array
+    {
+        $registros = $this->proveedores->registrosDeCuenta($usuarioId);
+
+        if ($registros['pilotos'] === [] && $registros['auxiliares'] === []) {
+            return [];
+        }
+
+        $fecha = ($hoy ?? new DateTimeImmutable('today'))->format('Y-m-d');
+
+        return array_map('intval', Equipo::query()
+            ->where(fn ($consulta) => $consulta
+                ->whereIn('piloto_id', $registros['pilotos'])
+                ->orWhereIn('auxiliar_id', $registros['auxiliares']))
+            ->when($soloVigentes, fn ($consulta) => $consulta
+                ->whereDate('vigente_desde', '<=', $fecha)
+                ->where(fn ($vigencia) => $vigencia->whereNull('vigente_hasta')->orWhereDate('vigente_hasta', '>=', $fecha)))
+            ->orderBy('id')
+            ->pluck('id')
+            ->all());
+    }
+
     public function tieneEquipoApto(int $proveedorId, ?DateTimeImmutable $hoy = null): bool
     {
         return $this->aptosDe($proveedorId, $hoy) !== [];

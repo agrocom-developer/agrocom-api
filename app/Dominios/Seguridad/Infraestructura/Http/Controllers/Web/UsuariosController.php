@@ -2,18 +2,15 @@
 
 namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 
-use App\Dominios\Comercial\Contratos\LecturaContrato;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Personal\Contratos\LecturaFichaPersona;
 use App\Dominios\Seguridad\Aplicacion\AlternarBloqueoUsuario;
 use App\Dominios\Seguridad\Aplicacion\AsignarRolesUsuario;
-use App\Dominios\Seguridad\Aplicacion\CrearCuentaPortal;
 use App\Dominios\Seguridad\Aplicacion\EliminarUsuario;
 use App\Dominios\Seguridad\Aplicacion\ListarBitacora;
 use App\Dominios\Seguridad\Aplicacion\ListarDispositivosDeUsuario;
 use App\Dominios\Seguridad\Aplicacion\ListarUsuarios;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
-use App\Dominios\Seguridad\Dominio\Excepciones\ContratoNoDisponibleParaPortal;
 use App\Dominios\Seguridad\Dominio\Excepciones\PermisoDenegado;
 use App\Dominios\Seguridad\Dominio\Excepciones\UsuarioDuplicado;
 use App\Dominios\Seguridad\Dominio\TipoUsuario;
@@ -80,8 +77,6 @@ final class UsuariosController
 
     private const PERMISO_ROL_DUENO = 'seguridad.usuario.asignar_rol_dueno';
 
-    private const PERMISO_PORTAL = 'seguridad.usuario.portal';
-
     private const PERMISO_VER_COMO = 'seguridad.usuario.ver_como';
 
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
@@ -119,41 +114,12 @@ final class UsuariosController
             ...$this->autorizacion->cascara($request),
             'rolesDisponibles' => $this->rolesDisponibles($request),
             'personasDisponibles' => $this->personasDisponibles(null),
-            'puedeCrearPortal' => $this->autorizacion->tienePermiso($request, self::PERMISO_PORTAL),
-            'clientesDisponibles' => $this->clientesDisponibles(),
-            'contratosVigentesDisponibles' => $this->contratosVigentesDisponibles(),
-            'emailPorCliente' => $this->emailPorCliente(),
         ]);
     }
 
-    public function store(CrearUsuarioRequest $request, AsignarRolesUsuario $asignarRoles, CrearCuentaPortal $crearCuentaPortal): RedirectResponse
+    public function store(CrearUsuarioRequest $request, AsignarRolesUsuario $asignarRoles): RedirectResponse
     {
         $datos = $request->validated();
-
-        if ((string) $datos['type'] === TipoUsuario::Cliente->value) {
-            abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CREAR), 403);
-            abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_PORTAL), 403);
-
-            try {
-                $usuario = $crearCuentaPortal->ejecutar(
-                    actor: $request->user('interno'),
-                    usuarioId: null,
-                    username: (string) $datos['username'],
-                    password: (string) $datos['password'],
-                    name: (string) $datos['name'],
-                    contratoId: (int) $datos['contrato_id'],
-                    idRolActivo: $this->rolActivoId($request),
-                    email: $this->cadenaONull($datos['email'] ?? null),
-                );
-            } catch (UsuarioDuplicado|PermisoDenegado|ContratoNoDisponibleParaPortal $excepcion) {
-                return redirect()->back()->withErrors(['estado' => $excepcion->getMessage()]);
-            }
-
-            // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
-            return redirect()
-                ->route('panel.usuarios.edit', $usuario)
-                ->with('estado', __('seguridad.usuarios.creado'));
-        }
 
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CREAR), 403);
 
@@ -171,7 +137,6 @@ final class UsuariosController
                 name: (string) $datos['name'],
                 type: TipoUsuario::Interno,
                 personaId: $this->enteroONull($datos['persona_id'] ?? null),
-                contratoId: null,
                 roleIds: $rolesDeseados,
                 idRolActivo: $this->rolActivoId($request),
             );
@@ -189,7 +154,6 @@ final class UsuariosController
         Request $request,
         SecUser $usuario,
         LecturaFichaPersona $lecturaPersona,
-        LecturaContrato $lecturaContrato,
         ListarDispositivosDeUsuario $listarDispositivos,
         ListarBitacora $listarBitacora,
     ): View {
@@ -203,50 +167,26 @@ final class UsuariosController
             'rolesAsignados' => $usuario->idsDeRoles(),
             'rolesDisponibles' => $this->rolesDisponibles($request),
             'personasDisponibles' => $this->personasDisponibles($usuario->id),
-            'clientesDisponibles' => $this->clientesDisponibles(),
-            'contratosVigentesDisponibles' => $this->contratosVigentesDisponibles(),
-            'emailPorCliente' => $this->emailPorCliente(),
             'resumenRelacionado' => $this->resumenRelacionado(
                 $usuario,
                 $request,
                 (string) ($cascara['zonaHoraria'] ?? config('app.timezone')),
                 $lecturaPersona,
-                $lecturaContrato,
                 $listarDispositivos,
                 $listarBitacora,
             ),
         ]);
     }
 
-    public function update(ActualizarUsuarioRequest $request, SecUser $usuario, AsignarRolesUsuario $asignarRoles, CrearCuentaPortal $crearCuentaPortal): RedirectResponse
+    public function update(ActualizarUsuarioRequest $request, SecUser $usuario, AsignarRolesUsuario $asignarRoles): RedirectResponse
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
 
         $datos = $request->validated();
 
-        if ($usuario->type === TipoUsuario::Cliente) {
-            abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_PORTAL), 403);
-
-            try {
-                $crearCuentaPortal->ejecutar(
-                    actor: $request->user('interno'),
-                    usuarioId: $usuario->id,
-                    username: (string) $datos['username'],
-                    password: $this->cadenaONull($datos['password'] ?? null),
-                    name: (string) $datos['name'],
-                    contratoId: (int) $datos['contrato_id'],
-                    idRolActivo: $this->rolActivoId($request),
-                    email: $this->cadenaONull($datos['email'] ?? null),
-                );
-            } catch (UsuarioDuplicado|PermisoDenegado|ContratoNoDisponibleParaPortal $excepcion) {
-                return redirect()->back()->withErrors(['estado' => $excepcion->getMessage()]);
-            }
-
-            // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
-            return redirect()
-                ->route('panel.usuarios.edit', $usuario)
-                ->with('estado', __('seguridad.usuarios.actualizado'));
-        }
+        // Las cuentas de cliente se registran solas desde la app (ADR 0036): el
+        // panel no las edita.
+        abort_if($usuario->type === TipoUsuario::Cliente, 404);
 
         $rolesDeseados = array_map('intval', $datos['roles'] ?? []);
 
@@ -262,7 +202,6 @@ final class UsuariosController
                 name: (string) $datos['name'],
                 type: $usuario->type,
                 personaId: $this->enteroONull($datos['persona_id'] ?? null),
-                contratoId: $usuario->contrato_id,
                 roleIds: $rolesDeseados,
                 idRolActivo: $this->rolActivoId($request),
             );
@@ -334,7 +273,6 @@ final class UsuariosController
         Request $request,
         string $zonaQueVe,
         LecturaFichaPersona $lecturaPersona,
-        LecturaContrato $lecturaContrato,
         ListarDispositivosDeUsuario $listarDispositivos,
         ListarBitacora $listarBitacora,
     ): array {
@@ -351,10 +289,6 @@ final class UsuariosController
 
         if ($esInterno && $this->autorizacion->tienePermiso($request, 'seguridad.dispositivo.ver')) {
             $resumen[] = $this->tarjetaDispositivos($usuario, $listarDispositivos);
-        }
-
-        if (! $esInterno && $this->autorizacion->tienePermiso($request, 'comercial.contrato.ver')) {
-            $resumen[] = $this->tarjetaContrato($usuario, $lecturaContrato);
         }
 
         if ($this->autorizacion->tienePermiso($request, 'seguridad.bitacora.ver')) {
@@ -431,27 +365,6 @@ final class UsuariosController
             // La lista de dispositivos se acota a esta cuenta con su usuario en el buscador.
             'acciones' => $dispositivos->isNotEmpty()
                 ? [['label' => __('seguridad.usuarios.aside_dispositivos_accion'), 'href' => route('panel.dispositivos.index', ['q' => $usuario->username]), 'icono' => 'list']]
-                : [],
-        ];
-    }
-
-    /** @return array{titulo: string, icono: string, tieneDatos: bool, items: list<array<string, mixed>>, vacioTitulo: string, vacioDetalle: string, acciones: list<array{label: string, href: string, icono?: string}>} */
-    private function tarjetaContrato(SecUser $usuario, LecturaContrato $lecturaContrato): array
-    {
-        $contrato = $usuario->contrato_id !== null ? $lecturaContrato->obtenerResumen($usuario->contrato_id) : null;
-
-        return [
-            'titulo' => __('seguridad.usuarios.aside_contrato_titulo'),
-            'icono' => 'description',
-            'tieneDatos' => $contrato !== null,
-            'items' => $contrato === null ? [] : [
-                ['label' => __('seguridad.usuarios.aside_contrato_cliente'), 'value' => $contrato->clienteNombre],
-                ['label' => __('seguridad.usuarios.aside_contrato_campania'), 'value' => $contrato->campaniaCodigo ?? __('seguridad.usuarios.aside_contrato_sin_campania'), 'mono' => true],
-            ],
-            'vacioTitulo' => __('seguridad.usuarios.aside_contrato_vacio_titulo'),
-            'vacioDetalle' => __('seguridad.usuarios.aside_contrato_vacio_detalle'),
-            'acciones' => $contrato !== null
-                ? [['label' => __('seguridad.usuarios.aside_contrato_accion'), 'href' => route('panel.contratos.index', ['cliente_id' => $contrato->clienteId]), 'icono' => 'list']]
                 : [],
         ];
     }
@@ -692,69 +605,5 @@ final class UsuariosController
         $clave = "seguridad.rol.meta.{$slug}.nombre";
 
         return Lang::has($clave) ? __($clave) : $slug;
-    }
-
-    /**
-     * Clientes vivos, para el select que solo FILTRA al de contrato (tarea
-     * 65): igual criterio que `cliente_id` en `lotes/_formulario.blade.php`
-     * — ninguna cuenta guarda esto, se resuelve del lado del cliente vía
-     * `usuarios-form.js`. Lectura directa (`Comercial` es otro módulo, ADR
-     * 0003 regla 3), mismo criterio que {@see self::personasDisponibles()}.
-     *
-     * @return Collection<int, string>
-     */
-    private function clientesDisponibles(): Collection
-    {
-        return DB::table('com_clientes')
-            ->whereNull('deleted_at')
-            ->orderBy('razon_social')
-            ->pluck('razon_social', 'id');
-    }
-
-    /**
-     * Contratos vigentes con su cliente, para el select dependiente
-     * cliente→contrato del camino portal (tarea 65). Solo `estado =
-     * 'vigente'` (valor de
-     * `App\Dominios\Comercial\Dominio\EstadoContrato::Vigente`, leído como
-     * dato — nunca se importa el enum de otro módulo, ADR 0003 regla 3):
-     * `CrearCuentaPortal`/`*UsuarioRequest` exigen lo mismo, así que no
-     * tiene sentido ofrecer en el `<select>` un contrato que el submit
-     * rechazaría.
-     *
-     * @return Collection<int, \stdClass> cada fila con `id`, `cliente_id`,
-     *                                    `razon_social`, `hectareas_contratadas`.
-     */
-    private function contratosVigentesDisponibles(): Collection
-    {
-        return DB::table('com_contratos as c')
-            ->join('com_clientes as cl', 'cl.id', '=', 'c.cliente_id')
-            ->whereNull('c.deleted_at')
-            ->where('c.estado', 'vigente')
-            ->orderBy('cl.razon_social')
-            ->get(['c.id', 'c.cliente_id', 'cl.razon_social', 'c.hectareas_contratadas']);
-    }
-
-    /**
-     * Correo sugerido por cliente, para precargar el campo `email` del
-     * camino portal (tarea 66, ampliación ADR 0004 9/9/2026): el contacto
-     * `dueno` si tiene correo, si no el primero con correo. Solo filtra el
-     * valor inicial del campo — el administrador siempre puede escribir
-     * otro, y el submit no vuelve a leer esta lista. Lectura directa
-     * (`Comercial` es otro módulo, ADR 0003 regla 3), mismo criterio que
-     * {@see self::clientesDisponibles()}.
-     *
-     * @return array<int, string> cliente_id => email
-     */
-    private function emailPorCliente(): array
-    {
-        return DB::table('com_cliente_contactos')
-            ->whereNull('deleted_at')
-            ->whereNotNull('email')
-            ->orderByRaw("case when tipo = 'dueno' then 0 else 1 end")
-            ->orderBy('id')
-            ->get(['cliente_id', 'email'])
-            ->groupBy('cliente_id')
-            ->map(fn (Collection $contactos) => $contactos->first()->email)
-            ->all();
     }
 }
