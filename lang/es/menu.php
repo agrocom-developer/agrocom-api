@@ -8,13 +8,9 @@
  * resuelven vía __() recién en presentación (ADR 0013).
  *
  * Los módulos y su vocabulario salen de la ESPECIFICACIÓN, no del mockup
- * (pedido explícito del 28/8/2026): §4 de
- * `docs/especificacion/especificacion_funcional_tecnica.md` — Comercial
- * (4.1), Recursos (4.2), Operación (4.3), Financiero (4.4), Seguridad (4.6) —
- * más Reportes (cap. 9/10). El mockup
- * aprobado fija el LAYOUT (riel + sidebar + badges); los nombres "Flota",
- * "Insumos", "Personas" y "Finanzas" que ese mockup inventaba se reemplazan
- * por las áreas reales del documento.
+ * (`docs/especificacion/marketplace.md`): Operación, Recursos,
+ * Proveedores, Seguridad y Reportes. El mockup aprobado fija el LAYOUT (riel
+ * + sidebar + badges).
  *
  * Archivo propio (no `seguridad.php`): el menú es transversal a todos los
  * módulos de dominio, aunque el catálogo `sec_menu` viva en Seguridad.

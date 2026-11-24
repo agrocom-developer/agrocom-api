@@ -6,7 +6,7 @@ próxima tarea**, listo para que otra sesión lo ejecute sola.
 ## La unidad de trabajo es una HU o una TE completa
 
 Una tarea del ciclo entrega **una historia de usuario o una tarea técnica
-entera de `docs/gestion/plan_sprints.md`**, con todos sus criterios de
+entera de `docs/gestion/cola_tareas.md`**, con todos sus criterios de
 aceptación cubiertos, en un solo PR. No media HU, no "la primera parte de
 TE-05", no un retoque suelto.
 
@@ -33,12 +33,11 @@ con recetas y productos, que esperan al módulo `Mezclas`).
    para el usuario. Elegí la siguiente, y si lo que la trabó también afecta a la
    que sigue, decilo en tu reporte.
 2. `docs/gestion/cola_tareas.md` — el backlog automatizable, con su orden.
-3. `docs/gestion/plan_sprints.md` — las HU y TE con sus criterios de
-   aceptación. **Es la fuente del alcance de la tarea que escribas.**
+3. `docs/especificacion/marketplace.md` y los ADR 0027 a 0039 — el producto y sus
+   decisiones. **Son la fuente del alcance de la tarea que escribas.**
 4. `docs/gestion/automatizacion_desarrollo.md` — qué falta para el turno
    desatendido y en qué orden de dependencia.
-5. `docs/gestion/estado_proyecto.md` — dónde quedó el proyecto y qué está
-   marcado como pendiente.
+5. `docs/gestion/estado-api.md` — qué quedó hecho en la API y qué falta.
 6. `git log --oneline -15` y `gh pr list --state merged --limit 5` — el estado
    real. Los documentos se desfasan; git no.
 
@@ -48,18 +47,13 @@ La primera de `docs/gestion/cola_tareas.md` que no esté hecha, salvo que lo que
 acaba de cerrarse haya dejado algo que la bloquea o la vuelve innecesaria — en
 ese caso explicá el cambio de orden en `docs/gestion/cola_tareas.md` y seguí.
 
-Si la cola se quedó sin filas, la próxima tarea sale de la primera HU o TE
-pendiente de `plan_sprints.md`, en el orden del sprint. Agregá su fila a
-`cola_tareas.md` con su criterio ejecutable.
-
-**Terminar un sprint no termina el trabajo.** Si la última HU pendiente del
-sprint en curso ya está hecha, seguí con la primera del sprint siguiente. El
-plan tiene seis; el ciclo los recorre en orden sin detenerse entre uno y otro.
+Si la cola se quedó sin filas, la próxima tarea sale de lo pendiente de
+`docs/gestion/estado-api.md`. Agregá su fila a `cola_tareas.md` con su criterio
+ejecutable.
 
 ### El trabajo sale del plan, nunca de tu criterio
 
-La fuente del alcance es `plan_sprints.md`. Una fila que no salga de una HU o
-una TE del plan **no la escribís vos**, por obvia que parezca la mejora: deuda
+La fuente del alcance es la especificación y lo pendiente de `estado-api.md`. Una fila que no salga de ahí **no la escribís vos**, por obvia que parezca la mejora: deuda
 técnica que encontraste leyendo los `runs/*.md`, un refactor que ordenaría el
 árbol, un flake de tests. El ciclo ejecuta el plan del usuario; no se da
 trabajo a sí mismo.
@@ -130,7 +124,7 @@ línea, exactamente este formato:
   archivo, que por eso conviene que ya sea la función.
 - **`etapas=`** — cuántas sesiones puede encadenar el ciclo sobre esa rama para
   terminar la HU. Dimensionalo por el tamaño de la historia, no por miedo: 2
-  para algo acotado, 4–5 para una HU de 2 días o más del plan de sprints. Si no
+  para algo acotado, 4–5 para una tarea de 2 días o más. Si no
   lo ponés, son 5.
 - `critica=si` para lo de la lista de arriba (PR normal, va a `runs/revision-pendiente.txt`).
 - `turno-noche=1` **siempre**. Lo que cambia por tarea es `descongela=`, con
@@ -167,8 +161,8 @@ Secciones:
 - **Qué hacer**: el objetivo en una frase, y después los pasos concretos. Decí
   qué skills cargar (`verificacion` siempre; los demás según el área). Nombrá
   los archivos que hay que tocar cuando ya se sepan, y qué NO hay que tocar.
-  Cubrí la HU entera: **todos** sus criterios de aceptación del plan de
-  sprints, cada uno con su test.
+  Cubrí la HU entera: **todos** sus criterios de aceptación de la fila de
+  la cola, cada uno con su test.
 - **Cómo repartir las etapas**: si la HU claramente no entra en una sesión,
   sugerí el corte (p. ej. "etapa 1: migración y modelo; etapa 2: caso de uso y
   endpoint; etapa 3: tests de replay"). Es una sugerencia, no un contrato — la
@@ -216,7 +210,7 @@ prompt de la última.
 
 Dos casos, misma salida:
 
-- **No queda ninguna HU/TE pendiente** en los seis sprints. El plan se
+- **No queda ninguna tarea pendiente** en la cola ni en `estado-api.md`. El trabajo se
   terminó: es el final esperado del ciclo, no una falla.
 - **Ninguna de las pendientes califica** por las tres condiciones de arriba.
 
@@ -247,6 +241,6 @@ empezar.
 
 ## Cierre obligatorio
 
-`runs/{{ID}}-plan.md`: qué tarea elegiste, por qué esa y no otra, qué HU o TE
-del plan de sprints cubre entera, cuántas etapas le diste y con qué criterio, y
+`runs/{{ID}}-plan.md`: qué tarea elegiste, por qué esa y no otra, qué fila
+de la cola cubre entera, cuántas etapas le diste y con qué criterio, y
 qué queda detrás de ella en la cola.

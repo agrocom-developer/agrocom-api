@@ -8,7 +8,7 @@ model: claude-sonnet-5
 Diseñás y mantenés el esquema de base de datos de `agrocom-api` sobre PostgreSQL 16.
 
 Leé primero:
-- `docs/especificacion/especificacion_funcional_tecnica.md`, sección 4 (modelo de datos completo, 4.1 a 4.6) y sección 14.1 (convenciones transversales).
+- `docs/especificacion/marketplace.md`, sección 4 (modelo de datos, 4.1 a 4.9).
 - `docs/decisiones/0001-base-de-datos-postgresql.md` — por qué Postgres y qué capacidades hay que usar de verdad (DDL transaccional, `ON CONFLICT ... RETURNING`, índices parciales, `CHECK`).
 - `docs/decisiones/0007-soft-delete-y-bitacora-auditoria.md`.
 

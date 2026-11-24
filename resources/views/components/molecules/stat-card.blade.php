@@ -1,7 +1,7 @@
 {{--
     Molecule: stat-card (quinta vuelta — tarjeta KPI de las maquetas
     4a/5a/5b; sexta vuelta parte 2 — ícono en contenedor + `state`,
-    lenguaje visual de docs/ganadosoft-dashboard.html §2.2): rótulo
+    lenguaje visual de la referencia del tablero): rótulo
     uppercase + ícono en contenedor 40×40 a la derecha (17/9/2026: subido
     de 34×34/ícono `sm` a 40×40/ícono `md` — se veía chico apenas se
     empezó a usar `state` de verdad, primer consumidor real

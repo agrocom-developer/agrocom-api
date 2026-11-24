@@ -1,6 +1,6 @@
 # ADR 0006 — Branching: GitFlow simplificado
 
-**Estado:** Aceptada · **Reemplaza:** el trunk-based (`main` + ramas cortas `feat/...`/`fix/...`) descrito en `docs/legacy/definicion_tecnica_repos_modulos_stack.md`.
+**Estado:** Aceptada · **Reemplaza:** el trunk-based (`main` + ramas cortas `feat/...`/`fix/...`) de la definición técnica inicial.
 
 ## Contexto
 
@@ -12,7 +12,7 @@ El proyecto lo desarrolla una sola persona con agentes de IA como implementadore
 
 - **`master`**: rama estable. En `agrocom-api`, cada merge a `master` dispara el deploy continuo (staging → producción), tal como ya definía `definicion_tecnica_repos_modulos_stack.md`. En `agrocom-field`, cada merge a `master` puede recibir un tag SemVer + `versionCode` Android (`1.4.0+17`) cuando corresponde publicar una versión candidata.
 - **`develop`**: rama de integración. Todas las `feature/*` se mergean acá primero.
-- **`feature/*`**: una por historia de usuario o tarea técnica (ver `docs/gestion/plan_sprints.md`), nace de `develop`, muere mergeada a `develop` por PR.
+- **`feature/*`**: una por historia de usuario o tarea técnica, nace de `develop`, muere mergeada a `develop` por PR.
 - **`fix/*`**: para correcciones puntuales; nace de `master`, se mergea a `master` y se reincorpora a `develop` para que no se pierda en la siguiente integración.
 - **Sin `release/*` ni `hotfix/*` formales** — no hay equipo esperando una rama de release; una corrección urgente es directamente una `fix/*` corta.
 - **Todo por Pull Request**, aunque el desarrollo sea en solitario: el PR es el punto en el que el desarrollador y el agente de IA revisan el diff antes de integrar — no es una formalidad de equipo, es el mecanismo de control de calidad.
@@ -26,5 +26,5 @@ El proyecto lo desarrolla una sola persona con agentes de IA como implementadore
 
 ## Consecuencias
 
-- `docs/gestion/plan_sprints.md` (TE-01, Sprint 1) crea `develop` desde `master` en ambos repositorios como parte del esqueleto inicial.
+- La tarea TE-01 (Sprint 1) crea `develop` desde `master` en ambos repositorios como parte del esqueleto inicial.
 - El primer commit de cada repo (esqueleto Laravel/Flutter, CI) se integra en `develop` y se mergea a `master` recién cuando la suite está en verde y el entorno de staging responde.

@@ -4,7 +4,7 @@
 
 ## Contexto
 
-`docs/api/README.md` era un placeholder que planeaba un único `openapi.yaml` escrito a mano a partir de TE-04/TE-05 (el motor de sync, Sprint 2), con la regla "ante cualquier duda entre el YAML y el código, el YAML gana" y, mientras tanto, la sección 8 de `docs/especificacion/especificacion_funcional_tecnica.md` como referencia. Ese plan quedó desfasado por dos lados: el primer endpoint real (órdenes de aplicación, núcleo comercial) ya existe antes del Sprint 2, y `agrocom-field` (ADR 0005) arranca pronto y necesita un contrato consumible ya.
+`docs/api/README.md` era un placeholder que planeaba un único `openapi.yaml` escrito a mano a partir de TE-04/TE-05 (el motor de sync, Sprint 2), con la regla "ante cualquier duda entre el YAML y el código, el YAML gana" y, mientras tanto, la sección 8 de `docs/especificacion/marketplace.md` como referencia. Ese plan quedó desfasado por dos lados: el primer endpoint real (órdenes de aplicación, núcleo comercial) ya existe antes del Sprint 2, y `agrocom-field` (ADR 0005) arranca pronto y necesita un contrato consumible ya.
 
 Además, el supuesto de fondo del contrato-first manual no se sostiene en este proyecto: con una sola persona y agentes de IA como implementadores principales (`CLAUDE.md`), un YAML mantenido a mano en paralelo al código es trabajo doble y una fuente casi garantizada de drift — el documento que "gana" sería justamente el que nadie verifica contra la realidad.
 

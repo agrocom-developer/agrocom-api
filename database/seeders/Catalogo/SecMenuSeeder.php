@@ -9,12 +9,10 @@ use Illuminate\Database\Seeder;
 /**
  * Catálogo del menú de tres niveles del panel (quinta vuelta — el LAYOUT es
  * el de las maquetas aprobadas 4a/5a/5b/5c; los MÓDULOS y su vocabulario
- * salen de la especificación, no del mockup — pedido explícito del
- * 28/8/2026): 7 módulos raíz (riel de nivel 1) con sus ítems hijos (sidebar
- * de nivel 2), según §4 de
- * `docs/especificacion/especificacion_funcional_tecnica.md` — Comercial
- * (4.1), Recursos (4.2), Operación (4.3), Financiero (4.4), Seguridad (4.6) —
- * más Reportes (cap. 9/10).
+ * salen de la especificación, no del mockup): módulos raíz (riel de nivel 1)
+ * con sus ítems hijos (sidebar de nivel 2), según
+ * `docs/especificacion/marketplace.md` — Operación, Recursos, Proveedores,
+ * Seguridad y Reportes.
  *
  * Corre en todos los entornos, producción incluida — igual que
  * `SeguridadSeeder`, del que depende (necesita `sec_permission` sembrado).

@@ -7,8 +7,7 @@ use RuntimeException;
 
 /**
  * Se intentó editar un trabajo cuyo estado de tablero ya es `validado`
- * (HU-93, tarea 108): criterio por defecto escrito en
- * `docs/negocio/observaciones_operaciones_comercial_2026-09-13.md` §4.4 —
+ * (HU-93, tarea 108): criterio por defecto:
  * "eliminar/editar libre solo antes de validar". Invariante 2 de CLAUDE.md:
  * un registro validado nunca se sobrescribe; la vía correcta para un trabajo
  * ya validado es una corrección con `anula_a_id`, todavía sin exponer como

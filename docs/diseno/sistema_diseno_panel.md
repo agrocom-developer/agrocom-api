@@ -380,10 +380,10 @@ Convención de catálogo de claves, definida acá (era un pendiente explícito d
 ## 7. Quinta vuelta (28/8/2026) — layout de tres niveles del panel
 
 Rediseño del panel completo sobre las maquetas aprobadas del mockup
-`docs/Login Agro Drones.dc.html` (`4a` escritorio, `5a` tablet, `5b` móvil,
+el mockup de login (`4a` escritorio, `5a` tablet, `5b` móvil,
 `5c` selección de rol). Tres decisiones del pedido gobiernan todo el pase:
 el **layout** es el de las maquetas; los **módulos del menú** salen de la
-especificación (`especificacion_funcional_tecnica.md` §4), no del mockup; y
+especificación (`docs/especificacion/marketplace.md`), no del mockup; y
 los **hex del mockup nunca se copian** — cada color se tradujo a un token
 semántico (invariante 11).
 
@@ -743,8 +743,8 @@ pantalla ya hecha, se anota acá.
 
 ## 9. Sexta vuelta — parte 2 (28/8/2026): rediseño del dashboard
 
-Ejecuta `docs/gestion/plan_dashboard_rediseno.md` — Anexo A y fases 1 a 7 de
-ese plan (queda solo la Fase 8, auditoría final, que es este mismo cierre).
+Ejecuta el plan de rediseño del dashboard: anexo A y fases 1 a 7 (queda solo la
+Fase 8, auditoría final, que es este mismo cierre).
 Verificado en navegador (Playwright, claro/oscuro/móvil, usuario
 `miguelo`) antes de cerrar cada fase.
 
@@ -840,8 +840,8 @@ Verificado en navegador (Playwright, claro/oscuro/móvil, usuario
 
 ## 10. Auditoría visual externa (28/8/2026) — respuesta a 9 observaciones
 
-Cierra la Fase 8 (auditoría final) que `docs/gestion/plan_dashboard_rediseno.md`
-había dejado pendiente, y la amplía con una revisión de diseño externa sobre
+Cierra la Fase 8 (auditoría final) del plan de rediseño del dashboard,
+que había quedado pendiente, y la amplía con una revisión de diseño externa sobre
 el panel completo (tokens de color, contraste AA, alertas, botones, gráfica
 de distribución, grilla, tipografía, elevación en oscuro, detalles menores).
 Rama `feature/auditoria-visual`, plan completo en el historial de la sesión.
@@ -1936,7 +1936,7 @@ Formato listo para copiar:
 
 ```php
 // PHP — array de constantes (nombre de la clase, namespace y ubicación
-// exacta dentro de app/Dominios/Comercial/ quedan a criterio de backend)
+// exacta dentro de app/Dominios/ quedan a criterio de backend)
 public const ROJO = '#B6202D';
 public const NARANJA = '#CD5E1D';
 public const AMBAR = '#AA8C18';

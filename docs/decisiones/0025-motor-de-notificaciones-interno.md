@@ -1,6 +1,6 @@
 # ADR 0025 — Motor de notificaciones interno: un módulo, un evento por hecho, un aviso por cuenta
 
-**Fecha:** 2026-09-23 · **Estado:** aceptado · **Decide:** el desarrollador, a partir del pedido del dueño del 22–23/9/2026 (plan `docs/gestion/plan_dashboard_notificaciones_por_rol.md`); tarea 141, marcada crítica.
+**Fecha:** 2026-09-23 · **Estado:** aceptado · **Decide:** el desarrollador, a partir del pedido del dueño del 22–23/9/2026; tarea 141, marcada crítica.
 
 ## Contexto
 

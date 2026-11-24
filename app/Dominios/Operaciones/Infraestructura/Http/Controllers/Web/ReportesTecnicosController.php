@@ -12,7 +12,7 @@ use Illuminate\View\View;
 /**
  * `GET /panel/reportes/tecnicos` (HU-43, tarea 57): "como encargado, quiero
  * listar y descargar los reportes técnicos generados, para reenviarlos al
- * agrónomo" (`plan_sprints.md` Sprint 12, §252). Pantalla de solo lectura —
+ * agrónomo". Pantalla de solo lectura —
  * agrega datos ya persistidos, no genera ni muta nada. La descarga de cada
  * fila reusa `panel.trabajos.reporte-pdf` (`TrabajosController::reporteTecnicoPdf`,
  * HU-18); esta pantalla nunca sirve el PDF.

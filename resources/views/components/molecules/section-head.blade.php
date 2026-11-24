@@ -1,6 +1,6 @@
 {{--
     Molecule: section-head (sexta vuelta parte 2 — lenguaje visual de
-    docs/ganadosoft-dashboard.html §2.1, traducido a tokens)
+    la referencia del tablero, traducido a tokens)
     Título de sector: barra lateral de color + rótulo uppercase chico +
     contador mono opcional a la derecha. Separa el dashboard en sectores
     (KPIs, distribución, etc.) — puramente presentación, sin lógica.

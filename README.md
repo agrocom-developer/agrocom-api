@@ -1,54 +1,45 @@
-# Agrocom — Sistema de Gestión de Operaciones de Fumigación
+# Agrocom — Marketplace de fumigación con drones
 
-**Agrocom SRL** fumiga cultivos con drones DJI Agras en Santa Cruz, Bolivia. Vende **hectáreas bien aplicadas y bien documentadas**: el cliente no compra horas de dron ni litros de caldo — compra que su cultivo reciba la dosis que su agrónomo ordenó, en la ventana que la plaga exige, con prueba de que ocurrió.
+**Agrocom SRL** conecta a quien necesita fumigar un cultivo con quien sabe y puede hacerlo. Un cliente solicita el servicio sobre su terreno; un proveedor (piloto con su dron y, si hace falta, su auxiliar) lo ejecuta; el cliente califica y el proveedor construye su reputación. Los drones cumplen el papel del vehículo. Agrocom capta a los clientes, es el nexo entre las partes y además es proveedor con su propia flota y sus propios pilotos.
 
-Este sistema existe para tres cosas:
+Este repositorio es el backend (API REST) y el panel web de administración. Las apps móviles viven en el repo hermano [`agrocom-field`](https://github.com/agrocom-developer/agrocom-field).
 
-1. **Que cada hectárea quede registrada a nombre de quien la voló.** El registro por sesión garantiza que nadie se atribuya hectáreas de otro ni pierda las suyas al entregar un lote a medias.
-2. **Que el cliente reciba exactamente lo que se le factura.** Cada hectárea se reconstruye de punta a punta: qué se aplicó, dónde, cuándo, en qué condiciones, con qué mezcla y con qué prueba (la captura del control remoto y el acta firmada).
-3. **Que el dueño vea cómo avanza la operación.** Hectáreas por contrato, pausas explicadas, estadías y alertas — lo que hoy vive en WhatsApp, Excel y la memoria.
+## Cómo funciona
 
-## Cómo trabaja Agrocom (y qué registra el sistema)
+1. El cliente registra sus **terrenos** y crea una **solicitud de servicio**; el sistema le muestra una tarifa estimada antes de confirmar.
+2. El motor de asignación ofrece el trabajo primero a los pilotos y drones **propios** de Agrocom y después a **terceros**, por zona, radio y calificación.
+3. Un proveedor acepta (requiere red) y se forma el equipo: piloto, dron y auxiliar opcional.
+4. En el lote no hay señal: el piloto y el auxiliar registran la sesión de vuelo, la mezcla y las evidencias **sin conexión** y sincronizan al volver a cobertura, sin duplicar jamás una hectárea.
+5. El cliente firma el acta de conformidad o abre una disputa; después califica al proveedor, y el proveedor califica al cliente de forma privada.
 
-El agrónomo del cliente emite la **orden de aplicación** (producto, dosis, litros por hectárea). El jefe de campo planifica el día: qué lotes, qué pareja piloto/auxiliar. En el lote, el piloto mapea la misión y vuela en tandas de 10–12 minutos, mientras el auxiliar sostiene el ritmo: cambia baterías y recarga caldo. Al cerrar cada lote, el piloto captura la pantalla del control — la evidencia que hoy ya zanja toda discusión de hectáreas. El jefe **valida** lo volado, el agrónomo **firma el acta**, y de ahí salen el reporte y la factura.
-
-El flujo completo con sus excepciones reales (lluvia, caldo cortado, dron caído, demoras del cliente) está en [`docs/negocio/flujo_base_y_excepciones.md`](docs/negocio/flujo_base_y_excepciones.md).
+En la primera versión no hay cobro dentro de la app: la comisión se liquida fuera de ella.
 
 ## Quién usa qué
 
 | Quién | Dónde | Para qué |
 |---|---|---|
-| **Piloto** | App en el control remoto del dron | Ver órdenes y lotes, cerrar sesiones con evidencia, registrar pausas e incidencias — siempre con el dron en tierra |
-| **Auxiliar** | App en su celular | Mezclas, recargas, baterías |
-| **Jefe de campo** | Panel web | Planificar el día, validar lo volado |
-| **Encargado de operaciones** | Panel web | Órdenes, validación de sesiones, reportes al cliente |
-| **Dueño** | Panel web | Contratos, facturas y avance por cliente |
-| **Cliente** (dueño del campo y su agrónomo) | Portal de solo lectura | Reportes, actas firmadas, historial de sus aplicaciones |
+| **Cliente** | App móvil `cliente` (online) | Terrenos, solicitudes, seguimiento, conformidad y calificación |
+| **Piloto** | App móvil `piloto` (offline en el lote) | Ofertas, sesión de vuelo, incidencias y evidencias |
+| **Auxiliar** | App móvil `auxiliar` (offline en el lote) | Mezclas y evidencias |
+| **Proveedor** | Web y app | Flota, equipo, documentos y reputación |
+| **Administrador y soporte** | Panel web | Aprobaciones, moderación, disputas, parámetros y métricas |
 
-En el lote no hay señal (la conectividad Starlink está en el campamento base), así que las apps de campo funcionan **sin internet** y sincronizan al volver a cobertura — sin duplicar jamás una hectárea.
+Una misma persona puede cumplir varios roles con un solo usuario, y opera bajo un único rol activo por sesión.
 
-Una misma persona puede cumplir varios roles con un solo usuario — en la operación real el dueño también vuela y valida (pero nunca sus propias sesiones).
+## Documentación
 
-## La lógica de negocio, documento por documento
-
-Todo el conocimiento del negocio salió de la gente que hace el trabajo: en agosto de 2026 los cinco roles operativos respondieron cuestionarios sobre su día real, sus excepciones y sus números. De ahí derivan:
-
-- [`docs/negocio/ventana_al_negocio.md`](docs/negocio/ventana_al_negocio.md) — el negocio de punta a punta: la cadena comercial, la economía del piloto, los conflictos típicos.
-- [`docs/negocio/politicas/`](docs/negocio/politicas/) — políticas y reglas por rol: piloto, auxiliar, jefe de campo, encargado, agrónomo, dueño y cliente.
-- [`docs/negocio/flujo_base_y_excepciones.md`](docs/negocio/flujo_base_y_excepciones.md) — de la orden al cobro, con las excepciones ancladas a cada etapa.
-- [`docs/negocio/automatizacion_sistematizacion.md`](docs/negocio/automatizacion_sistematizacion.md) — qué hace el sistema solo, qué estructura, y qué decisiones siguen siendo humanas.
-- [`docs/negocio/alcance_objetivos.md`](docs/negocio/alcance_objetivos.md) — para qué existe el proyecto, con metas medibles.
-- [`docs/glosario.md`](docs/glosario.md) — el vocabulario del negocio y del campo (qué es un chaco, la calda, las cortinas, el sereno).
-- [`docs/gestion/respuestas_campo/`](docs/gestion/respuestas_campo/) — las respuestas crudas de las encuestas y su análisis consolidado.
-
-## Estado del proyecto
-
-**Fase de fundación**: la documentación de negocio y las decisiones de arquitectura están completas; el código de la aplicación aún no arranca. Lo procesado hasta ahora y lo que sigue (capturas del control remoto, reunión de cierre con el equipo, primer sprint de desarrollo) está siempre al día en [`docs/gestion/estado_proyecto.md`](docs/gestion/estado_proyecto.md).
+- [`docs/README.md`](docs/README.md): mapa de la documentación y orden de lectura.
+- [`docs/especificacion/marketplace.md`](docs/especificacion/marketplace.md): la fuente de verdad funcional y técnica.
+- [`docs/decisiones/`](docs/decisiones/): los porqués, como ADRs. Los 0027 a 0039 definen el marketplace.
+- [`docs/politicas/`](docs/politicas/): cancelación, calificación, verificación de proveedores, seguridad, disputas y comisión.
+- [`docs/glosario.md`](docs/glosario.md): el vocabulario del negocio y del campo.
+- [`docs/api/openapi.yaml`](docs/api/openapi.yaml): el contrato de API que consumen las apps, generado desde el código.
+- [`docs/gestion/estado-api.md`](docs/gestion/estado-api.md): qué quedó hecho en la API y qué falta.
 
 ## Para desarrolladores
 
-- **Stack**: PHP 8.3 + Laravel 12 + PostgreSQL 16 (API REST y panel AdminLTE/Livewire); las apps de campo son Flutter, en el repo hermano [`agrocom-field`](https://github.com/agrocom-developer/agrocom-field). Monolito modular con un módulo por dominio de negocio.
-- **Fuente de verdad técnica**: [`docs/especificacion/`](docs/especificacion/) (especificación funcional, requerimientos, insumos del modelo de datos) y [`docs/decisiones/`](docs/decisiones/) (los porqués, como ADRs).
-- **Reglas para agentes de IA**: [`CLAUDE.md`](CLAUDE.md) — las invariantes no negociables. Los subagentes especializados viven en [`.claude/agents/`](.claude/agents/).
-- **Flujo de trabajo**: [`CONTRIBUTING.md`](CONTRIBUTING.md) — GitFlow simplificado, todo por PR; el CI protege `docs/legacy/` y auto-fusiona con checks en verde (ver `.github/workflows/`).
+- **Stack**: PHP 8.3 + Laravel 13 + PostgreSQL 16 (API REST y panel AdminLTE/Livewire). Monolito modular con un módulo por dominio.
+- **Reglas para agentes de IA**: [`CLAUDE.md`](CLAUDE.md), las invariantes no negociables. Los subagentes especializados viven en [`.claude/agents/`](.claude/agents/).
+- **Flujo de trabajo**: [`CONTRIBUTING.md`](CONTRIBUTING.md). GitFlow simplificado, todo por PR; el CI auto-fusiona con checks en verde (ver `.github/workflows/`).
 - **Entorno local**: `docker compose up -d` levanta PHP, PostgreSQL y Mailpit (ver [`docs/gestion/entornos.md`](docs/gestion/entornos.md)).
+- **Contrato de API**: `composer openapi` regenera `docs/api/openapi.yaml`; nunca se edita a mano.

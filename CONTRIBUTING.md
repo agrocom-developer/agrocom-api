@@ -6,7 +6,7 @@ Ver el porqué en `docs/decisiones/0006-gitflow-simplificado.md`. Esta es la ver
 
 - **`master`**: rama estable. Cada merge dispara el deploy continuo (staging → producción).
 - **`develop`**: rama de integración. Toda `feature/*` se mergea acá primero, por PR.
-- **`feature/<nombre-corto>`**: una por historia de usuario o tarea técnica del plan de sprints (`docs/gestion/plan_sprints.md`). Nace de `develop`, muere mergeada a `develop`. El nombre son 2–3 palabras de **la función del proyecto** que construye (`feature/sync-idempotente`, `feature/ordenes-offline`), nunca de la actividad ni del número de tarea.
+- **`feature/<nombre-corto>`**: una por tarea de la cola (`docs/gestion/cola_tareas.md`). Nace de `develop`, muere mergeada a `develop`. El nombre son 2–3 palabras de **la función del proyecto** que construye (`feature/sync-idempotente`, `feature/ordenes-offline`), nunca de la actividad ni del número de tarea.
 - **`fix/<nombre-corto>`**: corrección puntual. Nace de `master`, se mergea a `master` y se reincorpora a `develop`.
 
 No hay `release/*` ni `hotfix/*` — un solo desarrollador no necesita esa ceremonia.

@@ -9,7 +9,7 @@ use Carbon\CarbonImmutable;
 /**
  * Listado de reportes técnicos del panel (HU-43, tarea 57): "como
  * encargado, quiero listar y descargar los reportes técnicos generados,
- * para reenviarlos al agrónomo" (`plan_sprints.md` Sprint 12, §252). Solo
+ * para reenviarlos al agrónomo". Solo
  * lectura, filtrable por cliente y por período de generación.
  *
  * Compone dos fuentes sin JOIN cross-módulo (ADR 0003, regla 2):

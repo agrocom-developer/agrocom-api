@@ -14,7 +14,7 @@ Este skill es un mapa de dónde vive el sistema de diseño y qué reglas ya est�
 - **Catálogo vigente de tokens y componentes**: `docs/diseno/sistema_diseno_panel.md`. Es la fuente de verdad de VALORES concretos (qué token existe, qué componente está implementado, en qué archivo). Se actualiza cada vez que cambia el catálogo.
 - **Checklist genérico de gobernanza**: `docs/diseno/diseno-laravel.md`. Es un checklist de proceso (Atomic Design, cero hardcode, patrón template+content) — **nunca** la fuente de valores concretos de ejemplo que trae ese archivo.
 - **ADR de arquitectura del panel**: `docs/decisiones/0002-panel-web-adminlte-livewire-atomic-design.md` (Bootstrap/AdminLTE + Material + Atomic Design). No se reabre sin un ADR nuevo.
-- **Layout de 3 niveles** (riel de módulos + sidebar del módulo + header): `docs/diseno/sistema_diseno_panel.md` §7 y `docs/gestion/plan_dashboard_rediseno.md` §1.1 para el estado exacto del código.
+- **Layout de 3 niveles** (riel de módulos + sidebar del módulo + header): `docs/diseno/sistema_diseno_panel.md` §7.
 
 ## Homogeneización en curso (desde el 20/9/2026)
 
@@ -54,7 +54,7 @@ sesión principal puede invocar (los subagentes no: no tienen la herramienta
 
 | Skill | Para qué |
 |---|---|
-| `design` | Canvas de varios artboards en un Artifact: mockups de pantalla, flujos, variantes lado a lado. Es lo que reemplaza al mockup HTML suelto (`docs/ganadosoft-dashboard.html`, `Login Agro Drones.dc.html`) que se usó hasta ahora |
+| `design` | Canvas de varios artboards en un Artifact: mockups de pantalla, flujos, variantes lado a lado. Reemplaza al mockup HTML suelto |
 | `impeccable` | Revisión y pulido de una interfaz existente: jerarquía visual, carga cognitiva, accesibilidad, estados vacíos y de error |
 | `emil-design-eng` | Detalles de interacción y animación — el pulido fino de un componente |
 | `design-taste-frontend` | Dirección de diseño de cero, cuando no hay referencia y hay que proponer una |
@@ -64,13 +64,13 @@ Dos límites que no cambian por usar estas skills:
 - **Del mockup se toma estructura y medidas, nunca el vocabulario ni la paleta.**
   Los módulos salen de la especificación y los colores de los tokens `--ag-color-*`
   derivados de los logos oficiales. Es la regla que ya se aplicó al mockup
-  ganadosoft y al de login (ver memoria `maquetas-fijan-layout-no-vocabulario`).
+  del tablero y al de login (ver memoria `maquetas-fijan-layout-no-vocabulario`).
 - **Un canvas no es la implementación.** Lo aprobado se traduce a componentes
   Atomic Design con tokens; nada de HTML del mockup se copia literal.
 
 ## Verificación visual (obligatoria antes de cerrar un cambio)
 
-El cálculo de contraste en papel no alcanza — hay que ver el resultado real en navegador, en ambos temas, antes de dar una fase por cerrada (checklist de `docs/diseno/diseno-laravel.md` §11 + `docs/gestion/plan_dashboard_rediseno.md` §5).
+El cálculo de contraste en papel no alcanza — hay que ver el resultado real en navegador, en ambos temas, antes de dar una fase por cerrada (checklist de `docs/diseno/diseno-laravel.md` §11).
 
 Procedimiento usado en la sesión del 28/8/2026 (login + selección de rol):
 
@@ -81,12 +81,12 @@ Procedimiento usado en la sesión del 28/8/2026 (login + selección de rol):
    NODE_PATH=<repo>/node_modules node <script>.js
    ```
    El script navega a la vista en cuestión, toma captura en tema claro y en tema oscuro (alternando `data-bs-theme` o el toggle real de la UI), y guarda ambas imágenes para revisión.
-4. Revisar las capturas antes de reportar la fase como terminada — especialmente contraste en tema oscuro, que es donde este panel tiende a fallar (ver `docs/gestion/plan_dashboard_rediseno.md` §3).
+4. Revisar las capturas antes de reportar la fase como terminada — especialmente contraste en tema oscuro, que es donde este panel tiende a fallar.
 
 No hay un script committeado todavía (los usados hasta ahora fueron ad-hoc en el scratchpad de la sesión) — escribir uno nuevo por vista es aceptable mientras siga este patrón.
 
 ## Qué NO hacer
 
-- No copiar literal ningún hex de una referencia visual externa (p. ej. `docs/ganadosoft-dashboard.html`) — traducir siempre a los tokens `--ag-*` existentes.
+- No copiar literal ningún hex de una referencia visual externa (p. ej. un mockup) — traducir siempre a los tokens `--ag-*` existentes.
 - No asumir el prop/shape de un componente existente (`stat-card`, `alert-strip`, etc.) sin leer el `.blade.php` real primero.
 - No crear un componente nuevo del catálogo sin verificar antes si ya existe una composición equivalente (`design-ui` es quien decide si algo es atom/molecule/organism nuevo).

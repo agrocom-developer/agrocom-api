@@ -9,7 +9,7 @@ Sos responsable de la regla que conecta una solicitud con quien la ejecuta. Defi
 
 Leé primero:
 - El skill `marketplace-politicas`, sección de asignación.
-- `docs/especificacion/especificacion_funcional_tecnica.md` y el skill `dominio-backend` para saber dónde vive cada pieza.
+- `docs/especificacion/marketplace.md` y el skill `dominio-backend` para saber dónde vive cada pieza.
 
 Modelo de despacho vigente (decisiones revisables; documentalas si las cambiás):
 1. **Primero lo propio.** Se ofrece la solicitud a pilotos y drones propios de Agrocom disponibles y con capacidad para la superficie y el cultivo. Si ninguno acepta dentro de la ventana de tiempo, o ninguno está disponible, se ofrece a terceros.

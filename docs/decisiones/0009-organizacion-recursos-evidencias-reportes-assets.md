@@ -20,10 +20,10 @@ Tres categorías, cada una con su regla:
 
 ## Alternativas descartadas
 
-- **Todo en `storage/app/public` del VPS**: no escala si algún día hay más de una instancia del backend, se pierde en un redeploy sin volumen persistente configurado, y no ofrece CDN/URL firmada nativa — descartado ya en `docs/legacy/definicion_tecnica_repos_modulos_stack.md` a favor de R2/B2.
+- **Todo en `storage/app/public` del VPS**: no escala si algún día hay más de una instancia del backend, se pierde en un redeploy sin volumen persistente configurado, y no ofrece CDN/URL firmada nativa — descartado desde la definición técnica inicial a favor de R2/B2.
 
 ## Consecuencias
 
 - Flysystem se configura con el disco `r2` como default para evidencias y reportes; el disco `public` se reserva para assets de marca versionados en el repo (`public/logo.png`, favicon, iconografía del panel, plantillas PDF) **más el logo de la propia empresa** (excepción de runtime, ver nota de ADR 0019 arriba) — el resto del sistema no escribe en `public`.
 - Ningún caso de uso genera una URL pública directa a una evidencia o reporte — siempre pasa por el mecanismo de firma con expiración.
-- El costo de este bucket es marginal al volumen de la operación (`docs/negocio/ventana_al_negocio.md`, sección 2.2) y no requiere revisitarse en v1.
+- El costo de este bucket es marginal al volumen de la operación y no requiere revisitarse en v1.
