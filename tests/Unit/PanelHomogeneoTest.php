@@ -185,6 +185,7 @@ function panelHomogeneoMaquinasSinFicha(): array
         'TransicionesAprobacion' => 'la aprobación se resuelve con acciones de la ficha y de la cola, con motivo en un modal',
         'TransicionesTrabajo' => 'los trabajos nacen en la app de campo; el panel los consulta y los da de baja, no los edita',
         'TransicionesSolicitud' => 'la crea el cliente desde la app; el panel solo la consulta y la cancela con motivo en un modal',
+        'TransicionesOferta' => 'las genera el motor de asignación; el panel las consulta y asigna a mano, con motivo en un modal',
     ];
 }
 
