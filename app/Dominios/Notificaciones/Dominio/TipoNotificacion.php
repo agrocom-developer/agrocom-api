@@ -24,6 +24,13 @@ enum TipoNotificacion: string
     case DocumentoPorVencer = 'documento_por_vencer';
     case DocumentoVencido = 'documento_vencido';
     case ProveedorRegistrado = 'proveedor_registrado';
+    case OfertaCreada = 'oferta_creada';
+    case OfertaVencida = 'oferta_vencida';
+    case OfertaRetirada = 'oferta_retirada';
+    case SolicitudAsignada = 'solicitud_asignada';
+    case SolicitudReasignada = 'solicitud_reasignada';
+    case SolicitudSinProveedor = 'solicitud_sin_proveedor';
+    case ProveedorSancionado = 'proveedor_sancionado';
 
     /** Nombre del ícono de Material Symbols que rotula el aviso en la campana. */
     public function icono(): string
@@ -36,6 +43,12 @@ enum TipoNotificacion: string
             self::SujetoReenviado, self::ProveedorRegistrado => 'pending_actions',
             self::DocumentoPorVencer => 'event_upcoming',
             self::DocumentoVencido => 'event_busy',
+            self::OfertaCreada => 'campaign',
+            self::OfertaVencida, self::OfertaRetirada => 'timer_off',
+            self::SolicitudAsignada => 'handshake',
+            self::SolicitudReasignada => 'sync_alt',
+            self::SolicitudSinProveedor => 'person_off',
+            self::ProveedorSancionado => 'gavel',
         };
     }
 

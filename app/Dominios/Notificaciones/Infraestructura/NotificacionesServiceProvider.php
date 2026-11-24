@@ -5,7 +5,14 @@ namespace App\Dominios\Notificaciones\Infraestructura;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaDocumentoPorVencer;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaDocumentoVencido;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaEstadoDeAprobacionCambiado;
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaOfertaCreada;
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaOfertaRetirada;
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaOfertaVencida;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaProveedorRegistrado;
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaProveedorSancionado;
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaSolicitudAsignada;
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaSolicitudReasignada;
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaSolicitudSinProveedor;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaTrabajoCerrado;
 use App\Dominios\Notificaciones\Aplicacion\ReglasDeNotificacion;
 use App\Dominios\Notificaciones\Contratos\LecturaNotificaciones;
@@ -33,6 +40,13 @@ final class NotificacionesServiceProvider extends ServiceProvider
         ReglaDocumentoPorVencer::class,
         ReglaDocumentoVencido::class,
         ReglaProveedorRegistrado::class,
+        ReglaOfertaCreada::class,
+        ReglaOfertaVencida::class,
+        ReglaOfertaRetirada::class,
+        ReglaSolicitudAsignada::class,
+        ReglaSolicitudReasignada::class,
+        ReglaSolicitudSinProveedor::class,
+        ReglaProveedorSancionado::class,
     ];
 
     public function register(): void

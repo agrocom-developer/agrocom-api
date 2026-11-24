@@ -1,5 +1,12 @@
 <?php
 
+use App\Dominios\Asignacion\Contratos\Eventos\OfertaCreada;
+use App\Dominios\Asignacion\Contratos\Eventos\OfertaRetirada;
+use App\Dominios\Asignacion\Contratos\Eventos\OfertaVencida;
+use App\Dominios\Asignacion\Contratos\Eventos\ProveedorSancionado;
+use App\Dominios\Asignacion\Contratos\Eventos\SolicitudAsignada;
+use App\Dominios\Asignacion\Contratos\Eventos\SolicitudReasignada;
+use App\Dominios\Asignacion\Contratos\Eventos\SolicitudSinProveedor;
 use App\Dominios\Compartido\Contratos\Eventos\EstadoDeAprobacionCambiado;
 use App\Dominios\Compartido\Dominio\Excepciones\BorradoFisicoNoPermitido;
 use App\Dominios\Compartido\Infraestructura\Eloquent\Bitacora;
@@ -487,6 +494,14 @@ test('el listener está registrado para cada evento que tiene regla, y para ning
         DocumentoPorVencer::class,
         DocumentoVencido::class,
         ProveedorRegistrado::class,
+        // Asignación (ADR 0030 y 0038).
+        OfertaCreada::class,
+        OfertaVencida::class,
+        OfertaRetirada::class,
+        SolicitudAsignada::class,
+        SolicitudReasignada::class,
+        SolicitudSinProveedor::class,
+        ProveedorSancionado::class,
     ];
 
     foreach ($eventos as $evento) {

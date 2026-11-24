@@ -251,6 +251,14 @@ test('cada tipo de aviso tiene su texto en lang/es/notificaciones.php y usa solo
         'documento_por_vencer' => ['documento', 'sujeto', 'fecha', 'dias'],
         'documento_vencido' => ['documento', 'sujeto', 'fecha'],
         'proveedor_registrado' => ['tipo', 'nombre'],
+        // Asignación (ADR 0030 y 0038).
+        'oferta_creada' => ['solicitud', 'hectareas', 'hora'],
+        'oferta_vencida' => ['solicitud'],
+        'oferta_retirada' => ['solicitud', 'motivo'],
+        'solicitud_asignada' => ['solicitud', 'proveedor'],
+        'solicitud_reasignada' => ['solicitud'],
+        'solicitud_sin_proveedor' => ['solicitud'],
+        'proveedor_sancionado' => ['proveedor', 'sancion', 'causa'],
     ];
 
     foreach (TipoNotificacion::cases() as $tipo) {

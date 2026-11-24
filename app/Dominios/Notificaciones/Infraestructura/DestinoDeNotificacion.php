@@ -34,6 +34,7 @@ final class DestinoDeNotificacion
             RecursoNotificable::Dron => ['panel.drones-flota.show', 'flota.dron.ver', true],
             // La cola de documentos no tiene ficha por documento: lleva a la cola.
             RecursoNotificable::Documento => ['panel.documentos.index', 'proveedores.documento.ver', false],
+            RecursoNotificable::Solicitud => ['panel.asignaciones.show', 'asignacion.asignacion.ver', true],
         };
 
         if ($this->autorizacion->tienePermiso($request, $permiso)) {
