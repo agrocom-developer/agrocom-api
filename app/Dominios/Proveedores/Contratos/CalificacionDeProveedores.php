@@ -6,7 +6,7 @@ namespace App\Dominios\Proveedores\Contratos;
  * Escritura de la calificación promedio de un proveedor (especificación §4.3).
  * La calcula el módulo de calificaciones a partir de sus registros; `Proveedores`
  * solo la guarda en su ficha, porque cada módulo escribe únicamente sus tablas
- * (ADR 0003). La política de sanciones de la asignación la lee de la ficha.
+ * (ADR 0003). El mapa y las ofertas leen la calificación de la ficha.
  */
 interface CalificacionDeProveedores
 {

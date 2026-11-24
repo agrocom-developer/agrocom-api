@@ -6,9 +6,8 @@ use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 
 /**
  * Hecho de dominio: la calificación promedio de un proveedor cambió (llegó una
- * calificación o un administrador moderó una). La asignación lo escucha para
- * aplicar la política de sanciones al instante y no esperar a la evaluación diaria.
- * DTO de primitivos.
+ * calificación o un administrador moderó una). Otros módulos pueden escucharlo
+ * para refrescar lo que muestran de la reputación. DTO de primitivos.
  */
 final readonly class ReputacionDeProveedorActualizada implements ShouldDispatchAfterCommit
 {
