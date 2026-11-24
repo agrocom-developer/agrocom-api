@@ -4,7 +4,7 @@
 
 Agrocom es un marketplace de servicios de fumigación con drones. Un cliente solicita un servicio sobre su terreno; un proveedor (piloto con su dron y, si hace falta, su auxiliar) lo ejecuta; el cliente califica y el proveedor ve su reputación. Los drones cumplen el papel del vehículo. Agrocom capta a los clientes, es el nexo entre las partes y además es proveedor con su propia flota y sus propios pilotos. La empresa también vende drones y entrega a cada comprador trabajo asegurado a través de la plataforma.
 
-Este documento define el producto. Las decisiones que lo sostienen están en `docs/decisiones/` (ADR 0027 a 0034) y las reglas de operación en `docs/politicas/`. Cuando un valor numérico figura aquí como «parámetro», vive en la configuración del sistema (ADR 0016) y un administrador puede ajustarlo sin desplegar.
+Este documento define el producto. Las decisiones que lo sostienen están en `docs/decisiones/` (ADR 0027 a 0038) y las reglas de operación en `docs/politicas/`. Cuando un valor numérico figura aquí como «parámetro», vive en la configuración del sistema (ADR 0016) y un administrador puede ajustarlo sin desplegar.
 
 ## 1. Principios
 
