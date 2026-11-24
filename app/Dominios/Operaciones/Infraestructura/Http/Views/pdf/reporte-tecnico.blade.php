@@ -11,24 +11,21 @@
     PDF descargado no reacciona a `[data-bs-theme]` — la invariante 11 de
     CLAUDE.md no tiene nada que proteger acá).
 --}}
+@use('App\Dominios\Operaciones\Infraestructura\Pdf\PaletaPdf')
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8">
     <title>{{ __('operaciones.pdf.reporte_tecnico.titulo_documento', ['id' => $trabajo->id]) }}</title>
     <style>
-        body { font-family: Helvetica, Arial, sans-serif; font-size: 12px; color: black; }
-        h1 { font-size: 18px; margin-bottom: 4px; }
-        h2 { font-size: 14px; margin-top: 20px; margin-bottom: 4px; border-bottom: 1px solid gray; }
-        p.subtitulo { color: dimgray; margin-top: 0; }
-        p.nota { color: dimgray; font-style: italic; }
-        table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-        th, td { border: 1px solid gray; padding: 6px 8px; text-align: left; }
-        th { background-color: whitesmoke; width: 40%; }
+@include('operaciones::pdf.estilos-base')
+        h2 { font-size: 14px; margin-top: 20px; margin-bottom: 4px; border-bottom: 1px solid {{ PaletaPdf::BORDE }}; }
+        p.nota { color: {{ PaletaPdf::TEXTO_SUAVE }}; font-style: italic; }
+        table { margin-top: 8px; }
         img.campo { max-width: 100%; margin-top: 8px; }
         .captura { width: 48%; display: inline-block; vertical-align: top; margin: 8px 1% 0 0; }
-        .captura img { width: 100%; border: 1px solid gray; }
-        .captura span { display: block; color: dimgray; font-size: 11px; margin-top: 2px; }
+        .captura img { width: 100%; border: 1px solid {{ PaletaPdf::BORDE }}; }
+        .captura span { display: block; color: {{ PaletaPdf::TEXTO_SUAVE }}; font-size: 11px; margin-top: 2px; }
     </style>
 </head>
 <body>
