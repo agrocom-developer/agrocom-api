@@ -27,7 +27,7 @@ final class ListarRolesConPermisos
 {
     /**
      * @return Collection<int, array{
-     *     rol: SecRole, pantallas: int<0, max>, acciones: int, usuarios: int
+     *     rol: SecRole, pantallas: int, acciones: int, usuarios: int
      * }>
      */
     public function ejecutar(): Collection

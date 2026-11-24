@@ -46,7 +46,7 @@ final class ListarBaterias
             ->paginate($porPagina)
             ->withQueryString();
 
-        $paginador->getCollection()->each(function (Bateria $bateria): void {
+        $paginador->through(function (Bateria $bateria): Bateria {
             $porCiclos = $bateria->ciclos_acumulados >= Bateria::UMBRAL_CICLOS_ALERTA;
             $porTemperatura = $this->lecturaAlertasTemperatura->tuvoAlertaDeTemperatura($bateria->identificador);
 
@@ -57,6 +57,8 @@ final class ListarBaterias
                 $porTemperatura => 'temperatura',
                 default => null,
             };
+
+            return $bateria;
         });
 
         return $paginador;
