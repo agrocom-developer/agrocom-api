@@ -12,7 +12,7 @@
 // haya que sortear.
 //
 // Se importa dinámicamente desde app.js solo si `[data-ag-datetime]` existe
-// en el DOM (mismo criterio que dashboard-charts.js/dashboard-map.js), así
+// en el DOM (carga diferida por presencia en el DOM), así
 // que para cuando este módulo corre el DOM ya está listo.
 
 import flatpickr from 'flatpickr';

@@ -292,11 +292,12 @@ Son pantallas del panel (ADR 0008), no endpoints de la API de las apps. El menú
 | Módulo | Pantalla | Qué hace |
 |---|---|---|
 | Mercado | `panel/dashboard` | Tablero: solicitudes por estado y por región (macrorregión de la zona del terreno), hectáreas abiertas a ofertas y la cola de lo que espera una decisión |
-| Mercado | `panel/solicitudes` | Lista con filtro por estado; la ficha muestra cada negociación por proveedor con sus rondas, el chat, el avance, las fotos y la última ubicación del piloto. Cancela con motivo (`solicitudes.solicitud.cancelar`) o cierra la negociación de un proveedor con motivo (`solicitudes.solicitud.intervenir`) mientras la solicitud sigue abierta a ofertas |
+| Mercado | `panel/solicitudes` | Lista con filtros por estado, región y zona; la ficha muestra cada negociación por proveedor con sus rondas y, con `solicitudes.solicitud.ver_seguimiento`, el chat, el avance, las fotos y la última ubicación del piloto (datos de las partes). Cancela con motivo (`solicitudes.solicitud.cancelar`) o cierra la negociación de un proveedor con motivo (`solicitudes.solicitud.intervenir`) mientras la solicitud sigue abierta a ofertas |
 | Mercado | `panel/clientes` | Ficha del cliente con su reputación y sus solicitudes; suspende y reactiva con motivo (`solicitudes.cliente.suspender`) |
 | Mercado | `panel/calificaciones` | Oculta o deja visible una calificación con causa y motivo |
 | Mercado | `panel/disputas` | Toma, media y resuelve |
 | Mercado | `panel/metricas` | Adjudicación, ofertas por solicitud, rondas por negociación, tiempos, calidad y volumen |
+| Mercado | `panel/avisos` | Lo que el sistema avisó a cada cuenta y si lo leyó; solo lectura (`notificaciones.aviso.ver`) |
 | Proveedores | `panel/proveedores`, `panel/pilotos`, `panel/auxiliares` | Aprobar, rechazar, suspender y dar de baja, con motivo |
 | Proveedores | `panel/documentos` | Revisión de documentos y descarga restringida |
 | Proveedores | `panel/drones-flota` | Aprobación del dron y revisión de sus fotos (`flota.dron.revisar_foto`); no se aprueba sin las fotos de `flota.fotos_obligatorias` aprobadas |

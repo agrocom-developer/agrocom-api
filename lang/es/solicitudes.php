@@ -100,6 +100,8 @@ return [
         'vacio_detalle' => 'Las solicitudes las crean los clientes desde la app. Cuando llegue la primera, aparece acá.',
         'filtro_estado' => 'Estado',
         'filtro_todos' => 'Todos',
+        'filtro_region' => 'Región',
+        'filtro_zona' => 'Zona',
         'filtro_vacio_titulo' => 'Sin resultados para este filtro',
         'filtro_vacio_detalle' => 'Cambia el estado o la búsqueda para ver más solicitudes.',
         'buscar_placeholder' => 'Buscar por número, producto o cultivo',

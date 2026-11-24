@@ -5,8 +5,7 @@ namespace App\Dominios\Notificaciones\Contratos;
 /**
  * Un aviso tal como lo pinta la campana del panel: ya con su texto traducido
  * y el ícono resuelto, sin ningún modelo Eloquent (ADR 0003, regla 2).
- * `creadaEn` va en ISO 8601 para que la cáscara pueda ordenarlo junto con las
- * alertas técnicas de `Operaciones`, que es la otra fuente de la campana.
+ * `creadaEn` va en ISO 8601 para que la cáscara pueda ordenar la lista.
  */
 final readonly class NotificacionPanel
 {

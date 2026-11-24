@@ -7,6 +7,7 @@ use App\Dominios\Flota\Infraestructura\Http\Controllers\Web\DronesController as 
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Web\EquiposController as EquiposFlotaController;
 use App\Dominios\Metricas\Infraestructura\Http\Controllers\Web\MetricasController;
 use App\Dominios\Negociacion\Infraestructura\Http\Controllers\Web\IntervencionController;
+use App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Web\AvisosController;
 use App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Web\NotificacionesController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web\AprobacionController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web\AuxiliaresController as AuxiliaresPanelController;
@@ -344,6 +345,11 @@ Route::middleware('auth:interno')->group(function () {
         Route::post('/panel/clientes/{cliente}/reactivar', [ClientesController::class, 'reactivar'])
             ->whereNumber('cliente')
             ->name('panel.clientes.reactivar');
+
+        // Avisos que el sistema envió a clientes, proveedores y administradores
+        // (`notificaciones.aviso.ver`). Solo lectura.
+        Route::get('/panel/avisos', [AvisosController::class, 'index'])
+            ->name('panel.avisos.index');
 
         Route::get('/panel/zonas', [ZonasController::class, 'index'])
             ->name('panel.zonas.index');

@@ -15,7 +15,6 @@ use App\Dominios\Notificaciones\Aplicacion\EntregarNotificacion;
 use App\Dominios\Notificaciones\Aplicacion\MarcarTodasLeidas;
 use App\Dominios\Notificaciones\Aplicacion\ReglasDeNotificacion;
 use App\Dominios\Notificaciones\Aplicacion\ResolverDestinatarios;
-use App\Dominios\Notificaciones\Contratos\AlertasDeCuenta;
 use App\Dominios\Notificaciones\Contratos\LecturaNotificaciones;
 use App\Dominios\Notificaciones\Dominio\Destinatario;
 use App\Dominios\Notificaciones\Dominio\NotificacionArmada;
@@ -581,11 +580,6 @@ test('si falla la lectura de avisos, la cáscara del panel los reporta y sigue c
         {
             throw new RuntimeException('no existe la tabla ntf_notificaciones');
         }
-
-        public function alertasDeCuenta(int $usuarioId): AlertasDeCuenta
-        {
-            return new AlertasDeCuenta;
-        }
     });
 
     $cuenta = ntfCuenta([ntfRol('encargado_operaciones')]);
@@ -788,7 +782,12 @@ test('todo acceso al modelo Notificacion sale acotado por cuenta con deUsuario()
     foreach (ntfArchivosDeApp() as $ruta) {
         $codigo = (string) file_get_contents($raiz.'/'.$ruta);
 
-        if ($ruta === 'app/Dominios/Notificaciones/Infraestructura/Eloquent/Notificacion.php') {
+        // El modelo, y la pantalla de avisos del panel (`notificaciones.aviso.ver`): ve los de
+        // todas las cuentas a propósito, como auditoría del sistema, y solo con ese permiso.
+        if (in_array($ruta, [
+            'app/Dominios/Notificaciones/Infraestructura/Eloquent/Notificacion.php',
+            'app/Dominios/Notificaciones/Infraestructura/Http/Controllers/Web/AvisosController.php',
+        ], true)) {
             continue;
         }
 

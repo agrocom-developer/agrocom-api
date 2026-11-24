@@ -107,6 +107,8 @@ class SeguridadSeeder extends Seeder
         'solicitudes.cliente.suspender' => 'Suspender a un cliente o reactivarlo, con motivo',
         'solicitudes.zona.ver' => 'Ver el catálogo de zonas de Santa Cruz',
         'solicitudes.zona.gestionar' => 'Crear, editar y dar de baja zonas',
+        'solicitudes.solicitud.ver_seguimiento' => 'Ver el chat, las fotos de avance y la ubicación del piloto de una solicitud',
+        'notificaciones.aviso.ver' => 'Ver los avisos que el sistema envía a clientes, proveedores y administradores',
         'solicitudes.solicitud.intervenir' => 'Cerrar la negociación de un proveedor sobre una solicitud, con motivo',
         // Negociación oferta-demanda (`negociacion-contrato.md`), lado app. El alcance lo hacen los casos de uso (un id ajeno es 404).
         'negociacion.mercado.ver' => 'Ver el mapa de solicitudes abiertas y su detalle antes de ofertar desde la app',
@@ -251,6 +253,7 @@ class SeguridadSeeder extends Seeder
         'flota.equipo.ver',
         'solicitudes.solicitud.ver',
         'solicitudes.solicitud.cancelar',
+        'solicitudes.solicitud.ver_seguimiento',
         'solicitudes.solicitud.intervenir',
         'solicitudes.cliente.ver',
         'solicitudes.cliente.suspender',
@@ -262,6 +265,7 @@ class SeguridadSeeder extends Seeder
         'disputas.disputa.atender',
         'disputas.disputa.resolver',
         'metricas.panel.ver',
+        'notificaciones.aviso.ver',
     ];
 
     /**
@@ -279,6 +283,7 @@ class SeguridadSeeder extends Seeder
         'flota.equipo.ver',
         'solicitudes.solicitud.ver',
         'solicitudes.solicitud.cancelar',
+        'solicitudes.solicitud.ver_seguimiento',
         'solicitudes.solicitud.intervenir',
         'solicitudes.cliente.ver',
         'solicitudes.zona.ver',
