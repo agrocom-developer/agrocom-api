@@ -53,6 +53,8 @@ class DemoSeeder extends Seeder
         $this->call(PersonalDemoSeeder::class);
         $this->call(FlotaDemoSeeder::class);
         $this->call(CuadrillasDemoSeeder::class);
+        // Marketplace: usa los drones de `ope_drones` que siembra FlotaDemoSeeder.
+        $this->call(ProveedoresDemoSeeder::class);
         $this->call(CarteraDemoSeeder::class);
         $this->call(OperacionDemoSeeder::class);
     }
