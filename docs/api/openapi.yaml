@@ -331,6 +331,730 @@ paths:
       security:
         -
           tokenDispositivo: []
+  '/api/solicitudes/{id}/calificaciones':
+    get:
+      tags:
+        - Calificaciones
+      summary: 'Estado de la calificación de un servicio'
+      description: 'A quiénes puedes calificar en un servicio tuyo (el proveedor, el piloto y, si el equipo lo llevaba, el auxiliar), a quiénes ya calificaste y hasta cuándo. Solo un servicio `completada` se califica, durante 7 días desde que se completó.'
+      operationId: verCalificacionesDelServicio
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'Estado de la calificación.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalificacionesDelServicio'
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no es de cliente.'
+        404:
+          description: 'No existe o es de otro cliente.'
+      security:
+        -
+          tokenDispositivo: []
+    post:
+      tags:
+        - Calificaciones
+      summary: 'Calificar un servicio completado'
+      description: 'Califica al proveedor, al piloto y al auxiliar de un servicio completado: de 1 a 5 estrellas, etiquetas de un catálogo cerrado y un comentario opcional. Cada calificación lleva su `uuid_cliente` (idempotente: reintentar el mismo devuelve la calificación ya guardada) y se guarda una sola vez por sujeto: no se edita. Las de una misma llamada se guardan juntas o ninguna. Responde 201 si se creó alguna y 200 si todas eran reintentos.'
+      operationId: calificarServicio
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - calificaciones
+              properties:
+                calificaciones:
+                  type: array
+                  items:
+                    required:
+                      - uuid_cliente
+                      - sujeto_tipo
+                      - estrellas
+                    properties:
+                      uuid_cliente:
+                        type: string
+                        format: uuid
+                      sujeto_tipo:
+                        type: string
+                        enum:
+                          - proveedor
+                          - piloto
+                          - auxiliar
+                      estrellas:
+                        type: integer
+                        example: 5
+                        maximum: 5
+                        minimum: 1
+                      etiquetas:
+                        type: array
+                        items:
+                          type: string
+                          enum:
+                            - puntualidad
+                            - cobertura_pareja
+                            - comunicacion
+                            - cuidado_entorno
+                            - orden_lote
+                        nullable: true
+                      comentario:
+                        type: string
+                        nullable: true
+                    type: object
+                  maxItems: 3
+                  minItems: 1
+              type: object
+      responses:
+        201:
+          description: 'Calificaciones guardadas.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - calificaciones
+                properties:
+                  calificaciones:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Calificacion'
+                type: object
+        200:
+          description: 'Reintento: todas las calificaciones ya estaban guardadas.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - calificaciones
+                properties:
+                  calificaciones:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Calificacion'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no es de cliente.'
+        404:
+          description: 'No existe o es de otro cliente.'
+        409:
+          description: 'Ya calificaste a ese sujeto en este servicio.'
+        422:
+          description: 'El servicio no está completado, el plazo venció, el sujeto o las etiquetas no corresponden, o los datos son inválidos.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/solicitudes/{id}/calificar-cliente':
+    get:
+      tags:
+        - Calificaciones
+      summary: 'Estado de la calificación del cliente'
+      description: 'Si puedes calificar al cliente de un servicio que prestó tu proveedor, hasta cuándo y la calificación que ya diste. Es privada: el cliente nunca la ve. Solo un servicio `completada` se califica, durante 7 días desde que se completó.'
+      operationId: verCalificacionDelCliente
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'Estado de la calificación.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalificacionesDelServicio'
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no califica clientes.'
+        404:
+          description: 'No existe o no lo prestó tu proveedor.'
+      security:
+        -
+          tokenDispositivo: []
+    post:
+      tags:
+        - Calificaciones
+      summary: 'Calificar al cliente'
+      description: 'Califica en privado al cliente de un servicio completado que prestó tu proveedor: de 1 a 5 estrellas, etiquetas (puntualidad, comunicacion, acceso_lote, claridad_pedido) y un comentario opcional. No se publica: sirve a moderación y a soporte y alimenta la reputación del cliente. Idempotente por `uuid_cliente`; se guarda una sola vez por servicio y no se edita.'
+      operationId: calificarCliente
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - uuid_cliente
+                - estrellas
+              properties:
+                uuid_cliente:
+                  type: string
+                  format: uuid
+                estrellas:
+                  type: integer
+                  example: 4
+                  maximum: 5
+                  minimum: 1
+                etiquetas:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - puntualidad
+                      - comunicacion
+                      - acceso_lote
+                      - claridad_pedido
+                  nullable: true
+                comentario:
+                  type: string
+                  nullable: true
+              type: object
+      responses:
+        201:
+          description: 'Calificación guardada.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - calificacion
+                properties:
+                  calificacion:
+                    $ref: '#/components/schemas/Calificacion'
+                type: object
+        200:
+          description: 'Reintento: la calificación ya estaba guardada.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - calificacion
+                properties:
+                  calificacion:
+                    $ref: '#/components/schemas/Calificacion'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no califica clientes.'
+        404:
+          description: 'No existe o no lo prestó tu proveedor.'
+        409:
+          description: 'Ya calificaste al cliente en este servicio.'
+        422:
+          description: 'El servicio no está completado, el plazo venció, las etiquetas no corresponden o los datos son inválidos.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  /api/calificaciones/recibidas:
+    get:
+      tags:
+        - Calificaciones
+      summary: 'Calificaciones que recibo'
+      description: 'Las calificaciones que recibe tu proveedor (él, su piloto y su auxiliar), de la más nueva a la más vieja, sin las que un administrador ocultó. Incluye el resumen que muestra la app: promedio y conteo (los de tu reputación), distribución por estrellas y etiquetas más frecuentes de las últimas 100.'
+      operationId: listarCalificacionesRecibidas
+      parameters:
+        -
+          name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        200:
+          description: 'Página de calificaciones.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - calificaciones
+                  - pagina
+                  - paginas
+                  - total
+                  - resumen
+                properties:
+                  calificaciones:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Calificacion'
+                  pagina:
+                    type: integer
+                    example: 1
+                  paginas:
+                    type: integer
+                    example: 3
+                  total:
+                    type: integer
+                    example: 41
+                  resumen:
+                    required:
+                      - calificacion_promedio
+                      - calificaciones_conteo
+                      - por_estrellas
+                      - etiquetas
+                    properties:
+                      calificacion_promedio:
+                        type: string
+                        example: '4.60'
+                      calificaciones_conteo:
+                        type: integer
+                        example: 24
+                      por_estrellas:
+                        description: 'Cuántas calificaciones al proveedor tienen cada cantidad de estrellas (claves "1" a "5").'
+                        type: object
+                        additionalProperties:
+                          type: integer
+                      etiquetas:
+                        description: 'Cuántas veces aparece cada etiqueta, de la más frecuente a la menos.'
+                        type: object
+                        additionalProperties:
+                          type: integer
+                    type: object
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no ve calificaciones.'
+        404:
+          description: 'La cuenta no pertenece a ningún proveedor.'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/calificaciones/{id}/reportar':
+    post:
+      tags:
+        - Calificaciones
+      summary: 'Reportar una calificación'
+      description: 'Reporta con motivo una calificación que recibiste y consideras abusiva (insultos, datos personales, factores ajenos como el clima, represalia tras una disputa). Queda `en_moderacion` y un administrador decide; reportar no la oculta ni la saca del promedio. Reportar dos veces la misma devuelve la misma calificación.'
+      operationId: reportarCalificacion
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - motivo
+              properties:
+                motivo:
+                  type: string
+                  example: 'El comentario incluye insultos'
+              type: object
+      responses:
+        200:
+          description: 'Calificación en moderación.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - calificacion
+                properties:
+                  calificacion:
+                    $ref: '#/components/schemas/Calificacion'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no reporta calificaciones.'
+        404:
+          description: 'No existe o no es de tu proveedor.'
+        422:
+          description: 'Falta el motivo o la calificación ya está oculta.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/solicitudes/{id}/disputas':
+    post:
+      tags:
+        - Disputas
+      summary: 'Abrir una disputa'
+      description: 'Abre la disputa de un servicio (una por solicitud). El cliente puede hacerlo desde `ejecutada` hasta 72 horas después, por: `cobertura_incompleta`, `mala_aplicacion`, `dano_a_cultivos_o_terceros`, `producto_distinto`, `equipo_ausente`, `evidencia_faltante`, `cobro_indebido` o `trato_inadecuado`; la solicitud pasa a `en_disputa`. El proveedor puede abrirla por `cobro_pendiente`, `acceso_negado` o `calificacion_abusiva`. `monto_en_disputa` es opcional (por defecto, todo el monto del servicio) y no puede pasar de él. La contraparte tiene 48 horas para responder (`responde_antes_de`).'
+      operationId: abrirDisputa
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - motivo
+                - detalle
+              properties:
+                motivo:
+                  type: string
+                  example: cobertura_incompleta
+                detalle:
+                  type: string
+                  example: 'Quedaron franjas sin cubrir en el lado norte'
+                monto_en_disputa:
+                  type: string
+                  example: '3000.00'
+                  nullable: true
+              type: object
+      responses:
+        201:
+          description: 'Disputa abierta.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - disputa
+                properties:
+                  disputa:
+                    $ref: '#/components/schemas/Disputa'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no abre disputas.'
+        404:
+          description: 'El servicio no existe o no es tuyo.'
+        409:
+          description: 'El servicio ya tiene una disputa.'
+        422:
+          description: 'El motivo no corresponde a tu lado, el servicio no está en un estado disputable, el plazo venció o el monto es inválido.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/solicitudes/{id}/disputa':
+    get:
+      tags:
+        - Disputas
+      summary: 'La disputa de una solicitud'
+      description: 'La disputa de un servicio tuyo, con su conversación y sus resoluciones. Responde 404 si la solicitud no tiene disputa o no es tuya.'
+      operationId: verDisputaDeLaSolicitud
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'La disputa.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - disputa
+                properties:
+                  disputa:
+                    $ref: '#/components/schemas/Disputa'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no ve disputas.'
+        404:
+          description: 'No hay disputa en esa solicitud o no es tuya.'
+      security:
+        -
+          tokenDispositivo: []
+  /api/disputas:
+    get:
+      tags:
+        - Disputas
+      summary: 'Mis disputas'
+      description: 'Tus disputas (las de tu cuenta o las de tu proveedor), de la más nueva a la más vieja. `estado` filtra por un estado exacto.'
+      operationId: listarDisputas
+      parameters:
+        -
+          name: estado
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - abierta
+              - en_revision
+              - resuelta
+              - retirada
+        -
+          name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        200:
+          description: 'Página de disputas.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - disputas
+                  - pagina
+                  - paginas
+                  - total
+                properties:
+                  disputas:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Disputa'
+                  pagina:
+                    type: integer
+                    example: 1
+                  paginas:
+                    type: integer
+                    example: 1
+                  total:
+                    type: integer
+                    example: 2
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no ve disputas.'
+        404:
+          description: 'La cuenta no pertenece a ningún proveedor.'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/disputas/{id}':
+    get:
+      tags:
+        - Disputas
+      summary: 'Detalle de una disputa'
+      description: 'Una disputa tuya con su conversación y sus resoluciones. Una de otra cuenta responde 404.'
+      operationId: verDisputa
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'La disputa.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - disputa
+                properties:
+                  disputa:
+                    $ref: '#/components/schemas/Disputa'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no ve disputas.'
+        404:
+          description: 'No existe o no es tuya.'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/disputas/{id}/mensajes':
+    post:
+      tags:
+        - Disputas
+      summary: 'Escribir en una disputa'
+      description: 'Agrega un mensaje a la conversación de una disputa viva (`abierta` o `en_revision`): tu respuesta a la contraparte o a soporte. Una disputa resuelta se reabre apelando, no escribiendo.'
+      operationId: enviarMensajeDeDisputa
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - texto
+              properties:
+                texto:
+                  type: string
+                  example: 'Adjunto la hora del vuelo: terminó a las 15:40'
+              type: object
+      responses:
+        201:
+          description: 'Mensaje guardado; devuelve la disputa con su conversación.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - disputa
+                properties:
+                  disputa:
+                    $ref: '#/components/schemas/Disputa'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no escribe en disputas.'
+        404:
+          description: 'No existe o no es tuya.'
+        409:
+          description: 'La disputa ya no admite mensajes.'
+        422:
+          description: 'Falta el texto.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/disputas/{id}/retirar':
+    post:
+      tags:
+        - Disputas
+      summary: 'Retirar una disputa'
+      description: 'Quien abrió la disputa la retira mientras está viva. Si había movido la solicitud a `en_disputa`, la solicitud se completa como si el reclamo no se hubiera hecho. Retirar dos veces devuelve la misma disputa.'
+      operationId: retirarDisputa
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'Disputa retirada.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - disputa
+                properties:
+                  disputa:
+                    $ref: '#/components/schemas/Disputa'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no gestiona disputas.'
+        404:
+          description: 'No existe o no es tuya.'
+        409:
+          description: 'La disputa ya está resuelta y no se retira.'
+        422:
+          description: 'Solo quien abrió la disputa puede retirarla.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/disputas/{id}/apelar':
+    post:
+      tags:
+        - Disputas
+      summary: 'Apelar una resolución'
+      description: 'Apela la resolución con pruebas nuevas: una sola vez y dentro de 7 días desde la resolución (`apelable_hasta`). La disputa vuelve a revisión en su segunda ronda y un administrador la resuelve de nuevo; la primera resolución rige hasta entonces.'
+      operationId: apelarDisputa
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - pruebas
+              properties:
+                pruebas:
+                  type: string
+                  example: 'El registro del dron muestra la franja norte sin cubrir'
+              type: object
+      responses:
+        200:
+          description: 'Apelación registrada.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - disputa
+                properties:
+                  disputa:
+                    $ref: '#/components/schemas/Disputa'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no gestiona disputas.'
+        404:
+          description: 'No existe o no es tuya.'
+        409:
+          description: 'La disputa no está resuelta o ya se apeló.'
+        422:
+          description: 'Faltan las pruebas o el plazo de 7 días venció.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
   /api/version:
     get:
       tags:
@@ -2483,6 +3207,47 @@ paths:
       security:
         -
           tokenDispositivo: []
+  '/api/solicitudes/{id}/conformidad':
+    post:
+      tags:
+        - Solicitudes
+      summary: 'Dar la conformidad a un servicio'
+      description: 'El cliente da su conformidad a un servicio `ejecutada`: la solicitud pasa a `completada`, se congelan el monto final y la comisión que Agrocom devenga (se calcula, no se cobra en la app) y se abre la calificación durante 7 días. Si no hay observación, la conformidad es tácita al vencer el plazo (72 horas por defecto). Darla dos veces devuelve la misma solicitud. Para observar el servicio se abre una disputa (`POST /api/solicitudes/{id}/disputas`).'
+      operationId: conformarSolicitud
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'Solicitud completada.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - solicitud
+                properties:
+                  solicitud:
+                    $ref: '#/components/schemas/SolicitudServicio'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no es de cliente.'
+        404:
+          description: 'No existe o es de otro cliente.'
+        422:
+          description: 'La solicitud todavía no está ejecutada o terminó de otra forma.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
   /api/terrenos:
     get:
       tags:
@@ -2806,6 +3571,114 @@ components:
           type: object
           nullable: true
       type: object
+    CalificacionesDelServicio:
+      title: 'Estado de la calificación de un servicio'
+      description: 'A quiénes se puede calificar en el servicio, a quiénes ya se calificó y hasta cuándo.'
+      required:
+        - puede_calificar
+        - plazo_dias
+        - sujetos
+        - etiquetas
+      properties:
+        puede_calificar:
+          description: 'Verdadero si el servicio está completado, el plazo sigue abierto y falta calificar a alguien.'
+          type: boolean
+        vence_en:
+          description: 'Cuándo vence el plazo; nulo si el servicio todavía no se completó.'
+          type: string
+          format: date-time
+          nullable: true
+        plazo_dias:
+          type: integer
+          example: 7
+        sujetos:
+          type: array
+          items:
+            required:
+              - tipo
+              - id
+              - nombre
+            properties:
+              tipo:
+                type: string
+                enum:
+                  - proveedor
+                  - piloto
+                  - auxiliar
+                  - cliente
+              id:
+                type: integer
+              nombre:
+                type: string
+              calificacion:
+                oneOf:
+                  -
+                    $ref: '#/components/schemas/Calificacion'
+                nullable: true
+            type: object
+        etiquetas:
+          description: 'Catálogo cerrado de etiquetas que puedes usar.'
+          type: array
+          items:
+            type: string
+      type: object
+    Calificacion:
+      title: Calificación
+      description: 'Una calificación de un servicio completado (especificación §4.7, ADR 0031). Se escribe una vez y nunca se edita: moderar cambia el `estado`, no el contenido. El proveedor no ve las `oculta`; la que el proveedor escribe sobre el cliente es privada.'
+      required:
+        - id
+        - uuid_cliente
+        - solicitud_id
+        - sujeto_tipo
+        - sujeto_id
+        - estrellas
+        - etiquetas
+        - estado
+        - creada_en
+      properties:
+        id:
+          type: integer
+          example: 17
+        uuid_cliente:
+          description: 'Nace en el dispositivo; hace idempotente el reintento.'
+          type: string
+          format: uuid
+        solicitud_id:
+          type: integer
+          example: 31
+        sujeto_tipo:
+          type: string
+          enum:
+            - proveedor
+            - piloto
+            - auxiliar
+            - cliente
+        sujeto_id:
+          type: integer
+          example: 4
+        estrellas:
+          type: integer
+          example: 5
+          maximum: 5
+          minimum: 1
+        etiquetas:
+          description: 'Del catálogo cerrado: puntualidad, cobertura_pareja, comunicacion, cuidado_entorno, orden_lote, acceso_lote, claridad_pedido.'
+          type: array
+          items:
+            type: string
+        comentario:
+          type: string
+          nullable: true
+        estado:
+          type: string
+          enum:
+            - visible
+            - en_moderacion
+            - oculta
+        creada_en:
+          type: string
+          format: date-time
+      type: object
     PaginacionLinks:
       title: 'Links de paginación'
       description: 'Links de navegación de la respuesta paginada estándar de Laravel.'
@@ -2922,6 +3795,140 @@ components:
             type: array
             items:
               type: string
+      type: object
+    Disputa:
+      title: Disputa
+      description: 'La disputa de un servicio (especificación §4.8, ADR 0033): una por solicitud. La abre el cliente (hasta 72 horas después de `ejecutada`) o el proveedor (cobro pendiente, acceso negado o calificación abusiva). Los importes son decimales exactos en string. `mensajes` y `resoluciones` solo viajan en el detalle. Los reembolsos se liquidan entre las partes fuera de la app.'
+      required:
+        - id
+        - solicitud_id
+        - abierta_por
+        - motivo
+        - detalle
+        - monto_en_disputa
+        - estado
+        - ronda
+        - creada_en
+      properties:
+        id:
+          type: integer
+          example: 9
+        solicitud_id:
+          type: integer
+          example: 31
+        abierta_por:
+          type: string
+          enum:
+            - cliente
+            - proveedor
+        motivo:
+          type: string
+          enum:
+            - cobertura_incompleta
+            - mala_aplicacion
+            - dano_a_cultivos_o_terceros
+            - producto_distinto
+            - equipo_ausente
+            - evidencia_faltante
+            - cobro_indebido
+            - trato_inadecuado
+            - cobro_pendiente
+            - acceso_negado
+            - calificacion_abusiva
+        detalle:
+          type: string
+        monto_en_disputa:
+          type: string
+          example: '12000.00'
+        estado:
+          type: string
+          enum:
+            - abierta
+            - en_revision
+            - resuelta
+            - retirada
+        ronda:
+          description: '1 es la disputa original; 2, la apelación (una sola vez).'
+          type: integer
+          enum:
+            - 1
+            - 2
+        responde_antes_de:
+          description: 'Hasta cuándo responde la contraparte (48 horas por defecto).'
+          type: string
+          format: date-time
+          nullable: true
+        apelable_hasta:
+          description: 'Hasta cuándo se puede apelar la resolución (7 días); nulo si no hay resolución apelable.'
+          type: string
+          format: date-time
+          nullable: true
+        creada_en:
+          type: string
+          format: date-time
+        mensajes:
+          type: array
+          items:
+            required:
+              - id
+              - autor_rol
+              - tipo
+              - texto
+              - creado_en
+            properties:
+              id:
+                type: integer
+              autor_rol:
+                type: string
+                enum:
+                  - cliente
+                  - proveedor
+                  - soporte
+              tipo:
+                type: string
+                enum:
+                  - mensaje
+                  - informacion
+                  - apelacion
+              texto:
+                type: string
+              creado_en:
+                type: string
+                format: date-time
+            type: object
+        resoluciones:
+          description: 'La decisión del administrador es un registro nuevo; la apelación agrega una segunda y la última rige.'
+          type: array
+          items:
+            required:
+              - ronda
+              - resultado
+              - monto_reembolso
+              - motivo
+              - derivada_a_seguro
+              - resuelta_en
+            properties:
+              ronda:
+                type: integer
+              resultado:
+                type: string
+                enum:
+                  - a_favor_cliente
+                  - a_favor_proveedor
+                  - parcial
+                  - sin_lugar
+              monto_reembolso:
+                type: string
+                example: '6000.00'
+              motivo:
+                type: string
+              derivada_a_seguro:
+                description: 'El daño probado se deriva al seguro del proveedor; Agrocom facilita el expediente.'
+                type: boolean
+              resuelta_en:
+                type: string
+                format: date-time
+            type: object
       type: object
     VersionApk:
       title: 'Versión del APK'
@@ -3933,6 +4940,14 @@ components:
         calificaciones_conteo:
           type: integer
           example: 0
+        publicacion_limitada:
+          description: 'Verdadero si la publicación de solicitudes está limitada hasta una revisión por calificación baja (política de calificación).'
+          type: boolean
+          example: false
+        aviso_calificacion:
+          description: 'Verdadero si el promedio bajó del umbral y hay un aviso vigente.'
+          type: boolean
+          example: false
       type: object
     SolicitudServicio:
       title: 'Solicitud de servicio'
@@ -4009,6 +5024,7 @@ components:
           example: '10560.00'
           nullable: true
         monto_final:
+          description: 'Se congela al completar la solicitud: el estimado escalado por las hectáreas facturadas.'
           type: string
           nullable: true
         estado:
@@ -4128,6 +5144,12 @@ tags:
   -
     name: Ofertas
     description: 'El proveedor ve las ofertas que le hace el motor de asignación y las acepta o rechaza (ADR 0030). Requiere red.'
+  -
+    name: Calificaciones
+    description: 'El cliente califica al proveedor, al piloto y al auxiliar de un servicio completado, durante 7 días; el proveedor califica al cliente en privado y ve las calificaciones que recibe (ADR 0031).'
+  -
+    name: Disputas
+    description: 'El cliente (hasta 72 horas después de `ejecutada`) o el proveedor (cobro pendiente, acceso negado o calificación abusiva) abren una disputa; soporte media y un administrador resuelve; ambas partes pueden apelar una vez en 7 días (ADR 0033). Los reembolsos se liquidan fuera de la app.'
   -
     name: Distribucion
     description: 'Versionado y distribución del APK de agrocom-field (HU-20).'
