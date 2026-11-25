@@ -5,11 +5,11 @@ namespace App\Dominios\Flota\Infraestructura\Http\Controllers\Api;
 use App\Dominios\Compartido\Infraestructura\Http\RechazoDeDominio;
 use App\Dominios\Flota\Aplicacion\GestionarFotosDeDron;
 use App\Dominios\Flota\Dominio\Excepciones\OperacionDeFlotaInvalida;
+use App\Dominios\Flota\Infraestructura\Http\Requests\SubirFotoDeDronRequest;
 use App\Dominios\Seguridad\Contratos\IdentidadOperarioToken;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 use OpenApi\Attributes as OA;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
@@ -60,13 +60,10 @@ final class FotosDeDronController
             new OA\Response(response: 422, description: 'Archivo inválido o de 300 KB o más.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],
     )]
-    public function store(Request $request, int $id): JsonResponse
+    public function store(SubirFotoDeDronRequest $request, int $id): JsonResponse
     {
         $this->exigir($request);
-        $datos = $request->validate([
-            'tipo' => ['required', Rule::in(GestionarFotosDeDron::TIPOS)],
-            'archivo' => ['required', 'file', 'mimes:jpg,jpeg,png,webp', 'max:'.(int) config('seguimiento.evidencia_max_kb', 300)],
-        ]);
+        $datos = $request->validated();
 
         try {
             return response()->json(['foto' => $this->fotos->subir($this->usuarioId(), $id, $datos['tipo'], $request->file('archivo'))], 201);

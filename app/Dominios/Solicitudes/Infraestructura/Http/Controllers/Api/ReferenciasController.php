@@ -4,11 +4,8 @@ namespace App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api;
 
 use App\Dominios\Seguridad\Contratos\IdentidadOperarioToken;
 use App\Dominios\Solicitudes\Aplicacion\PrecioDeReferencia;
-use App\Dominios\Solicitudes\Dominio\TipoAplicacionServicio;
-use App\Dominios\Solicitudes\Infraestructura\Eloquent\Zona;
+use App\Dominios\Solicitudes\Infraestructura\Http\Requests\PrecioDeReferenciaRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use OpenApi\Attributes as OA;
 
 /**
@@ -58,7 +55,7 @@ final class ReferenciasController
             new OA\Response(response: 422, description: 'Tipo de aplicación, zona o macrorregión inválidos.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],
     )]
-    public function precio(Request $request): JsonResponse
+    public function precio(PrecioDeReferenciaRequest $request): JsonResponse
     {
         abort_unless(
             $this->identidad->tienePermiso($request, 'solicitudes.solicitud.gestionar')
@@ -67,11 +64,7 @@ final class ReferenciasController
             __('aprobacion.errores.sin_permiso'),
         );
 
-        $datos = $request->validate([
-            'tipo_aplicacion' => ['required', Rule::enum(TipoAplicacionServicio::class)],
-            'zona_id' => ['nullable', 'integer', Rule::exists(Zona::class, 'id')->whereNull('deleted_at')],
-            'macrorregion' => ['nullable', 'string', 'max:30', Rule::exists(Zona::class, 'macrorregion')->whereNull('deleted_at')],
-        ]);
+        $datos = $request->validated();
 
         return response()->json($this->referencia->para($datos['tipo_aplicacion'], isset($datos['zona_id']) ? (int) $datos['zona_id'] : null, $datos['macrorregion'] ?? null));
     }

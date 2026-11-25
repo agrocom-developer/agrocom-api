@@ -3,6 +3,7 @@
 namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api;
 
 use App\Dominios\Seguridad\Aplicacion\GestionarFotoDePerfil;
+use App\Dominios\Seguridad\Infraestructura\Http\Requests\ActualizarFotoDePerfilRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -36,12 +37,8 @@ final class FotoDePerfilController
             new OA\Response(response: 422, description: 'Archivo inválido o de 300 KB o más.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],
     )]
-    public function update(Request $request): JsonResponse
+    public function update(ActualizarFotoDePerfilRequest $request): JsonResponse
     {
-        $request->validate([
-            'archivo' => ['required', 'file', 'mimes:jpg,jpeg,png,webp', 'max:'.(int) config('seguimiento.evidencia_max_kb', 300)],
-        ]);
-
         return response()->json(['foto_url' => $this->fotos->subir($this->usuarioId(), $request->file('archivo'))]);
     }
 

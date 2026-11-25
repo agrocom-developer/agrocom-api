@@ -8,6 +8,7 @@ use App\Dominios\Solicitudes\Aplicacion\GestionarFotosDeTerreno;
 use App\Dominios\Solicitudes\Aplicacion\GestionarTerrenos;
 use App\Dominios\Solicitudes\Dominio\Excepciones\SolicitudInvalida;
 use App\Dominios\Solicitudes\Infraestructura\Http\Requests\CrearTerrenoRequest;
+use App\Dominios\Solicitudes\Infraestructura\Http\Requests\SubirFotoDeTerrenoRequest;
 use App\Dominios\Solicitudes\Infraestructura\Http\Resources\TerrenoResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -184,13 +185,10 @@ final class TerrenosController
             new OA\Response(response: 422, description: 'Archivo inválido, de 300 KB o más, o el terreno ya tiene el máximo de fotos.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],
     )]
-    public function subirFoto(Request $request, int $id): JsonResponse
+    public function subirFoto(SubirFotoDeTerrenoRequest $request, int $id): JsonResponse
     {
         $this->exigirPermiso($request);
-        $datos = $request->validate([
-            'archivo' => ['required', 'file', 'mimes:jpg,jpeg,png,webp', 'max:'.(int) config('seguimiento.evidencia_max_kb', 300)],
-            'descripcion' => ['nullable', 'string', 'max:140'],
-        ]);
+        $datos = $request->validated();
 
         try {
             $foto = $this->fotos->subir($this->usuarioId(), $id, $request->file('archivo'), $datos['descripcion'] ?? null);

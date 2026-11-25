@@ -10,10 +10,10 @@ use App\Dominios\Proveedores\Dominio\Excepciones\RegistroInvalido;
 use App\Dominios\Proveedores\Dominio\TipoSujeto;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Documento;
 use App\Dominios\Proveedores\Infraestructura\Http\Requests\CargarDocumentoDeSujetoRequest;
+use App\Dominios\Proveedores\Infraestructura\Http\Requests\ListarDocumentosRequest;
 use App\Dominios\Proveedores\Infraestructura\Http\Resources\DocumentoResource;
 use App\Dominios\Seguridad\Contratos\IdentidadOperarioToken;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
 
 /**
@@ -52,14 +52,11 @@ final class DocumentosController
             new OA\Response(response: 404, description: 'El sujeto no existe o no es de esta cuenta.'),
         ],
     )]
-    public function index(Request $request): JsonResponse
+    public function index(ListarDocumentosRequest $request): JsonResponse
     {
         $this->exigirPermiso($this->identidad, $request, self::PERMISO);
 
-        $datos = $request->validate([
-            'sujeto_tipo' => ['required', 'in:proveedor,piloto,auxiliar'],
-            'sujeto_id' => ['required', 'integer', 'min:1'],
-        ]);
+        $datos = $request->validated();
 
         $tipo = TipoSujeto::from($datos['sujeto_tipo']);
 

@@ -3,10 +3,9 @@
 namespace App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Api;
 
 use App\Dominios\Notificaciones\Aplicacion\DispositivosPush;
+use App\Dominios\Notificaciones\Infraestructura\Http\Requests\RegistrarDispositivoPushRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 use OpenApi\Attributes as OA;
 
 /**
@@ -57,12 +56,9 @@ final class DispositivosPushController
             new OA\Response(response: 422, description: 'Token o plataforma inválidos.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],
     )]
-    public function store(Request $request): JsonResponse
+    public function store(RegistrarDispositivoPushRequest $request): JsonResponse
     {
-        $datos = $request->validate([
-            'token' => ['required', 'string', 'max:512'],
-            'plataforma' => ['required', Rule::in(DispositivosPush::PLATAFORMAS)],
-        ]);
+        $datos = $request->validated();
 
         [$dispositivo, $nuevo] = $this->dispositivos->registrar($this->usuarioId(), $datos['token'], $datos['plataforma']);
 
