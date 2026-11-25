@@ -9,6 +9,7 @@ use App\Dominios\Flota\Contratos\LecturaEquipos;
 use App\Dominios\Flota\Contratos\LecturaIntegrantesDeEquipo;
 use App\Dominios\Negociacion\Aplicacion\CancelarComoProveedor;
 use App\Dominios\Negociacion\Aplicacion\ConfirmarPago;
+use App\Dominios\Negociacion\Aplicacion\ConfirmarPrecioFinal;
 use App\Dominios\Negociacion\Aplicacion\ConsultarOfertas;
 use App\Dominios\Negociacion\Aplicacion\Mensajeria;
 use App\Dominios\Negociacion\Aplicacion\MercadoDeSolicitudes;
@@ -80,11 +81,12 @@ function negMundo(): void
         'create_neg_tablas_de_negociacion',
         'agrega_adjuntos_y_eventos_a_neg_mensajes',
         'create_neg_pagos_confirmados_table',
+        'create_neg_precios_finales_confirmados_table',
         'create_sol_terreno_fotos_table',
         'create_sol_precios_referencia_table',
     ]);
 
-    foreach (['neg_pagos_confirmados', 'sol_terreno_fotos', 'sol_precios_referencia', 'neg_preferencias', 'neg_ubicaciones', 'neg_evidencias', 'neg_avances', 'neg_mensajes', 'neg_cancelaciones', 'neg_ofertas', 'sol_solicitud_historial', 'sol_solicitudes_servicio', 'sol_terrenos', 'sol_clientes', 'sol_zonas'] as $tabla) {
+    foreach (['neg_precios_finales_confirmados', 'neg_pagos_confirmados', 'sol_terreno_fotos', 'sol_precios_referencia', 'neg_preferencias', 'neg_ubicaciones', 'neg_evidencias', 'neg_avances', 'neg_mensajes', 'neg_cancelaciones', 'neg_ofertas', 'sol_solicitud_historial', 'sol_solicitudes_servicio', 'sol_terrenos', 'sol_clientes', 'sol_zonas'] as $tabla) {
         DB::table($tabla)->delete();
     }
 
@@ -803,6 +805,50 @@ test('el pago no se informa antes de finalizar el servicio', function () {
 
     expect(negCodigo(fn () => app(ConfirmarPago::class)->ejecutar(NEG_TITULAR_7, $solicitud, ['uuid_cliente' => (string) Str::uuid()])))->toBe('estado_invalido:409')
         ->and(DB::table('neg_pagos_confirmados')->count())->toBe(0);
+});
+
+test('el cliente confirma el precio final tras el cierre del piloto: valores del servidor, idempotente, sin cambiar el estado y con aviso al proveedor', function () {
+    negMundo();
+    $solicitud = negFinalizada();
+    $precios = app(ConfirmarPrecioFinal::class);
+
+    expect($precios->ver(NEG_CLIENTE, $solicitud)['confirmacion'])->toBeNull();
+
+    [$precio, $creado] = $precios->ejecutar(NEG_CLIENTE, $solicitud);
+    [$mismo, $creadoOtraVez] = $precios->ejecutar(NEG_CLIENTE, $solicitud);
+
+    expect($creado)->toBeTrue()->and($creadoOtraVez)->toBeFalse()
+        ->and($precio['monto_final'])->toBe('9263.00')->and($precio['confirmacion']->monto)->toBe('9263.00')
+        ->and($precio['confirmacion']->id)->toBe($mismo['confirmacion']->id)
+        ->and((float) $precio['hectareas_ejecutadas'])->toBe(78.5)->and((float) $precio['precio_ha_acordado'])->toBe(118.0)
+        ->and(DB::table('neg_precios_finales_confirmados')->count())->toBe(1)
+        ->and(negEstado($solicitud))->toBe('finalizada')
+        ->and($precios->ver(NEG_TITULAR_7, $solicitud)['confirmacion']->id)->toBe($precio['confirmacion']->id);
+    expect(Event::dispatched(AvisoDeNegociacion::class, fn (AvisoDeNegociacion $e): bool => $e->tipo === 'precio_final_confirmado')->count())->toBe(1);
+    Event::assertDispatched(AvisoDeNegociacion::class, fn (AvisoDeNegociacion $e): bool => $e->tipo === 'precio_final_confirmado' && $e->usuarios === [NEG_TITULAR_7, NEG_PILOTO_7]);
+});
+
+test('el precio final lo confirma solo el cliente dueño y solo con el servicio cerrado por el piloto', function () {
+    negMundo();
+    $solicitud = negFinalizada();
+    $precios = app(ConfirmarPrecioFinal::class);
+
+    expect(negCodigo(fn () => $precios->ejecutar(NEG_TITULAR_7, $solicitud)))->toBe('precio_final_solo_cliente:403')
+        ->and(negCodigo(fn () => $precios->ejecutar(NEG_PILOTO_7, $solicitud)))->toBe('precio_final_solo_cliente:403')
+        ->and(negCodigo(fn () => $precios->ejecutar(NEG_OTRO_CLIENTE, $solicitud)))->toBe('solicitud_ajena:404')
+        ->and(negCodigo(fn () => $precios->ejecutar(NEG_TITULAR_8, $solicitud)))->toBe('solicitud_ajena:404')
+        ->and(negCodigo(fn () => $precios->ver(NEG_OTRO_CLIENTE, $solicitud)))->toBe('solicitud_ajena:404')
+        ->and(DB::table('neg_precios_finales_confirmados')->count())->toBe(0);
+});
+
+test('el precio final no se confirma antes de que el piloto cierre el servicio', function () {
+    negMundo();
+    [$solicitud] = negAdjudicada();
+    $precios = app(ConfirmarPrecioFinal::class);
+
+    expect(negCodigo(fn () => $precios->ejecutar(NEG_CLIENTE, $solicitud)))->toBe('estado_invalido:409')
+        ->and($precios->ver(NEG_CLIENTE, $solicitud))->toBeNull()
+        ->and(DB::table('neg_precios_finales_confirmados')->count())->toBe(0);
 });
 
 test('el cliente sube fotos de su terreno, el piloto las ve con URL firmada y un tercero no las toca', function () {

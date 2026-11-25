@@ -283,6 +283,7 @@ test('cada tipo de aviso tiene su texto en lang/es/notificaciones.php y usa solo
         'avance_registrado' => ['solicitud', 'porcentaje'],
         'solicitud_finalizada' => ['solicitud', 'monto'],
         'mensaje_nuevo' => ['solicitud'],
+        'precio_final_confirmado' => ['solicitud', 'monto'],
     ];
 
     foreach (TipoNotificacion::cases() as $tipo) {

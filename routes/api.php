@@ -11,6 +11,7 @@ use App\Dominios\Negociacion\Infraestructura\Http\Controllers\Api\MensajesContro
 use App\Dominios\Negociacion\Infraestructura\Http\Controllers\Api\MercadoController;
 use App\Dominios\Negociacion\Infraestructura\Http\Controllers\Api\OfertasController;
 use App\Dominios\Negociacion\Infraestructura\Http\Controllers\Api\PagoController;
+use App\Dominios\Negociacion\Infraestructura\Http\Controllers\Api\PrecioFinalController;
 use App\Dominios\Negociacion\Infraestructura\Http\Controllers\Api\PreferenciasController;
 use App\Dominios\Negociacion\Infraestructura\Http\Controllers\Api\SeguimientoController;
 use App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Api\DispositivosPushController;
@@ -250,6 +251,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/solicitudes/{id}/pago-confirmado', [PagoController::class, 'show'])
         ->whereNumber('id')
         ->name('api.solicitudes.pago-confirmado.show');
+    // Precio final: el cliente, que paga, lo confirma o abre una disputa; ambas partes lo consultan.
+    Route::get('/solicitudes/{id}/precio-final', [PrecioFinalController::class, 'show'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.precio-final.show');
+    Route::post('/solicitudes/{id}/precio-final/confirmar', [PrecioFinalController::class, 'confirmar'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.precio-final.confirmar');
     Route::put('/ubicacion', [SeguimientoController::class, 'enviarUbicacion'])->name('api.ubicacion.update');
     Route::get('/solicitudes/{id}/ubicacion-piloto', [SeguimientoController::class, 'verUbicacion'])
         ->whereNumber('id')
