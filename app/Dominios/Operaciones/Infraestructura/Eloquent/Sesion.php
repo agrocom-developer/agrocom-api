@@ -142,7 +142,7 @@ class Sesion extends ModeloDominio
      * Incidencias registradas durante esta sesión (HU-08, tarea 22): a
      * diferencia de `Condiciones` (denormaliza `trabajo_id`), `Incidencia`
      * solo referencia `sesion_id` — se recolectan por sesión, no por trabajo
-     * directo (ver `ArmarContenidoReporteTecnico`).
+     * directo.
      *
      * @return HasMany<Incidencia, $this>
      */
@@ -195,9 +195,7 @@ class Sesion extends ModeloDominio
 
     /**
      * Recargas de batería/caldo registradas durante esta sesión (HU-13,
-     * tarea 23). `ArmarContenidoReporteTecnico` (HU-80, tarea 86) las
-     * recorre para saber qué baterías (`bateria_saliente_id`) se usaron y
-     * pedir sus ciclos acumulados a `Mantenimiento`.
+     * tarea 23).
      *
      * @return HasMany<Recarga, $this>
      */

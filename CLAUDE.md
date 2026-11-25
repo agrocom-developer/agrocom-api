@@ -1,6 +1,6 @@
 # CLAUDE.md — invariantes de `agrocom-api`
 
-Este repo es el backend (Laravel + PostgreSQL) y el panel web (AdminLTE + Blade/Livewire) de Agrocom SRL. El desarrollo lo hace una sola persona con agentes de IA como implementadores principales; estas invariantes existen para que la coherencia no dependa de la memoria de nadie. La fuente de verdad funcional/técnica es `docs/especificacion/marketplace.md`, con los estados, reglas y recursos de la negociación en `docs/especificacion/negociacion-contrato.md`; el porqué de cada decisión de arquitectura está en `docs/decisiones/` (ADRs). Léelos antes de implementar algo que los toque.
+Este repo es el backend (Laravel + PostgreSQL) y el panel web (AdminLTE + Blade) de Agrocom SRL. El desarrollo lo hace una sola persona con agentes de IA como implementadores principales; estas invariantes existen para que la coherencia no dependa de la memoria de nadie. La fuente de verdad funcional/técnica es `docs/especificacion/marketplace.md`, con los estados, reglas y recursos de la negociación en `docs/especificacion/negociacion-contrato.md`; el porqué de cada decisión de arquitectura está en `docs/decisiones/` (ADRs). Léelos antes de implementar algo que los toque.
 
 ## Invariantes no negociables
 

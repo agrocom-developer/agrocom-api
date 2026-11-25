@@ -1,6 +1,6 @@
 # Estado de la API
 
-Qué está hecho en `agrocom-api` para las apps móviles (`cliente`, `piloto` y `auxiliar` de `agrocom-field`) y qué falta. La fuente de verdad funcional es `docs/especificacion/marketplace.md`; el contrato técnico es `docs/api/openapi.yaml`, generado desde el código (ADR 0014).
+Qué está hecho en `agrocom-api` para las apps móviles (`cliente` y `piloto` de `agrocom-field`) y qué falta. La fuente de verdad funcional es `docs/especificacion/marketplace.md`; el contrato técnico es `docs/api/openapi.yaml`, generado desde el código (ADR 0014).
 
 ## Hecho
 
@@ -8,12 +8,12 @@ Qué está hecho en `agrocom-api` para las apps móviles (`cliente`, `piloto` y 
 
 | Área | Qué existe en la API | Decisión |
 |---|---|---|
-| Proveedores y flota | Registro público de proveedor con datos de la persona y del dron, pilotos, auxiliares, documentos, drones con dueño y fotos, equipos; aprobación y reenvío tras un rechazo. | ADR 0028, 0029, 0032, 0036, 0042 |
+| Proveedores y flota | Registro público de proveedor con datos de la persona y del dron, pilotos, documentos, drones con dueño y fotos, equipos; aprobación y reenvío tras un rechazo. | ADR 0028, 0029, 0032, 0036, 0042 |
 | Solicitud | Terrenos del cliente, solicitud idempotente por `uuid_cliente` con precio por hectárea propuesto, estimación, apertura al mercado, cambio de precio, renovación y cancelación sin penalidad. | ADR 0027, 0034, 0037 |
 | Negociación | Mapa de solicitudes abiertas con filtros y resumen por región, ofertas y contraofertas por rondas, adjudicación atómica que requiere red, vencimiento de ofertas y solicitudes (`negociacion:procesar`), cancelación del proveedor que reabre la solicitud y reputación sin sanciones automáticas. | ADR 0030, 0038, 0041 |
 | Seguimiento | Inicio, avance y cierre del piloto con fotos de avance (menos de 300 KB), chat entre cliente y proveedor adjudicado con cursor, última ubicación del piloto solo durante la ejecución, y preferencias de aviso por zona, región y hectáreas. | ADR 0040, 0041 |
 | Calificación y disputas | Calificación bidireccional (la del cliente por el proveedor es privada), reporte de una calificación abusiva, disputas con mensajes, retiro y una apelación, y métricas. | ADR 0031, 0033, 0034, 0039 |
-| Ejecución offline | `POST /api/sync` (lote idempotente por `uuid_cliente`), `GET /api/sync/catalogo` con cursor (solicitudes adjudicadas y en ejecución del equipo), `POST /api/solicitudes/{id}/evidencias` en cola aparte, actas y reporte del lote. | ADR 0005, 0040; especificación §10.3 |
+| Ejecución offline | `GET /api/sync/catalogo` con cursor (solicitudes adjudicadas y en ejecución del equipo), registros `inicio`, `avance`, `cierre` y `mensaje` por sus rutas REST idempotentes por `uuid_cliente` y `POST /api/solicitudes/{id}/evidencias` en cola aparte. | ADR 0005, 0040; especificación §10.3 |
 | Retiro de la operación interna | El alcance de finanzas, inventario y mantenimiento de flota no forma parte del marketplace; sus endpoints y esquemas no están en el contrato. | ADR 0035 |
 
 ### Contrato
@@ -54,7 +54,7 @@ La especificación §10 los define y la API no los expone:
 | Endpoint | Para qué | Quién lo necesita |
 |---|---|---|
 | `POST /api/incidencias` | Reporte de incidencia del cliente fuera del lote (el piloto ya la registra por `POST /api/sync`). | App `cliente` |
-| `POST /api/emergencias` | SOS con aviso de máxima prioridad a soporte y al contacto de emergencia. | Las tres apps |
+| `POST /api/emergencias` | SOS con aviso de máxima prioridad a soporte y al contacto de emergencia. | Las dos apps |
 
 ### Contrato y ejemplos
 

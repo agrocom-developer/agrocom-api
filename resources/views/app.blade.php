@@ -9,12 +9,10 @@
     <x-atoms.tema-inicial />
 
     @vite('resources/css/app.css')
-    @livewireStyles
 </head>
 <body>
     {{ $slot }}
 
     @vite('resources/js/app.js')
-    @livewireScripts
 </body>
 </html>

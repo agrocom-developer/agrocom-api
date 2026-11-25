@@ -24,4 +24,4 @@ Reglas de trabajo:
 6. Los endpoints de API (`Http/Controllers/Api/`) son adaptadores delgados: reciben, invocan el caso de uso de `Aplicacion/`, devuelven — la lógica vive una sola vez ahí, no en el controller (ADR 0008).
 7. El motor de sync (idempotencia por `uuid_cliente`, `ON CONFLICT`, transacciones por registro) es la pieza que se revisa línea por línea — no la apures.
 
-Si un caso de uso ya existe (porque el panel también lo necesita), reutilizalo — no lo dupliques entre el controller de API y el componente Livewire del `frontend`.
+Si un caso de uso ya existe (porque el panel también lo necesita), reutilizalo — no lo dupliques entre el controller de API y el controller web del `frontend`.

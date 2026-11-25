@@ -20,7 +20,6 @@ La app no cobra: el pago se hace fuera de ella.
 |---|---|---|
 | **Cliente** | App móvil `cliente` (online) | Propiedad, solicitudes, comparar y elegir ofertas, seguimiento, chat y calificación |
 | **Piloto** | App móvil `piloto` (offline en el lote) | Mapa de solicitudes, ofertas, avance, fotos y chat |
-| **Auxiliar** | App móvil `auxiliar` (offline en el lote) | Fotos de avance |
 | **Proveedor** | Web y app | Flota, equipo, documentos y reputación |
 | **Administrador y soporte** | Panel web | Aprobaciones, moderación, disputas, parámetros y métricas |
 
@@ -38,7 +37,7 @@ Una misma persona puede cumplir varios roles con un solo usuario, y opera bajo u
 
 ## Para desarrolladores
 
-- **Stack**: PHP 8.3 + Laravel 13 + PostgreSQL 16 (API REST y panel AdminLTE/Livewire). Monolito modular con un módulo por dominio.
+- **Stack**: PHP 8.3 + Laravel 13 + PostgreSQL 16 (API REST y panel AdminLTE/Blade). Monolito modular con un módulo por dominio.
 - **Reglas para agentes de IA**: [`CLAUDE.md`](CLAUDE.md), las invariantes no negociables. Los subagentes especializados viven en [`.claude/agents/`](.claude/agents/).
 - **Flujo de trabajo**: [`CONTRIBUTING.md`](CONTRIBUTING.md). GitFlow simplificado, todo por PR; el CI auto-fusiona con checks en verde (ver `.github/workflows/`).
 - **Entorno local**: `docker compose up -d` levanta PHP, PostgreSQL y Mailpit (ver [`docs/gestion/entornos.md`](docs/gestion/entornos.md)).

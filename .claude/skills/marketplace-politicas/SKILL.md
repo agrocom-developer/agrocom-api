@@ -13,9 +13,8 @@ Agrocom es un marketplace de servicio de fumigación con drones. El cliente publ
 |---|---|---|
 | Cliente | Publica la solicitud con su precio, compara y elige ofertas, ve fotos, chat y ubicación del piloto, califica | App `cliente` y portal web |
 | Piloto | Ve el mapa de solicitudes abiertas, ofrece, marca inicio, avance y cierre, sube fotos, chatea | App `piloto` |
-| Auxiliar | Asiste en el lote y sube fotos de avance | App `auxiliar` |
 | Proveedor independiente / dueño de drones / Agrocom propio | Se registra con datos de la persona y del dron con fotos; opera tras aprobación | Apps y portal |
-| Admin | Aprueba proveedores, auxiliares y drones, modera calificaciones, resuelve disputas | Panel web |
+| Admin | Aprueba proveedores, pilotos y drones, modera calificaciones, resuelve disputas | Panel web |
 
 ## Ciclo de una solicitud
 
@@ -27,7 +26,7 @@ Agrocom es un marketplace de servicio de fumigación con drones. El cliente publ
 2. El piloto acepta el precio o contraoferta, con el dron que usará.
 3. En cada negociación hay una sola oferta vigente: quien la recibe acepta, contraoferta o rechaza. Máximo de ofertas por negociación, con la última definitiva. Vigencias de oferta (24 horas) y de solicitud (7 días) por parámetro.
 4. Aceptar la oferta vigente de la contraparte adjudica la solicitud: precio acordado, proveedor y equipo; las demás ofertas se cierran. La operación es atómica en el servidor.
-5. No hay asignación automática, prioridad de propios, radios, puntuación ni sanciones automáticas.
+5. El cliente elige entre las ofertas: ningún proveedor tiene prioridad sobre otro y no hay puntuación ni sanciones automáticas.
 
 ## Qué ve cada parte
 
@@ -56,7 +55,6 @@ Gratuita y sin registro antes de adjudicar. Tras adjudicar se registra quién ca
 ## Alta y aprobación
 
 - El proveedor independiente se registra solo, con datos de la persona y del dron con fotos; un admin lo aprueba antes de que vea el mapa y ofrezca.
-- El piloto de un proveedor registra a su auxiliar; un admin lo aprueba antes de que opere.
 - La aprobación es un permiso propio con autor, fecha y motivo.
 
 ## Lo que no existe

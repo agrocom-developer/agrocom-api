@@ -9,7 +9,7 @@ Este documento define el producto. Las decisiones que lo sostienen están en `do
 ## 1. Principios
 
 1. **Solicitud por solicitud.** Toda relación comercial es una solicitud de servicio con su precio acordado.
-2. **El precio se negocia.** El cliente propone un precio por hectárea; cada piloto lo acepta o propone el suyo; el cliente elige. No hay asignación automática, ni tarifa impuesta, ni orden de prioridad entre proveedores.
+2. **El precio se negocia.** El cliente propone un precio por hectárea; cada piloto lo acepta o propone el suyo; el cliente elige. El cliente decide: ninguna tarifa se impone y ningún proveedor tiene prioridad sobre otro.
 3. **Una oferta vigente por negociación.** En cada negociación hay a lo sumo una oferta vigente, y la última oferta aceptada por la contraparte es el acuerdo.
 4. **Confianza verificable.** Ningún proveedor opera sin aprobación de un administrador; ningún dron vuela sin aprobación y sin fotos (ADR 0032, ADR 0042).
 5. **Negociar y decidir requieren red; el lote es offline.** Publicar, ofertar, contraofertar, aceptar y calificar exigen conexión. El avance, las fotos y el cierre que el piloto registra en el lote se capturan sin conexión y se sincronizan después (ADR 0028).
@@ -25,10 +25,9 @@ Este documento define el producto. Las decisiones que lo sostienen están en `do
 |---|---|---|
 | **Cliente** | Persona o empresa que publica la solicitud, compara ofertas, elige, sigue el avance y califica. | App móvil `cliente` (online) y web |
 | **Piloto** | Opera el dron. Puede ser empleado de Agrocom, independiente o piloto de un proveedor tercero. Ve el mapa de solicitudes abiertas, ofrece, ejecuta y sube fotos de avance. | App móvil `piloto` (offline en el lote) |
-| **Auxiliar** | Asiste al piloto en el lote y puede subir fotos de avance. Lo registra el piloto o el proveedor; lo aprueba un administrador. | App móvil `auxiliar` (offline en el lote) |
 | **Proveedor** | Entidad que presta el servicio: Agrocom (propio), un piloto independiente o una empresa o dueño de drones con sus pilotos (tercero). | Web y app |
 | **Dueño de dron** | Quien posee el dron. | Web y app |
-| **Administrador** | Aprueba proveedores, pilotos, auxiliares y drones con sus fotos; modera calificaciones; resuelve disputas; configura parámetros. | Web |
+| **Administrador** | Aprueba proveedores, pilotos y drones con sus fotos; modera calificaciones; resuelve disputas; configura parámetros. | Web |
 | **Soporte** | Atiende incidencias, emergencias y disputas. Es un rol del panel. | Web |
 
 Un usuario puede tener varios roles (ADR 0004). Las acciones se autorizan por permiso del rol activo. Un administrador no modera lo que él mismo calificó.
@@ -88,14 +87,13 @@ Convenciones: dominio en español, prefijo de tabla por módulo (ADR 0011), borr
 
 - **`prv_proveedores`**: `id`, `usuario_titular_id`, `tipo` (`propio` | `independiente` | `tercero`), `razon_social`, `documento_fiscal`, `zona_base_id`, `estado` (§5.2), `calificacion_promedio`, `calificaciones_conteo`, `tasa_cancelacion`, `aprobado_por`, `aprobado_en`. Agrocom existe como un proveedor de tipo `propio`; compite en igualdad con los demás.
 - **`prv_pilotos`**: `id`, `proveedor_id`, `usuario_id`, `nombres`, `apellidos`, `documento_identidad`, `telefono`, `licencia_numero`, `licencia_vence`, `categoria_habilitacion`, `estado` (`pendiente` | `aprobado` | `suspendido` | `rechazado` | `baja`).
-- **`prv_auxiliares`**: `id`, `proveedor_id`, `usuario_id`, `registrado_por_piloto_id`, `nombres`, `apellidos`, `documento_identidad`, `telefono`, `estado` (igual que el piloto). Un piloto o el proveedor registra a su auxiliar y un administrador lo aprueba.
-- **`prv_documentos`**: `id`, `sujeto_tipo` (`proveedor` | `piloto` | `auxiliar` | `dron`), `sujeto_id`, `tipo` (`identidad`, `licencia_piloto`, `habilitacion_dron`, `seguro_responsabilidad`, `registro_dron`, `certificado_fumigacion`, `antecedentes`, `otro`), `archivo_ref`, `vence_en`, `estado` (`en_revision` | `aprobado` | `rechazado` | `vencido`), `revisado_por`, `motivo_rechazo`. Ruta de archivo según ADR 0026.
+- **`prv_documentos`**: `id`, `sujeto_tipo` (`proveedor` | `piloto` | `dron`), `sujeto_id`, `tipo` (`identidad`, `licencia_piloto`, `habilitacion_dron`, `seguro_responsabilidad`, `registro_dron`, `certificado_fumigacion`, `antecedentes`, `otro`), `archivo_ref`, `vence_en`, `estado` (`en_revision` | `aprobado` | `rechazado` | `vencido`), `revisado_por`, `motivo_rechazo`. Ruta de archivo según ADR 0026.
 
 ### 4.4 Flota
 
 - **`flo_drones`**: `id`, `dueno_proveedor_id`, `operador_proveedor_id`, `marca`, `modelo`, `anio`, `numero_serie` (único), `capacidad_tanque_l` (decimal), `ancho_pasada_m` (decimal), `ciclos_bateria` (entero; único dato de mantenimiento que se conserva), `estado` (`pendiente` | `aprobado` | `suspendido` | `rechazado` | `baja`), `origen` (`flota_agrocom` | `vendido_por_agrocom` | `externo`).
 - **`flo_dron_fotos`**: `id`, `dron_id`, `tipo` (`frontal`, `lateral`, `placa_serie`, `con_tanque`, `otra`), `archivo_ref`, `bytes`, `estado` (`en_revision` | `aprobada` | `rechazada`), `motivo_rechazo`. Un dron exige al menos las fotos obligatorias del parámetro (por defecto `frontal`, `lateral` y `placa_serie`) para aprobarse (ADR 0042). El cliente ve las aprobadas.
-- **`flo_equipos`**: `id`, `proveedor_id`, `piloto_id`, `dron_id`, `auxiliar_id` (nulo), `vigente_desde`, `vigente_hasta`. Un equipo es la combinación operativa que ejecuta una solicitud. Un piloto y un dron no pueden estar en dos equipos vigentes a la vez.
+- **`flo_equipos`**: `id`, `proveedor_id`, `piloto_id`, `dron_id`, `vigente_desde`, `vigente_hasta`. Un equipo es la combinación operativa que ejecuta una solicitud. Un piloto y un dron no pueden estar en dos equipos vigentes a la vez.
 
 ### 4.5 Negociación
 
@@ -107,7 +105,7 @@ Convenciones: dominio en español, prefijo de tabla por módulo (ADR 0011), borr
 Las tablas de ejecución que el piloto escribe en el lote llevan `uuid_cliente`, `secuencia` local y `dispositivo_id`.
 
 - **`seg_avances`**: `id`, `uuid_cliente`, `solicitud_id`, `autor_usuario_id`, `tipo` (`inicio` | `avance` | `cierre`), `hectareas_ejecutadas` (decimal 12,4, acumuladas), `porcentaje` (decimal 5,2), `nota` (hasta 280 caracteres), `motivo_correccion` (obligatorio si el valor baja), `secuencia`, `registrado_en`. La escribe el piloto del equipo adjudicado.
-- **`seg_evidencias`**: `id`, `uuid_cliente`, `solicitud_id`, `avance_id` (nulo), `autor_usuario_id`, `autor_rol` (`piloto` | `auxiliar`), `tipo` (`foto_avance`, `foto_final`, `foto_incidencia`), `archivo_ref`, `bytes`, `subida_en`. Imagen comprimida a menos de 300 KB antes de subir; cola de subida separada de los registros livianos.
+- **`seg_evidencias`**: `id`, `uuid_cliente`, `solicitud_id`, `avance_id` (nulo), `autor_usuario_id`, `autor_rol` (`piloto`), `tipo` (`foto_avance`, `foto_final`, `foto_incidencia`), `archivo_ref`, `bytes`, `subida_en`. Imagen comprimida a menos de 300 KB antes de subir; cola de subida separada de los registros livianos.
 - **`seg_mensajes`**: `id`, `uuid_cliente`, `solicitud_id`, `autor_usuario_id`, `autor_rol` (`cliente` | `piloto`), `texto` (hasta 1000 caracteres), `creado_en`, `leido_en` (nulo hasta que lo lee la contraparte).
 - **`seg_ubicaciones`**: una fila por solicitud, la última: `solicitud_id` (único), `latitud`, `longitud`, `precision_m`, `capturado_en`, `recibido_en`. Se elimina al finalizar o cancelar (ADR 0040).
 - **`seg_incidencias`**: `id`, `uuid_cliente`, `solicitud_id`, `reportada_por_usuario_id`, `tipo` (§9.3), `severidad` (`informativa` | `grave` | `emergencia`), `descripcion`, `ubicacion`, `estado` (`abierta` | `en_atencion` | `cerrada`).
@@ -115,7 +113,7 @@ Las tablas de ejecución que el piloto escribe en el lote llevan `uuid_cliente`,
 
 ### 4.7 Calificaciones
 
-**`cal_calificaciones`**: `id`, `uuid_cliente`, `solicitud_id`, `autor_usuario_id`, `autor_rol` (`cliente` | `proveedor`), `sujeto_tipo` (`proveedor` | `piloto` | `auxiliar` | `cliente`), `sujeto_id`, `estrellas` (entero 1 a 5), `etiquetas` (lista de un catálogo cerrado), `comentario`, `estado` (`visible` | `en_moderacion` | `oculta`), `moderada_por`, `motivo_moderacion`. Única por `(solicitud_id, autor_rol, sujeto_tipo, sujeto_id)`. La escribe un solo actor y nunca se edita: moderar cambia `estado`, no el contenido.
+**`cal_calificaciones`**: `id`, `uuid_cliente`, `solicitud_id`, `autor_usuario_id`, `autor_rol` (`cliente` | `proveedor`), `sujeto_tipo` (`proveedor` | `piloto` | `cliente`), `sujeto_id`, `estrellas` (entero 1 a 5), `etiquetas` (lista de un catálogo cerrado), `comentario`, `estado` (`visible` | `en_moderacion` | `oculta`), `moderada_por`, `motivo_moderacion`. Única por `(solicitud_id, autor_rol, sujeto_tipo, sujeto_id)`. La escribe un solo actor y nunca se edita: moderar cambia `estado`, no el contenido.
 
 ### 4.8 Disputas
 
@@ -126,7 +124,7 @@ Las tablas de ejecución que el piloto escribe en el lote llevan `uuid_cliente`,
 
 - **`ntf_notificaciones`** (ADR 0025): un aviso por cuenta destinataria.
 - **`ntf_preferencias`** y **`ntf_dispositivos`** (ADR 0041): preferencias por categoría, zonas de interés y token de push por dispositivo. Un token está activo en una sola cuenta a la vez; el envío al sistema operativo va detrás de la interfaz `EnviadorDePush`, sin proveedor configurado todavía.
-- **`sec_user.foto_perfil_ref`**: foto de perfil de la persona de la cuenta (cliente, titular, piloto o auxiliar), menos de 300 KB, en el disco privado.
+- **`sec_user.foto_perfil_ref`**: foto de perfil de la persona de la cuenta (cliente, titular o piloto), menos de 300 KB, en el disco privado.
 - **`cfg_parametros`** (ADR 0016): parámetros de §11.
 - **`sec_*`**: usuarios, roles y permisos (ADR 0004).
 - **`aud_bitacora`**: auditoría de cambios (ADR 0007).
@@ -152,7 +150,7 @@ Las tablas de ejecución que el piloto escribe en el lote llevan `uuid_cliente`,
 
 El detalle de reglas y guardas de cada transición está en `negociacion-contrato.md`.
 
-### 5.2 Proveedor, piloto, auxiliar y dron
+### 5.2 Proveedor, piloto y dron
 
 `pendiente` → `aprobado` ⇄ `suspendido`; `pendiente` → `rechazado` (el solicitante puede reenviar); cualquiera → `baja`. Solo un administrador aprueba, suspende o da de baja. Un proveedor `aprobado` no ve el mapa de solicitudes abiertas ni ofrece si no tiene al menos un equipo con piloto y dron aprobados y documentos vigentes. Un documento vencido suspende de forma automática al sujeto hasta que se cargue uno vigente. Un dron se aprueba solo con las fotos obligatorias aprobadas (ADR 0042).
 
@@ -213,7 +211,7 @@ El precio por hectárea se negocia y queda congelado al adjudicar. El precio fin
 
 ### 8.3 Calificación y disputas
 
-El cliente califica al proveedor, al piloto y al auxiliar de 1 a 5 estrellas con etiquetas; el proveedor califica al cliente en privado y el administrador modera. Motivos de disputa: cobertura incompleta, mala aplicación, daño a cultivos o terceros, producto distinto al pactado, no se presentó el equipo, hectáreas ejecutadas discutidas, precio final discutido, cobro pendiente, acceso negado. Ver `calificacion.md` y `disputas.md`.
+El cliente califica al proveedor y al piloto de 1 a 5 estrellas con etiquetas; el proveedor califica al cliente en privado y el administrador modera. Motivos de disputa: cobertura incompleta, mala aplicación, daño a cultivos o terceros, producto distinto al pactado, no se presentó el equipo, hectáreas ejecutadas discutidas, precio final discutido, cobro pendiente, acceso negado. Ver `calificacion.md` y `disputas.md`.
 
 ## 9. Seguridad y confianza
 
@@ -227,7 +225,7 @@ Quién ve qué en cada estado está en `docs/politicas/seguimiento_y_privacidad.
 
 ### 9.3 Incidencias y emergencias
 
-Tipos: `deriva_de_producto`, `dron_caido`, `lesion`, `fuga_o_derrame`, `intrusion_de_personas_o_animales`, `conflicto_con_cliente`, `conflicto_con_proveedor`, `falla_de_equipo`, `otro`. El botón de emergencia (SOS) está en las apps del piloto, del auxiliar y del cliente: avisa a soporte con la ubicación, abre una incidencia de severidad `emergencia` y muestra el número de emergencias locales. El SOS no sustituye llamar a los servicios de emergencia. Ver `seguridad.md`.
+Tipos: `deriva_de_producto`, `dron_caido`, `lesion`, `fuga_o_derrame`, `intrusion_de_personas_o_animales`, `conflicto_con_cliente`, `conflicto_con_proveedor`, `falla_de_equipo`, `otro`. El botón de emergencia (SOS) está en las apps del piloto y del cliente: avisa a soporte con la ubicación, abre una incidencia de severidad `emergencia` y muestra el número de emergencias locales. El SOS no sustituye llamar a los servicios de emergencia. Ver `seguridad.md`.
 
 ### 9.4 Desactivación
 
@@ -259,7 +257,7 @@ Prefijo `/api`. Autenticación por token de dispositivo (`POST /auth/token`). El
 | `POST /ofertas/{id}/aceptar`, `/contraofertar`, `/rechazar` | Respuesta del cliente a una oferta |
 | `GET /solicitudes/{id}/avance`, `GET /solicitudes/{id}/ubicacion-piloto` | Fotos, avance y última ubicación |
 | `GET/POST /solicitudes/{id}/mensajes` | Chat con el piloto adjudicado |
-| `GET/POST /solicitudes/{id}/calificaciones` | A quién calificar y calificar al proveedor, piloto o auxiliar (7 días) |
+| `GET/POST /solicitudes/{id}/calificaciones` | A quién calificar y calificar al proveedor o al piloto (7 días) |
 | `POST /solicitudes/{id}/disputas`, `GET /solicitudes/{id}/disputa`, `GET /disputas`, `GET /disputas/{id}`, `POST /disputas/{id}/mensajes`, `/retirar`, `/apelar` | Disputa |
 | `POST /incidencias`, `POST /emergencias` | Reporte y SOS |
 
@@ -269,7 +267,7 @@ Prefijo `/api`. Autenticación por token de dispositivo (`POST /auth/token`). El
 |---|---|
 | `POST /proveedores/registro` | Alta con datos de la persona y del dron (queda `pendiente`) |
 | `POST /proveedores/documentos` | Carga documentos |
-| `GET/POST/PUT /proveedores/pilotos`, `/auxiliares`, `/drones`, `/equipos`; `POST/GET/DELETE /proveedores/drones/{id}/fotos` | Personal y flota con fotos del dron |
+| `GET/POST/PUT /proveedores/pilotos`, `/drones`, `/equipos`; `POST/GET/DELETE /proveedores/drones/{id}/fotos` | Personal y flota con fotos del dron |
 | `GET /solicitudes-abiertas`, `/solicitudes-abiertas/resumen-zonas`, `/solicitudes-abiertas/{id}` | Mapa, resumen por zona y detalle previo a ofertar |
 | `POST /solicitudes/{id}/ofertas` | Primera oferta de una negociación (acepta el precio o contraoferta) |
 | `GET /ofertas`, `GET /ofertas/{id}` | Mis negociaciones y su historial |
@@ -284,7 +282,7 @@ Prefijo `/api`. Autenticación por token de dispositivo (`POST /auth/token`). El
 | `GET/POST /solicitudes/{id}/calificar-cliente` | Califica al cliente en privado (7 días) |
 | Rutas de disputa e incidencias | Las mismas del cliente; el lado lo decide el rol del token |
 
-### 10.3 Sincronización del lote (piloto y auxiliar)
+### 10.3 Sincronización del lote (piloto)
 
 | Método y ruta | Función |
 |---|---|
@@ -308,7 +306,7 @@ Son pantallas del panel (ADR 0008), no endpoints de la API de las apps. El menú
 | Mercado | `panel/disputas` | Toma, media y resuelve |
 | Mercado | `panel/metricas` | Adjudicación, ofertas por solicitud, rondas por negociación, tiempos, calidad y volumen |
 | Mercado | `panel/avisos` | Lo que el sistema avisó a cada cuenta y si lo leyó; solo lectura (`notificaciones.aviso.ver`) |
-| Proveedores | `panel/proveedores`, `panel/pilotos`, `panel/auxiliares` | Aprobar, rechazar, suspender y dar de baja, con motivo |
+| Proveedores | `panel/proveedores`, `panel/pilotos` | Aprobar, rechazar, suspender y dar de baja, con motivo |
 | Proveedores | `panel/documentos` | Revisión de documentos y descarga restringida |
 | Proveedores | `panel/drones-flota` | Aprobación del dron y revisión de sus fotos (`flota.dron.revisar_foto`); no se aprueba sin las fotos de `flota.fotos_obligatorias` aprobadas |
 | Proveedores | `panel/equipos-flota` | Consulta de equipos |
@@ -344,7 +342,6 @@ Mecanismo del ADR 0025 con preferencias del ADR 0041: un aviso por cuenta destin
 |---|---|---|
 | `cliente` | Online primero, sin outbox | Solo caché de lectura |
 | `piloto` | Online para el mapa, las ofertas y el chat de lectura; offline en el lote | Inicio, avance, cierre, fotos y mensajes; outbox con `uuid_cliente` |
-| `auxiliar` | Online para ver la solicitud; offline en el lote | Fotos de avance; outbox con `uuid_cliente` |
 
 En el lote: todo registro nace con su `uuid_cliente` en el dispositivo, escribir es insertar local y encolar en una sola transacción, el orden causal lo da la `secuencia` local y no el reloj, y un registro ya confirmado por el servidor no se reescribe: se corrige con un registro nuevo con motivo y autor. Publicar, ofertar, contraofertar, aceptar, rechazar y retirar exigen red; se documenta como excepción en ADR 0028.
 

@@ -15,9 +15,7 @@ use App\Dominios\Negociacion\Infraestructura\Http\Controllers\Api\PreferenciasCo
 use App\Dominios\Negociacion\Infraestructura\Http\Controllers\Api\SeguimientoController;
 use App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Api\DispositivosPushController;
 use App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Api\NotificacionesController;
-use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Api\ActaController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Api\EvidenciaController;
-use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Api\ReporteTecnicoController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\AuxiliaresController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\DocumentosController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\MiProveedorController;
@@ -139,23 +137,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // JSON de /api/sync a propósito (lleva un binario). TE-07 parte servidor
     // (tarea 19).
     Route::post('/evidencias', [EvidenciaController::class, 'store'])->name('api.evidencias.store');
-
-    // Espec §4.3/§314-315, reinterpretados sobre `uuid_cliente` en vez de
-    // `id` (HU-17, tarea 24; ver runs/24.md): acta de conformidad por lote.
-    // Primeros endpoints de esta API que además del token exigen un permiso
-    // `sec_permission` puntual (`operaciones.acta.generar`/`.firmar`).
-    Route::post('/trabajos/{trabajo:uuid_cliente}/acta', [ActaController::class, 'generar'])->name('api.actas.generar');
-    Route::post('/actas/{acta:uuid_cliente}/firmar', [ActaController::class, 'firmar'])->name('api.actas.firmar');
-    Route::get('/actas/{acta:uuid_cliente}/pdf', [ActaController::class, 'pdf'])->name('api.actas.pdf');
-
-    // Espec §8/§9/§328 (HU-18, tarea 25): reporte técnico por lote — generado
-    // solo al firmar el acta (`GenerarReporteTecnico`, enganchado en
-    // `FirmarActa`), nunca por este endpoint. `{id}` = `trabajo_id` (no
-    // `uuid_cliente`: el reporte no nace de una acción del dispositivo, ver
-    // runs/25.md).
-    Route::get('/reportes/lote/{trabajo}', [ReporteTecnicoController::class, 'mostrar'])
-        ->whereNumber('trabajo')
-        ->name('api.reportes.lote');
 
     // Marketplace (ADR 0036): el proveedor gestiona lo SUYO. El permiso del rol
     // del token es la puerta; el alcance (solo sus registros, un id ajeno es
