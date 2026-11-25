@@ -1,0 +1,19 @@
+{
+    "operationId": "actualizarContacto",
+    "descripcion": "Un id que no es del cliente responde 404, nunca 403 (invariante 5).",
+    "peticion": {
+        "metodo": "PUT",
+        "ruta": "/api/clientes/mi/contactos/999999",
+        "autenticada": true,
+        "cuerpo": {
+            "nombre": "Otra persona",
+            "telefono": "+591 70011225"
+        }
+    },
+    "respuesta": {
+        "estado": 404,
+        "cuerpo": {
+            "message": "El contacto no existe."
+        }
+    }
+}

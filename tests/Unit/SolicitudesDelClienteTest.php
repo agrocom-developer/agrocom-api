@@ -44,6 +44,7 @@ function clienteEsquema(): void
         'create_sol_solicitud_historial_table',
         'agrega_reputacion_a_sol_clientes',
         'agrega_negociacion_a_sol_solicitudes_servicio',
+        'crea_sol_cliente_contactos',
         'create_neg_tablas_de_negociacion',
     ]);
 }

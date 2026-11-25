@@ -116,4 +116,25 @@ final class SolicitudInvalida extends RuntimeException
     {
         return new self(Texto::de('solicitudes.errores.foto_de_terreno_ajena'), true);
     }
+
+    public static function contactoAjeno(): self
+    {
+        return new self(Texto::de('solicitudes.errores.contacto_ajeno'), true);
+    }
+
+    /** El `contacto_id` enviado en una solicitud no es de un contacto vigente del cliente. */
+    public static function contactoNoValido(): self
+    {
+        return new self(Texto::de('solicitudes.errores.contacto_no_valido'), false, 'contacto_id');
+    }
+
+    public static function contactoRequerido(): self
+    {
+        return new self(Texto::de('solicitudes.errores.contacto_requerido'), false, 'contacto_id');
+    }
+
+    public static function ultimoContactoDeEmpresa(): self
+    {
+        return new self(Texto::de('solicitudes.errores.ultimo_contacto_de_empresa'));
+    }
 }

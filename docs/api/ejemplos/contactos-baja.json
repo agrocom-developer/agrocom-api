@@ -1,0 +1,13 @@
+{
+    "operationId": "darDeBajaContacto",
+    "descripcion": "Baja lógica de un contacto propio; las solicitudes ya creadas conservan a la persona elegida.",
+    "peticion": {
+        "metodo": "DELETE",
+        "ruta": "/api/clientes/mi/contactos/4",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 204,
+        "cuerpo": null
+    }
+}

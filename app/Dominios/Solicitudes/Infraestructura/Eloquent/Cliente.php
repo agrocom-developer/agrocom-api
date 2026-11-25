@@ -6,6 +6,7 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
 use App\Dominios\Solicitudes\Dominio\EstadoCliente;
 use App\Dominios\Solicitudes\Dominio\TipoCliente;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -53,5 +54,11 @@ class Cliente extends ModeloDominio
             'aviso_calificacion_en' => 'datetime',
             'publicacion_limitada_en' => 'datetime',
         ];
+    }
+
+    /** @return HasMany<ClienteContacto, $this> Vigentes, el principal primero. */
+    public function contactos(): HasMany
+    {
+        return $this->hasMany(ClienteContacto::class, 'cliente_id')->orderByDesc('es_principal')->orderBy('id');
     }
 }

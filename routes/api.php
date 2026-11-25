@@ -29,6 +29,7 @@ use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\SesionCampoContr
 use App\Dominios\Sincronizacion\Infraestructura\Http\Controllers\Api\CatalogoController;
 use App\Dominios\Sincronizacion\Infraestructura\Http\Controllers\Api\SyncController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\ClientesController;
+use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\ContactosController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\ReferenciasController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\SolicitudesController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\TerrenosController;
@@ -294,6 +295,16 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Cliente: su propio perfil (el alta es pública, arriba).
     Route::get('/clientes/mi', [ClientesController::class, 'show'])->name('api.clientes.mi');
+
+    // Contactos de referencia del cliente: las personas con quienes el proveedor coordina el servicio.
+    Route::get('/clientes/mi/contactos', [ContactosController::class, 'index'])->name('api.clientes.contactos.index');
+    Route::post('/clientes/mi/contactos', [ContactosController::class, 'store'])->name('api.clientes.contactos.store');
+    Route::put('/clientes/mi/contactos/{id}', [ContactosController::class, 'update'])
+        ->whereNumber('id')
+        ->name('api.clientes.contactos.update');
+    Route::delete('/clientes/mi/contactos/{id}', [ContactosController::class, 'destroy'])
+        ->whereNumber('id')
+        ->name('api.clientes.contactos.destroy');
 
     // Marketplace (ADR 0027): el cliente registra sus terrenos y pide servicios.
     // Superficie online, sin outbox (ADR 0028). El alcance (solo lo propio, un

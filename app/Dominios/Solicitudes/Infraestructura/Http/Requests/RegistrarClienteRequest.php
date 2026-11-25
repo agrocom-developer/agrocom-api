@@ -31,6 +31,12 @@ final class RegistrarClienteRequest extends FormRequest
             // Una empresa se identifica por su razón social y su NIT; una persona, por su nombre.
             'razon_social' => ['required_if:tipo,empresa', 'nullable', 'string', 'max:150'],
             'documento_fiscal' => ['required_if:tipo,empresa', 'nullable', 'string', 'max:30'],
+            // Contactos de referencia: si una empresa no los envía, el contacto es quien registra la cuenta.
+            'contactos' => ['nullable', 'array', 'max:10'],
+            'contactos.*.nombre' => ['required', 'string', 'max:150'],
+            'contactos.*.telefono' => ['required', 'string', 'max:30', 'regex:/^[0-9 +().-]{6,30}$/'],
+            'contactos.*.cargo' => ['nullable', 'string', 'max:80'],
+            'contactos.*.es_principal' => ['nullable', 'boolean'],
         ];
     }
 

@@ -4329,6 +4329,12 @@ paths:
                   description: 'Obligatorio para una empresa (NIT).'
                   type: string
                   nullable: true
+                contactos:
+                  description: 'Contactos de referencia. Una empresa que no los envía queda con quien registra la cuenta (`nombre` y `telefono`) como contacto principal.'
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ContactoEntrada'
+                  nullable: true
               type: object
       responses:
         201:
@@ -4375,6 +4381,153 @@ paths:
           description: 'El rol del token no es de cliente.'
         404:
           description: 'La cuenta no tiene ficha de cliente.'
+      security:
+        -
+          tokenDispositivo: []
+  /api/clientes/mi/contactos:
+    get:
+      tags:
+        - 'Contactos del cliente'
+      summary: 'Mis contactos de referencia'
+      description: 'Los contactos de referencia vigentes del cliente de la cuenta, el principal primero.'
+      operationId: listarMisContactos
+      responses:
+        200:
+          description: 'Contactos vigentes.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - contactos
+                properties:
+                  contactos:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ClienteContacto'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no es de cliente.'
+        404:
+          description: 'La cuenta no tiene ficha de cliente.'
+      security:
+        -
+          tokenDispositivo: []
+    post:
+      tags:
+        - 'Contactos del cliente'
+      summary: 'Agregar un contacto de referencia'
+      description: 'Agrega un contacto de referencia. El primero queda como principal.'
+      operationId: agregarContacto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactoEntrada'
+      responses:
+        201:
+          description: 'Contacto creado.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - contacto
+                properties:
+                  contacto:
+                    $ref: '#/components/schemas/ClienteContacto'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no es de cliente.'
+        404:
+          description: 'La cuenta no tiene ficha de cliente.'
+        422:
+          description: 'Datos inválidos o cliente suspendido.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/clientes/mi/contactos/{id}':
+    put:
+      tags:
+        - 'Contactos del cliente'
+      summary: 'Actualizar un contacto de referencia'
+      description: 'Corrige un contacto propio. Marcarlo como principal releva al anterior; desmarcar al principal no tiene efecto (se marca a otro).'
+      operationId: actualizarContacto
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactoEntrada'
+      responses:
+        200:
+          description: 'Contacto actualizado.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - contacto
+                properties:
+                  contacto:
+                    $ref: '#/components/schemas/ClienteContacto'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no es de cliente.'
+        404:
+          description: 'No existe o es de otro cliente.'
+        422:
+          description: 'Datos inválidos o cliente suspendido.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+    delete:
+      tags:
+        - 'Contactos del cliente'
+      summary: 'Dar de baja un contacto de referencia'
+      description: 'Baja lógica de un contacto propio. Las solicitudes ya creadas conservan a la persona elegida. Una empresa no puede quedarse sin contactos: dar de baja al último responde 422. Si era el principal, lo releva el más antiguo que quede.'
+      operationId: darDeBajaContacto
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        204:
+          description: 'Contacto dado de baja.'
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no es de cliente.'
+        404:
+          description: 'No existe o es de otro cliente.'
+        422:
+          description: 'Es el único contacto de una empresa.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
       security:
         -
           tokenDispositivo: []
@@ -4551,6 +4704,11 @@ paths:
                 terreno_id:
                   type: integer
                   example: 12
+                contacto_id:
+                  description: 'Contacto de referencia (uno de `GET /api/clientes/mi/contactos`). Opcional: una empresa que no elige usa su contacto principal.'
+                  type: integer
+                  example: 7
+                  nullable: true
                 tipo_aplicacion:
                   type: string
                   enum:
@@ -4624,7 +4782,7 @@ paths:
         404:
           description: 'El terreno no existe o es de otro cliente.'
         422:
-          description: 'Datos inválidos, hectáreas mayores a las del terreno o cliente suspendido.'
+          description: 'Datos inválidos, contacto que no es del cliente, empresa sin contactos, hectáreas mayores a las del terreno o cliente suspendido.'
           content:
             application/json:
               schema:
@@ -6590,11 +6748,17 @@ components:
           example: '64.00'
           nullable: true
         contacto:
-          description: 'Nombre y teléfono del cliente: se entregan solo tras adjudicar.'
+          description: 'La persona de contacto de la solicitud (nombre y teléfono) y, si el cliente es una empresa, su razón social: se entregan solo tras adjudicar. Las solicitudes sin contacto elegido traen el nombre y el teléfono del cliente.'
           properties:
             nombre:
               type: string
             telefono:
+              type: string
+              nullable: true
+            cargo:
+              type: string
+              nullable: true
+            empresa:
               type: string
               nullable: true
           type: object
@@ -6943,6 +7107,28 @@ components:
           type: string
           example: 'el trabajo referenciado no existe todavía'
       type: object
+    ContactoEntrada:
+      title: 'Contacto de referencia (datos que envía el cliente)'
+      description: 'Cuerpo de `POST /api/clientes/mi/contactos` y de `PUT /api/clientes/mi/contactos/{id}`. El primer contacto del cliente queda como principal; marcar otro como principal releva al anterior.'
+      required:
+        - nombre
+        - telefono
+      properties:
+        nombre:
+          description: "Contactos de referencia del cliente de la cuenta (`/clientes/mi/contactos`).\nAdaptador delgado (ADR 0008): las reglas y el alcance (solo lo propio, un id\najeno es 404) viven en {@see GestionarContactos}."
+          type: string
+          example: 'Rosa Condori Vargas'
+        telefono:
+          type: string
+          example: '+591 76543210'
+        cargo:
+          type: string
+          example: 'Encargada de campo'
+          nullable: true
+        es_principal:
+          type: boolean
+          nullable: true
+      type: object
     EstimacionSolicitud:
       title: 'Estimación de una solicitud'
       required:
@@ -7004,6 +7190,33 @@ components:
           type: integer
           nullable: true
       type: object
+    ClienteContacto:
+      title: 'Contacto de referencia del cliente'
+      description: 'Persona con quien el proveedor coordina el servicio. Una empresa tiene al menos uno; un cliente persona puede no tener. Se entrega al proveedor solo tras adjudicar la solicitud.'
+      required:
+        - id
+        - nombre
+        - telefono
+        - es_principal
+      properties:
+        id:
+          type: integer
+          example: 7
+        nombre:
+          type: string
+          example: 'Rosa Condori Vargas'
+        telefono:
+          type: string
+          example: '+591 76543210'
+        cargo:
+          type: string
+          example: 'Encargada de campo'
+          nullable: true
+        es_principal:
+          description: 'El contacto que se usa cuando una solicitud no elige otro. Hay uno solo.'
+          type: boolean
+          example: true
+      type: object
     Cliente:
       title: Cliente
       description: 'Quien solicita el servicio de fumigación y califica al proveedor (especificación §4.1).'
@@ -7050,6 +7263,11 @@ components:
           description: 'Verdadero si la publicación de solicitudes está limitada hasta una revisión por calificación baja (política de calificación).'
           type: boolean
           example: false
+        contactos:
+          description: 'Contactos de referencia vigentes, el principal primero. Una empresa tiene al menos uno.'
+          type: array
+          items:
+            $ref: '#/components/schemas/ClienteContacto'
         aviso_calificacion:
           description: 'Verdadero si el promedio bajó del umbral y hay un aviso vigente.'
           type: boolean
@@ -7081,6 +7299,11 @@ components:
         terreno_id:
           type: integer
           example: 12
+        contacto_id:
+          description: 'Contacto de referencia elegido; una empresa que no elige usa su contacto principal. Nulo en un cliente persona sin contacto.'
+          type: integer
+          example: 7
+          nullable: true
         tipo_aplicacion:
           type: string
           enum:
@@ -7183,6 +7406,11 @@ components:
             - proveedor
             - administrador
             - sistema
+        contacto:
+          nullable: true
+          allOf:
+            -
+              $ref: '#/components/schemas/ClienteContacto'
         terreno:
           $ref: '#/components/schemas/Terreno'
         historial:
@@ -7329,6 +7557,9 @@ tags:
   -
     name: Clientes
     description: 'Registro y perfil del cliente del marketplace, que solicita el servicio y califica al proveedor (ADR 0027).'
+  -
+    name: 'Contactos del cliente'
+    description: 'Personas de referencia del cliente (en una empresa, quienes coordinan el servicio con el proveedor). El proveedor recibe sus datos solo tras adjudicar.'
   -
     name: Solicitudes
     description: 'El cliente pide, consulta, publica y cancela servicios de fumigación (ADR 0027). Sin cobro en la app en la versión 1.'

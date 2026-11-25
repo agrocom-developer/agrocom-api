@@ -17,17 +17,20 @@ use Illuminate\Support\Carbon;
  * `POST /solicitudes`). Es idempotente por `uuid_cliente` (invariante 1 de
  * CLAUDE.md): reintentar el mismo uuid devuelve la solicitud ya creada y nunca
  * una segunda. El precio por hectárea propuesto puede venir al crearla o fijarse
- * antes de publicar; es obligatorio para abrirla al mercado.
+ * antes de publicar; es obligatorio para abrirla al mercado. El contacto de
+ * referencia se elige entre los del cliente; una empresa sin elección usa su
+ * contacto principal.
  */
 final class CrearSolicitud
 {
     public function __construct(
         private readonly ClienteDeLaCuenta $clientes,
         private readonly MaquinaEstadosSolicitud $estados,
+        private readonly GestionarContactos $contactos,
     ) {}
 
     /**
-     * @param  array{uuid_cliente: string, terreno_id: int, tipo_aplicacion: string, hectareas_solicitadas: string|int|float, cultivo?: ?string, producto_indicado: string, aporta_producto?: ?string, ventana_desde: string, ventana_hasta: string, urgente?: ?bool, observaciones?: ?string, precio_ha_propuesto?: string|int|float|null}  $datos
+     * @param  array{uuid_cliente: string, terreno_id: int, contacto_id?: ?int, tipo_aplicacion: string, hectareas_solicitadas: string|int|float, cultivo?: ?string, producto_indicado: string, aporta_producto?: ?string, ventana_desde: string, ventana_hasta: string, urgente?: ?bool, observaciones?: ?string, precio_ha_propuesto?: string|int|float|null}  $datos
      * @return array{0: SolicitudServicio, 1: bool} la solicitud y si se creó ahora (`false` = reintento).
      *
      * @throws SolicitudInvalida
@@ -47,6 +50,8 @@ final class CrearSolicitud
             throw SolicitudInvalida::terrenoAjeno();
         }
 
+        $contacto = $this->contactos->paraSolicitud($cliente, isset($datos['contacto_id']) ? (int) $datos['contacto_id'] : null);
+
         $hectareas = BigDecimal::of((string) $datos['hectareas_solicitadas']);
         if ($hectareas->isGreaterThan(BigDecimal::of($terreno->hectareas))) {
             throw SolicitudInvalida::hectareasExcedenTerreno((string) $hectareas, $terreno->hectareas);
@@ -65,6 +70,7 @@ final class CrearSolicitud
             'uuid_cliente' => $datos['uuid_cliente'],
             'cliente_id' => $cliente->id,
             'terreno_id' => $terreno->id,
+            'contacto_id' => $contacto?->id,
             'tipo_aplicacion' => TipoAplicacionServicio::from($datos['tipo_aplicacion']),
             'hectareas_solicitadas' => (string) $hectareas,
             'cultivo' => $datos['cultivo'] ?? $terreno->cultivo,

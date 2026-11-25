@@ -7,6 +7,8 @@ use App\Dominios\Seguridad\Contratos\CuentaDuplicada;
 use App\Dominios\Seguridad\Contratos\IdentidadOperarioToken;
 use App\Dominios\Solicitudes\Aplicacion\RegistrarCliente;
 use App\Dominios\Solicitudes\Dominio\Excepciones\ClienteDuplicado;
+use App\Dominios\Solicitudes\Dominio\Excepciones\SolicitudInvalida;
+use App\Dominios\Solicitudes\Dominio\TipoCliente;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Solicitudes\Infraestructura\Http\Requests\RegistrarClienteRequest;
 use App\Dominios\Solicitudes\Infraestructura\Http\Resources\ClienteResource;
@@ -50,6 +52,7 @@ final class ClientesController
                     new OA\Property(property: 'telefono', type: 'string', example: '+591 76543210'),
                     new OA\Property(property: 'razon_social', description: 'Obligatoria para una empresa; si falta, se usa el nombre.', type: 'string', nullable: true),
                     new OA\Property(property: 'documento_fiscal', description: 'Obligatorio para una empresa (NIT).', type: 'string', nullable: true),
+                    new OA\Property(property: 'contactos', description: 'Contactos de referencia. Una empresa que no los envía queda con quien registra la cuenta (`nombre` y `telefono`) como contacto principal.', type: 'array', items: new OA\Items(ref: '#/components/schemas/ContactoEntrada'), nullable: true),
                 ],
                 type: 'object',
             ),
@@ -68,8 +71,13 @@ final class ClientesController
     public function store(RegistrarClienteRequest $request): JsonResponse
     {
         try {
-            $cliente = $this->registrar->ejecutar($request->validated());
-        } catch (CuentaDuplicada|ClienteDuplicado $excepcion) {
+            $datos = $request->validated();
+            if ($datos['tipo'] === TipoCliente::Empresa->value && empty($datos['contactos'])) {
+                $datos['contactos'] = [['nombre' => $datos['nombre'], 'telefono' => $datos['telefono']]];
+            }
+
+            $cliente = $this->registrar->ejecutar($datos)->load('contactos');
+        } catch (CuentaDuplicada|ClienteDuplicado|SolicitudInvalida $excepcion) {
             return RechazoDeDominio::respuesta($excepcion);
         }
 
@@ -94,7 +102,7 @@ final class ClientesController
     {
         abort_unless($this->identidad->tienePermiso($request, 'solicitudes.cliente.gestionar'), 403, __('aprobacion.errores.sin_permiso'));
 
-        $cliente = Cliente::query()->where('usuario_id', (int) Auth::guard('sanctum')->id())->first();
+        $cliente = Cliente::query()->with('contactos')->where('usuario_id', (int) Auth::guard('sanctum')->id())->first();
 
         abort_if($cliente === null, 404, __('solicitudes.errores.sin_cliente'));
 

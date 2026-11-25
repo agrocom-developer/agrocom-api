@@ -80,7 +80,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'precio_ha_acordado', description: 'El precio de la oferta adjudicada.', type: 'string', nullable: true, example: '118.0000'),
         new OA\Property(property: 'hectareas_ejecutadas', type: 'string', nullable: true, example: '51.2000'),
         new OA\Property(property: 'porcentaje_avance', type: 'string', nullable: true, example: '64.00'),
-        new OA\Property(property: 'contacto', description: 'Nombre y teléfono del cliente: se entregan solo tras adjudicar.', properties: [new OA\Property(property: 'nombre', type: 'string'), new OA\Property(property: 'telefono', type: 'string', nullable: true)], type: 'object', nullable: true),
+        new OA\Property(property: 'contacto', description: 'La persona de contacto de la solicitud (nombre y teléfono) y, si el cliente es una empresa, su razón social: se entregan solo tras adjudicar. Las solicitudes sin contacto elegido traen el nombre y el teléfono del cliente.', properties: [new OA\Property(property: 'nombre', type: 'string'), new OA\Property(property: 'telefono', type: 'string', nullable: true), new OA\Property(property: 'cargo', type: 'string', nullable: true), new OA\Property(property: 'empresa', type: 'string', nullable: true)], type: 'object', nullable: true),
         new OA\Property(property: 'updated_at', description: 'Posición del cursor de esta sección.', type: 'string', format: 'date-time', example: '2026-12-01T12:00:00+00:00'),
     ],
     type: 'object',

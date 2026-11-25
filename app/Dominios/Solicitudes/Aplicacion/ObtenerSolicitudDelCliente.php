@@ -21,7 +21,7 @@ final class ObtenerSolicitudDelCliente
 
         $solicitud = SolicitudServicio::query()
             ->where('cliente_id', $cliente->id)
-            ->with(['terreno.fotos', 'historial'])
+            ->with(['terreno.fotos', 'contacto', 'historial'])
             ->find($solicitudId);
 
         if ($solicitud === null) {

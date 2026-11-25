@@ -22,6 +22,7 @@ use Illuminate\Support\Carbon;
  * @property string $uuid_cliente
  * @property int $cliente_id
  * @property int $terreno_id
+ * @property int|null $contacto_id
  * @property TipoAplicacionServicio $tipo_aplicacion
  * @property string $hectareas_solicitadas
  * @property string|null $cultivo
@@ -54,6 +55,7 @@ use Illuminate\Support\Carbon;
  * @property ActorSolicitud|null $cancelada_por
  * @property-read Terreno $terreno
  * @property-read Cliente $cliente
+ * @property-read ClienteContacto|null $contacto
  */
 class SolicitudServicio extends ModeloDominio
 {
@@ -72,6 +74,7 @@ class SolicitudServicio extends ModeloDominio
         'uuid_cliente',
         'cliente_id',
         'terreno_id',
+        'contacto_id',
         'tipo_aplicacion',
         'hectareas_solicitadas',
         'cultivo',
@@ -90,6 +93,7 @@ class SolicitudServicio extends ModeloDominio
         return [
             'cliente_id' => 'integer',
             'terreno_id' => 'integer',
+            'contacto_id' => 'integer',
             'proveedor_id' => 'integer',
             'equipo_id' => 'integer',
             'tipo_aplicacion' => TipoAplicacionServicio::class,
@@ -123,6 +127,12 @@ class SolicitudServicio extends ModeloDominio
     public function terreno(): BelongsTo
     {
         return $this->belongsTo(Terreno::class, 'terreno_id');
+    }
+
+    /** @return BelongsTo<ClienteContacto, $this> Con los dados de baja: la solicitud conserva a la persona elegida. */
+    public function contacto(): BelongsTo
+    {
+        return $this->belongsTo(ClienteContacto::class, 'contacto_id')->withTrashed();
     }
 
     /** @return BelongsTo<Cliente, $this> */

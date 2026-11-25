@@ -34,6 +34,10 @@ return [
         'urgente' => 'urgencia',
         'observaciones' => 'observaciones',
         'motivo' => 'motivo',
+        'contacto_id' => 'contacto de referencia',
+        'cargo' => 'cargo',
+        'es_principal' => 'contacto principal',
+        'contactos' => 'contactos de referencia',
     ],
 
     'errores' => [
@@ -57,6 +61,10 @@ return [
         'precio_excede_maximo' => 'El precio por hectárea no puede pasar de :maximo.',
         'precio_no_editable' => 'El precio ya no se puede cambiar: la solicitud fue adjudicada o terminó.',
         'no_renovable' => 'La solicitud ya no se puede renovar: pasó el plazo. Crea una nueva.',
+        'contacto_ajeno' => 'El contacto no existe.',
+        'contacto_no_valido' => 'Elige uno de tus contactos de referencia.',
+        'contacto_requerido' => 'Una empresa necesita al menos un contacto de referencia. Agrégalo en tus contactos.',
+        'ultimo_contacto_de_empresa' => 'Una empresa necesita al menos un contacto de referencia. Agrega otro antes de dar de baja a este.',
         'transicion_no_permitida' => 'La solicitud no puede pasar de «:desde» a «:hacia».',
     ],
 
