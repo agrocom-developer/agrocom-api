@@ -11,7 +11,6 @@ use App\Dominios\Flota\Infraestructura\Eloquent\Dron as DronMarketplace;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Dron as DronOperativo;
 use App\Dominios\Proveedores\Aplicacion\CargarDocumento;
 use App\Dominios\Proveedores\Aplicacion\ProcesarVencimientos;
-use App\Dominios\Proveedores\Aplicacion\RegistrarAuxiliar;
 use App\Dominios\Proveedores\Aplicacion\RegistrarPiloto;
 use App\Dominios\Proveedores\Aplicacion\RegistrarProveedor;
 use App\Dominios\Proveedores\Aplicacion\ResolverAprobacion;
@@ -32,11 +31,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Marketplace: proveedores, pilotos, auxiliares, drones, equipos y clientes con
+ * Marketplace: proveedores, pilotos, drones, equipos y clientes con
  * datos creíbles de Santa Cruz (ADR 0028, 0029, 0032). Cubre cada estado de la
  * cola de aprobación para que el panel se vea vivo:
  *
- * - Agrocom (propio): aprobado, con dos pilotos, un auxiliar, tres drones
+ * - Agrocom (propio): aprobado, con dos pilotos, tres drones
  *   (enlazados a los de `ope_drones`) y dos equipos.
  * - Mamani Agroservicios (independiente): aprobado, con su dron y su equipo.
  * - Fumigaciones del Oriente SRL (tercero): aprobado, con un piloto pendiente,
@@ -62,7 +61,6 @@ class ProveedoresDemoSeeder extends Seeder
     public function __construct(
         private readonly RegistrarProveedor $registrarProveedor,
         private readonly RegistrarPiloto $registrarPiloto,
-        private readonly RegistrarAuxiliar $registrarAuxiliar,
         private readonly RegistrarCliente $registrarCliente,
         private readonly RegistrarDron $registrarDron,
         private readonly CrearEquipo $crearEquipo,
@@ -115,14 +113,10 @@ class ProveedoresDemoSeeder extends Seeder
             'password' => self::PASSWORD, 'licencia_numero' => 'RPA-1204', 'licencia_vence' => now()->addMonths(11)->toDateString(),
             'categoria_habilitacion' => 'RPAS agrícola',
         ]);
-        $diego = $this->registrarAuxiliar->ejecutar($this->admin, [
-            'nombre' => 'Diego Parada Cuéllar', 'username' => 'diego.parada', 'email' => null, 'password' => self::PASSWORD,
-        ]);
 
         foreach ([$rodrigo, $valeria] as $piloto) {
             $this->documentosYAprobacion(TipoSujeto::Piloto, $piloto->id);
         }
-        $this->documentosYAprobacion(TipoSujeto::Auxiliar, $diego->id);
 
         // Los tres drones de la flota operativa de Agrocom entran al marketplace
         // enlazados a su fila de `ope_drones` (la ejecución en el lote los usa).
@@ -147,7 +141,7 @@ class ProveedoresDemoSeeder extends Seeder
         }
 
         $desde = now()->subMonth()->toDateString();
-        $this->crearEquipo->ejecutar($this->admin, $rodrigo->id, $drones['AG-02']->id, $diego->id, $desde);
+        $this->crearEquipo->ejecutar($this->admin, $rodrigo->id, $drones['AG-02']->id, null, $desde);
         $this->crearEquipo->ejecutar($this->admin, $valeria->id, $drones['AG-07']->id, null, $desde);
     }
 
@@ -172,12 +166,7 @@ class ProveedoresDemoSeeder extends Seeder
         ]);
         $this->documentosYAprobacion(TipoSujeto::Dron, $dron->id);
 
-        $auxiliar = $this->registrarAuxiliar->ejecutar($proveedor->usuario_titular_id, [
-            'nombre' => 'Esteban Choque Ramos', 'username' => 'esteban.choque', 'email' => null, 'password' => self::PASSWORD,
-        ]);
-        $this->documentosYAprobacion(TipoSujeto::Auxiliar, $auxiliar->id);
-
-        $this->crearEquipo->ejecutar($proveedor->usuario_titular_id, $piloto->id, $dron->id, $auxiliar->id, now()->subWeeks(3)->toDateString());
+        $this->crearEquipo->ejecutar($proveedor->usuario_titular_id, $piloto->id, $dron->id, null, now()->subWeeks(3)->toDateString());
     }
 
     private function terceroAprobado(): void
@@ -204,11 +193,6 @@ class ProveedoresDemoSeeder extends Seeder
         // Iván todavía no cargó sus antecedentes: queda pendiente con lo que ya subió en revisión.
         $this->subirDocumentos(TipoSujeto::Piloto, $ivan->id, ['identidad', 'licencia_piloto']);
 
-        $lucia = $this->registrarAuxiliar->ejecutar($titular, [
-            'nombre' => 'Lucía Flores Justiniano', 'username' => 'lucia.flores', 'email' => null, 'password' => self::PASSWORD,
-        ]);
-        $this->documentosYAprobacion(TipoSujeto::Auxiliar, $lucia->id);
-
         $uno = $this->registrarDron->ejecutar($titular, [
             'marca' => 'DJI', 'modelo' => 'Agras T40', 'numero_serie' => '1WNDH2K00A0522', 'capacidad_tanque_l' => '40.00', 'ancho_pasada_m' => '11.00',
         ]);
@@ -227,7 +211,7 @@ class ProveedoresDemoSeeder extends Seeder
         // El P100 Pro todavía espera revisión: sus documentos están cargados, sin revisar.
         $this->subirDocumentos(TipoSujeto::Dron, $tres->id, RequisitosDocumentales::POR_DEFECTO['dron']);
 
-        $this->crearEquipo->ejecutar($titular, $marcelo->id, $uno->id, $lucia->id, now()->subWeeks(5)->toDateString());
+        $this->crearEquipo->ejecutar($titular, $marcelo->id, $uno->id, null, now()->subWeeks(5)->toDateString());
     }
 
     private function independientePendiente(): void

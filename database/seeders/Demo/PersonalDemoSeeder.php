@@ -20,7 +20,7 @@ use Illuminate\Database\Seeder;
 
 /**
  * Bases, personas, cuentas internas con sus roles, preferencias, tokens de
- * dispositivo y el catálogo de accesorios de cuadrilla.
+ * dispositivo y el catálogo de accesorios.
  *
  * Se suma a las cuatro personas y la base que ya cargó el dueño (Miguelito
  * Justiniano, Jorge Sheidel, David Rios, Abraham Coimbra; CENTRAL SANTA
@@ -48,14 +48,6 @@ class PersonalDemoSeeder extends Seeder
 
     public const CI_PILOTO_RODRIGO = '7890123';
 
-    public const CI_AUXILIAR_LUIS = '8901234';
-
-    public const CI_AUXILIAR_WILDER = '9012345';
-
-    public const CI_AUXILIAR_DANIELA = '9123456';
-
-    public const CI_AUXILIAR_PEDRO = '9234567';
-
     public const BASE_CENTRAL = 'CENTRAL SANTA CRUZ';
 
     public const BASE_PAILON = 'BASE PAILÓN';
@@ -82,10 +74,6 @@ class PersonalDemoSeeder extends Seeder
         ['Abraham', 'Gutiérrez', 'Contreras', self::CI_JEFE_CAMPO, '70033445', 'abraham.gutierrez@agrocom.demo', RolOperativoPersona::JefeCampo, self::BASE_PAILON, 'abraham.gutierrez', ['jefe_campo', 'piloto']],
         ['Josué', 'Haenke', 'Paz', self::CI_PILOTO_JOSUE, '70044556', 'josue.haenke@agrocom.demo', RolOperativoPersona::Piloto, self::BASE_PAILON, 'josue.haenke', ['piloto']],
         ['Rodrigo', 'Peña', 'Suárez', self::CI_PILOTO_RODRIGO, '70055667', 'rodrigo.pena@agrocom.demo', RolOperativoPersona::Piloto, self::BASE_SAN_JULIAN, 'rodrigo.pena', ['piloto']],
-        ['Luis Fernando', 'Mamani', 'Quispe', self::CI_AUXILIAR_LUIS, '70066778', null, RolOperativoPersona::Auxiliar, self::BASE_PAILON, 'luis.mamani', ['auxiliar']],
-        ['Wilder', 'Choque', 'Flores', self::CI_AUXILIAR_WILDER, '70077889', null, RolOperativoPersona::Auxiliar, self::BASE_PAILON, null, []],
-        ['Daniela', 'Rojas', 'Vaca', self::CI_AUXILIAR_DANIELA, '70088990', 'daniela.rojas@agrocom.demo', RolOperativoPersona::Auxiliar, self::BASE_SAN_JULIAN, 'daniela.rojas', ['auxiliar']],
-        ['Pedro', 'Vaca', 'Roca', self::CI_AUXILIAR_PEDRO, '70099001', null, RolOperativoPersona::Auxiliar, self::BASE_CENTRAL, null, []],
     ];
 
     /**
@@ -176,15 +164,6 @@ class PersonalDemoSeeder extends Seeder
             if ($username !== null) {
                 $this->cuenta($persona, $username, $correo, $roles);
             }
-        }
-
-        // Pedro integró la cuadrilla de invierno que ya cerró: queda inactivo
-        // para que el listado de personal muestre los dos casos.
-        $pedro = $this->personaPorCi(self::CI_AUXILIAR_PEDRO);
-
-        if ($pedro !== null && $pedro->activo) {
-            $pedro->activo = false;
-            $pedro->save();
         }
     }
 

@@ -2,7 +2,7 @@
 
 /*
  * Genera los ejemplos reales de `docs/api/ejemplos/`: ejecuta el recorrido de
- * las apps (cliente, piloto, auxiliar) contra la API de verdad, request por
+ * las apps (cliente y piloto) contra la API de verdad, request por
  * request, y guarda cada intercambio como un fixture JSON.
  *
  * No va dentro de `app/`: es una herramienta de contrato, no código de
