@@ -14,14 +14,18 @@
         "estado": 201,
         "cuerpo": {
             "mensaje": {
-                "id": 16,
+                "id": 33,
                 "uuid_cliente": "9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e21",
                 "solicitud_id": 18,
                 "autor_rol": "cliente",
                 "propio": true,
+                "tipo": "texto",
+                "evento": null,
                 "texto": "Hola, ¿qué día pueden venir?",
+                "url": null,
+                "bytes": null,
                 "leido_en": null,
-                "creado_en": "2026-11-24T18:56:45+00:00"
+                "creado_en": "2026-11-25T17:56:12+00:00"
             }
         }
     }

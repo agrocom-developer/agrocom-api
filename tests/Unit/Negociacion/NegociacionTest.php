@@ -15,12 +15,14 @@ use App\Dominios\Negociacion\Aplicacion\Mensajeria;
 use App\Dominios\Negociacion\Aplicacion\MercadoDeSolicitudes;
 use App\Dominios\Negociacion\Aplicacion\Negociar;
 use App\Dominios\Negociacion\Aplicacion\PreferenciasDeAviso;
+use App\Dominios\Negociacion\Aplicacion\Presentacion;
 use App\Dominios\Negociacion\Aplicacion\ProcesarNegociacion;
 use App\Dominios\Negociacion\Aplicacion\Seguimiento;
 use App\Dominios\Negociacion\Aplicacion\UbicacionDelPiloto;
 use App\Dominios\Negociacion\Contratos\Eventos\AvisoDeNegociacion;
 use App\Dominios\Negociacion\Dominio\Excepciones\NegociacionInvalida;
 use App\Dominios\Negociacion\Infraestructura\Eloquent\Oferta;
+use App\Dominios\Negociacion\Infraestructura\Oyentes\RegistrarEventoEnElChat;
 use App\Dominios\Proveedores\Contratos\DatosPiloto;
 use App\Dominios\Proveedores\Contratos\DatosProveedor;
 use App\Dominios\Proveedores\Contratos\LecturaProveedores;
@@ -77,6 +79,7 @@ function negMundo(): void
         'agrega_negociacion_a_sol_solicitudes_servicio',
         'crea_sol_cliente_contactos',
         'create_neg_tablas_de_negociacion',
+        'agrega_adjuntos_y_eventos_a_neg_mensajes',
         'create_neg_pagos_confirmados_table',
         'create_neg_precios_finales_confirmados_table',
         'create_sol_terreno_fotos_table',
@@ -625,6 +628,62 @@ test('el chat entrega por cursor, es idempotente y solo lo usan las dos partes',
         ->and(negCodigo(fn () => $chat->enviar(NEG_TITULAR_8, $solicitud, (string) Str::uuid(), 'Intruso')))->toBe('solicitud_ajena:404')
         ->and(negCodigo(fn () => $chat->enviar(NEG_OTRO_CLIENTE, $solicitud, (string) Str::uuid(), 'Intruso')))->toBe('solicitud_ajena:404');
     Event::assertDispatched(AvisoDeNegociacion::class, fn (AvisoDeNegociacion $e): bool => $e->tipo === 'mensaje_nuevo' && $e->usuarios === [NEG_TITULAR_7, NEG_PILOTO_7]);
+});
+
+test('el chat admite fotos con las reglas de las evidencias: peso máximo, disco privado, idempotencia y solo las dos partes', function () {
+    negMundo();
+    [$solicitud] = negAdjudicada();
+    $chat = app(Mensajeria::class);
+    $uuid = (string) Str::uuid();
+
+    [$foto, $creada] = $chat->enviarFoto(NEG_CLIENTE, $solicitud, $uuid, UploadedFile::fake()->image('lote.jpg')->size(120), '  Así está el lote ');
+    [$mismo, $reintento] = $chat->enviarFoto(NEG_CLIENTE, $solicitud, $uuid, UploadedFile::fake()->image('lote.jpg')->size(120), null);
+
+    expect($creada)->toBeTrue()->and($reintento)->toBeFalse()->and($mismo->id)->toBe($foto->id)
+        ->and($foto->tipo)->toBe('foto')->and($foto->texto)->toBe('Así está el lote')->and($foto->bytes)->toBeGreaterThan(0)
+        ->and($foto->hash)->toHaveLength(64)
+        ->and($foto->archivo)->toStartWith("mensajes/{$solicitud}/");
+    Storage::disk('local')->assertExists($foto->archivo);
+
+    $presentado = Presentacion::mensaje($foto, NEG_CLIENTE);
+    expect($presentado['tipo'])->toBe('foto')->and($presentado['url'])->toBe("/api/mensajes/{$foto->id}/archivo")->and($presentado['propio'])->toBeTrue()
+        ->and(Presentacion::mensaje($foto, NEG_TITULAR_7)['propio'])->toBeFalse()
+        ->and($chat->archivoDeFoto(NEG_PILOTO_7, $foto->id)[1])->toContain($foto->archivo)
+        ->and(negCodigo(fn () => $chat->archivoDeFoto(NEG_TITULAR_8, $foto->id)))->toBe('solicitud_ajena:404')
+        ->and(negCodigo(fn () => $chat->archivoDeFoto(NEG_CLIENTE, 99999)))->toBe('evidencia_ajena:404')
+        ->and(negCodigo(fn () => $chat->archivoDeFoto(NEG_OTRO_CLIENTE, $foto->id)))->toBe('solicitud_ajena:404')
+        ->and(negCodigo(fn () => $chat->enviarFoto(NEG_CLIENTE, $solicitud, (string) Str::uuid(), UploadedFile::fake()->image('grande.jpg')->size(301), null)))->toBe('evidencia_muy_grande:422')
+        ->and(negCodigo(fn () => $chat->enviarFoto(NEG_CLIENTE, $solicitud, (string) Str::uuid(), UploadedFile::fake()->image('x.jpg')->size(50), str_repeat('x', 281))))->toBe('mensaje_invalido:422')
+        ->and(negCodigo(fn () => $chat->enviarFoto(NEG_OTRO_CLIENTE, $solicitud, (string) Str::uuid(), UploadedFile::fake()->image('x.jpg')->size(50), null)))->toBe('solicitud_ajena:404')
+        ->and(negCodigo(fn () => $chat->enviarFoto(NEG_PILOTO_7, $solicitud, $uuid, UploadedFile::fake()->image('x.jpg')->size(50), null)))->toBe('uuid_en_uso:422')
+        ->and($chat->listar(NEG_TITULAR_7, $solicitud, null, 50)['mensajes'])->toHaveCount(1);
+    Event::assertDispatched(AvisoDeNegociacion::class, fn (AvisoDeNegociacion $e): bool => $e->tipo === 'mensaje_nuevo' && $e->usuarios === [NEG_TITULAR_7, NEG_PILOTO_7]);
+});
+
+test('los hechos de la solicitud dejan una línea de sistema en el chat, una sola vez, sin autor y sin marcarse como leída', function () {
+    negMundo();
+    [$solicitud] = negAdjudicada();
+    $chat = app(Mensajeria::class);
+    $oyente = app(RegistrarEventoEnElChat::class);
+    $aviso = new AvisoDeNegociacion('ejecucion_iniciada', "ejecucion_iniciada:{$solicitud}", ['solicitud' => $solicitud], $solicitud, [NEG_CLIENTE]);
+
+    $oyente->handle($aviso);
+    $oyente->handle($aviso);
+    $oyente->handle(new AvisoDeNegociacion('solicitud_finalizada', "solicitud_finalizada:{$solicitud}", ['solicitud' => $solicitud, 'monto' => '9263.00'], $solicitud, [NEG_CLIENTE]));
+    $oyente->handle(new AvisoDeNegociacion('mensaje_nuevo', 'mensaje_nuevo:1', ['solicitud' => $solicitud], $solicitud, [NEG_CLIENTE]));
+    $chat->enviar(NEG_CLIENTE, $solicitud, (string) Str::uuid(), 'Gracias');
+
+    $pagina = $chat->listar(NEG_CLIENTE, $solicitud, null, 50);
+    [$inicio, $fin, $texto] = $pagina['mensajes'];
+
+    expect($pagina['mensajes'])->toHaveCount(3)
+        ->and($inicio->tipo)->toBe('sistema')->and($inicio->evento)->toBe('servicio_iniciado')->and($inicio->autor_rol)->toBe('sistema')
+        ->and($inicio->autor_usuario_id)->toBeNull()->and($inicio->texto)->toBe('El piloto inició el servicio.')
+        ->and($fin->evento)->toBe('servicio_finalizado')->and($fin->texto)->toBe('El piloto finalizó el servicio. Precio final: 9263.00.')
+        ->and(Presentacion::mensaje($inicio, NEG_CLIENTE))->toMatchArray(['tipo' => 'sistema', 'evento' => 'servicio_iniciado', 'propio' => false, 'url' => null])
+        ->and($texto->tipo)->toBe('texto')
+        ->and($chat->marcarLeidos(NEG_TITULAR_7, $solicitud, $texto->id))->toBe(1)
+        ->and(DB::table('neg_mensajes')->where('tipo', 'sistema')->whereNotNull('leido_en')->count())->toBe(0);
 });
 
 test('el chat pasa a solo lectura al cerrarse el plazo de calificación', function () {

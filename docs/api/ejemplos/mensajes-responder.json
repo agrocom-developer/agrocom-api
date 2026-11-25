@@ -14,14 +14,18 @@
         "estado": 201,
         "cuerpo": {
             "mensaje": {
-                "id": 17,
+                "id": 34,
                 "uuid_cliente": "9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e22",
                 "solicitud_id": 18,
                 "autor_rol": "proveedor",
                 "propio": true,
+                "tipo": "texto",
+                "evento": null,
                 "texto": "El jueves temprano, si el viento lo permite.",
+                "url": null,
+                "bytes": null,
                 "leido_en": null,
-                "creado_en": "2026-11-24T18:56:45+00:00"
+                "creado_en": "2026-11-25T17:56:12+00:00"
             }
         }
     }

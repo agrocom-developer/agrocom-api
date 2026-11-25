@@ -1386,7 +1386,7 @@ paths:
       tags:
         - Mensajes
       summary: 'Enviar un mensaje'
-      description: 'Escribe un mensaje a la otra parte. Idempotente por `uuid_cliente`: reintentar responde 200 con el mismo mensaje. Se avisa a la otra parte. Con el plazo cerrado responde 409 `chat_cerrado`.'
+      description: 'Escribe un mensaje de texto a la otra parte (las fotos van por `POST /api/solicitudes/{id}/mensajes/fotos`). Idempotente por `uuid_cliente`: reintentar responde 200 con el mismo mensaje. Se avisa a la otra parte. Con el plazo cerrado responde 409 `chat_cerrado`.'
       operationId: enviarMensaje
       parameters:
         -
@@ -1452,6 +1452,115 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/solicitudes/{id}/mensajes/fotos':
+    post:
+      tags:
+        - Mensajes
+      summary: 'Enviar una foto'
+      description: 'Envía una foto a la otra parte (multipart): menos de 300 KB (la app la comprime antes; si no, 422 `evidencia_muy_grande`), jpg, png o webp, con un pie opcional de hasta 280 caracteres. Se guarda en el disco privado y se descarga con `GET /api/mensajes/{id}/archivo`. Idempotente por `uuid_cliente`: reintentar responde 200 con el mismo mensaje. Se avisa a la otra parte. Con el plazo cerrado responde 409 `chat_cerrado`.'
+      operationId: enviarFotoDeMensaje
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              required:
+                - uuid_cliente
+                - archivo
+              properties:
+                uuid_cliente:
+                  type: string
+                  format: uuid
+                archivo:
+                  type: string
+                  format: binary
+                texto:
+                  type: string
+                  nullable: true
+                  maxLength: 280
+              type: object
+      responses:
+        201:
+          description: 'Foto enviada.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - mensaje
+                properties:
+                  mensaje:
+                    $ref: '#/components/schemas/Mensaje'
+                type: object
+        200:
+          description: 'Reintento: el mensaje ya existía.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - mensaje
+                properties:
+                  mensaje:
+                    $ref: '#/components/schemas/Mensaje'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no usa el chat.'
+        404:
+          description: 'La solicitud no es de la cuenta.'
+        409:
+          description: '`chat_cerrado`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorConflicto'
+        422:
+          description: 'Archivo inválido o de 300 KB o más, o pie de más de 280 caracteres.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/mensajes/{id}/archivo':
+    get:
+      tags:
+        - Mensajes
+      summary: 'Descargar una foto del chat'
+      description: 'El archivo de una foto del chat, solo para las dos partes del servicio. Se sirve del disco privado, nunca por una URL pública.'
+      operationId: descargarFotoDeMensaje
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'La imagen.'
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no usa el chat.'
+        404:
+          description: 'No existe o es de otra cuenta.'
       security:
         -
           tokenDispositivo: []
@@ -5773,12 +5882,14 @@ components:
       type: object
     Mensaje:
       title: 'Mensaje del chat'
+      description: 'Tres tipos: `texto`; `foto` (`url` apunta al archivo privado, `texto` es el pie y puede ir vacío); `sistema` (`evento` dice qué pasó: `solicitud_adjudicada`, `servicio_iniciado`, `servicio_finalizado` o `precio_final_confirmado`; `autor_rol` es `sistema`, `propio` es falso y nunca se marca como leído).'
       required:
         - id
         - uuid_cliente
         - solicitud_id
         - autor_rol
         - propio
+        - tipo
         - texto
         - creado_en
       properties:
@@ -5796,12 +5907,38 @@ components:
           enum:
             - cliente
             - proveedor
+            - sistema
         propio:
           description: 'Verdadero si lo escribió la cuenta que consulta.'
           type: boolean
+        tipo:
+          type: string
+          enum:
+            - texto
+            - foto
+            - sistema
+        evento:
+          description: 'Solo en los mensajes de sistema.'
+          type: string
+          nullable: true
+          enum:
+            - solicitud_adjudicada
+            - servicio_iniciado
+            - servicio_finalizado
+            - precio_final_confirmado
         texto:
+          description: 'El texto, el pie de la foto (puede ir vacío) o la línea del evento, ya en español.'
           type: string
           example: 'Llego el lunes temprano.'
+        url:
+          description: 'Solo en las fotos: ruta autenticada del archivo.'
+          type: string
+          example: /api/mensajes/121/archivo
+          nullable: true
+        bytes:
+          description: 'Peso de la foto.'
+          type: integer
+          nullable: true
         leido_en:
           type: string
           format: date-time
@@ -7437,7 +7574,7 @@ tags:
     description: 'Versionado y distribución del APK de agrocom-field (HU-20).'
   -
     name: Mensajes
-    description: 'Mensajes entre el cliente y el proveedor adjudicado, desde la adjudicación. Texto de hasta 1000 caracteres, sin adjuntos: las fotos van como evidencia.'
+    description: 'Mensajes entre el cliente y el proveedor adjudicado, desde la adjudicación. Texto de hasta 1000 caracteres, fotos de menos de 300 KB y líneas de sistema que el servidor escribe al cambiar la solicitud.'
   -
     name: Mercado
     description: 'El piloto ve en un mapa las solicitudes abiertas para decidir a qué zona ir con su equipo (los valles frente a la Chiquitania) y a cuáles ofertar.'

@@ -124,7 +124,9 @@ Finalizar no exige ningún otro tipo de registro operativo: solo `cierre` y las 
 ## 5. Mensajes
 
 - Solo entre el cliente y la cuenta de proveedor adjudicada (titular y piloto del equipo), desde `adjudicada`. Lectura y escritura hasta el cierre del plazo de calificación (7 días tras `finalizada`) o mientras haya una disputa abierta; después, solo lectura.
-- `texto` obligatorio, hasta 1000 caracteres, sin adjuntos (las fotos van como evidencia).
+- Cada mensaje tiene un `tipo`: `texto` (`texto` obligatorio, hasta 1000 caracteres), `foto` o `sistema`.
+- Foto: `POST /solicitudes/{id}/mensajes/fotos` (multipart: `uuid_cliente`, `archivo` jpg, png o webp, `texto` opcional como pie de hasta 280 caracteres). Reglas de las evidencias: menos de `seguimiento.evidencia_max_kb` (300; la app la comprime antes, si no 422 `evidencia_muy_grande`), disco privado, hash y peso guardados, idempotente por `uuid_cliente`. El mensaje trae `url` (`GET /mensajes/{id}/archivo`, solo las dos partes; otra cuenta 404). Escriben el cliente y la cuenta del proveedor adjudicado, y avisan a la otra parte como un mensaje de texto.
+- Sistema: líneas que escribe el servidor cuando la negociación avisa de un hecho de la solicitud, sin autor (`autor_rol` `sistema`, `propio` falso, nunca se marcan leídas): `solicitud_adjudicada`, `servicio_iniciado` («El piloto inició el servicio.»), `servicio_finalizado` y `precio_final_confirmado`. `evento` dice cuál y `texto` ya viene en español. Una por hecho (idempotente por la clave del aviso) y se escriben aunque el chat esté en solo lectura.
 - `GET /solicitudes/{id}/mensajes?despues={cursor}&limite=50` devuelve en orden de creación con cursor opaco; `POST` es idempotente por `uuid_cliente`; `POST /solicitudes/{id}/mensajes/leidos` marca hasta un cursor.
 - Entrega «instantánea»: el cliente consulta con sondeo corto (cada 5 segundos con el chat abierto) y recibe aviso push al llegar un mensaje. El contrato por cursor permite pasar a un canal en tiempo real sin cambiar los recursos (ADR 0040).
 
