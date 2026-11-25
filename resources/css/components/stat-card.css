@@ -64,8 +64,7 @@
     flex-shrink: 0;
 }
 
-/* Tono del contenedor del ícono por estado (segunda vuelta paleta Fiori,
-   17/9/2026): relleno SÓLIDO `-contrast-fill` + ícono blanco, no el par
+/* Tono del contenedor del ícono por estado (relleno SÓLIDO `-contrast-fill` + ícono blanco, no el par
    tenue `-subtle`/`-strong` anterior — pedido explícito del usuario, esta
    tarjeta KPI es justo donde el par tenue se leía "con poca opacity". Mismo
    criterio y mismos tokens que atoms/badge (ver badge.css).
@@ -190,18 +189,11 @@
     background: var(--ag-color-alert-contrast-fill);
 }
 
-/* Sans + tabular-nums (auditoría visual externa, obs. #7 — supera la regla
-   §8.7 anterior, "mono, nunca la display", documentado como tal en
-   sistema_diseno_panel.md): la versión mono (IBM Plex Mono) abría demasiado
-   el tracking de una cifra grande ("Bs 18.490" se leía espaciada/floja). La
-   sans (IBM Plex Base) + font-variant-numeric: tabular-nums da dígitos de
-   ancho fijo (se siguen alineando en columna, mismo motivo original de usar
-   mono) sin el tracking abierto — y sigue sin ser la display (IBM Plex Sans
-   Condensed): el titular de la página sigue siendo el único texto en esa
-   fuente. */
+/* Cifra protagonista en JetBrains Mono (el número manda, igual que en la app
+   móvil) con tabular-nums: dígitos de ancho fijo que se alinean en columna. */
 .ag-stat-card__value {
     margin: 0;
-    font-family: var(--ag-font-family-base);
+    font-family: var(--ag-font-family-mono);
     font-variant-numeric: tabular-nums;
     font-weight: var(--ag-font-weight-bold);
     letter-spacing: -0.02em;

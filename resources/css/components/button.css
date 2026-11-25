@@ -78,8 +78,7 @@
 .ag-button--outline {
     /* Borde en `-primary-emphasis` (verde, mismo tono que el texto) — antes
        `-border-strong` (gris neutro): igual inconsistencia que tenían
-       `--danger-outline`/`--warning-outline` antes de la segunda vuelta de
-       paleta Fiori (17/9/2026) y que ahí sí se corrigió — acá quedó
+       `--danger-outline`/`--warning-outline` y que ya se corrigió — acá quedó
        pendiente. Detectado 18/9/2026 al comparar "Editar" (borde ámbar
        vívido) vs "Aprobar" (borde gris casi invisible) en la misma fila de
        `contratos/index.blade.php`: mismo texto verde, un botón con borde a
@@ -108,12 +107,11 @@
 .ag-button--danger {
     /* Relleno sólido constante entre temas (mismo criterio que
        --ag-color-accent-contrast-fill), NO --ag-color-danger directo:
-       --ag-color-danger en oscuro es #ea868f, calibrado para TEXTO sobre
+       --ag-color-danger en oscuro es un rojo claro, calibrado para TEXTO sobre
        superficie oscura (chip), no para relleno sólido de botón — blanco
        sobre ese rosa claro se leía "deshabilitado" (auditoría visual
-       externa). --ag-color-danger-contrast-fill reutiliza --ag-color-red-600
-       (el mismo valor que ya usa --ag-color-danger en tema claro), AA 5.1:1
-       con texto blanco. */
+       externa). --ag-color-danger-contrast-fill es un rojo de marca
+       oscurecido, AA 5.2:1 con texto blanco. */
     background-color: var(--ag-color-danger-contrast-fill);
     color: var(--ag-color-gray-0);
 }
@@ -165,7 +163,7 @@
        texto 4.5:1) — mejor que danger pero igual no es el tono pensado
        para oscuro. `--ag-color-warning` (plano) en claro resuelve al
        MISMO ámbar-700 literal pedido, y en oscuro ya tiene su propio
-       aclarado (amber-300 `#f5a623`, ~6.37:1 contra la tarjeta oscura). */
+       aclarado (ámbar de marca del tema oscuro, ~7:1 contra la tarjeta oscura). */
     background-color: transparent;
     color: var(--ag-color-warning);
     border-color: var(--ag-color-warning);

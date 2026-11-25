@@ -527,7 +527,7 @@
     border: none;
     border-radius: var(--ag-radius-pill);
     background: transparent;
-    color: var(--ag-color-olive-150);
+    color: var(--ag-color-text-rail);
     cursor: pointer;
 }
 
@@ -550,7 +550,7 @@
 .ag-mobile-topbar__app {
     font-size: var(--ag-font-size-sm);
     font-weight: var(--ag-font-weight-bold);
-    color: var(--ag-color-olive-150);
+    color: var(--ag-color-text-rail);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -570,7 +570,7 @@
 /* Campana y avatar de mobile: BOTONES reales (11/9/2026, antes `<span>`
    decorativos sin `data-bs-toggle` — no abrían nada al tocarlos). Mismo
    objetivo táctil ≥44px que `.ag-mobile-topbar__menu-btn`; los tokens son
-   los constantes del riel (`olive`/`rail-*`), no los del tema — coherente
+   los constantes del riel (`rail-*`), no los del tema — coherente
    con que este header es "oscuro, constante entre temas" (docblock del
    componente). */
 .ag-mobile-topbar__bell-btn {
@@ -584,7 +584,7 @@
     border: none;
     border-radius: var(--ag-radius-pill);
     background: transparent;
-    color: var(--ag-color-olive-150);
+    color: var(--ag-color-text-rail);
     cursor: pointer;
 }
 
@@ -598,7 +598,7 @@
 .ag-mobile-topbar__bell-btn .ag-notification-badge {
     top: 6px;
     right: 6px;
-    background: var(--ag-color-red-600);
+    background: var(--ag-color-danger-contrast-fill);
 }
 
 .ag-mobile-topbar__avatar-btn {
@@ -638,7 +638,7 @@
    chrome claro de escritorio, ilegible sobre el fondo siempre-oscuro de
    este header. */
 .ag-mobile-topbar__theme-toggle {
-    color: var(--ag-color-olive-150);
+    color: var(--ag-color-text-rail);
 }
 
 .ag-mobile-topbar__theme-toggle:hover,

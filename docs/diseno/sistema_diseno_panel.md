@@ -13,119 +13,125 @@ Ubicación: `resources/css/tokens/`. Import único desde `resources/css/app.css`
 ### 1.1. Dos capas, deliberadamente separadas
 
 1. **Primitivos** (`tokens/primitives/`) — valores literales (hex). Ningún componente los usa directamente.
-   - `brand.css`: **solo** las rampas verde/ámbar de Agrocom. Es la única pieza del sistema atada a la identidad visual de esta marca — ver §1.4.
-   - `base.css`: escala neutra (grises), colores de estado universales (rojo/amarillo/azul — la marca no define un rojo — más la extensión categórica violeta/magenta de "distintivo", ver §1.4), y las escalas de espaciado/tipografía/radio/elevación/transición. No tiene nada de marca.
-2. **Semánticos** (`tokens/semantic/theme-light.css`, `theme-dark.css`) — los tokens que de verdad referencian los componentes (`--ag-color-bg`, `--ag-color-text`, `--ag-color-primary`, etc.), resueltos sobre los primitivos de ambos archivos de la capa 1. El tema activo se resuelve reasignando **estos** tokens vía el atributo nativo de Bootstrap 5.3 `[data-bs-theme="light"|"dark"]` en el `<html>` — nunca duplicando una regla de componente por tema.
+   - `brand.css`: la identidad **Industrial AgTech**, idéntica a la de la app móvil (`agrocom-field`, `docs/diseno/tokens/tokens.json`, claves `color.light` y `color.dark`). Es el único archivo con hex de marca. Nombres `--ag-brand-<tema>-<rol>` (`--ag-brand-light-primary`, `--ag-brand-dark-on-amber-container`…). Un valor nuevo de la app móvil se copia aquí tal cual.
+   - `base.css`: escala neutra (grises), tonos categóricos violeta/magenta (`distintivo`), y las escalas de espaciado, tipografía, radio, elevación y transición. No tiene nada de marca.
+2. **Semánticos** (`tokens/semantic/theme-light.css`, `theme-dark.css`) — los tokens que referencian los componentes (`--ag-color-bg`, `--ag-color-text`, `--ag-color-primary`…), resueltos sobre los primitivos. El tema activo se resuelve reasignando **estos** tokens vía el atributo nativo de Bootstrap 5.3 `[data-bs-theme="light"|"dark"]` en el `<html>`. Cada archivo declara exactamente los mismos nombres.
 
-Por qué la separación brand/base dentro de la capa 1 (pedido explícito, no implementado, solo organizativo): hoy el panel es de una sola marca. Si en el futuro el sistema se vendiera como SaaS multi-tenant (cada cliente con su logo/colores propios), el único archivo que un tenant nuevo necesitaría sobreescribir es `primitives/brand.css` — ningún componente, ninguna vista, ni `base.css`, ni la capa semántica cambiarían, porque nada fuera de `semantic/` referencia un hex directamente. **Esto no implementa multi-tenant**: no hay tabla, no hay resolución por tenant, no hay selector de marca — es solo el criterio de organización del archivo de tokens que de todos modos había que escribir para HU-02.
+Regla de importación: fuera de `tokens/semantic/` ningún componente referencia `--ag-brand-*` ni un hex. La compuerta es `tests/Unit/TokensColorTest.php`.
 
-### 1.2. Paleta de marca (verificada contra los logos oficiales)
+### 1.2. Paleta de marca — Industrial AgTech
 
-Confirmado contra `public/logo.png` (antes `logo-dark.jpeg`/`logo-light.jpeg`, mismo isotipo) y la memoria de proyecto (`paleta-colores-marca-agrocom`) — no se inventaron valores nuevos:
+Regla 60 / 30 / 10: superficies neutras, grafito para la estructura (riel de módulos), verde para la acción principal y ámbar para lo que pide atención.
 
-| Rampa | 100 | 300 (logo) | 500 | 700 (logo) | 900 |
-|---|---|---|---|---|---|
-| Verde | `#E8F4D9` | `#8CC63F` | `#55A03A` | `#1E7A34` | `#0F3D1A` |
-| Ámbar | `#FDEDD3` | `#F5A623` | `#EF8C18` | `#E8720C` | `#743906` |
+| Rol | Claro | Oscuro |
+|---|---|---|
+| bg | `#F3F5F1` | `#17251C` |
+| surface | `#FFFFFF` | `#293832` |
+| surface2 | `#E9EEE7` | `#34443B` |
+| border | `#DDE4DC` | `#405247` |
+| text | `#202A2E` | `#EDF3EC` |
+| text2 | `#68756D` | `#AAB8AC` |
+| primary (verde) | `#347A36` | `#62B66A` |
+| primary-hover | `#28632C` | `#79CA80` |
+| primary-container / on | `#E1EEDD` / `#22562A` | `#2E4A35` / `#A8DCAC` |
+| graphite (grafito) | `#29343A` | `#34443B` |
+| amber (ámbar) | `#F5A623` | `#FFB52E` |
+| on-amber | `#29343A` | `#17251C` |
+| amber-container / on | `#FDF0D3` / `#7A4B00` | `#4A3A17` / `#FFD488` |
+| info | `#2785C7` | `#50A5D8` |
+| info-container / on | `#E2F0FA` / `#14577F` | `#1E3A4C` / `#A6D4F0` |
+| error | `#DC4545` | `#FF6868` |
+| error-container / on | `#FCE6E6` / `#A12727` | `#4A2326` / `#FFB4B4` |
 
-Los tonos "300" y "700" son los dos extremos exactos del degradado leído en cada logo (verde lima→bosque, ámbar del ícono de señal); 100/500/900 son interpolaciones/mezclas para dar una rampa completa (tinte claro, punto medio, sombra oscura) sin inventar un hue nuevo.
+Los tonos violeta y magenta de `base.css` no pertenecen a la marca: son categóricos (sin carga de bueno o malo) para distinguir más valores de los que cubren los estados.
 
-### 1.3. Verificación de contraste (WCAG 2.1 AA, 4.5:1 texto normal)
+### 1.3. Verificación de contraste (WCAG 2.1 AA, 4,5:1 texto normal, 3:1 no-texto)
 
-| Combinación | Ratio aprox. | Resultado | Dónde se usa |
-|---|---|---|---|
-| Texto blanco sobre `--ag-color-primary` (verde-700) | 5.4:1 | Pasa AA | Botón primario, ambos temas |
-| Texto gris-900 sobre `--ag-color-accent` (ámbar-700) | 5.0:1 | Pasa AA | Badge de rol/menú sobre `--ag-color-accent-subtle` (topbar.css, menu-item.css) — ahí sigue siendo gris-900, fondo muy claro |
-| Texto blanco sobre ámbar-700 | 3.1:1 | Falla AA texto normal | Por eso ningún consumidor de `--ag-color-accent` como relleno usa blanco |
-| Texto ámbar-100 sobre `--ag-color-accent` (ámbar-700) | ~5.1:1 | Pasa AA | Botón `variant="accent"` (relleno sólido, hoy solo "Enviar solicitud" del tab de recuperar acceso) — `--ag-color-accent-contrast-fill`, ambos temas. Gris-900 ahí pasaba contraste igual, pero se leía muy duro/negro sobre el naranja vivo; ámbar-100 es un blanco cálido que también pasa AA sin ese efecto |
-| `--ag-color-text` (gris-900) sobre `--ag-color-bg`/`--ag-color-bg-elevated` (tema claro) | ~15.8:1 | Pasa AAA | Texto de cuerpo, tema claro |
-| `--ag-color-text-muted` (gris-600) sobre blanco | ~4.7:1 | Pasa AA (al límite) | Texto secundario, tema claro |
-| `--ag-color-text` (gris-100) sobre `--ag-color-bg` (gris-950, tema oscuro) | ~14.9:1 | Pasa AAA | Texto de cuerpo, tema oscuro |
-| `--ag-color-primary-emphasis` (verde-300) sobre `--ag-color-bg-chrome` negro puro (tema oscuro) | ~10.3:1 | Pasa AAA | Ítem de menú activo sobre sidebar oscuro |
-| `--ag-color-primary-emphasis` verde-700 (si se usara igual que en claro) sobre negro puro | ~2:1 | Falla | Por eso `-emphasis` se aclara a verde-300 en tema oscuro, mientras el relleno sólido del botón (`--ag-color-primary`) se mantiene igual en ambos temas |
-| `--ag-color-text` (gris-100) sobre `--ag-color-bg-elevated` (gris-850, tema oscuro) | ~15.0:1 | Pasa AAA | Tarjeta de `login-form` dentro de `auth-layout`, tema oscuro — comparable a los ~15.8:1 de la misma tarjeta en tema claro (fila de arriba) |
-| `--ag-color-text-muted` (gris-500) sobre `--ag-color-bg-elevated` (gris-850, tema oscuro) | ~8.0:1 | Pasa AAA | Subtítulo/help text de `login-form`, tema oscuro |
-| `--ag-color-text-on-scrim` (blanco) sobre foto + `--ag-color-scrim-strong` (zona del wordmark, cielo claro de `drone-hero.jpg`) | ~5.7:1 (estimado — sin muestreo de píxeles, foto real) | Pasa AA | Wordmark de `templates/auth-layout`, **idéntico en ambos temas** (token constante) |
-| `--ag-color-text-on-scrim` (blanco) sobre foto + `--ag-color-scrim` (zona del headline, follaje/campo más oscuro) | ~7.5:1 (estimado) | Pasa AAA | Headline de `templates/auth-layout`, **idéntico en ambos temas** |
-| `--ag-color-text` sobre `--ag-color-bg-auth` (tema claro, "crema anaranjado" ~`#fefaf2`, cuarta vuelta) | ~14.9:1 | Pasa AAA | Texto principal del panel de formulario de login. Bajó levemente de ~15.6:1 (era un poco más oscuro/ocre) pero sigue muy por encima de AAA |
-| `--ag-color-text-muted` (gris-600) sobre `--ag-color-bg-auth` (tema claro) | ~4.5:1 (al filo del umbral, cálculo de precisión insuficiente para asegurar de qué lado cae) | Indeterminado/al límite — no se puede dar por bueno | Por qué sigue existiendo `--ag-color-text-muted-auth`: el fondo más claro de la cuarta vuelta mejora el ratio del muted global (era ~4.3:1, falla clara) pero lo deja apenas en el borde de 4.5:1, no con margen — no alcanza para dejar de declarar la variante propia |
-| `--ag-color-text-muted-auth` (gris-700) sobre `--ag-color-bg-auth` (tema claro) | ~7.9:1 | Pasa AAA | Labels uppercase, subtítulos, pie mono de `login-form`, tema claro. Subió de ~7.5:1 (el nuevo fondo es más claro) |
-| `--ag-color-accent-link` (ámbar-800) sobre `--ag-color-bg-auth` (tema claro) | ~5.2:1 | Pasa AA | Link "¿Olvidaste tu contraseña?", tema claro. Subió de ~4.9:1 |
-| `--ag-color-primary-emphasis` (verde-700) sobre `--ag-color-bg-auth` (tema claro) | ~5.2:1 | Pasa AA | Link "Volver al ingreso" (estado de recuperación), tema claro — reutiliza el token existente, no necesita uno propio. Subió de ~4.9:1 |
-| `--ag-color-text` sobre `--ag-color-bg-auth` (tema oscuro, "grafito-petróleo con dejo verde" ~`#1a261d`, cuarta vuelta) | ~14.2:1 | Pasa AAA | Texto principal del panel de formulario de login, tema oscuro. Prácticamente sin cambio respecto al tono anterior |
-| `--ag-color-text-muted` (gris-500) sobre `--ag-color-bg-auth` (tema oscuro) | ~7.6:1 | Pasa AAA (con menos margen que antes) | El muted global sigue pasando cómodo en oscuro — `--ag-color-text-muted-auth` reutiliza el mismo valor. Bajó de ~8.2:1 (el nuevo fondo es más luminoso), pero se mantiene por encima del piso AAA (7:1) |
-| `--ag-color-accent-link` (ámbar-300) sobre `--ag-color-bg-auth` (tema oscuro) | ~7.8:1 | Pasa AAA | Link "¿Olvidaste tu contraseña?", tema oscuro. Bajó de ~8.4:1, sigue AAA |
-| `--ag-color-primary-emphasis` (verde-300) sobre `--ag-color-bg-auth` (tema oscuro) | ~7.7:1 | Pasa AAA | Link "Volver al ingreso", tema oscuro. Bajó de ~8.3:1, sigue AAA |
-| `--ag-color-distintivo-1-strong` (violeta-700) sobre `--ag-color-distintivo-1-subtle` (tema claro) | ~7.88:1 | Pasa AAA | Chip categórico "distintivo-1" (violeta), tema claro. Recalculado 17/9/2026 (violeta pasa a hex literal de Fiori, ver más abajo) |
-| `--ag-color-distintivo-1-strong` (violeta-700) sobre `--ag-color-surface-card` (tema claro) | ~9.65:1 | Pasa AAA | Ídem, texto de chip directo sobre la tarjeta (sin el fondo `-subtle` de por medio) |
-| `--ag-color-distintivo-2-strong` (magenta-700) sobre `--ag-color-distintivo-2-subtle` (tema claro) | ~7.57:1 | Pasa AAA | Chip categórico "distintivo-2" (magenta), tema claro |
-| `--ag-color-distintivo-2-strong` (magenta-700) sobre `--ag-color-surface-card` (tema claro) | ~9.47:1 | Pasa AAA | Ídem, texto de chip directo sobre la tarjeta |
-| `--ag-color-distintivo-1-strong` (violeta-300) sobre `--ag-color-distintivo-1-subtle` (tema oscuro) | ~4.69:1 | Pasa AA | Chip categórico "distintivo-1" (violeta), tema oscuro. Opacidad de `-subtle` bajada de 0.16 a 0.1 (17/9/2026) — a 0.16 no llegaba a 4.5:1 |
-| `--ag-color-distintivo-1-strong` (violeta-300) sobre `--ag-color-surface-card` (tema oscuro) | ~5.63:1 | Pasa AA | Ídem, texto de chip directo sobre la tarjeta |
-| `--ag-color-distintivo-2-strong` (magenta-300) sobre `--ag-color-distintivo-2-subtle` (tema oscuro) | ~5.06:1 | Pasa AA | Chip categórico "distintivo-2" (magenta), tema oscuro |
-| `--ag-color-distintivo-2-strong` (magenta-300) sobre `--ag-color-surface-card` (tema oscuro) | ~6.13:1 | Pasa AA | Ídem, texto de chip directo sobre la tarjeta |
-| `--ag-color-success-strong` (`color-mix(green-600 30%, green-900 70%)`) sobre `--ag-color-success-subtle` (tema claro) | ~7.36:1 | Pasa AAA | Chip "Validada", tema claro. Recalculado 17/9/2026: `success` pasa de green-500 a green-600 (Fiori "positive" `#107e3e`, literal — ver `primitives/base.css`) |
-| `--ag-color-danger-strong` (red-700, `#880000`) sobre `--ag-color-danger-subtle` (tema claro) | ~7.26:1 | Pasa AAA | Alerta de RC, tema claro. `danger` pasa a los hex literales de Fiori (`#bb0000` crudo / `#880000` texto, UI Indication 2/1) |
-| Texto blanco sobre `--ag-color-danger-contrast-fill` (red-600, `#bb0000`) | ~6.75:1 | Pasa AAA | Relleno sólido de `.ag-button--danger`, ambos temas |
-| `--ag-color-warning-strong` (amber-900) sobre `--ag-color-warning-subtle` (tema claro) | ~7.25:1 | Pasa AAA | Chip "Sin evidencia", tema claro. `warning` pasa a amber-700 (coincide casi exacto con Fiori "critical" `#e9730c`); `-strong` sube de amber-800 a amber-900 porque contra el `-subtle` nuevo amber-800 caía a 4.29:1 (bajo AA) |
-| `--ag-color-info-strong` (teal-700) sobre `--ag-color-info-subtle` (tema claro) | ~7.1:1 | Pasa AAA | Chip "En vuelo", tema claro. Tercera vuelta (18/9/2026, tabla de 8 nombres del usuario): `info` pasa de blue-600 a teal-500 (Fiori "UI Indication 6" `#0f828f`, literal); blue-600 queda libre como `--ag-color-primary-2` (ver §1.4), sin conectar a pantalla. `--ag-color-focus-ring` se queda en blue-500, sin tocar |
-| `--ag-color-danger-strong` (`#fc9292`) sobre `--ag-color-danger-subtle` (tema oscuro) | ~4.94:1 | Pasa AA | Alerta de RC, tema oscuro. Opacidad de `-subtle` bajada de 0.2 a 0.1 — a 0.2 ni el valor nuevo ni el anterior de Bootstrap (`#ea868f`) llegaban a 4.5:1 (el anterior daba 4.41:1, nunca verificado) |
-| `--ag-color-info-strong` (teal-300, `#7fc4cb`) sobre `--ag-color-info-subtle` (tema oscuro) | ~5.33:1 | Pasa AA | Chip "En vuelo", tema oscuro. Tercera vuelta (18/9/2026): mismo stop pastel que ya usaba `distintivo-3` en este archivo (`#7ab8f5` anterior queda libre como `--ag-color-primary-2`) |
-| Texto blanco sobre `--ag-color-success-contrast-fill` (green-600, `#107e3e`) | ~5.15:1 | Pasa AA | `.ag-badge--success` y `stat-card[data-state="success"]`, ambos temas (segunda vuelta paleta Fiori, 17/9/2026 — relleno sólido constante entre temas, ver §1.4) |
-| Texto blanco sobre `--ag-color-info-contrast-fill` (teal-500, `#0f828f`) | ~4.56:1 | Pasa AA (al filo) | Ídem, variante info. Tercera vuelta (18/9/2026): mismo valor que `--ag-color-distintivo-3-contrast-fill` (ver fila de abajo) — ambos tokens comparten hoy el mismo primitivo, ver §1.4 |
-| Texto blanco sobre `--ag-color-warning-contrast-fill` (amber-700, `#e8720c`) | ~3.03:1 | **No llega a AA para texto chico (4.5:1); pasa 3:1** | **Es la regla vigente desde el 19/9/2026 (decisión del dueño): `.ag-badge--warning`, el paso `warning` de `step-arrow` y el ícono `warning` de `link-row` llevan texto/ícono BLANCO, como todos los demás tonos.** Costo de contraste asumido a cambio de que los estados se lean como una sola familia: el dueño descartó el gris-900 dos veces («no le queda el negro», 17/9; badge «En curso» de Estadías, 19/9). No volver a introducir texto oscuro sobre un relleno de estado |
-| ~~Texto gris-900 sobre `--ag-color-warning-contrast-fill` (amber-700, `#e8720c`)~~ | ~5.09:1 | Pasaba AA | **Retirado el 19/9/2026** — era la única excepción al texto blanco sobre relleno de estado (ver fila de arriba). Queda como historial de por qué existió |
-| Ícono blanco (gráfico, no-texto) sobre `--ag-color-warning-contrast-fill` (amber-700, `#e8720c`) | ~3.07:1 | Pasa WCAG 1.4.11 (no-texto, 3:1 — NO el 4.5:1 de texto) | `stat-card[data-state="warning"] .ag-stat-card__icon-box`, ambos temas (17/9/2026, segunda vuelta: gris-900 pasaba AA pero "no quedaba", feedback directo del usuario sobre captura real — el ícono es gráfico, no texto, así que aplica el umbral más laxo de 1.4.11, no el de texto). `.ag-badge--warning` de arriba NO puede copiar esto: ahí el contenido es texto real |
-| Borde `--ag-color-danger-contrast-fill`/`--ag-color-warning-contrast-fill` (crudo, no diluido) sobre `--ag-color-surface-card`/`-bg-auth` (sand-50) | ~6.75:1 / ~3.07:1 | Pasa 3:1 (borde, no-texto) | `.ag-button--danger-outline`/`.ag-button--warning-outline` (17/9/2026, segunda vuelta): antes usaban `-danger-border`/`-warning-border` (diluido con sand-50 al 70%), se leía "triste" en captura real |
-| Texto/borde `--ag-color-danger`/`--ag-color-warning` (plano, NO `-contrast-fill`) sobre `--ag-color-surface-card`, tema claro | ~6.75:1 / ~3.07:1 | Danger pasa AAA; warning pasa 3:1 (borde) pero no 4.5:1 (texto normal) | `.ag-button--danger-outline`/`.ag-button--warning-outline`, tercera vuelta (18/9/2026): texto pasó de `-strong` al hex literal (pedido explícito del usuario). En tema claro `--ag-color-danger`/`-warning` resuelven al MISMO hex que `-contrast-fill` (son el mismo primitivo ahí), sin diferencia visual con lo pedido |
-| Texto/borde `--ag-color-danger`/`--ag-color-warning`/`--ag-color-primary-2` (plano) sobre `--ag-color-surface-card`, tema oscuro | ~5.95:1 / ~6.37:1 / ~6.15:1 | Los tres pasan AAA | Cuarta vuelta (18/9/2026, aviso del usuario: "esos hexas funcionan solo para el tema claro"): el crudo `-contrast-fill` (constante entre temas) daba ~1.91:1/~4.21:1/~2.56:1 contra la tarjeta oscura — casi invisible en danger, por debajo del piso 3:1 en los tres. Se cambió `.ag-button--danger-outline`/`.ag-button--warning-outline` (button.css) y `.ag-row-actions__more-btn` (row-actions.css) del token `-contrast-fill` al token PLANO (`--ag-color-danger`/`-warning`/`-primary-2`), que ya traía su propio aclarado por tema (`#fc9292`/amber-300 `#f5a623`/`#7ab8f5`) — no hizo falta inventar un valor nuevo, solo usar el token correcto para texto/borde DIRECTO sobre una superficie que cambia de tema (a diferencia de un relleno sólido + texto blanco, que sí debe quedar constante) |
-| Texto/borde `--ag-color-distintivo-1`/`--ag-color-distintivo-2` (plano) sobre `--ag-color-surface-card`, ambos temas | claro ~4.39:1/~4.65:1 · oscuro (violet-300/magenta-300) ~5.7:1/~6.17:1 | Pasan AA (claro violeta al filo del umbral de texto) | Mismo aviso del usuario extendido a todos los semánticos ("hasta el purple, azul y violet"). `distintivo-2` SÍ tiene un `-outline` real desde la octava vuelta: `.ag-button--distintivo-2-outline`, "Finalizar" en `contratos/index.blade.php`. `distintivo-1` sigue sin `-outline` en pantalla (solo relleno `-contrast-fill` en `atoms/badge`/`molecules/stat-card`) |
-| Texto/borde `--ag-color-alert` (plano) sobre `--ag-color-surface-card`, ambos temas | claro (red-700, `#880000`) ~9.82:1 · oscuro (`#fb7474`) ~4.83:1 | Pasan AAA/AA | Novena vuelta (18/9/2026): "alert" es UI Indication 1 (`#880000`), mismo primitivo que ya usaba `danger-strong` como texto, ahora con token propio. El aclarado de oscuro NO reutiliza el mismo cálculo que `danger` (`#fc9292`) — misma fórmula HLS con el mismo hue/saturación daría un rojo idéntico, invisible la diferencia entre "alert" y "danger" — se usó menos lightness (L=0.72 vs 0.78) para un coral más saturado, distinto a simple vista del rosa pastel de danger. `.ag-button--alert-outline`, "Cerrar" en `campanias/index.blade.php` |
-| Texto blanco sobre `--ag-color-alert-contrast-fill` (red-700, `#880000`) | ~10.26:1 | Pasa AAA | `.ag-badge--alert`, badge de estado "cerrada" en `campanias/index.blade.php`, ambos temas (constante) |
-| Texto blanco sobre `--ag-color-distintivo-1-contrast-fill` (violeta-500, `#925ace`) | ~4.59:1 | Pasa AA (al filo) | `.ag-badge--distintivo-1` y `stat-card[data-state="distintivo-1"]` (18/9/2026: tarjeta KPI "categoría de insumo" de `ordenes/show.blade.php`, primer consumidor real), ambos temas |
-| Texto blanco sobre `--ag-color-distintivo-2-contrast-fill` (magenta-500, `#c0399f`) | ~4.85:1 | Pasa AA | `.ag-badge--distintivo-2`, ambos temas |
-| Texto blanco sobre `--ag-color-distintivo-3-contrast-fill` (teal-500, `#0f828f`, UI Indication 6 — nuevo 17/9/2026) | ~4.56:1 | Pasa AA (al filo) | `.ag-badge--distintivo-3`, ambos temas. Sin conectar a ninguna pantalla todavía |
+Calculado con la fórmula de luminancia relativa de WCAG sobre los valores finales de los tokens. Las mezclas son `color-mix(in srgb)` entre primitivos de marca.
 
-Consecuencia de diseño explícita: **el relleno sólido de marca (botones) es constante entre temas** (identidad de marca no cambia); lo que sí se reasigna por tema son los tonos usados como *texto/ícono sobre una superficie* (`-emphasis`) y los fondos tenues (`-subtle`), porque esos sí dependen de si están sobre blanco o sobre negro. El mismo criterio se extiende (HU-02, refinamiento editorial de `auth-layout`) a `--ag-color-scrim*`/`--ag-color-text-on-scrim`: la fotografía de fondo no reasigna por tema, así que el overlay y el texto que van montados sobre ella tampoco — usar `--ag-color-text-inverse` ahí sería un bug real en tema oscuro (resuelve a gris-900, casi invisible sobre la foto oscurecida).
+Tema claro:
+
+| Combinación | Ratio | Resultado |
+|---|---|---|
+| `--ag-color-text` sobre `--ag-color-surface-card` / `--ag-color-bg` | 14,7:1 / 13,4:1 | AAA |
+| `--ag-color-text-muted` (text2 80 % + text 20 %, `#5A6660`) sobre tarjeta / bg / surface2 | 6,0:1 / 5,5:1 / 5,1:1 | AA |
+| `--ag-color-text-faint` (text2 puro) sobre tarjeta | 4,8:1 | AA; reservado a íconos apagados y placeholders |
+| Blanco sobre `--ag-color-primary` | 5,3:1 | AA (botón primario, relleno de éxito) |
+| `--ag-color-primary-emphasis` sobre `--ag-color-bg` | 4,8:1 | AA (enlaces, ítem activo) |
+| Blanco sobre `--ag-color-primary-hover` | 7,2:1 | AAA |
+| `--ag-color-accent-contrast` (grafito) sobre `--ag-color-accent` (ámbar) | 6,3:1 | AA (botón de acento) |
+| `--ag-color-accent-emphasis` (on-amber-container) sobre blanco | 7,4:1 | AAA (ámbar usado como texto) |
+| `-strong` sobre `-subtle`: success / warning / info / danger | 7,2 / 6,6 / 6,7 / 6,2 :1 | AAA / AA+ (chips tenues, alertas) |
+| `--ag-color-danger` (plano) sobre tarjeta / bg | 5,3:1 / 4,8:1 | AA (texto y borde de `danger-outline`) |
+| `--ag-color-warning` (plano) sobre tarjeta / bg | 5,1:1 / 4,7:1 | AA |
+| `--ag-color-info` (plano) sobre tarjeta / bg | 5,1:1 / 4,7:1 | AA |
+| Blanco sobre `--ag-color-success-contrast-fill` | 5,3:1 | AA |
+| Blanco sobre `--ag-color-danger-contrast-fill` | 5,3:1 | AA |
+| Blanco sobre `--ag-color-warning-contrast-fill` | 5,1:1 | AA |
+| Blanco sobre `--ag-color-info-contrast-fill` (y `primary-2`, `distintivo-3`) | 5,1:1 | AA |
+| Blanco sobre `--ag-color-alert-contrast-fill` | 7,4:1 | AAA |
+| Blanco sobre `--ag-color-distintivo-1-contrast-fill` / `-2-` | 4,6:1 / 4,9:1 | AA |
+| `distintivo-1-strong` / `-2-strong` sobre su `-subtle` | 8,2:1 / 7,9:1 | AAA |
+| `--ag-color-neutral-strong` sobre `--ag-color-neutral-subtle` | 5,1:1 | AA |
+| `--ag-color-focus-ring` (info) sobre tarjeta / bg | 4,0:1 / 3,6:1 | Pasa 3:1 no-texto |
+| `--ag-color-text-rail` sobre `--ag-color-bg-rail` (riel, ambos temas) | 7,1:1 | AAA |
+| `--ag-color-text-rail-active` sobre `--ag-color-bg-rail-active` | 4,7:1 | AA |
+
+Tema oscuro:
+
+| Combinación | Ratio | Resultado |
+|---|---|---|
+| `--ag-color-text` sobre tarjeta / bg | 10,9:1 / 14,1:1 | AAA |
+| `--ag-color-text-muted` (text2) sobre tarjeta / bg / surface2 | 6,0:1 / 7,7:1 / 5,0:1 | AA+ |
+| `--ag-color-primary` sobre tarjeta / bg | 4,9:1 / 6,4:1 | AA |
+| `--ag-color-primary-contrast` (on-primary) sobre `--ag-color-primary` | 6,9:1 | AA |
+| `--ag-color-primary-hover` sobre tarjeta | 6,2:1 | AA (enlace de autenticación sobre bg: 8,0:1) |
+| `--ag-color-accent` (ámbar) sobre tarjeta / bg | 7,0:1 / 9,0:1 | AAA |
+| `--ag-color-accent-contrast` sobre `--ag-color-accent` | 9,0:1 | AAA |
+| `-strong` sobre `-subtle`: success / warning / info / danger | 6,3 / 7,9 / 7,5 / 8,0 :1 | AA+ |
+| `--ag-color-danger` (plano) sobre tarjeta / bg | 4,9:1 / 6,3:1 | AA |
+| `--ag-color-info` (plano) sobre tarjeta / bg | 5,2:1 / 6,8:1 | AA |
+| `distintivo-1-strong` / `-2-strong` sobre su `-subtle` | 4,6:1 / 4,9:1 | AA |
+| `--ag-color-alert` sobre tarjeta | 7,3:1 | AAA |
+
+Los rellenos `-contrast-fill` son **constantes entre temas** y llevan texto o ícono blanco encima; nunca se usan como texto o borde directo sobre una superficie que cambia de tema (para eso están los tokens planos). Warning y danger como relleno son versiones oscurecidas del ámbar y el rojo de marca (mezcla con `on-amber-container` y `on-error-container`) para llegar a 4,5:1 con blanco; el ámbar y el rojo puros se reservan a íconos, bordes y superficies donde el texto encima es grafito.
+
+Regla operativa: **un chip tenue usa siempre el par `-subtle` (fondo) + `-strong` (texto)**; un chip sólido usa `-contrast-fill` + blanco. El token crudo (`--ag-color-success`) no se usa como texto sobre `-subtle`.
 
 ### 1.4. Inventario de tokens semánticos
 
 | Token | Uso |
 |---|---|
-| `--ag-color-bg`, `--ag-color-bg-elevated`, `--ag-color-bg-chrome` | Fondo de página, fondo de tarjeta/input, fondo de sidebar/topbar |
-| `--ag-color-text`, `--ag-color-text-muted`, `--ag-color-text-inverse` | Texto principal, secundario, texto sobre fondos oscuros/de color |
-| `--ag-color-border`, `--ag-color-border-strong` | Divisores sutiles vs. bordes de controles interactivos |
-| `--ag-color-primary(-hover|-contrast|-emphasis|-subtle)` | Verde de marca — botones, foco, estado activo |
-| `--ag-color-accent(-hover|-contrast|-emphasis|-subtle)` | Ámbar de marca — CTA secundario, resaltados |
-| `--ag-color-success|danger|warning|info(-subtle)` | Estados de formulario/alertas |
-| `--ag-color-avance-bajo|medio|alto|cumplido|excedido` (nuevo, 9/9/2026, tarea 75) | Los 5 tramos de `molecules/tiered-progress-bar` (0-33/34-66/67-99/100/>100%, informe de avance de contratos HU-52). Alias de success/danger/warning/info/primary-emphasis — no rampa de color nueva. `excedido` usa `primary-emphasis` y no `primary` a secas: green-700 crudo sobre el track oscuro del tema oscuro ronda 2:1, insuficiente (mismo motivo que `--ag-color-primary-emphasis`, ver fila de abajo) |
-| `--ag-color-neutral-subtle` (nuevo, mockup de dashboard 2026-08-28) | Gris "sin estado" para `atoms/badge`/`molecules/stat-card` variante "neutral" — un peldaño más marcado que `--ag-color-bg`/`-bg-elevated` (gray-200 claro / gray-800 oscuro) para que el pill/chip se distinga de la superficie sin necesitar tinte de color |
-| `--ag-color-distintivo-1\|2\|3(-subtle\|-strong\|-border)` (17/9/2026, tarea de tokens; distintivo-3 agregado en la segunda vuelta el mismo día) | Extensión CATEGÓRICA de la familia de estados universales — tres tonos (violeta/magenta/teal, `primitives/base.css`) sin carga de "bueno"/"malo"/urgencia, a diferencia de success/warning/danger/info. Cubren el hueco de más de 4 valores a distinguir sin pisarse (p. ej. las 6 categorías de `ope_categorias_insumo`, o un estado con más de 4 pasos). Valores literales de la paleta "Indication Colors" de SAP Fiori (UI Indication 7/8/6, `#925ace`/`#c0399f`/`#0f828f`). Este trío `-subtle`/`-strong`/`-border` queda como estaba (par tenue, sin conectar a pantalla); el uso real como chip es vía `-contrast-fill`, ver fila de abajo. `distintivo-1` (violeta) SÍ está conectado desde el 18/9/2026: tarjeta KPI "categoría de insumo" de `ordenes/show.blade.php` (ver `molecules/stat-card`). `distintivo-3` (teal) comparte desde la tercera vuelta el mismo primitivo crudo que `--ag-color-info` (ver fila de abajo) — duplicado documentado a propósito, no fusionado porque `distintivo-3` en sí sigue sin conectar a ninguna pantalla |
-| `--ag-color-success\|danger\|warning\|info` (actualizado, 17/9/2026 y tercera vuelta 18/9/2026, tarea de tokens) | Los cuatro estados usan los valores LITERALES de "Indication Colors" de SAP Fiori — pedido explícito y repetido del usuario ("que un documento no te limite si yo toy autorizando"), porque los tonos anteriores se veían "demasiado claros, como si les faltara opacity". Es la única excepción documentada a "nunca copiar el hex de una referencia externa" (`guia_pantalla_panel.md` §7) — no aplica al resto del sistema. `danger` usa 2 tonos (crudo `#bb0000` / texto `-strong` `#880000`, UI Indication 2/1); `warning` no suma primitivo nuevo porque `#e9730c` (UI Indication 3) coincide casi exacto con el amber-700 de marca ya existente; `success` es `#107e3e` (UI Indication 4). **`info` cambió dos veces**: 17/9 pasó de azul Bootstrap a blue-600 (`#0a6ed1`, UI Indication 5); 18/9 (tercera vuelta, tabla de 8 nombres del usuario) pasó de blue-600 a teal-500 (`#0f828f`, UI Indication 6) — blue-600 quedó libre como `--ag-color-primary-2` nuevo, ver fila de abajo. AA de cada par recalculado y verificado en §1.3. Detalle completo del porqué de cada valor en el comentario de cabecera de `primitives/base.css` |
-| `--ag-color-primary-2(-subtle\|-strong\|-border\|-contrast-fill)` (nuevo, 18/9/2026, tercera vuelta; conectado y revertido varias veces, conectado de nuevo en la octava) | blue-600 (`#0a6ed1`, UI Indication 5) — el tono que ocupaba `info` hasta la segunda vuelta. Nombre asignado explícitamente por el usuario en su tabla de 8 colores/8 nombres. Se probó en Contrato/Órdenes (badge `borrador`, botón "Ver", "⋮") y el usuario revirtió los tres. Conexión vigente hoy: `.ag-badge--primary-2` para "Activa" de Campania (`campanias/index.blade.php`, columna "Actividad" — antes `success`, verde, que competía con el badge "Abierta" de la columna "Estado" al lado; "Inactiva" se queda en `neutral`). `--ag-color-focus-ring` sigue en blue-500 (primitivo distinto), sin tocar |
-| `--ag-color-alert(-subtle\|-strong\|-border\|-contrast-fill)` (nuevo, 18/9/2026, novena vuelta) | UI Indication 1 de Fiori (`#880000`, red-700) — mismo primitivo que ya alimentaba `--ag-color-danger-strong` (texto de danger), ahora con nombre y token PROPIOS a pedido del usuario. `-strong` queda igual al crudo (red-700 ya es el escalón más oscuro de la rampa roja, no hay un cuarto tono de dónde derivar uno más oscuro). Conectado desde que se creó: `.ag-badge--alert`/`.ag-button--alert-outline` para "Cerrar"/estado `cerrada` de Campania — más oscuro y severo que `danger` (rojo-600, el botón "Eliminar"), a propósito distinto para no confundir cerrar un ciclo de negocio con borrar el registro |
-| `.ag-button--success-outline`/`.ag-button--info-outline`/`.ag-button--primary-2-outline`/`.ag-button--distintivo-2-outline`/`.ag-button--alert-outline` (nuevo, 18/9/2026, quinta a novena vuelta) | Completa la familia `-outline` (antes solo danger/warning): texto y borde en el token PLANO del estado (nunca `-contrast-fill`, ver la trampa documentada junto a esos tokens en theme-light.css). Principio del usuario: "el mismo botón al cambiar el estado sea el mismo color de ese estado" — la acción que dispara una transición usa el color del ESTADO DE LLEGADA. La asignación estado↔color en `contratos/index.blade.php` no es fija, es una decisión de negocio que el usuario reasignó más de una vez en la misma sesión: `vigente`=success (Aprobar/Reanudar), `pausado`=info (Pausar, antes warning), `finalizado`=distintivo-2/"purple" (Finalizar, antes info) — el CRITERIO no cambió, solo qué color le toca a cada estado. `primary-2-outline` es la excepción: no representa ningún estado, pensado para acciones que solo NAVEGAN — probado en "Ver"/"⋮" y revertido en los dos (ver fila de `--ag-color-primary-2` más arriba), hoy sin conectar como botón. Octava vuelta: `campanias/index.blade.php` — "Cerrar" (→ `cerrada`) pasa de `danger-outline` a `distintivo-2-outline` (magenta), pedido explícito del usuario para distinguirlo de "Eliminar" (borrado real, se queda en `danger-outline`). Novena vuelta, minutos después: el usuario aclaró que había confundido "magenta" con `#880000` (que en realidad es "alert", no `distintivo-2`) y pidió "Cerrar" en alert-outline en su lugar — `$variantePorEstado['cerrada']` acompaña el cambio (`distintivo-2`→`alert`); "Eliminar" sigue en `danger-outline` (rojo-600) sin tocar, dos rojos distintos para dos acciones de gravedad distinta |
-| Estado `conflicto` de Contrato (19/9/2026, ADR 0021) | Badge `alert` en `contratos/index.blade.php` y en el modal de conflicto (`ContratosController::formatearConflictos`) — el mismo tono que ya tenía la marca "En conflicto" de un lote dentro del formulario de contrato (#244), así que el estado persistido y la marca visual se leen como lo mismo. Su única acción en el listado es "Cancelar" (`danger-outline`, color del estado de llegada, `cancelado`): un contrato en conflicto no se aprueba ni se pide a mano hasta que se resuelva el choque de lotes. |
-| `molecules/progress-meter` `__percent`/`__bar-fill`/`section-head` propio (18/9/2026, sexta y novena vuelta) | La cifra grande pasa de `--ag-color-text` (plano, sin relación con la paleta) a `--ag-color-distintivo-1` (violeta) — pedido explícito del usuario. Texto GRANDE (1.5rem bold, umbral WCAG 3:1), así que el crudo de tema claro (~4.39:1) pasa de sobra. Novena vuelta: `__bar-fill` (antes `--ag-color-primary`, verde) y el `accent` del `section-head` propio de esta tarjeta (antes sin `accent`, caía en el verde por defecto — colisionaba con "Datos de la orden" en `ordenes/show.blade.php`, el usuario lo notó como "se repite desde 0") pasan TAMBIÉN a distintivo-1 — toda la tarjeta comparte un único tono, fijo en el componente (no un prop, todo `progress-meter` es igual) |
-| `ordenes/show.blade.php`: mapeo final de `accent` por sección (18/9/2026, novena vuelta, tras varias iteraciones) | Con 7 `section-head` en la pantalla (6 `form-section` + `progress-meter`) y solo 6 tonos sin carga de bueno/malo, el usuario dio el mapeo uno a uno para que ninguno se repita: `success`→Datos de la orden, `info`→Lotes, `distintivo-2`→Actividad, `alert`→Vínculos/"Relacionado", `warning`→Límites climáticos, `primary-2`→Parámetros de vuelo, `distintivo-1`→Avance de asignación. `danger` queda sin usar en esta pantalla. `success` en "Datos de la orden" comparte tono con el KPI "Aplicaciones" cuando completa su meta — decisión explícita del usuario, consultada antes de fijarla, no un descuido |
-| `molecules/timeline` línea conectora (18/9/2026, sexta vuelta) | Pasa de `--ag-color-border-row` (divisor sutil, casi invisible en claro — nunca pensado para leerse como línea) a `--ag-color-text` (pedido explícito: "negro para claro y blanco para oscuro" — `--ag-color-text` ya resuelve oliva-950/casi-blanco cálido, el mismo par sin introducir un negro/blanco puro que desentone con la paleta tibia del resto del sistema) |
-| `molecules/link-row` `__icon--*` (18/9/2026, sexta vuelta) | Mismo salto que `atoms/badge`/`stat-card`: relleno SÓLIDO `-contrast-fill` + ícono blanco (antes par tenue `-subtle`/`-strong`), ícono en `md` (antes `sm`, contenedor 2.25rem→2.5rem, igual que `stat-card__icon-box`). Suma variantes `distintivo-1\|2\|3`/`primary-2` a las 4 que ya tenía. Primer consumidor (`ordenes/show.blade.php`, sección "Relacionado"): tono pasa de condicional (`neutral` si el conteo es 0) a FIJO por vínculo (`info` trabajos / `success` equipos) — pedido explícito: "un diferente por cada elemento", no gris hasta que haya datos (a diferencia de los KPI de la misma pantalla, que sí arrancan neutros a propósito, ver el bloque de comentario sobre `$aplicacionesEstado`/`$equiposEstado`) |
-| `--ag-color-success\|warning\|info\|distintivo-1\|2\|3\|primary-2\|alert-contrast-fill` (17/9/2026, segunda vuelta; `primary-2`/`alert` sumados 18/9/2026) | Relleno SÓLIDO de cada estado, constante entre temas (mismo criterio que `--ag-color-danger-contrast-fill`, que ya existía) — pedido explícito del usuario: el par tenue `-subtle`/texto `-strong` de `atoms/badge` y `molecules/stat-card` se leía "con poca opacity", no como estado. `atoms/badge` (variantes success/warning/info/danger/distintivo-1/2/3/primary-2/alert) y el ícono+barra de `molecules/stat-card` (`data-state`, las 8 variantes completas desde la novena vuelta — pedido explícito: "tiene que tener para los 8 colores semánticos aunque ahorita solo se ocupe 4") pasan a este relleno + texto blanco, salvo warning (texto gris-900 — blanco sobre `#e9730c`/amber-700 falla AA, ver §1.3). **Alcance deliberadamente acotado**: los controles de formulario (`checkbox`, `input`, `switch`, `select`, `radio-group`, etc.) siguen con el par tenue de siempre — ese sigue siendo el patrón correcto ahí (un input de error con relleno sólido rojo se lee como roto, no como aviso), no se tocaron |
-| `--ag-color-focus-ring` | Contorno de foco de teclado (accesibilidad) |
-| `--ag-space-1`…`--ag-space-8` | Espaciado, escala de 8px |
-| `--ag-font-family-base|mono`, `--ag-font-size-*`, `--ag-line-height-*`, `--ag-font-weight-*` | Tipografía de texto/cifras |
-| `--ag-font-family-display` | Tipografía de titulares grandes tipo hero (HU-02). Aditivo, no reemplaza `-base` en ningún otro lado — la usan `templates/auth-layout` (wordmark + headline), `organisms/login-form` (título de "Ingreso"/"Recuperar acceso") y el resto de consumidores de §7.3/§11.2. **"IBM Plex Sans Condensed"** (`@fontsource/ibm-plex-sans-condensed`, pesos 400/500/600/700) desde la séptima vuelta (§11.2) — reemplazó a "Fraunces" (serif), que a su vez había reemplazado a "Instrument Serif" en la tercera vuelta. Historial completo en §11.2 |
-| `--ag-radius-sm|md|lg|pill` | Radio de borde |
-| `--ag-shadow-sm|md|lg` | Elevación (vocabulario Material) |
-| `--ag-transition-fast|base` | Duración de transiciones |
-| `--ag-ease-emphasized|drawer` | Curvas cubic-bezier propias (solo la curva, HU-02) — entradas/expansiones (stagger de menú, popover de rol, tarjeta de auth) y deslizamiento de paneles tipo cajón (sidebar offcanvas), respectivamente |
-| `--ag-color-scrim-strong`, `--ag-color-scrim`, `--ag-color-text-on-scrim` | Overlay oscuro y texto sobre la foto de `auth-layout` (HU-02, refinamiento editorial) — **constantes entre temas** a propósito (la foto no reasigna por tema); nunca usar `--ag-color-text-inverse` sobre la foto, ver §1.3 |
-| `--ag-color-bg-auth` (nuevo, HU-02 rediseño de login, tercera vuelta; retocado en la cuarta) | Fondo del panel de formulario de `auth-layout` — reemplaza el uso de `--ag-color-bg-elevated` ahí. Tono propio ("crema anaranjado" en claro, "grafito-petróleo con dejo verde" en oscuro — antes "ocre pastel"/"verde-oliva muy oscuro", ajustado a pedido en la cuarta vuelta, ver nota más abajo), deliberadamente distinto del gris neutro del resto del panel, para que ninguna otra tarjeta genérica que sí use `-bg-elevated` herede el tinte sin querer |
-| `--ag-color-text-muted-auth` (nuevo, ídem) | Variante del texto muted, exclusiva de superficies montadas sobre `--ag-color-bg-auth` — el `--ag-color-text-muted` global cae bajo AA (~4.3:1) contra el nuevo fondo tintado en tema claro; en oscuro reutiliza el mismo valor del global (ya pasa cómodo). Ver §1.3 |
-| `--ag-color-accent-link` (nuevo, ídem) | Ámbar seguro como TEXTO de enlace ("¿Olvidaste tu contraseña?") — distinto de `--ag-color-accent-emphasis`, que en tema claro resuelve a ámbar-700 y ya está documentado como no apto para texto. Usa el primitivo nuevo `--ag-color-amber-800` en claro, ámbar-300 en oscuro (mismo valor que `-accent-emphasis` en oscuro, pero separado semánticamente por contrato: "seguro para texto") |
-| `--ag-color-wordmark-accent` (nuevo, HU-02 tercera vuelta) | Ámbar para la parte "COM" del wordmark bicromía de `auth-layout` — constante entre temas (igual que `--ag-color-scrim*`) porque la foto no reasigna por tema. Ambos temas usan ámbar-300 (verde oscuro = identidad de marca fija en la tipografía editorial) |
-| `--ag-color-chip-icon` (nuevo, ídem) | Verde para el ícono `flight_takeoff` del chip de tagline de `auth-layout` — constante entre temas, mismo criterio que el wordmark. Ambos temas usan verde-300 (identidad de marca fija) |
-| `--bs-body-bg`, `--bs-body-color`, `--bs-border-color`, `--bs-primary(-rgb)`, `--bs-secondary(-rgb)`, `--bs-success`, `--bs-danger`, `--bs-warning`, `--bs-info` | Las mismas variables nativas de Bootstrap 5, reasignadas a los tokens de arriba para que `.btn-primary`, `.alert-success`, y el propio AdminLTE hereden la marca **sin overrides por componente** |
+| `--ag-color-bg`, `--ag-color-bg-elevated`, `--ag-color-bg-chrome` | Fondo de página; fondo de tarjeta o input; fondo de sidebar y topbar |
+| `--ag-color-bg-auth`, `--ag-color-text-muted-auth` | Superficie y texto secundario del panel de formulario de `auth-layout`; alias de `bg` y `text-muted` |
+| `--ag-color-text`, `-text-muted`, `-text-faint`, `-text-inverse` | Texto principal, secundario, decorativo (íconos apagados) y texto sobre fondos de color |
+| `--ag-color-border`, `-border-strong`, `-border-card`, `-border-row` | Divisores, bordes de controles, borde de tarjeta y de fila |
+| `--ag-color-primary(-hover\|-contrast\|-emphasis\|-subtle\|-border-subtle)` | Verde de marca: botones, foco, estado activo, borde tenue de chips activos |
+| `--ag-color-bg-nav-active` | Fondo sólido del ítem de menú activo |
+| `--ag-color-accent(-hover\|-contrast\|-contrast-fill\|-emphasis\|-subtle\|-border-subtle\|-link)` | Ámbar de marca: CTA secundario y resaltados; `-emphasis` y `-link` son los usables como texto |
+| `--ag-color-success\|danger\|warning\|info(-subtle\|-strong\|-border)` | Estados; `-subtle` es el fondo tenue, `-strong` el texto sobre ese fondo, el plano sirve de texto o borde sobre la tarjeta |
+| `--ag-color-success\|danger\|warning\|info\|alert\|distintivo-1\|2\|3\|primary-2-contrast-fill` | Relleno sólido de chips, KPI y pasos, constante entre temas, con texto blanco |
+| `--ag-color-primary-2`, `--ag-color-distintivo-3` | Alias del tono informativo con familia propia (`-subtle`, `-strong`, `-border`) para consumidores que distinguen la categoría |
+| `--ag-color-alert(-subtle\|-strong\|-border)` | Rojo oscuro de máxima severidad (estado «cerrada», conflicto); distinto de `danger` |
+| `--ag-color-distintivo-1\|2(-subtle\|-strong\|-border)` | Tonos categóricos violeta y magenta, sin carga de estado |
+| `--ag-color-neutral-subtle`, `-neutral-strong` | Chip «sin estado» |
+| `--ag-color-avance-bajo\|medio\|alto\|cumplido\|excedido` | Los cinco tramos de `molecules/tiered-progress-bar`; alias de danger, warning, info, success y primary-emphasis |
+| `--ag-color-surface-card`, `-bg-table-head`, `-bg-row-hover`, `-bg-input-chrome` | Tarjeta, cabecera de tabla, hover de fila, relleno del buscador y de las píldoras inactivas |
+| `--ag-color-track`, `--ag-color-bar-unassigned` | Pista de las barras y barra «sin causa asignada» |
+| `--ag-color-bg-rail`, `-bg-rail-active`, `-text-rail`, `-text-rail-active` | Riel de módulos y header móvil: grafito en ambos temas; el activo usa el verde claro del tema oscuro |
+| `--ag-color-scrim-strong`, `-scrim`, `-text-on-scrim`, `-text-on-scrim-muted`, `-chip-border`, `-chip-text` | Overlay y texto sobre la fotografía de `auth-layout`; constantes entre temas (nunca usar `-text-inverse` sobre la foto) |
+| `--ag-color-wordmark-accent`, `--ag-color-chip-icon` | Ámbar del «COM» del wordmark y verde del ícono del chip de `auth-layout`; constantes entre temas |
+| `--ag-color-focus-ring` | Contorno de foco de teclado |
+| `--ag-color-overlay` | Velo de modales |
+| `--ag-space-1`…`--ag-space-8` | Espaciado, escala de 8 px |
+| `--ag-font-family-base\|mono\|display` | Tipografía; ver §7.3 |
+| `--ag-font-size-*`, `--ag-line-height-*`, `--ag-font-weight-*` | Escala tipográfica; pesos 400, 500, 700 y 800 |
+| `--ag-radius-sm\|md\|lg\|pill` | Radio de borde |
+| `--ag-shadow-sm\|md\|lg\|selected\|overlay-mapa` | Elevación |
+| `--ag-transition-fast\|base`, `--ag-ease-emphasized\|drawer` | Duraciones y curvas de easing |
+| `--bs-body-font-family`, `--bs-body-bg`, `--bs-body-color`, `--bs-border-color`, `--bs-primary(-rgb)`, `--bs-secondary(-rgb)`, `--bs-success`, `--bs-danger`, `--bs-warning`, `--bs-info` | Variables nativas de Bootstrap 5 reasignadas a los tokens de arriba, para que `.btn-primary`, `.alert-success` y AdminLTE hereden la marca sin overrides por componente |
+
+Los componentes que necesitan un tono nuevo lo piden como token semántico en ambos temas; nunca declaran un color propio.
 
 ## 2. Mezcla Bootstrap / Material — criterio por tipo de componente
 
@@ -134,7 +140,7 @@ Consecuencia de diseño explícita: **el relleno sólido de marca (botones) es c
 | Grid, contenedores, utilidades de espaciado/flex, breakpoints responsivos, offcanvas (sidebar en mobile) | Bootstrap | Es la base de AdminLTE (ADR 0002 punto 2); reinventar un grid propio no aporta nada |
 | Botones, inputs, cards, formularios | Material (forma "outlined"/pill, elevación, radios de borde mayores) montado sobre marcado propio — no se usa `.form-control`/`.btn` de Bootstrap para no heredar su estética por defecto, que es justo lo que ADR 0002 pide reemplazar | Ver `resources/css/components/input.css`, `button.css` |
 | Iconografía | Material Symbols (ligadura de texto, variable font) | Set único, permisivo, reemplaza a los íconos de Bootstrap Icons/FontAwesome que trae AdminLTE por defecto |
-| Tipografía | **IBM Plex Sans** (texto) / **IBM Plex Mono** (cifras tabulares) como única familia base — deliberadamente *no* Roboto. Roboto es el default de Material por asociación automática, y ADR 0002 pide el comportamiento/estética de Material para inputs/cards/iconos, no que se herede su tipografía de fábrica. Plex tiene personalidad técnica acorde a un panel B2B agro-industrial, buena legibilidad en tablas/formularios densos (el uso real de este panel), cifras tabulares nativas para hectáreas/montos/códigos de sesión, y se auto-hospeda desde Google Fonts (coherente con que `frontend` instala fuentes por build, no por CDN) | Evita "panel genérico sin pensar la tipografía"; ver `--ag-font-family-base`/`--ag-font-family-mono` |
+| Tipografía | **Manrope** (interfaz y titulares) / **JetBrains Mono** (cifras tabulares y metadatos), las mismas familias de la app móvil, servidas desde el bundle con `@fontsource` (sin CDN). No se hereda el Roboto por defecto de Material: ADR 0002 pide el comportamiento de Material para inputs, cards e íconos, no su tipografía de fábrica. Manrope da buena legibilidad en tablas y formularios densos; JetBrains Mono da cifras de ancho fijo para hectáreas, montos y códigos | Una sola identidad tipográfica entre panel y app; ver `--ag-font-family-base`/`--ag-font-family-mono` |
 | Color / theming | Ninguno de los dos "de fábrica" — tokens propios (`--ag-color-*`) que además reasignan las variables nativas de Bootstrap 5.3 (`--bs-*`) | CLAUDE.md invariante 11 |
 
 ## 3. Catálogo de componentes
@@ -215,7 +221,7 @@ Por qué solo los átomos estaban implementados en el pase anterior: era el lím
 
 **Refinamiento editorial de `auth-layout` (segunda vuelta, 27/8/2026)** — el usuario vio un prototipo de referencia (herramienta externa, no en el repo) con 3 direcciones y pidió la "1a: editorial cálido"; se adoptó la IDEA (wordmark arriba + headline grande en serif abajo sobre la foto, formulario en tarjeta clara/elevada), nunca su paleta (no sale de los logos de Agrocom) ni sus campos (nuestro login es username-only, sin recuperación ni alta pública — `login-form` no cambió):
 
-- **`--ag-font-family-display`** (`tokens/primitives/base.css`): tipografía de titulares grandes, ADITIVA a `--ag-font-family-base` (IBM Plex Sans sigue siendo la única familia de texto/formularios/menú). Originalmente "Instrument Serif"; reemplazada por **"Fraunces"** en el rediseño de login (tercera vuelta) por verse muy angosta a 38-44px — ver fila de §1.4.
+- **`--ag-font-family-display`** (`tokens/primitives/base.css`): tipografía de titulares grandes. Resuelve a Manrope, la misma familia de `--ag-font-family-base`; el titular se distingue por peso y tamaño. Ver §7.3.
 - **`--ag-color-scrim-strong`, `--ag-color-scrim`, `--ag-color-text-on-scrim`** (nuevos, `tokens/semantic/theme-{light,dark}.css`, **mismo valor en los dos archivos a propósito**): overlay oscuro (vignette, sin color de marca) y texto sobre `drone-hero.jpg`. Constantes entre temas porque la foto no reasigna por `[data-bs-theme]` — usar `--ag-color-text-inverse` ahí sería un bug real en tema oscuro (resuelve a gris-900, casi invisible sobre la foto ya oscurecida). Ver estimación de contraste en §1.3 (ídem en ambos temas, por diseño).
 - **El wordmark es texto, no el átomo `logo`**: al momento de esta decisión, `logo-light.jpeg`/`logo-dark.jpeg` traían fondo sólido horneado (JPEG, sin transparencia); sobre una foto se hubiera visto un recuadro blanco/negro. Se resolvió como `<p>` en `--ag-font-family-display` reutilizando la clave `ui.logo.alt` (sin agregar un string nuevo) — el logo de `login-form` no se duplicó ni se quitó, sigue siendo el único wordmark visible en mobile (donde la foto se oculta). **Actualización (tercera vuelta):** el asset ya es `public/logo.png` transparente (ver nota más abajo, "Asset de logo transparente") — la limitación técnica desapareció, pero el wordmark sigue en texto porque el mockup pide la bicromía tipográfica "AGRO"/"COM", no el isotipo cuadrado.
 - **Headline** (`seguridad.auth.headline`, nuevo en `lang/es/seguridad.php`): `clamp(2.25rem, 1.2rem + 2.2vw, 3rem)`, `line-height: 1.12`. Solo se renderiza en tablet/desktop (≥768px, cuando la foto es visible) — en mobile no hay riesgo de que se vea desproporcionado o recortado porque directamente no se pinta (`display:none` heredado del contenedor de la foto).
@@ -223,9 +229,9 @@ Por qué solo los átomos estaban implementados en el pase anterior: era el lím
 
 **Rediseño de login (tercera vuelta, HU-02)** — el usuario aprobó un mockup de referencia (`docs/login.html`, sección "Turno 3", ids `#3a` claro / `#3b` oscuro) para un tercer refinamiento visual del login. Esta vuelta es ajuste de tokens + extensión de átomos compartidos + re-arquitectura de `login-form` en TABS; no toca arquitectura de negocio (contratos, `SesionController`, `IniciarSesionRequest`), solo presentación:
 
-- **`--ag-color-amber-800`** (nuevo primitivo, `tokens/primitives/brand.css`): escalón intermedio 700→900, existe para dar un ámbar oscurecido usable como texto (ámbar-700 falla AA como texto, ámbar-900 es demasiado marrón). Ver §1.3.
+- **`--ag-color-accent-emphasis`** y **`--ag-color-accent-link`**: el ámbar de marca no llega a AA como texto sobre blanco, así que el ámbar usable como texto es `on-amber-container` en tema claro. Ver §1.3.
 - **`--ag-color-bg-auth`, `--ag-color-text-muted-auth`, `--ag-color-accent-link`** (nuevos tokens semánticos, `theme-{light,dark}.css`): fondo propio del panel de formulario de login (reemplaza `--ag-color-bg-elevated` ahí, quita la tarjeta blanca elevada de vueltas anteriores), su variante de texto muted (el muted global falla AA sobre el nuevo fondo tintado en claro), y un ámbar seguro para texto de enlace. Ver §1.3/§1.4 para la verificación de contraste completa y §1.4 para el detalle de cada token.
-- **`--ag-color-wordmark-accent`, `--ag-color-chip-icon`** (nuevos tokens semánticos, `theme-{light,dark}.css`, mismo valor exacto en ambos archivos a propósito): constantes entre temas para el branding tipográfico editorial de `auth-layout` (wordmark bicromía "AGRO"/"COM" + chip de ícono). Criterio idéntico que `--ag-color-scrim*`: la foto no reasigna por tema, así que lo que va montado sobre ella tampoco. Ambos temas usan ámbar-300 (wordmark-accent) y verde-300 (chip-icon), identidad de marca fija.
+- **`--ag-color-wordmark-accent`, `--ag-color-chip-icon`** (tokens semánticos, mismo valor en `theme-{light,dark}.css` a propósito): constantes entre temas para el branding tipográfico de `auth-layout` (wordmark bicromía "AGRO"/"COM" + chip de ícono). Criterio idéntico a `--ag-color-scrim*`: la foto no reasigna por tema, así que lo que va montado sobre ella tampoco. Usan el ámbar y el verde de marca.
 - **`atoms/input` — prop `variant`** (`'boxed'` default | `'line'`): variante de línea editorial (sin caja, solo `border-bottom`, label uppercase) para el nuevo diseño de login. Mismo Blade, mismo marcado/accesibilidad — el modificador es una clase CSS (`ag-input--line`) resuelta en `resources/css/components/input.css`, no un componente nuevo. El resto del panel sigue usando `'boxed'` (default) sin cambios. El color muted propio de auth (`--ag-color-text-muted-auth`) es responsabilidad de quien consume el átomo (el organism/template de login), no del átomo compartido — este no conoce "auth" como concepto.
 - **`atoms/input` — prop `helpTone`** (`null` default | `'accent'` | `'alert'`, 19/9/2026): colorea el texto de ayuda con el acento de marca o el de alerta (`ag-input__help--accent` / `--alert`, ya definidos en `input.css`) para una ayuda que es una SUGERENCIA o un aviso y no una aclaración neutra — sin pasarlo, el gris de siempre. Sirve para el primer pintado; la ayuda que cambia de tono según lo escrito (`contratos-form.js`, "Adelanto Solicitado"; `lotes-generar.js`, hectáreas por lote) alterna las mismas dos clases desde JS con sus plantillas en `data-plantilla-ayuda*` del propio input. Texto siempre sobre `--ag-color-accent-link`/`--ag-color-alert-strong` (contraste medido 5,11:1 y 9,82:1 en claro, 10,35:1 y 7,84:1 en oscuro sobre la tarjeta).
 - **`atoms/input` — prop `suffix`** (`null` default, 20/9/2026, tarea 115): unidad del valor ("km", "h", "kg", "ciclos") al final del control, DENTRO del mismo borde, en `--ag-font-family-mono` y `--ag-color-text-muted` (`ag-input__suffix`, en `input.css`). Reemplaza al paréntesis en el rótulo ("Kilometraje (km)") y a un texto suelto al lado del campo: la unidad es parte del campo. Es texto de lectura —no recibe foco ni viaja en el POST— y su id entra en `aria-describedby`. Primeros usos: ciclos de batería, horas de generador y kilometraje de vehículo (Mantenimiento). Verificado en claro y oscuro y a 390 px.
@@ -239,8 +245,8 @@ Por qué solo los átomos estaban implementados en el pase anterior: era el lím
 **Ajustes puntuales de login (cuarta vuelta, HU-02, PR #15)** — el usuario probó el PR y pidió una ronda de retoques acotados, sin reabrir arquitectura (ni ADR 0002, ni tabs, ni el motor de sync/backend). Todos los cambios son de tokens/CSS/JS de presentación dentro del catálogo ya existente:
 
 - **`--ag-color-bg-auth` retocado en ambos temas** (`tokens/semantic/theme-{light,dark}.css`, mismo mecanismo `color-mix()` sobre primitivos existentes, ningún hex nuevo):
-  - Claro: de `color-mix(in srgb, var(--ag-color-amber-100) 45%, var(--ag-color-gray-50) 55%)` a `color-mix(in srgb, var(--ag-color-amber-100) 30%, var(--ag-color-gray-0) 70%)` — menos peso de ámbar, mezclado contra blanco puro (antes gris-50) para que el resultado se lea "crema" en vez de "ocre pastel". Aprox. `#fefaf2`.
-  - Oscuro: de `color-mix(in srgb, var(--ag-color-green-900) 40%, var(--ag-color-gray-950) 60%)` a `color-mix(in srgb, var(--ag-color-green-900) 25%, var(--ag-color-gray-850) 75%)` — menos peso de verde, mezclado contra gray-850 (antes gray-950, más oscuro) para que el matiz verde siga siendo perceptible pese a pesar menos en la mezcla. Aprox. `#1a261d` — grafito/petróleo con un dejo verde, ya no "verde-oliva".
+  - Claro: `--ag-color-bg-auth` es alias de `--ag-color-bg` (`#F3F5F1`), el mismo fondo del resto del panel.
+  - Oscuro: `--ag-color-bg-auth` es alias de `--ag-color-bg` (`#17251C`).
   - Contraste reverificado en los dos temas (ver tabla actualizada en §1.3): todos los pares texto/fondo de la superficie auth se mantienen en AA o mejor, con un caso a vigilar — `--ag-color-text-muted` (el global, gris-600) sobre el nuevo fondo claro da ~4.5:1, al filo del umbral (no una mejora sólida); sigue sin ser el token que se usa ahí, `--ag-color-text-muted-auth` (gris-700, ~7.9:1 AAA) sigue siendo el que corresponde.
 - **Logo del header de `auth-layout` +15%** (`resources/css/components/auth-layout.css`): override local `.ag-auth-layout__header .ag-logo { --ag-logo-height: 2.875rem; }` (2.5rem × 1.15), aprovechando que `atoms/logo` ya expone esa custom property. `--ag-logo-height`/`.ag-logo--md` global NO cambia — sidebar-nav/topbar siguen en 2.5rem.
 - **Tab "Recuperar acceso" — campo de correo, no de usuario** (`organisms/login-form.blade.php`): `name="username_recuperar"` (`type="text"`, ícono `person`) reemplazado por `name="email_recuperar"` (`type="email"`, ícono `mail`, `autocomplete="email"`). Nueva clave `seguridad.recuperar.campo_email` = "Correo electrónico"; `seguridad.recuperar.subtitulo` reescrito para hablar de correo en vez de usuario.
@@ -255,7 +261,7 @@ Por qué solo los átomos estaban implementados en el pase anterior: era el lím
 
 **Mockup de dashboard admin — catálogo nuevo + mejoras de chrome (2026-08-28)** — hay una presentación de aprobación de proyecto próxima; se pidió un mockup visual de alta fidelidad del panel de admin (dashboard con métricas, topbar con más jerarquía/notificaciones, sidebar pulido, footer mejorado, y una pantalla nueva de "Registro de la compañía" que muestra la visión de pivotar a SaaS multi-tenant — sin implementar tenancy real). Este pase es SOLO el catálogo de componentes y las mejoras a los organisms/template compartidos que ya eran de `design-ui` (`topbar`, `sidebar-nav`, `panel-layout`); el ensamblado de las pantallas concretas con datos mock queda para `frontend`:
 
-- **`atoms/badge`** (nuevo): pill de estado, variantes `success|warning|info|danger|neutral|accent`. Decisión de contraste deliberada: el texto de las variantes de estado es SIEMPRE `--ag-color-text` (nunca el token crudo del estado, p. ej. `--ag-color-warning`, como color de texto) — se verificó que amarillo-sobre-amarillo-pálido da ~1.4:1 (falla catastrófica) y que azul/rojo rondan el límite de AA (~4.4-4.8:1) en vez de pasarlo con margen. `--ag-color-text` sobre cualquier `-subtle` (tinte pálido en claro, overlay de baja opacidad sobre superficie oscura en oscuro) pasa AAA en los dos temas sin excepción — el color de marca de cada estado se conserva en un punto decorativo (`.ag-badge__dot`, no-texto, exigencia de contraste más laxa) o en el ícono si se pasa uno, nunca en el texto. La variante "accent" reutiliza el par ya establecido y verificado en el sistema (`--ag-color-accent-subtle`/`--ag-color-accent-contrast`, el mismo que ya usan `.ag-role-badge` y `.ag-menu-item__badge`). Nuevo token semántico `--ag-color-neutral-subtle` (gray-200 claro / gray-800 oscuro) para la variante "neutral", que no tenía un `-subtle` propio en el sistema.
+- **`atoms/badge`** (nuevo): pill de estado, variantes `success|warning|info|danger|neutral|accent`. Decisión de contraste deliberada: el texto de las variantes de estado es SIEMPRE `--ag-color-text` (nunca el token crudo del estado, p. ej. `--ag-color-warning`, como color de texto) — se verificó que amarillo-sobre-amarillo-pálido da ~1.4:1 (falla catastrófica) y que azul/rojo rondan el límite de AA (~4.4-4.8:1) en vez de pasarlo con margen. `--ag-color-text` sobre cualquier `-subtle` (tinte pálido en claro, overlay de baja opacidad sobre superficie oscura en oscuro) pasa AAA en los dos temas sin excepción — el color de marca de cada estado se conserva en un punto decorativo (`.ag-badge__dot`, no-texto, exigencia de contraste más laxa) o en el ícono si se pasa uno, nunca en el texto. La variante "accent" reutiliza el par ya establecido y verificado en el sistema (`--ag-color-accent-subtle`/`--ag-color-accent-contrast`, el mismo que ya usan `.ag-role-badge` y `.ag-menu-item__badge`). Nuevo token semántico `--ag-color-neutral-subtle` (`surface2` en ambos temas) para la variante "neutral", que no tenía un `-subtle` propio en el sistema.
 - **`molecules/stat-card`** (nuevo): tarjeta de métrica de dashboard — ícono + valor grande (`--ag-font-family-mono`, cifras tabulares, mismo criterio que el resto del sistema) + label + variante de acento (mismo set que `badge`, aplicado a una barra superior decorativa con el color crudo del estado + un chip de ícono con el mismo criterio bg-subtle/texto-seguro de `badge`) + tendencia opcional (texto ya formateado + ícono `trending_up`/`trending_down`/`trending_flat`, color éxito/peligro/muted independiente de la `variant` de la tarjeta). El grid de 4-5 tarjetas por dashboard es Bootstrap y lo arma quien componga la pantalla (`frontend`) — la molécula no se envuelve en su propio grid.
 - **`atoms/switch`** (nuevo): toggle on/off de FORMULARIO real (`<input type="checkbox">`, se envía con el form) — deliberadamente distinto de `molecules/theme-toggle` (ese es presentación pura sin `name`/`checked`, atado al tema, con JS propio). Sin JS: el estado visual (track+thumb) se resuelve 100% en CSS con `:checked` + combinador de hermanos.
 - **`molecules/plan-card`** (nuevo): tarjeta seleccionable tipo radio para elegir un plan de suscripción (pensada para 2-3 planes uno al lado del otro). `<input type="radio">` real, visualmente oculto pero accesible (la asociación `<label for>` nativa ya cubre el requisito de "role correcto, navegable por teclado" sin ARIA adicional) — la tarjeta completa (el `<label>`) es el target de click, elevación Material (`shadow-sm` → `shadow-lg`) al seleccionar, sin JS propio (mismo mecanismo `:checked` que `atoms/switch`). Prop `highlightedLabel` opcional compone `atoms/badge` (variante "accent") para marcar un plan destacado — quien arme el grupo de 2+ tarjetas es responsable del contenedor `role="radiogroup"` (mismo criterio de responsabilidad que `role-selector-item`, que tampoco arma su lista contenedora).
@@ -364,7 +370,7 @@ Convención de catálogo de claves, definida acá (era un pendiente explícito d
 
 ## 6. Pendiente — no es trabajo de `design-ui`, queda para quien corresponda
 
-- ~~Instalar Bootstrap/AdminLTE + Material Symbols + IBM Plex Sans/Mono vía npm~~ — hecho por `frontend` (27/8/2026): `bootstrap@5.3.8`, `material-symbols`, `@fontsource/ibm-plex-{sans,mono}` en `package.json`, importados desde `resources/css/app.css`; `bootstrap` (JS) importado completo en `resources/js/app.js` (`window.bootstrap`). `livewire/livewire` (composer) sigue pendiente.
+- ~~Instalar Bootstrap/AdminLTE + Material Symbols + Manrope/JetBrains Mono vía npm~~ — hecho por `frontend`: `bootstrap@5.3.8`, `material-symbols`, `@fontsource/manrope` y `@fontsource/jetbrains-mono` en `package.json`, importados desde `resources/css/app.css`; `bootstrap` (JS) importado completo en `resources/js/app.js` (`window.bootstrap`). `livewire/livewire` (composer) sigue pendiente.
 - ~~Reemplazar el scaffold Tailwind de `resources/css/app.css`~~ — hecho por `frontend`; los tokens/componentes de `design-ui` sobrevivieron el cambio sin tocarlos.
 - **Wiring de los JS nuevos de este pase en `resources/js/app.js`** (archivo reservado a `frontend`, `design-ui` no lo toca): falta agregar `import './molecules/theme-toggle.js';` y `import './organisms/sidebar-nav.js';`, mismo patrón que la línea ya existente `import './atoms/input.js';`. Sin este import, el switch de tema y el colapso a icon-rail del sidebar quedan sin comportamiento (el resto de la interacción nueva — offcanvas, collapse, dropdown — ya funciona porque depende de `window.bootstrap`, que `app.js` ya expone). → `frontend`.
 - **Columna de preferencia de tema por usuario**: resuelta como `sec_user_preferencia.tema` (enum `TemaPreferencia::Claro|Oscuro`), ya implementada por `backend` en `app/Dominios/Seguridad/`. Pendiente real: el mapeo `claro|oscuro` ↔ `light|dark` (el que persiste el backend vs. el que consume `data-bs-theme`/`theme-toggle`) lo hace quien conecte el evento `agrocom:theme-changed` a la persistencia (Livewire) — no es responsabilidad de la molécula. → `frontend`.
@@ -372,7 +378,7 @@ Convención de catálogo de claves, definida acá (era un pendiente explícito d
 - **Implementación de las moléculas/organismos/templates de §4** — hecho en este pase (27/8/2026). Ver tabla de arriba y las notas de composición.
 - **Ensamblar las páginas concretas** (`pages/login`, `pages/seleccionar-rol`, el dashboard de cada rol) usando `auth-layout`/`panel-layout`, conectar el submit de `login-form` y los triggers de `role-selector-item`/popovers de rol a `SesionController`/`RolActivoController` (ambos responden JSON, pensados para fetch/Livewire, no submit clásico con redirect). → `frontend`.
 - ~~Asset de logo transparente~~ — resuelto (rediseño de login, tercera vuelta): los dos JPEG (`logo-light.jpeg`/`logo-dark.jpeg`, fondo sólido horneado blanco/negro) se reprocesaron a un único `public/logo.png` con canal alfa real (recorte del isotipo + wordmark, extracción de alfa por chroma-key con limpieza de ruido de compresión — filtro de mediana + erosión + blur suave sobre el canal alfa, no sobre el color). Ya no hace falta variante por tema: `atoms/logo` renderiza un solo `<img>`, `logo.css` perdió la regla `[data-bs-theme]` que alternaba `display`. El wordmark editorial de `auth-layout` sigue en texto (no en esta imagen) por decisión de diseño del mockup (bicromía tipográfica "AGRO"/"COM"), no ya por la limitación técnica — ver notas de §3.
-- ~~Instalar la fuente de `--ag-font-family-display` vía npm~~ — resuelto, dos vueltas: primero se instaló `@fontsource/instrument-serif`; en el rediseño de login (tercera vuelta) se reemplazó por `@fontsource-variable/fraunces` (más ancha/cálida a 38-44px, con eje óptico `opsz`) y se desinstaló el paquete de Instrument Serif (sin otros consumidores).
+- ~~Instalar la fuente de `--ag-font-family-display` vía npm~~ — resuelto: usa Manrope, ya instalada para la interfaz (§7.3).
 
 ## 7. Quinta vuelta (28/8/2026) — layout de tres niveles del panel
 
@@ -388,7 +394,7 @@ semántico (invariante 11).
 
 | Nivel | Componente | Qué es |
 |---|---|---|
-| 1 | `organisms/module-rail` | Riel de módulos, 74px (64px tablet), superficie oliva oscura **en ambos temas** (`--ag-color-bg-rail*`, constantes — chrome de marca, mismo criterio que `--ag-color-scrim*`). Solo los módulos que el rol activo puede ver; engranaje al pie → `panel.organizacion.index`. |
+| 1 | `organisms/module-rail` | Riel de módulos, 74px (64px tablet), superficie grafito **en ambos temas** (`--ag-color-bg-rail*`, constantes — chrome de marca, mismo criterio que `--ag-color-scrim*`). Solo los módulos que el rol activo puede ver; engranaje al pie → `panel.organizacion.index`. |
 | 2 | `organisms/module-sidebar` | Ítems del módulo activo, 252px, solo ≥1200px: nombre en display 22px + descripción (`sec_menu.descripcion`, clave i18n nueva), lista de `menu-item` (radio 9, activo verde negrita sobre tenue, badge de pendientes en mono ámbar), pie "Cambiar de rol" (link a la pantalla 5c con `?cambiar=1`). |
 | 3 | `tabs.css` (skin del `tab` nativo de Bootstrap) | Pestañas dentro del contenido (Resumen / Sesiones / Pausas en el dashboard), subrayado ámbar 2px en la activa. |
 
@@ -415,72 +421,34 @@ columna flex interna lleva `min-height: 0` (sin eso el hijo flex nunca
 encoge y el scroll interno no aparece); las tarjetas que no deben encogerse
 van `flex: 0 0 auto`.
 
-### 7.3. Tipografía — tres familias, una por contexto
+### 7.3. Tipografía — dos familias, una por contexto
 
-Confirmado en este pase (pedido del 28/8/2026): **Fraunces** es LA fuente
-display del sistema — el mockup traía Instrument Serif, pero esa no es la
-del sistema (ya reemplazada en la tercera vuelta); se mantiene Fraunces y
-los tamaños del panel se calibran a su métrica más ancha (título de página
-2.125rem vs. 36px del mockup, KPI 2.125rem vs. 38px, sidebar 1.375rem vs.
-23px). **IBM Plex Sans** para toda la interfaz/subtítulos — ahora cableada
-explícitamente a `--bs-body-font-family` para que nada caiga al stack del
-sistema — e **IBM Plex Mono** para datos/metadatos (horas, drones, badges
-de pendientes, `ROL · CAMPAÑA`, pie). Los íconos pasan de Material Symbols
-Outlined a **Rounded** (los de las maquetas): `material-symbols/rounded.css`
-+ clase `material-symbols-rounded` en `atoms/icon`.
+Las mismas de la app móvil, servidas desde el propio bundle (`@fontsource/manrope` y `@fontsource/jetbrains-mono`, importadas en `resources/css/app.css`; sin CDN):
 
-### 7.4. Tokens nuevos (ambos temas)
+- **Manrope** (400, 500, 600, 700, 800) para la interfaz, los subtítulos y los titulares. `--ag-font-family-base` y `--ag-font-family-display` resuelven a Manrope; el titular se distingue por peso (700 a 800) y tamaño, no por una familia aparte. Está cableada a `--bs-body-font-family` para que nada caiga al stack del sistema.
+- **JetBrains Mono** (400, 700) para cifras y metadatos: KPI de `stat-card`, horas, drones, `ROL · CAMPAÑA`, valores de leyenda. `--ag-font-family-mono`. Las cifras llevan `font-variant-numeric: tabular-nums` para alinear en columna.
 
-Primitivas (`tokens/primitives/`): rampa **arena** `--ag-color-sand-50…700`
-y rampa **oliva** `--ag-color-olive-150…1000` en `brand.css` (neutros
-cálidos del lenguaje aprobado — un tenant las reemplazaría junto con las
-rampas de marca); `--ag-color-green-200` (lima del riel); en `base.css` el
-rojo óxido `--ag-color-red-50|200|600|900` y el azul `--ag-color-blue-50|700`.
+El título de pantalla (`--ag-title-page-*`) usa peso 800. Los íconos son Material Symbols **Rounded** (`material-symbols/rounded.css`, clase `material-symbols-rounded` en `atoms/icon`).
 
-Semánticos (mismo nombre en ambos temas, valores reasignados):
+### 7.4. Tokens del layout de tres niveles
+
+Semánticos (mismo nombre en ambos temas, valores reasignados desde `brand.css`):
 
 | Token | Uso |
 |---|---|
-| `--ag-color-bg` (reasignado) | El fondo del contenido del panel es **el mismo `--ag-color-bg-auth` del login** en ambos temas (pedido explícito del 28/8/2026) — crema en claro, grafito-petróleo en oscuro |
-| `--ag-color-bg-rail`, `-bg-rail-active`, `-text-rail`, `-text-rail-active` | Riel de módulos — **constantes entre temas** (oliva-1000/900, oliva-300, verde-200) |
-| `--ag-color-surface-card`, `--ag-color-border-card` | Tarjeta del panel (KPI, tablas, fichas) y su borde suave, separados del chrome |
+| `--ag-color-bg` | Fondo del contenido del panel; `--ag-color-bg-auth` es su alias |
+| `--ag-color-bg-rail`, `-bg-rail-active`, `-text-rail`, `-text-rail-active` | Riel de módulos, **constantes entre temas** (grafito, mezcla de grafito con blanco al 10 %, blanco al 70 %, verde claro) |
+| `--ag-color-surface-card`, `--ag-color-border-card` | Tarjeta del panel (KPI, tablas, fichas) y su borde, separados del chrome |
 | `--ag-color-bg-table-head`, `--ag-color-border-row`, `--ag-color-bg-row-hover` | Cabecera mono de tabla, borde de fila, hover de fila |
-| `--ag-color-bg-input-chrome` | Relleno del buscador del header y píldoras inactivas |
-| `--ag-color-success-strong`, `-warning-strong`, `-info-strong`, `-danger-strong`, `-neutral-strong` | TEXTO de los chips de estado sobre su propio `-subtle` — cada par verificado AA (ver §7.5). `warning` pasa del amarillo Bootstrap al ámbar de marca; `danger` al rojo óxido |
-| `--ag-color-danger-border` | Borde de la alerta de RC |
-| `--ag-color-primary-border-subtle` | Borde tenue verde (chip de campaña, píldora/filtro activo) |
-| `--ag-color-text-faint` | Oliva decorativa (íconos apagados, barras) — **no pasa AA como texto**, documentado |
-| `--ag-color-track`, `--ag-color-bar-unassigned` | Pista de las barras de pausas y la barra "sin causa asignada" |
+| `--ag-color-bg-input-chrome` | Relleno del buscador del header y de las píldoras inactivas |
+| `--ag-color-*-strong` | Texto de los chips de estado sobre su propio `-subtle`; cada par verificado AA en §1.3 |
+| `--ag-color-primary-border-subtle` | Borde tenue verde (chip de campaña, píldora o filtro activo) |
+| `--ag-color-text-faint` | Decorativo (íconos apagados, barras); no se usa para texto de lectura |
+| `--ag-color-track`, `--ag-color-bar-unassigned` | Pista de las barras de pausas y barra «sin causa asignada» |
 
-`--ag-color-text`/`-text-muted`/`-border`/`-neutral-subtle` se reasignaron
-a la escala oliva/arena (claro) y a mezclas oliva-sobre-gris + texto crema
-(oscuro).
+### 7.5. Contraste
 
-### 7.5. Contraste verificado (se suma a §1.3)
-
-| Combinación (tema claro) | Ratio aprox. | Resultado |
-|---|---|---|
-| `--ag-color-text` (oliva-950) sobre `--ag-color-surface-card` (arena-50) | ~12.9:1 | AAA |
-| `--ag-color-text-muted` (oliva-500) sobre arena-50 / `--ag-color-bg` crema | ~5.0:1 / ~5.1:1 | AA — por eso muted es oliva-500 y NO la oliva-400 del mockup (~3.5:1, falla; quedó como `-text-faint` decorativo) |
-| `--ag-color-success-strong` sobre `--ag-color-success-subtle` | ~7.2:1 | AAA (chip "Validada") |
-| `--ag-color-warning-strong` (ámbar-800) sobre `--ag-color-warning-subtle` (ámbar-100) | ~4.6:1 | AA (chip "Sin evidencia", badges de pendientes, "ÚLTIMO USADO") |
-| `--ag-color-info-strong` (azul-700) sobre `--ag-color-info-subtle` (azul-50) | ~5.5:1 | AA (chip "En vuelo") |
-| `--ag-color-danger-strong` (rojo-900) sobre `--ag-color-danger-subtle` (rojo-50) | ~9.2:1 | AAA (alerta de RC) |
-| `--ag-color-neutral-strong` (oliva-600) sobre `--ag-color-neutral-subtle` (arena-200) | ~5.2:1 | AA (chip "Programada") |
-| Blanco sobre `--ag-color-danger` (rojo-600) | ~5.1:1 | AA (botón "Resolver") |
-| `--ag-color-text-rail` (oliva-300) sobre `--ag-color-bg-rail` (oliva-1000) | ~4.9:1 | AA (íconos del riel; el mínimo exigido para no-texto es 3:1) |
-| `--ag-color-text-rail-active` (verde-200) sobre `--ag-color-bg-rail-active` (oliva-900) | ~8.7:1 | AAA |
-
-| Combinación (tema oscuro) | Ratio aprox. | Resultado |
-|---|---|---|
-| Texto crema sobre `--ag-color-surface-card` | ~14:1 | AAA |
-| `--ag-color-text-muted` (salvia) sobre la tarjeta oscura | ~6:1 | AA+ |
-| `-strong` de cada estado sobre su `-subtle` (overlay sobre tarjeta): success ~5.6, warning ~5.6, info ~5.3, danger ~5.3, neutral ~9.6 | ≥5.3:1 | AA todos |
-
-Regla operativa que queda fijada: **un chip de estado usa siempre el par
-`-subtle` (fondo) + `-strong` (texto)**, nunca el token crudo como texto;
-el ámbar como texto sobre superficie clara es siempre el oscurecido
-(ámbar-800 vía `-warning-strong`/`-accent-link`) porque el tono base falla AA.
+Los ratios de cada combinación están en §1.3. Regla operativa: **un chip de estado usa siempre el par `-subtle` (fondo) + `-strong` (texto)**, nunca el token crudo como texto; el ámbar como texto sobre superficie clara es siempre `--ag-color-accent-emphasis` o `--ag-color-warning-strong`, porque el ámbar puro no llega a AA sobre blanco.
 
 ### 7.6. Catálogo — altas y bajas
 
@@ -770,7 +738,7 @@ Verificado en navegador (Playwright, claro/oscuro/móvil, usuario
   período, campaña.
 - **Fase 7 — contraste sistémico en oscuro**: `--ag-color-bg-elevated`,
   `--ag-color-bg-chrome` y `--ag-color-surface-card` eran EL MISMO valor
-  (`color-mix(olive-900 22%, gray-850 78%)`) — contra `--ag-color-bg`
+  (el verde oscuro de fondo) — contra `--ag-color-bg`
   (`bg-auth`) la diferencia real era de ~2 unidades de RGB, imperceptible
   (confirmado con captura real, no solo cálculo). Reemplazado por una
   escala de elevación tipo Material dark theme (overlay de blanco creciente
@@ -843,55 +811,27 @@ el panel completo (tokens de color, contraste AA, alertas, botones, gráfica
 de distribución, grilla, tipografía, elevación en oscuro, detalles menores).
 Rama `feature/auditoria-visual`, plan completo en el historial de la sesión.
 Tres observaciones de la revisión no aplicaban (ya resueltas por trabajo
-previo, no se tocó código): la rampa neutra ya estaba "teñida" (arena/oliva,
-no grises fríos), el padding de KPI vs. tarjeta de distribución ya era el
+previo, no se tocó código): la rampa neutra ya estaba teñida de la marca,
+no en grises fríos, el padding de KPI vs. tarjeta de distribución ya era el
 mismo (`var(--ag-space-4)`), y el azul de "En vuelo" ya era
 `--ag-color-info` del catálogo semántico.
 
-### 10.1. Sistema de color — consistencia de marca
+### 10.1. Sistema de color
 
-Verificado con cálculo exacto de contraste WCAG (script Python, no a ojo),
-antes de fijar cualquier hex.
+Los valores y contrastes del sistema de color viven en §1.2 y §1.3. Reglas de consistencia:
 
-| Combinación | Ratio | Resultado | Dónde se usa |
-|---|---|---|---|
-| `--ag-color-green-400` (`#79b93d`, nuevo primitivo — blend 65% green-300/35% green-500) sobre `--ag-color-surface-card` (oscuro) | 5.21:1 | Pasa AA | `--ag-color-primary-emphasis`/`-success` (crudo), tema oscuro |
-| `--ag-color-green-400` sobre `--ag-color-bg-chrome` (oscuro) | 5.86:1 | Pasa AA | Ídem |
-| `--ag-color-green-200` (success-strong, oscuro) sobre su propio `--ag-color-success-subtle` (`rgba(198,232,106,.16)`) | 5.95:1 | Pasa AA | Chip "Validada" (`atoms/badge`), tema oscuro |
-| `--ag-color-green-500` (success crudo, claro) sobre `--ag-color-sand-50` | 3.10:1 | Pasa 3:1 no-texto | Uso decorativo (borde/relleno de gráfica), NUNCA como texto |
-| `--ag-color-success-strong` (claro, `color-mix(green-500 30%, green-900 70%)` ≈ `#245b24`) sobre su propio `--ag-color-success-subtle` (`color-mix(green-500 16%, sand-50 84%)` ≈ `#e0ecd8`) | 6.61:1 | Pasa AAA | Chip "Validada", tema claro |
-| `--ag-color-danger-contrast-fill` (`--ag-color-red-600`, `#c0442e`) con texto blanco | 5.11:1 | Pasa AA | Relleno sólido de `.ag-button--danger`, ambos temas |
-
-Cambios de token (`tokens/primitives/brand.css`, `tokens/semantic/theme-{dark,light}.css`):
-
-1. **Verde de marca entre temas (obs. #1).** Nuevo primitivo
-   `--ag-color-green-400` — paso intermedio 300→500, menos saturado que el
-   lima puro del logo. `--ag-color-primary-emphasis`/`-success` (crudo) en
-   oscuro pasan de `green-300` a `green-400`. `--ag-color-text-rail-active`/
-   `--ag-color-chip-icon` (chrome de marca fijo) y el relleno sólido de
-   `--ag-color-primary` (ya constante) NO se tocaron.
-2. **`success` ≠ `primary` (obs. #2).** Antes eran literalmente el mismo
-   valor en ambos temas. Ahora: oscuro usa `green-200` para
-   `-success-strong` (distinto del `green-400` de `-primary-emphasis`);
-   claro usa `green-500` como base de `success`/`-subtle`/`-strong`, sin
-   reutilizar `green-700` (el primitivo de `primary`) en ningún punto de la
-   cadena — antes `-success-strong` sí lo reutilizaba al 50%.
-3. **Patrón `-subtle`/`-border`/`-strong` completo (obs. #1.3).** Nuevos
-   `--ag-color-success-border`, `-warning-border`, `-info-border` en ambos
-   temas (mismo criterio que `--ag-color-danger-border`: literal/mix en
-   claro, `rgba` del tono crudo en oscuro) — `atoms/badge` puede dar borde
-   a los cuatro estados por igual (regla §8 punto 3). El propio `badge.css`
-   no se tocó (ninguna variante aplicaba borde todavía, ni siquiera danger
-   — queda fuera de esta vuelta, es un cambio de componente, no de tokens).
+1. **`success` ≠ `primary`.** El éxito usa el verde de marca como relleno pero su texto tenue es `on-primary-container`, distinto del `-emphasis` de enlaces y estados activos.
+2. **Patrón completo por estado.** Cada estado expone `-subtle`, `-strong`, `-border` y `-contrast-fill`, de modo que `atoms/badge` puede dar borde a los cuatro por igual (regla §8 punto 3).
+3. **El relleno sólido de botón no depende del tema.** `.ag-button--danger` usa `-danger-contrast-fill` (5,3:1 con blanco), nunca el rojo plano del tema oscuro, que está calibrado para texto.
 
 ### 10.2. Botón "Resolver" en oscuro (obs. #2)
 
 `.ag-button--danger` usaba `background: var(--ag-color-danger)` — en
-oscuro ese token es `#ea868f`, calibrado para TEXTO sobre superficie
+oscuro ese token es un rojo claro, calibrado para TEXTO sobre superficie
 oscura, no para relleno sólido (blanco sobre ese rosa claro se leía
 "deshabilitado"). Nuevo `--ag-color-danger-contrast-fill` (constante entre
-temas, mismo criterio que `--ag-color-accent-contrast-fill`, reutiliza
-`--ag-color-red-600`) como `background` del botón. Verificado en navegador,
+temas, mismo criterio que `--ag-color-accent-contrast-fill`, usa
+un rojo de marca oscurecido) como `background` del botón. Verificado en navegador,
 ambos temas.
 
 ### 10.3. Alertas (obs. #3) — superó la regla §8.8 anterior
@@ -934,20 +874,9 @@ filas). El "48" del `count` de `section-head` se quitó de esa llamada —
 ahora vive dentro de la tarjeta como KPI (`.ag-distribution-bar__total`,
 sans + `tabular-nums`, mismo criterio que §10.6).
 
-### 10.6. Tipografía — superó la regla §8.7 anterior (obs. #7)
+### 10.6. Cifras
 
-`.ag-stat-card__value` y `.ag-distribution-bar__total` pasan de
-`--ag-font-family-mono` a `--ag-font-family-base` + `font-variant-numeric:
-tabular-nums`. El mono abría demasiado el tracking de una cifra de varios
-dígitos ("Bs 18.490"); tabular-nums da el mismo efecto de "dígitos
-alineados en columna" que motivaba el mono original, sin ese tracking. La
-display (Fraunces en su momento, IBM Plex Sans Condensed desde la séptima
-vuelta — ver §11.2) sigue reservada para el titular de página — eso no
-cambió. Los usos mono CHICOS (horas, drones, `ROL · CAMPAÑA`, valores de
-leyenda) no cambian. §8.7 marcada como superada.
-Título de card (`.ag-card__title`, sans/bold/`font-size-sm` en las tres
-cards del dashboard): ya cumplía, se declaró como regla fija (§8, entrada
-nueva más abajo).
+`.ag-stat-card__value` y `.ag-distribution-bar__total` usan `--ag-font-family-mono` (JetBrains Mono) con `font-variant-numeric: tabular-nums`: el número es el protagonista y los dígitos de ancho fijo se alinean en columna. El título de card (`.ag-card__title`) es sans, bold, `font-size-sm`.
 
 ### 10.7. Grilla y alineación (obs. #6)
 
@@ -1027,105 +956,15 @@ distinguen la tarjeta del fondo con margen claro en la captura. No se tocó
 Título de card (`.ag-card__title`, sans/bold/`font-size-sm`) se fijó como
 regla 9 de §8 — ver ahí.
 
-## 11. Séptima vuelta (28/8/2026) — ajuste puntual: tema oscuro y tipografía display
+## 11. Superficies del tema oscuro y tipografía display
 
-Feedback directo sobre captura real del dashboard en producción local (no
-una auditoría externa formal como §10): "el tema oscuro está demasiado
-verdoso" + "se nota que el sistema está generado con IA, como si fuera
-Times New Roman". Dos cambios independientes, misma vuelta.
+### 11.1. Tema oscuro
 
-### 11.1. Tema oscuro — el tinte de marca se retira de la superficie estructural
+La superficie estructural es neutra y la identidad vive en los acentos. `--ag-color-bg` es el lienzo verde oscuro de marca (`#17251C`); el chrome (`--ag-color-bg-elevated`, `-bg-chrome`) y la tarjeta (`--ag-color-surface-card`) son `surface` (`#293832`), y los rellenos de tabla, hover e input son `surface2` (`#34443B`). El ítem de menú activo usa el token sólido `--ag-color-bg-nav-active` (sin alpha, para que se vea igual sobre cualquier fondo). El verde de marca se reserva a botones, badges, enlaces y al ítem activo.
 
-Diagnóstico: `--ag-color-bg-auth` (tokens/semantic/theme-dark.css) alimentaba
-TODO el cascade de superficie (`--ag-color-bg`, `-bg-elevated`, `-bg-chrome`,
-`-surface-card`, `-border-card`, `-bg-table-head`, `-border-row`,
-`-bg-row-hover`, `-bg-input-chrome`, `-track`) con un mismo tinte
-verde/oliva — cuatro vueltas previas (§9, §10.1) ya habían diluido ese
-tinte (40%→25% de peso, base gray-950→gray-850) sin resolver la percepción
-de "todo verde", precisamente porque diluir un valor que se repite en cada
-superficie a la vez no cambia que se repita en cada superficie a la vez.
+### 11.2. Tipografía display
 
-Corrección (pedido explícito del usuario, no una preferencia de
-`design-ui`): **el lienzo de contenido (`--ag-color-bg`) mantiene su tinte**
-— es el mismo criterio "un fondo con identidad propia" que ya rige en claro
-(`--ag-color-bg-auth` ahí es crema, no gris puro) y el usuario lo confirmó
-explícitamente como correcto. Lo que cambia es que **el chrome estructural
-deja de heredar ese tinte**:
-
-- `--ag-color-bg-elevated` / `--ag-color-bg-chrome` (sidebar de nivel 2,
-  header): pasan de derivar de `--ag-color-bg-auth` a `--ag-color-gray-900`
-  plano — mismo criterio que en claro, donde ese chrome es `sand-50` (más
-  neutro que el `bg-auth` crema del lienzo).
-- `--ag-color-surface-card` y toda su escala derivada (`-border-card`,
-  `-bg-table-head`, `-border-row`, `-bg-row-hover`, `-bg-input-chrome`,
-  `-track`, `-border`, `-border-strong`, `-neutral-subtle`): mismo overlay
-  blanco creciente de siempre, pero ahora sobre `--ag-color-gray-900` en vez
-  de `--ag-color-bg-auth`.
-- `--ag-color-text-muted`/`-text-faint`: de mezcla oliva a gris neutro
-  (`gray-500`/`gray-600`) — pasan más contraste que antes en ambas
-  superficies.
-- `--ag-color-primary-subtle` (el wash translúcido más usado del sistema —
-  15+ consumidores): 0.16→0.10 de opacidad. Sobre un fondo casi negro un
-  verde lima translúcido se percibe más vívido que el mismo % sobre un fondo
-  claro (el alpha-blend deja pasar más croma cuanto más oscura es la base).
-- **Selección del ítem de menú activo** (`.ag-menu-item.is-active`,
-  `.ag-module-band__pill.is-active` — sidebar de nivel 2): dejó de reutilizar
-  `--ag-color-primary-subtle` (un wash translúcido que se ve distinto según
-  qué color tenga debajo, señalado explícitamente como otra causa de
-  "demasiado verde") y pasa a un token propio, **`--ag-color-bg-nav-active`**
-  — sólido, sin alpha, en los dos temas: `green-100` en claro (idéntico al
-  valor previo, sin cambio visual), `green-900` sólido en oscuro. Contraste
-  con `--ag-color-success-strong` (texto de ese estado): ~9:1 en oscuro, AAA.
-- `--ag-color-bg-rail`/`-bg-rail-active` (riel, nivel 1) y el resto de la
-  paleta de acento (`primary`, `success`, `accent`) **no cambiaron** — la
-  identidad de marca en oscuro queda 100% en los acentos (botones, badges,
-  texto cálido, riel, ítem de menú activo), nunca en la superficie de fondo
-  del chrome. Referencia externa verificada (hoja de estilos real de
-  deere.com, un actor del mismo rubro): cromo estructural neutro
-  (blanco/gris/negro), verde de marca reservado a CTAs/badges — nunca al
-  fondo, pese a que JD es una marca todavía más asociada al verde que
-  Agrocom.
-
-`theme-light.css` no se tocó (ningún cambio visual en claro) salvo el nuevo
-token `--ag-color-bg-nav-active`, con el mismo valor que ya tenía
-`--ag-color-primary-subtle` ahí.
-
-### 11.2. Tipografía display — Fraunces (serif) → IBM Plex Sans Condensed
-
-`--ag-font-family-display` (tokens/primitives/base.css) deja de ser
-**"Fraunces"** (confirmada como LA fuente display en la quinta vuelta, §7.3)
-— feedback directo: un serif editorial en un panel operativo de campo lee
-como plantilla genérica ("se nota que está generado con IA"), no como
-identidad propia; irónico además porque el fallback de ese mismo token
-terminaba en `'Times New Roman', serif`.
-
-Se verificó `deere.com` (hoja de estilos real, no captura) como referencia
-del rubro: usa un sans grotesco propio (`jd_sans_pro*`, fallback
-`"Helvetica Neue", Helvetica, Arial`) SIEMPRE bold/condensado en titulares,
-nunca serif. Nueva fuente display: **`IBM Plex Sans Condensed`**
-(`@fontsource/ibm-plex-sans-condensed`, pesos 400/500/600/700 importados en
-`app.css`) — misma familia tipográfica que `--ag-font-family-base` (IBM Plex
-Sans), diferenciada de la interfaz por condensación + peso en vez de por una
-tipografía ajena. Resuelve más angosta que Fraunces (favorable para
-KPIs/títulos de contenedor angosto — lo opuesto al problema que tenía
-Instrument Serif en la tercera vuelta, §3).
-
-`@fontsource-variable/fraunces` se desinstaló (sin otros consumidores,
-mismo criterio que la baja de `@fontsource/instrument-serif` en la tercera
-vuelta). Ningún consumidor de `--ag-font-family-display` (§4.8, §4.9,
-`login-form`, `module-sidebar`, `panel-layout`, `dashboard.css`,
-`seleccionar-rol.css`) cambió de código — todos ya declaraban
-`font-weight`/`font-optical-sizing` explícitos por consumidor (regla 1 de
-§8), así que el swap de familia en el token alcanzó sin tocar componentes.
-Las tres familias del sistema (§7.3) siguen siendo tres, solo que la
-"protagonista" cambió: **IBM Plex Sans Condensed** títulos/cifras
-protagonistas, **IBM Plex Sans** interfaz/subtítulos, **IBM Plex Mono**
-datos/metadatos.
-
-Nota para quien lea §1.4, §3 y §7.3 más arriba: describen decisiones
-históricas correctas para su momento (Instrument Serif → Fraunces, tercera
-vuelta) — el estado ACTUAL del token es el de esta sección, no el de esas
-tablas/párrafos, que se dejan como registro histórico sin reescribir.
+`--ag-font-family-display` resuelve a Manrope, la misma familia de la interfaz; ver §7.3. Los consumidores (`auth-layout`, `login-form`, `module-sidebar`, `panel-layout`, `page-header`, `seleccionar-rol`) declaran `font-weight` explícito, así que el titular se ajusta por peso sin tocar componentes.
 
 ## 12. Octava vuelta (29/8/2026) — `theme-toggle`: de segmented control a botón único
 
@@ -1717,7 +1556,7 @@ verde — que es la del cultivo en una vista satelital, para que ninguna
 propiedad se confunda con el propio terreno) y luminosidad media (ni pastel
 —se funde en tema claro— ni casi negro —se funde en tema oscuro—). El verde
 de la paleta (`#218349`) es deliberadamente más azulado que el verde de
-marca (`--ag-color-green-700` = `#1E7A34`) y que el verde de cultivo típico:
+marca (`--ag-brand-light-primary` = `#347A36`) y que el verde de cultivo típico:
 bajo deuteranopia/protanopia, un canal de azul más alto ayuda a separarlo
 del rojo (el eje que esos dos tipos de daltonismo comprometen). Diez colores
 (los cuatro de la segunda vuelta — Marrón, Pizarra, Musgo, Malva — y los
