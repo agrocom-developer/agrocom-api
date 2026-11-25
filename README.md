@@ -37,7 +37,7 @@ Una misma persona puede cumplir varios roles con un solo usuario, y opera bajo u
 
 ## Para desarrolladores
 
-- **Stack**: PHP 8.3 + Laravel 13 + PostgreSQL 16 (API REST y panel AdminLTE/Livewire). Monolito modular con un módulo por dominio.
+- **Stack**: PHP 8.3 + Laravel 13 + PostgreSQL 16 (API REST y panel AdminLTE/Blade). Monolito modular con un módulo por dominio.
 - **Reglas para agentes de IA**: [`CLAUDE.md`](CLAUDE.md), las invariantes no negociables. Los subagentes especializados viven en [`.claude/agents/`](.claude/agents/).
 - **Flujo de trabajo**: [`CONTRIBUTING.md`](CONTRIBUTING.md). GitFlow simplificado, todo por PR; el CI auto-fusiona con checks en verde (ver `.github/workflows/`).
 - **Entorno local**: `docker compose up -d` levanta PHP, PostgreSQL y Mailpit (ver [`docs/gestion/entornos.md`](docs/gestion/entornos.md)).

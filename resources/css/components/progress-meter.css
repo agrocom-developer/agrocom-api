@@ -3,8 +3,7 @@
  * Misma superficie de tarjeta que `form-section`/`summary-card`. El
  * porcentaje de la barra llega por la custom property
  * `--ag-progress-meter-percent` (dato en runtime, no una medida de diseño:
- * no viola CLAUDE.md invariante 11, igual criterio que el `width` calculado
- * de `distribution-bar`).
+ * no viola CLAUDE.md invariante 11).
  */
 
 .ag-progress-meter {

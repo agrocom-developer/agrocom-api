@@ -42,7 +42,7 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Web — panel (AdminLTE/Livewire) y, a futuro, portal del cliente
+| Web — panel (AdminLTE/Blade) y, a futuro, portal del cliente
 |--------------------------------------------------------------------------
 |
 | Este archivo sirve exclusivamente al panel/portal, con sesión (ADR 0008):

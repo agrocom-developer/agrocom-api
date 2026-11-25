@@ -75,12 +75,10 @@
     @vite($transicionDeVista
         ? ['resources/css/app.css', 'resources/css/transicion-vista.css']
         : 'resources/css/app.css')
-    @livewireStyles
 </head>
 <body>
     {{ $slot }}
 
     @vite('resources/js/app.js')
-    @livewireScripts
 </body>
 </html>
