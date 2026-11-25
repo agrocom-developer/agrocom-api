@@ -1,0 +1,27 @@
+{
+    "operationId": "actualizarContacto",
+    "descripcion": "Corrige un contacto propio; marcarlo principal releva al anterior.",
+    "peticion": {
+        "metodo": "PUT",
+        "ruta": "/api/clientes/mi/contactos/4",
+        "autenticada": true,
+        "cuerpo": {
+            "nombre": "Elena Chávez Soliz",
+            "telefono": "+591 70011224",
+            "cargo": "Administradora general",
+            "es_principal": false
+        }
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "contacto": {
+                "id": 4,
+                "nombre": "Elena Chávez Soliz",
+                "telefono": "+591 70011224",
+                "cargo": "Administradora general",
+                "es_principal": false
+            }
+        }
+    }
+}

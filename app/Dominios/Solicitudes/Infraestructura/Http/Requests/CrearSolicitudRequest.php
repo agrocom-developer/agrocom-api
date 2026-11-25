@@ -21,6 +21,7 @@ final class CrearSolicitudRequest extends FormRequest
         return [
             'uuid_cliente' => ['required', 'uuid'],
             'terreno_id' => ['required', 'integer'],
+            'contacto_id' => ['nullable', 'integer'],
             'tipo_aplicacion' => ['required', Rule::enum(TipoAplicacionServicio::class)],
             'hectareas_solicitadas' => ['required', 'numeric', 'gt:0', 'max:99999999', 'decimal:0,4'],
             'cultivo' => ['nullable', 'string', 'max:80'],

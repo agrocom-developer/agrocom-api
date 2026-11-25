@@ -75,6 +75,7 @@ final class SolicitudesController
                 properties: [
                     new OA\Property(property: 'uuid_cliente', type: 'string', format: 'uuid'),
                     new OA\Property(property: 'terreno_id', type: 'integer', example: 12),
+                    new OA\Property(property: 'contacto_id', description: 'Contacto de referencia (uno de `GET /api/clientes/mi/contactos`). Opcional: una empresa que no elige usa su contacto principal.', type: 'integer', nullable: true, example: 7),
                     new OA\Property(property: 'tipo_aplicacion', type: 'string', enum: ['herbicida', 'insecticida', 'fungicida', 'fertilizante_foliar', 'desecante', 'otro']),
                     new OA\Property(property: 'hectareas_solicitadas', type: 'string', example: '80'),
                     new OA\Property(property: 'cultivo', type: 'string', nullable: true),
@@ -96,7 +97,7 @@ final class SolicitudesController
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
             new OA\Response(response: 403, description: 'El rol del token no es de cliente.'),
             new OA\Response(response: 404, description: 'El terreno no existe o es de otro cliente.'),
-            new OA\Response(response: 422, description: 'Datos inválidos, hectáreas mayores a las del terreno o cliente suspendido.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
+            new OA\Response(response: 422, description: 'Datos inválidos, contacto que no es del cliente, empresa sin contactos, hectáreas mayores a las del terreno o cliente suspendido.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],
     )]
     public function store(CrearSolicitudRequest $request): JsonResponse
@@ -109,7 +110,7 @@ final class SolicitudesController
             return RechazoDeDominio::respuesta($excepcion);
         }
 
-        $solicitud->load(['terreno', 'historial']);
+        $solicitud->load(['terreno', 'contacto', 'historial']);
 
         return response()->json(['solicitud' => new SolicitudServicioResource($solicitud)], $creada ? 201 : 200);
     }

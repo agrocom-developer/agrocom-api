@@ -12,7 +12,7 @@ final readonly class ServicioAsignadoCatalogo
 {
     /**
      * @param  array{nombre: string, hectareas: string, geometria: ?array<string, mixed>, referencias_acceso: ?string, colindantes_sensibles: ?string, acceso_dificil: bool}  $terreno
-     * @param  array{nombre: string, telefono: string|null}|null  $contacto  solo viaja con el servicio adjudicado.
+     * @param  array{nombre: string, telefono: string|null, cargo?: string|null, empresa?: string|null}|null  $contacto  la persona de contacto; solo viaja con el servicio adjudicado.
      */
     public function __construct(
         public int $id,

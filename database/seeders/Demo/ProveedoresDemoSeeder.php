@@ -250,17 +250,22 @@ class ProveedoresDemoSeeder extends Seeder
     private function clientes(): void
     {
         foreach ([
-            ['empresa', 'Rosario Antelo Vaca', 'agro.sanrafael', 'Agropecuaria San Rafael SRL', '1029384027', '+591 76543210'],
-            ['persona', 'Luis Antelo Ribera', 'luis.antelo', null, null, '+591 72288410'],
-            ['empresa', 'Gonzalo Parada Egüez', 'coop.valle.grande', 'Cooperativa Agrícola Valle Grande', '1034556021', '+591 3 9452216'],
-        ] as [$tipo, $nombre, $username, $razonSocial, $documento, $telefono]) {
+            ['empresa', 'Rosario Antelo Vaca', 'agro.sanrafael', 'Agropecuaria San Rafael SRL', '1029384027', '+591 76543210', [
+                ['nombre' => 'Rosario Antelo Vaca', 'telefono' => '+591 76543210', 'cargo' => 'Gerente', 'es_principal' => true],
+                ['nombre' => 'Mario Suárez Rojas', 'telefono' => '+591 71234567', 'cargo' => 'Encargado de campo'],
+            ]],
+            ['persona', 'Luis Antelo Ribera', 'luis.antelo', null, null, '+591 72288410', []],
+            ['empresa', 'Gonzalo Parada Egüez', 'coop.valle.grande', 'Cooperativa Agrícola Valle Grande', '1034556021', '+591 3 9452216', [
+                ['nombre' => 'Gonzalo Parada Egüez', 'telefono' => '+591 3 9452216', 'cargo' => 'Presidente'],
+            ]],
+        ] as [$tipo, $nombre, $username, $razonSocial, $documento, $telefono, $contactos]) {
             if (Cliente::query()->where('razon_social', $razonSocial ?? $nombre)->exists()) {
                 continue;
             }
 
             $this->registrarCliente->ejecutar([
                 'tipo' => $tipo, 'nombre' => $nombre, 'username' => $username, 'email' => null, 'password' => self::PASSWORD,
-                'razon_social' => $razonSocial, 'documento_fiscal' => $documento, 'telefono' => $telefono,
+                'razon_social' => $razonSocial, 'documento_fiscal' => $documento, 'telefono' => $telefono, 'contactos' => $contactos,
             ]);
         }
     }

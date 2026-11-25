@@ -19,7 +19,23 @@
                 "calificacion_promedio": "5.00",
                 "calificaciones_conteo": 1,
                 "publicacion_limitada": false,
-                "aviso_calificacion": false
+                "aviso_calificacion": false,
+                "contactos": [
+                    {
+                        "id": 1,
+                        "nombre": "Rosario Antelo Vaca",
+                        "telefono": "+591 76543210",
+                        "cargo": "Gerente",
+                        "es_principal": true
+                    },
+                    {
+                        "id": 2,
+                        "nombre": "Mario Suárez Rojas",
+                        "telefono": "+591 71234567",
+                        "cargo": "Encargado de campo",
+                        "es_principal": false
+                    }
+                ]
             }
         }
     }

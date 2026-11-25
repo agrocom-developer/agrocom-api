@@ -52,6 +52,7 @@ Convenciones: dominio en español, prefijo de tabla por módulo (ADR 0011), borr
 ### 4.1 Clientes, propiedades y zonas
 
 - **`sol_clientes`**: `id`, `usuario_id`, `tipo` (`persona` | `empresa`), `razon_social`, `documento_fiscal`, `telefono`, `estado` (`activo` | `suspendido`), `calificacion_promedio` (decimal 3,2), `calificaciones_conteo`.
+- **`sol_cliente_contactos`**: personas de referencia del cliente. `id`, `cliente_id`, `nombre`, `telefono`, `cargo` (nulo), `es_principal`, baja lógica. Una empresa tiene al menos un contacto vigente; hay un solo principal vigente (el primero que se crea; si se da de baja, lo releva el más antiguo). La solicitud guarda `contacto_id` (`sol_solicitudes_servicio`): el elegido al crearla o, si no elige, el principal de la empresa. Tras adjudicar, el proveedor recibe el nombre, el teléfono y el cargo de esa persona, y la razón social de la empresa; antes de adjudicar no ve ninguno (ADR 0043).
 - **`sol_terrenos`**: la propiedad o lote del cliente. `id`, `cliente_id`, `nombre`, `geometria` (polígono GeoJSON), `hectareas` (decimal 12,4), `cultivo`, `referencias_acceso`, `colindantes_sensibles` (texto: apiarios, cultivos orgánicos, viviendas), `zona_id`, `estado_terreno` (texto breve: maleza, humedad, obstáculos, líneas eléctricas).
 - **`sol_terreno_fotos`**: `id`, `terreno_id`, `archivo`, `hash`, `bytes`, `descripcion`. Imagen comprimida a menos de 300 KB, hasta 8 por terreno (`solicitudes.fotos_terreno.maximo_por_terreno`), en el disco privado. Las sube el cliente dueño y las ve el piloto en el detalle de la solicitud antes de ofertar, con una URL firmada de corta vida (15 minutos).
 - **`sol_precios_referencia`**: `id`, `tipo_aplicacion`, `zona_id` (nulo), `macrorregion` (nulo), `precio_ha` (decimal 14,4). Guía de precio por hectárea con tres niveles de detalle: zona, macrorregión o general por tipo. Datos sembrados que el administrador ajusta; el sembrado no los pisa. Si no hay ninguno, vale el respaldo de `config/negociacion.php`.
@@ -242,12 +243,13 @@ Prefijo `/api`. Autenticación por token de dispositivo (`POST /auth/token`). El
 
 | Método y ruta | Función |
 |---|---|
-| `POST /clientes/registro` | Alta de cliente |
+| `POST /clientes/registro` | Alta de cliente; una empresa envía `contactos` o queda con quien registra como contacto principal |
+| `GET/POST /clientes/mi/contactos`, `PUT/DELETE /clientes/mi/contactos/{id}` | Contactos de referencia del cliente |
 | `GET/POST/PUT /terrenos`, `POST /terrenos/{id}/fotos`, `DELETE /terrenos/{id}/fotos/{foto}` | Propiedad, lotes y fotos de su estado |
 | `GET /referencias/precio` | Precio por hectárea de referencia para proponer (también lo ve el piloto al ofertar) |
 | `GET /solicitudes/{id}/pago-confirmado` | Si el proveedor informó que recibió el pago |
 | `PUT/DELETE /perfil/foto` | Foto de perfil de la cuenta |
-| `POST /solicitudes`, `PUT /solicitudes/{id}` | Crea (idempotente por `uuid_cliente`) y edita el borrador |
+| `POST /solicitudes`, `PUT /solicitudes/{id}` | Crea (idempotente por `uuid_cliente`, con `contacto_id` opcional) y edita el borrador |
 | `GET /solicitudes`, `GET /solicitudes/{id}` | Lista y detalle con avance y precio |
 | `POST /solicitudes/{id}/publicar`, `/cancelar`, `/renovar` | Abre la solicitud, la cancela o la renueva |
 | `POST /solicitudes/{id}/precio` | Cambia el precio propuesto mientras no está adjudicada |

@@ -6,6 +6,7 @@ use App\Dominios\Seguridad\Contratos\CuentaDuplicada;
 use App\Dominios\Seguridad\Contratos\RegistroCuentas;
 use App\Dominios\Solicitudes\Dominio\EstadoCliente;
 use App\Dominios\Solicitudes\Dominio\Excepciones\ClienteDuplicado;
+use App\Dominios\Solicitudes\Dominio\Excepciones\SolicitudInvalida;
 use App\Dominios\Solicitudes\Dominio\TipoCliente;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\Cliente;
 use Illuminate\Database\QueryException;
@@ -19,13 +20,17 @@ use Illuminate\Support\Facades\DB;
  */
 final class RegistrarCliente
 {
-    public function __construct(private readonly RegistroCuentas $cuentas) {}
+    public function __construct(
+        private readonly RegistroCuentas $cuentas,
+        private readonly GestionarContactos $contactos,
+    ) {}
 
     /**
-     * @param  array{nombre: string, username: string, email: ?string, password: string, tipo: string, razon_social: ?string, documento_fiscal: ?string, telefono: ?string}  $datos
+     * @param  array{nombre: string, username: string, email: ?string, password: string, tipo: string, razon_social: ?string, documento_fiscal: ?string, telefono: ?string, contactos?: list<array{nombre: string, telefono: string, cargo?: ?string, es_principal?: ?bool}>}  $datos
      *
      * @throws CuentaDuplicada si el `username` o el `email` ya existen.
      * @throws ClienteDuplicado si el documento fiscal ya pertenece a otro cliente.
+     * @throws SolicitudInvalida si es una empresa y no trae al menos un contacto de referencia.
      */
     public function ejecutar(array $datos): Cliente
     {
@@ -33,7 +38,7 @@ final class RegistrarCliente
             $usuarioId = $this->cuentas->crear($datos['nombre'], $datos['username'], $datos['email'] ?? null, $datos['password'], ['cliente']);
 
             try {
-                return Cliente::query()->create([
+                $cliente = Cliente::query()->create([
                     'usuario_id' => $usuarioId,
                     'tipo' => TipoCliente::from($datos['tipo']),
                     'razon_social' => $datos['razon_social'] ?? $datos['nombre'],
@@ -50,6 +55,10 @@ final class RegistrarCliente
 
                 throw $excepcion;
             }
+
+            $this->contactos->registrarIniciales($cliente, $datos['contactos'] ?? []);
+
+            return $cliente;
         });
 
         // Trae los valores por defecto de la base (calificación en cero, etc.).

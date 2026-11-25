@@ -23,6 +23,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'calificacion_promedio', description: 'Decimal exacto en string (0 a 5).', type: 'string', example: '0.00'),
         new OA\Property(property: 'calificaciones_conteo', type: 'integer', example: 0),
         new OA\Property(property: 'publicacion_limitada', description: 'Verdadero si la publicación de solicitudes está limitada hasta una revisión por calificación baja (política de calificación).', type: 'boolean', example: false),
+        new OA\Property(property: 'contactos', description: 'Contactos de referencia vigentes, el principal primero. Una empresa tiene al menos uno.', type: 'array', items: new OA\Items(ref: '#/components/schemas/ClienteContacto')),
         new OA\Property(property: 'aviso_calificacion', description: 'Verdadero si el promedio bajó del umbral y hay un aviso vigente.', type: 'boolean', example: false),
     ],
     type: 'object',
@@ -43,6 +44,7 @@ final class ClienteResource extends JsonResource
             'calificaciones_conteo' => $this->calificaciones_conteo,
             'publicacion_limitada' => $this->publicacion_limitada_en !== null,
             'aviso_calificacion' => $this->aviso_calificacion_en !== null,
+            'contactos' => $this->whenLoaded('contactos', fn () => ClienteContactoResource::collection($this->contactos)),
         ];
     }
 }

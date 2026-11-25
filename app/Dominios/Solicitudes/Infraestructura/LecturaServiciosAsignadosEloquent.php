@@ -6,6 +6,7 @@ use App\Dominios\Solicitudes\Contratos\LecturaServiciosAsignados;
 use App\Dominios\Solicitudes\Contratos\ServicioAsignadoCatalogo;
 use App\Dominios\Solicitudes\Contratos\ServicioRetiradoCatalogo;
 use App\Dominios\Solicitudes\Dominio\EstadoSolicitud;
+use App\Dominios\Solicitudes\Dominio\TipoCliente;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\SolicitudServicio;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
@@ -21,7 +22,7 @@ final class LecturaServiciosAsignadosEloquent implements LecturaServiciosAsignad
 
         return $this->consulta($cursorActualizadoEn, $cursorId, $equipoIds)
             ->whereIn('estado', array_map(fn (EstadoSolicitud $estado): string => $estado->value, EstadoSolicitud::conEquipo()))
-            ->with(['terreno', 'cliente'])
+            ->with(['terreno', 'cliente', 'contacto'])
             ->limit($limite)
             ->get()
             ->map(fn (SolicitudServicio $solicitud): ServicioAsignadoCatalogo => new ServicioAsignadoCatalogo(
@@ -51,8 +52,9 @@ final class LecturaServiciosAsignadosEloquent implements LecturaServiciosAsignad
                 precioHaAcordado: $solicitud->precio_ha_acordado,
                 hectareasEjecutadas: $solicitud->hectareas_ejecutadas,
                 porcentajeAvance: $solicitud->porcentaje_avance,
-                // El contacto del cliente se entrega solo con el servicio adjudicado (§3.4).
-                contacto: ['nombre' => $solicitud->cliente->razon_social, 'telefono' => $solicitud->cliente->telefono],
+                // El contacto del cliente se entrega solo con el servicio adjudicado (§3.4): la persona
+                // elegida y, sin ella (solicitudes anteriores a los contactos), el cliente mismo.
+                contacto: $this->contactoDe($solicitud),
             ))
             ->all();
     }
@@ -105,5 +107,23 @@ final class LecturaServiciosAsignadosEloquent implements LecturaServiciosAsignad
             )
             ->orderBy('updated_at')
             ->orderBy('id');
+    }
+
+    /** @return array{nombre: string, telefono: string|null, cargo: string|null, empresa: string|null} */
+    private function contactoDe(SolicitudServicio $solicitud): array
+    {
+        $cliente = $solicitud->cliente;
+        $contacto = $solicitud->contacto;
+
+        if ($contacto === null) {
+            return ['nombre' => $cliente->razon_social, 'telefono' => $cliente->telefono, 'cargo' => null, 'empresa' => null];
+        }
+
+        return [
+            'nombre' => $contacto->nombre,
+            'telefono' => $contacto->telefono,
+            'cargo' => $contacto->cargo,
+            'empresa' => $cliente->tipo === TipoCliente::Empresa ? $cliente->razon_social : null,
+        ];
     }
 }

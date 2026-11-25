@@ -233,6 +233,24 @@ try {
 
     registrar('seguridad-sesion-cliente', 'verSesionCampo', 'Quién es el dispositivo y con qué rol opera.', 'GET', '/api/auth/sesion', null, $tokenCliente, 200);
     registrar('clientes-mi', 'verMiCliente', 'Perfil del cliente de la cuenta.', 'GET', '/api/clientes/mi', null, $tokenCliente, 200);
+    [, $contactos] = registrar('contactos-lista', 'listarMisContactos', 'Contactos de referencia vigentes del cliente, el principal primero.', 'GET', '/api/clientes/mi/contactos', null, $tokenCliente, 200);
+    $contactoElegidoId = $contactos['contactos'][1]['id'] ?? ($contactos['contactos'][0]['id'] ?? null);
+    [, $contactoNuevo] = registrar('contactos-agregar', 'agregarContacto', 'Agrega una persona de referencia; el primer contacto de un cliente queda como principal.', 'POST', '/api/clientes/mi/contactos', [
+        'nombre' => 'Elena Chávez Soliz', 'telefono' => '+591 70011223', 'cargo' => 'Administradora',
+    ], $tokenCliente, 201);
+    registrar('contactos-agregar-invalido', 'agregarContacto', 'Validación: faltan el nombre y el teléfono.', 'POST', '/api/clientes/mi/contactos', [
+        'cargo' => 'Administradora',
+    ], $tokenCliente, 422);
+    $contactoNuevoId = $contactoNuevo['contacto']['id'] ?? null;
+    if ($contactoNuevoId !== null) {
+        registrar('contactos-actualizar', 'actualizarContacto', 'Corrige un contacto propio; marcarlo principal releva al anterior.', 'PUT', "/api/clientes/mi/contactos/{$contactoNuevoId}", [
+            'nombre' => 'Elena Chávez Soliz', 'telefono' => '+591 70011224', 'cargo' => 'Administradora general', 'es_principal' => false,
+        ], $tokenCliente, 200);
+        registrar('contactos-baja', 'darDeBajaContacto', 'Baja lógica de un contacto propio; las solicitudes ya creadas conservan a la persona elegida.', 'DELETE', "/api/clientes/mi/contactos/{$contactoNuevoId}", null, $tokenCliente, 204);
+    }
+    registrar('contactos-ajeno', 'actualizarContacto', 'Un id que no es del cliente responde 404, nunca 403 (invariante 5).', 'PUT', '/api/clientes/mi/contactos/999999', [
+        'nombre' => 'Otra persona', 'telefono' => '+591 70011225',
+    ], $tokenCliente, 404);
     registrar('clientes-zonas', 'listarZonas', 'Catálogo de zonas de operación.', 'GET', '/api/zonas', null, $tokenCliente, 200);
     registrar('terrenos-lista', 'listarTerrenos', 'Terrenos del cliente.', 'GET', '/api/terrenos', null, $tokenCliente, 200);
 
@@ -268,6 +286,7 @@ try {
     $cuerpoSolicitud = [
         'uuid_cliente' => $uuidSolicitud,
         'terreno_id' => $terrenoId,
+        'contacto_id' => $contactoElegidoId,
         'tipo_aplicacion' => 'herbicida',
         'hectareas_solicitadas' => '100.0000',
         'producto_indicado' => 'Glifosato 480 SL, 2 L/ha',
