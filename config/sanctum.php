@@ -7,7 +7,7 @@
 |
 | Sanctum se usa acá en su modo más chico: tokens de API para
 | `agrocom-field` (ADR 0008). NO se usa el modo SPA con cookies de sesión —
-| el panel es Laravel full-stack con Blade/Livewire (ADR 0002), no una SPA,
+| el panel es Laravel full-stack con Blade (ADR 0002), no una SPA,
 | así que nada de este sistema necesita `/sanctum/csrf-cookie` ni el
 | middleware `EnsureFrontendRequestsAreStateful`.
 |
