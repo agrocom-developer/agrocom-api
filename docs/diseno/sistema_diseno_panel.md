@@ -115,7 +115,7 @@ Regla operativa: **un chip tenue usa siempre el par `-subtle` (fondo) + `-strong
 | `--ag-color-alert(-subtle\|-strong\|-border)` | Rojo oscuro de máxima severidad (estado «cerrada», conflicto); distinto de `danger` |
 | `--ag-color-distintivo-1\|2(-subtle\|-strong\|-border)` | Tonos categóricos violeta y magenta, sin carga de estado |
 | `--ag-color-neutral-subtle`, `-neutral-strong` | Chip «sin estado» |
-| `--ag-color-avance-bajo\|medio\|alto\|cumplido\|excedido` | Los cinco tramos de `molecules/tiered-progress-bar`; alias de danger, warning, info, success y primary-emphasis |
+| `--ag-color-avance-bajo\|medio\|alto\|cumplido\|excedido` | Los cinco tramos de color de una barra de avance; alias de danger, warning, info, success y primary-emphasis |
 | `--ag-color-surface-card`, `-bg-table-head`, `-bg-row-hover`, `-bg-input-chrome` | Tarjeta, cabecera de tabla, hover de fila, relleno del buscador y de las píldoras inactivas |
 | `--ag-color-track`, `--ag-color-bar-unassigned` | Pista de las barras y barra «sin causa asignada» |
 | `--ag-color-bg-rail`, `-bg-rail-active`, `-text-rail`, `-text-rail-active` | Riel de módulos y header móvil: grafito en ambos temas; el activo usa el verde claro del tema oscuro |
@@ -167,9 +167,6 @@ Los componentes que necesitan un tono nuevo lo piden como token semántico en am
 | Molecule | `form-section` | `resources/views/components/molecules/form-section.blade.php` | Implementado (2026-08-28); **evolucionado** de `<fieldset>` desnudo a tarjeta con header `section-head` + grid de dos columnas (2/9/2026, tarea 31 — ver §14) |
 | Molecule | `role-card` | `resources/views/components/molecules/role-card.blade.php` | Implementado (2026-08-28, quinta vuelta) |
 | Molecule | `section-head` | `resources/views/components/molecules/section-head.blade.php` | Implementado (2026-08-28, sexta vuelta parte 2) |
-| Molecule | `donut-chart` | — | **Retirado** (28/8/2026, auditoría visual externa obs. #5/#6 — ver §10.5). Reemplazado por `distribution-bar`, mismo prop shape. |
-| Molecule | `distribution-bar` | `resources/views/components/molecules/distribution-bar.blade.php` | Implementado (2026-08-28, auditoría visual externa obs. #5/#6) |
-| Molecule | `captura-rc-card` | `resources/views/components/molecules/captura-rc-card.blade.php` | Implementado (29/8/2026, novena vuelta) |
 | Molecule | `alert-strip` | `resources/views/components/molecules/alert-strip.blade.php` | Implementado (28/8/2026, sexta vuelta parte 2 — ver §10.3). Faltaba en esta tabla; se agrega en la sincronización del 2/9/2026. |
 | Organism | `module-rail` | `resources/views/components/organisms/module-rail.blade.php` | Implementado (28/8/2026, quinta vuelta — nivel 1 del layout, §7.1). Faltaba en esta tabla; se agrega el 2/9/2026. |
 | Organism | `module-sidebar` | `resources/views/components/organisms/module-sidebar.blade.php` | Implementado (28/8/2026, quinta vuelta — nivel 2 del layout, §7.1; sucesor de `sidebar-nav`). Faltaba en esta tabla; se agrega el 2/9/2026. |
@@ -190,7 +187,6 @@ Los componentes que necesitan un tono nuevo lo piden como token semántico en am
 | Atom | `checkbox-group` | `resources/views/components/atoms/checkbox-group.blade.php` | Implementado (8/9/2026, tarea 76 — ver §16) |
 | Atom | `radio-group` | `resources/views/components/atoms/radio-group.blade.php` | Implementado (8/9/2026, tarea 76 — ver §16) |
 | Atom | `textarea` | `resources/views/components/atoms/textarea.blade.php` | Implementado (8/9/2026, tarea 76 — ver §16) |
-| Molecule | `tiered-progress-bar` | `resources/views/components/molecules/tiered-progress-bar.blade.php` | Implementado (9/9/2026, tarea 75 — informe de avance de contratos, HU-52). Barra de un solo relleno con color por tramo (5 tokens `--ag-color-avance-*`, ver §1.4) en vez del relleno fijo `--ag-color-primary` de `progress-meter` — se necesitaba distinguir 0-33/34-66/67-99/100/>100% a simple vista. `percent`/`tramo` ya resueltos por el llamador (`TramoAvance::desde()`), `tramo` viaja como string (`->value`), nunca el enum: el catálogo no importa clases de `App\Dominios\*` |
 | Atom | `datetime` | `resources/views/components/atoms/datetime.blade.php` | Implementado (11/9/2026 — reemplaza `<x-atoms.input type="datetime-local">` nativo en `pausas` inicio/fin, el mismo problema que ya se había resuelto para `atoms/date` sin hora). Única excepción del catálogo que envuelve una librería de terceros (flatpickr) en vez de construirse desde cero: un selector de hora accesible a mano es mucho más trabajo que el calendario de días de `atoms/date`, y esto solo tiene dos usos hoy — decisión explícita del usuario. Retematizado completo a tokens en `resources/css/components/datetime.css` (CLAUDE.md invariante 11); CSS estructural de flatpickr importado como vendor en `app.css`, mismo criterio que Bootstrap. Progressive enhancement distinto al resto del catálogo: el control real es `<input type="text">`, no un `type="datetime-local"` nativo oculto (ese tipo exige el formato exacto `YYYY-MM-DDTHH:mm` incluso seteado por JS) — sin JS el campo es texto plano editable a mano, que el backend acepta igual (`RegistrarPausaRequest` valida solo `'date'`, sin formato estricto). 24h siempre (`H:i`), nunca a.m./p.m. — mismo criterio que la columna HORA del dashboard. Carga diferida vía `data-ag-datetime` (mismo patrón que dashboard-charts/dashboard-map), no entra en el bundle de pantallas que no lo usan. |
 | Atom | `time-range` | `resources/views/components/atoms/time-range.blade.php` | Implementado (19/9/2026 — primer uso: horario por lote en `contratos/_lotes-tabla`, reemplazaba a los dos `<input type="time">` nativos; el 21/9/2026 el horario por lote salió del contrato y hoy lo usa `pausas/create`). Rango horario en UNA casilla compacta (~14 rem) con un POPUP de reloj anclado a ella (Popover API: capa superior sin recortes, cierra con clic afuera o Esc, sin fondo oscuro; debajo de la casilla o encima si no entra). El reloj es de **12 horas con «a. m.»/«p. m.» explícitos** junto a cada hora en la cabecera —un dial de 1 a 12 sin período no dice si 3:00 es de la madrugada o de la tarde—; dial de una sola vuelta (minutos con marcas cada 5 y precisión de 1 al arrastrar); elegir una hora pasa sola a sus minutos, luego a la hora de fin y a sus minutos; **el período de la hora de fin se elige solo** para que quede después del inicio (10:00 a. m. → «3» = 3:00 p. m.) mientras no se toque a mano. Modo de texto que acepta «6:30 a. m.», «6 pm» o «18:30»; valida que ambas horas estén y que el fin sea posterior. Lo que se guarda es siempre `H:i` en 24 horas (el que espera `date_format:H:i`); la casilla muestra «10:00 a. m. – 3:30 p. m.». Props `nameStart`, `nameEnd`, `id` (único), `valueStart`, `valueEnd`, `label`, `help`, `error`, `invalid`, `disabled`, `required` (20/9/2026, tarea 113: asterisco junto al rótulo, el de `atoms/input`, y `required` en los dos nativos; segundo consumidor: la hora de la pausa en `pausas/create`). Mejora progresiva de `atoms/date`: los dos nativos son los controles reales y se ocultan con `--enhanced`; sin Popover API no se mejora y quedan los nativos. Cualquier código puede deshabilitarlo cambiando `disabled` en los nativos (el componente lo observa). Las filas que nacen después de cargar la página se inicializan con `initTimeRanges(raiz)` (idempotente) y se clonan de un `<template>` con `__INDICE__` en `name` e `id`. Tokens: cabecera `--ag-color-primary` con texto `--ag-color-gray-0` (constante, como el paso actual de `step-arrow`), dial `--ag-color-bg-input-chrome`. Verificado en claro y oscuro y a 360 px. |
 | Molecule | `paginador-cliente` (JS + `.ag-paginador`) | `resources/js/shared/paginador-cliente.js`, `resources/css/components/pagination.css` | Implementado (19/9/2026 — usos: modal de lotes de un contrato y su tabla de lotes, la tabla de lotes de una orden de aplicación en su formulario y en su detalle, 20 por página). Gemelo en el navegador de `molecules/pagination` para listas que YA están completas en la página: mismo markup de `.pagination`/`.page-link` de Bootstrap, con el resumen «Lotes 1–20 de 33» a la izquierda. Solo dibuja los controles (`crearPaginador(contenedor, {porPagina, alCambiar})`, `actualizar(total, pagina)`, `rango()`); quien lo usa oculta las filas de otras páginas con `hidden` —nunca las quita ni deshabilita sus campos— para que lo marcado y lo que se envía con el formulario se conserve. Textos por `data-label-*` del contenedor (`ui.paginador.*`). Se oculta solo si todo cabe en una página. Para una tabla cuyas filas ya están pintadas, `paginarFilas(contenedor, {filas, porPagina})` arma el paginador y oculta las filas de otras páginas (`actualizar(pagina)` cuando las filas cambian): es lo que usan las órdenes. |
@@ -861,22 +857,9 @@ es un `atoms/button` (ver 10.3) — quedó como link de texto
 sesión" es el único botón sólido/primario visible sobre el pliegue;
 "Exportar" sigue outline.
 
-### 10.5. `distribution-bar` reemplaza a `donut-chart` (obs. #5, #6)
-
-`donut-chart` (blade + css) se retiró — no tenía otro consumidor.
-`molecules/distribution-bar` (mismo prop shape: `segments`, `total`,
-`centerLabel` — `DatosDemoPanel::distribucionSesiones()` no cambió): KPI
-grande a la izquierda + barra horizontal 100% apilada a la derecha (18px
-de alto), leyenda debajo como grid de 4 columnas (`auto 1fr auto auto`:
-punto/etiqueta/valor mono/%, cada `<li>` en `display:contents` para que
-sus 4 hijos caigan directo en las columnas del padre y se alineen entre
-filas). El "48" del `count` de `section-head` se quitó de esa llamada —
-ahora vive dentro de la tarjeta como KPI (`.ag-distribution-bar__total`,
-sans + `tabular-nums`, mismo criterio que §10.6).
-
 ### 10.6. Cifras
 
-`.ag-stat-card__value` y `.ag-distribution-bar__total` usan `--ag-font-family-mono` (JetBrains Mono) con `font-variant-numeric: tabular-nums`: el número es el protagonista y los dígitos de ancho fijo se alinean en columna. El título de card (`.ag-card__title`) es sans, bold, `font-size-sm`.
+`.ag-stat-card__value` usa `--ag-font-family-mono` (JetBrains Mono) con `font-variant-numeric: tabular-nums`: el número es el protagonista y los dígitos de ancho fijo se alinean en columna. El título de card (`.ag-card__title`) es sans, bold, `font-size-sm`.
 
 ### 10.7. Grilla y alineación (obs. #6)
 
@@ -896,8 +879,7 @@ oscuro) antes de tocar cualquier valor: el sistema de overlays de la Fase 7
 del rediseño anterior (4%/8%/12%/20% sobre `--ag-color-bg-auth`) sigue
 siendo suficiente tras todos los cambios de esta vuelta — borde + superficie
 distinguen la tarjeta del fondo con margen claro en la captura. No se tocó
-`theme-dark.css` para esto. `.ag-stat-card` y la tarjeta de
-`distribution-bar` (vía su wrapper `.ag-card`) ya aplican
+`theme-dark.css` para esto. `.ag-stat-card` ya aplica
 `border: 1px solid var(--ag-color-border-card)`.
 
 ### 10.9. Detalles menores (obs. varias + pedidos directos del usuario, 28/8/2026)
@@ -1025,8 +1007,7 @@ interesa más ver estadísticas y mapas que tablas. El dashboard
 (`app/Dominios/Seguridad/Infraestructura/Http/Views/pages/dashboard.blade.php`)
 pasa de 3 pestañas (Resumen/Sesiones/Pausas + KPIs) a 4: **Resumen** (sin
 KPIs, con 3 gráficos ApexCharts + detalle de clientes), **Mapa** (Leaflet),
-**Resumen por lote** (cuadros por lote + `distribution-bar` reubicada acá
-desde Resumen) y **Multimedia** (capturas RC reales). Detalle completo del
+**Resumen por lote** (cuadros por lote) y **Multimedia**. Detalle completo del
 plan y las 9 fases ejecutadas: rama `feature/dashboard-agro`, plan en
 `docs/gestion/` de esa sesión.
 
@@ -1113,8 +1094,7 @@ traducidas a tokens, nunca su paleta/fuentes propias).
   orquestar otras moléculas"). `progress-meter` recibe el porcentaje ya
   calculado (nunca calcula una regla de negocio) y lo pasa a la barra por
   una custom property (`--ag-progress-meter-percent`) — no es una medida de
-  diseño hardcodeada, es un dato en runtime, mismo criterio que
-  `distribution-bar`.
+  diseño hardcodeada, es un dato en runtime.
 - **`file-field`** (molecule): reemplaza el markup suelto que tenía
   `organizacion.css` para el preview del logo (`.ag-organizacion__logo-preview*`,
   retirado). Preview vía slot (no decide qué es: ícono, imagen, `atoms/logo`).

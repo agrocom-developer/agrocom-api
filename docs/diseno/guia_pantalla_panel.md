@@ -190,7 +190,7 @@ Estado al cerrar la homogeneización (tareas 122 y 123, 20/9/2026): todo `index`
 
 Referencia viva: `seguridad::pages.dashboard`.
 
-Cabecera → tabs → por cada sector: `molecules/section-head` (barra de color + rótulo mono uppercase + contador opcional) y debajo su contenido. Indicadores con `molecules/stat-card`; distribuciones con `molecules/distribution-bar` (**nunca** un donut nuevo: `donut-chart` se retiró).
+Cabecera → tabs → por cada sector: `molecules/section-head` (barra de color + rótulo mono uppercase + contador opcional) y debajo su contenido. Indicadores con `molecules/stat-card`; para distribuciones, **nunca** un donut.
 
 ### 6.2. Listado
 
