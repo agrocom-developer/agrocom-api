@@ -9,11 +9,15 @@ use App\Dominios\Negociacion\Aplicacion\Seguimiento;
 use App\Dominios\Negociacion\Aplicacion\UbicacionDelPiloto;
 use App\Dominios\Negociacion\Dominio\Excepciones\NegociacionInvalida;
 use App\Dominios\Negociacion\Infraestructura\Eloquent\Avance;
+use App\Dominios\Negociacion\Infraestructura\Http\Requests\CerrarServicioRequest;
+use App\Dominios\Negociacion\Infraestructura\Http\Requests\EnviarUbicacionRequest;
+use App\Dominios\Negociacion\Infraestructura\Http\Requests\IniciarServicioRequest;
+use App\Dominios\Negociacion\Infraestructura\Http\Requests\RegistrarAvanceRequest;
+use App\Dominios\Negociacion\Infraestructura\Http\Requests\SubirEvidenciaRequest;
 use App\Dominios\Negociacion\Infraestructura\Http\RespuestaDeNegociacion;
 use App\Dominios\Seguridad\Contratos\IdentidadOperarioToken;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use OpenApi\Attributes as OA;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
@@ -71,10 +75,10 @@ final class SeguimientoController
             new OA\Response(response: 409, description: 'La solicitud no está `adjudicada`.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorConflicto')),
         ],
     )]
-    public function inicio(Request $request, int $id): JsonResponse
+    public function inicio(IniciarServicioRequest $request, int $id): JsonResponse
     {
         $this->exigirPermiso($request, 'negociacion.seguimiento.registrar');
-        $datos = $request->validate(['uuid_cliente' => ['required', 'uuid'], 'secuencia' => ['nullable', 'integer', 'min:0'], 'registrado_en' => ['nullable', 'date']]);
+        $datos = $request->validated();
 
         return $this->registro(fn () => $this->seguimiento->iniciar($this->usuarioId(), $id, $datos));
     }
@@ -106,14 +110,10 @@ final class SeguimientoController
             new OA\Response(response: 422, description: '`hectareas_exceden_tolerancia` o `correccion_sin_motivo`.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],
     )]
-    public function avance(Request $request, int $id): JsonResponse
+    public function avance(RegistrarAvanceRequest $request, int $id): JsonResponse
     {
         $this->exigirPermiso($request, 'negociacion.seguimiento.registrar');
-        $datos = $request->validate([
-            'uuid_cliente' => ['required', 'uuid'], 'secuencia' => ['nullable', 'integer', 'min:0'], 'registrado_en' => ['nullable', 'date'],
-            'hectareas_ejecutadas' => ['nullable', 'numeric', 'min:0', 'decimal:0,4'], 'porcentaje' => ['nullable', 'numeric', 'min:0', 'max:105', 'decimal:0,2'],
-            'nota' => ['nullable', 'string', 'max:500'], 'motivo_correccion' => ['nullable', 'string', 'max:500'],
-        ]);
+        $datos = $request->validated();
 
         return $this->registro(fn () => $this->seguimiento->avanzar($this->usuarioId(), $id, $datos));
     }
@@ -143,13 +143,10 @@ final class SeguimientoController
             new OA\Response(response: 422, description: '`hectareas_exceden_tolerancia`.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],
     )]
-    public function cierre(Request $request, int $id): JsonResponse
+    public function cierre(CerrarServicioRequest $request, int $id): JsonResponse
     {
         $this->exigirPermiso($request, 'negociacion.seguimiento.registrar');
-        $datos = $request->validate([
-            'uuid_cliente' => ['required', 'uuid'], 'secuencia' => ['nullable', 'integer', 'min:0'], 'registrado_en' => ['nullable', 'date'],
-            'hectareas_ejecutadas' => ['required', 'numeric', 'min:0', 'decimal:0,4'], 'nota' => ['nullable', 'string', 'max:500'],
-        ]);
+        $datos = $request->validated();
 
         return $this->registro(fn () => $this->seguimiento->cerrar($this->usuarioId(), $id, $datos));
     }
@@ -204,14 +201,10 @@ final class SeguimientoController
             new OA\Response(response: 422, description: 'Archivo inválido o de 300 KB o más.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],
     )]
-    public function subirEvidencia(Request $request, int $id): JsonResponse
+    public function subirEvidencia(SubirEvidenciaRequest $request, int $id): JsonResponse
     {
         $this->exigirPermiso($request, 'negociacion.evidencia.subir');
-        $datos = $request->validate([
-            'uuid_cliente' => ['required', 'uuid'],
-            'tipo' => ['required', Rule::in(['foto_avance', 'foto_final', 'foto_incidencia'])],
-            'avance_uuid_cliente' => ['nullable', 'uuid'], 'archivo' => ['required', 'file', 'mimes:jpg,jpeg,png,webp'],
-        ]);
+        $datos = $request->validated();
 
         try {
             [$evidencia, $creada] = $this->seguimiento->subirEvidencia($this->usuarioId(), $id, $datos, $request->file('archivo'));
@@ -273,13 +266,10 @@ final class SeguimientoController
             new OA\Response(response: 422, description: 'Coordenadas inválidas.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],
     )]
-    public function enviarUbicacion(Request $request): JsonResponse
+    public function enviarUbicacion(EnviarUbicacionRequest $request): JsonResponse
     {
         $this->exigirPermiso($request, 'negociacion.seguimiento.registrar');
-        $datos = $request->validate([
-            'solicitud_id' => ['required', 'integer'], 'latitud' => ['required', 'numeric', 'between:-90,90'], 'longitud' => ['required', 'numeric', 'between:-180,180'],
-            'precision_m' => ['nullable', 'numeric', 'min:0'], 'capturado_en' => ['nullable', 'date'],
-        ]);
+        $datos = $request->validated();
 
         try {
             $this->ubicacion->registrar($this->usuarioId(), (int) $datos['solicitud_id'], (float) $datos['latitud'], (float) $datos['longitud'], isset($datos['precision_m']) ? (float) $datos['precision_m'] : null, $datos['capturado_en'] ?? null);
