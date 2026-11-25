@@ -178,7 +178,6 @@ function panelHomogeneoMaquinasSinFicha(): array
     return [
         'TransicionesEquipoTrabajo' => 'el panel ya no administra equipos de trabajo',
         'TransicionesVersionApk' => 'solo listado; badge y acciones de fila con el tono del estado',
-        'TransicionesActa' => 'se valida desde pantallas propias',
         'TransicionesSesion' => 'se valida desde pantallas propias',
         'TransicionesDocumento' => 'se revisa desde la cola de documentos, con motivo en el rechazo',
         'TransicionesAprobacion' => 'la aprobación se resuelve con acciones de la ficha y de la cola, con motivo en un modal',

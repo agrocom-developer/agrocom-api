@@ -23,8 +23,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * cuelga de la solicitud por `solicitud_id`: FK plana a `sol_solicitudes_servicio`
  * (otro módulo, ADR 0003 regla 3), sin relación Eloquent; el módulo
  * `Solicitudes` lo expone por `Contratos/`. La sesión de vuelo, las pausas,
- * las condiciones, las recargas, las incidencias, las evidencias, el acta y el
- * reporte técnico cuelgan de este trabajo.
+ * las condiciones, las recargas, las incidencias, las evidencias y los equipos cuelgan de este trabajo.
  *
  * `sesiones()`, en cambio, SÍ es una relación Eloquent normal: `Sesion` vive
  * en el mismo módulo (ADR 0003, regla 1).
@@ -146,12 +145,6 @@ class Trabajo extends ModeloDominio
         return $this->hasMany(RecepcionCaldo::class, 'trabajo_id');
     }
 
-    /** @return HasOne<Acta, $this> */
-    public function acta(): HasOne
-    {
-        return $this->hasOne(Acta::class, 'trabajo_id');
-    }
-
     /**
      * Condiciones de vuelo registradas al iniciar cada sesión (HU-06, tarea
      * 17): `trabajo_id` está denormalizado en `ope_condiciones` justo para
@@ -163,12 +156,6 @@ class Trabajo extends ModeloDominio
     public function condiciones(): HasMany
     {
         return $this->hasMany(Condiciones::class, 'trabajo_id');
-    }
-
-    /** @return HasOne<ReporteTecnico, $this> */
-    public function reporteTecnico(): HasOne
-    {
-        return $this->hasOne(ReporteTecnico::class, 'trabajo_id');
     }
 
     /**

@@ -15,7 +15,7 @@
 
 ## Incidencias
 
-Tipos: deriva de producto, dron caído, lesión, fuga o derrame, intrusión de personas o animales, conflicto con cliente, conflicto con proveedor, falla de equipo, otro. Cualquier participante puede reportarlas con fotos y ubicación; las del piloto y del auxiliar se registran sin conexión y se sincronizan al recuperarla.
+Tipos: deriva de producto, dron caído, lesión, fuga o derrame, intrusión de personas o animales, conflicto con cliente, conflicto con proveedor, falla de equipo, otro. Cualquier participante puede reportarlas con fotos y ubicación; las del piloto se registran sin conexión y se sincronizan al recuperarla.
 
 | Severidad | Atención |
 |---|---|

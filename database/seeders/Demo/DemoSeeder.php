@@ -11,8 +11,8 @@ use Illuminate\Support\Facades\Auth;
  * TODOS los objetos del esquema poblados (pedido del dueño, 22/9/2026, tras
  * la reestructuración del modelo de datos y del rediseño de UI/UX).
  *
- * Se apoya en lo que ya cargó el dueño a mano en el compose (las cuadrillas
- * EQ1/EQ2 y el dron DRONT50) y suma alrededor: no toca ni borra nada de eso.
+ * Se apoya en lo que ya cargó el dueño a mano en el compose (el dron DRONT50)
+ * y suma alrededor: no toca ni borra nada de eso.
  *
  * Reglas de la familia:
  * - Idempotente: cada seeder mira un centinela (un NIT, un CI, un
@@ -52,10 +52,9 @@ class DemoSeeder extends Seeder
         $this->call(PlataformaDemoSeeder::class);
         $this->call(PersonalDemoSeeder::class);
         $this->call(FlotaDemoSeeder::class);
-        $this->call(CuadrillasDemoSeeder::class);
         // Marketplace: usa los drones de `ope_drones` que siembra FlotaDemoSeeder.
         $this->call(ProveedoresDemoSeeder::class);
-        // Cada piloto y auxiliar del marketplace necesita su persona para abrir sesiones.
+        // Cada piloto del marketplace necesita su persona para abrir sesiones.
         $this->call(PersonasDeOperariosDemoSeeder::class);
         // Negociación completa para las apps (solicitudes en cada estado, ofertas, chat, fotos y
         // ubicación), con las marcas de hora relativas a ahora, y vigencias que se renuevan al re-sembrar.

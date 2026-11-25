@@ -2,7 +2,7 @@
 #
 # Demo local del marketplace por negociación: una API con datos de ejemplo
 # (solicitudes en todos los estados, ofertas y contraofertas, chat, fotos y
-# ubicaciones) para recorrer las apps (cliente, piloto, auxiliar) en el
+# ubicaciones) para recorrer las apps (cliente y piloto) en el
 # simulador o en un teléfono. Ver docs/gestion/demo-local.md.
 #
 #   bin/demo up      # postgres en docker + migra + siembra + sirve la API
@@ -209,9 +209,9 @@ API de demo lista.
 
 Usuarios (contraseña 0000): ver docs/gestion/demo-local.md
   cliente   agro.sanrafael · luis.antelo · coop.valle.grande
-  piloto    rodrigo.suarez · valeria.montano   auxiliar  diego.parada
-  proveedor carlos.mamani (auxiliar esteban.choque)
-  tercero   fumigaciones.oriente (pilotos marcelo.terrazas, ivan.cuellar; auxiliar lucia.flores)
+  piloto    rodrigo.suarez · valeria.montano
+  proveedor carlos.mamani
+  tercero   fumigaciones.oriente (pilotos marcelo.terrazas, ivan.cuellar)
 EOF
 }
 

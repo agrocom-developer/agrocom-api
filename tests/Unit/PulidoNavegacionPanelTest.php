@@ -93,8 +93,7 @@ function pantallasBladeDelPanel(string $raizProyecto): array
 test('el descubrimiento encuentra las pantallas Blade del panel', function () use ($raizProyecto) {
     expect(pantallasBladeDelPanel($raizProyecto))
         ->toContain('app/Dominios/Solicitudes/Infraestructura/Http/Views/pages/solicitudes/show.blade.php')
-        ->toContain('resources/views/components/organisms/page-header.blade.php')
-        ->not->toContain('app/Dominios/Operaciones/Infraestructura/Http/Views/pdf/acta.blade.php');
+        ->toContain('resources/views/components/organisms/page-header.blade.php');
 });
 
 test('ningún título de pantalla es un <h1> sin clase (hereda el peso de Bootstrap)', function () use ($raizProyecto) {
