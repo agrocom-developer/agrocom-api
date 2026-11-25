@@ -10,7 +10,7 @@
  *      reasignados por tema vía `[data-bs-theme]`.
  *
  * Ningún componente debe importar `primitives/*.css` directamente ni usar un
- * valor `--ag-color-green-*`/`--ag-color-amber-*` fuera de `semantic/`.
+ * valor `--ag-brand-*` fuera de `semantic/`.
  */
 
 @import './primitives/base.css';

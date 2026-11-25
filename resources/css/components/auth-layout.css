@@ -185,8 +185,8 @@
     width: 64px;
     background: linear-gradient(
         90deg,
-        var(--ag-color-green-300),
-        var(--ag-color-amber-300)
+        var(--ag-color-chip-icon),
+        var(--ag-color-wordmark-accent)
     );
 }
 

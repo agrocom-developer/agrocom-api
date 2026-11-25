@@ -1,12 +1,10 @@
 /*
  * Tokens base (capa 1 — primitivos no ligados a marca)
  * ------------------------------------------------------
- * Escala neutra (grises), colores de estado universales (rojo/amarillo/azul,
- * ninguno viene del logo porque la marca no define un color de error) y las
- * escalas de espaciado/tipografía/radio/elevación. A diferencia de
- * `brand.css`, esto es infraestructura de diseño tenant-agnóstica: incluso
- * en un futuro hipotético multi-tenant (ver nota en `brand.css`), estos
- * valores no tendrían por qué cambiar por cliente.
+ * Escala neutra (grises), tonos categóricos (violeta/magenta) y las
+ * escalas de espaciado/tipografía/radio/elevación. Los colores de estado
+ * (éxito, aviso, informativo, error) vienen de la marca (`brand.css`).
+ * Esto es infraestructura de diseño agnóstica de la marca.
  */
 
 :root {
@@ -26,122 +24,18 @@
     --ag-color-gray-950: #121212;
     --ag-color-gray-1000: #000000;
 
-    /* Estados universales — no derivados de la marca (Agrocom no define un rojo) */
-    --ag-color-red-500: #dc3545;
-    --ag-color-red-100: #f8d7da;
-    --ag-color-yellow-500: #ffc107;
-    --ag-color-yellow-100: #fff3cd;
-    --ag-color-blue-500: #0d6efd;
-    --ag-color-blue-100: #cfe2ff;
-
-    /* Extensión del rediseño del panel (quinta vuelta, maquetas 4a/5a/5b/5c):
-       el lenguaje aprobado usa un azul acero oscurecido como texto "info"
-       apto AA sobre su tenue (blue-500 baja de 4.5:1 sobre blue-50/blue-100).
-       Siguen siendo estados universales no derivados del logo — por eso
-       viven acá y no en brand.css. */
-    --ag-color-blue-700: #1d5fa8;
-
-    /* Tarea de tokens (17/9/2026): success/danger/warning/info pasan a los
-       valores literales de la paleta "Indication Colors" de SAP Fiori
-       (https://www.sap.com/design-system/fiori-design-web/v1-84/foundations/
-       best-practices/ui-elements/how-to-use-semantic-colors), por pedido
-       explícito y repetido del usuario — a diferencia de red-600/blue-700
-       arriba (tonos PROPIOS inspirados en Fiori) o de violet/magenta más
-       abajo, acá el usuario autorizó copiar el hex tal cual porque el rojo
-       "óxido cálido"/ámbar de marca existentes se leían "demasiado claros,
-       como si les faltara opacity" — el criterio de "nunca copiar el hex de
-       una referencia externa" queda explícitamente anulado para estos 8
-       valores, no para el resto del sistema.
-       red-600/red-700 son las dos UI Indication 1/2 de Fiori (#bb0000
-       negative / #880000 negative oscuro) usadas juntas para danger, mismo
-       criterio que ya traía Fiori: 2 = ícono/relleno (crudo, no-texto),
-       1 = texto (`-strong`, ver theme-light.css/theme-dark.css). red-50/-200
-       recalculados como el mismo mix 16%/30% con sand-50 que ya usaba la
-       fórmula anterior, solo que ahora sobre el red-600 nuevo.
-       blue-600 es la UI Indication 5 de Fiori (#0a6ed1, informative) — vive
-       aparte de blue-500 (Bootstrap, todavía usado por --ag-color-focus-ring)
-       para no mover el foco de accesibilidad de todo el panel como efecto
-       colateral de este cambio. blue-50 recalculado con el mismo mix 16%
-       sobre blue-600; blue-700 ("acero") se deja igual: ya pasaba AA de
-       sobra contra el blue-50 nuevo (4.96:1 / 6.18:1, ver
-       sistema_diseno_panel.md §1.3), no hace falta tocarlo.
-       Tercera vuelta (18/9/2026): blue-600/-50/-700 DEJAN de alimentar
-       `--ag-color-info` (que pasa a teal-500, ver más abajo) y pasan a
-       `--ag-color-primary-2`, token nuevo sin conectar a pantalla — el
-       primitivo no cambia de valor, solo de qué token semántico lo usa
-       (ver semantic/theme-light.css/theme-dark.css).
-       green-600 es la UI Indication 4 de Fiori (#107e3e, positive) para
-       success. Vive ACÁ y no en brand.css junto al resto de la rampa verde
-       —aunque comparte familia de nombre— porque a diferencia de
-       green-100..900 (degradado real del isotipo) este valor NO sale del
-       logo: es la excepción literal de Fiori, así que corresponde a
-       "estados universales, no derivados de la marca" como el resto de este
-       bloque. success-strong se sigue calculando por fórmula
-       (color-mix 30% green-600 + 70% green-900, ver theme-light.css) — no
-       hace falta un segundo primitivo nuevo, green-900 (brand.css) ya sirve
-       de ancla oscura y sigue pasando AA con el crudo nuevo.
-       warning NO suma primitivo nuevo: la UI Indication 3 de Fiori
-       (#e9730c, critical) coincide casi exacto con el amber-700 que ya
-       existe en brand.css (#e8720c, la marca del panel) — mismo tono a
-       simple vista. warning pasa a usar amber-700 directo en vez de
-       amber-500 (ver theme-light.css); el `-strong` pasa a amber-900
-       (primitivo ya existente, hoy usado por --ag-color-accent-hover en
-       oscuro) porque contra el `-subtle` nuevo, más saturado, amber-800
-       deja de pasar AA (4.29:1, por debajo de 4.5) y amber-900 sí (7.25:1). */
-    --ag-color-red-50: #f1d2cf;
-    --ag-color-red-200: #e8afac;
-    --ag-color-red-600: #bb0000;
-    --ag-color-red-700: #880000;
-    --ag-color-blue-50: #d4e4f0;
-    --ag-color-blue-600: #0a6ed1;
-    --ag-color-green-600: #107e3e;
-
-    /* Extensión "distintivo" (tarea de tokens, 17/9/2026): dos tonos
-       puramente CATEGÓRICOS —violeta y magenta—, sin carga de
-       "bueno"/"malo"/urgencia a diferencia de success/warning/danger/info.
-       Motivo real: `ope_categorias_insumo` tiene 6 valores
-       (Insecticidas/Herbicida/Fungicidas/Fertilizante/Coadyuvantes/
-       Antiespumante) sin color propio hoy, y un estado con más de 4 pasos
-       tampoco tendría de dónde sacar un quinto/sexto tono sin reusar el
-       significado de otro. Origen: paleta "Indication Colors" de SAP Fiori
-       (UI Indication 7/8, #925ace/#c0399f) — a diferencia de la primera
-       versión de este bloque, que adaptaba solo el CONCEPTO con hex propios,
-       el usuario pidió explícitamente que estos dos también usaran el valor
-       literal de Fiori (mismo pedido que motivó el cambio de
-       success/danger/warning/info, ver el bloque de arriba) — mismo criterio
-       de excepción documentada, no aplica al resto del sistema.
-       Siguen siendo "estados universales, no derivados de la marca": por
-       eso viven acá y no en brand.css.
-       500 = crudo literal de Fiori (tema claro, ícono/relleno, uso
-       NO-texto). 700 = oscurecido desde el crudo (factor L×0.6, mismo
-       criterio de fórmula que success/danger de arriba) para texto
-       `-strong` AA en tema claro. 300 = version aclarada del crudo
-       (L≈0.75) para uso como crudo+texto `-strong` sobre fondo oscuro,
-       mismo criterio que `--ag-color-danger`/`-info` de abajo, que reusan
-       un único stop pastel para las dos cosas. AA verificado en
-       sistema_diseno_panel.md §1.3. Todavía sin conectar a ninguna pantalla
-       ni componente. */
+    /* Tonos puramente CATEGÓRICOS (violeta y magenta), sin carga de
+       bueno/malo/urgencia, para distinguir más valores de los que cubren
+       los estados semánticos (p. ej. las categorías de insumo). No salen de
+       la marca. 500 = relleno (texto blanco encima), 700 = texto `-strong`
+       sobre tema claro, 300 = relleno y texto sobre tema oscuro. AA
+       verificado en sistema_diseno_panel.md §1.3. */
     --ag-color-violet-300: #bea0de;
     --ag-color-violet-500: #925ace;
     --ag-color-violet-700: #572989;
     --ag-color-magenta-300: #dea0cf;
     --ag-color-magenta-500: #c0399f;
     --ag-color-magenta-700: #73225f;
-
-    /* Tercer tono "distintivo" (tarea de tokens, 17/9/2026 — segunda vuelta):
-       UI Indication 6 de Fiori (#0f828f, sin asignación semántica fija en la
-       paleta de origen — Fiori la deja libre para "lo que la industria
-       necesite"). Mismo criterio que violet/magenta de arriba: crudo literal
-       + oscurecido/aclarado por fórmula. Completa 3 de los hasta 6 tonos
-       categóricos que puede necesitar `ope_categorias_insumo`.
-       Tercera vuelta (18/9/2026): el usuario asignó esta UI Indication 6 al
-       nombre "info" en su tabla de 8 colores/8 nombres — `--ag-color-info`
-       pasa a usar este mismo primitivo (ver semantic/theme-light.css/
-       theme-dark.css). `--ag-color-distintivo-3` se queda apuntando acá
-       también (duplicado documentado, no fusionado — ver esos archivos). */
-    --ag-color-teal-300: #7fc4cb;
-    --ag-color-teal-500: #0f828f;
-    --ag-color-teal-700: #095055;
 
     /* No es color de marca Agrocom — el azul de referencia de Google Maps,
        fallback del polígono del editor de mapa de propiedad cuando la
@@ -160,39 +54,15 @@
     --ag-space-6: 2rem;
     --ag-space-8: 3rem;
 
-    /* Tipografía — IBM Plex Sans/Mono (elección deliberada, no el default de
-       Material: ver catálogo §2 para la justificación). Plex Mono es para
-       cifras tabulares (hectáreas, montos, códigos de sesión), no de uso general. */
-    --ag-font-family-base: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
-    --ag-font-family-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
-    /* Tipografía de titulares: ADICIONAL a --ag-font-family-base, nunca la
-       reemplaza — para headlines/títulos de página/cifras de KPI.
-
-       Séptima vuelta (28/8/2026): se retira Fraunces (serif editorial, LA
-       fuente display desde la quinta vuelta) — feedback externo directo
-       sobre captura real: "se nota que el sistema está generado con IA,
-       como si fuera Times New Roman" (irónico: el fallback de este mismo
-       token terminaba en 'Times New Roman', serif). Un serif display en un
-       panel operativo de campo (hectáreas, sesiones, contratos) lee como
-       plantilla genérica, no como identidad propia. Se verificó deere.com
-       como referencia del rubro: usa un sans grotesco propio (JD Sans Pro,
-       fallback `"Helvetica Neue", Helvetica, Arial`) SIEMPRE bold/condensado
-       en titulares, nunca serif — mismo criterio que ya regía para el color
-       de superficies (ver theme-dark.css §bg-auth): la identidad se expresa
-       en peso/acento, no en un recurso tipográfico ajeno al resto del
-       sistema.
-
-       'IBM Plex Sans Condensed' (`@fontsource/ibm-plex-sans-condensed`,
-       pesos 400/500/600/700 importados en app.css) es la nueva fuente
-       display: misma familia tipográfica que el texto de interfaz (Plex
-       Sans), diferenciada por condensación + peso en vez de por una
-       tipografía distinta — evita el efecto "tres fuentes sin relación" y
-       resuelve más angosta que Fraunces (útil en KPIs/títulos de contenedor
-       angosto, lo opuesto al problema que tenía Fraunces en la tercera
-       vuelta del login). Tres familias, una por contexto: Plex Sans
-       Condensed títulos/cifras protagonistas, Plex Sans interfaz/subtítulos,
-       Plex Mono datos/metadatos. */
-    --ag-font-family-display: 'IBM Plex Sans Condensed', 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+    /* Tipografía — la de la app móvil: Manrope para la interfaz y los
+       titulares, JetBrains Mono para cifras tabulares (hectáreas, montos,
+       códigos) y metadatos. Se sirven desde el propio bundle
+       (`@fontsource`, importadas en app.css), sin CDN. Los titulares usan
+       Manrope en peso 700-800 en vez de una familia condensada aparte: dos
+       familias, una por contexto. */
+    --ag-font-family-base: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+    --ag-font-family-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    --ag-font-family-display: 'Manrope', ui-sans-serif, system-ui, sans-serif;
     --ag-font-size-xs: 0.75rem;
     --ag-font-size-sm: 0.875rem;
     --ag-font-size-base: 1rem;
@@ -204,6 +74,7 @@
     --ag-font-weight-regular: 400;
     --ag-font-weight-medium: 500;
     --ag-font-weight-bold: 700;
+    --ag-font-weight-extrabold: 800;
 
     /* Título de PANTALLA — la receta única del h1 de cualquier vista del
        panel. Existe como token porque hasta ahora cada pantalla la escribía
@@ -213,7 +84,7 @@
        simple vista parecían dos tipografías. El valor canónico es el del
        dashboard, que es el que el usuario aprobó. */
     --ag-title-page-size: 2.125rem;
-    --ag-title-page-weight: var(--ag-font-weight-regular);
+    --ag-title-page-weight: var(--ag-font-weight-extrabold);
     --ag-title-page-line-height: 1.05;
 
     /* Alturas de las bandas fijas del chrome (header arriba, footer abajo).

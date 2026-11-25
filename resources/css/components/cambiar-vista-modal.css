@@ -96,14 +96,14 @@
  * Séptimo caso, `dueno` (26/9/2026 — rol de negocio, distinto de
  * `admin_plataforma`, que es técnico): agotados los seis semánticos
  * distinguibles sin carga de estado (`distintivo-3` resuelve al MISMO
- * teal-500 que `info`/portal; `success`/`warning` repiten literalmente el
+ * azul informativo que `info`/portal; `success`/`warning` repiten literalmente el
  * tono de `primary`/`accent`; `danger`/`alert` son el rojo de
  * cancelada/rechazada). No hay un octavo semántico libre — se arma un
  * séptimo tono con `color-mix()` de dos tokens SEMÁNTICOS ya existentes
  * (nunca un primitivo de `primitives/*.css` directo, ni acá ni en ningún
  * componente — regla de `tokens/index.css`): la mitad de `--ag-color-accent`
  * (el acento de marca, ya usado crudo por `encargado_operaciones`) y la
- * mitad de `--ag-color-bg-rail-active` (neutro oscuro de marca — olive-900,
+ * mitad de `--ag-color-bg-rail-active` (grafito elevado de marca,
  * hoy fondo del ítem activo del riel de módulos) da un bronce/ocre oscuro —
  * distinto a simple vista del ámbar vivo de `encargado_operaciones` y de los
  * otros seis, y constante entre temas (los dos semánticos que se mezclan ya
@@ -154,7 +154,7 @@
 /* encargado_operaciones: ámbar de marca — el segundo color de identidad de
  * Agrocom, para el rol de mayor jerarquía operativa. Texto con el token
  * pensado específicamente para relleno sólido de acento (blanco puro falla
- * AA contra ámbar-700, ver theme-light.css), no `--ag-color-gray-0`. */
+ * AA contra el ámbar, ver theme-light.css), no `--ag-color-gray-0`. */
 .ag-cambiar-vista__opcion-avatar--encargado-operaciones {
     background: var(--ag-color-accent);
     color: var(--ag-color-accent-contrast-fill);

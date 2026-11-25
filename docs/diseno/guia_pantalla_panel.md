@@ -114,7 +114,7 @@ Toda pantalla autenticada del panel se envuelve igual:
 
 `panel-layout` ya resuelve el **chrome** completo — no lo redibujes:
 
-- Nivel 1: riel de módulos (74px, oliva oscuro en ambos temas).
+- Nivel 1: riel de módulos (74px, grafito en ambos temas).
 - Nivel 2: sidebar de ítems del módulo activo (252px, solo ≥1200px; en 768–1199 se convierte en banda de píldoras; en <768 en drawer).
 - Header: breadcrumb, buscador, usuario + rol activo, tema, notificaciones, período, campaña.
 - Pie mono con copyright y versión.

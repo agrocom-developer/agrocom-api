@@ -3,23 +3,14 @@
  * Chip/pill de estado (quinta vuelta — los chips de la tabla de sesiones de
  * las maquetas 4a/5a/5b).
  *
- * Segunda vuelta de paleta (17/9/2026): success/warning/info/danger y los
- * tres "distintivo" dejan el par fondo `-subtle` + texto `-strong` (pedido
- * explícito del usuario — se leía "con poca opacity", no como estado) y
- * pasan a relleno SÓLIDO (`-contrast-fill`, constante entre temas) + texto
- * blanco (`--ag-color-gray-0`), como los chips "Out of Stock"/"Active" de
- * la referencia SAP Fiori "Industry-Specific Colors". SIN excepciones
- * (19/9/2026, decisión del dueño): warning también lleva texto blanco. Hasta
- * ese día usaba gris-900 porque blanco sobre `#e9730c`/amber-700 da 3.03:1
- * (bajo el 4.5:1 de AA para texto chico); el dueño lo descartó dos veces
- * —"no le queda el negro" (17/9) y sobre el badge «En curso» (19/9)—: un
- * chip de estado se reconoce por su color, y el texto oscuro lo hacía leer
- * como otra familia. El contraste queda anotado como costo asumido en
- * sistema_diseno_panel.md §1.3; NO volver a poner texto oscuro sobre un
- * relleno de estado. Ver el bloque "Relleno sólido chip fuerte" en
- * theme-light.css/theme-dark.css para los contrastes de cada color.
- * `neutral`/`accent` no se tocan: siguen con el par tenue/-strong de
- * siempre (no son parte de la paleta de 8 colores de indicación).
+ * success/warning/info/danger y los tres "distintivo" usan relleno SÓLIDO
+ * (`-contrast-fill`, constante entre temas) + texto blanco
+ * (`--ag-color-gray-0`), no el par `-subtle`/`-strong` (que se leía "con
+ * poca opacity", no como estado). Warning también lleva texto blanco: su
+ * relleno es un ámbar oscurecido (5,1:1 con blanco) para que todos los
+ * estados se lean como una familia y pasen AA. NO poner texto oscuro sobre
+ * un relleno de estado. Contrastes en sistema_diseno_panel.md §1.3.
+ * `neutral`/`accent` siguen con el par tenue/-strong.
  */
 
 .ag-badge {
