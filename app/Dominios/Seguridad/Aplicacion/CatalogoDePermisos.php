@@ -25,9 +25,9 @@ use Illuminate\Support\Facades\DB;
  * 58 siguientes son acciones DENTRO de una de esas pantallas, y se reconocen
  * porque comparten el prefijo `modulo.entidad` con el permiso de la pantalla
  * (`comercial.cliente.ver` es la pantalla; `comercial.cliente.crear`, su
- * acción). Los 2 que quedan —`operaciones.acta.generar` y `.firmar`— no
- * cuelgan de ninguna pantalla del panel porque se ejecutan desde
- * `agrocom-field`, y el árbol los devuelve aparte en vez de esconderlos.
+ * acción). Los que no cuelgan de ninguna pantalla del panel —por ejemplo
+ * los que se ejercen desde `agrocom-field`— el árbol los devuelve aparte en
+ * vez de esconderlos.
  *
  * Esa partición es lo que hace administrable la matriz: 91 interruptores
  * sueltos son ilegibles; siete módulos de menú con sus pantallas, y las
@@ -248,8 +248,7 @@ final class CatalogoDePermisos
             ];
         }
 
-        // Lo que sobra: acciones sin pantalla del panel donde ejercerse. Hoy
-        // son las dos del acta, que se ejecutan desde `agrocom-field`. Van
+        // Lo que sobra: acciones sin pantalla del panel donde ejercerse. Van
         // visibles y aparte — esconderlas dejaría permisos inalcanzables
         // desde la única pantalla que administra permisos.
         $sueltos = [];
