@@ -33,13 +33,10 @@
 @import './empty-state.css';
 @import './role-card.css';
 @import './section-head.css';
-@import './distribution-bar.css';
-@import './captura-rc-card.css';
 @import './summary-card.css';
 @import './confirm-button.css';
 @import './color-swatch-field.css';
 @import './progress-meter.css';
-@import './tiered-progress-bar.css';
 @import './file-field.css';
 @import './table-search.css';
 @import './pagination.css';
