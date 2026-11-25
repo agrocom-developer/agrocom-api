@@ -4,8 +4,10 @@ namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Personal\Contratos\LecturaFichaPersona;
+use App\Dominios\Personal\Contratos\LecturaNombresDePersonas;
 use App\Dominios\Seguridad\Aplicacion\AlternarBloqueoUsuario;
 use App\Dominios\Seguridad\Aplicacion\AsignarRolesUsuario;
+use App\Dominios\Seguridad\Aplicacion\ConsultarRolesDeUsuarios;
 use App\Dominios\Seguridad\Aplicacion\EliminarUsuario;
 use App\Dominios\Seguridad\Aplicacion\ListarBitacora;
 use App\Dominios\Seguridad\Aplicacion\ListarDispositivosDeUsuario;
@@ -16,13 +18,13 @@ use App\Dominios\Seguridad\Dominio\Excepciones\UsuarioDuplicado;
 use App\Dominios\Seguridad\Dominio\TipoUsuario;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
+use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\NombreLegibleRol;
+use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\TarjetasDeUsuario;
 use App\Dominios\Seguridad\Infraestructura\Http\Requests\ActualizarUsuarioRequest;
 use App\Dominios\Seguridad\Infraestructura\Http\Requests\CrearUsuarioRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Lang;
 use Illuminate\View\View;
 
 /**
@@ -79,7 +81,12 @@ final class UsuariosController
 
     private const PERMISO_VER_COMO = 'seguridad.usuario.ver_como';
 
-    public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
+    public function __construct(
+        private readonly AutorizacionPanelWeb $autorizacion,
+        private readonly ConsultarRolesDeUsuarios $roles,
+        private readonly TarjetasDeUsuario $tarjetas,
+        private readonly LecturaNombresDePersonas $personas,
+    ) {}
 
     public function index(Request $request, ListarUsuarios $listarUsuarios): View
     {
@@ -96,11 +103,11 @@ final class UsuariosController
         return view('seguridad::pages.usuarios.index', [
             ...$this->autorizacion->cascara($request),
             'usuarios' => $usuarios,
-            'rolesPorUsuario' => $this->rolesPorUsuario($idsUsuario),
+            'rolesPorUsuario' => $this->tarjetas->rolesPorUsuario($idsUsuario),
             'rolesVerComoPorUsuario' => $this->autorizacion->tienePermiso($request, self::PERMISO_VER_COMO)
                 ? $this->rolesVivosPorUsuario($idsUsuario)
                 : [],
-            'etiquetasPersona' => $this->etiquetasPersona($idsPersona),
+            'etiquetasPersona' => $this->personas->nombresDe($idsPersona),
             'filtros' => ['q' => $busqueda, 'tipo' => $tipo->value ?? ''],
             'tonoPorEstado' => self::TONO_POR_ESTADO,
         ]);
@@ -280,125 +287,22 @@ final class UsuariosController
         $esInterno = $usuario->type === TipoUsuario::Interno;
 
         if ($esInterno && $this->autorizacion->tienePermiso($request, 'seguridad.rol.ver')) {
-            $resumen[] = $this->tarjetaRoles($usuario);
+            $resumen[] = $this->tarjetas->tarjetaRoles($usuario);
         }
 
         if ($esInterno && $this->autorizacion->tienePermiso($request, 'personal.persona.ver')) {
-            $resumen[] = $this->tarjetaPersona($usuario, $lecturaPersona);
+            $resumen[] = $this->tarjetas->tarjetaPersona($usuario, $lecturaPersona);
         }
 
         if ($esInterno && $this->autorizacion->tienePermiso($request, 'seguridad.dispositivo.ver')) {
-            $resumen[] = $this->tarjetaDispositivos($usuario, $listarDispositivos);
+            $resumen[] = $this->tarjetas->tarjetaDispositivos($usuario, $listarDispositivos);
         }
 
         if ($this->autorizacion->tienePermiso($request, 'seguridad.bitacora.ver')) {
-            $resumen[] = $this->tarjetaBitacora($usuario, $zonaQueVe, $listarBitacora);
+            $resumen[] = $this->tarjetas->tarjetaBitacora($usuario, $zonaQueVe, $listarBitacora);
         }
 
         return $resumen;
-    }
-
-    /** @return array{titulo: string, icono: string, tieneDatos: bool, items: list<array<string, mixed>>, vacioTitulo: string, vacioDetalle: string, acciones: list<array{label: string, href: string, icono?: string}>} */
-    private function tarjetaRoles(SecUser $usuario): array
-    {
-        $roles = $this->rolesPorUsuario([(int) $usuario->id])[(int) $usuario->id] ?? [];
-
-        return [
-            'titulo' => __('seguridad.usuarios.aside_roles_titulo'),
-            'icono' => 'shield_person',
-            'tieneDatos' => $roles !== [],
-            'items' => [
-                ['label' => __('seguridad.usuarios.aside_roles_total'), 'value' => (string) count($roles), 'mono' => true],
-                ['label' => __('seguridad.usuarios.aside_roles_nombres'), 'value' => implode(', ', $roles)],
-            ],
-            'vacioTitulo' => __('seguridad.usuarios.aside_roles_vacio_titulo'),
-            'vacioDetalle' => __('seguridad.usuarios.aside_roles_vacio_detalle'),
-            'acciones' => $roles !== []
-                ? [['label' => __('seguridad.usuarios.aside_roles_accion'), 'href' => route('panel.roles.index'), 'icono' => 'list']]
-                : [],
-        ];
-    }
-
-    /** @return array{titulo: string, icono: string, tieneDatos: bool, items: list<array<string, mixed>>, vacioTitulo: string, vacioDetalle: string, acciones: list<array{label: string, href: string, icono?: string}>} */
-    private function tarjetaPersona(SecUser $usuario, LecturaFichaPersona $lecturaPersona): array
-    {
-        $ficha = $usuario->persona_id !== null ? $lecturaPersona->dePersona($usuario->persona_id) : null;
-
-        return [
-            'titulo' => __('seguridad.usuarios.aside_persona_titulo'),
-            'icono' => 'badge',
-            'tieneDatos' => $ficha !== null,
-            'items' => $ficha === null ? [] : [
-                ['label' => __('seguridad.usuarios.aside_persona_nombre'), 'value' => $ficha->nombre],
-                ['label' => __('seguridad.usuarios.aside_persona_rol'), 'value' => __('personal.roles.'.$ficha->rol)],
-                ['label' => __('seguridad.usuarios.aside_persona_base'), 'value' => $ficha->baseNombre ?? __('seguridad.usuarios.aside_persona_sin_base')],
-            ],
-            // Sin persona_id, o con una persona dada de baja, la tarjeta dice cuál de las dos es.
-            'vacioTitulo' => $usuario->persona_id === null
-                ? __('seguridad.usuarios.aside_persona_vacio_titulo')
-                : __('seguridad.usuarios.aside_persona_baja_titulo'),
-            'vacioDetalle' => $usuario->persona_id === null
-                ? __('seguridad.usuarios.aside_persona_vacio_detalle')
-                : __('seguridad.usuarios.aside_persona_baja_detalle'),
-            'acciones' => [],
-        ];
-    }
-
-    /** @return array{titulo: string, icono: string, tieneDatos: bool, items: list<array<string, mixed>>, vacioTitulo: string, vacioDetalle: string, acciones: list<array{label: string, href: string, icono?: string}>} */
-    private function tarjetaDispositivos(SecUser $usuario, ListarDispositivosDeUsuario $listarDispositivos): array
-    {
-        $dispositivos = $listarDispositivos->ejecutar($usuario);
-        $ultimoUso = $dispositivos->max('last_used_at');
-
-        return [
-            'titulo' => __('seguridad.usuarios.aside_dispositivos_titulo'),
-            'icono' => 'smartphone',
-            'tieneDatos' => $dispositivos->isNotEmpty(),
-            'items' => [
-                ['label' => __('seguridad.usuarios.aside_dispositivos_total'), 'value' => (string) $dispositivos->count(), 'mono' => true],
-                ['label' => __('seguridad.usuarios.aside_dispositivos_ultimo_uso'), 'value' => $ultimoUso !== null ? $ultimoUso->diffForHumans() : __('seguridad.dispositivos.sin_uso')],
-            ],
-            'vacioTitulo' => __('seguridad.usuarios.aside_dispositivos_vacio_titulo'),
-            'vacioDetalle' => __('seguridad.usuarios.aside_dispositivos_vacio_detalle'),
-            // La lista de dispositivos se acota a esta cuenta con su usuario en el buscador.
-            'acciones' => $dispositivos->isNotEmpty()
-                ? [['label' => __('seguridad.usuarios.aside_dispositivos_accion'), 'href' => route('panel.dispositivos.index', ['q' => $usuario->username]), 'icono' => 'list']]
-                : [],
-        ];
-    }
-
-    /**
-     * Últimos movimientos de la propia cuenta en la bitácora: lee con
-     * {@see ListarBitacora} —el mismo caso de uso de `/panel/bitacora`, acotado
-     * a `sec_user` y a esta cuenta— sin tocar la bitácora.
-     *
-     * @return array{titulo: string, icono: string, tieneDatos: bool, items: list<array<string, mixed>>, vacioTitulo: string, vacioDetalle: string, acciones: list<array{label: string, href: string, icono?: string}>}
-     */
-    private function tarjetaBitacora(SecUser $usuario, string $zonaQueVe, ListarBitacora $listarBitacora): array
-    {
-        $filas = $listarBitacora->ejecutar(
-            zonaQueVe: $zonaQueVe,
-            tabla: 'sec_user',
-            registroId: (int) $usuario->id,
-            porPagina: 3,
-        )->items();
-
-        return [
-            'titulo' => __('seguridad.usuarios.aside_bitacora_titulo'),
-            'icono' => 'history',
-            'tieneDatos' => $filas !== [],
-            // Acción y fecha: una línea por movimiento. Quién lo hizo y el detalle del cambio están en la bitácora.
-            'items' => array_map(fn ($fila): array => [
-                'label' => __('seguridad.bitacora.acciones.'.$fila->accion->value),
-                'value' => $fila->instante->format('d/m/Y H:i'),
-                'mono' => true,
-            ], $filas),
-            'vacioTitulo' => __('seguridad.usuarios.aside_bitacora_vacio_titulo'),
-            'vacioDetalle' => __('seguridad.usuarios.aside_bitacora_vacio_detalle'),
-            'acciones' => $filas !== []
-                ? [['label' => __('seguridad.usuarios.aside_bitacora_accion'), 'href' => route('panel.bitacora.index', ['tabla' => 'sec_user', 'registro_id' => $usuario->id]), 'icono' => 'history']]
-                : [],
-        ];
     }
 
     /**
@@ -482,29 +386,25 @@ final class UsuariosController
     }
 
     /**
-     * @return list<int> IDs de rol con `asignar_rol_dueno` otorgado y vivo en
-     *                   el catálogo (`sec_role_permission`/`sec_permission`).
+     * Roles vivos y habilitados de cada cuenta con su id, para el selector de
+     * «Ver como» (tarea 140), con nombre legible.
+     *
+     * @param  list<int>  $idsUsuario
+     * @return array<int, array<int, string>> `id de usuario => [id de rol => nombre legible]`
      */
-    private function idsRolesQueExigenPermisoDueno(): array
+    private function rolesVivosPorUsuario(array $idsUsuario): array
     {
-        return DB::table('sec_role_permission')
-            ->join('sec_permission', 'sec_permission.id', '=', 'sec_role_permission.id_permission')
-            ->whereNull('sec_role_permission.deleted_at')
-            ->whereNull('sec_permission.deleted_at')
-            ->where('sec_permission.code', self::PERMISO_ROL_DUENO)
-            ->where('sec_permission.state', true)
-            ->pluck('sec_role_permission.id_role')
-            ->map(fn ($id) => (int) $id)
-            ->all();
+        return array_map(
+            fn (array $roles): array => array_map(NombreLegibleRol::de(...), $roles),
+            $this->roles->slugsVivosPorUsuario($idsUsuario),
+        );
     }
 
     /**
-     * Personas vivas de `per_personas` sin cuenta asignada todavía, más la
-     * propia persona del usuario en edición (si no se excluyera del filtro
-     * de "ya asignadas", el propio registro se autoexcluiría de su lista al
-     * re-guardar). Lectura directa por `DB::table` — `Personal` es otro
-     * módulo, ADR 0003 regla 3, mismo criterio que los selects de
-     * `OrdenesController`.
+     * Personas vivas sin cuenta asignada todavía, más la propia persona del
+     * usuario en edición (si no se excluyera del filtro de «ya asignadas», el
+     * propio registro se autoexcluiría de su lista al re-guardar). `Personal`
+     * es otro módulo: se lee por su contrato (ADR 0003, regla 2).
      *
      * @return Collection<int, string>
      */
@@ -515,93 +415,12 @@ final class UsuariosController
             ->when($usuarioId !== null, fn ($consulta) => $consulta->whereKeyNot($usuarioId))
             ->pluck('persona_id');
 
-        return DB::table('per_personas')
-            ->whereNull('deleted_at')
-            ->whereNotIn('id', $idsAsignados)
-            ->orderBy('nombre')
-            ->pluck('nombre', 'id');
+        return collect($this->personas->vivasExcepto($idsAsignados));
     }
 
-    /**
-     * Etiquetas legibles de persona para la columna del listado, mismo
-     * criterio de lectura directa que `personasDisponibles()`.
-     *
-     * @param  list<int>  $ids
-     * @return array<int, string>
-     */
-    private function etiquetasPersona(array $ids): array
+    /** @return list<int> */
+    private function idsRolesQueExigenPermisoDueno(): array
     {
-        if ($ids === []) {
-            return [];
-        }
-
-        return DB::table('per_personas')
-            ->whereIn('id', $ids)
-            ->pluck('nombre', 'id')
-            ->all();
-    }
-
-    /**
-     * Nombres legibles de los roles vivos de cada usuario, para la columna
-     * "Roles" del listado. Consulta directa (`sec_user_role`/`sec_role`) en
-     * vez de `idsDeRoles()` por usuario: evita N+1 en la vista.
-     *
-     * @param  list<int>  $idsUsuario
-     * @return array<int, list<string>>
-     */
-    private function rolesPorUsuario(array $idsUsuario): array
-    {
-        if ($idsUsuario === []) {
-            return [];
-        }
-
-        return DB::table('sec_user_role as ur')
-            ->join('sec_role as r', 'r.id', '=', 'ur.id_role')
-            ->whereIn('ur.id_user', $idsUsuario)
-            ->whereNull('ur.deleted_at')
-            ->orderBy('r.name')
-            ->get(['ur.id_user', 'r.name'])
-            ->groupBy(fn (object $fila): int => (int) $fila->id_user)
-            ->map(fn (Collection $filas) => $filas->map(fn (object $fila) => $this->nombreLegibleRol((string) $fila->name))->all())
-            ->all();
-    }
-
-    /**
-     * Roles VIVOS y habilitados de cada cuenta, con su id, para el selector de
-     * «Ver como» (tarea 140): quien mira elige uno de los roles con los que esa
-     * cuenta podría estar operando. Mismos criterios que
-     * {@see SecUser::idsDeRolesActivos()} — asignación no revocada y rol
-     * habilitado en el catálogo — pero en una sola consulta para todo el
-     * listado.
-     *
-     * @param  list<int>  $idsUsuario
-     * @return array<int, array<int, string>> `id de usuario => [id de rol => nombre legible]`
-     */
-    private function rolesVivosPorUsuario(array $idsUsuario): array
-    {
-        if ($idsUsuario === []) {
-            return [];
-        }
-
-        return DB::table('sec_user_role as ur')
-            ->join('sec_role as r', 'r.id', '=', 'ur.id_role')
-            ->whereIn('ur.id_user', $idsUsuario)
-            ->whereNull('ur.deleted_at')
-            ->whereNull('r.deleted_at')
-            ->where('r.state', true)
-            ->orderBy('r.name')
-            ->get(['ur.id_user', 'r.id', 'r.name'])
-            ->groupBy(fn (object $fila): int => (int) $fila->id_user)
-            ->map(fn (Collection $filas) => $filas
-                ->mapWithKeys(fn (object $fila): array => [(int) $fila->id => $this->nombreLegibleRol((string) $fila->name)])
-                ->all())
-            ->all();
-    }
-
-    private function nombreLegibleRol(string $slug): string
-    {
-        $clave = "seguridad.rol.meta.{$slug}.nombre";
-
-        return Lang::has($clave) ? __($clave) : $slug;
+        return $this->roles->idsDeRolesConPermiso(self::PERMISO_ROL_DUENO);
     }
 }
