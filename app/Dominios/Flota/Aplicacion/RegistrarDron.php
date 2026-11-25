@@ -6,6 +6,7 @@ use App\Dominios\Flota\Aplicacion\MaquinaEstados\MaquinaEstadosDron;
 use App\Dominios\Flota\Dominio\Excepciones\OperacionDeFlotaInvalida;
 use App\Dominios\Flota\Dominio\OrigenDron;
 use App\Dominios\Flota\Infraestructura\Eloquent\Dron;
+use App\Dominios\Proveedores\Contratos\DatosProveedor;
 use App\Dominios\Proveedores\Contratos\LecturaProveedores;
 use Illuminate\Database\QueryException;
 
@@ -33,6 +34,27 @@ final class RegistrarDron
     {
         $proveedor = $this->proveedores->proveedorDelTitular($actorUsuarioId) ?? throw OperacionDeFlotaInvalida::sinProveedor();
 
+        return $this->registrarEn($proveedor, $actorUsuarioId, $datos);
+    }
+
+    /**
+     * El alta que carga la oficina desde el panel: el mismo registro, sobre un proveedor
+     * elegido por su id y con quien lo carga como autor (no podrá aprobarlo).
+     *
+     * @param  array{marca: string, modelo: string, numero_serie: string, capacidad_tanque_l: string, ancho_pasada_m: string, anio?: int|string|null}  $datos
+     *
+     * @throws OperacionDeFlotaInvalida si el proveedor no existe, no admite altas o la serie ya existe.
+     */
+    public function ejecutarParaProveedor(int $proveedorId, int $registradoPor, array $datos): Dron
+    {
+        $proveedor = $this->proveedores->proveedor($proveedorId) ?? throw OperacionDeFlotaInvalida::sinProveedor();
+
+        return $this->registrarEn($proveedor, $registradoPor, $datos);
+    }
+
+    /** @param  array{marca: string, modelo: string, numero_serie: string, capacidad_tanque_l: string, ancho_pasada_m: string, anio?: int|string|null}  $datos */
+    private function registrarEn(DatosProveedor $proveedor, int $actorUsuarioId, array $datos): Dron
+    {
         if (! $proveedor->admiteAltas()) {
             throw OperacionDeFlotaInvalida::proveedorNoAdmiteAltas();
         }

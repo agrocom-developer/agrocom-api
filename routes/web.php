@@ -334,6 +334,13 @@ Route::middleware('auth:interno')->group(function () {
         Route::get('/panel/clientes', [ClientesController::class, 'index'])
             ->name('panel.clientes.index');
 
+        // Alta a mano para quien llega a la oficina (mismo caso de uso que el registro de la app).
+        Route::get('/panel/clientes/crear', [ClientesController::class, 'create'])
+            ->name('panel.clientes.create');
+
+        Route::post('/panel/clientes', [ClientesController::class, 'store'])
+            ->name('panel.clientes.store');
+
         Route::get('/panel/clientes/{cliente}', [ClientesController::class, 'show'])
             ->whereNumber('cliente')
             ->name('panel.clientes.show');
@@ -418,6 +425,13 @@ Route::middleware('auth:interno')->group(function () {
         Route::get('/panel/proveedores', [ProveedoresController::class, 'index'])
             ->name('panel.proveedores.index');
 
+        // Alta a mano de proveedores, pilotos y drones (pendientes de aprobación, como el registro de la app).
+        Route::get('/panel/proveedores/crear', [ProveedoresController::class, 'create'])
+            ->name('panel.proveedores.create');
+
+        Route::post('/panel/proveedores', [ProveedoresController::class, 'store'])
+            ->name('panel.proveedores.store');
+
         Route::get('/panel/proveedores/{proveedor}', [ProveedoresController::class, 'show'])
             ->whereNumber('proveedor')
             ->name('panel.proveedores.show');
@@ -428,6 +442,12 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::get('/panel/pilotos', [PilotosPanelController::class, 'index'])
             ->name('panel.pilotos.index');
+
+        Route::get('/panel/pilotos/crear', [PilotosPanelController::class, 'create'])
+            ->name('panel.pilotos.create');
+
+        Route::post('/panel/pilotos', [PilotosPanelController::class, 'store'])
+            ->name('panel.pilotos.store');
 
         Route::get('/panel/pilotos/{piloto}', [PilotosPanelController::class, 'show'])
             ->whereNumber('piloto')
@@ -458,6 +478,12 @@ Route::middleware('auth:interno')->group(function () {
         Route::post('/panel/drones-flota/fotos/{foto}/revisar', [DronesFlotaController::class, 'revisarFoto'])
             ->whereNumber('foto')
             ->name('panel.drones-flota.foto-revisar');
+
+        Route::get('/panel/drones-flota/crear', [DronesFlotaController::class, 'create'])
+            ->name('panel.drones-flota.create');
+
+        Route::post('/panel/drones-flota', [DronesFlotaController::class, 'store'])
+            ->name('panel.drones-flota.store');
 
         Route::get('/panel/drones-flota/{dron}', [DronesFlotaController::class, 'show'])
             ->whereNumber('dron')

@@ -2,9 +2,11 @@
 
 namespace App\Dominios\Flota\Aplicacion;
 
+use App\Dominios\Compartido\Aplicacion\SeparacionDeFunciones;
 use App\Dominios\Compartido\Contratos\Eventos\EstadoDeAprobacionCambiado;
 use App\Dominios\Compartido\Dominio\AccionAprobacion;
 use App\Dominios\Compartido\Dominio\EstadoAprobacion;
+use App\Dominios\Compartido\Dominio\Excepciones\AprobacionPropia;
 use App\Dominios\Compartido\Dominio\Excepciones\DocumentosIncompletos;
 use App\Dominios\Compartido\Dominio\Excepciones\MotivoRequerido;
 use App\Dominios\Compartido\Dominio\Excepciones\TransicionDeAprobacionInvalida;
@@ -38,6 +40,7 @@ final class ResolverAprobacionDron
     /**
      * @throws TransicionDeAprobacionInvalida
      * @throws MotivoRequerido
+     * @throws AprobacionPropia si el actor aprueba lo que él mismo registró en el panel.
      * @throws DocumentosIncompletos
      * @throws OperacionDeFlotaInvalida si se aprueba sin las fotos obligatorias aprobadas (ADR 0042).
      */
@@ -53,6 +56,8 @@ final class ResolverAprobacionDron
             $anterior = $dron->estado;
 
             $destino = $this->estados->destino($dron, $accion, $motivo);
+
+            SeparacionDeFunciones::exigir($accion, $dron->created_by, $actorUsuarioId);
 
             if ($destino === EstadoAprobacion::Aprobado) {
                 $faltantes = $this->documentos->faltantes('dron', $dronId);

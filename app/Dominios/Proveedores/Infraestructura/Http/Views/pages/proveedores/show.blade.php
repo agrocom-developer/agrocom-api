@@ -38,6 +38,12 @@
                 </x-slot:chip>
                 <x-slot:actions>
                     <x-molecules.boton-volver :href="route('panel.proveedores.index')" :label="__('proveedores.proveedores.volver')" />
+                    @if ($puedeRegistrarPiloto)
+                        <x-atoms.button :href="route('panel.pilotos.create', ['proveedor' => $proveedor->id])" variant="outline" icon="person_add">{{ __('proveedores.alta_manual.registrar_piloto') }}</x-atoms.button>
+                    @endif
+                    @if ($puedeRegistrarDron)
+                        <x-atoms.button :href="route('panel.drones-flota.create', ['proveedor' => $proveedor->id])" variant="outline" icon="add">{{ __('flota.alta_manual.registrar') }}</x-atoms.button>
+                    @endif
                     @include('proveedores::pages._acciones-aprobacion', ['acciones' => $acciones, 'modalBase' => 'proveedor'])
                 </x-slot:actions>
             </x-organisms.page-header>
@@ -59,6 +65,12 @@
             @if (session('estado'))
                 <x-molecules.alert-strip variant="success" icon="check_circle">
                     {{ session('estado') }}
+                </x-molecules.alert-strip>
+            @endif
+
+            @if ($registradoPor && $proveedor->estado->value === 'pendiente')
+                <x-molecules.alert-strip variant="info" icon="info">
+                    {{ __('proveedores.alta_manual.registrado_por', ['nombre' => $registradoPor]) }}
                 </x-molecules.alert-strip>
             @endif
 

@@ -75,6 +75,15 @@ final class LecturaProveedoresEloquent implements LecturaProveedores
         return $pilotos->map(fn (Piloto $piloto): DatosPiloto => $this->datosPiloto($piloto, $nombres))->all();
     }
 
+    public function admitenAltas(): array
+    {
+        return Proveedor::query()
+            ->whereIn('estado', [EstadoAprobacion::Pendiente->value, EstadoAprobacion::Aprobado->value])
+            ->orderBy('razon_social')
+            ->pluck('razon_social', 'id')
+            ->all();
+    }
+
     public function aprobadosDelGrupo(string $grupo): array
     {
         $proveedores = Proveedor::query()

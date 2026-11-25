@@ -5,33 +5,42 @@ namespace App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Web;
 use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
+use App\Dominios\Seguridad\Contratos\CuentaDuplicada;
 use App\Dominios\Seguridad\Contratos\LecturaCuentas;
 use App\Dominios\Solicitudes\Aplicacion\CambiarEstadoDeCliente;
+use App\Dominios\Solicitudes\Aplicacion\RegistrarCliente;
 use App\Dominios\Solicitudes\Dominio\EstadoCliente;
+use App\Dominios\Solicitudes\Dominio\Excepciones\ClienteDuplicado;
 use App\Dominios\Solicitudes\Dominio\Excepciones\SolicitudInvalida;
+use App\Dominios\Solicitudes\Dominio\TipoCliente;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\SolicitudServicio;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\Terreno;
+use App\Dominios\Solicitudes\Infraestructura\Http\Requests\RegistrarClienteDesdePanelRequest;
 use App\Dominios\Solicitudes\Infraestructura\Http\Requests\SuspenderClienteRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 /**
  * Los clientes del marketplace en el panel: `GET /panel/clientes` (cola y búsqueda),
  * `GET /panel/clientes/{cliente}` (ficha con su reputación y sus solicitudes) y la
- * suspensión o reactivación con motivo. El cliente se registra solo desde la app;
- * el panel no lo crea ni lo edita.
+ * suspensión o reactivación con motivo. El cliente se registra solo desde la app o,
+ * para quien llega a la oficina, lo carga a mano el panel con el mismo caso de uso
+ * ({@see RegistrarCliente}); el panel no lo edita.
  *
  * Gateada por `solicitudes.cliente.ver`; suspender y reactivar exigen además
- * `solicitudes.cliente.suspender`, verificados DENTRO del controlador contra el
- * ROL ACTIVO (invariante 10).
+ * `solicitudes.cliente.suspender` y el alta a mano `solicitudes.cliente.crear`,
+ * verificados DENTRO del controlador contra el ROL ACTIVO (invariante 10).
  */
 final class ClientesController
 {
     private const PERMISO_VER = 'solicitudes.cliente.ver';
 
     private const PERMISO_SUSPENDER = 'solicitudes.cliente.suspender';
+
+    private const PERMISO_CREAR = RegistrarClienteDesdePanelRequest::PERMISO;
 
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
@@ -55,7 +64,40 @@ final class ClientesController
             'clientes' => $clientes,
             'filtros' => ['q' => $busqueda, 'estado' => $estado?->value],
             'estadosFiltro' => EstadoCliente::cases(),
+            'puedeCrear' => $this->autorizacion->tienePermiso($request, self::PERMISO_CREAR),
         ]);
+    }
+
+    /** `GET /panel/clientes/crear`: el formulario de alta a mano. */
+    public function create(Request $request): View
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CREAR), 403);
+
+        return view('solicitudes::pages.clientes.create', [
+            ...$this->autorizacion->cascara($request),
+            'tipos' => TipoCliente::cases(),
+            'filasDeContacto' => RegistrarClienteDesdePanelRequest::FILAS_DE_CONTACTO,
+        ]);
+    }
+
+    /**
+     * `POST /panel/clientes`: registra al cliente con el mismo caso de uso que el alta
+     * pública. El autor queda en `created_by` y en la bitácora; el cliente nace activo,
+     * como el que se registra solo (no hay aprobación de clientes).
+     */
+    public function store(RegistrarClienteDesdePanelRequest $request, RegistrarCliente $registrar): RedirectResponse
+    {
+        $datos = $request->validated();
+        $datos['contactos'] = array_values($datos['contactos'] ?? []);
+        $datos['registrado_por'] = (int) Auth::guard('interno')->id();
+
+        try {
+            $cliente = $registrar->ejecutar($datos);
+        } catch (CuentaDuplicada|ClienteDuplicado|SolicitudInvalida $excepcion) {
+            return redirect()->back()->withInput($request->except('password'))->withErrors(['estado' => $excepcion->getMessage()]);
+        }
+
+        return redirect()->route('panel.clientes.show', $cliente)->with('estado', __('solicitudes.clientes.registrado'));
     }
 
     public function show(Request $request, Cliente $cliente, LecturaCuentas $cuentas): View
@@ -76,6 +118,7 @@ final class ClientesController
             'solicitudes' => $solicitudes,
             'totalSolicitudes' => SolicitudServicio::query()->where('cliente_id', $cliente->id)->count(),
             'totalTerrenos' => Terreno::query()->where('cliente_id', $cliente->id)->count(),
+            'contactos' => $cliente->contactos()->get(),
             'puedeSuspender' => $this->autorizacion->tienePermiso($request, self::PERMISO_SUSPENDER),
             'puedeVerSolicitudes' => $this->autorizacion->tienePermiso($request, 'solicitudes.solicitud.ver'),
         ]);

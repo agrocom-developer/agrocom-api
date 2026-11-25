@@ -5,25 +5,36 @@ namespace App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web;
 use App\Dominios\Compartido\Dominio\EstadoAprobacion;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Proveedores\Aplicacion\EstadoDocumentalDeSujeto;
+use App\Dominios\Proveedores\Aplicacion\RegistrarPiloto;
+use App\Dominios\Proveedores\Dominio\Excepciones\RegistroInvalido;
+use App\Dominios\Proveedores\Dominio\TipoProveedor;
 use App\Dominios\Proveedores\Dominio\TipoSujeto;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\HistorialEstado;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Piloto;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Proveedor;
+use App\Dominios\Proveedores\Infraestructura\Http\Requests\RegistrarPilotoDesdePanelRequest;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
+use App\Dominios\Seguridad\Contratos\CuentaDuplicada;
 use App\Dominios\Seguridad\Contratos\LecturaCuentas;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 /**
  * `GET /panel/pilotos` y `GET /panel/pilotos/{piloto}`: pilotos de todos los
- * proveedores y su ficha de revisión (ADR 0032). Gateada por
- * `proveedores.piloto.ver` contra el ROL ACTIVO.
+ * proveedores y su ficha de revisión (ADR 0032), y el alta a mano de un piloto de un
+ * proveedor tercero (`GET /panel/pilotos/crear`, `POST /panel/pilotos`), con el mismo caso
+ * de uso que la app ({@see RegistrarPiloto}). Gateada por `proveedores.piloto.ver` y, el
+ * alta, por `proveedores.piloto.crear`, contra el ROL ACTIVO.
  */
 final class PilotosController
 {
     use ArmaFichasDeAprobacion;
 
     private const PERMISO_VER = 'proveedores.piloto.ver';
+
+    private const PERMISO_CREAR = RegistrarPilotoDesdePanelRequest::PERMISO;
 
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
@@ -53,7 +64,41 @@ final class PilotosController
             'proveedores' => Proveedor::query()->whereIn('id', $pilotos->getCollection()->pluck('proveedor_id')->unique())->pluck('razon_social', 'id'),
             'filtros' => ['q' => $busqueda, 'estado' => $estado?->value],
             'estadosFiltro' => EstadoAprobacion::cases(),
+            'puedeCrear' => $this->autorizacion->tienePermiso($request, self::PERMISO_CREAR),
         ]);
+    }
+
+    /** `GET /panel/pilotos/crear`: el formulario de alta a mano; `?proveedor=` preselecciona al proveedor. */
+    public function create(Request $request): View
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CREAR), 403);
+
+        return view('proveedores::pages.pilotos.create', [
+            ...$this->autorizacion->cascara($request),
+            'proveedores' => Proveedor::query()
+                ->where('tipo', TipoProveedor::Tercero->value)
+                ->whereIn('estado', [EstadoAprobacion::Pendiente->value, EstadoAprobacion::Aprobado->value])
+                ->orderBy('razon_social')
+                ->pluck('razon_social', 'id')
+                ->all(),
+            'proveedorElegido' => $request->integer('proveedor') ?: null,
+        ]);
+    }
+
+    /** `POST /panel/pilotos`: registra al piloto `pendiente`; quien lo carga no podrá aprobarlo. */
+    public function store(RegistrarPilotoDesdePanelRequest $request, RegistrarPiloto $registrar): RedirectResponse
+    {
+        $datos = $request->validated();
+        $proveedorId = (int) $datos['proveedor_id'];
+        unset($datos['proveedor_id']);
+
+        try {
+            $piloto = $registrar->ejecutarParaProveedor($proveedorId, (int) Auth::guard('interno')->id(), $datos);
+        } catch (CuentaDuplicada|RegistroInvalido $excepcion) {
+            return redirect()->back()->withInput($request->except('password'))->withErrors(['estado' => $excepcion->getMessage()]);
+        }
+
+        return redirect()->route('panel.pilotos.show', $piloto)->with('estado', __('proveedores.alta_manual.piloto_registrado'));
     }
 
     public function show(Request $request, Piloto $piloto, LecturaCuentas $cuentas, EstadoDocumentalDeSujeto $estadoDocumental): View

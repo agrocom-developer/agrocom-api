@@ -30,7 +30,13 @@
             <x-organisms.page-header
                 :title="__('proveedores.pilotos.titulo')"
                 :subtitle="__('proveedores.pilotos.subtitulo')"
-            />
+            >
+                @if ($puedeCrear)
+                    <x-slot:actions>
+                        <x-atoms.button :href="route('panel.pilotos.create')" variant="primary" icon="add">{{ __('proveedores.alta_manual.registrar_piloto') }}</x-atoms.button>
+                    </x-slot:actions>
+                @endif
+            </x-organisms.page-header>
 
             @if (session('estado'))
                 <x-molecules.alert-strip variant="success" icon="check_circle">

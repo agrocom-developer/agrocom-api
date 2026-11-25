@@ -31,7 +31,13 @@
             <x-organisms.page-header
                 :title="__('flota.drones.titulo')"
                 :subtitle="__('flota.drones.subtitulo')"
-            />
+            >
+                @if ($puedeCrear)
+                    <x-slot:actions>
+                        <x-atoms.button :href="route('panel.drones-flota.create')" variant="primary" icon="add">{{ __('flota.alta_manual.registrar') }}</x-atoms.button>
+                    </x-slot:actions>
+                @endif
+            </x-organisms.page-header>
 
             @if (session('estado'))
                 <x-molecules.alert-strip variant="success" icon="check_circle">

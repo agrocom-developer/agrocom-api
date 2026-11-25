@@ -30,6 +30,11 @@ final class ProveedoresFalsos implements LecturaProveedores
         return $this->proveedores[$id] ?? null;
     }
 
+    public function admitenAltas(): array
+    {
+        return [];
+    }
+
     public function proveedorDelTitular(int $usuarioId): ?DatosProveedor
     {
         foreach ($this->proveedores as $proveedor) {

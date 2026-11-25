@@ -18,6 +18,16 @@ final class RegistrarClienteRequest extends FormRequest
     /** @return array<string, mixed> */
     public function rules(): array
     {
+        return self::reglasDeRegistro();
+    }
+
+    /**
+     * Las reglas del registro, que el alta manual del panel reutiliza tal cual.
+     *
+     * @return array<string, mixed>
+     */
+    public static function reglasDeRegistro(): array
+    {
         return [
             'tipo' => ['required', Rule::enum(TipoCliente::class)],
             'nombre' => ['required', 'string', 'max:150'],
