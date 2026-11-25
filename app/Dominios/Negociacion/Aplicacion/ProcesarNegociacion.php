@@ -35,22 +35,17 @@ final class ProcesarNegociacion
         $expiradas = 0;
 
         $solicitudesAfectadas = [];
-        Oferta::query()->where('estado', EstadoOferta::Vigente->value)->where('vence_en', '<=', $ahora)->orderBy('id')->each(function (Oferta $oferta) use (&$vencidas, &$solicitudesAfectadas): void {
-            try {
-                DB::transaction(function () use ($oferta, &$vencidas, &$solicitudesAfectadas): void {
-                    $this->solicitudes->datos($oferta->solicitud_id, true);
-                    $actual = Oferta::query()->lockForUpdate()->find($oferta->id);
 
-                    if ($actual !== null && $actual->estado === EstadoOferta::Vigente) {
-                        $this->estados->transicionar($actual, EstadoOferta::Vencida);
-                        $vencidas++;
-                        $solicitudesAfectadas[$oferta->solicitud_id] = true;
-                    }
-                });
-            } catch (Throwable $error) {
-                report($error);
+        // PostgreSQL vence todo el lote en una sola sentencia (`neg_vencer_ofertas`, auditoría L3);
+        // las pruebas unitarias corren en SQLite, que conserva el recorrido fila por fila.
+        if (DB::getDriverName() === 'pgsql') {
+            foreach (DB::select('SELECT oferta_id, solicitud_id FROM '.DB::getTablePrefix().'neg_vencer_ofertas(?)', [$ahora->toDateTimeString()]) as $fila) {
+                $vencidas++;
+                $solicitudesAfectadas[(int) $fila->solicitud_id] = true;
             }
-        });
+        } else {
+            $this->vencerOfertasUnaPorUna($ahora, $vencidas, $solicitudesAfectadas);
+        }
 
         foreach (array_keys($solicitudesAfectadas) as $solicitudId) {
             try {
@@ -91,6 +86,27 @@ final class ProcesarNegociacion
         }
 
         return ['ofertas_vencidas' => $vencidas, 'solicitudes_expiradas' => $expiradas];
+    }
+
+    /** @param  array<int, bool>  $solicitudesAfectadas */
+    private function vencerOfertasUnaPorUna(Carbon $ahora, int &$vencidas, array &$solicitudesAfectadas): void
+    {
+        Oferta::query()->where('estado', EstadoOferta::Vigente->value)->where('vence_en', '<=', $ahora)->orderBy('id')->each(function (Oferta $oferta) use (&$vencidas, &$solicitudesAfectadas): void {
+            try {
+                DB::transaction(function () use ($oferta, &$vencidas, &$solicitudesAfectadas): void {
+                    $this->solicitudes->datos($oferta->solicitud_id, true);
+                    $actual = Oferta::query()->lockForUpdate()->find($oferta->id);
+
+                    if ($actual !== null && $actual->estado === EstadoOferta::Vigente) {
+                        $this->estados->transicionar($actual, EstadoOferta::Vencida);
+                        $vencidas++;
+                        $solicitudesAfectadas[$oferta->solicitud_id] = true;
+                    }
+                });
+            } catch (Throwable $error) {
+                report($error);
+            }
+        });
     }
 
     /**
