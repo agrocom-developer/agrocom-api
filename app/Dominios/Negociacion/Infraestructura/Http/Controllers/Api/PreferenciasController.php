@@ -4,6 +4,7 @@ namespace App\Dominios\Negociacion\Infraestructura\Http\Controllers\Api;
 
 use App\Dominios\Negociacion\Aplicacion\PreferenciasDeAviso;
 use App\Dominios\Negociacion\Dominio\Excepciones\NegociacionInvalida;
+use App\Dominios\Negociacion\Infraestructura\Http\Requests\ActualizarPreferenciasRequest;
 use App\Dominios\Negociacion\Infraestructura\Http\RespuestaDeNegociacion;
 use App\Dominios\Seguridad\Contratos\IdentidadOperarioToken;
 use Illuminate\Http\JsonResponse;
@@ -78,22 +79,10 @@ final class PreferenciasController
             new OA\Response(response: 422, description: 'Macrorregión inválida o datos mal formados.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],
     )]
-    public function update(Request $request): JsonResponse
+    public function update(ActualizarPreferenciasRequest $request): JsonResponse
     {
         $this->exigirPermiso($request, 'negociacion.preferencias.gestionar');
-        $datos = $request->validate([
-            'nuevas_solicitudes' => ['sometimes', 'array'],
-            'nuevas_solicitudes.activo' => ['sometimes', 'boolean'],
-            'nuevas_solicitudes.zonas' => ['sometimes', 'array'],
-            'nuevas_solicitudes.zonas.*' => ['integer'],
-            'nuevas_solicitudes.macrorregiones' => ['sometimes', 'array'],
-            'nuevas_solicitudes.macrorregiones.*' => ['string'],
-            'nuevas_solicitudes.hectareas_minimas' => ['sometimes', 'nullable', 'numeric', 'min:0', 'decimal:0,4'],
-            'ofertas' => ['sometimes', 'boolean'],
-            'mensajes' => ['sometimes', 'boolean'],
-            'avance' => ['sometimes', 'boolean'],
-            'calificaciones' => ['sometimes', 'boolean'],
-        ]);
+        $datos = $request->validated();
 
         try {
             return response()->json(['preferencias' => $this->preferencias->guardar($this->usuarioId(), $datos)]);

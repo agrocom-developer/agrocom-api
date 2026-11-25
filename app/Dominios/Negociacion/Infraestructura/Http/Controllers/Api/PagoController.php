@@ -5,11 +5,11 @@ namespace App\Dominios\Negociacion\Infraestructura\Http\Controllers\Api;
 use App\Dominios\Negociacion\Aplicacion\ConfirmarPago;
 use App\Dominios\Negociacion\Aplicacion\Presentacion;
 use App\Dominios\Negociacion\Dominio\Excepciones\NegociacionInvalida;
+use App\Dominios\Negociacion\Infraestructura\Http\Requests\ConfirmarPagoRequest;
 use App\Dominios\Negociacion\Infraestructura\Http\RespuestaDeNegociacion;
 use App\Dominios\Seguridad\Contratos\IdentidadOperarioToken;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use OpenApi\Attributes as OA;
 
 /**
@@ -74,14 +74,10 @@ final class PagoController
             new OA\Response(response: 422, description: 'Datos inválidos.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],
     )]
-    public function store(Request $request, int $id): JsonResponse
+    public function store(ConfirmarPagoRequest $request, int $id): JsonResponse
     {
         $this->exigirPermiso($request, 'negociacion.pago.confirmar');
-        $datos = $request->validate([
-            'uuid_cliente' => ['required', 'uuid'],
-            'metodo' => ['nullable', Rule::in(ConfirmarPago::METODOS)],
-            'nota' => ['nullable', 'string', 'max:280'],
-        ]);
+        $datos = $request->validated();
 
         try {
             [$pago, $creado] = $this->pagos->ejecutar($this->usuarioId(), $id, $datos);

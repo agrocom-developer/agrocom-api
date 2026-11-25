@@ -6,6 +6,8 @@ use App\Dominios\Negociacion\Aplicacion\Mensajeria;
 use App\Dominios\Negociacion\Aplicacion\Presentacion;
 use App\Dominios\Negociacion\Dominio\Excepciones\NegociacionInvalida;
 use App\Dominios\Negociacion\Infraestructura\Eloquent\Mensaje;
+use App\Dominios\Negociacion\Infraestructura\Http\Requests\EnviarMensajeRequest;
+use App\Dominios\Negociacion\Infraestructura\Http\Requests\MarcarMensajesLeidosRequest;
 use App\Dominios\Negociacion\Infraestructura\Http\RespuestaDeNegociacion;
 use App\Dominios\Seguridad\Contratos\IdentidadOperarioToken;
 use Illuminate\Http\JsonResponse;
@@ -105,10 +107,10 @@ final class MensajesController
             new OA\Response(response: 422, description: 'Texto vacío o de más de 1000 caracteres.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],
     )]
-    public function store(Request $request, int $id): JsonResponse
+    public function store(EnviarMensajeRequest $request, int $id): JsonResponse
     {
         $this->exigirPermiso($request, 'negociacion.mensaje.usar');
-        $datos = $request->validate(['uuid_cliente' => ['required', 'uuid'], 'texto' => ['required', 'string', 'max:'.Mensajeria::LIMITE_TEXTO]]);
+        $datos = $request->validated();
 
         try {
             [$mensaje, $creado] = $this->mensajeria->enviar($this->usuarioId(), $id, $datos['uuid_cliente'], $datos['texto']);
@@ -135,10 +137,10 @@ final class MensajesController
             new OA\Response(response: 404, description: 'La solicitud no es de la cuenta.'),
         ],
     )]
-    public function leidos(Request $request, int $id): JsonResponse
+    public function leidos(MarcarMensajesLeidosRequest $request, int $id): JsonResponse
     {
         $this->exigirPermiso($request, 'negociacion.mensaje.usar');
-        $datos = $request->validate(['hasta' => ['required', 'integer', 'min:0']]);
+        $datos = $request->validated();
 
         try {
             return response()->json(['marcados' => $this->mensajeria->marcarLeidos($this->usuarioId(), $id, (int) $datos['hasta'])]);
