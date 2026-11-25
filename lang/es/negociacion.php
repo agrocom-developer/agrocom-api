@@ -51,6 +51,7 @@ return [
         'chat_cerrado' => 'El chat de este servicio ya cerró: solo puedes leer los mensajes.',
         'pago_solo_proveedor' => 'Solo el proveedor del servicio informa que recibió el pago.',
         'pago_solo_titular' => 'Solo el titular del proveedor informa que recibió el pago.',
+        'precio_final_solo_cliente' => 'Solo el cliente de la solicitud confirma el precio final.',
         'pago_ya_confirmado' => 'El pago de este servicio ya fue confirmado.',
         'bbox_invalido' => 'El encuadre debe ser «oeste,sur,este,norte» con números.',
     ],

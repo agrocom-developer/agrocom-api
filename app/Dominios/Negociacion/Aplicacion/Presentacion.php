@@ -7,6 +7,7 @@ use App\Dominios\Negociacion\Infraestructura\Eloquent\Evidencia;
 use App\Dominios\Negociacion\Infraestructura\Eloquent\Mensaje;
 use App\Dominios\Negociacion\Infraestructura\Eloquent\Oferta;
 use App\Dominios\Negociacion\Infraestructura\Eloquent\PagoConfirmado;
+use App\Dominios\Negociacion\Infraestructura\Eloquent\PrecioFinalConfirmado;
 
 /** Arma las formas de respuesta de la negociación (las que documenta el OpenAPI). */
 final class Presentacion
@@ -89,6 +90,23 @@ final class Presentacion
             'metodo' => $pago->metodo,
             'nota' => $pago->nota,
             'confirmado_en' => $pago->confirmado_en->toIso8601String(),
+        ];
+    }
+
+    /**
+     * @param  array{hectareas_ejecutadas: string, precio_ha_acordado: string, monto_final: string, confirmacion: ?PrecioFinalConfirmado}  $precio
+     * @return array<string, mixed>
+     */
+    public static function precioFinal(array $precio): array
+    {
+        $confirmacion = $precio['confirmacion'];
+
+        return [
+            'hectareas_ejecutadas' => $precio['hectareas_ejecutadas'],
+            'precio_ha_acordado' => $precio['precio_ha_acordado'],
+            'monto_final' => $precio['monto_final'],
+            'confirmado' => $confirmacion !== null,
+            'confirmado_en' => $confirmacion?->confirmado_en->toIso8601String(),
         ];
     }
 }

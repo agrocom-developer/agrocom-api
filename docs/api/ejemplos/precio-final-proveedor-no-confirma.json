@@ -1,0 +1,15 @@
+{
+    "operationId": "confirmarPrecioFinalDeSolicitud",
+    "descripcion": "El proveedor no confirma el precio final: lo confirma solo el cliente, que es quien paga.",
+    "peticion": {
+        "metodo": "POST",
+        "ruta": "/api/solicitudes/18/precio-final/confirmar",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 403,
+        "cuerpo": {
+            "message": "No tienes permiso para hacer esto."
+        }
+    }
+}

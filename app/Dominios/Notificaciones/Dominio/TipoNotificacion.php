@@ -51,6 +51,7 @@ enum TipoNotificacion: string
     case AvanceRegistrado = 'avance_registrado';
     case SolicitudFinalizada = 'solicitud_finalizada';
     case MensajeNuevo = 'mensaje_nuevo';
+    case PrecioFinalConfirmado = 'precio_final_confirmado';
 
     /** Nombre del ícono de Material Symbols que rotula el aviso en la campana. */
     public function icono(): string
@@ -87,6 +88,7 @@ enum TipoNotificacion: string
             self::AvanceRegistrado => 'photo_camera',
             self::SolicitudFinalizada => 'task_alt',
             self::MensajeNuevo => 'chat',
+            self::PrecioFinalConfirmado => 'price_check',
         };
     }
 

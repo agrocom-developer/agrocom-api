@@ -1,0 +1,21 @@
+{
+    "operationId": "confirmarPrecioFinalDeSolicitud",
+    "descripcion": "Repetir la confirmación devuelve el mismo precio final (200).",
+    "peticion": {
+        "metodo": "POST",
+        "ruta": "/api/solicitudes/18/precio-final/confirmar",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "precio_final": {
+                "hectareas_ejecutadas": "98.5000",
+                "precio_ha_acordado": "121.0000",
+                "monto_final": "11918.50",
+                "confirmado": true,
+                "confirmado_en": "2026-11-25T17:51:07+00:00"
+            }
+        }
+    }
+}
