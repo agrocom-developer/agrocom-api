@@ -4,7 +4,7 @@
 
 ## Quién califica a quién
 
-- El **cliente** califica al proveedor, al piloto y al auxiliar al terminar un servicio `finalizada`, durante 7 días; al hacerlo, la solicitud pasa a `calificada`.
+- El **cliente** califica al proveedor y al piloto al terminar un servicio `finalizada`, durante 7 días; al hacerlo, la solicitud pasa a `calificada`.
 - El **proveedor** califica al cliente en privado. Esa calificación no se publica; sirve para moderación y soporte.
 - El proveedor ve las calificaciones que recibe; el administrador modera.
 

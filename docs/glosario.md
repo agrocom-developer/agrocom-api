@@ -15,12 +15,11 @@ Referencia rápida de vocabulario, de negocio y técnico, para que cualquier per
 | **Proveedor** | Entidad que presta el servicio: propio, independiente o tercero | ADR 0028 |
 | **Proveedor propio** | Agrocom como proveedor, con sus pilotos y drones; compite como cualquier otro | ADR 0028 |
 | **Proveedor independiente** | Piloto que es su propio proveedor; se registra solo y lo aprueba un administrador | ADR 0028, 0032 |
-| **Proveedor tercero** | Empresa o dueño de drones con pilotos y auxiliares a su cargo | ADR 0028 |
+| **Proveedor tercero** | Empresa o dueño de drones con pilotos a su cargo | ADR 0028 |
 | **Piloto** | Persona que opera el dron, ve el mapa de solicitudes abiertas, ofrece y marca el avance | especificación §2 |
-| **Auxiliar** | Persona que asiste al piloto en el lote y puede subir fotos de avance; lo registra el piloto o el proveedor y lo aprueba un administrador | ADR 0032 |
 | **Dron (vehículo)** | Activo que presta el servicio, con dueño y operador; requiere aprobación | ADR 0029 |
 | **Dueño del dron** | Proveedor que posee el dron, aunque lo opere otro | ADR 0029 |
-| **Equipo** | Combinación operativa de piloto, dron y auxiliar opcional que ejecuta una solicitud | especificación §4.4 |
+| **Equipo** | Combinación operativa de piloto y dron que ejecuta una solicitud | especificación §4.4 |
 | **Mapa de solicitudes abiertas** | Vista del piloto con las solicitudes `abierta` y `con_ofertas`, filtros por zona, hectáreas y precio, y resumen por zona | ADR 0041 |
 | **Oferta** | Precio por hectárea que una parte propone en una negociación, con vencimiento; se acepta, se contraoferta o se rechaza | especificación §4.5, §5.3 |
 | **Negociación** | Conjunto de ofertas entre el cliente y un proveedor sobre una solicitud; hay una sola oferta vigente y un máximo de ofertas | ADR 0030 |
@@ -52,7 +51,7 @@ Referencia rápida de vocabulario, de negocio y técnico, para que cualquier per
 | **Outbox** | Cola local donde toda escritura offline se encola antes de sincronizar | especificación §13 |
 | **Idempotencia** | Reintentar la misma operación no cambia el resultado; se logra con `UNIQUE (uuid_cliente)` | ADR 0001 |
 | **`secuencia`** | Contador local de cada dispositivo que ordena sus registros; el orden causal no usa el reloj | especificación §4.6 |
-| **Flavor** | Variante de la app móvil: `cliente`, `piloto` o `auxiliar` | especificación §13 |
+| **Flavor** | Variante de la app móvil: `cliente` o `piloto` | especificación §13 |
 | **`sec_permission`** | Código de permiso abstracto que el menú referencia | ADR 0004 |
 | **Policy** | Clase de Laravel que responde si un usuario puede actuar sobre un registro concreto | ADR 0004 |
 | **ADR** | Documento corto en `docs/decisiones/` con contexto, decisión, alternativas y consecuencias | `README.md` |
