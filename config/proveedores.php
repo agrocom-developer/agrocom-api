@@ -40,6 +40,12 @@ return [
         'dron' => array_values(array_filter(explode(',', (string) env('PROVEEDORES_DOCS_DRON', implode(',', RequisitosDocumentales::POR_DEFECTO['dron']))))),
     ],
 
+    /*
+     * Separación de funciones: quien registra a mano un proveedor, piloto o
+     * dron en el panel no lo aprueba él mismo. `false` lo permite (decisión del dueño).
+     */
+    'separar_funciones' => (bool) env('PROVEEDORES_SEPARAR_FUNCIONES', true),
+
     /* Radio de operación (km) con que nace un proveedor que no lo declara. */
     'radio_operacion_defecto_km' => 50,
 ];

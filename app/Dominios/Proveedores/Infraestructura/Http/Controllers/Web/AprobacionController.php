@@ -3,6 +3,7 @@
 namespace App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Compartido\Dominio\AccionAprobacion;
+use App\Dominios\Compartido\Dominio\Excepciones\AprobacionPropia;
 use App\Dominios\Compartido\Dominio\Excepciones\DocumentosIncompletos;
 use App\Dominios\Compartido\Dominio\Excepciones\MotivoRequerido;
 use App\Dominios\Compartido\Dominio\Excepciones\TransicionDeAprobacionInvalida;
@@ -67,7 +68,7 @@ final class AprobacionController
 
         try {
             $this->resolver->ejecutar($tipo, $id, $accion, (int) Auth::guard('interno')->id(), $request->validated('motivo'));
-        } catch (TransicionDeAprobacionInvalida|MotivoRequerido|DocumentosIncompletos $excepcion) {
+        } catch (TransicionDeAprobacionInvalida|MotivoRequerido|DocumentosIncompletos|AprobacionPropia $excepcion) {
             return $volver->withErrors(['aprobacion' => $excepcion->getMessage()]);
         }
 

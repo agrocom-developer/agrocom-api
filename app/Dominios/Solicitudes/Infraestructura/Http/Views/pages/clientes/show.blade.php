@@ -6,7 +6,7 @@
     sus últimas solicitudes.
 
     Datos esperados (ver ClientesController::show()): la cáscara de CascaraPanel,
-    más $cliente, $cuenta (?DatosCuenta), $solicitudes (Collection<SolicitudServicio>),
+    más $cliente, $cuenta (?DatosCuenta), $contactos (Collection<ClienteContacto>), $solicitudes (Collection<SolicitudServicio>),
     $totalSolicitudes, $totalTerrenos, $puedeSuspender y $puedeVerSolicitudes.
 
     Gateada por `solicitudes.cliente.ver`; suspender y reactivar exigen además
@@ -136,6 +136,40 @@
                     <div class="ag-detalle__campo">
                         <p class="ag-detalle__campo-label">{{ __('solicitudes.clientes.campo_alta') }}</p>
                         <p class="ag-detalle__campo-valor">{{ $cliente->created_at->format('d/m/Y') }}</p>
+                    </div>
+                </x-molecules.form-section>
+
+                <x-molecules.form-section accent="distintivo-1" :title="__('solicitudes.clientes.seccion_contactos')" :count="(string) $contactos->count()">
+                    <div class="ag-form-section__field--full">
+                        @if ($contactos->isEmpty())
+                            <x-molecules.empty-state icon="contacts" :title="__('solicitudes.clientes.contactos_vacio_titulo')" :detail="__('solicitudes.clientes.contactos_vacio_detalle')" />
+                        @else
+                            <div class="ag-tablero__scroll">
+                                <table class="ag-tablero__tabla">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">{{ __('solicitudes.clientes.campo_contacto_nombre') }}</th>
+                                            <th scope="col">{{ __('solicitudes.clientes.campo_contacto_cargo') }}</th>
+                                            <th scope="col">{{ __('solicitudes.clientes.campo_contacto_telefono') }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($contactos as $contacto)
+                                            <tr>
+                                                <th scope="row">
+                                                    {{ $contacto->nombre }}
+                                                    @if ($contacto->es_principal)
+                                                        <x-atoms.badge variant="info">{{ __('solicitudes.clientes.contacto_principal') }}</x-atoms.badge>
+                                                    @endif
+                                                </th>
+                                                <td>{{ $contacto->cargo ?? '—' }}</td>
+                                                <td>{{ $contacto->telefono }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
                     </div>
                 </x-molecules.form-section>
 

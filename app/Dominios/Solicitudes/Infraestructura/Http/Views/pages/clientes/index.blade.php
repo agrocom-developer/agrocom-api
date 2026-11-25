@@ -2,11 +2,12 @@
     Page: clientes/index (GET /panel/clientes, panel.clientes.index)
     Los clientes del marketplace: arquetipo Listado, §6.2 de
     docs/diseno/guia_pantalla_panel.md — cabecera → toolbar → tabla → paginación.
-    Los suspendidos van primero. El cliente se registra solo desde la app; acá se
-    consulta y, con permiso, se suspende o reactiva desde su ficha.
+    Los suspendidos van primero. El cliente se registra solo desde la app o lo carga
+    la oficina («Registrar cliente», con permiso); acá se consulta y, con permiso, se
+    suspende o reactiva desde su ficha.
 
     Datos esperados (ver ClientesController::index()): la cáscara de CascaraPanel,
-    más $clientes (LengthAwarePaginator<Cliente>), $filtros (array{q: string,
+    más $puedeCrear (bool), $clientes (LengthAwarePaginator<Cliente>), $filtros (array{q: string,
     estado: ?string}) y $estadosFiltro (list<EstadoCliente>).
 
     Gateada por `solicitudes.cliente.ver`, verificado server-side.
@@ -28,7 +29,13 @@
             <x-organisms.page-header
                 :title="__('solicitudes.clientes.titulo')"
                 :subtitle="__('solicitudes.clientes.subtitulo')"
-            />
+            >
+                @if ($puedeCrear)
+                    <x-slot:actions>
+                        <x-atoms.button :href="route('panel.clientes.create')" variant="primary" icon="person_add">{{ __('solicitudes.clientes.registrar') }}</x-atoms.button>
+                    </x-slot:actions>
+                @endif
+            </x-organisms.page-header>
 
             @if (session('estado'))
                 <x-molecules.alert-strip variant="success" icon="check_circle">

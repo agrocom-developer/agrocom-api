@@ -7,6 +7,7 @@ use App\Dominios\Proveedores\Aplicacion\MaquinaEstados\MaquinaEstadosAprobacion;
 use App\Dominios\Proveedores\Dominio\Excepciones\RegistroInvalido;
 use App\Dominios\Proveedores\Dominio\TipoProveedor;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Piloto;
+use App\Dominios\Proveedores\Infraestructura\Eloquent\Proveedor;
 use App\Dominios\Seguridad\Contratos\CuentaDuplicada;
 use App\Dominios\Seguridad\Contratos\RegistroCuentas;
 use Illuminate\Support\Facades\DB;
@@ -35,6 +36,28 @@ final class RegistrarPiloto
     {
         $proveedor = $this->alcance->proveedorDelTitular($actorUsuarioId) ?? throw RegistroInvalido::sinProveedor();
 
+        return $this->registrarEn($proveedor, $actorUsuarioId, $datos);
+    }
+
+    /**
+     * El alta que carga la oficina desde el panel: el mismo registro, sobre un proveedor
+     * elegido por su id y con quien lo carga como autor.
+     *
+     * @param  array{nombre: string, username: string, email: ?string, password: string, licencia_numero: string, licencia_vence: string, categoria_habilitacion: string}  $datos
+     *
+     * @throws RegistroInvalido si el proveedor no existe, no admite altas o es independiente.
+     * @throws CuentaDuplicada si el `username` o el `email` ya existen.
+     */
+    public function ejecutarParaProveedor(int $proveedorId, int $registradoPor, array $datos): Piloto
+    {
+        $proveedor = Proveedor::query()->find($proveedorId) ?? throw RegistroInvalido::sinProveedor();
+
+        return $this->registrarEn($proveedor, $registradoPor, $datos);
+    }
+
+    /** @param  array{nombre: string, username: string, email: ?string, password: string, licencia_numero: string, licencia_vence: string, categoria_habilitacion: string}  $datos */
+    private function registrarEn(Proveedor $proveedor, int $actorUsuarioId, array $datos): Piloto
+    {
         if ($proveedor->tipo === TipoProveedor::Independiente) {
             throw RegistroInvalido::tipoDeProveedorSinPersonal();
         }

@@ -15,6 +15,16 @@ final class RegistrarPilotoRequest extends FormRequest
     /** @return array<string, mixed> */
     public function rules(): array
     {
+        return self::reglasDeRegistro();
+    }
+
+    /**
+     * Las reglas del registro, que el alta manual del panel reutiliza tal cual.
+     *
+     * @return array<string, mixed>
+     */
+    public static function reglasDeRegistro(): array
+    {
         return [
             ...ReglasDeCuenta::reglas(),
             'licencia_numero' => ['required', 'string', 'max:40'],

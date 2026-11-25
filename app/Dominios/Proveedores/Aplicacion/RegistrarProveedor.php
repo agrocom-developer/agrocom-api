@@ -20,7 +20,9 @@ use Illuminate\Support\Facades\DB;
  * Nada queda aprobado: solo un administrador aprueba. Todo en una transacción:
  * si algo falla no queda una cuenta huérfana.
  *
- * Nunca registra el tipo `propio`: Agrocom se siembra, no se auto-registra.
+ * Nunca registra el tipo `propio`: Agrocom se siembra, no se auto-registra. El panel
+ * lo reutiliza para el alta en la oficina (`registrado_por` es quien lo carga y no
+ * podrá aprobarlo).
  */
 final class RegistrarProveedor
 {
@@ -30,7 +32,7 @@ final class RegistrarProveedor
     ) {}
 
     /**
-     * @param  array{tipo: string, nombre: string, username: string, email: ?string, password: string, telefono: ?string, razon_social: string, documento_fiscal: ?string, zona_base_id: ?int, radio_operacion_km: ?string, licencia_numero?: ?string, licencia_vence?: ?string, categoria_habilitacion?: ?string, nombres?: ?string, apellidos?: ?string, documento_identidad?: ?string, fecha_nacimiento?: ?string}  $datos
+     * @param  array{tipo: string, nombre: string, username: string, email: ?string, password: string, telefono: ?string, razon_social: string, documento_fiscal: ?string, zona_base_id: ?int, radio_operacion_km: ?string, licencia_numero?: ?string, licencia_vence?: ?string, categoria_habilitacion?: ?string, nombres?: ?string, apellidos?: ?string, documento_identidad?: ?string, fecha_nacimiento?: ?string, registrado_por?: ?int}  $datos
      *
      * @throws CuentaDuplicada si el `username` o el `email` ya existen.
      * @throws RegistroDuplicado si el documento fiscal ya pertenece a otro proveedor.
@@ -47,6 +49,8 @@ final class RegistrarProveedor
             $roles = $tipo->titularEsPiloto() ? ['proveedor', 'piloto'] : ['proveedor'];
 
             $usuarioId = $this->cuentas->crear($datos['nombre'], $datos['username'], $datos['email'] ?? null, $datos['password'], $roles);
+            // Quien registra: la propia cuenta (app) o la persona de la oficina que lo carga a mano (panel).
+            $autorId = $datos['registrado_por'] ?? $usuarioId;
 
             try {
                 $proveedor = $this->estados->registrarProveedor([
@@ -61,8 +65,8 @@ final class RegistrarProveedor
                     'fecha_nacimiento' => $datos['fecha_nacimiento'] ?? null,
                     'zona_base_id' => $datos['zona_base_id'] ?? null,
                     'radio_operacion_km' => $datos['radio_operacion_km'] ?? config('proveedores.radio_operacion_defecto_km'),
-                    'created_by' => $usuarioId,
-                    'updated_by' => $usuarioId,
+                    'created_by' => $autorId,
+                    'updated_by' => $autorId,
                 ]);
             } catch (QueryException $excepcion) {
                 if (str_contains($excepcion->getMessage(), 'prv_proveedores_documento_unico') || str_contains($excepcion->getMessage(), 'prv_proveedores.documento_fiscal')) {
@@ -79,8 +83,8 @@ final class RegistrarProveedor
                     'licencia_numero' => (string) $datos['licencia_numero'],
                     'licencia_vence' => (string) $datos['licencia_vence'],
                     'categoria_habilitacion' => (string) $datos['categoria_habilitacion'],
-                    'created_by' => $usuarioId,
-                    'updated_by' => $usuarioId,
+                    'created_by' => $autorId,
+                    'updated_by' => $autorId,
                 ]);
             }
 

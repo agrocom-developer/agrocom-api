@@ -2,9 +2,11 @@
 
 namespace App\Dominios\Proveedores\Aplicacion;
 
+use App\Dominios\Compartido\Aplicacion\SeparacionDeFunciones;
 use App\Dominios\Compartido\Contratos\Eventos\EstadoDeAprobacionCambiado;
 use App\Dominios\Compartido\Dominio\AccionAprobacion;
 use App\Dominios\Compartido\Dominio\EstadoAprobacion;
+use App\Dominios\Compartido\Dominio\Excepciones\AprobacionPropia;
 use App\Dominios\Compartido\Dominio\Excepciones\DocumentosIncompletos;
 use App\Dominios\Compartido\Dominio\Excepciones\MotivoRequerido;
 use App\Dominios\Compartido\Dominio\Excepciones\TransicionDeAprobacionInvalida;
@@ -43,6 +45,7 @@ final class ResolverAprobacion
     /**
      * @throws TransicionDeAprobacionInvalida
      * @throws MotivoRequerido
+     * @throws AprobacionPropia si el actor aprueba lo que él mismo registró en el panel.
      * @throws DocumentosIncompletos si se aprueba o rehabilita a quien no tiene todos sus documentos obligatorios aprobados y vigentes.
      */
     public function ejecutar(
@@ -62,6 +65,8 @@ final class ResolverAprobacion
             $anterior = $sujeto->estado;
 
             $destino = $this->estados->destino($sujeto, $accion, $motivo);
+
+            SeparacionDeFunciones::exigir($accion, $sujeto->created_by, $actorUsuarioId);
 
             if ($destino === EstadoAprobacion::Aprobado) {
                 $faltantes = $this->documentos->faltantesDe($tipo, $sujetoId);

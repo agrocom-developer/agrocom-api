@@ -13,6 +13,14 @@ interface LecturaProveedores
     /** El proveedor del que la cuenta es titular (una cuenta es titular de uno como máximo). */
     public function proveedorDelTitular(int $usuarioId): ?DatosProveedor;
 
+    /**
+     * Proveedores que todavía admiten altas (pendientes o aprobados), por razón social:
+     * lo que ofrece un selector al registrar a mano un dron.
+     *
+     * @return array<int, string> id => razón social
+     */
+    public function admitenAltas(): array;
+
     /** El proveedor Agrocom (único, tipo `propio`), si ya existe. */
     public function proveedorPropio(): ?DatosProveedor;
 

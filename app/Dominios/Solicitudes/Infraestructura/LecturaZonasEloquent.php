@@ -14,6 +14,12 @@ final class LecturaZonasEloquent implements LecturaZonas
     }
 
     /** {@inheritDoc} */
+    public function todas(): array
+    {
+        return Zona::query()->orderBy('nombre')->pluck('nombre', 'id')->all();
+    }
+
+    /** {@inheritDoc} */
     public function centroide(int $id): ?array
     {
         $zona = Zona::query()->find($id);

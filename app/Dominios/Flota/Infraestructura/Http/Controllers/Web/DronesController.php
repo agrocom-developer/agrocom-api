@@ -4,6 +4,7 @@ namespace App\Dominios\Flota\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Compartido\Dominio\AccionAprobacion;
 use App\Dominios\Compartido\Dominio\EstadoAprobacion;
+use App\Dominios\Compartido\Dominio\Excepciones\AprobacionPropia;
 use App\Dominios\Compartido\Dominio\Excepciones\DocumentosIncompletos;
 use App\Dominios\Compartido\Dominio\Excepciones\MotivoRequerido;
 use App\Dominios\Compartido\Dominio\Excepciones\TransicionDeAprobacionInvalida;
@@ -13,12 +14,14 @@ use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Flota\Aplicacion\FotosObligatorias;
 use App\Dominios\Flota\Aplicacion\GestionarFotosDeDron;
+use App\Dominios\Flota\Aplicacion\RegistrarDron;
 use App\Dominios\Flota\Aplicacion\ResolverAprobacionDron;
 use App\Dominios\Flota\Dominio\Excepciones\OperacionDeFlotaInvalida;
 use App\Dominios\Flota\Dominio\OrigenDron;
 use App\Dominios\Flota\Infraestructura\Eloquent\Dron;
 use App\Dominios\Flota\Infraestructura\Eloquent\Equipo;
 use App\Dominios\Flota\Infraestructura\Eloquent\HistorialEstadoDron;
+use App\Dominios\Flota\Infraestructura\Http\Requests\RegistrarDronDesdePanelRequest;
 use App\Dominios\Flota\Infraestructura\Http\Requests\ResolverAprobacionDronRequest;
 use App\Dominios\Proveedores\Contratos\DatosDocumento;
 use App\Dominios\Proveedores\Contratos\LecturaDocumentos;
@@ -41,12 +44,17 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
  * proveedores, con su dueño, su estado de aprobación y sus ciclos de batería
  * (ADR 0029) y la revisión de sus fotos (ADR 0042).
  *
- * Gateada por `flota.dron.ver`; las acciones, por `.aprobar`, `.suspender`,
+ * También el alta a mano del dron de un proveedor (`GET /panel/drones-flota/crear`,
+ * `POST /panel/drones-flota`), con el mismo caso de uso que la app ({@see RegistrarDron}).
+ *
+ * Gateada por `flota.dron.ver`; las acciones, por `.crear`, `.aprobar`, `.suspender`,
  * `.dar_baja` y `.revisar_foto`, todas contra el ROL ACTIVO.
  */
 final class DronesController
 {
     private const PERMISO_VER = 'flota.dron.ver';
+
+    private const PERMISO_CREAR = RegistrarDronDesdePanelRequest::PERMISO;
 
     public function __construct(
         private readonly AutorizacionPanelWeb $autorizacion,
@@ -83,7 +91,36 @@ final class DronesController
             'filtros' => ['q' => $busqueda, 'estado' => $estado?->value, 'origen' => $origen?->value],
             'estadosFiltro' => EstadoAprobacion::cases(),
             'origenesFiltro' => OrigenDron::cases(),
+            'puedeCrear' => $this->autorizacion->tienePermiso($request, self::PERMISO_CREAR),
         ]);
+    }
+
+    /** `GET /panel/drones-flota/crear`: el formulario de alta a mano; `?proveedor=` preselecciona al proveedor. */
+    public function create(Request $request): View
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CREAR), 403);
+
+        return view('flota::pages.drones.create', [
+            ...$this->autorizacion->cascara($request),
+            'proveedores' => $this->proveedores->admitenAltas(),
+            'proveedorElegido' => $request->integer('proveedor') ?: null,
+        ]);
+    }
+
+    /** `POST /panel/drones-flota`: registra el dron `pendiente`; quien lo carga no podrá aprobarlo. */
+    public function store(RegistrarDronDesdePanelRequest $request, RegistrarDron $registrar): RedirectResponse
+    {
+        $datos = $request->validated();
+        $proveedorId = (int) $datos['proveedor_id'];
+        unset($datos['proveedor_id']);
+
+        try {
+            $dron = $registrar->ejecutarParaProveedor($proveedorId, (int) Auth::guard('interno')->id(), $datos);
+        } catch (OperacionDeFlotaInvalida $excepcion) {
+            return redirect()->back()->withInput()->withErrors(['estado' => $excepcion->getMessage()]);
+        }
+
+        return redirect()->route('panel.drones-flota.show', $dron)->with('estado', __('flota.alta_manual.registrado'));
     }
 
     public function show(Request $request, Dron $dron, LecturaCuentas $cuentas, VerificacionDocumental $documentos, FotosObligatorias $obligatorias): View
@@ -151,7 +188,7 @@ final class DronesController
 
         try {
             $resolver->ejecutar($dron->id, $accion, (int) Auth::guard('interno')->id(), $request->validated('motivo'));
-        } catch (TransicionDeAprobacionInvalida|MotivoRequerido|DocumentosIncompletos|OperacionDeFlotaInvalida $excepcion) {
+        } catch (TransicionDeAprobacionInvalida|MotivoRequerido|DocumentosIncompletos|OperacionDeFlotaInvalida|AprobacionPropia $excepcion) {
             return $volver->withErrors(['aprobacion' => $excepcion->getMessage()]);
         }
 

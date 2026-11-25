@@ -17,6 +17,16 @@ final class RegistrarProveedorRequest extends FormRequest
     /** @return array<string, mixed> */
     public function rules(): array
     {
+        return self::reglasDeRegistro();
+    }
+
+    /**
+     * Las reglas del registro, que el alta manual del panel reutiliza tal cual.
+     *
+     * @return array<string, mixed>
+     */
+    public static function reglasDeRegistro(): array
+    {
         $tipos = array_map(static fn (TipoProveedor $tipo): string => $tipo->value, TipoProveedor::registrables());
 
         return [
