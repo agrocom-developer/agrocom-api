@@ -470,6 +470,24 @@ test('un proveedor solo ve sus ofertas y el cliente solo las de sus solicitudes 
         ->and($comparador[0]['proveedor']['calificacion_promedio'])->not->toBeNull();
 });
 
+test('las ofertas del proveedor traen la zona y el lote solo cuando la solicitud quedó adjudicada a él', function () {
+    negMundo();
+    $solicitud = negAbierta();
+    $de7 = negOfertar(NEG_TITULAR_7, $solicitud, 'contraoferta', '118');
+    $consultar = app(ConsultarOfertas::class);
+
+    $antes = $consultar->delProveedor(NEG_TITULAR_7)[0];
+    app(Negociar::class)->aceptar(Negociar::LADO_CLIENTE, NEG_CLIENTE, $de7->id);
+    $despues = $consultar->delProveedor(NEG_TITULAR_7)[0];
+    $detalle = $consultar->una(Negociar::LADO_PROVEEDOR, NEG_TITULAR_7, $de7->id);
+
+    expect($antes)->toHaveKeys(['zona', 'zona_id', 'lote'])->and($antes['lote'])->toBeNull()
+        ->and($despues['lote'])->toBe(DB::table('sol_terrenos')->where('id', 1)->value('nombre'))
+        ->and($despues['zona_id'])->toBe($antes['zona_id'])
+        ->and($detalle['lote'])->toBe($despues['lote'])
+        ->and(json_encode($consultar->delCliente(NEG_CLIENTE, $solicitud)))->not->toContain('"lote"');
+});
+
 test('el contacto del cliente no aparece antes de adjudicar y la solicitud ajena responde 404 en seguimiento', function () {
     negMundo();
     $solicitud = negAbierta();

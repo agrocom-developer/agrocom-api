@@ -33,6 +33,7 @@ final readonly class DatosSolicitudNegociable
         public ?string $cierreSolicitadoEn,
         public ?string $ultimoAvanceEn,
         public ?string $iniciadaEn,
+        public ?string $terrenoNombre = null,
     ) {}
 
     public function enMercado(): bool

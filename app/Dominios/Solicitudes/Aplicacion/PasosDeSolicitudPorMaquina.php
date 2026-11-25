@@ -58,6 +58,7 @@ final class PasosDeSolicitudPorMaquina implements PasosDeSolicitud
             cierreSolicitadoEn: $solicitud->cierre_solicitado_en?->toIso8601String(),
             ultimoAvanceEn: $solicitud->ultimo_avance_en?->toIso8601String(),
             iniciadaEn: $solicitud->iniciada_en?->toIso8601String(),
+            terrenoNombre: $solicitud->terreno->nombre,
         );
     }
 
