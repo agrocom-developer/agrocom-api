@@ -16,8 +16,7 @@ use OpenApi\Attributes as OA;
     name: 'Sincronizacion',
     description: 'Push de escritura offline de la app de campo (especificación §13): `trabajo`, `sesion`, '
         .'`condiciones`, `recepcion_caldo`, `mezcla`, `incidencia`, `recarga`, `evidencia_equipo` y los cierres '
-        .'de trabajo y de sesión, todos como tipos de registro de `POST /api/sync`. El acta de conformidad '
-        .'tiene sus propios endpoints (`ActaController`), fuera de este push.',
+        .'de trabajo y de sesión, todos como tipos de registro de `POST /api/sync`.',
 )]
 #[OA\Schema(
     schema: 'RegistroSync',
