@@ -24,6 +24,7 @@ return [
         'avance_registrado' => 'La solicitud #:solicitud lleva :porcentaje % de avance.',
         'solicitud_finalizada' => 'El servicio #:solicitud quedó finalizado. Monto a pagar al proveedor: :monto. Puedes calificarlo durante 7 días o abrir una disputa.',
         'mensaje_nuevo' => 'Tienes un mensaje nuevo en la solicitud #:solicitud.',
+        'precio_final_confirmado' => 'El cliente confirmó el precio final del servicio #:solicitud: :monto. El pago se acuerda directamente con él.',
         'calificacion_registrada' => 'Recibiste una calificación de :estrellas estrellas en el servicio #:solicitud.',
         'calificacion_reportada' => '«:proveedor» reportó una calificación del servicio #:solicitud: espera tu decisión en el panel.',
         'disputa_abierta' => 'Se abrió una disputa por :motivo en el servicio #:solicitud. Responde antes del plazo.',

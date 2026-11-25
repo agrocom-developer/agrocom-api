@@ -2257,6 +2257,96 @@ paths:
       security:
         -
           tokenDispositivo: []
+  '/api/solicitudes/{id}/precio-final/confirmar':
+    post:
+      tags:
+        - Seguimiento
+      summary: 'Confirmar el precio final'
+      description: 'El cliente de la solicitud confirma el precio final (hectáreas ejecutadas por precio acordado) cuando el piloto ya cerró el servicio: solo con la solicitud `finalizada` o `calificada`. Sin cuerpo: el servidor copia las hectáreas, el precio y el monto del cierre. Idempotente por solicitud (repetirlo responde 200 con el mismo precio final) y lo confirmado no se reescribe. No cambia el estado ni cobra nada: el pago es directo. Si el cliente no está de acuerdo, la salida es abrir una disputa. Avisa al proveedor adjudicado.'
+      operationId: confirmarPrecioFinalDeSolicitud
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        201:
+          description: 'Precio final confirmado.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - precio_final
+                properties:
+                  precio_final:
+                    $ref: '#/components/schemas/PrecioFinal'
+                type: object
+        200:
+          description: 'Ya estaba confirmado.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - precio_final
+                properties:
+                  precio_final:
+                    $ref: '#/components/schemas/PrecioFinal'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no confirma el precio final (solo `message`), o la cuenta es del proveedor (`message` y `codigo`: `precio_final_solo_cliente`).'
+        404:
+          description: 'La solicitud no es de la cuenta.'
+        409:
+          description: 'El piloto aún no cerró el servicio, o hay una disputa abierta (`estado_invalido`).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorConflicto'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/solicitudes/{id}/precio-final':
+    get:
+      tags:
+        - Seguimiento
+      summary: 'Ver el precio final'
+      description: 'El precio final del servicio y si el cliente ya lo confirmó: lo consultan el cliente de la solicitud y el proveedor adjudicado. Responde 200 con `precio_final: null` mientras el piloto no cierre el servicio.'
+      operationId: verPrecioFinalDeSolicitud
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'El precio final, o `null`.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - precio_final
+                properties:
+                  precio_final:
+                    nullable: true
+                    allOf:
+                      -
+                        $ref: '#/components/schemas/PrecioFinal'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no ve seguimiento.'
+        404:
+          description: 'La solicitud no es de la cuenta.'
+      security:
+        -
+          tokenDispositivo: []
   /api/notificaciones/preferencias:
     get:
       tags:
@@ -5961,6 +6051,33 @@ components:
         confirmado_en:
           type: string
           format: date-time
+      type: object
+    PrecioFinal:
+      title: 'Precio final del servicio y su confirmación'
+      description: 'Los valores del cierre del piloto. `confirmado` pasa a `true` cuando el cliente lo confirma; `confirmado_en` es nulo hasta entonces.'
+      required:
+        - hectareas_ejecutadas
+        - precio_ha_acordado
+        - monto_final
+        - confirmado
+        - confirmado_en
+      properties:
+        hectareas_ejecutadas:
+          description: "Precio final del servicio: lo calcula el cierre del piloto (hectáreas ejecutadas por precio\nacordado) y el cliente, que es quien paga, tiene la última palabra: lo confirma aquí o abre\nuna disputa. No procesa cobros ni cambia el estado (ADR 0034)."
+          type: string
+          example: '78.5000'
+        precio_ha_acordado:
+          type: string
+          example: '118.0000'
+        monto_final:
+          type: string
+          example: '9263.00'
+        confirmado:
+          type: boolean
+        confirmado_en:
+          type: string
+          format: date-time
+          nullable: true
       type: object
     PreferenciasDeAviso:
       title: 'Preferencias de aviso'
