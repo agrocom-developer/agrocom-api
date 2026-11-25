@@ -68,10 +68,6 @@ class SeguridadSeeder extends Seeder
         'seguridad.dispositivo.revocar' => 'Revocar el acceso de un dispositivo de campo',
         // Distribución de las apps: autorizar una versión del APK.
         'distribucion.version.autorizar' => 'Autorizar una versión del APK para distribución',
-        // Actas y reportes técnicos que genera la API de campo.
-        'operaciones.acta.generar' => 'Generar el acta de conformidad de un trabajo cerrado y validado',
-        'operaciones.acta.firmar' => 'Registrar la firma del agrónomo sobre un acta pendiente',
-        'operaciones.reporte.ver' => 'Ver y descargar el reporte técnico de un trabajo',
         // Proveedores y flota en el panel (ADR 0032): aprobar, suspender y dar de baja.
         'proveedores.proveedor.ver' => 'Ver el listado y la ficha de proveedores',
         'proveedores.proveedor.aprobar' => 'Aprobar o rechazar a un proveedor y rehabilitar a uno suspendido',
@@ -202,8 +198,6 @@ class SeguridadSeeder extends Seeder
         'calificaciones.calificacion.ver_recibidas',
         'calificaciones.calificacion.reportar',
         'disputas.disputa.gestionar_proveedor',
-        'operaciones.acta.generar',
-        'operaciones.acta.firmar',
     ];
 
     /**
