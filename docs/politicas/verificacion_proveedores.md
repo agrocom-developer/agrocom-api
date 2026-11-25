@@ -1,4 +1,4 @@
-# Política de verificación de proveedores, pilotos, auxiliares y drones
+# Política de verificación de proveedores, pilotos y drones
 
 **Agrocom SRL · Vigente** · Decisión: ADR 0032 · Especificación: `docs/especificacion/marketplace.md` §4.3, §5.2, §9.1
 
@@ -8,7 +8,6 @@
 |---|---|
 | Proveedor | Identidad del titular, documento fiscal, domicilio de operación, seguro de responsabilidad civil que cubra aplicación de agroquímicos |
 | Piloto | Nombres, apellidos, teléfono y foto de perfil; identidad, licencia o habilitación de piloto remoto vigente, certificado de aplicador de agroquímicos si la normativa local lo exige, antecedentes |
-| Auxiliar | Identidad, capacitación en manejo de productos, antecedentes |
 | Dron | Registro o matrícula ante la autoridad aeronáutica, habilitación para uso agrícola, número de serie, marca y modelo, fotos del equipo (frontal, lateral y placa de serie como mínimo), seguro vigente |
 
 La normativa local de cada zona puede añadir requisitos; el catálogo de documentos se ajusta por parámetro.

@@ -20,7 +20,6 @@ La app no cobra: el pago se hace fuera de ella.
 |---|---|---|
 | **Cliente** | App móvil `cliente` (online) | Propiedad, solicitudes, comparar y elegir ofertas, seguimiento, chat y calificación |
 | **Piloto** | App móvil `piloto` (offline en el lote) | Mapa de solicitudes, ofertas, avance, fotos y chat |
-| **Auxiliar** | App móvil `auxiliar` (offline en el lote) | Fotos de avance |
 | **Proveedor** | Web y app | Flota, equipo, documentos y reputación |
 | **Administrador y soporte** | Panel web | Aprobaciones, moderación, disputas, parámetros y métricas |
 
