@@ -98,7 +98,7 @@ class NegociacionDemoSeeder extends Seeder
             $this->clientes[$username] = $cliente;
         }
 
-        foreach (['rodrigo.suarez', 'valeria.montano', 'carlos.mamani', 'esteban.choque', 'diego.parada', 'marcelo.terrazas', 'fumigaciones.oriente', 'agro.sanrafael', 'luis.antelo', 'coop.valle.grande'] as $username) {
+        foreach (['rodrigo.suarez', 'valeria.montano', 'carlos.mamani', 'marcelo.terrazas', 'fumigaciones.oriente', 'agro.sanrafael', 'luis.antelo', 'coop.valle.grande'] as $username) {
             $this->usuarios[$username] = (int) SecUser::query()->where('username', $username)->value('id');
         }
 
