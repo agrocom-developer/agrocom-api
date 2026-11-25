@@ -126,9 +126,7 @@ final class MaquinaEstadosSesion
      * normaliza — y `ope_sesiones.inicio`/`fin` son `dateTime` sin tz. Sin
      * este `->utc()`, `format()` escribiría la hora LOCAL literal
      * ("16:30:00") y una relectura posterior la interpretaría como UTC,
-     * corriendo el instante real por el valor del offset. Mismo mecanismo
-     * (y mismo fix) que `MaquinaEstadosActa::firmar()` ya aplica a
-     * `fecha_firma` (runs/24.md).
+     * corriendo el instante real por el valor del offset.
      */
     private static function normalizarUtc(string|\DateTimeInterface|null $valor): ?CarbonImmutable
     {
