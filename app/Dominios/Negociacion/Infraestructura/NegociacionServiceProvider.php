@@ -2,12 +2,14 @@
 
 namespace App\Dominios\Negociacion\Infraestructura;
 
+use App\Dominios\Negociacion\Contratos\Eventos\AvisoDeNegociacion;
 use App\Dominios\Negociacion\Contratos\LecturaNegociacionParaPanel;
 use App\Dominios\Negociacion\Infraestructura\Console\AvisarInactividadCommand;
 use App\Dominios\Negociacion\Infraestructura\Console\ProcesarNegociacionCommand;
 use App\Dominios\Negociacion\Infraestructura\Oyentes\AvisarCambioDePrecio;
 use App\Dominios\Negociacion\Infraestructura\Oyentes\AvisarNuevaSolicitud;
 use App\Dominios\Negociacion\Infraestructura\Oyentes\CerrarNegociacionPorCancelacion;
+use App\Dominios\Negociacion\Infraestructura\Oyentes\RegistrarEventoEnElChat;
 use App\Dominios\Solicitudes\Contratos\Eventos\PrecioPropuestoCambiado;
 use App\Dominios\Solicitudes\Contratos\Eventos\SolicitudAbierta;
 use App\Dominios\Solicitudes\Contratos\Eventos\SolicitudCancelada;
@@ -33,6 +35,7 @@ final class NegociacionServiceProvider extends ServiceProvider
         Event::listen(SolicitudAbierta::class, AvisarNuevaSolicitud::class);
         Event::listen(SolicitudCancelada::class, CerrarNegociacionPorCancelacion::class);
         Event::listen(PrecioPropuestoCambiado::class, AvisarCambioDePrecio::class);
+        Event::listen(AvisoDeNegociacion::class, RegistrarEventoEnElChat::class);
 
         if ($this->app->runningInConsole()) {
             $this->commands([ProcesarNegociacionCommand::class, AvisarInactividadCommand::class]);

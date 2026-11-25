@@ -266,6 +266,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/solicitudes/{id}/mensajes', [MensajesController::class, 'store'])
         ->whereNumber('id')
         ->name('api.solicitudes.mensajes.store');
+    Route::post('/solicitudes/{id}/mensajes/fotos', [MensajesController::class, 'foto'])
+        ->whereNumber('id')
+        ->name('api.solicitudes.mensajes.fotos');
+    Route::get('/mensajes/{id}/archivo', [MensajesController::class, 'archivo'])
+        ->whereNumber('id')
+        ->name('api.mensajes.archivo');
     Route::post('/solicitudes/{id}/mensajes/leidos', [MensajesController::class, 'leidos'])
         ->whereNumber('id')
         ->name('api.solicitudes.mensajes.leidos');

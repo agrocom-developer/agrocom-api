@@ -499,6 +499,7 @@ try {
             registrar('mensajes-responder', 'enviarMensaje', 'El proveedor responde.', 'POST', "/api/solicitudes/{$solicitudNegociada}/mensajes", [
                 'uuid_cliente' => '9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e22', 'texto' => 'El jueves temprano, si el viento lo permite.',
             ], $tokenProveedor, 201);
+            registrarFoto('mensajes-foto-enviar', 'enviarFotoDeMensaje', 'El proveedor envía una foto por el chat (multipart, menos de 300 KB, pie opcional); idempotente por uuid_cliente.', 'POST', "/api/solicitudes/{$solicitudNegociada}/mensajes/fotos", ['uuid_cliente' => '9c1d7e40-5a2b-4f3c-8e61-0d4b7a2c9e23', 'texto' => 'Así queda el punto de carga.'], $tokenProveedor, 201, 120);
             [, $conversacion] = registrar('mensajes-lista', 'listarMensajes', 'Mensajes en orden con cursor: el cliente consulta cada pocos segundos con `despues`.', 'GET', "/api/solicitudes/{$solicitudNegociada}/mensajes", null, $tokenCliente, 200);
 
             // Ejecución: inicio, avance con foto, última ubicación y cierre del piloto.

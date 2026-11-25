@@ -44,8 +44,12 @@ final class Presentacion
             'uuid_cliente' => $mensaje->uuid_cliente,
             'solicitud_id' => $mensaje->solicitud_id,
             'autor_rol' => $mensaje->autor_rol,
-            'propio' => $mensaje->autor_usuario_id === $usuarioId,
+            'propio' => $mensaje->autor_usuario_id !== null && $mensaje->autor_usuario_id === $usuarioId,
+            'tipo' => $mensaje->tipo,
+            'evento' => $mensaje->evento,
             'texto' => $mensaje->texto,
+            'url' => $mensaje->tipo === 'foto' ? "/api/mensajes/{$mensaje->id}/archivo" : null,
+            'bytes' => $mensaje->bytes,
             'leido_en' => $mensaje->leido_en?->toIso8601String(),
             'creado_en' => $mensaje->created_at->toIso8601String(),
         ];

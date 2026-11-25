@@ -55,6 +55,14 @@ return [
         'bbox_invalido' => 'El encuadre debe ser «oeste,sur,este,norte» con números.',
     ],
 
+    // Líneas de sistema del chat (`neg_mensajes.tipo = sistema`), una por hecho de la solicitud.
+    'chat_sistema' => [
+        'solicitud_adjudicada' => 'La solicitud quedó adjudicada. Ya pueden coordinar por aquí.',
+        'servicio_iniciado' => 'El piloto inició el servicio.',
+        'servicio_finalizado' => 'El piloto finalizó el servicio. Precio final: :monto.',
+        'precio_final_confirmado' => 'El cliente confirmó el precio final: :monto.',
+    ],
+
     // Intervención del administrador desde el panel (ficha de la solicitud).
     'panel' => [
         'negociacion_cerrada' => 'Cerraste la negociación. El cliente y el proveedor reciben el motivo.',
