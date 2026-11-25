@@ -5949,6 +5949,20 @@ components:
           type: string
           format: date-time
           nullable: true
+        zona:
+          description: 'Solo para el proveedor: nombre de la zona de la solicitud.'
+          type: string
+          example: 'Valle de Culiacán'
+          nullable: true
+        zona_id:
+          description: 'Solo para el proveedor: id de la zona de la solicitud.'
+          type: integer
+          nullable: true
+        lote:
+          description: 'Solo para el proveedor: nombre del lote del cliente. Viene solo cuando la solicitud quedó adjudicada a ese proveedor; antes es `null`.'
+          type: string
+          example: 'Lote Norte'
+          nullable: true
         proveedor:
           description: 'Solo para el cliente: `nombre`, `foto_url` (foto de perfil del piloto del equipo o del titular, URL firmada de corta vida que se pide sin token; `null` si no hay), calificación, tasa de cancelación y dron con fotos aprobadas.'
           type: object

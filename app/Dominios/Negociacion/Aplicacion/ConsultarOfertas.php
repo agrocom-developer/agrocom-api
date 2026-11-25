@@ -8,6 +8,7 @@ use App\Dominios\Negociacion\Dominio\Excepciones\NegociacionInvalida;
 use App\Dominios\Negociacion\Infraestructura\Eloquent\Oferta;
 use App\Dominios\Proveedores\Contratos\LecturaProveedores;
 use App\Dominios\Seguridad\Contratos\FotosDePerfil;
+use App\Dominios\Solicitudes\Contratos\LecturaZonas;
 use App\Dominios\Solicitudes\Contratos\PasosDeSolicitud;
 
 /**
@@ -28,6 +29,7 @@ final class ConsultarOfertas
         private readonly ReputacionDelProveedor $reputacion,
         private readonly Negociar $negociar,
         private readonly FotosDePerfil $fotosDePerfil,
+        private readonly LecturaZonas $zonas,
     ) {}
 
     /**
@@ -77,8 +79,29 @@ final class ConsultarOfertas
             ->orderByDesc('id')
             ->limit(200)
             ->get()
-            ->map(fn (Oferta $o): array => Presentacion::oferta($o))
+            ->map(fn (Oferta $o): array => [...Presentacion::oferta($o), ...$this->ubicacionParaProveedor($o)])
             ->all();
+    }
+
+    /**
+     * La zona y el lote de la solicitud para el proveedor dueño de la oferta. La zona es
+     * pública en el mercado; el nombre del lote es dato del cliente y solo se muestra
+     * una vez adjudicada la solicitud a ese proveedor.
+     *
+     * @return array{zona: ?string, zona_id: ?int, lote: ?string}
+     */
+    private function ubicacionParaProveedor(Oferta $oferta): array
+    {
+        $solicitud = $this->solicitudes->datos($oferta->solicitud_id);
+        $adjudicada = $solicitud !== null
+            && $solicitud->proveedorId === $oferta->proveedor_id
+            && ! in_array($solicitud->estado, ['abierta', 'con_ofertas', 'expirada', 'cancelada'], true);
+
+        return [
+            'zona' => $solicitud?->zonaId === null ? null : $this->zonas->nombre($solicitud->zonaId),
+            'zona_id' => $solicitud?->zonaId,
+            'lote' => $adjudicada ? $solicitud->terrenoNombre : null,
+        ];
     }
 
     /**
@@ -95,7 +118,9 @@ final class ConsultarOfertas
 
         $fila = Presentacion::oferta($oferta);
 
-        return $lado === Negociar::LADO_CLIENTE ? [...$fila, 'proveedor' => $this->tarjetaDelProveedor($oferta->proveedor_id, $oferta->equipo_id)] : $fila;
+        return $lado === Negociar::LADO_CLIENTE
+            ? [...$fila, 'proveedor' => $this->tarjetaDelProveedor($oferta->proveedor_id, $oferta->equipo_id)]
+            : [...$fila, ...$this->ubicacionParaProveedor($oferta)];
     }
 
     /** @return array<string, mixed> */
