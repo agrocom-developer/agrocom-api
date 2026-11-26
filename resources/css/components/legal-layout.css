@@ -1,0 +1,185 @@
+/*
+ * Template: legal-layout (resources/views/components/templates/legal-layout.blade.php)
+ * y página de documento legal (resources/views/legal/documento.blade.php).
+ * Columna de lectura única, sin riel ni menú: es una página pública de texto
+ * largo. Todo valor sale de tokens (invariante 11); el aviso de borrador es la
+ * molecule `alert-strip` y el marcador `[POR DEFINIR]` usa los tokens de
+ * advertencia, para que se vea igual en tema claro y oscuro.
+ */
+
+.ag-legal {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    width: 100%;
+    background: var(--ag-color-bg);
+    color: var(--ag-color-text);
+}
+
+.ag-legal__banner {
+    flex: 0 0 auto;
+    border-bottom: 1px solid var(--ag-color-border);
+}
+
+.ag-legal__header {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ag-space-4);
+    min-height: var(--ag-size-topbar-height);
+    padding: var(--ag-space-2) var(--ag-space-4);
+    background: var(--ag-color-bg-chrome);
+    border-bottom: 1px solid var(--ag-color-border);
+}
+
+.ag-legal__header-end {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+}
+
+.ag-legal__volver {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-2) var(--ag-space-3);
+    border-radius: var(--ag-radius-md);
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
+    color: var(--ag-color-text-muted);
+    text-decoration: none;
+    transition:
+        background-color var(--ag-transition-fast),
+        color var(--ag-transition-fast);
+}
+
+.ag-legal__volver:hover,
+.ag-legal__volver:focus-visible {
+    background: var(--ag-color-bg-row-hover);
+    color: var(--ag-color-text);
+}
+
+.ag-legal__main {
+    flex: 1 0 auto;
+    width: 100%;
+    max-width: var(--ag-size-lectura);
+    margin-inline: auto;
+    padding: var(--ag-space-6) var(--ag-space-4) var(--ag-space-8);
+}
+
+.ag-legal__titulo {
+    margin: 0 0 var(--ag-space-3);
+    font-family: var(--ag-font-family-display);
+    font-size: var(--ag-title-page-size);
+    font-weight: var(--ag-title-page-weight);
+    line-height: var(--ag-title-page-line-height);
+    color: var(--ag-color-text);
+}
+
+.ag-legal__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ag-space-2);
+    margin: 0 0 var(--ag-space-5);
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-legal__parrafo {
+    margin: 0 0 var(--ag-space-4);
+    font-size: var(--ag-font-size-base);
+    line-height: var(--ag-line-height-base);
+}
+
+.ag-legal__indice {
+    margin: var(--ag-space-5) 0 var(--ag-space-6);
+    padding: var(--ag-space-4);
+    background: var(--ag-color-neutral-subtle);
+    border: 1px solid var(--ag-color-border);
+    border-radius: var(--ag-radius-md);
+}
+
+.ag-legal__indice-titulo {
+    margin: 0 0 var(--ag-space-2);
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-legal__indice-lista {
+    margin: 0;
+    padding-left: var(--ag-space-5);
+    font-size: var(--ag-font-size-sm);
+    line-height: var(--ag-line-height-base);
+}
+
+.ag-legal__indice-lista a,
+.ag-legal__enlace {
+    color: var(--ag-color-primary-emphasis);
+    text-underline-offset: var(--ag-space-1);
+}
+
+.ag-legal__seccion {
+    margin-bottom: var(--ag-space-6);
+    /* Que el título no quede tapado al saltar desde el índice. */
+    scroll-margin-top: var(--ag-space-5);
+}
+
+.ag-legal__seccion-titulo {
+    margin: 0 0 var(--ag-space-3);
+    font-family: var(--ag-font-family-display);
+    font-size: var(--ag-font-size-xl);
+    font-weight: var(--ag-font-weight-bold);
+    line-height: var(--ag-line-height-tight);
+    color: var(--ag-color-text);
+}
+
+.ag-legal__lista {
+    margin: 0 0 var(--ag-space-4);
+    padding-left: var(--ag-space-5);
+    line-height: var(--ag-line-height-base);
+}
+
+.ag-legal__lista > li {
+    margin-bottom: var(--ag-space-3);
+}
+
+/* Lo que todavía no está decidido: visible, no solo por color (lleva el texto
+   «[POR DEFINIR]» y un borde). */
+.ag-legal__por-definir {
+    padding: 0 var(--ag-space-1);
+    background: var(--ag-color-warning-subtle);
+    color: var(--ag-color-warning-strong);
+    border: 1px solid var(--ag-color-warning-border);
+    border-radius: var(--ag-radius-sm);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+.ag-legal__footer {
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ag-space-2) var(--ag-space-4);
+    padding: var(--ag-space-4);
+    border-top: 1px solid var(--ag-color-border);
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-legal__footer-nav {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ag-space-2);
+}
+
+@media (min-width: 768px) {
+    .ag-legal__main {
+        padding-inline: var(--ag-space-5);
+    }
+}
