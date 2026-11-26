@@ -34,11 +34,18 @@ return [
         'proveedor' => 'Proveedor',
         'piloto' => 'Piloto',
         'dron' => 'Dron',
+        'cliente' => 'Cliente',
     ],
     'errores' => [
         'transicion_invalida' => 'No se puede :accion: el estado actual es «:estado».',
         'motivo_requerido' => 'Indica el motivo para :accion.',
         'sin_permiso' => 'No tienes permiso para esta acción.',
+        // Compuerta de la cuenta de app (ADR 0046, punto 12): lo que se le dice a quien todavía no puede operar en el mercado.
+        'cuenta_no_aprobada_pendiente' => 'Tu cuenta está en revisión. Cuando la aprobemos podrás publicar y negociar; mientras tanto puedes revisar tus datos.',
+        'cuenta_no_aprobada_rechazado' => 'No aprobamos tu cuenta. Revisa el motivo, corrige lo que falta y envíala de nuevo a revisión.',
+        'cuenta_no_aprobada_suspendido' => 'Tu cuenta está suspendida y no puede operar en el mercado. Escríbenos si crees que es un error.',
+        'cuenta_no_aprobada_baja' => 'Tu cuenta fue eliminada y no puede operar en el mercado.',
+        'cuenta_no_aprobada_aprobado' => 'Tu cuenta está aprobada.',
         'aprobacion_propia' => 'No puedes aprobar lo que registraste tú. Pide a otra persona de la oficina que lo revise y lo apruebe.',
     ],
 ];

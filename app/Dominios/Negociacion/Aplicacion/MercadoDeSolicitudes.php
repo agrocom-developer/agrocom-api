@@ -27,6 +27,7 @@ final class MercadoDeSolicitudes
         private readonly LecturaMercado $mercado,
         private readonly LecturaProveedores $proveedores,
         private readonly LecturaEquipos $equipos,
+        private readonly SinAutocontratacion $autocontratacion,
     ) {}
 
     /**
@@ -156,13 +157,13 @@ final class MercadoDeSolicitudes
 
         $negociaciones = $this->negociacionDe($proveedor->id, $ids);
         $vigentes = $this->vigentesPorSolicitud($ids);
-        $usuarios = $this->proveedores->usuariosDeAviso($proveedor->id);
+        // Ni las solicitudes de su propia cuenta de cliente ni las de otra cuenta de la misma persona (ADR 0046, punto 10).
+        $propios = $this->autocontratacion->propios(array_map(fn (DatosSolicitudAbierta $s): int => $s->clienteUsuarioId, $abiertas), $this->autocontratacion->delProveedor($proveedor->id));
         $bbox = $this->bbox($filtros['bbox'] ?? null);
 
         $filas = [];
         foreach ($abiertas as $solicitud) {
-            // Un proveedor no ve las solicitudes de su propia cuenta de cliente.
-            if (in_array($solicitud->clienteUsuarioId, $usuarios, true)) {
+            if (in_array($solicitud->clienteUsuarioId, $propios, true)) {
                 continue;
             }
 

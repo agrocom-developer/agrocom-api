@@ -1,5 +1,6 @@
 <?php
 
+use App\Dominios\Compartido\Dominio\Excepciones\CuentaNoAprobada;
 use App\Dominios\Compartido\Infraestructura\Http\ErroresHttpEnEspanol;
 use App\Dominios\Compartido\Infraestructura\Http\Middleware\RecordarOrigenNavegacion;
 use App\Dominios\Seguridad\Infraestructura\Http\Middleware\AplicarVistaComo;
@@ -58,6 +59,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
+        );
+
+        // La compuerta de la cuenta de app (ADR 0046, punto 12): `403 cuenta_no_aprobada` con el estado y lo que falta.
+        $exceptions->render(
+            fn (CuentaNoAprobada $excepcion, Request $request) => response()->json($excepcion->cuerpo(), 403),
         );
 
         // Los errores que arma el propio framework al responder JSON (401,

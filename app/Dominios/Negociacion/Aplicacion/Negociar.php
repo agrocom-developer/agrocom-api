@@ -2,6 +2,9 @@
 
 namespace App\Dominios\Negociacion\Aplicacion;
 
+use App\Dominios\Compartido\Aplicacion\ExigirCuentaAprobada;
+use App\Dominios\Compartido\Dominio\EstadoAprobacion;
+use App\Dominios\Compartido\Dominio\Excepciones\CuentaNoAprobada;
 use App\Dominios\Flota\Contratos\DatosEquipoApto;
 use App\Dominios\Flota\Contratos\LecturaEquipos;
 use App\Dominios\Negociacion\Aplicacion\MaquinaEstados\MaquinaEstadosOferta;
@@ -13,6 +16,7 @@ use App\Dominios\Negociacion\Infraestructura\Eloquent\Oferta;
 use App\Dominios\Proveedores\Contratos\DatosProveedor;
 use App\Dominios\Proveedores\Contratos\LecturaProveedores;
 use App\Dominios\Solicitudes\Contratos\DatosSolicitudNegociable;
+use App\Dominios\Solicitudes\Contratos\LecturaEstadoDeCliente;
 use App\Dominios\Solicitudes\Contratos\LecturaMercado;
 use App\Dominios\Solicitudes\Contratos\LecturaZonas;
 use App\Dominios\Solicitudes\Contratos\PasosDeSolicitud;
@@ -50,6 +54,9 @@ final class Negociar
         private readonly MaquinaEstadosOferta $estados,
         private readonly ParametrosDeNegociacion $parametros,
         private readonly Avisador $avisos,
+        private readonly SinAutocontratacion $autocontratacion,
+        private readonly ExigirCuentaAprobada $compuerta,
+        private readonly LecturaEstadoDeCliente $estadoDeClientes,
     ) {}
 
     /**
@@ -69,9 +76,8 @@ final class Negociar
             return [$this->deProveedor($existente, $proveedor, $solicitudId), false];
         }
 
-        if (! $proveedor->estaAprobado()) {
-            throw NegociacionInvalida::prohibido('proveedor_no_habilitado');
-        }
+        // Solo un proveedor aprobado oferta (ADR 0046, punto 12): `403 cuenta_no_aprobada` con su estado.
+        $this->exigirAprobada(self::LADO_PROVEEDOR, $usuarioId, $proveedor);
 
         try {
             return [DB::transaction(function () use ($proveedor, $solicitudId, $datos): Oferta {
@@ -81,7 +87,8 @@ final class Negociar
                     throw NegociacionInvalida::conflicto('solicitud_no_abierta');
                 }
 
-                if (in_array($solicitud->clienteUsuarioId, $this->proveedores->usuariosDeAviso($proveedor->id), true)) {
+                // Ni sobre lo publicado por su propia cuenta de cliente ni por otra cuenta de la misma persona (ADR 0046, punto 10).
+                if ($this->autocontratacion->esPropia($solicitud->clienteUsuarioId, $proveedor->id)) {
                     throw NegociacionInvalida::dato('propia_cuenta');
                 }
 
@@ -147,6 +154,9 @@ final class Negociar
         return [DB::transaction(function () use ($lado, $usuarioId, $ofertaId, $precioHa, $nota, $uuidCliente): Oferta {
             [$solicitud, $actual] = $this->bloquearConOferta($lado, $usuarioId, $ofertaId);
 
+            // Contraofertar es de la cuenta aprobada (ADR 0046, punto 12).
+            $this->exigirAprobada($lado, $usuarioId);
+
             $this->exigirRespondible($lado, $solicitud, $actual);
 
             if ($actual->es_definitiva) {
@@ -203,6 +213,9 @@ final class Negociar
             if ($actual->estado === EstadoOferta::Aceptada && $solicitud->ofertaAdjudicadaId === $actual->id) {
                 return $actual;
             }
+
+            // Aceptar adjudica: es de la cuenta aprobada, de cualquiera de las dos partes (ADR 0046, punto 12).
+            $this->exigirAprobada($lado, $usuarioId);
 
             if ($solicitud->estado === 'adjudicada' || $solicitud->estado === 'en_ejecucion') {
                 throw NegociacionInvalida::conflicto('solicitud_ya_adjudicada');
@@ -328,6 +341,31 @@ final class Negociar
         $oferta = Oferta::query()->lockForUpdate()->findOrFail($ofertaId);
 
         return [$solicitud, $oferta];
+    }
+
+    /**
+     * La compuerta de la cuenta (ADR 0046, punto 12): el cliente y el proveedor no aprobados entran y miran, pero
+     * no ofertan, contraofertan ni aceptan. Rechazar y retirar no se frenan: salir de una negociación siempre se puede.
+     *
+     * @throws CuentaNoAprobada `403 cuenta_no_aprobada` con el estado de la cuenta.
+     */
+    private function exigirAprobada(string $lado, int $usuarioId, ?DatosProveedor $proveedor = null): void
+    {
+        if ($lado === self::LADO_PROVEEDOR) {
+            $proveedor ??= $this->proveedores->proveedorDeLaCuenta($usuarioId);
+
+            if ($proveedor !== null) {
+                $this->compuerta->exigir(EstadoAprobacion::from($proveedor->estado));
+            }
+
+            return;
+        }
+
+        $estado = $this->estadoDeClientes->deLaCuenta($usuarioId);
+
+        if ($estado !== null) {
+            $this->compuerta->exigir($estado);
+        }
     }
 
     /** @throws NegociacionInvalida 404 si la oferta no es de la cuenta. */
