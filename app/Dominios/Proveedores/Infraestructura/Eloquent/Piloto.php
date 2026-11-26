@@ -5,6 +5,7 @@ namespace App\Dominios\Proveedores\Infraestructura\Eloquent;
 use App\Dominios\Compartido\Dominio\EstadoAprobacion;
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
+use App\Dominios\Proveedores\Dominio\Disponibilidad;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
@@ -38,6 +39,9 @@ class Piloto extends ModeloDominio
         'motivo_estado',
         'aprobado_por',
         'aprobado_en',
+        'disponibilidad',
+        'disponibilidad_cambiada_en',
+        'disponibilidad_cambiada_por',
     ];
 
     /** @return array<string, string> */
@@ -49,6 +53,9 @@ class Piloto extends ModeloDominio
             'usuario_id' => 'integer',
             'licencia_vence' => 'date',
             'aprobado_en' => 'datetime',
+            'disponibilidad' => Disponibilidad::class,
+            'disponibilidad_cambiada_en' => 'datetime',
+            'disponibilidad_cambiada_por' => 'integer',
         ];
     }
 

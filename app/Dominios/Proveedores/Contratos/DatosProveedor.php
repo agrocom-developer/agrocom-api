@@ -17,6 +17,7 @@ final readonly class DatosProveedor
         public int $calificacionesConteo = 0,
         public string $tasaAceptacion = '1.0000',
         public string $tasaCancelacion = '0.0000',
+        public string $disponibilidad = 'disponible',
     ) {}
 
     public function estaAprobado(): bool
