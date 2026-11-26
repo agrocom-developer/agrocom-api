@@ -249,7 +249,7 @@ try {
     registrar('contactos-ajeno', 'actualizarContacto', 'Un id que no es del cliente responde 404, nunca 403 (invariante 5).', 'PUT', '/api/clientes/mi/contactos/999999', [
         'nombre' => 'Otra persona', 'telefono' => '+591 70011225',
     ], $tokenCliente, 404);
-    registrar('clientes-zonas', 'listarZonas', 'Catálogo de zonas de operación.', 'GET', '/api/zonas', null, $tokenCliente, 200);
+    registrar('catalogos-ubicaciones', 'listarUbicaciones', 'Catálogo oficial de departamentos y provincias de Bolivia con su código del INE; sin token, de solo lectura.', 'GET', '/api/catalogos/ubicaciones', null, null, 200);
     registrar('terrenos-lista', 'listarTerrenos', 'Terrenos del cliente.', 'GET', '/api/terrenos', null, $tokenCliente, 200);
 
     [, $terreno] = registrar('terrenos-crear', 'crearTerreno', 'Alta de un terreno; las hectáreas viajan como decimal exacto en string.', 'POST', '/api/terrenos', [
@@ -258,7 +258,15 @@ try {
         'cultivo' => 'Soya',
         'referencias_acceso' => 'Camino vecinal, portón azul a 2 km de la ruta.',
         'acceso_dificil' => false,
+        'departamento_codigo' => '07',
+        'provincia_codigo' => '0702',
+        'municipio' => 'Warnes',
+        'comunidad' => 'Los Álamos',
     ], $tokenCliente, 201);
+
+    registrar('terrenos-provincia-ajena', 'crearTerreno', 'Validación: la provincia debe ser del departamento elegido (Cercado, 0301, es de Cochabamba).', 'POST', '/api/terrenos', [
+        'nombre' => 'Lote Sur', 'hectareas' => '40', 'departamento_codigo' => '07', 'provincia_codigo' => '0301',
+    ], $tokenCliente, 422);
     $terrenoId = $terreno['terreno']['id'] ?? null;
 
     registrar('terrenos-sin-nombre', 'crearTerreno', 'Validación: faltan datos obligatorios.', 'POST', '/api/terrenos', [
@@ -311,9 +319,18 @@ try {
 
     if ($solicitudId !== null) {
         registrar('solicitudes-estimacion', 'estimarSolicitud', 'Monto estimado con el precio propuesto, antes de abrirla.', 'GET', "/api/solicitudes/{$solicitudId}/estimacion", null, $tokenCliente, 200);
-        registrar('solicitudes-publicar', 'publicarSolicitud', 'La deja abierta a ofertas: los pilotos la ven en el mapa y reciben el aviso de su zona.', 'POST', "/api/solicitudes/{$solicitudId}/publicar", null, $tokenCliente, 200);
+        registrar('solicitudes-publicar', 'publicarSolicitud', 'La deja abierta a ofertas: los pilotos la ven en el mapa y reciben el aviso.', 'POST', "/api/solicitudes/{$solicitudId}/publicar", null, $tokenCliente, 200);
         registrar('solicitudes-precio', 'cambiarPrecioSolicitud', 'El cliente cambia el precio propuesto mientras la solicitud sigue abierta; las ofertas vigentes no cambian.', 'POST', "/api/solicitudes/{$solicitudId}/precio", ['precio_ha_propuesto' => '128.0000'], $tokenCliente, 200);
         registrar('solicitudes-ver', 'verSolicitud', 'Detalle con su historial de estados.', 'GET', "/api/solicitudes/{$solicitudId}", null, $tokenCliente, 200);
+    }
+
+    // Un terreno sin departamento y provincia se registra, pero no se publica (ADR 0045).
+    [, $sinUbicacion] = llamar('POST', '/api/terrenos', ['nombre' => 'Lote sin ubicación', 'hectareas' => '30'], $tokenCliente);
+    if (isset($sinUbicacion['terreno']['id'])) {
+        [, $borradorSinUbicacion] = llamar('POST', '/api/solicitudes', [...$cuerpoSolicitud, 'uuid_cliente' => '5b0f6a52-0c1e-4b6c-9d57-7f9d3a1c2e77', 'terreno_id' => $sinUbicacion['terreno']['id'], 'hectareas_solicitadas' => '30.0000'], $tokenCliente);
+        if (isset($borradorSinUbicacion['solicitud']['id'])) {
+            registrar('solicitudes-publicar-sin-ubicacion', 'publicarSolicitud', 'Validación: el terreno no tiene departamento ni provincia, así que la solicitud no se abre al mercado.', 'POST', "/api/solicitudes/{$borradorSinUbicacion['solicitud']['id']}/publicar", null, $tokenCliente, 422);
+        }
     }
 
     registrar('solicitudes-ajena', 'verSolicitud', 'Un id que no es del cliente responde 404, nunca 403 (invariante 5).', 'GET', '/api/solicitudes/999999', null, $tokenCliente, 404);
@@ -452,15 +469,14 @@ try {
     registrar('proveedores-mi-disponibilidad-volver', 'cambiarMiDisponibilidad', 'El titular vuelve a «disponible».', 'PUT', '/api/proveedores/mi/disponibilidad', ['disponibilidad' => 'disponible'], $tokenProveedor, 200);
     registrar('ofertas-reputacion', 'verReputacion', 'Calificación, tasa de cancelación y alertas propias; sin sanciones automáticas.', 'GET', '/api/reputacion', null, $tokenProveedor, 200);
     registrar('calificaciones-recibidas', 'listarCalificacionesRecibidas', 'Calificaciones que recibe el proveedor.', 'GET', '/api/calificaciones/recibidas', null, $tokenProveedor, 200);
-    registrar('notificaciones-proveedor', 'listarNotificaciones', 'Bandeja del proveedor: nuevas solicitudes en su zona, ofertas y mensajes.', 'GET', '/api/notificaciones', null, $tokenProveedor, 200);
+    registrar('notificaciones-proveedor', 'listarNotificaciones', 'Bandeja del proveedor: nuevas solicitudes, ofertas y mensajes.', 'GET', '/api/notificaciones', null, $tokenProveedor, 200);
     registrar('notificaciones-preferencias', 'verPreferenciasDeAviso', 'Qué avisos recibe el proveedor: nuevas solicitudes con sus filtros (hectáreas mínimas, departamentos y tipos de aplicación que no acepta) y los filtros que el servidor conoce.', 'GET', '/api/notificaciones/preferencias', null, $tokenProveedor, 200);
     registrar('notificaciones-preferencias-guardar', 'guardarPreferenciasDeAviso', 'Activa o apaga los avisos de nuevas solicitudes y los filtra: hectáreas mínimas, departamentos y tipos de aplicación excluidos.', 'PUT', '/api/notificaciones/preferencias', [
         'nuevas_solicitudes' => ['activo' => true, 'hectareas_minimas' => '50.0000', 'departamentos_excluidos' => ['09'], 'tipos_aplicacion_excluidos' => ['desecante']], 'ofertas' => true, 'mensajes' => true, 'avance' => true, 'calificaciones' => true,
     ], $tokenProveedor, 200);
 
     // Mapa de solicitudes abiertas: sin datos privados del cliente.
-    [, $mapa] = registrar('mercado-mapa', 'listarSolicitudesAbiertas', 'Solicitudes abiertas para el mapa del piloto, con sus filtros; sin nombre ni teléfono del cliente.', 'GET', '/api/solicitudes-abiertas?macrorregion=chiquitania&hectareas_min=50', null, $tokenProveedor, 200);
-    registrar('mercado-resumen-zonas', 'resumenZonasAbiertas', 'Cuántas solicitudes y hectáreas hay por zona y región (valles frente a Chiquitania).', 'GET', '/api/solicitudes-abiertas/resumen-zonas', null, $tokenProveedor, 200);
+    [, $mapa] = registrar('mercado-mapa', 'listarSolicitudesAbiertas', 'Solicitudes abiertas para el mapa del piloto, con sus filtros; sin nombre ni teléfono del cliente.', 'GET', '/api/solicitudes-abiertas?hectareas_min=50', null, $tokenProveedor, 200);
     $abierta = $solicitudId !== null ? ['id' => $solicitudId] : buscar($mapa['solicitudes'] ?? [], fn ($fila) => ($fila['mi_negociacion'] ?? null) === null);
 
     if ($abierta !== null) {

@@ -328,11 +328,11 @@ test('el cambio queda en la bitácora de auditoría', function () {
 });
 
 test('el permiso de cambiar la propia disponibilidad lo tienen el proveedor y el piloto, no el cliente', function () {
+    $de = fn (string $lista): array => config('permisos_app.'.$lista);
     $catalogo = new ReflectionClass(SeguridadSeeder::class);
-    $de = fn (string $constante): array => $catalogo->getReflectionConstant($constante)->getValue();
 
-    expect($de('PERMISOS_PILOTO'))->toContain('proveedores.disponibilidad.gestionar')
-        ->and($de('PERMISOS_PROVEEDOR'))->toContain('proveedores.disponibilidad.gestionar')
-        ->and($de('PERMISOS_CLIENTE'))->not->toContain('proveedores.disponibilidad.gestionar')
+    expect($de('piloto'))->toContain('proveedores.disponibilidad.gestionar')
+        ->and($de('proveedor'))->toContain('proveedores.disponibilidad.gestionar')
+        ->and($de('cliente'))->not->toContain('proveedores.disponibilidad.gestionar')
         ->and($catalogo->getReflectionConstant('PERMISOS')->getValue())->toHaveKey('proveedores.disponibilidad.gestionar');
 });

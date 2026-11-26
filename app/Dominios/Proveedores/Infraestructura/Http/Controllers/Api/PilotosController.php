@@ -16,6 +16,7 @@ use App\Dominios\Proveedores\Infraestructura\Http\Requests\CambiarDisponibilidad
 use App\Dominios\Proveedores\Infraestructura\Http\Requests\RegistrarPilotoRequest;
 use App\Dominios\Proveedores\Infraestructura\Http\Resources\PilotoResource;
 use App\Dominios\Seguridad\Contratos\CuentaDuplicada;
+use App\Dominios\Seguridad\Contratos\CuentaYaRegistrada;
 use App\Dominios\Seguridad\Contratos\IdentidadOperarioToken;
 use App\Dominios\Seguridad\Contratos\LecturaCuentas;
 use Illuminate\Http\JsonResponse;
@@ -86,6 +87,12 @@ final class PilotosController
                     new OA\Property(property: 'email', type: 'string', format: 'email', nullable: true),
                     new OA\Property(property: 'password', type: 'string', format: 'password'),
                     new OA\Property(property: 'licencia_numero', type: 'string', example: 'RPA-2291'),
+                    new OA\Property(property: 'telefono', description: 'Teléfono del piloto (E.164, único entre las cuentas de proveedor). Opcional por ahora.', type: 'string', example: '+591 70012345', nullable: true),
+                    new OA\Property(property: 'documento_tipo', type: 'string', enum: ['ci', 'pasaporte', 'licencia_conducir'], nullable: true),
+                    new OA\Property(property: 'documento_numero', description: 'Documento del piloto: con `nombres` y `apellidos`, lo identifica como persona única.', type: 'string', nullable: true),
+                    new OA\Property(property: 'nombres', type: 'string', nullable: true),
+                    new OA\Property(property: 'apellidos', type: 'string', nullable: true),
+                    new OA\Property(property: 'fecha_nacimiento', type: 'string', format: 'date', nullable: true),
                     new OA\Property(property: 'licencia_vence', type: 'string', format: 'date', example: '2027-06-30'),
                     new OA\Property(property: 'categoria_habilitacion', type: 'string', example: 'RPAS agrícola'),
                 ],
@@ -97,6 +104,7 @@ final class PilotosController
             new OA\Response(response: 201, description: 'Piloto creado `pendiente`.', content: new OA\JsonContent(required: ['piloto'], properties: [new OA\Property(property: 'piloto', ref: '#/components/schemas/Piloto')], type: 'object')),
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
             new OA\Response(response: 403, description: 'El rol del token no gestiona un proveedor.'),
+            new OA\Response(response: 409, description: 'Ese teléfono o esa persona (documento) ya tiene una cuenta de proveedor: `codigo: cuenta_ya_registrada`.', content: new OA\JsonContent(ref: '#/components/schemas/CuentaYaRegistrada')),
             new OA\Response(response: 422, description: 'Datos inválidos, login o correo ya registrados, o el proveedor no admite pilotos.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],
     )]
@@ -106,6 +114,8 @@ final class PilotosController
 
         try {
             $piloto = $this->registrar->ejecutar($this->usuarioId($request), $request->validated());
+        } catch (CuentaYaRegistrada $excepcion) {
+            return response()->json($excepcion->cuerpo(), 409);
         } catch (RegistroInvalido|CuentaDuplicada $excepcion) {
             return RechazoDeDominio::respuesta($excepcion);
         }

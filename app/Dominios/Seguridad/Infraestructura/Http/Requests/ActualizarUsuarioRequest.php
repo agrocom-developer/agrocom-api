@@ -46,19 +46,16 @@ final class ActualizarUsuarioRequest extends FormRequest
                 'string',
                 'email',
                 'max:150',
-                Rule::unique('sec_user', 'email')->whereNull('deleted_at')->ignore($this->route('usuario')),
+                Rule::unique('sec_user', 'email')->where('tipo_cuenta', 'panel')->whereNull('deleted_at')->ignore($this->route('usuario')),
             ],
             'password' => ['nullable', 'string', 'min:8'],
-            'persona_id' => [
-                'prohibited_if:type,cliente',
-                'nullable',
-                'integer',
-                Rule::exists('per_personas', 'id')->whereNull('deleted_at'),
-            ],
+            // Una cuenta de panel tiene un solo rol (ADR 0046, punto 4); el catálogo de roles
+            // del panel es fijo y `AsignarRolesUsuario` revalida que sea administrador u operador.
             'roles' => [
                 'present_if:type,interno',
                 'prohibited_if:type,cliente',
                 'array',
+                'size:1',
             ],
             'roles.*' => ['integer', Rule::exists('sec_role', 'id')->whereNull('deleted_at')],
         ];
@@ -72,9 +69,8 @@ final class ActualizarUsuarioRequest extends FormRequest
             'username.required' => __('seguridad.usuarios.error_username_requerido'),
             'username.unique' => __('seguridad.validacion.usuario_username_unico'),
             'email.unique' => __('seguridad.validacion.usuario_email_unico'),
-            'persona_id.exists' => __('seguridad.validacion.usuario_persona_invalida'),
-            'persona_id.prohibited_if' => __('seguridad.validacion.usuario_persona_prohibida_portal'),
             'roles.present_if' => __('seguridad.validacion.usuario_roles_requerido'),
+            'roles.size' => __('seguridad.validacion.usuario_roles_un_solo_rol'),
             'roles.prohibited_if' => __('seguridad.validacion.usuario_roles_prohibido_portal'),
             'roles.*.exists' => __('seguridad.validacion.usuario_rol_invalido'),
         ];

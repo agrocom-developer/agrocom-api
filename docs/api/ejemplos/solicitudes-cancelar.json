@@ -3,7 +3,7 @@
     "descripcion": "El cliente cancela una solicitud abierta con motivo; sin penalidad.",
     "peticion": {
         "metodo": "POST",
-        "ruta": "/api/solicitudes/19/cancelar",
+        "ruta": "/api/solicitudes/20/cancelar",
         "autenticada": true,
         "cuerpo": {
             "motivo": "Se adelantó la lluvia y se pospone la aplicación."
@@ -13,16 +13,17 @@
         "estado": 200,
         "cuerpo": {
             "solicitud": {
-                "id": 19,
+                "id": 20,
                 "uuid_cliente": "5b0f6a52-0c1e-4b6c-9d57-7f9d3a1c2e02",
                 "terreno_id": 10,
+                "contacto_id": 2,
                 "tipo_aplicacion": "herbicida",
                 "hectareas_solicitadas": "40.0000",
                 "cultivo": "Soya",
                 "producto_indicado": "Glifosato 480 SL, 2 L/ha",
                 "aporta_producto": "cliente",
-                "ventana_desde": "2026-12-14",
-                "ventana_hasta": "2026-12-20",
+                "ventana_desde": "2026-12-16",
+                "ventana_hasta": "2026-12-22",
                 "urgente": false,
                 "observaciones": "Entrar por el portón sur.",
                 "precio_ha_propuesto": "125.0000",
@@ -33,11 +34,15 @@
                 "monto_final": null,
                 "estado": "cancelada",
                 "oferta_adjudicada_id": null,
-                "vence_en": "2026-12-01T18:56:45+00:00",
+                "vence_en": "2026-12-03T21:56:03+00:00",
                 "proveedor_id": null,
-                "publicada_en": "2026-11-24T18:56:45+00:00",
+                "publicada_en": "2026-11-26T21:56:03+00:00",
                 "motivo_cancelacion": "Se adelantó la lluvia y se pospone la aplicación.",
                 "cancelada_por": "cliente",
+                "departamento_codigo": "07",
+                "provincia_codigo": "0702",
+                "municipio": "Warnes",
+                "comunidad": "Los Álamos",
                 "terreno": {
                     "id": 10,
                     "nombre": "Lote Los Álamos",
@@ -47,7 +52,10 @@
                     "referencias_acceso": "Camino vecinal, portón azul a 2 km de la ruta.",
                     "colindantes_sensibles": null,
                     "acceso_dificil": false,
-                    "zona_id": null
+                    "departamento_codigo": "07",
+                    "provincia_codigo": "0702",
+                    "municipio": "Warnes",
+                    "comunidad": "Los Álamos"
                 },
                 "historial": [
                     {
@@ -55,21 +63,21 @@
                         "estado_nuevo": "borrador",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-24T18:56:45+00:00"
+                        "creado_en": "2026-11-26T21:56:03+00:00"
                     },
                     {
                         "estado_anterior": "borrador",
                         "estado_nuevo": "abierta",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-24T18:56:45+00:00"
+                        "creado_en": "2026-11-26T21:56:03+00:00"
                     },
                     {
                         "estado_anterior": "abierta",
                         "estado_nuevo": "cancelada",
                         "origen": "cliente",
                         "motivo": "Se adelantó la lluvia y se pospone la aplicación.",
-                        "creado_en": "2026-11-24T18:56:45+00:00"
+                        "creado_en": "2026-11-26T21:56:03+00:00"
                     }
                 ]
             }

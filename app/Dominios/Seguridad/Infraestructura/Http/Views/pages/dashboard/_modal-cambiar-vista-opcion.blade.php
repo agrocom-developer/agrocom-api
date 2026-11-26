@@ -1,13 +1,11 @@
 {{--
-    Parcial: una fila del selector de «Cambiar vista» (dashboard). Extraído
-    de `_modal-cambiar-vista.blade.php` porque se repite dos veces (grupos
-    por rol y grupo de portal) con el mismo marcado.
+    Parcial: una fila del selector de «Cambiar vista» (dashboard), extraída de
+    `_modal-cambiar-vista.blade.php`.
 
-    Espera: $idUsuario (int), $candidato ({nombre, username, esPortal, roles,
-    detalle} de ListarCandidatosVerComo::ejecutar()), $rolId (int|null) — el
-    rol del GRUPO en el que aparece esta fila (null en el grupo de portal),
-    $claveRol (string) — la clave técnica del rol (ej. 'piloto', 'jefe_campo',
-    'portal') para calcular la clase CSS del avatar.
+    Espera: $idUsuario (int), $candidato ({nombre, username, roles, detalle} de
+    ListarCandidatosVerComo::ejecutar()), $rolId (int|null) — el rol del GRUPO
+    en el que aparece esta fila, $claveRol (string) — la clave técnica del rol
+    (`administrador` u `operador`) para calcular la clase CSS del avatar.
 
     Avatar de iniciales: mismo cálculo que `molecules/user-menu` (2 letras,
     una por palabra del nombre) — acá no se reusa ese componente porque es un

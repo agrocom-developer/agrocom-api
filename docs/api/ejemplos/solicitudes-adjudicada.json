@@ -19,8 +19,8 @@
                 "cultivo": "Soya",
                 "producto_indicado": "Glifosato 480 SL, 2 L/ha",
                 "aporta_producto": "cliente",
-                "ventana_desde": "2026-12-15",
-                "ventana_hasta": "2026-12-21",
+                "ventana_desde": "2026-12-16",
+                "ventana_hasta": "2026-12-22",
                 "urgente": false,
                 "observaciones": "Entrar por el portón sur.",
                 "precio_ha_propuesto": "128.0000",
@@ -31,11 +31,15 @@
                 "monto_final": null,
                 "estado": "adjudicada",
                 "oferta_adjudicada_id": 18,
-                "vence_en": "2026-12-02T17:22:40+00:00",
+                "vence_en": "2026-12-03T21:55:58+00:00",
                 "proveedor_id": 2,
-                "publicada_en": "2026-11-25T17:22:40+00:00",
+                "publicada_en": "2026-11-26T21:55:58+00:00",
                 "motivo_cancelacion": null,
                 "cancelada_por": null,
+                "departamento_codigo": "07",
+                "provincia_codigo": "0702",
+                "municipio": "Warnes",
+                "comunidad": "Los Álamos",
                 "contacto": {
                     "id": 2,
                     "nombre": "Mario Suárez Rojas",
@@ -52,12 +56,15 @@
                     "referencias_acceso": "Camino vecinal, portón azul a 2 km de la ruta.",
                     "colindantes_sensibles": null,
                     "acceso_dificil": false,
-                    "zona_id": null,
+                    "departamento_codigo": "07",
+                    "provincia_codigo": "0702",
+                    "municipio": "Warnes",
+                    "comunidad": "Los Álamos",
                     "fotos": [
                         {
                             "id": 1,
                             "descripcion": "Borde norte con maleza alta",
-                            "url": "/api/terrenos/fotos/1/archivo?expires=1795628270&signature=aee4b4b3d6d91e8779e71fac44d1f6f578db7cf6e5e950db25abe19bf3ee8066"
+                            "url": "/api/terrenos/fotos/1/archivo?expires=1795731062&signature=ec3752810641c3454852adc47632222544e1ac1b51e00c87c8875c54a669a50e"
                         }
                     ]
                 },
@@ -67,28 +74,28 @@
                         "estado_nuevo": "borrador",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-25T17:22:40+00:00"
+                        "creado_en": "2026-11-26T21:55:58+00:00"
                     },
                     {
                         "estado_anterior": "borrador",
                         "estado_nuevo": "abierta",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-25T17:22:40+00:00"
+                        "creado_en": "2026-11-26T21:55:58+00:00"
                     },
                     {
                         "estado_anterior": "abierta",
                         "estado_nuevo": "con_ofertas",
                         "origen": "sistema",
                         "motivo": null,
-                        "creado_en": "2026-11-25T17:22:49+00:00"
+                        "creado_en": "2026-11-26T21:56:01+00:00"
                     },
                     {
                         "estado_anterior": "con_ofertas",
                         "estado_nuevo": "adjudicada",
                         "origen": "proveedor",
                         "motivo": null,
-                        "creado_en": "2026-11-25T17:22:50+00:00"
+                        "creado_en": "2026-11-26T21:56:02+00:00"
                     }
                 ]
             }

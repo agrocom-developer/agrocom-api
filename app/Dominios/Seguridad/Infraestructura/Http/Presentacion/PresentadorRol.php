@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Lang;
 
 /**
  * Metadata de PRESENTACIÓN de un rol para la pantalla de selección (quinta
- * vuelta, maqueta 5c): nombre legible ("Dueño", nunca el slug `dueno`),
+ * vuelta, maqueta 5c): nombre legible ("Administrador", nunca el slug `administrador`),
  * ícono propio y chips con los permisos que habilita.
  *
  * No contradice ADR 0013 punto 3 ("los nombres de rol no se traducen"): esa
@@ -27,12 +27,9 @@ final class PresentadorRol
 {
     /** @var array<string, string> Ícono Material Symbols por slug de rol. */
     private const ICONOS = [
-        'dueno' => 'shield_person',
+        'administrador' => 'shield_person',
+        'operador' => 'manage_accounts',
         'piloto' => 'flight_takeoff',
-        'jefe_campo' => 'supervisor_account',
-        'encargado_operaciones' => 'fact_check',
-        'soporte' => 'support_agent',
-        'admin_plataforma' => 'admin_panel_settings',
     ];
 
     /**

@@ -26,14 +26,15 @@ Cada app admite un solo tipo de cuenta, con su propio usuario, verificación (se
 
 1. El cliente propone un precio por hectárea; la solicitud queda abierta.
 2. El piloto acepta el precio o contraoferta, con el dron que usará.
-3. En cada negociación hay una sola oferta vigente: quien la recibe acepta, contraoferta o rechaza. Máximo de ofertas por negociación, con la última definitiva. Vigencias de oferta (24 horas) y de solicitud (7 días) por parámetro.
+3. En cada negociación hay una sola oferta vigente: quien la recibe acepta, contraoferta o rechaza. Máximo de ofertas por negociación, con la última definitiva. La oferta vence (24 horas por parámetro, contadas desde que llega a la bandeja); la solicitud no vence sola.
+   La negociación es asíncrona: cada aceptación llega a la bandeja del cliente, que conversa con hasta 3 proveedores a la vez (`cupo_negociaciones`); los excedentes esperan en una cola que el cliente no ve y pasan a la bandeja cuando libera un lugar, tras revisar que el proveedor siga disponible y la solicitud vigente. Ofertar no oculta la solicitud: solo el cliente la detiene al marcarla «En acuerdo». El proveedor ve «Tu oferta está en cola» o «El cliente la está viendo», nunca posiciones ni datos de otros. En una empresa ofrece el encargado (delegable por piloto). ADR 0045.
 4. Aceptar la oferta vigente de la contraparte adjudica la solicitud: precio acordado, proveedor y equipo; las demás ofertas se cierran. La operación es atómica en el servidor.
-5. El cliente elige entre las ofertas: ningún proveedor tiene prioridad sobre otro y no hay puntuación ni sanciones automáticas.
+5. El cliente elige entre las ofertas: ningún proveedor tiene ventaja al adjudicar y no hay puntuación ni sanciones automáticas; la prioridad (propios y mejor calificados) es solo en el aviso, en el orden de la cola y en el orden sugerido.
 
 ## Qué ve cada parte
 
 - Antes de ofertar, el piloto ve lotes, hectáreas, cultivo, accesos, observaciones y fotos del terreno; no ve datos del cliente ni las ofertas de otros pilotos.
-- El cliente ve por oferta el precio, la calificación, el dron con fotos aprobadas y la distancia.
+- El cliente ve por oferta el precio, la calificación, el dron con fotos aprobadas y el requisito que no cumple; no hay distancia calculada.
 - Los datos de contacto se entregan solo tras adjudicar. La ubicación del piloto se comparte solo durante `en_ejecucion`.
 
 ## Reglas de red

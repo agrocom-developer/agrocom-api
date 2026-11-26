@@ -3,13 +3,110 @@
     "descripcion": "Solicitudes abiertas para el mapa del piloto, con sus filtros; sin nombre ni teléfono del cliente.",
     "peticion": {
         "metodo": "GET",
-        "ruta": "/api/solicitudes-abiertas?macrorregion=chiquitania&hectareas_min=50",
+        "ruta": "/api/solicitudes-abiertas?hectareas_min=50",
         "autenticada": true
     },
     "respuesta": {
         "estado": 200,
         "cuerpo": {
             "solicitudes": [
+                {
+                    "id": 18,
+                    "centro": null,
+                    "hectareas_solicitadas": "100.0000",
+                    "precio_ha_propuesto": "128.0000",
+                    "departamento_codigo": "07",
+                    "provincia_codigo": "0702",
+                    "cultivo": "Soya",
+                    "tipo_aplicacion": "herbicida",
+                    "ventana_desde": "2026-12-16",
+                    "ventana_hasta": "2026-12-22",
+                    "ofertas_vigentes": 0,
+                    "mi_negociacion": null,
+                    "distancia_km": null,
+                    "publicada_en": "2026-11-26T21:55:58+00:00",
+                    "vence_en": "2026-12-03T21:55:58+00:00"
+                },
+                {
+                    "id": 7,
+                    "centro": {
+                        "latitud": -17.3205,
+                        "longitud": -63.2838
+                    },
+                    "hectareas_solicitadas": "90.0000",
+                    "precio_ha_propuesto": "115.0000",
+                    "departamento_codigo": "07",
+                    "provincia_codigo": "0710",
+                    "cultivo": "Maíz",
+                    "tipo_aplicacion": "herbicida",
+                    "ventana_desde": "2026-11-28",
+                    "ventana_hasta": "2026-12-05",
+                    "ofertas_vigentes": 1,
+                    "mi_negociacion": "vigente",
+                    "distancia_km": null,
+                    "publicada_en": "2026-11-26T01:55:51+00:00",
+                    "vence_en": "2026-12-03T01:55:51+00:00"
+                },
+                {
+                    "id": 6,
+                    "centro": {
+                        "latitud": -17.7843,
+                        "longitud": -63.21310000000001
+                    },
+                    "hectareas_solicitadas": "100.0000",
+                    "precio_ha_propuesto": "125.0000",
+                    "departamento_codigo": "07",
+                    "provincia_codigo": "0701",
+                    "cultivo": "Maíz",
+                    "tipo_aplicacion": "herbicida",
+                    "ventana_desde": "2026-11-28",
+                    "ventana_hasta": "2026-12-05",
+                    "ofertas_vigentes": 3,
+                    "mi_negociacion": "vigente",
+                    "distancia_km": null,
+                    "publicada_en": "2026-11-25T15:55:51+00:00",
+                    "vence_en": "2026-12-02T15:55:51+00:00"
+                },
+                {
+                    "id": 5,
+                    "centro": {
+                        "latitud": -17.535100000000003,
+                        "longitud": -63.197799999999994
+                    },
+                    "hectareas_solicitadas": "70.0000",
+                    "precio_ha_propuesto": "120.0000",
+                    "departamento_codigo": "07",
+                    "provincia_codigo": "0702",
+                    "cultivo": "Soya",
+                    "tipo_aplicacion": "herbicida",
+                    "ventana_desde": "2026-11-28",
+                    "ventana_hasta": "2026-12-05",
+                    "ofertas_vigentes": 0,
+                    "mi_negociacion": null,
+                    "distancia_km": null,
+                    "publicada_en": "2026-11-26T20:55:51+00:00",
+                    "vence_en": "2026-12-03T20:55:51+00:00"
+                },
+                {
+                    "id": 4,
+                    "centro": {
+                        "latitud": -18.490000000000002,
+                        "longitud": -64.08000000000001
+                    },
+                    "hectareas_solicitadas": "60.0000",
+                    "precio_ha_propuesto": "130.0000",
+                    "departamento_codigo": "07",
+                    "provincia_codigo": "0708",
+                    "cultivo": "Maíz",
+                    "tipo_aplicacion": "insecticida",
+                    "ventana_desde": "2026-11-28",
+                    "ventana_hasta": "2026-12-05",
+                    "ofertas_vigentes": 0,
+                    "mi_negociacion": null,
+                    "distancia_km": null,
+                    "publicada_en": "2026-11-26T19:55:50+00:00",
+                    "vence_en": "2026-12-03T19:55:50+00:00"
+                },
                 {
                     "id": 3,
                     "centro": {
@@ -18,18 +115,17 @@
                     },
                     "hectareas_solicitadas": "250.0000",
                     "precio_ha_propuesto": "105.0000",
-                    "zona": "San Ignacio de Velasco",
-                    "zona_id": 10,
-                    "macrorregion": "chiquitania",
+                    "departamento_codigo": "07",
+                    "provincia_codigo": "0703",
                     "cultivo": "Soya",
                     "tipo_aplicacion": "fungicida",
-                    "ventana_desde": "2026-11-26",
-                    "ventana_hasta": "2026-12-03",
+                    "ventana_desde": "2026-11-28",
+                    "ventana_hasta": "2026-12-05",
                     "ofertas_vigentes": 0,
                     "mi_negociacion": null,
                     "distancia_km": null,
-                    "publicada_en": "2026-11-24T09:56:36+00:00",
-                    "vence_en": "2026-12-01T09:56:36+00:00"
+                    "publicada_en": "2026-11-26T12:55:50+00:00",
+                    "vence_en": "2026-12-03T12:55:50+00:00"
                 },
                 {
                     "id": 2,
@@ -39,18 +135,17 @@
                     },
                     "hectareas_solicitadas": "180.0000",
                     "precio_ha_propuesto": "118.0000",
-                    "zona": "San José de Chiquitos",
-                    "zona_id": 9,
-                    "macrorregion": "chiquitania",
+                    "departamento_codigo": "07",
+                    "provincia_codigo": "0705",
                     "cultivo": "Soya",
                     "tipo_aplicacion": "herbicida",
-                    "ventana_desde": "2026-11-26",
-                    "ventana_hasta": "2026-12-03",
+                    "ventana_desde": "2026-11-28",
+                    "ventana_hasta": "2026-12-05",
                     "ofertas_vigentes": 0,
                     "mi_negociacion": null,
                     "distancia_km": null,
-                    "publicada_en": "2026-11-24T13:56:35+00:00",
-                    "vence_en": "2026-12-01T13:56:35+00:00"
+                    "publicada_en": "2026-11-26T16:55:50+00:00",
+                    "vence_en": "2026-12-03T16:55:50+00:00"
                 }
             ],
             "siguiente_cursor": null

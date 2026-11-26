@@ -43,7 +43,6 @@ final class AvisarNuevaSolicitud
         $this->avisos->avisar('nueva_solicitud_abierta', "nueva_solicitud_abierta:{$evento->solicitudId}", [
             'solicitud' => $evento->solicitudId,
             'hectareas' => $evento->hectareas,
-            'zona' => $evento->zona ?? '',
             'precio' => $evento->precioHa,
         ], $evento->solicitudId, $usuarios);
     }

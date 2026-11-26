@@ -14,8 +14,6 @@ use Illuminate\Support\Facades\DB;
  * extensible guardado en `neg_preferencias.filtros`; ver {@see FiltrosDeProveedor}). Sin fila
  * guardada rige el valor por defecto: todo activo y sin filtros. Los filtros solo gobiernan los
  * avisos y nunca se relajan. Las categorías obligatorias no aparecen acá y no se apagan.
- *
- * Las zonas y macrorregiones ya no existen en el contrato: sus columnas quedan sin uso.
  */
 final class PreferenciasDeAviso
 {

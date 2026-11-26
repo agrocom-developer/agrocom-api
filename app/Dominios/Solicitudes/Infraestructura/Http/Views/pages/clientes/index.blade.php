@@ -8,7 +8,7 @@
 
     Datos esperados (ver ClientesController::index()): la cáscara de CascaraPanel,
     más $puedeCrear (bool), $clientes (LengthAwarePaginator<Cliente>), $filtros (array{q: string,
-    estado: ?string}) y $estadosFiltro (list<EstadoCliente>).
+    estado: ?string}) y $estadosFiltro (list<EstadoAprobacion>).
 
     Gateada por `solicitudes.cliente.ver`, verificado server-side.
 --}}

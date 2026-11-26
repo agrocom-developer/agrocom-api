@@ -74,6 +74,7 @@
             :help="__('seguridad.roles.campo_nombre_ayuda')"
             :error="$errors->first('name')"
             required
+            readonly
             autocomplete="off"
             spellcheck="false"
         />

@@ -25,11 +25,11 @@ use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\FotoDePerfilCont
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\SesionCampoController;
 use App\Dominios\Sincronizacion\Infraestructura\Http\Controllers\Api\CatalogoController;
 use App\Dominios\Sincronizacion\Infraestructura\Http\Controllers\Api\SyncController;
+use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\CatalogosController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\ClientesController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\ContactosController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\SolicitudesController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\TerrenosController;
-use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\ZonasController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -60,20 +60,22 @@ Route::post('/auth/token', [SesionCampoController::class, 'store'])
 
 // Marketplace (ADR 0036): registro público de clientes y proveedores. Crean
 // cuentas sin autenticación, así que llevan el límite `registro-publico`
-// (SeguridadServiceProvider): 5 por minuto y 20 por hora por IP.
+// (SeguridadServiceProvider): 5 por minuto y 20 por hora por IP. `sondeo.cuentas`
+// corta además el sondeo de teléfonos y documentos por el `409 cuenta_ya_registrada`
+// (5 por hora por IP, por teléfono y por documento consultados).
 Route::post('/clientes/registro', [ClientesController::class, 'store'])
-    ->middleware('throttle:registro-publico')
+    ->middleware(['throttle:registro-publico', 'sondeo.cuentas'])
     ->name('api.clientes.registro');
 
 Route::post('/proveedores/registro', [RegistroProveedorController::class, 'store'])
-    ->middleware('throttle:registro-publico')
+    ->middleware(['throttle:registro-publico', 'sondeo.cuentas'])
     ->name('api.proveedores.registro');
 
-// Catálogo de zonas: el formulario de registro lo necesita antes de tener
-// cuenta. Mismo throttle suave que /version: es lectura pública.
-Route::get('/zonas', [ZonasController::class, 'index'])
+// Catálogo oficial de departamentos y provincias de Bolivia (ADR 0045): solo
+// lectura y sin token, lo usan las dos apps para ubicar un terreno.
+Route::get('/catalogos/ubicaciones', [CatalogosController::class, 'ubicaciones'])
     ->middleware('throttle:60,1')
-    ->name('api.zonas.index');
+    ->name('api.catalogos.ubicaciones');
 
 // Foto del estado de un terreno: la URL es firmada y de corta vida (la entregan el terreno del
 // cliente dueño y el detalle de la solicitud abierta), así que la imagen carga sin token.
@@ -137,7 +139,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/proveedores/mi/reenviar', [MiProveedorController::class, 'reenviar'])->name('api.proveedores.mi.reenviar');
 
     Route::get('/proveedores/pilotos', [PilotosController::class, 'index'])->name('api.proveedores.pilotos.index');
-    Route::post('/proveedores/pilotos', [PilotosController::class, 'store'])->name('api.proveedores.pilotos.store');
+    Route::post('/proveedores/pilotos', [PilotosController::class, 'store'])->middleware('sondeo.cuentas')->name('api.proveedores.pilotos.store');
     Route::put('/proveedores/pilotos/{id}/disponibilidad', [PilotosController::class, 'cambiarDisponibilidad'])
         ->whereNumber('id')
         ->name('api.proveedores.pilotos.disponibilidad');
@@ -184,7 +186,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // red (no pasan por el outbox). El permiso del rol del token es la puerta; el alcance (solo lo
     // propio, un id ajeno es 404) lo hacen los casos de uso.
     Route::get('/solicitudes-abiertas', [MercadoController::class, 'index'])->name('api.solicitudes-abiertas.index');
-    Route::get('/solicitudes-abiertas/resumen-zonas', [MercadoController::class, 'resumen'])->name('api.solicitudes-abiertas.resumen');
     Route::get('/solicitudes-abiertas/{id}', [MercadoController::class, 'show'])
         ->whereNumber('id')
         ->name('api.solicitudes-abiertas.show');
@@ -272,7 +273,7 @@ Route::middleware('auth:sanctum')->group(function () {
         ->whereNumber('id')
         ->name('api.solicitudes.mensajes.leidos');
 
-    // Preferencias de aviso: el piloto activa o desactiva las nuevas solicitudes en sus zonas.
+    // Preferencias de aviso: el piloto activa o desactiva las nuevas solicitudes.
     Route::get('/notificaciones/preferencias', [PreferenciasController::class, 'show'])->name('api.notificaciones.preferencias.show');
     Route::put('/notificaciones/preferencias', [PreferenciasController::class, 'update'])->name('api.notificaciones.preferencias.update');
 

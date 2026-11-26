@@ -4,7 +4,6 @@ use App\Dominios\Flota\Contratos\LecturaEquipos;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Api\DronesController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\MiProveedorController;
 use App\Dominios\Seguridad\Contratos\IdentidadOperarioToken;
-use Database\Seeders\Catalogo\SeguridadSeeder;
 use Illuminate\Auth\GenericUser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -33,6 +32,7 @@ function pvMundo(): void
     Esquema::migrar([
         'create_plt_bitacoras_table', 'create_sol_zonas_table', 'create_prv_proveedores_table', 'create_prv_pilotos_table',
         'create_prv_auxiliares_table', 'create_prv_documentos_table', 'create_flo_drones_table', 'create_flo_equipos_table',
+        'retira_zonas',
     ]);
 
     foreach (['flo_equipos', 'flo_drones', 'prv_documentos', 'prv_pilotos', 'prv_proveedores'] as $tabla) {
@@ -176,11 +176,10 @@ test('el piloto ve solo los drones de sus equipos y nunca los de otro proveedor'
 });
 
 test('el permiso de ver lo tiene el piloto y no el cliente', function () {
-    $catalogo = new ReflectionClass(SeguridadSeeder::class);
-    $de = fn (string $constante): array => $catalogo->getReflectionConstant($constante)->getValue();
+    $de = fn (string $lista): array => config('permisos_app.'.$lista);
 
-    expect($de('PERMISOS_PILOTO'))->toContain('proveedores.cuenta.ver')
-        ->and($de('PERMISOS_PROVEEDOR'))->not->toContain('proveedores.cuenta.ver')
-        ->and($de('PERMISOS_CLIENTE'))->not->toContain('proveedores.cuenta.ver')
-        ->and($de('PERMISOS_PILOTO'))->not->toContain('proveedores.cuenta.gestionar');
+    expect($de('piloto'))->toContain('proveedores.cuenta.ver')
+        ->and($de('proveedor'))->not->toContain('proveedores.cuenta.ver')
+        ->and($de('cliente'))->not->toContain('proveedores.cuenta.ver')
+        ->and($de('piloto'))->not->toContain('proveedores.cuenta.gestionar');
 });

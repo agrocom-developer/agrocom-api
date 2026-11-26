@@ -57,6 +57,17 @@
     font-weight: var(--ag-font-weight-bold);
 }
 
+/* Página actual fuera del menú (Inicio con una sola entrada): se ve seleccionada
+   pero no es un enlace, así que no ofrece el cursor ni el hover de uno. */
+.ag-menu-item--actual {
+    cursor: default;
+}
+
+.ag-menu-item--actual:hover {
+    background: var(--ag-color-bg-nav-active);
+    color: var(--ag-color-success-strong);
+}
+
 .ag-menu-item__icon {
     flex-shrink: 0;
 }

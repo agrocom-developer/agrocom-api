@@ -20,8 +20,6 @@ use Illuminate\Support\Carbon;
  * @property string $razon_social
  * @property string|null $documento_fiscal
  * @property string|null $telefono
- * @property int|null $zona_base_id
- * @property string $radio_operacion_km
  * @property EstadoAprobacion $estado
  * @property string|null $motivo_estado
  * @property string $calificacion_promedio
@@ -49,8 +47,6 @@ class Proveedor extends ModeloDominio
         'apellidos',
         'documento_identidad',
         'fecha_nacimiento',
-        'zona_base_id',
-        'radio_operacion_km',
         'estado',
         'motivo_estado',
         'aprobado_por',
@@ -67,7 +63,6 @@ class Proveedor extends ModeloDominio
             'tipo' => TipoProveedor::class,
             'estado' => EstadoAprobacion::class,
             'usuario_titular_id' => 'integer',
-            'zona_base_id' => 'integer',
             'aprobado_por' => 'integer',
             'aprobado_en' => 'datetime',
             'disponibilidad' => Disponibilidad::class,

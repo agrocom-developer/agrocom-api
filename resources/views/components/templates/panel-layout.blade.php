@@ -45,6 +45,19 @@
     - vistaActual (nullable string): segundo tramo del breadcrumb
       ("Módulo › Vista"), ya traducido por la página. Default: el label del
       ítem activo.
+    - tituloPagina (nullable string): nombre de una página que NO pertenece a
+      ningún ítem del menú (búsqueda, perfil, Mis notificaciones), ya traducido.
+      Casi nunca hace falta pasarlo: por defecto sale de
+      `lang/es/paginas.php` (`rutas.<nombre de la ruta>`), una sola entrada
+      por página, sin consultar la base. Ver «Página fuera del menú» abajo.
+
+    Página fuera del menú: si la ruta actual no activa ningún módulo y tiene
+    título declarado, el módulo Inicio queda activo en el riel y su panel
+    muestra UN solo ítem, seleccionado y sin enlace (no navega), con el
+    nombre de esa página. En el tablero o en una página con ítem de menú,
+    Inicio sigue siendo el acceso directo de siempre. Una página fuera del
+    menú sin título declarado conserva el comportamiento anterior (el primer
+    módulo queda activo); `PaginasFueraDelMenuTest` impide que haya una.
 
     El header quedó sin contexto de negocio el 9/9/2026 (pedido del dueño,
     mirando el panel andando): se fueron el chip de campaña — que ya venía
@@ -66,6 +79,7 @@
     'version' => null,
     'vistaActual' => null,
     'zonaHoraria' => null,
+    'tituloPagina' => null,
 ])
 
 @php
@@ -141,11 +155,41 @@
             'descripcion' => data_get($mod, 'descripcion'),
             'icono' => data_get($mod, 'icono'),
             'items' => $items,
+            // Inicio: el acceso directo al tablero (único módulo sin ítems cuya ruta es esa).
+            'esInicio' => $items->isEmpty() && $rutaPropia === 'panel.dashboard',
             'href' => $rutaPropia ? $resolverHref($rutaPropia) : null,
             'active' => $items->contains(fn ($item) => $item['active'])
                 || ($rutaPropia && $itemEsActivo($rutaPropia)),
         ];
     })->values();
+
+    // Página fuera del menú: ningún módulo se activó y la ruta declara su título
+    // (`paginas.rutas.<ruta>`) o la página lo pasó. Inicio se activa y su panel
+    // muestra solo el nombre de esta página, sin enlace. Solo se resuelve el
+    // título de la página visible, nunca la lista de todas.
+    if (! $modulos->contains(fn ($modulo) => $modulo['active']) && $modulos->contains(fn ($modulo) => $modulo['esInicio'])) {
+        $claveTitulo = $rutaActual !== null ? "paginas.rutas.{$rutaActual}" : null;
+        $tituloFueraDelMenu = $tituloPagina
+            ?? ($claveTitulo !== null && is_string(__($claveTitulo)) && __($claveTitulo) !== $claveTitulo ? __($claveTitulo) : null);
+
+        if ($tituloFueraDelMenu !== null) {
+            $modulos = $modulos->map(fn ($modulo) => $modulo['esInicio']
+                ? [
+                    ...$modulo,
+                    'active' => true,
+                    'items' => collect([[
+                        'label' => $tituloFueraDelMenu,
+                        'icono' => 'description',
+                        'href' => null,
+                        'active' => true,
+                        'actual' => true,
+                        'badge' => null,
+                        'badgeTitle' => null,
+                    ]]),
+                ]
+                : $modulo)->values();
+        }
+    }
 
     // Módulo activo: el que contiene el ítem de la ruta actual; si ninguno
     // (pantalla fuera del menú, p. ej. organización vía engranaje), el
@@ -212,7 +256,14 @@
                 <h2 class="ag-module-band__title">{{ __($moduloActivo['label']) }}</h2>
                 <div class="ag-module-band__pills">
                     @foreach ($moduloActivo['items'] as $item)
-                        @if ($item['href'])
+                        @if ($item['actual'] ?? false)
+                            <span class="ag-module-band__pill is-active" aria-current="page">
+                                @if ($item['icono'])
+                                    <x-atoms.icon :name="$item['icono']" size="sm" />
+                                @endif
+                                {{ $item['label'] }}
+                            </span>
+                        @elseif ($item['href'])
                             <a
                                 href="{{ $item['href'] }}"
                                 class="ag-module-band__pill {{ $item['active'] ? 'is-active' : '' }}"

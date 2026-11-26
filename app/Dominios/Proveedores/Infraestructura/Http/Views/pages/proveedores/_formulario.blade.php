@@ -2,8 +2,7 @@
     Partial: formulario de alta a mano de un proveedor (independiente o tercero).
     Arquetipo Formulario, §6.3 de docs/diseno/guia_pantalla_panel.md. Solo alta.
 
-    Espera: $tipos (list<TipoProveedor>) y $zonas (array<int, string>, id =>
-    nombre). Los datos de la persona y de la licencia los pide el mismo registro
+    Espera: $tipos (list<TipoProveedor>). Los datos de la persona y de la licencia los pide el mismo registro
     que la app; la licencia es obligatoria para un independiente (es su propio
     piloto) y se ignora en un tercero. Tras un error de validación, `old()`
     repuebla los campos; `password` nunca.
@@ -55,16 +54,6 @@
             <x-atoms.input type="text" name="razon_social" :label="__('proveedores.alta_manual.campo_razon_social')" :value="old('razon_social', '')" :error="$errors->first('razon_social')" maxlength="150" required autocomplete="off" />
             <x-atoms.input type="text" name="documento_fiscal" :label="__('proveedores.alta_manual.campo_documento_fiscal')" :value="old('documento_fiscal', '')" :error="$errors->first('documento_fiscal')" maxlength="30" required autocomplete="off" />
             <x-atoms.input type="tel" name="telefono" :label="__('proveedores.alta_manual.campo_telefono')" :value="old('telefono', '')" :error="$errors->first('telefono')" maxlength="30" required autocomplete="off" />
-            <x-atoms.select
-                name="zona_base_id"
-                id="zona-base"
-                :label="__('proveedores.alta_manual.campo_zona')"
-                :options="$zonas"
-                :value="old('zona_base_id')"
-                :placeholder="__('proveedores.alta_manual.campo_zona_placeholder')"
-                :error="$errors->first('zona_base_id')"
-            />
-            <x-atoms.input type="text" name="radio_operacion_km" :label="__('proveedores.alta_manual.campo_radio')" :value="old('radio_operacion_km', '')" :help="__('proveedores.alta_manual.campo_radio_ayuda')" :error="$errors->first('radio_operacion_km')" inputmode="decimal" autocomplete="off" />
         </x-molecules.form-section>
 
         <x-molecules.form-section

@@ -8,7 +8,6 @@ use App\Dominios\Seguridad\Aplicacion\TerminarVistaComo;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Dominio\Excepciones\VistaComoNoPermitida;
 use App\Dominios\Seguridad\Dominio\MotivoFinVistaComo;
-use App\Dominios\Seguridad\Dominio\TipoUsuario;
 use App\Dominios\Seguridad\Dominio\VistaComoActiva;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use App\Dominios\Seguridad\Infraestructura\Http\Middleware\AplicarVistaComo;
@@ -46,7 +45,7 @@ final class VistaComoController
         $idRol = $request->validated('rol_id');
 
         try {
-            $vista = $iniciarVistaComo->ejecutar(
+            $iniciarVistaComo->ejecutar(
                 $admin,
                 (int) $request->session()->get('sec_rol_activo_id'),
                 $usuario->id,
@@ -60,10 +59,8 @@ final class VistaComoController
 
         // El destino lo resuelve el request siguiente, YA con la vista aplicada:
         // `/` elige el primer ítem visible del rol observado (no se conoce acá
-        // sin sustituir al usuario) y el portal arranca en su avance.
-        return $vista->tipo === TipoUsuario::Cliente
-            ? redirect()->route('portal.perfil.edit')
-            : redirect('/');
+        // sin sustituir al usuario).
+        return redirect('/');
     }
 
     /**

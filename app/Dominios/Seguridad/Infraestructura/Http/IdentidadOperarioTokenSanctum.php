@@ -18,7 +18,10 @@ final class IdentidadOperarioTokenSanctum implements IdentidadOperarioToken
         /** @var SecUser|null $usuario */
         $usuario = $request->user();
 
-        return $usuario?->persona_id;
+        // `persona_id` ahora es la persona única (documento) de la cuenta de app; el vínculo con el
+        // personal anterior (`per_personas`) que lee la sincronización de campo vive en `persona_legada_id`
+        // hasta el retiro de `per_*`.
+        return $usuario?->persona_legada_id;
     }
 
     /** Fail-closed: sin `SecUser` autenticado, ningún permiso se concede. */

@@ -8,7 +8,6 @@ use App\Dominios\Negociacion\Dominio\Excepciones\NegociacionInvalida;
 use App\Dominios\Negociacion\Infraestructura\Eloquent\Oferta;
 use App\Dominios\Proveedores\Contratos\LecturaProveedores;
 use App\Dominios\Seguridad\Contratos\FotosDePerfil;
-use App\Dominios\Solicitudes\Contratos\LecturaZonas;
 use App\Dominios\Solicitudes\Contratos\PasosDeSolicitud;
 
 /**
@@ -29,7 +28,6 @@ final class ConsultarOfertas
         private readonly ReputacionDelProveedor $reputacion,
         private readonly Negociar $negociar,
         private readonly FotosDePerfil $fotosDePerfil,
-        private readonly LecturaZonas $zonas,
     ) {}
 
     /**
@@ -84,11 +82,11 @@ final class ConsultarOfertas
     }
 
     /**
-     * La zona y el lote de la solicitud para el proveedor dueño de la oferta. La zona es
-     * pública en el mercado; el nombre del lote es dato del cliente y solo se muestra
-     * una vez adjudicada la solicitud a ese proveedor.
+     * El departamento y el lote de la solicitud para el proveedor dueño de la oferta. El
+     * departamento es público en el mercado; el nombre del lote es dato del cliente y solo
+     * se muestra una vez adjudicada la solicitud a ese proveedor.
      *
-     * @return array{zona: ?string, zona_id: ?int, lote: ?string}
+     * @return array{departamento_codigo: ?string, lote: ?string}
      */
     private function ubicacionParaProveedor(Oferta $oferta): array
     {
@@ -98,8 +96,7 @@ final class ConsultarOfertas
             && ! in_array($solicitud->estado, ['abierta', 'con_ofertas', 'expirada', 'cancelada'], true);
 
         return [
-            'zona' => $solicitud?->zonaId === null ? null : $this->zonas->nombre($solicitud->zonaId),
-            'zona_id' => $solicitud?->zonaId,
+            'departamento_codigo' => $solicitud?->departamentoCodigo,
             'lote' => $adjudicada ? $solicitud->terrenoNombre : null,
         ];
     }

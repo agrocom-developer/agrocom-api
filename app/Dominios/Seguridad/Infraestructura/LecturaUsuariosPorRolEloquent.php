@@ -3,7 +3,7 @@
 namespace App\Dominios\Seguridad\Infraestructura;
 
 use App\Dominios\Seguridad\Contratos\LecturaUsuariosPorRol;
-use App\Dominios\Seguridad\Dominio\TipoUsuario;
+use App\Dominios\Seguridad\Contratos\TipoCuenta;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUserRole;
@@ -29,7 +29,7 @@ final class LecturaUsuariosPorRolEloquent implements LecturaUsuariosPorRol
                 ->where('state', true));
 
         return SecUser::query()
-            ->where('type', TipoUsuario::Interno->value)
+            ->where('tipo_cuenta', TipoCuenta::Panel->value)
             ->where('state', true)
             ->whereIn('id', $asignados)
             ->orderBy('id')

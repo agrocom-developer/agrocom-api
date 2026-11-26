@@ -26,33 +26,32 @@ return [
     // Marketplace (ADR 0027): la solicitud de servicio es la unidad de negocio.
     'solicitudes' => [
         'label' => 'Mercado',
-        'descripcion' => 'Las solicitudes con sus ofertas y las métricas del mercado.',
+        'descripcion' => 'Las métricas del mercado, las solicitudes con sus ofertas y las calificaciones que reciben pilotos y clientes.',
         'items' => [
-            'solicitudes' => 'Solicitudes',
             'metricas' => 'Métricas del mercado',
+            'solicitudes' => 'Solicitudes',
+            'calificaciones' => 'Calificaciones',
         ],
     ],
 
     // Marketplace (ADR 0028, 0029, 0032): aprobación de quienes prestan el servicio.
     'proveedores' => [
         'label' => 'Proveedores',
-        'descripcion' => 'Aprobación de proveedores, pilotos, drones y documentos de verificación.',
+        'descripcion' => 'Aprobación de las cuentas de proveedores (personas y empresas que ofrecen el servicio), sus pilotos, sus drones y los documentos de verificación.',
         'items' => [
-            'documentos' => 'Documentos',
-            'proveedores' => 'Proveedores',
+            'proveedores' => 'Cuentas',
             'pilotos' => 'Pilotos',
             'drones_flota' => 'Drones',
+            'documentos' => 'Documentos',
         ],
     ],
 
-    // La relación con quienes usan la plataforma: quiénes son, qué opinan de
-    // un servicio y qué reclaman.
+    // La relación con quienes usan la plataforma: quiénes son y qué reclaman.
     'atencion' => [
         'label' => 'Atención',
-        'descripcion' => 'Clientes, calificaciones y reclamos de quienes usan la plataforma.',
+        'descripcion' => 'Clientes y reclamos de quienes usan la plataforma.',
         'items' => [
             'clientes' => 'Clientes',
-            'calificaciones' => 'Calificaciones',
             'reclamos' => 'Reclamos',
         ],
     ],
@@ -71,12 +70,11 @@ return [
     // que son una herramienta de auditoría y no de gestión del mercado.
     'sistema' => [
         'label' => 'Sistema',
-        'descripcion' => 'Zonas, organización, configuración y avisos del sistema.',
+        'descripcion' => 'Organización, avisos y configuración del sistema.',
         'items' => [
-            'zonas' => 'Zonas',
             'organizacion' => 'Organización',
-            'configuracion' => 'Configuración del sistema',
             'avisos' => 'Avisos del sistema',
+            'configuracion' => 'Configuración',
         ],
     ],
 

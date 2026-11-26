@@ -1,22 +1,23 @@
 # Tiendas de aplicaciones y privacidad de datos personales
 
-**Agrocom SRL · Borrador de trabajo, pendiente de revisión legal** · Consulta de fuentes: **2026-11-26** · Decisión de fondo: ADR 0046 (cuentas, verificación y retención), ADR 0040 (ubicación y contacto) · Política hermana de `seguimiento_y_privacidad.md`, `verificacion_proveedores.md`, `seguridad.md` y de `legal.md` (términos y privacidad públicos; ese documento vive en la rama `feature/paginas-legales` hasta que se integre en `develop`).
+**Agrocom SRL · Vigente con las decisiones del dueño del 27/11/2026, pendiente de revisión legal** · Consulta de fuentes: **2026-11-26** · Decisión de fondo: ADR 0047 (eliminación de cuenta, retención, reportar y bloquear, ubicación de emergencia), ADR 0046 (cuentas, verificación y retención), ADR 0040 (ubicación y contacto) · Política hermana de `eliminacion_de_cuenta.md`, `seguimiento_y_privacidad.md`, `verificacion_proveedores.md`, `seguridad.md` y de `legal.md` (términos y privacidad públicos; ese documento vive en la rama `feature/paginas-legales` hasta que se integre en `develop`). **Antes de enviar a las tiendas: sección 6.**
 
-> **Esto no es asesoría legal.** Reúne lo que las tiendas piden hoy y lo que las leyes de la región suelen exigir, para que el dueño llegue a la reunión con un abogado boliviano con las preguntas hechas. Las citas de leyes salen de búsquedas y de textos oficiales leídos en la fecha indicada; donde no pude verificar algo, está marcado **[NO VERIFICADO]**. La fuente de verdad de este tema vive en `agrocom-api`; `agrocom-field` solo lo enlaza.
+> **Esto no es asesoría legal.** Reúne lo que las tiendas piden hoy y lo que las leyes de la región suelen exigir, para que el dueño llegue a la reunión con un abogado boliviano con las preguntas hechas. Las citas de leyes salen de búsquedas y de textos oficiales leídos en la fecha indicada; donde no pude verificar algo, está marcado **[NO VERIFICADO]**. La fuente de verdad de este tema vive en `agrocom-api`; `agrocom-field` solo lo enlaza. El dueño decidió ajustarse a lo que las tiendas exigen («si son restricción de las tiendas, nos tenemos que ajustar a ellas»): lo que este documento marca como decidido rige como política y se implementa por el plan de tareas de la sección 4.
 
-## 0. Lo que obliga a cambiar el diseño
+## 0. Lo que se decidió
 
-El diseño actual (ADR 0046 y 0024 de field) cumple casi todo lo que piden las tiendas, con estas excepciones, que se resuelven con las tareas de la sección 4:
+La investigación encontró nueve puntos donde el diseño no cumplía a las tiendas. El dueño decidió aplicarlos todos, y esto es lo vigente:
 
-1. **Falta «Eliminar mi cuenta», dentro de las dos apps y en una página web.** Hoy la «baja» es un estado que pone un administrador y deja la cuenta congelada con soft delete. Google dice que congelar o desactivar «no califica como eliminación de cuenta» y Apple, que desactivar «es insuficiente». Hace falta una eliminación iniciada por la persona, que borre o anonimice sus datos de verdad (T1 y T2).
-2. **El soft delete (invariante 8) y el retiro a esquemas `respaldo_*` (invariante 15) no sirven para los datos personales de una cuenta eliminada.** Una fila con nombre y teléfono marcada como borrada sigue siendo el dato. La eliminación debe anonimizar en el lugar y los respaldos deben tener una rotación declarada (T1, T13).
-3. **Conservar la selfie y el documento 12 meses «por temas legales» es defendible pero frágil.** Google permite retener por seguridad, prevención de fraude o cumplimiento legal si se declara en la política de privacidad. Apple solo menciona lo que la ley obliga a conservar. Bolivia no tiene ley general de datos y no encontré una norma que obligue a guardar la imagen del documento. El motivo real es prevenir fraude y poder defenderse en un reclamo, y así debe decirse. Hay dos formas de reducir el riesgo (sección 1.5).
-4. **El chat no tiene «reportar» ni «bloquear».** Google (1:1 con bloqueo obligatorio) y Apple 1.2 (filtro, reporte con respuesta, bloqueo y contacto publicado) lo exigen para contenido de usuarios. La política actual dice que soporte lee una conversación solo si hay un reclamo abierto, y eso choca con moderar un reporte (T7).
-5. **La ubicación del SOS y de las incidencias no está dentro de la regla «la ubicación no se guarda».** `seg_incidencias.ubicacion` guarda una posición. Hay que declararla y fijar su retención (T14).
-6. **La beta no tiene dominio ni HTTPS (ADR 0017).** Las dos tiendas piden una URL de privacidad pública y Apple bloquea HTTP por defecto. Producción necesita dominio y certificado antes de enviar nada (T4).
-7. **Mapas con `tile.openstreetmap.org`.** El servicio comunitario es «best effort», puede bloquear sin aviso y su política desaconseja depender de él en un producto comercial. Además recibe la IP y la zona que mira cada usuario: es un tercero que hay que declarar (T11).
-8. **El manifiesto de Android declara permisos de ubicación para las dos apps**, y solo el piloto usa `geolocator`. El cliente declararía un permiso que no usa (T5).
-9. **Edad mínima, responsable de los datos, contacto, terceros y plazos siguen en `[POR DEFINIR]`** en el borrador de privacidad. Las tiendas exigen una política completa.
+1. **«Eliminar mi cuenta»** dentro de las dos apps (Perfil, Privacidad y datos, con confirmación) y en la página pública `/eliminar-cuenta`. La eliminación voluntaria **anonimiza los datos personales en el lugar**; ya no es un congelamiento. Servicios, ofertas y calificaciones se conservan sin datos identificables. Qué se anonimiza y qué se conserva, plazos y auditoría: `eliminacion_de_cuenta.md` y ADR 0047 (1.5 y 1.6).
+2. **Retención de la selfie y el documento, opción B:** 12 meses solo si hubo antecedentes (suspensión, rechazo por fraude, incidencia grave o reclamo) o una baja administrativa; en una eliminación voluntaria sin antecedentes, 90 días; después solo queda un registro mínimo antifraude sin imágenes ni nombre (1.5).
+3. **El soft delete (invariante 8) y los esquemas `respaldo_*` (invariante 15)** no sirven para datos personales: reciben una excepción redactada en `CLAUDE.md` (ADR 0047, punto 13), y los respaldos rotan en 30 días.
+4. **Chat con «Reportar» y «Bloquear».** El reporte es un reclamo de tipo conducta y abre a soporte solo lo reportado (1.9).
+5. **La ubicación de un SOS o una incidencia se guarda** solo si la persona pulsa el botón o reporta, con finalidad de seguridad, 90 días después de cerrar la incidencia, y está declarada. La frase absoluta «la ubicación no se guarda» se reemplazó por la formulación exacta (1.3 y 1.4).
+6. **Dominio y HTTPS** son trabajo de infraestructura del dueño y condición para publicar: lista de verificación en la sección 6.
+7. **El mapa** con teselas públicas de OpenStreetMap no es base para una app publicada; la alternativa es una decisión del dueño con tres opciones (1.12).
+8. **Sign in with Apple no aplica** (1.11), la edad mínima es de **18 años** y las declaraciones de Data safety y App Privacy están alineadas con lo anterior (1.4 y 1.8).
+9. **Quién ofrece en una empresa** quedó resuelto (el encargado, con delegación opcional) y no es un tema de las tiendas.
+10. **Textos legales** (términos y privacidad), edad mínima, responsable, contacto, terceros y plazos: se completan con estas decisiones cuando se integre el PR de páginas legales (T3 de la sección 4).
 
 ## 1. Lo que cada tienda exige y cómo se aplica a Agrocom
 
@@ -44,32 +45,37 @@ La política de privacidad **no reemplaza** la explicación previa en la app (Go
 
 ### 1.3 Mapa de datos: dato, para qué, si se comparte, si es obligatorio y cuánto se conserva
 
-Es la base de la política, de Data safety y de App Privacy. «Comparte» incluye lo que ve la otra parte del servicio y los terceros (proveedores de infraestructura). Las retenciones salen de ADR 0046 §33, ADR 0040 y las políticas; **«[POR DEFINIR]»** marca lo que ningún documento fija hoy.
+Es la base de la política, de Data safety y de App Privacy. «Comparte» incluye lo que ve la otra parte del servicio y los terceros (proveedores de infraestructura). Las retenciones salen del ADR 0047, el ADR 0046 §33, el ADR 0040 y las políticas. «Eliminación» es lo que pasa cuando la persona elimina su cuenta (`eliminacion_de_cuenta.md`).
 
-| Dato | Para qué | ¿Se comparte? | ¿Obligatorio? | Retención |
+| Dato | Para qué | ¿Se comparte? | ¿Obligatorio? | Retención y eliminación |
 |---|---|---|---|---|
-| Nombre y apellidos | Saber quién es cada persona y que cada oferta sea real | El cliente ve al proveedor en las ofertas (nombre comercial, logo, calificación). El proveedor ve el nombre del cliente solo tras adjudicar | Sí | Mientras exista la cuenta; se anonimiza a los 12 meses de la baja si no hay otra cuenta viva ni reclamo (ADR 0046 §33) |
-| Teléfono | Referencia para entrar y contacto | Cliente y proveedor se ven el teléfono solo tras adjudicar. Nadie más | Sí | Igual; al anonimizar se libera |
+| Nombre y apellidos | Saber quién es cada persona y que cada oferta sea real | El cliente ve al proveedor en las ofertas (nombre comercial, logo, calificación). El proveedor ve el nombre del cliente solo tras adjudicar | Sí | Mientras exista la cuenta. Eliminación: la cuenta pasa a «Cuenta eliminada»; la persona (`sec_personas`) se anonimiza a los 90 días sin antecedentes o a los 12 meses con ellos, si no tiene otra cuenta viva |
+| Teléfono | Referencia para entrar y contacto | Cliente y proveedor se ven el teléfono solo tras adjudicar. Nadie más | Sí | Mientras exista la cuenta. Eliminación: se borra y queda libre |
 | Correo de respaldo | Recuperar el acceso con un código; avisos | No | Sí | Igual |
-| Documento (tipo, número) y fecha de nacimiento (proveedor) | Una persona, una cuenta por tipo; mayoría de edad de quien vuela | No. Las otras partes ven la insignia «Verificado» | Sí, para operar | Igual que el nombre |
-| Imagen del documento | Que quien revisa compruebe que la persona existe | No. Solo quien tiene `seguridad.verificacion.ver` | Sí, para operar (no para entrar y mirar) | Cuenta + 12 meses tras la baja; rechazadas o reemplazadas, 90 días |
+| Documento (tipo, número) y fecha de nacimiento (proveedor) | Una persona, una cuenta por tipo; mayoría de edad de quien vuela | No. Las otras partes ven la insignia «Verificado» | Sí, para operar | Igual que el nombre; después, solo una huella con clave del servidor (registro antifraude, 12 o 36 meses) |
+| Imagen del documento | Que quien revisa compruebe que la persona existe | No. Solo quien tiene `seguridad.verificacion.ver` | Sí, para operar (no para entrar y mirar) | Mientras exista la cuenta. Después: **90 días** si eliminó su cuenta sin antecedentes; **12 meses** con antecedentes o baja administrativa; rechazadas o reemplazadas, 90 días |
 | Selfie (cámara, en el momento) | Comparar con el documento | No. Igual | Sí, para operar | Igual |
-| Foto de perfil | Reconocer al proveedor en la oferta | Sí, a la otra parte | No | Con la cuenta |
-| Logo, nombre comercial, razón social, NIT | Datos de empresa | Logo y nombre del proveedor, al cliente en las ofertas; los del cliente, al proveedor tras adjudicar | No | Con la cuenta |
-| Documentos del proveedor (licencia, matrículas, seguros) y fotos del dron | Aprobar al proveedor | No. Solo quien revisa | Sí, para ofertar | Con la cuenta **[POR DEFINIR tras la baja]** |
-| Terreno y lotes (contorno, ubicación, hectáreas, cultivo, accesos, colindantes) y fotos del terreno | Que el proveedor decida su precio | Proveedores con la solicitud visible, antes de adjudicar y **sin la identidad del cliente** | Sí, para publicar | Con la cuenta; el registro del servicio sigue con la contraparte |
+| Foto de perfil, logo | Reconocer al proveedor en la oferta | Sí, a la otra parte | No | Con la cuenta; se borra al eliminarla |
+| Nombre comercial, razón social, NIT, dirección | Datos de empresa | Logo y nombre del proveedor, al cliente en las ofertas; los del cliente, al proveedor tras adjudicar | No | Con la cuenta; se borran al eliminarla |
+| Documentos del proveedor (licencia, matrículas, seguros) y fotos del dron | Aprobar al proveedor | No. Solo quien revisa | Sí, para ofertar | Con la cuenta; se borran al eliminarla |
+| Terreno y lotes (contorno, ubicación, hectáreas, cultivo, accesos, colindantes) y fotos del terreno | Que el proveedor decida su precio | Proveedores con la solicitud visible, antes de adjudicar y **sin la identidad del cliente** | Sí, para publicar | Con la cuenta. Al eliminarla, se borran el contorno, las fotos, los accesos y las observaciones; la contraparte conserva hectáreas, cultivo, departamento, provincia, fechas y precio |
 | Ubicación del piloto (última posición) | Que el cliente vea que el servicio avanza | Cliente del servicio, solo durante `en_ejecucion` | **No**: el piloto puede desactivarla | Se elimina al finalizar o cancelar; nunca en logs, bitácora ni historial |
-| Ubicación en SOS e incidencias | Avisar a soporte donde ocurre la emergencia | Soporte | No (la persona decide reportar) | **[POR DEFINIR]**: hoy se guarda en `seg_incidencias.ubicacion` |
-| Fotos de avance | Probar el avance y cerrar el servicio | Cliente del servicio | Sí, para cerrar | Mientras sea posible un reclamo y luego **[POR DEFINIR]** |
-| Mensajes del chat | Coordinar el servicio | La otra parte. Soporte solo con un reclamo abierto | No | **[POR DEFINIR]** |
-| Ofertas, precio acordado, avance, cierre, calificaciones, reclamos | Ser el registro del resultado del servicio | La contraparte | Sí | Se conservan; tras la baja muestran «Cuenta eliminada» (ADR 0046 §33) |
-| Token de sesión, `uuid_dispositivo`, token de push | Sesión, un dispositivo por token y avisos | Apple o Google si se usa su push **[ver T12]** | Sí (sesión) | Se revocan al cerrar sesión o dar de baja |
-| Aceptación de términos y privacidad (versión, fecha, app, dispositivo) | Prueba de que la persona aceptó | No | Sí | **[POR DEFINIR]** (prueba de aceptación) |
-| Bitácora de auditoría y accesos a verificaciones | Seguridad y responsabilidad | No | Sí | **[POR DEFINIR]** |
-| IP y registros del servidor (límites de frecuencia, errores) | Seguridad | No | Sí | **[POR DEFINIR]** |
-| IP y zona visible del mapa hacia `tile.openstreetmap.org` | Dibujar el mapa | **Sí, a la Fundación OpenStreetMap** | Sí, para ver mapas | Según la política de ese tercero |
+| **Ubicación de emergencia (SOS e incidencias)** | Avisar a soporte donde ocurre la emergencia y atenderla (seguridad) | Soporte; no la contraparte | No: solo si la persona pulsa el botón o reporta | **90 días después de cerrar la incidencia**; nunca de forma automática ni en segundo plano; no entra a logs ni analíticas. En el piloto es la posición del dispositivo; en el cliente, la del terreno del servicio |
+| Fotos de avance | Probar el avance y cerrar el servicio | Cliente del servicio | Sí, para cerrar | Hasta 12 meses después de que cierra el plazo de reclamo y de calificación (`retencion.servicio_meses`) |
+| Mensajes del chat | Coordinar el servicio | La otra parte. Soporte solo lee lo reportado, con consentimiento de quien reporta, o con un reclamo abierto | No | Igual que las fotos. Al eliminar la cuenta, se borra el texto de los mensajes que escribió |
+| Reportes y bloqueos | Moderar el chat y proteger a las personas | Soporte; el reportado no ve quién reportó | No | El reporte, con el servicio; el bloqueo, hasta que la persona lo deshaga o elimine su cuenta |
+| Ofertas, precio acordado, avance, cierre, calificaciones, reclamos | Ser el registro del resultado del servicio | La contraparte | Sí | Se conservan; tras la eliminación muestran «Cuenta eliminada» y de la calificación se conservan el puntaje y las etiquetas, no el comentario |
+| Token de sesión, `uuid_dispositivo`, token de push | Sesión, un dispositivo por token y avisos | Apple o Google si se usa su push **[ver T12]** | Sí (sesión) | Se revocan al cerrar sesión, dar de baja o eliminar la cuenta |
+| Aceptación de términos y privacidad (versión, fecha, app) | Prueba de que la persona aceptó | No | Sí | 36 meses (`retencion.aceptaciones_meses`), sin el identificador del dispositivo tras eliminar la cuenta |
+| Bitácora de auditoría y accesos a verificaciones | Seguridad y responsabilidad | No | Sí | Se conserva quién, cuándo y qué; los valores personales se redactan al eliminar la cuenta. **[POR DEFINIR]** el plazo de la bitácora misma |
+| IP y registros del servidor (límites de frecuencia, errores) | Seguridad | No | Sí | **[POR DEFINIR]** (por ejemplo 30 días) |
+| Registro mínimo antifraude (huella del documento, motivo, fecha) | Frenar la suplantación y el fraude reiterado | No | Sí, tras una eliminación | 12 meses sin antecedentes; 36 con ellos |
+| Respaldos | Recuperar el servicio ante un fallo | No | Sí | Rotan en 30 días; una restauración reaplica las eliminaciones ejecutadas |
+| IP y zona visible del mapa hacia el proveedor de teselas | Dibujar el mapa | **Sí, al proveedor de mapas (hoy la Fundación OpenStreetMap)** | Sí, para ver mapas | Según la política de ese tercero; decisión en 1.12 |
 
 Lo que Agrocom **no** recoge: pagos, contactos del teléfono, galería completa (solo las fotos que la persona elige), micrófono, ubicación en segundo plano, identificador de publicidad, analíticas ni reportes de fallos de terceros. Si algún día se agrega un SDK de analíticas o de fallos, hay que declararlo antes (Apple pide declarar también lo que recogen los SDK; Google igual).
+
+**La ubicación, con la formulación exacta.** La ubicación del piloto durante la ejecución se guarda solo como última posición y se elimina al finalizar; la única otra ubicación que se guarda es la de una emergencia o incidencia, solo si la persona pulsa el SOS o reporta, y 90 días después de cerrar la incidencia. La app no guarda ninguna ubicación en `drift`, logs, reportes de error ni analíticas, salvo la que viaja dentro del registro de la incidencia mientras espera sincronizarse. Esta es la frase que reemplaza a «la ubicación no se guarda».
 
 **Uso único.** Los datos se usan para garantizar que cada persona es real y que cada oferta es genuina, y para operar el servicio. Apple 5.1.2(ii) prohíbe reutilizar un dato para otro fin sin nuevo consentimiento, y 5.1.2(vi) prohíbe usar datos de las APIs de cámara y fotos para publicidad o minería de datos. La política de privacidad lo dice expresamente: **la selfie y el documento no se usan para nada más que verificar y prevenir fraude, no se venden ni se comparten** (Google también prohíbe vender datos personales y sensibles).
 
@@ -79,27 +85,31 @@ Lo que Agrocom **no** recoge: pagos, contactos del teléfono, galería completa 
 
 Reglas generales leídas el 2026-11-26. **Google:** [Data safety](https://support.google.com/googleplay/android-developer/answer/10787469). Un formulario por paquete, así que hay **dos** (`...cliente` y `...piloto`); «recoger» es sacar datos del dispositivo, incluidos los que envían librerías; «compartir» es darlos a un tercero (los proveedores que tratan datos por cuenta propia, las transferencias legales y las acciones iniciadas por el usuario quedan fuera); hay que decir si todo viaja cifrado, si la persona puede pedir la eliminación, y la declaración debe seguir exacta siempre. **Apple:** [App Privacy Details](https://developer.apple.com/app-store/app-privacy-details/). Hay que declarar todo lo recogido aunque no sea para analíticas ni publicidad, vinculado o no a la persona, y si se usa para rastreo (no se usa). «Fraude» no es un propósito aparte: va dentro de «App Functionality». Se puede cambiar sin una versión nueva.
 
-| Dato | Google Data safety | Apple App Privacy | Propósito | Vinculado al usuario | Opcional |
-|---|---|---|---|---|---|
-| Nombre, teléfono, correo, ID de usuario | Información personal: nombre, correo, ID de usuario, número de teléfono | Contact Info (nombre, correo, teléfono) e Identifiers (User ID) | Funcionamiento de la app, gestión de cuenta, prevención de fraude | Sí | No |
-| Documento (número), fecha de nacimiento | Información personal: «otra información» | **[NO VERIFICADO]** No encontré una categoría de Apple para documentos de identidad; la salida prudente es «Other Data Types» | Funcionamiento, prevención de fraude | Sí | No |
-| Selfie, imagen del documento, foto de perfil, fotos del terreno y de avance, fotos del dron | Fotos y videos | Photos or Videos | Funcionamiento, prevención de fraude | Sí | No (la de perfil sí) |
-| Ubicación del piloto | Ubicación precisa | Precise Location | Funcionamiento de la app | Sí | **Sí** (puede desactivarla) |
-| Contorno y ubicación del terreno | Ubicación precisa (lo ingresa la persona) | Precise Location | Funcionamiento de la app | Sí | No |
-| Mensajes | Mensajes: «otros mensajes en la app» | Other User Content | Funcionamiento de la app | Sí | No |
-| Ofertas, calificaciones, avance | Actividad de la app: «otro contenido generado por el usuario» | Other User Content | Funcionamiento de la app | Sí | No |
-| Token de dispositivo y de push | Dispositivo u otros ID | Device ID | Funcionamiento de la app | Sí | No |
-| Cifrado en tránsito | Sí (HTTPS; **requiere T4**) | n/a | | | |
-| ¿Pide eliminar los datos? | Sí, con la URL de eliminación | n/a (la eliminación va dentro de la app) | | | |
-| Rastreo / publicidad | No hay | No hay (no se usa App Tracking Transparency) | | | |
+**Versión alineada con las decisiones del 27/11/2026** (sustituye al borrador). Se completa en Play Console y App Store Connect al enviar (T9); cada fila vale para las dos apps salvo lo que dice la columna «Solo en».
+
+| Dato | Google Data safety | Apple App Privacy | Propósito | Vinculado | Opcional | Solo en |
+|---|---|---|---|---|---|---|
+| Nombre, teléfono, correo, ID de usuario | Información personal: nombre, correo, ID de usuario, número de teléfono | Contact Info (nombre, correo, teléfono) e Identifiers (User ID) | Funcionamiento de la app, gestión de cuenta, prevención de fraude | Sí | No | |
+| Documento (número), fecha de nacimiento | Información personal: «otra información» | **[NO VERIFICADO]** No encontré una categoría de Apple para documentos de identidad; la salida prudente es «Other Data Types» | Funcionamiento, prevención de fraude | Sí | No | Fecha de nacimiento: piloto |
+| Selfie, imagen del documento, foto de perfil, fotos del terreno y de avance, fotos del dron | Fotos y videos | Photos or Videos | Funcionamiento, prevención de fraude | Sí | La de perfil sí | Avance y dron: piloto; terreno: cliente |
+| Ubicación del piloto durante la ejecución | Ubicación precisa | Precise Location | Funcionamiento de la app | Sí | **Sí** (puede desactivarla) | Piloto |
+| **Ubicación de emergencia (SOS e incidencias)** | Ubicación precisa; recogida solo al pulsar el SOS o reportar; propósito de seguridad; conservada 90 días | Precise Location; Funcionamiento de la app | Seguridad (dentro de «App Functionality» en Apple) | Sí | **Sí** | Las dos (en el cliente es la del terreno del servicio, ya registrada) |
+| Contorno y ubicación del terreno | Ubicación precisa (lo ingresa la persona) | Precise Location | Funcionamiento de la app | Sí | No | Cliente |
+| Mensajes, reportes de conducta | Mensajes: «otros mensajes en la app» | Other User Content | Funcionamiento de la app | Sí | No | |
+| Ofertas, calificaciones, avance | Actividad de la app: «otro contenido generado por el usuario» | Other User Content | Funcionamiento de la app | Sí | No | |
+| Token de dispositivo y de push | Dispositivo u otros ID | Device ID | Funcionamiento de la app | Sí | No | |
+| Cifrado en tránsito | Sí (HTTPS; **requiere T4**) | n/a | | | | |
+| ¿Se puede pedir la eliminación? | **Sí**: dentro de la app y en la URL `/eliminar-cuenta`; se eliminan los datos personales y se conserva, declarado, lo de la retención B (selfie y documento 90 días o 12 meses, registro antifraude, servicios anonimizados) | n/a (la eliminación va dentro de la app; la web es la «Privacy Choices URL») | | | | |
+| Datos que se comparten con terceros | **No** como venta ni publicidad; los proveedores que tratan datos por cuenta de Agrocom (alojamiento, correo, mapas, push) se nombran en la política | Igual | | | | |
+| Rastreo / publicidad | No hay | No hay (no se usa App Tracking Transparency) | | | | |
 
 La selfie y el documento que **solo ve quien revisa** siguen siendo datos «recogidos»: Apple define recoger como enviarlos fuera del dispositivo para conservarlos más de lo necesario para atender la petición, y Google como transmitirlos fuera del dispositivo.
 
 **Lo que no pude confirmar de la clasificación:** si Apple trata la selfie de verificación como «Photos or Videos» o como «Sensitive Info» (que incluye datos biométricos). Su página no lo dice. Como no hay procesamiento biométrico, se declara como fotos; conviene confirmarlo en la reunión de App Store Connect o con soporte de Apple antes del primer envío.
 
-**Compartir.** Lo que una parte ve de la otra es parte del funcionamiento y lo inicia la persona al ofertar o adjudicar; Google no lo cuenta como compartir con terceros cuando es una acción iniciada o esperada por el usuario, pero la guía no habla del caso de dos usuarios de un marketplace **[NO VERIFICADO]**. Se explica igual en la política. Los terceros reales hoy son: alojamiento (servidor propio en Proxmox, hasta nuevo aviso), el servidor de correo configurado en `plt_configuraciones`, el servicio de push que se elija (T12) y OpenStreetMap (T11). Los proveedores que tratan datos por cuenta de Agrocom no cuentan como «compartir» en Google, pero sí deben estar nombrados en la política.
+**Compartir.** Lo que una parte ve de la otra es parte del funcionamiento y lo inicia la persona al ofertar o adjudicar; Google no lo cuenta como compartir con terceros cuando es una acción iniciada o esperada por el usuario, pero la guía no habla del caso de dos usuarios de un marketplace **[NO VERIFICADO]**. Se explica igual en la política. Los terceros reales hoy son: alojamiento (servidor propio en Proxmox, hasta nuevo aviso), el servidor de correo configurado en `plt_configuraciones`, el servicio de push que se elija (T12) y el proveedor de teselas del mapa (T11, decisión en 1.12). Los proveedores que tratan datos por cuenta de Agrocom no cuentan como «compartir» en Google, pero sí deben estar nombrados en la política.
 
-### 1.5 Eliminación de cuenta y la retención de 12 meses
+### 1.5 Eliminación de cuenta y retención de la selfie y el documento
 
 **Qué piden las tiendas** (consultas del 2026-11-26):
 
@@ -113,41 +123,40 @@ La selfie y el documento que **solo ve quien revisa** siguen siendo datos «reco
 | Alcance regional | Todas las personas | «Ofrecerla solo por CCPA o GDPR no es suficiente» |
 | Dónde se declara | Formulario Data safety, preguntas de eliminación | App Review |
 
-**Cómo se concilia con la retención de la selfie y el documento.** Hay que separar tres cosas que hoy el ADR 0046 mezcla en «baja»:
+**Decisión del dueño (27/11/2026): se aplica.** Hay tres cosas distintas, que antes el ADR 0046 mezclaba en «baja»:
 
-1. **Baja administrativa** (suspender o dar de baja una cuenta): decisión de un administrador, la cuenta queda cerrada. Sigue como está.
-2. **Eliminación pedida por la persona**: la persona ya no quiere la cuenta. Es lo que las tiendas exigen y no puede ser un congelamiento.
-3. **Conservación mínima para prevenir fraude y defender reclamos**: lo único que sobrevive a la eliminación, declarado y limitado en el tiempo.
+1. **Baja administrativa** (suspender o dar de baja una cuenta): decisión de un administrador, la cuenta queda cerrada. Sigue como está y cuenta como antecedente.
+2. **Eliminación pedida por la persona:** anonimiza los datos personales **en el lugar**; no es un congelamiento. Es lo que las tiendas exigen.
+3. **Conservación mínima:** lo único que sobrevive a la eliminación, declarado y con plazo.
 
-**Qué se elimina cuando la persona lo pide** (propuesta, dentro de los 30 días de la solicitud, plazo en un parámetro): perfil, foto de perfil, logo, correo, teléfono, contactos de referencia, documentos del proveedor, fotos del dron, equipos e integrantes, terrenos sin servicio vigente, borradores, tokens de sesión y de push; las solicitudes abiertas se cancelan y las ofertas vigentes se retiran. Nombre, documento y fecha de nacimiento se anonimizan **en el lugar** (no basta el soft delete). Si hay un servicio adjudicado o en ejecución, o un reclamo abierto, la eliminación se programa para cuando terminen y la app lo explica con el motivo y el camino (las dos tiendas aceptan explicar pasos previos, siempre que no sea una traba innecesaria).
+**Cómo funciona** (ADR 0047, puntos 1 a 6, y `eliminacion_de_cuenta.md`): se pide en la app con contraseña y un código al correo de respaldo, o en la web con el código; no se puede con un servicio adjudicado o en ejecución, un reclamo abierto, una incidencia grave abierta o pilotos vinculados (la app explica el motivo y la salida: son pasos previos que las dos tiendas admiten); al pedirla se cancelan las solicitudes abiertas y se retiran las ofertas; hay 7 días de arrepentimiento (la persona cancela entrando a la app); a los 30 días como máximo está ejecutada, y se avisa por correo al pedirla y al terminar. Los plazos son parámetros.
 
-**Qué se conserva y por qué, y debe estar escrito en la política y en la pantalla de eliminación:**
+**Qué se conserva y por qué** (debe estar escrito en la política y en la pantalla de eliminación):
 
 | Lo conservado | Motivo | Por cuánto | Quién lo ve |
 |---|---|---|---|
-| Selfie e imagen del documento, con nombre, documento y fecha de nacimiento | Prevenir fraude y suplantación (volver a registrarse con otra identidad) y defender a Agrocom y a la contraparte en un reclamo | 12 meses tras la baja o eliminación (ADR 0046 §33) | Solo quien tenga el permiso sensible; cada acceso queda registrado |
-| Ofertas, precio acordado, avance, cierre, fotos del servicio, mensajes y calificaciones del servicio | La plataforma es el registro del resultado; la contraparte los necesita para reclamos y calificaciones | Mientras sea posible un reclamo y luego **[POR DEFINIR]** | La contraparte, con la persona mostrada como «Cuenta eliminada» |
-| Aceptaciones, bitácora de auditoría | Probar qué se aceptó y qué se hizo | **[POR DEFINIR]** | Administradores |
+| Selfie e imagen del documento (y la persona que las acompaña), **sin antecedentes** | Defender a Agrocom y a la contraparte en un reclamo | **90 días** desde la eliminación | Solo quien tenga el permiso sensible, por un reclamo; cada acceso queda registrado |
+| Lo mismo, **con antecedentes** (suspensión, rechazo por fraude, incidencia grave, reclamo con responsabilidad) o tras una baja administrativa | Prevenir fraude y suplantación (volver a registrarse con otra identidad) y defender reclamos | **12 meses** | Igual |
+| Registro mínimo antifraude: huella del documento con clave del servidor, motivo y fecha; sin imágenes ni nombre | Frenar a quien vuelve a registrarse tras un fraude; la huella no permite recuperar el documento | 12 meses sin antecedentes; 36 con ellos | Administradores, solo como marca «documento con antecedentes»; nada es automático |
+| Ofertas, precio acordado, avance, cierre, hectáreas y reclamos cerrados | La plataforma es el registro del resultado; la contraparte los necesita para sus propios reclamos y su historial | Mientras sea posible un reclamo; mensajes y fotos, 12 meses más | La contraparte, con la persona mostrada como «Cuenta eliminada» |
+| Calificaciones (puntaje y etiquetas, sin comentario ni autor identificable) | No falsear la reputación ni el historial de las otras partes | Con el registro del servicio | La contraparte y el panel |
+| Aceptaciones, bitácora de auditoría | Probar qué se aceptó y qué se hizo; la bitácora conserva quién, cuándo y qué, sin los valores personales | Aceptaciones 36 meses; bitácora **[POR DEFINIR]** | Administradores |
 
-**Dónde está el riesgo y qué cambiaría.** Apple escribe «datos que el desarrollador **no está legalmente obligado** a conservar». Yo no encontré ninguna norma boliviana que obligue a guardar la imagen de un documento o una selfie; lo que existe es un interés legítimo (antifraude y defensa en reclamos) que las leyes de la región admiten bajo ciertas condiciones, y Google lo admite expresamente. Por eso:
+**Por qué conservar sigue siendo defendible, y su riesgo.** Apple escribe «datos que el desarrollador **no está legalmente obligado** a conservar». No se encontró ninguna norma boliviana que obligue a guardar la imagen de un documento o una selfie; lo que existe es un interés legítimo (antifraude y defensa en reclamos) que las leyes de la región admiten bajo ciertas condiciones, y Google admite expresamente. Por eso la retención B (la opción recomendada por la investigación) limita los 12 meses a quien dio motivo, reduce a 90 días lo de quien se va sin antecedentes y lo declara; la selfie y el documento nunca se usan para otra cosa (5.1.2(ii)). Lo confirma un abogado (sección 3). Las opciones que se descartaron: **A** (12 meses para todas las cuentas, por «temas legales»: riesgo de objeción de Apple y de conservar de más la cara y el documento de quien no dio motivo) y **C** (no conservar imágenes nunca: la más fácil de defender, pero sin pruebas para un reclamo).
 
-- **Opción A (la actual).** Todas las cuentas conservan selfie y documento 12 meses. Es la más simple. Riesgo: un revisor de Apple puede objetar que «por temas legales» no está respaldado, y una persona sin ningún antecedente ve conservada su cara y su documento un año después de irse. Se mitiga con la declaración clara y el acceso restringido.
-- **Opción B (recomendada, la decide el dueño).** El plazo de 12 meses se aplica cuando hubo suspensión, rechazo por fraude, incidencia grave o reclamo. Para una eliminación voluntaria sin antecedentes, las imágenes se eliminan al terminar el plazo de reclamos (por ejemplo, los 90 días que ya existen para verificaciones reemplazadas) y solo queda lo mínimo para frenar a quien volvió a registrarse tras un fraude (un código derivado del documento con clave del servidor, motivo y fecha, sin imágenes ni nombre). Reduce el riesgo en las tiendas y bajo la ley, y conserva el objetivo declarado.
-- **Opción C.** No conservar imágenes en ningún caso y confiar solo en el registro mínimo de B. Es la más fácil de defender y la que menos pruebas deja en un reclamo.
+**Texto de la pantalla de eliminación** (se repite en la política): «Eliminamos tu cuenta y tus datos personales. Por seguridad y para prevenir fraude, conservamos tu selfie y la imagen de tu documento durante 90 días (12 meses si tu cuenta tuvo suspensiones, reclamos o incidencias graves); solo las ve personal autorizado de Agrocom y luego se destruyen. Tus servicios y calificaciones se conservan sin tu nombre».
 
-Sea cual sea la opción, **se declara en la política y se repite en la pantalla de eliminación** («Eliminamos tu cuenta y tus datos. Por seguridad y para prevenir fraude, conservamos tu selfie y la imagen de tu documento durante N meses; solo las ve personal autorizado de Agrocom y luego se destruyen»). Y la regla de 5.1.2(ii): lo conservado no se usa para otra cosa.
-
-**Respaldos.** Los datos eliminados siguen en los respaldos hasta que rotan. La política debe decir cuánto (**[POR DEFINIR]**, por ejemplo hasta 30 días) y el procedimiento de restauración debe volver a aplicar las eliminaciones pendientes. El invariante 15 (mover a `respaldo_*`) no aplica a datos personales de una eliminación.
+**Respaldos.** Los datos eliminados siguen en los respaldos hasta que rotan: **30 días** (`respaldos.retencion_dias`, se dice en la política), y el procedimiento de restauración vuelve a aplicar las eliminaciones ejecutadas desde un registro que vive fuera de la base (`docs/seguridad/despliegue.md`). La excepción a los invariantes 8 y 15 que lo sostiene está en `CLAUDE.md` (ADR 0047, punto 13) y se marca como decisión revisable.
 
 ### 1.6 Página web de solicitud de eliminación
 
-Google la exige: «un enlace web donde las personas pidan la eliminación sin reinstalar la app», que nombre la app o el desarrollador como aparecen en Play, y fácil de encontrar. Apple no la pide, pero la acepta como complemento.
+Google la exige: «un enlace web donde las personas pidan la eliminación sin reinstalar la app», que nombre la app o el desarrollador como aparecen en Play, y fácil de encontrar. Apple no la pide, pero la acepta como complemento y como «Privacy Choices URL». **Se construye** (T2).
 
-- Ruta pública `GET /eliminar-cuenta`, enlazada desde `/privacidad`, `/terminos`, la ficha de Play (campo de la sección de eliminación de datos), el campo «Privacy Choices URL» de Apple y las apps.
-- Contenido: nombre «Agrocom», para cuál app aplica, qué se elimina, qué se conserva y por cuánto (la tabla de 1.5), plazo, cómo se confirma.
-- Flujo: la persona escribe su teléfono, usuario o correo y la app responde siempre igual; se envía un código al **correo de respaldo** (el mismo mecanismo de recuperación del ADR 0046 §27, con sus límites) y, al confirmarlo, queda registrada la solicitud. Sin código no se acepta: es la única forma de que un tercero no elimine la cuenta de otro.
-- Para quien perdió el acceso al correo: un formulario de contacto que abre una solicitud revisada por un administrador comparando selfie y documento (la vía que ya describe el ADR 0046).
-- La solicitud entra a una cola del panel con estado, plazo y autor; la persona recibe un correo al comenzar y otro al terminar (se envía antes de borrar el correo de la cuenta).
+- Ruta pública `GET /eliminar-cuenta` (sin sesión, sin PDF), enlazada desde `/privacidad`, `/terminos`, la ficha de Play (campo de eliminación de datos), el campo «Privacy Choices URL» de Apple y las apps.
+- Contenido: nombre «Agrocom», para cuál app aplica (cliente o piloto, porque el mismo teléfono puede estar en las dos), qué se elimina, qué se conserva y por cuánto (la tabla de 1.5), plazo y cómo se confirma.
+- Flujo: la persona escribe su teléfono, usuario o correo y elige la app; la página responde siempre igual; se envía un código al **correo de respaldo** (el mismo mecanismo de recuperación del ADR 0046 §27, con el propósito `eliminar_cuenta` y sus límites) y, al confirmarlo, se muestran el resumen y los impedimentos (si hay un servicio en curso, etc.) y queda registrada la solicitud. Sin código no se acepta: es la única forma de que un tercero no elimine la cuenta de otro, y por eso el estado de la cuenta se muestra solo después del código.
+- Para quien perdió el acceso al correo: un formulario de contacto que abre una solicitud revisada por un administrador comparando selfie y documento (la vía que ya describe el ADR 0046); el administrador registra la solicitud con `origen = oficina`.
+- La solicitud entra a una cola del panel con estado, plazo y autor; la persona recibe un correo al pedirla y otro al terminar (se envía antes de borrar el correo de la cuenta).
 
 ### 1.7 Permisos y textos de propósito
 
@@ -157,15 +166,15 @@ Fuentes: [User Data](https://support.google.com/googleplay/android-developer/ans
 |---|---|---|---|---|
 | Cámara | Selfie de verificación (obligatoria con cámara, sin galería), fotos de avance del piloto, foto del terreno, documento, incidencias | iOS: «Agrocom usa la cámara para fotografiar el lote, las incidencias y los documentos» | «Agrocom usa la cámara para tomarte una selfie y fotografiar tu documento, y para tomar fotos del terreno y del avance del servicio. Solo las ve quien tiene que verificarlas o quien participa del servicio.» | Falta la selfie. Pedirla justo antes del paso de la selfie, con una pantalla que explique para qué sirve y que no se usa para nada más |
 | Fotos | Elegir foto de perfil, logo, documento y fotos del terreno de la galería (no la selfie) | iOS: «necesita acceder a tus fotos para adjuntar evidencias y documentos» | «Agrocom accede solo a las fotos que eliges para tu perfil, el logo de tu empresa, tus documentos y el terreno. No lee el resto de tu galería.» | Apple 5.1.1(iii) recomienda el selector del sistema en lugar de acceso completo |
-| Ubicación (en uso) | Solo la app del piloto, durante un servicio en ejecución | iOS: «Agrocom comparte tu última ubicación con el cliente solo mientras tienes un servicio en ejecución» | Mantener el texto. Añadir antes del permiso una pantalla dentro de la app que diga qué se comparte, con quién, cuándo y que puede desactivarse | Android declara hoy `ACCESS_COARSE_LOCATION` y `ACCESS_FINE_LOCATION` en el manifiesto común: **retirarlos del flavor cliente**. No hay ubicación en segundo plano ni servicio en primer plano; mantener así evita el formulario de ubicación en segundo plano de Google y su video. Apple 5.1.2(i): la app del piloto debe funcionar si se rechaza; hoy puede desactivarla |
+| Ubicación (en uso) | Solo la app del piloto, durante un servicio en ejecución | iOS: «Agrocom comparte tu última ubicación con el cliente solo mientras tienes un servicio en ejecución» | Mantener el texto y agregar: «También la usamos, solo si pulsas el botón de auxilio o reportas una incidencia, para avisar a soporte dónde estás». Añadir antes del permiso una pantalla dentro de la app que diga qué se comparte, con quién, cuándo y que puede desactivarse | Android declara hoy `ACCESS_COARSE_LOCATION` y `ACCESS_FINE_LOCATION` en el manifiesto común: **retirarlos del flavor cliente** (su SOS usa la ubicación del terreno del servicio y no pide ubicación del dispositivo; ADR 0047, punto 14). No hay ubicación en segundo plano ni servicio en primer plano; mantener así evita el formulario de ubicación en segundo plano de Google y su video. Apple 5.1.2(i): la app del piloto debe funcionar si se rechaza; hoy puede desactivarla |
 | Notificaciones | Avisos de ofertas, adjudicación, mensajes y nuevas solicitudes | Android: `POST_NOTIFICATIONS`; iOS pide en ejecución | Pedir en contexto, con una pantalla previa: «Te avisamos cuando haya ofertas, mensajes o una solicitud nueva» | Apple 5.1.2(i): no exigirlas para usar la app. Hoy el aviso se ve en la campana mientras no haya push |
 
 ### 1.8 Clasificación por edad y público objetivo
 
-| Tienda | Qué piden | Aplicación |
+| Tienda | Qué piden | Aplicación (decidido el 27/11/2026) |
 |---|---|---|
-| Google | Declarar el público objetivo; si incluye niños rige la política de Familias. Cuestionario IARC en la sección de contenido; la inexactitud puede llevar a retirar la app ([Content ratings](https://support.google.com/googleplay/android-developer/answer/9859655), [App content](https://support.google.com/googleplay/android-developer/answer/9859455), 2026-11-26) | Público objetivo: **adultos** (el piloto debe ser mayor de edad; el cliente tiene terreno). Fijar edad mínima en los términos (hoy `[POR DEFINIR]`). Respuestas: sin contenido sexual, violento ni de juego; sí hay mensajes entre usuarios, contenido de usuarios y ubicación compartida |
-| Apple | Cuestionario de edad con 4+, 9+, 13+, 16+ y 18+; pregunta por contenido de usuarios, mensajes y chat, ubicación compartida y control de edad ([Age ratings](https://developer.apple.com/help/app-store-connect/reference/app-information/age-ratings-values-and-definitions), 2026-11-26) | Mensajes y contenido de usuarios no suben por sí solos la calificación; lo que la sube es una red social con difusión a muchos. Agrocom es 1:1 entre partes adjudicadas. **[NO VERIFICADO el resultado exacto]**: se conoce al completar el cuestionario |
+| Google | Declarar el público objetivo; si incluye niños rige la política de Familias. Cuestionario IARC en la sección de contenido; la inexactitud puede llevar a retirar la app ([Content ratings](https://support.google.com/googleplay/android-developer/answer/9859655), [App content](https://support.google.com/googleplay/android-developer/answer/9859455), 2026-11-26) | Público objetivo: **adultos, 18 años o más**. La **edad mínima de 18 años** va en los términos y el registro de las dos apps pide declararla («Soy mayor de 18 años», junto a la aceptación de términos); el piloto además da su fecha de nacimiento. Respuestas del cuestionario: sin contenido sexual, violento ni de juego; sí hay mensajes entre usuarios, contenido de usuarios (con reporte y bloqueo, 1.9) y ubicación compartida |
+| Apple | Cuestionario de edad con 4+, 9+, 13+, 16+ y 18+; pregunta por contenido de usuarios, mensajes y chat, ubicación compartida y control de edad ([Age ratings](https://developer.apple.com/help/app-store-connect/reference/app-information/age-ratings-values-and-definitions), 2026-11-26) | Se responde con los mismos datos. Mensajes y contenido de usuarios no suben por sí solos la calificación; lo que la sube es una red social con difusión a muchos. Agrocom es 1:1 entre partes adjudicadas. **[NO VERIFICADO el resultado exacto]**: se conoce al completar el cuestionario, y si Apple asigna 18+ se acepta |
 | Apple, Kids | No aplica: la app no está dirigida a menores | Evitar términos y capturas que sugieran público infantil |
 | Brasil | Google usa ClassInd (L, 10, 12, 14, 16, 18) por la IARC | Se obtiene sola del cuestionario |
 
@@ -173,10 +182,15 @@ Fuentes: [User Data](https://support.google.com/googleplay/android-developer/ans
 
 | Requisito | Fuente | Estado hoy | Aplicación |
 |---|---|---|---|
-| Google: aceptar los términos antes de crear contenido; los términos definen lo objetable; moderación «robusta, efectiva y continua»; **bloqueo en la app** para funciones 1:1; reporte de contenido y usuarios cuando la app es solo de usuarios registrados | [UGC](https://support.google.com/googleplay/android-developer/answer/9876937) (2026-11-26) | Términos con la aceptación del ADR 0046 §31; el borrador prohíbe insultos, amenazas y datos de terceros. **No hay reportar ni bloquear en el chat** | T7 |
-| Apple 1.2: filtro de material objetable, mecanismo de **reporte con respuesta a tiempo**, **bloqueo** de usuarios abusivos y **contacto publicado** | [Guidelines 1.2](https://developer.apple.com/app-store/review/guidelines/) (2026-11-26) | Solo hay `POST /api/calificaciones/{id}/reportar` para calificaciones. Soporte lee una conversación solo con un reclamo abierto | T7 |
+| Google: aceptar los términos antes de crear contenido; los términos definen lo objetable; moderación «robusta, efectiva y continua»; **bloqueo en la app** para funciones 1:1; reporte de contenido y usuarios cuando la app es solo de usuarios registrados | [UGC](https://support.google.com/googleplay/android-developer/answer/9876937) (2026-11-26) | Términos con la aceptación del ADR 0046 §31; el borrador prohíbe insultos, amenazas y datos de terceros. **Decidido:** reportar y bloquear en el chat (T7) | ADR 0047, puntos 15 a 19 |
+| Apple 1.2: filtro de material objetable, mecanismo de **reporte con respuesta a tiempo**, **bloqueo** de usuarios abusivos y **contacto publicado** | [Guidelines 1.2](https://developer.apple.com/app-store/review/guidelines/) (2026-11-26) | Hoy solo hay `POST /api/calificaciones/{id}/reportar` para calificaciones | Igual |
 
-Propuesta: en cada mensaje y en el chat, «Reportar» (con motivo; adjunta a soporte los últimos mensajes de esa conversación **con el consentimiento de quien reporta**, lo que se dice en la política) y «Bloquear» (la otra parte ya no puede escribir; **el servicio sigue**, porque la adjudicación es un acuerdo y el reclamo es la vía formal). Respuesta de soporte en el plazo que ya existe para reclamos no urgentes (24 horas hábiles). Filtro básico de enlaces, teléfonos y groserías, y un administrador puede ocultar una foto (ya existe). Contacto de soporte visible en la app y en la ficha.
+**Decisión aplicada** (política en `seguimiento_y_privacidad.md`, `disputas.md` y `negociacion.md`):
+
+- **Reportar.** En cada mensaje, en la conversación y en cada foto de avance, con un motivo (acoso o insultos, amenazas, contenido sexual o violento, datos de terceros, estafa o pago por fuera, suplantación, otro) y un detalle opcional. El reporte queda como un **reclamo de tipo conducta** en el panel. Al reportar, la persona acepta que soporte lea **solo lo reportado**: el mensaje y los 10 anteriores y posteriores, o los últimos 50 si reporta la conversación; esa lectura se cierra con el reporte y deja constancia de cada acceso. Así se concilia con la política «soporte lee el chat solo con un reclamo»: el reporte **es** el reclamo y abre un acceso acotado, no el chat completo. Un reclamo de servicio abierto sigue abriendo el chat de esa solicitud. Respuesta en 24 horas hábiles; resultados: sin lugar, advertencia, contenido ocultado o cuenta suspendida, con motivo, autor y apelación; sin sanciones automáticas.
+- **Bloquear.** Cierra el chat de esa solicitud para las dos partes y la negociación en curso (libera la casilla del cupo del cliente por el camino normal), y deja de mostrar a cada uno las solicitudes del otro en el mapa, en los avisos y en las ofertas. **El servicio ya adjudicado sigue**: la adjudicación es un acuerdo y el reclamo es la vía formal. No se avisa al bloqueado. Se deshace desde «Cuentas bloqueadas».
+- **Filtro básico** de palabras y enlaces que un administrador configura, una foto indebida la oculta un administrador, y el **contacto de soporte** está visible en las apps y en las fichas de las tiendas.
+- Las calificaciones ya se pueden reportar y un administrador las modera (`calificacion.md`).
 
 ### 1.10 Cuentas de prueba para los revisores
 
@@ -200,13 +214,25 @@ Cómo se da el acceso:
 
 | Tema | Resultado |
 |---|---|
-| **Sign in with Apple** | **No aplica.** Apple 4.8 solo exige otra opción de inicio de sesión cuando la app usa un inicio de sesión de terceros (Google, Facebook, etc.); Agrocom usa solo su propio sistema de cuentas, que está en la lista de excepciones ([4.8](https://developer.apple.com/app-store/review/guidelines/), 2026-11-26). Si algún día se agrega «Entrar con Google», sí aplica |
+| **Sign in with Apple** | **No aplica** (anotado el 27/11/2026, ADR 0047, punto 22). Apple 4.8 solo exige otra opción de inicio de sesión cuando la app usa un inicio de sesión de terceros (Google, Facebook, etc.); Agrocom usa solo su propio sistema de cuentas, que está en la lista de excepciones ([4.8](https://developer.apple.com/app-store/review/guidelines/), 2026-11-26). Si algún día se agrega «Entrar con Google», sí aplica |
 | **Privacy manifest de iOS** | Apple exige un `PrivacyInfo.xcprivacy` con las APIs de «motivo requerido» de la app y de los SDK (desde el 1 de mayo de 2024). La página oficial no cargó en la consulta, así que esto sale de conocimiento general **[NO VERIFICADO]**. Revisar `shared_preferences`, `flutter_secure_storage`, `drift`, `path_provider` y `package_info_plus` (T10) |
 | **Seguridad del transporte** | Google exige manejar los datos personales de forma segura (HTTPS). Apple bloquea HTTP por defecto. Requiere T4 |
 | **Dato sensible en el dispositivo** | Cumple: selfie, documento y códigos no se guardan en `drift`, preferencias ni logs (ADR 0024 §7); el token vive en Keychain/Keystore |
 | **Publicidad y seguimiento** | No hay. Declarar «sin anuncios» en Google y sin rastreo en Apple |
 | **Cuenta y datos sin compra** | Sin cobros en la app: no hay compras dentro de la app |
 | **Datos personales pedidos** | Apple 5.1.1(v): solo se piden datos personales cuando son esenciales para la función principal o la ley. La verificación se justifica por el núcleo del marketplace y se explica en las notas de revisión |
+
+### 1.12 Mapa: las teselas públicas de OpenStreetMap son un tercero
+
+Las apps dibujan el mapa con `flutter_map` y teselas de `tile.openstreetmap.org`. Su política de uso es «best effort», puede bloquear sin aviso, desaconseja depender de ellas en un producto comercial y exige un `User-Agent` identificable y la atribución; además ese servicio recibe la IP y la zona que mira cada persona. En una app publicada eso es un tercero que se declara y un riesgo de continuidad. **Es una decisión del dueño**: aquí van las opciones, sin elegir por él. Los precios son aproximados y de memoria; **[NO VERIFICADO]**: hay que confirmarlos en el sitio de cada proveedor antes de decidir.
+
+| Opción | Qué es | Costo aproximado | A favor | En contra |
+|---|---|---|---|---|
+| **A. Proveedor gestionado con plan comercial** (por ejemplo MapTiler, Stadia Maps, Thunderforest o Geoapify) | Teselas por una clave de API; estilos y, según el proveedor, satélite | Planes de entrada de unos US$20 a 30 al mes; los planes gratuitos suelen ser solo para uso no comercial o desarrollo | No hay nada que operar; términos y acuerdo de nivel de servicio claros; permite satélite, útil para ver lotes | Un costo mensual; la clave viaja en la app (se restringe por identificador de la app) y se declara al proveedor como tercero |
+| **B. Mapbox** | Teselas raster (y vectoriales) por token, con capa gratuita mensual y pago por uso | Cero en el volumen de un lanzamiento; después del cupo, del orden de US$0,5 por mil teselas | Escala sin trabajo; satélite y estilos propios | El costo crece con el uso y es difícil de predecir; sus términos exigen su atribución y limitan guardar teselas sin conexión; tercero a declarar |
+| **C. Teselas propias** | Extracto de OpenStreetMap de Bolivia (Geofabrik) servido como PMTiles o MBTiles con Nginx en la infraestructura Proxmox del dueño | Sin licencia (datos ODbL con atribución); costo en horas de montaje y actualización, y en ancho de banda y CPU del servidor | Control total y privacidad: la IP no sale a un tercero y no hay clave; costo fijo | Hay que montar, actualizar y vigilar el servicio; sin satélite (se necesitaría un proveedor aparte); si se usan teselas vectoriales, una dependencia nueva en la app con su motivo en el PR |
+
+Sea cual sea la opción: la **atribución** «© contribuyentes de OpenStreetMap» (y la del proveedor si lo pide) visible en el mapa; el **`User-Agent`** fijo; la clave de API, si hay, entra por `--dart-define-from-file` y nunca al repo; y se **declara en la política de privacidad** quién recibe la IP y la zona visible, y en Data safety y App Privacy si el proveedor las recoge para sí. Mientras no se decida, la beta del equipo sigue con las teselas actuales y no se publica en las tiendas con ellas.
 
 ## 2. Panorama de privacidad de datos personales en Latinoamérica
 
@@ -246,8 +272,8 @@ Cómo se da el acceso:
 | Finalidad | No usar los datos para algo distinto | Una sola finalidad declarada: autenticidad de las personas y de las ofertas |
 | Minimización y calidad | Pedir solo lo necesario, exacto y actualizado | El cliente no ve datos del proveedor ni el proveedor los del cliente antes de adjudicar; ubicación solo en ejecución; sin analíticas |
 | Seguridad | Medidas técnicas y organizativas; aviso de incidentes (LGPD, Ley 1581 y otras) | Disco privado, URL firmada, permiso sensible, bitácora de accesos, HTTPS; **falta** el procedimiento de aviso de incidentes |
-| Derechos de acceso, rectificación, cancelación y oposición (ARCO), y portabilidad en algunas leyes | La persona consulta, corrige, elimina y se opone | Corrección y eliminación en la app y la web (T1, T2); **falta** el canal y plazo de acceso y una exportación (T15) |
-| Conservación limitada | Guardar solo el tiempo necesario | 12 meses de la selfie y el documento; resto **[POR DEFINIR]** (T13) |
+| Derechos de acceso, rectificación, cancelación y oposición (ARCO), y portabilidad en algunas leyes | La persona consulta, corrige, elimina y se opone | Eliminación en la app y la web (decidido, T1 y T2); corrección en el perfil; **falta** el canal y plazo de acceso y una exportación (T15) |
+| Conservación limitada | Guardar solo el tiempo necesario | 90 días o 12 meses de la selfie y el documento según los antecedentes (retención B); lo demás, en 1.3 y en `eliminacion_de_cuenta.md` (T13) |
 | Transferencias internacionales | Enviar datos al extranjero con garantías | Hoy hospedaje propio; si se usa nube, push (Google o Apple) o correo de terceros, hay que revisarlo (sección 3) |
 | Responsable y contacto | Identificar a quien trata los datos y cómo contactarlo (LGPD pide un encargado) | Falta el dato de Agrocom SRL y el contacto en la política |
 | Datos de menores | Protección reforzada | App para mayores de edad, edad mínima en los términos |
@@ -256,43 +282,45 @@ Cómo se da el acceso:
 
 ## 3. Puntos que debe confirmar un abogado local
 
-1. **Si en Bolivia hay una norma que obligue o permita conservar la selfie y el documento 12 meses** tras la baja, y con qué base (interés legítimo, defensa de reclamos, deber legal). Es el motivo que se escribe hoy como «por temas legales». Y si la Opción B o C (sección 1.5) es más prudente.
+1. **La retención B:** si en Bolivia hay una norma que obligue o permita conservar la selfie y el documento 90 días o 12 meses según los antecedentes, y con qué base (interés legítimo, defensa de reclamos, deber legal); y si los plazos de 90 días y 12 meses son prudentes.
 2. **La naturaleza de la selfie**: si, sin comparación automática, se considera un dato biométrico o sensible, y qué consentimiento adicional se necesita (LGPD, Ley 1581 y otras lo tratan así cuando hay procesamiento biométrico).
 3. **Transferencia a proveedores fuera del país**: correo, push (Google o Apple), mapas, copias de seguridad o una futura nube. Qué cláusulas y qué aviso corresponden, y si alguna ley extranjera aplica si Agrocom sirve a personas de otro país.
-4. **Datos de documentos de terceros que el cliente carga** (contactos de referencia de empresa, integrantes del equipo): base legal para tratarlos, porque esas personas no aceptaron nada.
-5. **El plazo y el contenido de los términos y de la privacidad**: edad mínima, ley aplicable y jurisdicción, datos y representación de Agrocom SRL como responsable, aviso de incidentes y canal de derechos.
-6. **El alcance de lo que se conserva del registro del servicio** (mensajes, fotos, calificaciones, bitácora) y su plazo.
-7. **Ubicación en SOS e incidencias** y su conservación.
+4. **Datos de terceros que el cliente carga** (contactos de referencia de empresa, integrantes del equipo): base legal para tratarlos, porque esas personas no aceptaron nada.
+5. **El plazo y el contenido de los términos y de la privacidad**: edad mínima de 18 años, ley aplicable y jurisdicción, datos y representación de Agrocom SRL como responsable, aviso de incidentes y canal de derechos.
+6. **El alcance de lo que se conserva del registro del servicio** (mensajes, fotos, calificaciones, bitácora) y su plazo de 12 meses, y que el puntaje y las etiquetas de una calificación se conserven sin autor.
+7. **Ubicación en SOS e incidencias:** la conservación de 90 días tras cerrar la incidencia y la declaración como ubicación precisa.
 8. **Si el PL-538 u otra norma estará vigente cuando se publique la app**, y qué cambiaría (inscripción, responsable de protección, autoridad).
 9. **Cualquier obligación sectorial**: uso de drones agrícolas y datos de terrenos; no es el tema de este documento y no lo revisé.
+10. **El registro mínimo antifraude:** si una huella del documento con clave del servidor se considera un dato personal, con qué base se conserva 12 o 36 meses y cómo se informa.
+11. **El consentimiento al reportar:** que bastan el aviso y la casilla de la pantalla de reporte para que soporte lea lo reportado, y que el reportado no deba ser informado del contenido del reporte.
 
 ## 4. Tareas derivadas
 
-Prioridad: **P0** bloquea el envío a las tiendas; **P1** antes de abrir al público; **P2** poco después. Los números de ADR nuevos son los siguientes libres (0047 en api y 0025 en field).
+Prioridad: **P0** bloquea el envío a las tiendas; **P1** antes de abrir al público; **P2** poco después. Los números de ADR son el 0047 en api (decisión) y el 0025 en field (las apps). **Estado:** «decidido» quiere decir que el dueño lo resolvió el 27/11/2026 y falta implementarlo; el plan por fases, archivos y pruebas afectadas está en `plan_tiendas_v1.md`.
 
-| ID | Tarea | Repo | Prio | Documento o ADR que se actualiza |
-|---|---|---|---|---|
-| T1 | **Eliminar mi cuenta**: caso de uso y endpoint (`POST /api/cuenta/eliminacion` con confirmación por código al correo y contraseña), estados (`solicitada`, `programada`, `ejecutada`), anonimización en el lugar, cancelación de ofertas y solicitudes, bloqueo mientras haya servicio activo o reclamo (con mensaje claro), correo de confirmación y plazo en un parámetro. Pantalla en las dos apps (Perfil, Privacidad y datos) con los cinco estados y goldens | api + field | P0 | Nuevo ADR 0047 (api) y ADR 0025 (field); `CLAUDE.md` invariantes 8 y 15 (excepción para datos personales); ADR 0046 §33; `verificacion_proveedores.md`; `seguimiento_y_privacidad.md`; `docs/api/openapi.yaml`; `docs/seguridad/autenticacion.md`; ADR 0024 de field; `DESIGN.md` |
-| T2 | **Página web `/eliminar-cuenta`** (sección 1.6) y cola de solicitudes en el panel (estado, plazo, autor, caso sin acceso al correo) | api | P0 | ADR 0047; `legal.md`; política del panel; glosario |
-| T3 | **Completar los textos legales**: quitar los `[POR DEFINIR]` (responsable, contacto, edad mínima, terceros, retención, derechos, incidentes, transferencias), incluir la tabla de 1.3 y 1.5, y subir la versión | api | P0 | `legal.md`, `lang/es/legal.php`, `config/legal.php`; revisión de abogado (sección 3) |
-| T4 | **Dominio y HTTPS en producción**, antes de la URL de privacidad y de la eliminación | api | P0 | ADR 0017; `docs/gestion/entornos.md` |
-| T5 | **Textos de propósito y permisos por app**: Info.plist y manifiestos por flavor (retirar la ubicación del cliente), selfie en el texto de cámara, pantallas de explicación previa para cámara-selfie, ubicación y notificaciones | field | P0 | ADR 0024 puntos 5 y 7 de field; `DESIGN.md`; `docs/diseno/` |
-| T6 | **Enlaces a términos y privacidad** en el registro (la casilla del ADR 0024 §14 ya está decidida) y **dentro de la app** (ajustes de cuenta), más contacto de soporte visible | field | P0 | ADR 0024 §14; `DESIGN.md` |
-| T7 | **Reportar y bloquear en el chat**, filtro básico, respuesta de soporte, contacto publicado; la política cambia para que soporte lea los mensajes reportados con consentimiento de quien reporta | api + field | P0 | Nuevo ADR (moderación del chat); `seguimiento_y_privacidad.md`; `seguridad.md`; ADR 0040; `openapi.yaml`; ADR 0017 y 0018 de field |
-| T8 | **Cuentas de revisión de las tiendas** (sección 1.10) con datos de demostración aislados, marca para excluirlas de métricas, avisos y purgas, y las **notas para el revisor en inglés** | api | P0 | Nuevo `docs/gestion/revision-tiendas.md`; `demo-local.md`; ADR 0044 |
-| T9 | **Declaraciones**: Play Console (Data safety de las dos apps, URL de eliminación, contenido, público objetivo, acceso a la app, privacidad) y App Store Connect (App Privacy de las dos apps, edad, URL de privacidad y de soporte, notas de revisión), con los valores de 1.3 y 1.4 | field | P0 | Nuevo `docs/gestion/publicacion-tiendas.md` en field |
-| T10 | **`PrivacyInfo.xcprivacy`** de las apps y verificación de los manifiestos de los plugins | field | P1 | `docs/gestion/ci-por-impacto.md` si cambia la compuerta; ADR 0019 de field |
-| T11 | **Mapa**: servidor de teselas propio o proveedor comercial, con `User-Agent` fijo y atribución (ya hay), y declarar al tercero | field + api | P1 | el ADR que fija las teselas abiertas (citado en `lib/nucleo/marketplace/ui/mapa_lote.dart` de field); política de privacidad |
-| T12 | **Push**: decidir el servicio (FCM/APNs), enviar sin datos personales en el mensaje, declarar el ID de dispositivo | api + field | P1 | ADR 0041 y 0045; ADR 0020 de field; Data safety |
-| T13 | **Retención**: parámetros y política para mensajes, fotos, bitácora, aceptaciones, registros del servidor y respaldos; elegir entre las Opciones A, B o C de 1.5 | api | P1 | ADR 0046 §33; `seguimiento_y_privacidad.md`; `CLAUDE.md` invariante 13; tarea `PurgarVerificaciones` |
-| T14 | **Ubicación en SOS e incidencias**: fijar retención, decir en la política que existe y alinear el invariante 13 | api + field | P1 | ADR 0040; `seguridad.md`; `seguimiento_y_privacidad.md`; `CLAUDE.md` de field («ninguna ubicación se guarda en drift») |
-| T15 | **Derechos de acceso y rectificación**: canal, plazo de respuesta y exportación de los datos propios; cola en el panel | api | P2 | ADR 0047; `legal.md` |
-| T16 | **Registro de aceptación** (`sec_aceptaciones`, `GET /api/legal/vigentes`, `legal_pendiente`): confirmar que está implementado antes del envío | api + field | P1 | ADR 0046 §31; ADR 0024 §14 de field |
-| T17 | **Edad mínima y cuestionarios de edad** con las respuestas de 1.8 | api + field | P1 | Términos; ADR 0046 |
-| T18 | **Terceros y encargados del tratamiento**: lista pública de proveedores, contratos con ellos y revisión de transferencias | api | P1 | `legal.md`; `docs/seguridad/` |
-| T19 | **Aviso de incidentes de seguridad**: procedimiento y texto | api | P2 | `docs/seguridad/`; `legal.md` |
-| T20 | **Abogado local**: revisar las preguntas de la sección 3 y los textos de T3 | dueño | P0 | Este documento |
-| T21 | **Cuentas de desarrollador de organización** (Google con D-U-N-S, Apple como entidad) | dueño | P0 | `docs/gestion/publicacion-tiendas.md` |
+| ID | Tarea | Repo | Prio | Estado | Documento o ADR que se actualiza |
+|---|---|---|---|---|---|
+| T1 | **Eliminar mi cuenta**: `POST /api/cuenta/eliminacion` con código al correo y contraseña, estados (`solicitada`, `pospuesta`, `cancelada`, `ejecutada`), gracia de 7 días, anonimización en el lugar, cancelación de ofertas y solicitudes, bloqueo con servicio o reclamo, correos y parámetros. Pantalla en las dos apps (Perfil, Privacidad y datos) con los cinco estados y goldens | api + field | P0 | decidido (ADR 0047 y 0025) | `CLAUDE.md` invariantes 8, 9, 13 y 15; ADR 0046 §33; `eliminacion_de_cuenta.md`; `openapi.yaml`; `DESIGN.md` |
+| T2 | **Página web `/eliminar-cuenta`** (sección 1.6) y cola de solicitudes en el panel (estado, plazo, autor, caso sin acceso al correo) | api | P0 | decidido | ADR 0047; `legal.md`; glosario |
+| T3 | **Completar los textos legales**: quitar los `[POR DEFINIR]`, incluir las tablas de 1.3 y 1.5, la eliminación, la retención B, reportar y bloquear, la ubicación de emergencia, la edad mínima de 18 años y el tercero del mapa, y subir la versión. **Depende de que se integre el PR de páginas legales** (`feature/paginas-legales`) | api | P0 | decidido; espera el PR de páginas legales | `legal.md`, `lang/es/legal.php`, `config/legal.php`; revisión de abogado (sección 3) |
+| T4 | **Dominio y HTTPS en producción**, antes de la URL de privacidad y de la eliminación (sección 6) | api (infraestructura del dueño) | P0 | por hacer por el dueño | ADR 0017; `docs/gestion/entornos.md` |
+| T5 | **Textos de propósito y permisos por app**: Info.plist y manifiestos por flavor (retirar la ubicación del cliente), selfie en el texto de cámara, pantallas de explicación previa | field | P0 | decidido | ADR 0024 y 0025; `DESIGN.md`; `docs/diseno/` |
+| T6 | **Enlaces a términos y privacidad** en el registro y dentro de la app (ajustes de cuenta), contacto de soporte visible y declaración «Soy mayor de 18 años» | field | P0 | decidido | ADR 0024 §14 y 0025 |
+| T7 | **Reportar y bloquear** en el chat: reclamo de conducta, lectura acotada, bloqueos y su efecto en cupo, mapa y avisos, filtro básico, panel y apps | api + field | P0 | decidido (ADR 0047 y 0025) | `seguimiento_y_privacidad.md`; `disputas.md`; `negociacion.md`; `openapi.yaml`; ADR 0017 y 0018 de field |
+| T8 | **Cuentas de revisión de las tiendas** (sección 1.10) con datos de demostración aislados y las **notas para el revisor en inglés** | api | P0 | por hacer | Nuevo `docs/gestion/revision-tiendas.md`; `demo-local.md`; ADR 0044 |
+| T9 | **Declaraciones**: Play Console (Data safety de las dos apps, URL de eliminación, contenido, público objetivo, acceso a la app, privacidad) y App Store Connect (App Privacy de las dos apps, edad, URL de privacidad y de soporte, notas de revisión), con los valores de 1.3 y 1.4 | field | P0 | borrador alineado (1.4) | Nuevo `docs/gestion/publicacion-tiendas.md` en field |
+| T10 | **`PrivacyInfo.xcprivacy`** de las apps y verificación de los manifiestos de los plugins | field | P1 | por hacer | `docs/gestion/ci-por-impacto.md` si cambia la compuerta; ADR 0019 de field |
+| T11 | **Mapa**: elegir entre las opciones de 1.12 e implementarla | field + api | P1 | **decisión del dueño** | el ADR que fija las teselas abiertas; política de privacidad |
+| T12 | **Push**: decidir el servicio (FCM/APNs), enviar sin datos personales en el mensaje, declarar el ID de dispositivo | api + field | P1 | por decidir | ADR 0041 y 0045; ADR 0020 de field; Data safety |
+| T13 | **Retención**: purga con la opción B (`PurgarVerificaciones`), `PurgarRetencionDeServicios`, parámetros `retencion.*` y respaldos de 30 días con `bin/reaplicar-eliminaciones` | api | P1 | decidido | ADR 0046 §33; ADR 0047; `docs/seguridad/despliegue.md` |
+| T14 | **Ubicación en SOS e incidencias**: 90 días tras el cierre (`PurgarUbicacionDeIncidencias`), SOS del cliente con la ubicación del terreno, y la formulación exacta en la política y en `CLAUDE.md` de field | api + field | P1 | decidido | ADR 0040 y 0047; `seguridad.md`; `seguimiento_y_privacidad.md` |
+| T15 | **Derechos de acceso y rectificación**: canal, plazo de respuesta y exportación de los datos propios; cola en el panel | api | P2 | por hacer | ADR 0047; `legal.md` |
+| T16 | **Registro de aceptación** (`sec_aceptaciones`, `GET /api/legal/vigentes`, `legal_pendiente`): confirmar que está implementado antes del envío | api + field | P1 | por confirmar | ADR 0046 §31; ADR 0024 §14 de field |
+| T17 | **Edad mínima y cuestionarios de edad** con las respuestas de 1.8 | api + field | P1 | decidido (18 años) | Términos; ADR 0046 |
+| T18 | **Terceros y encargados del tratamiento**: lista pública de proveedores, contratos con ellos y revisión de transferencias | api | P1 | por hacer | `legal.md`; `docs/seguridad/` |
+| T19 | **Aviso de incidentes de seguridad**: procedimiento y texto | api | P2 | por hacer | `docs/seguridad/`; `legal.md` |
+| T20 | **Abogado local**: revisar las preguntas de la sección 3 y los textos de T3 | dueño | P0 | por hacer | Este documento |
+| T21 | **Cuentas de desarrollador de organización** (Google con D-U-N-S, Apple como entidad) | dueño | P0 | por hacer | `docs/gestion/publicacion-tiendas.md` |
 
 ## 5. Lo que no pude verificar en esta revisión
 
@@ -306,3 +334,34 @@ Prioridad: **P0** bloquea el envío a las tiendas; **P1** antes de abrir al púb
 - El estado de **Chile** (si la postergación a 2027 ya es ley), el art. 12 de la Ley argentina 25.326 y el detalle del registro de bases de datos en Colombia.
 - Ecuador, Uruguay, Paraguay y otros países.
 - La versión mínima de Android (`targetSdk`) que Google exige hoy para publicar.
+
+## 6. Antes de publicar en las tiendas
+
+Lista de verificación para el dueño. Lo marcado como «dueño» es infraestructura y trámites que no se resuelven con código; lo demás lo implementa el plan de tareas (sección 4). **Nada de esto se da por hecho:** cada casilla se tilda cuando se comprueba.
+
+**Dominio, HTTPS y páginas públicas (dueño)**
+
+- [ ] **Dominio propio** registrado a nombre de Agrocom SRL, con DNS administrable. Una dirección para la web y las páginas legales y otra para la API (por ejemplo `agrocom.<dominio>` y `api.<dominio>`; el nombre lo elige el dueño).
+- [ ] **Certificado HTTPS** válido y renovación automática (Nginx Proxy Manager del Proxmox es una vía), redirección de HTTP a HTTPS y HSTS. La API y las apps usan solo HTTPS (`API_BASE_URL` de las apps en `https://`; sin excepciones de certificado en release).
+- [ ] **`/terminos`** abre sin sesión, activa, sin PDF, con la versión vigente.
+- [ ] **`/privacidad`** abre sin sesión, activa, sin PDF, con contacto del desarrollador, qué datos se recogen y con quién se comparten, la retención y la eliminación (esta política).
+- [ ] **`/eliminar-cuenta`** abre sin sesión y funciona de punta a punta (código al correo, resumen, solicitud); es la URL de eliminación de Play y la «Privacy Choices URL» de Apple.
+- [ ] Las tres páginas se abren desde fuera de la red del equipo y desde cualquier país.
+- [ ] **Correo de contacto y soporte** con buzón real (por ejemplo `soporte@<dominio>`), también publicado en las apps, en las dos fichas y en el campo «Support URL» de Apple; un teléfono de soporte si se ofrece.
+- [ ] **Correo del sistema** con remitente propio del dominio, SPF, DKIM y DMARC configurados para que los códigos de recuperación y de eliminación lleguen, y un servidor SMTP real en `plt_configuraciones` (no Mailpit).
+- [ ] Certificado, dominio y servidor encendidos mientras dure la revisión de las tiendas (Apple prueba con el backend activo).
+
+**Dependencias de código y textos**
+
+- [ ] **PR de páginas legales** integrado en `develop` (`feature/paginas-legales`): sin él no existen `legal.md`, `lang/es/legal.php` ni `config/legal.php`. Después, T3 actualiza sus textos con la eliminación, la retención B, reportar y bloquear, la ubicación de emergencia, la edad mínima y el mapa, y sube la versión.
+- [ ] **Textos legales revisados por un abogado** (T20) y `LEGAL_BORRADOR=false` en producción.
+- [ ] `GET /api/legal/vigentes` devuelve las direcciones https y las versiones (`legal.terminos_url`, `legal.privacidad_url`).
+- [ ] T1, T2, T7 y T14 implementados y probados en un entorno con HTTPS.
+
+**Cuentas, declaraciones y revisión**
+
+- [ ] Cuenta de desarrollador de organización: Google (D-U-N-S) y Apple (entidad legal) (T21).
+- [ ] Decisión del mapa tomada e implementada (1.12) y declarada en la política.
+- [ ] Data safety (las dos apps) y App Privacy (las dos apps) cargados con la tabla de 1.4; edad y público objetivo (1.8).
+- [ ] Cuentas de revisión creadas, aprobadas y con datos de demostración (1.10) y notas para el revisor en inglés, con la ruta de eliminar cuenta y de reportar.
+- [ ] `PrivacyInfo.xcprivacy` y manifiestos de permisos por flavor revisados (T5, T10).

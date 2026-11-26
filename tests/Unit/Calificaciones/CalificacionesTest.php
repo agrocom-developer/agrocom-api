@@ -78,6 +78,9 @@ function calMundo(): CalificacionesGuardadas
         'agrega_reputacion_a_sol_clientes',
         'create_cal_calificaciones_table',
         'create_cal_moderaciones_table',
+        'agrega_ubicacion_a_sol_terrenos',
+        'agrega_ubicacion_a_sol_solicitudes_servicio',
+        'retira_zonas',
     ]);
 
     foreach (['cal_moderaciones', 'cal_calificaciones', 'sol_solicitud_historial', 'sol_solicitudes_servicio', 'sol_clientes'] as $tabla) {
@@ -85,7 +88,7 @@ function calMundo(): CalificacionesGuardadas
     }
 
     DB::table('sol_clientes')->insert([
-        'id' => 1, 'usuario_id' => CAL_CLIENTE_USUARIO, 'tipo' => 'persona', 'razon_social' => 'Cliente Ana', 'estado' => 'activo',
+        'id' => 1, 'usuario_id' => CAL_CLIENTE_USUARIO, 'tipo' => 'persona', 'razon_social' => 'Cliente Ana', 'estado' => 'aprobado',
         'created_at' => now(), 'updated_at' => now(),
     ]);
 

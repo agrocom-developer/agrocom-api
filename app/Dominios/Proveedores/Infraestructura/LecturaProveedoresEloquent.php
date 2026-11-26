@@ -155,8 +155,6 @@ final class LecturaProveedoresEloquent implements LecturaProveedores
             $proveedor->tipo->value,
             $proveedor->razon_social,
             $proveedor->estado->value,
-            $proveedor->zona_base_id,
-            (string) $proveedor->radio_operacion_km,
             (string) $proveedor->calificacion_promedio,
             $proveedor->calificaciones_conteo,
             (string) $proveedor->tasa_aceptacion,

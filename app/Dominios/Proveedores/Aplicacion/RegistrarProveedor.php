@@ -9,7 +9,11 @@ use App\Dominios\Proveedores\Dominio\TipoProveedor;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Piloto;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Proveedor;
 use App\Dominios\Seguridad\Contratos\CuentaDuplicada;
+use App\Dominios\Seguridad\Contratos\CuentaYaRegistrada;
+use App\Dominios\Seguridad\Contratos\DatosDePersona;
 use App\Dominios\Seguridad\Contratos\RegistroCuentas;
+use App\Dominios\Seguridad\Contratos\ReglasDeContacto;
+use App\Dominios\Seguridad\Contratos\TipoCuenta;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
@@ -32,9 +36,10 @@ final class RegistrarProveedor
     ) {}
 
     /**
-     * @param  array{tipo: string, nombre: string, username: string, email: ?string, password: string, telefono: ?string, razon_social: string, documento_fiscal: ?string, zona_base_id: ?int, radio_operacion_km: ?string, licencia_numero?: ?string, licencia_vence?: ?string, categoria_habilitacion?: ?string, nombres?: ?string, apellidos?: ?string, documento_identidad?: ?string, fecha_nacimiento?: ?string, registrado_por?: ?int}  $datos
+     * @param  array{tipo: string, nombre: string, username: string, email: ?string, password: string, telefono: ?string, razon_social: string, documento_fiscal: ?string, licencia_numero?: ?string, licencia_vence?: ?string, categoria_habilitacion?: ?string, nombres?: ?string, apellidos?: ?string, documento_identidad?: ?string, fecha_nacimiento?: ?string, registrado_por?: ?int, documento_tipo?: ?string, documento_numero?: ?string}  $datos
      *
      * @throws CuentaDuplicada si el `username` o el `email` ya existen.
+     * @throws CuentaYaRegistrada si el teléfono o el documento ya tienen una cuenta de proveedor.
      * @throws RegistroDuplicado si el documento fiscal ya pertenece a otro proveedor.
      */
     public function ejecutar(array $datos): Proveedor
@@ -48,7 +53,16 @@ final class RegistrarProveedor
         $proveedor = DB::transaction(function () use ($datos, $tipo): Proveedor {
             $roles = $tipo->titularEsPiloto() ? ['proveedor', 'piloto'] : ['proveedor'];
 
-            $usuarioId = $this->cuentas->crear($datos['nombre'], $datos['username'], $datos['email'] ?? null, $datos['password'], $roles);
+            // Teléfono en E.164 (único por tipo) y persona por documento (ADR 0046): quien ya tiene una cuenta
+            // de proveedor, por teléfono o por documento, no abre otra. `documento_identidad` es el nombre de
+            // siempre del número de documento; `documento_numero` es el nuevo y manda si llega.
+            $telefono = ReglasDeContacto::telefono($datos['telefono'] ?? null);
+            $numero = $datos['documento_numero'] ?? $datos['documento_identidad'] ?? null;
+            $persona = ! empty($numero) && ! empty($datos['nombres']) && ! empty($datos['apellidos'])
+                ? new DatosDePersona($datos['documento_tipo'] ?? 'ci', (string) $numero, $datos['nombres'], $datos['apellidos'], $datos['fecha_nacimiento'] ?? null)
+                : null;
+
+            $usuarioId = $this->cuentas->crear($datos['nombre'], $datos['username'], $datos['email'] ?? null, $datos['password'], TipoCuenta::Proveedor, $roles, $telefono, $persona);
             // Quien registra: la propia cuenta (app) o la persona de la oficina que lo carga a mano (panel).
             $autorId = $datos['registrado_por'] ?? $usuarioId;
 
@@ -58,13 +72,11 @@ final class RegistrarProveedor
                     'tipo' => $tipo,
                     'razon_social' => $datos['razon_social'],
                     'documento_fiscal' => $datos['documento_fiscal'] ?? null,
-                    'telefono' => $datos['telefono'] ?? null,
+                    'telefono' => $telefono ?? ($datos['telefono'] ?? null),
                     'nombres' => $datos['nombres'] ?? null,
                     'apellidos' => $datos['apellidos'] ?? null,
-                    'documento_identidad' => $datos['documento_identidad'] ?? null,
+                    'documento_identidad' => $datos['documento_numero'] ?? $datos['documento_identidad'] ?? null,
                     'fecha_nacimiento' => $datos['fecha_nacimiento'] ?? null,
-                    'zona_base_id' => $datos['zona_base_id'] ?? null,
-                    'radio_operacion_km' => $datos['radio_operacion_km'] ?? config('proveedores.radio_operacion_defecto_km'),
                     'created_by' => $autorId,
                     'updated_by' => $autorId,
                 ]);

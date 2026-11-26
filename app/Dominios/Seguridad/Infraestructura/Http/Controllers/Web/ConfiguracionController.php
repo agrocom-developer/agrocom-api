@@ -16,7 +16,7 @@ use Illuminate\View\View;
  * `GET /panel/configuracion`, `POST /panel/configuracion/{grupo}` (tarea 78,
  * HU-55): llaves y tokens con que EL SISTEMA se parametriza (mapas, correo,
  * integraciones) — separado a propósito de `/panel/organizacion` (los datos
- * de LA EMPRESA). Exclusivo del rol `dueno` (pedido explícito del 7/9/2026):
+ * de LA EMPRESA). Exclusivo del administrador (permisos reservados, ADR 0046):
  * dos permisos propios, `seguridad.configuracion.ver`/`.editar`, que ninguna
  * otra lista `PERMISOS_*` de `SeguridadSeeder` referencia.
  *

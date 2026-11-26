@@ -4,6 +4,7 @@ namespace App\Dominios\Seguridad\Aplicacion;
 
 use App\Dominios\Seguridad\Dominio\Excepciones\PermisoDenegado;
 use App\Dominios\Seguridad\Dominio\Excepciones\RolProtegido;
+use App\Dominios\Seguridad\Dominio\PermisosReservados;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRolePermission;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
@@ -11,7 +12,8 @@ use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUserRole;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Baja lógica de un rol (ADR 0007: soft delete, nunca `DELETE` físico).
+ * Baja lógica de un rol (ADR 0007: soft delete, nunca `DELETE` físico). Los dos
+ * roles del panel, `administrador` y `operador`, no se dan de baja (ADR 0046).
  *
  * Tres guardas, y las tres son sobre cosas que la base aceptaría sin
  * chistar:
@@ -51,6 +53,11 @@ final class EliminarRol
     {
         if (! $this->actorTienePermiso($actor, $idRolActivo, self::PERMISO_ELIMINAR)) {
             throw PermisoDenegado::porFaltaDePermiso(self::PERMISO_ELIMINAR);
+        }
+
+        // `administrador` y `operador` son del sistema (ADR 0046, punto 4).
+        if (PermisosReservados::esRolDelPanel((string) $rol->name)) {
+            throw RolProtegido::porRolDelPanel((string) $rol->name);
         }
 
         if ($idRolActivo !== null && $rol->id === $idRolActivo) {

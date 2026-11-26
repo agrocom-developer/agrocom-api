@@ -62,7 +62,7 @@ function avanceSolicitud(EstadoSolicitud $estado, string $hectareas = '100.0000'
         'usuario_id' => 55,
         'tipo' => 'persona',
         'razon_social' => 'Cliente de prueba',
-        'estado' => 'activo',
+        'estado' => 'aprobado',
         'created_at' => now(),
         'updated_at' => now(),
     ]);

@@ -91,6 +91,31 @@ use OpenApi\Attributes as OA;
     ],
     type: 'object',
 )]
+#[OA\Schema(
+    schema: 'CuentaNoAprobada',
+    title: 'Cuenta no aprobada',
+    description: 'Respuesta 403 de la compuerta de la cuenta (ADR 0046, punto 12): la cuenta existe pero su estado no permite publicar, aceptar o contraofertar (cliente), ni ofertar, contraofertar o aceptar (proveedor). La app lo muestra como la pantalla de verificación, no como un error genérico. Distinto de `proveedor_no_habilitado` (falta un equipo apto). La app no replica la regla: la decide el servidor.',
+    required: ['message', 'codigo', 'estado', 'falta'],
+    properties: [
+        new OA\Property(property: 'message', type: 'string', example: 'Tu cuenta está en revisión. Cuando la aprobemos podrás publicar y negociar; mientras tanto puedes revisar tus datos.'),
+        new OA\Property(property: 'codigo', type: 'string', enum: ['cuenta_no_aprobada'], example: 'cuenta_no_aprobada'),
+        new OA\Property(property: 'estado', type: 'string', enum: ['pendiente', 'rechazado', 'suspendido', 'baja'], example: 'pendiente'),
+        new OA\Property(property: 'falta', description: 'Qué impide aprobar la cuenta (`verificacion`, `documentos`, `dron_fotos`, `equipo`…). Mientras no existan esos pasos viene vacío.', type: 'array', items: new OA\Items(type: 'string'), example: []),
+    ],
+    type: 'object',
+)]
+#[OA\Schema(
+    schema: 'CuentaYaRegistrada',
+    title: 'Cuenta ya registrada',
+    description: 'Respuesta 409 de un registro (ADR 0046): el teléfono o la persona (documento) ya tiene una cuenta de ESE tipo. No dice cuál de los dos datos chocó, ni datos de nadie, ni si la cuenta está completa: la persona inicia sesión o recupera su acceso. Cada 409 cuenta contra un tope por hora por IP, teléfono y documento (después, 429).',
+    required: ['message', 'codigo', 'tipo_cuenta'],
+    properties: [
+        new OA\Property(property: 'message', type: 'string', example: 'Ya tienes una cuenta de cliente. Inicia sesión o recupera tu acceso.'),
+        new OA\Property(property: 'codigo', type: 'string', enum: ['cuenta_ya_registrada'], example: 'cuenta_ya_registrada'),
+        new OA\Property(property: 'tipo_cuenta', description: 'Tipo de la cuenta que ya existe.', type: 'string', enum: ['cliente', 'proveedor'], example: 'cliente'),
+    ],
+    type: 'object',
+)]
 final class DocumentacionApi
 {
     // Intencionalmente vacía: existe solo como ancla de los atributos OpenAPI.

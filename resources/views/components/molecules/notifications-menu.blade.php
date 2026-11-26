@@ -16,7 +16,7 @@
     leído, y por eso el pie «Marcar todas como leídas» solo aparece si hay
     alguno sin leer.
 
-    «Limpiar» vacía la campana de la cuenta y aparece siempre que haya algo.
+    «Eliminar todas» vacía la campana de la cuenta y aparece siempre que haya algo; «Ver todas» lleva a «Mis notificaciones» (la campana muestra solo los 3 últimos).
     Props:
     - notifications (list, default []): `{icon, title, time, unread, href?,
       id?}` ya resueltos por el llamador.
@@ -92,6 +92,8 @@
             </ul>
 
             <div class="ag-notifications-popover__footer">
+                <a href="{{ route('panel.notificaciones.index') }}" class="ag-notifications-popover__mark-all">{{ __('ui.topbar.see_all') }}</a>
+
                 @if ($hayMarcablesSinLeer)
                     <form method="POST" action="{{ route('panel.notificaciones.marcar-todas') }}">
                         @csrf
