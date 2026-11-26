@@ -1,6 +1,6 @@
 # ADR 0034 — Precio acordado y pago fuera de la aplicación
 
-**Estado:** aceptada, revisable · **Fecha:** 2026-11-24 · **Decide:** el dueño
+**Estado:** aceptada, revisable · **Fecha:** 2026-11-24 · **Decide:** el dueño · **Reemplazado en parte por:** ADR 0045 (punto 6: no hay precio de referencia)
 
 ## Contexto
 
