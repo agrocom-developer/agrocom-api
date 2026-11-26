@@ -8,7 +8,6 @@ use App\Dominios\Compartido\Dominio\Excepciones\CuentaNoAprobada;
 use App\Dominios\Flota\Contratos\DatosEquipoApto;
 use App\Dominios\Flota\Contratos\LecturaEquipos;
 use App\Dominios\Negociacion\Aplicacion\MaquinaEstados\MaquinaEstadosOferta;
-use App\Dominios\Negociacion\Dominio\Distancia;
 use App\Dominios\Negociacion\Dominio\EstadoOferta;
 use App\Dominios\Negociacion\Dominio\Excepciones\NegociacionInvalida;
 use App\Dominios\Negociacion\Infraestructura\Eloquent\Cancelacion;
@@ -17,8 +16,6 @@ use App\Dominios\Proveedores\Contratos\DatosProveedor;
 use App\Dominios\Proveedores\Contratos\LecturaProveedores;
 use App\Dominios\Solicitudes\Contratos\DatosSolicitudNegociable;
 use App\Dominios\Solicitudes\Contratos\LecturaEstadoDeCliente;
-use App\Dominios\Solicitudes\Contratos\LecturaMercado;
-use App\Dominios\Solicitudes\Contratos\LecturaZonas;
 use App\Dominios\Solicitudes\Contratos\PasosDeSolicitud;
 use App\Dominios\Solicitudes\Contratos\SolicitudNoNegociable;
 use Brick\Math\BigDecimal;
@@ -49,8 +46,6 @@ final class Negociar
         private readonly PasosDeSolicitud $solicitudes,
         private readonly LecturaProveedores $proveedores,
         private readonly LecturaEquipos $equipos,
-        private readonly LecturaMercado $mercado,
-        private readonly LecturaZonas $zonas,
         private readonly MaquinaEstadosOferta $estados,
         private readonly ParametrosDeNegociacion $parametros,
         private readonly Avisador $avisos,
@@ -109,7 +104,6 @@ final class Negociar
                     'es_definitiva' => $numero >= $this->parametros->maxOfertas(),
                     'nota' => $this->nota($datos['nota'] ?? null),
                     'vence_en' => $this->venceEn($solicitud),
-                    'distancia_km' => $this->distancia($proveedor, $solicitudId),
                 ]);
 
                 $this->solicitudes->marcarConOfertas($solicitudId);
@@ -514,19 +508,6 @@ final class Negociar
         $nota = $nota === null ? null : trim($nota);
 
         return $nota === '' ? null : $nota;
-    }
-
-    /** Distancia del centro de los lotes a la zona base del proveedor, en km (aproximada). */
-    private function distancia(DatosProveedor $proveedor, int $solicitudId): ?string
-    {
-        $abierta = $this->mercado->abierta($solicitudId);
-        $base = $proveedor->zonaBaseId === null ? null : $this->zonas->centroide($proveedor->zonaBaseId);
-
-        if ($abierta === null || $abierta->centro === null || $base === null) {
-            return null;
-        }
-
-        return Distancia::km((float) $base['lat'], (float) $base['lng'], $abierta->centro['latitud'], $abierta->centro['longitud']);
     }
 
     private function nombreDeProveedor(int $proveedorId): string

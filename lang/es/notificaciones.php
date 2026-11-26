@@ -13,7 +13,7 @@ return [
         'documento_vencido' => 'Venció el documento «:documento» del :sujeto el :fecha: queda suspendido hasta que subas uno vigente.',
         'proveedor_registrado' => 'Un proveedor :tipo espera tu revisión: «:nombre».',
         'oferta_vencida' => 'Venció sin respuesta la oferta de la solicitud #:solicitud.',
-        'nueva_solicitud_abierta' => 'Nueva solicitud #:solicitud de :hectareas ha en :zona, a :precio por hectárea. Revísala en el mapa y ofrece tu precio.',
+        'nueva_solicitud_abierta' => 'Nueva solicitud #:solicitud de :hectareas ha, a :precio por hectárea. Revísala en el mapa y ofrece tu precio.',
         'oferta_retirada' => 'Se cerró la negociación de la solicitud #:solicitud. Motivo: :motivo',
         'oferta_recibida' => '«:proveedor» ofrece :precio por hectárea en la solicitud #:solicitud. Acéptala, haz una contraoferta o recházala antes de que venza.',
         'precio_cambiado' => 'El cliente cambió el precio propuesto de la solicitud #:solicitud a :precio por hectárea. Tu oferta vigente no cambia.',
