@@ -49,7 +49,7 @@ final class AsignarRolesUsuario
      *                                 si no se envía una nueva.
      * @param  string|null  $email  Correo de la cuenta (tarea 66, ampliación
      *                              ADR 0004 9/9/2026) — de la cuenta, no de
-     *                              la persona operativa. `null` = sin correo.
+     *                              la persona. `null` = sin correo.
      * @param  list<int>  $roleIds  El rol deseado: exactamente uno, de los dos del
      *                              panel. Set completo y definitivo, no un delta:
      *                              el que falte respecto a los actuales se revoca
@@ -73,8 +73,8 @@ final class AsignarRolesUsuario
      *                         de estado es `administrador`, el permiso
      *                         `asignar_rol_administrador`.
      * @throws RolProtegido si el payload no trae exactamente un rol del panel.
-     * @throws UsuarioDuplicado si el `username`, el `email` o la `persona_id`
-     *                          ya pertenecen a otra cuenta viva.
+     * @throws UsuarioDuplicado si el `username` o el `email` ya pertenecen a otra
+     *                          cuenta de panel viva.
      */
     public function ejecutar(
         SecUser $actor,
@@ -84,7 +84,6 @@ final class AsignarRolesUsuario
         ?string $password,
         string $name,
         TipoUsuario $type,
-        ?int $personaId,
         array $roleIds,
         ?int $idRolActivo,
     ): SecUser {
@@ -108,7 +107,6 @@ final class AsignarRolesUsuario
             $password,
             $name,
             $type,
-            $personaId,
             $roleIds,
             $idRolActivo,
             $esAlta,
@@ -132,7 +130,8 @@ final class AsignarRolesUsuario
             $usuario->email = $email;
             $usuario->type = $type;
             $usuario->tipo_cuenta = TipoCuenta::Panel;
-            $usuario->persona_id = $personaId;
+            // El personal no tiene persona: la persona (documento) es de las cuentas de app (ADR 0046, punto 8).
+            $usuario->persona_id = null;
 
             if ($password !== null) {
                 $usuario->password = $password;
@@ -146,7 +145,7 @@ final class AsignarRolesUsuario
             try {
                 $usuario->save();
             } catch (QueryException $excepcion) {
-                $this->relanzarComoDuplicado($excepcion, $username, $email, $personaId);
+                $this->relanzarComoDuplicado($excepcion, $username, $email);
             }
 
             $this->sincronizarRoles($usuario, $rolesActuales, $roleIds, $actor);
@@ -272,10 +271,10 @@ final class AsignarRolesUsuario
      * ninguno de los dos y se relanza intacta.
      *
      * @throws UsuarioDuplicado si la violación corresponde a `username`, a
-     *                          `email` o a `persona_id`.
+     *                          `email`.
      * @throws QueryException si la violación no es una de las contempladas.
      */
-    private function relanzarComoDuplicado(QueryException $excepcion, string $username, ?string $email, ?int $personaId): never
+    private function relanzarComoDuplicado(QueryException $excepcion, string $username, ?string $email): never
     {
         $mensaje = $excepcion->getMessage();
 
@@ -284,15 +283,9 @@ final class AsignarRolesUsuario
         }
 
         if ($email !== null
-            && (str_contains($mensaje, 'sec_user_email_unico') || str_contains($mensaje, 'sec_user.email'))
+            && (str_contains($mensaje, 'sec_user_email_tipo_unico') || str_contains($mensaje, 'sec_user_email_unico') || str_contains($mensaje, 'sec_user.email'))
         ) {
             throw UsuarioDuplicado::porEmail($email);
-        }
-
-        if ($personaId !== null
-            && (str_contains($mensaje, 'sec_user_persona_id_unico') || str_contains($mensaje, 'sec_user.persona_id'))
-        ) {
-            throw UsuarioDuplicado::porPersona($personaId);
         }
 
         throw $excepcion;

@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Solicitudes\Aplicacion;
 
+use App\Dominios\Compartido\Dominio\Excepciones\CuentaNoAprobada;
 use App\Dominios\Compartido\Dominio\MontoDelServicio;
 use App\Dominios\Solicitudes\Aplicacion\MaquinaEstados\MaquinaEstadosSolicitud;
 use App\Dominios\Solicitudes\Contratos\Eventos\SolicitudAbierta;
@@ -36,11 +37,13 @@ final class PublicarSolicitud
 
     /**
      * @throws SolicitudInvalida
+     * @throws CuentaNoAprobada si el cliente todavía no está aprobado.
      * @throws TransicionSolicitudNoPermitida
      */
     public function ejecutar(int $usuarioId, int $solicitudId): SolicitudServicio
     {
-        $cliente = $this->clientes->activo($usuarioId);
+        // Solo un cliente aprobado publica (ADR 0046, punto 12): `403 cuenta_no_aprobada` con su estado.
+        $cliente = $this->clientes->aprobado($usuarioId);
 
         if ($cliente->publicacion_limitada_en !== null) {
             throw SolicitudInvalida::publicacionLimitada();

@@ -20,6 +20,7 @@ use App\Dominios\Proveedores\Dominio\TipoProveedor;
 use App\Dominios\Proveedores\Dominio\TipoSujeto;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Documento;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Proveedor;
+use App\Dominios\Solicitudes\Aplicacion\CambiarEstadoDeCliente;
 use App\Dominios\Solicitudes\Aplicacion\RegistrarCliente;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\Zona;
@@ -62,6 +63,7 @@ class ProveedoresDemoSeeder extends Seeder
         private readonly RegistrarProveedor $registrarProveedor,
         private readonly RegistrarPiloto $registrarPiloto,
         private readonly RegistrarCliente $registrarCliente,
+        private readonly CambiarEstadoDeCliente $cambiarEstadoDeCliente,
         private readonly RegistrarDron $registrarDron,
         private readonly CrearEquipo $crearEquipo,
         private readonly CargarDocumento $cargarDocumento,
@@ -273,10 +275,13 @@ class ProveedoresDemoSeeder extends Seeder
                 continue;
             }
 
-            $this->registrarCliente->ejecutar([
+            $cliente = $this->registrarCliente->ejecutar([
                 'tipo' => $tipo, 'nombre' => $nombre, 'username' => $username, 'email' => null, 'password' => self::PASSWORD,
                 'razon_social' => $razonSocial, 'documento_fiscal' => $documento, 'telefono' => $telefono, 'contactos' => $contactos,
             ]);
+
+            // Un cliente nace pendiente (ADR 0046): los de la demo ya están aprobados, para recorrer la negociación.
+            $this->cambiarEstadoDeCliente->ejecutar($cliente->id, AccionAprobacion::Aprobar, null, $this->admin);
         }
     }
 

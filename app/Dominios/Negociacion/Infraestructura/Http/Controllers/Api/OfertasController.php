@@ -67,7 +67,7 @@ final class OfertasController
         path: '/api/solicitudes/{id}/ofertas',
         operationId: 'ofertarSolicitud',
         description: 'La primera oferta del proveedor sobre una solicitud `abierta` o `con_ofertas`. `tipo=acepta_propuesta` acepta exactamente el precio propuesto; `tipo=contraoferta` indica `precio_ha`, distinto del propuesto. Sin `equipo_id` usa el primer equipo apto. Idempotente por `uuid_cliente`: reintentar responde 200 con la misma oferta. '
-            .'Solo cuentas de proveedor habilitadas; un proveedor no oferta sobre solicitudes de su propia cuenta de cliente.',
+            .'Solo cuentas de proveedor aprobadas y con un equipo apto; un proveedor no oferta sobre solicitudes de su propia cuenta de cliente ni de otra cuenta de la misma persona.',
         summary: 'Ofertar sobre una solicitud',
         security: [['tokenDispositivo' => []]],
         requestBody: new OA\RequestBody(
@@ -90,7 +90,7 @@ final class OfertasController
             new OA\Response(response: 201, description: 'Oferta creada.', content: new OA\JsonContent(required: ['oferta'], properties: [new OA\Property(property: 'oferta', ref: '#/components/schemas/Oferta')], type: 'object')),
             new OA\Response(response: 200, description: 'Reintento: ya existía una oferta con ese `uuid_cliente`.', content: new OA\JsonContent(required: ['oferta'], properties: [new OA\Property(property: 'oferta', ref: '#/components/schemas/Oferta')], type: 'object')),
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
-            new OA\Response(response: 403, description: 'El rol no oferta o el proveedor no está habilitado.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorConflicto')),
+            new OA\Response(response: 403, description: 'El rol no oferta, el proveedor no tiene un equipo apto (`proveedor_no_habilitado`) o la cuenta todavía no está aprobada (`cuenta_no_aprobada`, ADR 0046: entra y ve sus pantallas, pero no oferta).', content: new OA\JsonContent(ref: '#/components/schemas/ErrorConflicto')),
             new OA\Response(response: 404, description: 'La solicitud no existe o la cuenta no es de un proveedor.'),
             new OA\Response(response: 409, description: 'La solicitud ya no está abierta, o ya hay una negociación vigente o cerrada con este proveedor.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorConflicto')),
             new OA\Response(response: 422, description: 'Precio inválido, sin equipo apto o sobre su propia cuenta.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
@@ -220,7 +220,7 @@ final class OfertasController
             new OA\Response(response: 201, description: 'La oferta nueva.', content: new OA\JsonContent(required: ['oferta'], properties: [new OA\Property(property: 'oferta', ref: '#/components/schemas/Oferta')], type: 'object')),
             new OA\Response(response: 200, description: 'Reintento con el mismo `uuid_cliente`.', content: new OA\JsonContent(required: ['oferta'], properties: [new OA\Property(property: 'oferta', ref: '#/components/schemas/Oferta')], type: 'object')),
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
-            new OA\Response(response: 403, description: 'El rol del token no negocia.'),
+            new OA\Response(response: 403, description: 'El rol del token no negocia, o la cuenta todavía no está aprobada (`cuenta_no_aprobada`, ADR 0046).', content: new OA\JsonContent(ref: '#/components/schemas/CuentaNoAprobada')),
             new OA\Response(response: 404, description: 'No existe o es de otra cuenta.'),
             new OA\Response(response: 409, description: 'La oferta ya no está vigente, no es su turno o es definitiva.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorConflicto')),
             new OA\Response(response: 422, description: 'Precio inválido.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
@@ -251,7 +251,7 @@ final class OfertasController
         responses: [
             new OA\Response(response: 200, description: 'Oferta aceptada: la solicitud queda `adjudicada`.', content: new OA\JsonContent(required: ['oferta'], properties: [new OA\Property(property: 'oferta', ref: '#/components/schemas/Oferta')], type: 'object')),
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
-            new OA\Response(response: 403, description: 'El rol del token no negocia.'),
+            new OA\Response(response: 403, description: 'El rol del token no negocia, o la cuenta todavía no está aprobada (`cuenta_no_aprobada`, ADR 0046).', content: new OA\JsonContent(ref: '#/components/schemas/CuentaNoAprobada')),
             new OA\Response(response: 404, description: 'No existe o es de otra cuenta.'),
             new OA\Response(response: 409, description: '`oferta_no_vigente`, `solicitud_ya_adjudicada`, `equipo_no_disponible`, `no_es_su_turno` o `solicitud_no_abierta`.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorConflicto')),
         ],

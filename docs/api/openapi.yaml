@@ -1839,7 +1839,7 @@ paths:
       tags:
         - Ofertas
       summary: 'Ofertar sobre una solicitud'
-      description: 'La primera oferta del proveedor sobre una solicitud `abierta` o `con_ofertas`. `tipo=acepta_propuesta` acepta exactamente el precio propuesto; `tipo=contraoferta` indica `precio_ha`, distinto del propuesto. Sin `equipo_id` usa el primer equipo apto. Idempotente por `uuid_cliente`: reintentar responde 200 con la misma oferta. Solo cuentas de proveedor habilitadas; un proveedor no oferta sobre solicitudes de su propia cuenta de cliente.'
+      description: 'La primera oferta del proveedor sobre una solicitud `abierta` o `con_ofertas`. `tipo=acepta_propuesta` acepta exactamente el precio propuesto; `tipo=contraoferta` indica `precio_ha`, distinto del propuesto. Sin `equipo_id` usa el primer equipo apto. Idempotente por `uuid_cliente`: reintentar responde 200 con la misma oferta. Solo cuentas de proveedor aprobadas y con un equipo apto; un proveedor no oferta sobre solicitudes de su propia cuenta de cliente ni de otra cuenta de la misma persona.'
       operationId: ofertarSolicitud
       parameters:
         -
@@ -1904,7 +1904,7 @@ paths:
         401:
           description: 'Token ausente o revocado.'
         403:
-          description: 'El rol no oferta o el proveedor no está habilitado.'
+          description: 'El rol no oferta, el proveedor no tiene un equipo apto (`proveedor_no_habilitado`) o la cuenta todavía no está aprobada (`cuenta_no_aprobada`, ADR 0046: entra y ve sus pantallas, pero no oferta).'
           content:
             application/json:
               schema:
@@ -2071,7 +2071,11 @@ paths:
         401:
           description: 'Token ausente o revocado.'
         403:
-          description: 'El rol del token no negocia.'
+          description: 'El rol del token no negocia, o la cuenta todavía no está aprobada (`cuenta_no_aprobada`, ADR 0046).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CuentaNoAprobada'
         404:
           description: 'No existe o es de otra cuenta.'
         409:
@@ -2118,7 +2122,11 @@ paths:
         401:
           description: 'Token ausente o revocado.'
         403:
-          description: 'El rol del token no negocia.'
+          description: 'El rol del token no negocia, o la cuenta todavía no está aprobada (`cuenta_no_aprobada`, ADR 0046).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CuentaNoAprobada'
         404:
           description: 'No existe o es de otra cuenta.'
         409:
@@ -3567,6 +3575,32 @@ paths:
                 licencia_numero:
                   type: string
                   example: RPA-2291
+                telefono:
+                  description: 'Teléfono del piloto (E.164, único entre las cuentas de proveedor). Opcional por ahora.'
+                  type: string
+                  example: '+591 70012345'
+                  nullable: true
+                documento_tipo:
+                  type: string
+                  nullable: true
+                  enum:
+                    - ci
+                    - pasaporte
+                    - licencia_conducir
+                documento_numero:
+                  description: 'Documento del piloto: con `nombres` y `apellidos`, lo identifica como persona única.'
+                  type: string
+                  nullable: true
+                nombres:
+                  type: string
+                  nullable: true
+                apellidos:
+                  type: string
+                  nullable: true
+                fecha_nacimiento:
+                  type: string
+                  format: date
+                  nullable: true
                 licencia_vence:
                   type: string
                   format: date
@@ -3591,6 +3625,12 @@ paths:
           description: 'Token ausente o revocado.'
         403:
           description: 'El rol del token no gestiona un proveedor.'
+        409:
+          description: 'Ese teléfono o esa persona (documento) ya tiene una cuenta de proveedor: `codigo: cuenta_ya_registrada`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CuentaYaRegistrada'
         422:
           description: 'Datos inválidos, login o correo ya registrados, o el proveedor no admite pilotos.'
           content:
@@ -3680,6 +3720,7 @@ paths:
                   type: string
                   format: password
                 telefono:
+                  description: 'Teléfono de la cuenta: un celular de Bolivia de 8 dígitos o un número con su código de país. Se guarda en E.164 y es único entre las cuentas de proveedor.'
                   type: string
                   example: '+591 70012345'
                 razon_social:
@@ -3692,9 +3733,25 @@ paths:
                 apellidos:
                   type: string
                   example: 'Mamani Quispe'
-                documento_identidad:
+                documento_tipo:
+                  description: 'Tipo del documento de la persona (por defecto `ci`).'
+                  type: string
+                  example: ci
+                  nullable: true
+                  enum:
+                    - ci
+                    - pasaporte
+                    - licencia_conducir
+                documento_numero:
+                  description: 'Número del documento. Es el nombre nuevo de `documento_identidad`: si llegan los dos, manda este. La persona es única por tipo y número normalizado (mayúsculas, sin espacios ni puntos).'
                   type: string
                   example: '7845123 SC'
+                  nullable: true
+                documento_identidad:
+                  description: 'Número del documento (nombre histórico de `documento_numero`; obligatorio si no se envía `documento_numero`).'
+                  type: string
+                  example: '7845123 SC'
+                  nullable: true
                 fecha_nacimiento:
                   type: string
                   format: date
@@ -3741,6 +3798,12 @@ paths:
                   proveedor:
                     $ref: '#/components/schemas/Proveedor'
                 type: object
+        409:
+          description: 'Ese teléfono o esa persona (documento) ya tiene una cuenta de proveedor: `codigo: cuenta_ya_registrada`. No crea nada ni dice cuál de los dos datos chocó; la persona inicia sesión o recupera su acceso.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CuentaYaRegistrada'
         422:
           description: 'Datos inválidos o login, correo o documento ya registrados.'
           content:
@@ -3748,7 +3811,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorValidacion'
         429:
-          description: 'Demasiados registros desde la misma IP; reintentar tras `Retry-After` segundos.'
+          description: 'Demasiados registros desde la misma IP, o demasiados `409` seguidos para esa IP, ese teléfono o ese documento; reintentar tras `Retry-After` segundos.'
   '/api/dispositivos/{id}':
     get:
       tags:
@@ -3898,7 +3961,7 @@ paths:
                 - uuid_dispositivo
               properties:
                 username:
-                  description: 'Login del operario (nunca un correo).'
+                  description: 'Usuario de la cuenta (nunca un correo) o su teléfono, en cualquier formato (`70012345`, `+591 700-12345`). El teléfono es único por tipo de cuenta: sin `app`, un teléfono que sirve a dos cuentas (cliente y proveedor) no entra.'
                   type: string
                   example: camila.rojas
                 password:
@@ -4237,8 +4300,35 @@ paths:
                   type: string
                   format: password
                 telefono:
+                  description: 'Teléfono de la cuenta: un celular de Bolivia de 8 dígitos o un número con su código de país. Se guarda en E.164 y es único entre las cuentas de cliente (el mismo teléfono puede ser además de una cuenta de proveedor).'
                   type: string
                   example: '+591 76543210'
+                documento_tipo:
+                  description: 'Tipo del documento de la persona (por defecto `ci`). TRANSITORIO: el documento es opcional hasta que la app lo envíe; con él, `nombres` y `apellidos` son obligatorios.'
+                  type: string
+                  example: ci
+                  nullable: true
+                  enum:
+                    - ci
+                    - pasaporte
+                    - licencia_conducir
+                documento_numero:
+                  description: 'Número del documento: la persona es única por tipo y número normalizado (mayúsculas, sin espacios ni puntos) y tiene a lo sumo una cuenta de cliente.'
+                  type: string
+                  example: '7845123 SC'
+                  nullable: true
+                nombres:
+                  type: string
+                  example: Rosa
+                  nullable: true
+                apellidos:
+                  type: string
+                  example: 'Condori Vargas'
+                  nullable: true
+                fecha_nacimiento:
+                  type: string
+                  format: date
+                  nullable: true
                 razon_social:
                   description: 'Obligatoria para una empresa; si falta, se usa el nombre.'
                   type: string
@@ -4266,6 +4356,12 @@ paths:
                   cliente:
                     $ref: '#/components/schemas/Cliente'
                 type: object
+        409:
+          description: 'Ese teléfono o esa persona (documento) ya tiene una cuenta de cliente: `codigo: cuenta_ya_registrada`. No crea nada ni dice cuál de los dos datos chocó; la persona inicia sesión o recupera su acceso.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CuentaYaRegistrada'
         422:
           description: 'Datos inválidos o login, correo o documento ya registrados.'
           content:
@@ -4273,7 +4369,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorValidacion'
         429:
-          description: 'Demasiados registros desde la misma IP; reintentar tras `Retry-After` segundos.'
+          description: 'Demasiados registros desde la misma IP, o demasiados `409` seguidos para esa IP, ese teléfono o ese documento; reintentar tras `Retry-After` segundos.'
   /api/clientes/mi:
     get:
       tags:
@@ -4725,7 +4821,11 @@ paths:
         401:
           description: 'Token ausente o revocado.'
         403:
-          description: 'El rol del token no es de cliente.'
+          description: 'El rol del token no es de cliente, o la cuenta todavía no está aprobada (`cuenta_no_aprobada`, ADR 0046: entra y arma sus borradores, pero no publica).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CuentaNoAprobada'
         404:
           description: 'No existe o es de otro cliente.'
         422:
@@ -5425,6 +5525,62 @@ components:
             type: array
             items:
               type: string
+      type: object
+    CuentaNoAprobada:
+      title: 'Cuenta no aprobada'
+      description: 'Respuesta 403 de la compuerta de la cuenta (ADR 0046, punto 12): la cuenta existe pero su estado no permite publicar, aceptar o contraofertar (cliente), ni ofertar, contraofertar o aceptar (proveedor). La app lo muestra como la pantalla de verificación, no como un error genérico. Distinto de `proveedor_no_habilitado` (falta un equipo apto). La app no replica la regla: la decide el servidor.'
+      required:
+        - message
+        - codigo
+        - estado
+        - falta
+      properties:
+        message:
+          type: string
+          example: 'Tu cuenta está en revisión. Cuando la aprobemos podrás publicar y negociar; mientras tanto puedes revisar tus datos.'
+        codigo:
+          type: string
+          example: cuenta_no_aprobada
+          enum:
+            - cuenta_no_aprobada
+        estado:
+          type: string
+          example: pendiente
+          enum:
+            - pendiente
+            - rechazado
+            - suspendido
+            - baja
+        falta:
+          description: 'Qué impide aprobar la cuenta (`verificacion`, `documentos`, `dron_fotos`, `equipo`…). Mientras no existan esos pasos viene vacío.'
+          type: array
+          items:
+            type: string
+          example: []
+      type: object
+    CuentaYaRegistrada:
+      title: 'Cuenta ya registrada'
+      description: 'Respuesta 409 de un registro (ADR 0046): el teléfono o la persona (documento) ya tiene una cuenta de ESE tipo. No dice cuál de los dos datos chocó, ni datos de nadie, ni si la cuenta está completa: la persona inicia sesión o recupera su acceso. Cada 409 cuenta contra un tope por hora por IP, teléfono y documento (después, 429).'
+      required:
+        - message
+        - codigo
+        - tipo_cuenta
+      properties:
+        message:
+          type: string
+          example: 'Ya tienes una cuenta de cliente. Inicia sesión o recupera tu acceso.'
+        codigo:
+          type: string
+          example: cuenta_ya_registrada
+          enum:
+            - cuenta_ya_registrada
+        tipo_cuenta:
+          description: 'Tipo de la cuenta que ya existe.'
+          type: string
+          example: cliente
+          enum:
+            - cliente
+            - proveedor
       type: object
     Disputa:
       title: Disputa
@@ -7086,11 +7242,15 @@ components:
           example: '+591 76543210'
           nullable: true
         estado:
+          description: 'Ciclo de aprobación (ADR 0046): nace `pendiente`; solo `aprobado` publica y negocia.'
           type: string
-          example: activo
+          example: aprobado
           enum:
-            - activo
+            - pendiente
+            - aprobado
             - suspendido
+            - rechazado
+            - baja
         calificacion_promedio:
           description: 'Decimal exacto en string (0 a 5).'
           type: string

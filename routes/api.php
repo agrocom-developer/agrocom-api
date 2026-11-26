@@ -61,13 +61,15 @@ Route::post('/auth/token', [SesionCampoController::class, 'store'])
 
 // Marketplace (ADR 0036): registro público de clientes y proveedores. Crean
 // cuentas sin autenticación, así que llevan el límite `registro-publico`
-// (SeguridadServiceProvider): 5 por minuto y 20 por hora por IP.
+// (SeguridadServiceProvider): 5 por minuto y 20 por hora por IP. `sondeo.cuentas`
+// corta además el sondeo de teléfonos y documentos por el `409 cuenta_ya_registrada`
+// (5 por hora por IP, por teléfono y por documento consultados).
 Route::post('/clientes/registro', [ClientesController::class, 'store'])
-    ->middleware('throttle:registro-publico')
+    ->middleware(['throttle:registro-publico', 'sondeo.cuentas'])
     ->name('api.clientes.registro');
 
 Route::post('/proveedores/registro', [RegistroProveedorController::class, 'store'])
-    ->middleware('throttle:registro-publico')
+    ->middleware(['throttle:registro-publico', 'sondeo.cuentas'])
     ->name('api.proveedores.registro');
 
 // Catálogo de zonas: el formulario de registro lo necesita antes de tener
@@ -143,7 +145,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/proveedores/mi/reenviar', [MiProveedorController::class, 'reenviar'])->name('api.proveedores.mi.reenviar');
 
     Route::get('/proveedores/pilotos', [PilotosController::class, 'index'])->name('api.proveedores.pilotos.index');
-    Route::post('/proveedores/pilotos', [PilotosController::class, 'store'])->name('api.proveedores.pilotos.store');
+    Route::post('/proveedores/pilotos', [PilotosController::class, 'store'])->middleware('sondeo.cuentas')->name('api.proveedores.pilotos.store');
     Route::post('/proveedores/pilotos/{id}/reenviar', [PilotosController::class, 'reenviar'])
         ->whereNumber('id')
         ->name('api.proveedores.pilotos.reenviar');

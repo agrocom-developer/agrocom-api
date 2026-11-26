@@ -80,7 +80,7 @@ function catalogoTerreno(): int
 
 function catalogoSolicitud(string $estado, ?int $equipoId, ?Carbon $modificada = null): int
 {
-    DB::table('sol_clientes')->insertOrIgnore(['id' => 1, 'usuario_id' => 55, 'tipo' => 'persona', 'razon_social' => 'Cliente Ana', 'telefono' => '70011122', 'estado' => 'activo', 'created_at' => now(), 'updated_at' => now()]);
+    DB::table('sol_clientes')->insertOrIgnore(['id' => 1, 'usuario_id' => 55, 'tipo' => 'persona', 'razon_social' => 'Cliente Ana', 'telefono' => '70011122', 'estado' => 'aprobado', 'created_at' => now(), 'updated_at' => now()]);
 
     return DB::table('sol_solicitudes_servicio')->insertGetId([
         'uuid_cliente' => (string) Str::uuid(),

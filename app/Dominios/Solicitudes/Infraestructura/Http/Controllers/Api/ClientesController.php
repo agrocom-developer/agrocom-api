@@ -4,6 +4,7 @@ namespace App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api;
 
 use App\Dominios\Compartido\Infraestructura\Http\RechazoDeDominio;
 use App\Dominios\Seguridad\Contratos\CuentaDuplicada;
+use App\Dominios\Seguridad\Contratos\CuentaYaRegistrada;
 use App\Dominios\Seguridad\Contratos\IdentidadOperarioToken;
 use App\Dominios\Solicitudes\Aplicacion\RegistrarCliente;
 use App\Dominios\Solicitudes\Dominio\Excepciones\ClienteDuplicado;
@@ -49,7 +50,12 @@ final class ClientesController
                     new OA\Property(property: 'username', description: 'Login (nunca un correo): letras, números, punto, guion.', type: 'string', example: 'rosa.condori'),
                     new OA\Property(property: 'email', type: 'string', format: 'email', nullable: true),
                     new OA\Property(property: 'password', description: 'Mínimo 8 caracteres con letras y números.', type: 'string', format: 'password'),
-                    new OA\Property(property: 'telefono', type: 'string', example: '+591 76543210'),
+                    new OA\Property(property: 'telefono', description: 'Teléfono de la cuenta: un celular de Bolivia de 8 dígitos o un número con su código de país. Se guarda en E.164 y es único entre las cuentas de cliente (el mismo teléfono puede ser además de una cuenta de proveedor).', type: 'string', example: '+591 76543210'),
+                    new OA\Property(property: 'documento_tipo', description: 'Tipo del documento de la persona (por defecto `ci`). TRANSITORIO: el documento es opcional hasta que la app lo envíe; con él, `nombres` y `apellidos` son obligatorios.', type: 'string', enum: ['ci', 'pasaporte', 'licencia_conducir'], example: 'ci', nullable: true),
+                    new OA\Property(property: 'documento_numero', description: 'Número del documento: la persona es única por tipo y número normalizado (mayúsculas, sin espacios ni puntos) y tiene a lo sumo una cuenta de cliente.', type: 'string', example: '7845123 SC', nullable: true),
+                    new OA\Property(property: 'nombres', type: 'string', example: 'Rosa', nullable: true),
+                    new OA\Property(property: 'apellidos', type: 'string', example: 'Condori Vargas', nullable: true),
+                    new OA\Property(property: 'fecha_nacimiento', type: 'string', format: 'date', nullable: true),
                     new OA\Property(property: 'razon_social', description: 'Obligatoria para una empresa; si falta, se usa el nombre.', type: 'string', nullable: true),
                     new OA\Property(property: 'documento_fiscal', description: 'Obligatorio para una empresa (NIT).', type: 'string', nullable: true),
                     new OA\Property(property: 'contactos', description: 'Contactos de referencia. Una empresa que no los envía queda con quien registra la cuenta (`nombre` y `telefono`) como contacto principal.', type: 'array', items: new OA\Items(ref: '#/components/schemas/ContactoEntrada'), nullable: true),
@@ -64,8 +70,9 @@ final class ClientesController
                 description: 'Cliente creado y activo.',
                 content: new OA\JsonContent(required: ['cliente'], properties: [new OA\Property(property: 'cliente', ref: '#/components/schemas/Cliente')], type: 'object'),
             ),
+            new OA\Response(response: 409, description: 'Ese teléfono o esa persona (documento) ya tiene una cuenta de cliente: `codigo: cuenta_ya_registrada`. No crea nada ni dice cuál de los dos datos chocó; la persona inicia sesión o recupera su acceso.', content: new OA\JsonContent(ref: '#/components/schemas/CuentaYaRegistrada')),
             new OA\Response(response: 422, description: 'Datos inválidos o login, correo o documento ya registrados.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
-            new OA\Response(response: 429, description: 'Demasiados registros desde la misma IP; reintentar tras `Retry-After` segundos.'),
+            new OA\Response(response: 429, description: 'Demasiados registros desde la misma IP, o demasiados `409` seguidos para esa IP, ese teléfono o ese documento; reintentar tras `Retry-After` segundos.'),
         ],
     )]
     public function store(RegistrarClienteRequest $request): JsonResponse
@@ -77,6 +84,8 @@ final class ClientesController
             }
 
             $cliente = $this->registrar->ejecutar($datos)->load('contactos');
+        } catch (CuentaYaRegistrada $excepcion) {
+            return response()->json($excepcion->cuerpo(), 409);
         } catch (CuentaDuplicada|ClienteDuplicado|SolicitudInvalida $excepcion) {
             return RechazoDeDominio::respuesta($excepcion);
         }

@@ -29,6 +29,7 @@ beforeEach(function () {
         'create_sec_user_table',
         'agrega_foto_perfil_a_sec_user',
         'agrega_tipo_cuenta_a_sec_user',
+        'crea_sec_personas_y_telefono_de_cuenta',
         'create_sec_role_table',
         'create_sec_permission_table',
         'create_sec_role_permission_table',
@@ -215,6 +216,9 @@ it('el tipo de app se normaliza: piloto es proveedor y lo desconocido no es nada
 // --- La migración clasifica lo que ya existe -------------------------------------------------
 
 it('la migración clasifica las cuentas existentes por lo que ya son', function () {
+    // Sus índices dependen de `tipo_cuenta`: se retiran primero, como lo haría `migrate:rollback`.
+    (require database_path('migrations/2026_12_12_100000_crea_sec_personas_y_telefono_de_cuenta.php'))->down();
+
     $migracion = require database_path('migrations/2026_12_11_100000_agrega_tipo_cuenta_a_sec_user.php');
     $migracion->down();
 
