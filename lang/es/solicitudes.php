@@ -147,7 +147,7 @@ return [
         'kpi_tarifa_pie' => 'Precio por hectárea: :tarifa',
         'kpi_sin_publicar' => 'Todavía sin abrir',
         'kpi_ventana' => 'Fecha deseada',
-        'seccion_servicio' => 'Servicio pedido',
+        'seccion_servicio' => 'Servicio solicitado',
         'seccion_terreno' => 'Terreno',
         'campos_contador' => ':cantidad campos',
         'campo_aplicacion' => 'Tipo de aplicación',

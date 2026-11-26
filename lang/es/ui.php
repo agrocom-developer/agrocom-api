@@ -221,7 +221,7 @@ return [
 
     // Mensajes de error.
     'errores' => [
-        'borrado_fisico_no_permitido' => 'Borrado físico bloqueado para :clase: los modelos de dominio solo admiten borrado lógico (ADR 0007 — soft delete y bitácora de auditoría).',
+        'borrado_fisico_no_permitido' => 'No se puede eliminar definitivamente ningún dato de :clase: los datos solo se marcan como eliminados y la bitácora conserva el rastro.',
         'escritura_en_modo_solo_lectura' => 'Estás en modo de solo lectura: no se puede guardar, eliminar ni restaurar nada. Vuelve a tu vista para hacerlo.',
         // Aviso cuando no carga el mapa de Google.
         'google_maps_no_disponible' => 'No se pudo cargar Google Maps. Revisa tu conexión y vuelve a intentarlo.',

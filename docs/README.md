@@ -28,7 +28,7 @@ Este `docs/` contiene la documentación vigente de Agrocom, un marketplace de se
   - 0046 cuentas separadas por app (cliente y proveedor), persona única, verificación de identidad y roles del panel (Administrador y Operador)
 - **`politicas/`**: una política por tema, que operan lo decidido: `negociacion.md`, `precio_y_pago.md`, `cancelacion.md`, `calificacion.md`, `verificacion_proveedores.md`, `seguimiento_y_privacidad.md`, `seguridad.md`, `disputas.md` y `tiendas-y-privacidad.md` (qué exigen Google Play y la App Store sobre privacidad, eliminación de cuenta y revisión, el panorama de protección de datos en Latinoamérica y las tareas derivadas; no es asesoría legal).
 - **`gestion/`**: cola de tareas del ciclo automático, `estado-api.md` (qué está hecho en la API y qué falta), entornos, automatización del desarrollo y el plan de homogeneización del panel; `respuestas_campo/capturas_rc/` guarda las capturas del control remoto del dron.
-- **`diseno/`**: sistema de diseño del panel (tokens CSS, catálogo Atomic Design) y guía de construcción de pantallas.
+- **`diseno/`**: sistema de diseño del panel (tokens CSS, catálogo Atomic Design), guía de construcción de pantallas y `guia_redaccion_panel.md` (cómo se escriben los textos visibles: español neutro, etiquetas con el sustantivo primero, una palabra por concepto).
 - **`api/openapi.yaml`**: contrato de API generado desde el código (ADR 0014); no se edita a mano.
 - **`api/ejemplos/`**: intercambios reales de la API (petición y respuesta) que las apps usan como fixtures de contrato; se regeneran con `bin/generar-ejemplos`.
 - **`glosario.md`**: vocabulario de negocio y técnico.

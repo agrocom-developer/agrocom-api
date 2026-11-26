@@ -65,7 +65,7 @@ return [
         'motivo_invalido' => 'El motivo «:motivo» no corresponde a tu lado del reclamo.',
         'servicio_no_disputable' => 'Un servicio «:estado» no admite este reclamo.',
         'plazo_vencido' => 'El plazo para abrir el reclamo venció.',
-        'monto_invalido' => 'El monto reclamado debe ser mayor que cero y no puede pasar de :monto.',
+        'monto_invalido' => 'El monto reclamado debe ser mayor que cero y no puede superar :monto.',
         'texto_requerido' => 'Escribe el mensaje.',
         'motivo_requerido' => 'Indica el motivo de la decisión.',
         'no_admite_mensajes' => 'El reclamo ya no admite mensajes: si fue resuelto, puedes apelar.',

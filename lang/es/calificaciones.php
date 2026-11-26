@@ -46,7 +46,7 @@ return [
         'cuidado_entorno' => 'Cuidado del entorno',
         'orden_lote' => 'Orden en el lote',
         'acceso_lote' => 'Acceso al lote',
-        'claridad_pedido' => 'Claridad del pedido',
+        'claridad_pedido' => 'Claridad de la solicitud',
     ],
 
     'causa' => [

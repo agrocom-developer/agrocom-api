@@ -130,7 +130,7 @@ return [
     'present_unless' => 'Falta este campo.',
     'present_with' => 'Falta este campo.',
     'present_with_all' => 'Falta este campo.',
-    'prohibited' => 'Este campo no corresponde acá.',
+    'prohibited' => 'Este campo no corresponde aquí.',
     'prohibited_if' => 'Este campo no corresponde en este caso.',
     'prohibited_if_accepted' => 'Este campo no corresponde en este caso.',
     'prohibited_if_declined' => 'Este campo no corresponde en este caso.',
