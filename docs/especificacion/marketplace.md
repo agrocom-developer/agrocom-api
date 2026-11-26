@@ -11,7 +11,7 @@ Este documento define el producto. Las decisiones que lo sostienen están en `do
 1. **Solicitud por solicitud.** Toda relación comercial es una solicitud de servicio con su precio acordado.
 2. **El precio se negocia.** El cliente propone un precio por hectárea; cada piloto lo acepta o propone el suyo; el cliente elige. El cliente decide: ninguna tarifa se impone y ningún proveedor tiene prioridad sobre otro.
 3. **Una oferta vigente por negociación.** En cada negociación hay a lo sumo una oferta vigente, y la última oferta aceptada por la contraparte es el acuerdo.
-4. **Confianza verificable.** Ningún proveedor opera sin aprobación de un administrador; ningún dron vuela sin aprobación y sin fotos (ADR 0032, ADR 0042).
+4. **Confianza verificable.** Cualquiera se registra y entra a la app, pero ningún cliente publica ni acepta ofertas, y ningún proveedor ofrece ni acepta, sin la aprobación de un administrador de su cuenta, que exige selfie y documento de identidad; ningún dron vuela sin aprobación y sin fotos (ADR 0032, ADR 0042, ADR 0046).
 5. **Negociar y decidir requieren red; el lote es offline.** Publicar, ofertar, contraofertar, aceptar y calificar exigen conexión. El avance, las fotos y el cierre que el piloto registra en el lote se capturan sin conexión y se sincronizan después (ADR 0028).
 6. **Un solo rol escritor por registro.** Cada registro lo escribe un solo actor; las correcciones son registros nuevos con motivo y autor.
 7. **Decimales exactos.** Hectáreas y montos se manejan como decimal exacto, nunca como punto flotante.
@@ -27,15 +27,15 @@ Este documento define el producto. Las decisiones que lo sostienen están en `do
 | **Piloto** | Opera el dron. Puede ser empleado de Agrocom, independiente o piloto de un proveedor tercero. Ve el mapa de solicitudes abiertas, ofrece, ejecuta y sube fotos de avance. | App móvil `piloto` (offline en el lote) |
 | **Proveedor** | Entidad que presta el servicio: Agrocom (propio), un piloto independiente o una empresa o dueño de drones con sus pilotos (tercero). | Web y app |
 | **Dueño de dron** | Quien posee el dron. | Web y app |
-| **Administrador** | Aprueba proveedores, pilotos y drones con sus fotos; modera calificaciones; resuelve disputas; configura parámetros. | Web |
-| **Soporte** | Atiende incidencias, emergencias y disputas. Es un rol del panel. | Web |
+| **Administrador** | Personal de Agrocom que ve todo el panel: verifica y aprueba clientes, proveedores, pilotos y drones; atiende incidencias, emergencias y disputas; modera calificaciones; configura parámetros; administra usuarios y roles. | Web (panel) |
+| **Operador** | Personal de Agrocom con acceso a partes específicas de algunos módulos del panel; el administrador define cuáles. | Web (panel) |
 
-Un usuario puede tener varios roles (ADR 0004). Las acciones se autorizan por permiso del rol activo. Un administrador no modera lo que él mismo calificó.
+Hay tres tipos de cuenta (ADR 0046). La **cuenta de panel** es del personal de Agrocom, tiene un solo rol (Administrador u Operador) y las acciones se autorizan por los permisos de ese rol. La **cuenta de cliente** entra a la app `cliente` y la **cuenta de proveedor** a la app `piloto`: cada app admite un solo tipo, cada cuenta tiene su propio usuario y contraseña, su propia verificación de identidad y su propia aprobación, y no hay conversión de una en otra ni selector de rol. Un cliente que quiere ser proveedor se registra de nuevo en la app del piloto. Una persona real, identificada por su documento, tiene a lo sumo una cuenta de cliente y una de proveedor (§4.10). Una persona no ofrece sobre una solicitud propia, ni con su otra cuenta. Un administrador no modera lo que él mismo calificó.
 
 ## 3. Flujo de punta a punta
 
 1. El cliente registra su **propiedad** y sus **lotes** en el mapa (geometría y hectáreas) una sola vez, con fotos del estado del terreno si quiere.
-2. El cliente crea una **solicitud**: lotes a fumigar, hectáreas, cultivo, tipo de aplicación, producto, fecha deseada, accesos, observaciones y **precio por hectárea** (el sistema muestra un precio de referencia no vinculante). Al publicarla queda `abierta`.
+2. El cliente aprobado crea una **solicitud**: lotes a fumigar, hectáreas, cultivo, tipo de aplicación, producto, fecha deseada, accesos, observaciones y **precio por hectárea** (el sistema muestra un precio de referencia no vinculante). Al publicarla queda `abierta`.
 3. Los pilotos aprobados ven la solicitud en el **mapa de solicitudes abiertas**, con filtros por zona (valles, Chiquitania y otras), hectáreas y precio. Quien tiene activadas las notificaciones recibe un aviso si la solicitud cae en sus zonas (ADR 0041).
 4. Antes de ofertar, el piloto abre el detalle: lotes dibujados, hectáreas, cultivo, accesos, observaciones y fotos del terreno. No ve datos de contacto del cliente.
 5. El piloto **acepta el precio propuesto** o **contraoferta** su precio por hectárea, indicando el dron con el que trabajará. La solicitud pasa a `con_ofertas`.
@@ -51,7 +51,7 @@ Convenciones: dominio en español, prefijo de tabla por módulo (ADR 0011), borr
 
 ### 4.1 Clientes, propiedades y zonas
 
-- **`sol_clientes`**: `id`, `usuario_id`, `tipo` (`persona` | `empresa`), `razon_social`, `documento_fiscal`, `telefono`, `estado` (`activo` | `suspendido`), `calificacion_promedio` (decimal 3,2), `calificaciones_conteo`.
+- **`sol_clientes`**: `id`, `usuario_id`, `tipo` (`persona` | `empresa`), `razon_social`, `documento_fiscal`, `telefono`, `nombre_comercial`, `logo_ref` (ambos opcionales; `razon_social` y `documento_fiscal`, el NIT, son opcionales cuando el cliente es una persona), `estado` (el ciclo de aprobación de §5.2: nace `pendiente`), `motivo_estado`, `calificacion_promedio` (decimal 3,2), `calificaciones_conteo`.
 - **`sol_cliente_contactos`**: personas de referencia del cliente. `id`, `cliente_id`, `nombre`, `telefono`, `cargo` (nulo), `es_principal`, baja lógica. Una empresa tiene al menos un contacto vigente; hay un solo principal vigente (el primero que se crea; si se da de baja, lo releva el más antiguo). La solicitud guarda `contacto_id` (`sol_solicitudes_servicio`): el elegido al crearla o, si no elige, el principal de la empresa. Tras adjudicar, el proveedor recibe el nombre, el teléfono y el cargo de esa persona, y la razón social de la empresa; antes de adjudicar no ve ninguno (ADR 0043).
 - **`sol_terrenos`**: la propiedad o lote del cliente. `id`, `cliente_id`, `nombre`, `geometria` (polígono GeoJSON), `hectareas` (decimal 12,4), `cultivo`, `referencias_acceso`, `colindantes_sensibles` (texto: apiarios, cultivos orgánicos, viviendas), `zona_id`, `estado_terreno` (texto breve: maleza, humedad, obstáculos, líneas eléctricas).
 - **`sol_terreno_fotos`**: `id`, `terreno_id`, `archivo`, `hash`, `bytes`, `descripcion`. Imagen comprimida a menos de 300 KB, hasta 8 por terreno (`solicitudes.fotos_terreno.maximo_por_terreno`), en el disco privado. Las sube el cliente dueño y las ve el piloto en el detalle de la solicitud antes de ofertar, con una URL firmada de corta vida (15 minutos).
@@ -85,8 +85,8 @@ Convenciones: dominio en español, prefijo de tabla por módulo (ADR 0011), borr
 
 ### 4.3 Proveedores y personas
 
-- **`prv_proveedores`**: `id`, `usuario_titular_id`, `tipo` (`propio` | `independiente` | `tercero`), `razon_social`, `documento_fiscal`, `zona_base_id`, `estado` (§5.2), `calificacion_promedio`, `calificaciones_conteo`, `tasa_cancelacion`, `aprobado_por`, `aprobado_en`. Agrocom existe como un proveedor de tipo `propio`; compite en igualdad con los demás.
-- **`prv_pilotos`**: `id`, `proveedor_id`, `usuario_id`, `nombres`, `apellidos`, `documento_identidad`, `telefono`, `licencia_numero`, `licencia_vence`, `categoria_habilitacion`, `estado` (`pendiente` | `aprobado` | `suspendido` | `rechazado` | `baja`).
+- **`prv_proveedores`**: `id`, `usuario_titular_id`, `tipo` (`propio` | `independiente` | `tercero`), `razon_social`, `documento_fiscal` (NIT), `nombre_comercial` y `logo_ref` (opcionales), `zona_base_id`, `estado` (§5.2), `calificacion_promedio`, `calificaciones_conteo`, `tasa_cancelacion`, `aprobado_por`, `aprobado_en`. Agrocom existe como un proveedor de tipo `propio`; compite en igualdad con los demás.
+- **`prv_pilotos`**: `id`, `proveedor_id`, `usuario_id` (los nombres, el documento y el celular son los de su `sec_personas`), `licencia_numero`, `licencia_vence`, `categoria_habilitacion`, `estado` (`pendiente` | `aprobado` | `suspendido` | `rechazado` | `baja`).
 - **`prv_documentos`**: `id`, `sujeto_tipo` (`proveedor` | `piloto` | `dron`), `sujeto_id`, `tipo` (`identidad`, `licencia_piloto`, `habilitacion_dron`, `seguro_responsabilidad`, `registro_dron`, `certificado_fumigacion`, `antecedentes`, `otro`), `archivo_ref`, `vence_en`, `estado` (`en_revision` | `aprobado` | `rechazado` | `vencido`), `revisado_por`, `motivo_rechazo`. Ruta de archivo según ADR 0026.
 
 ### 4.4 Flota
@@ -124,10 +124,18 @@ Las tablas de ejecución que el piloto escribe en el lote llevan `uuid_cliente`,
 
 - **`ntf_notificaciones`** (ADR 0025): un aviso por cuenta destinataria.
 - **`ntf_preferencias`** y **`ntf_dispositivos`** (ADR 0041): preferencias por categoría, zonas de interés y token de push por dispositivo. Un token está activo en una sola cuenta a la vez; el envío al sistema operativo va detrás de la interfaz `EnviadorDePush`, sin proveedor configurado todavía.
-- **`sec_user.foto_perfil_ref`**: foto de perfil de la persona de la cuenta (cliente, titular o piloto), menos de 300 KB, en el disco privado.
+- **`sec_user.foto_perfil_ref`**: foto de perfil de la cuenta (cliente, titular o piloto), menos de 300 KB, en el disco privado. No es la selfie de verificación (§4.10).
 - **`cfg_parametros`** (ADR 0016): parámetros de §11.
-- **`sec_*`**: usuarios, roles y permisos (ADR 0004).
+- **`sec_*`**: usuarios, roles y permisos (ADR 0004, ADR 0046), personas y verificaciones (§4.10).
 - **`aud_bitacora`**: auditoría de cambios (ADR 0007).
+
+### 4.10 Cuentas, personas y verificación (ADR 0046)
+
+- **`sec_user`**: la cuenta (credenciales, correo, foto de perfil, estado). `tipo_cuenta` vale `panel`, `cliente` o `proveedor`. `persona_id` apunta a `sec_personas` y es obligatorio en las cuentas de app. Las cuentas `panel` tienen un solo rol (`administrador` u `operador`) en `sec_user_role`; las cuentas de app no tienen roles. Índice único parcial `(persona_id, tipo_cuenta)`: una persona tiene a lo sumo una cuenta de cliente y una de proveedor.
+- **`sec_personas`**: la persona real, con `documento_tipo` (`ci` | `pasaporte` | `licencia_conducir`) y `documento_numero` (normalizado) **únicos**, `nombres`, `apellidos`, `celular` y `fecha_nacimiento` (nulo; la pide el registro del proveedor). Los mismos datos sirven a sus dos cuentas sin duplicarse. Registrarse otra vez en el mismo tipo responde `409 persona_ya_registrada`; el registro en el otro tipo enlaza la misma persona sin sobrescribir sus datos.
+- **`sec_verificaciones`**: una por cuenta (`usuario_id`). `estado` (`en_revision` | `aprobada` | `rechazada` | `reemplazada`), `selfie_ref`, `selfie_capturada_en`, `selfie_origen` (`camara` | `administrador`), `documento_ref`, `documento_origen` (`cuenta` | `administrador`), `es_marcador` (el administrador no adjuntó documento de la persona), `motivo_alta_administrador`, `revisado_por`, `revisado_en`, `motivo_rechazo`. El tipo y el número del documento son los de la persona. Una vigente por cuenta; reenviar crea otra fila. Los archivos van al disco privado (ADR 0026) y solo los sirve el panel con `seguridad.verificacion.ver`.
+- **`flo_equipo_integrantes`**: `equipo_id`, `nombre`, `celular` (nulo), `orden`. Datos informativos de las personas que forman el equipo del servicio, sin cuenta ni página propia; el cliente los ve solo tras adjudicar, junto al piloto (marcado como tal).
+- **Perfil de la cuenta.** La cuenta `cliente` es la fila de `sol_clientes`; la cuenta `proveedor` es la fila de `prv_proveedores` (titular) o de `prv_pilotos` (piloto con cuenta propia de un tercero). El estado de la cuenta es el de esa fila.
 
 ## 5. Máquinas de estado
 
@@ -150,7 +158,9 @@ Las tablas de ejecución que el piloto escribe en el lote llevan `uuid_cliente`,
 
 El detalle de reglas y guardas de cada transición está en `negociacion-contrato.md`.
 
-### 5.2 Proveedor, piloto y dron
+### 5.2 Cliente, proveedor, piloto y dron
+
+La cuenta de cliente y la de proveedor tienen cada una su estado; el cliente nace `pendiente`, como el proveedor. Una cuenta `aprobada` exige su verificación de identidad `aprobada` (selfie con cámara y documento: CI, licencia de conducir o pasaporte; ADR 0046). Con la cuenta `pendiente`, `rechazada`, `suspendida` o en `baja` la persona entra y ve las pantallas de su app, pero el servidor rechaza con `403` (`cuenta_no_aprobada`) publicar, aceptar y contraofertar en el cliente, y ofertar, contraofertar y aceptar en el proveedor. El alta que hace un administrador desde el panel la puede aprobar el mismo administrador; nadie aprueba su propia cuenta.
 
 `pendiente` → `aprobado` ⇄ `suspendido`; `pendiente` → `rechazado` (el solicitante puede reenviar); cualquiera → `baja`. Solo un administrador aprueba, suspende o da de baja. Un proveedor `aprobado` no ve el mapa de solicitudes abiertas ni ofrece si no tiene al menos un equipo con piloto y dron aprobados y documentos vigentes. Un documento vencido suspende de forma automática al sujeto hasta que se cargue uno vigente. Un dron se aprueba solo con las fotos obligatorias aprobadas (ADR 0042).
 
@@ -217,7 +227,7 @@ El cliente califica al proveedor y al piloto de 1 a 5 estrellas con etiquetas; e
 
 ### 9.1 Verificación
 
-Documentos obligatorios por sujeto, fotos del dron, revisión manual y vencimientos con aviso previo. Ver `verificacion_proveedores.md`.
+Verificación de identidad de cada cuenta (selfie con cámara y documento de identidad), documentos obligatorios por sujeto, fotos del dron, revisión manual y vencimientos con aviso previo. Ver `verificacion_proveedores.md`.
 
 ### 9.2 Privacidad y visibilidad
 
@@ -238,6 +248,17 @@ Canal por la app y por la web, con cola de casos por severidad. Una incidencia `
 ## 10. Endpoints
 
 Prefijo `/api`. Autenticación por token de dispositivo (`POST /auth/token`). El contrato publicado es `docs/api/openapi.yaml`, generado desde el código (ADR 0014). La lista completa con payloads, errores y reglas está en `negociacion-contrato.md`; los verbos de abajo definen la superficie.
+
+### 10.0 Cuenta y verificación
+
+Cada flavor usa estos endpoints con su tipo de cuenta (ADR 0046).
+
+| Método y ruta | Función |
+|---|---|
+| `POST /auth/token`, `GET /auth/sesion` | Login por dispositivo, sin rol, con la app de origen (`app`); devuelven `cuenta` (tipo, estado y lo que falta para aprobarla), `persona` y `verificacion`. `403 tipo_de_cuenta_incorrecto` si la cuenta es de la otra app |
+| `POST /clientes/registro`, `POST /proveedores/registro` | Alta pública de la cuenta con los datos de la persona; `409 persona_ya_registrada` si esa persona ya tiene una cuenta de ese tipo |
+| `GET /verificacion` | Estado de la verificación de la cuenta, motivo si fue rechazada y lo que falta |
+| `PUT /verificacion/selfie`, `PUT /verificacion/documento` | Sube la selfie (con la hora de captura de la cámara) y la imagen del documento declarado; la verificación queda `en_revision` |
 
 ### 10.1 Cliente
 
@@ -281,7 +302,7 @@ Prefijo `/api`. Autenticación por token de dispositivo (`POST /auth/token`). El
 | `GET/PUT /notificaciones/preferencias`, `POST/DELETE /dispositivos` | Preferencias de aviso y token de push |
 | `GET /reputacion`, `GET /calificaciones/recibidas`, `POST /calificaciones/{id}/reportar` | Reputación y calificaciones recibidas |
 | `GET/POST /solicitudes/{id}/calificar-cliente` | Califica al cliente en privado (7 días) |
-| Rutas de disputa e incidencias | Las mismas del cliente; el lado lo decide el rol del token |
+| Rutas de disputa e incidencias | Las mismas del cliente; el lado lo decide el tipo de la cuenta |
 
 ### 10.3 Sincronización del lote (piloto)
 
@@ -314,6 +335,8 @@ Son pantallas del panel (ADR 0008), no endpoints de la API de las apps. El menú
 | Sistema | organización, configuración y versiones de las apps | Ajustes de la plataforma que se tocan poco |
 | Seguridad | usuarios, roles, dispositivos y bitácora | Roles del panel: `dueno`, `encargado_operaciones` (administrador del marketplace), `soporte` y `admin_plataforma` |
 
+Roles del panel (ADR 0046): el panel lo usa solo el personal de Agrocom y tiene dos roles, Administrador (ve todo) y Operador (ve las pantallas y acciones cuyos permisos le asigna el administrador en la matriz de roles). Este párrafo manda sobre la fila «Seguridad» de la tabla anterior y sobre «quien los cargó no los aprueba» de la fila de alta a mano: el administrador puede aprobar lo que registró, y «Ver como» solo sobre cuentas de panel. Las altas a mano pueden crear cuentas de app (cliente o proveedor, con la misma regla de una cuenta de cada tipo por persona) y aprobarlas, con la verificación marcada «cargado por administrador» (ADR 0046). La ficha del cliente y del proveedor muestra su verificación (selfie y documento, con `seguridad.verificacion.ver`), con aprobar y rechazar con motivo.
+
 El administrador lee el chat y la ubicación solo para atender una disputa o una intervención; no escribe en ellos. Cerrar una negociación no es una sanción: no restringe ninguna cuenta (ADR 0033).
 
 ## 11. Parámetros configurables
@@ -333,6 +356,8 @@ Mecanismo del ADR 0025 con preferencias del ADR 0041: un aviso por cuenta destin
 | `MensajeEnviado` | La contraparte | Sí (`mensajes`) |
 | `SolicitudExpirada`, `SolicitudCancelada` | Las partes involucradas | No |
 | `ProveedorAprobado`, `ProveedorSuspendido`, `DocumentoPorVencer` | Proveedor | No |
+| `EstadoDeAprobacionCambiado` de un cliente (aprobado, rechazado, suspendido) | Cliente | No |
+| `VerificacionEnviada` (selfie y documento en revisión) | Administradores | No |
 | `CalificacionRegistrada` | Proveedor | Sí (`calificaciones`) |
 | `DisputaAbierta`, `DisputaResuelta` | Partes y soporte | No |
 | `EmergenciaActivada` | Soporte (prioridad máxima) | No |
@@ -356,4 +381,4 @@ En el lote: todo registro nace con su `uuid_cliente` en el dispositivo, escribir
 
 ## 15. Alcance de la primera versión
 
-Incluye: registro y aprobación de proveedores con datos de la persona y del dron con fotos, propiedad y lotes en mapa, solicitud con precio por hectárea, mapa de solicitudes abiertas, negociación por rondas, adjudicación, ejecución con fotos y avance, ubicación del piloto, chat, precio final, calificación, disputas, incidencias y SOS, notificaciones con preferencias y métricas básicas. No incluye: cobro dentro de la app, comisión calculada por la plataforma, cobertura de seguro propia, ruta ni tiempo estimado de llegada, ni facturación electrónica.
+Incluye: registro de cuentas de cliente y de proveedor (una persona, una cuenta de cada tipo), verificación de identidad y aprobación de clientes y proveedores con datos de la persona y del dron con fotos, propiedad y lotes en mapa, solicitud con precio por hectárea, mapa de solicitudes abiertas, negociación por rondas, adjudicación, ejecución con fotos y avance, ubicación del piloto, chat, precio final, calificación, disputas, incidencias y SOS, notificaciones con preferencias y métricas básicas. No incluye: cobro dentro de la app, comisión calculada por la plataforma, cobertura de seguro propia, ruta ni tiempo estimado de llegada, ni facturación electrónica.

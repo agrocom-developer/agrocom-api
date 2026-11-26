@@ -69,7 +69,7 @@ Reglas:
 - Precio de referencia (`GET /referencias/precio?tipo_aplicacion=&zona_id=&macrorregion=`): guía, no límite. Busca de lo específico a lo general (zona, macrorregión, general del tipo) y responde `precio_ha` con `nivel` (`zona`, `macrorregion`, `general` o `respaldo`). Lo consultan el cliente al proponer y el piloto al ofertar; los valores son datos de `sol_precios_referencia` que el administrador ajusta.
 
 ### 3.2 Quién puede ofertar
-Cuenta de proveedor (titular o piloto) con proveedor `aprobado`, al menos un equipo apto (piloto y dron aprobados, dron con fotos aprobadas, documentos vigentes), sin suspensión. El `equipo_id` de la oferta debe ser de su proveedor y apto. Un proveedor no oferta sobre solicitudes de su propia cuenta de cliente.
+Cuenta de proveedor (titular o piloto) en estado `aprobado`, al menos un equipo apto (piloto y dron aprobados, dron con fotos aprobadas, documentos vigentes), sin suspensión. El `equipo_id` de la oferta debe ser de su proveedor y apto. Un proveedor no oferta sobre solicitudes de su propia cuenta de cliente ni de otra cuenta de la misma persona. Si la cuenta no está `aprobada`, 403 `cuenta_no_aprobada` (distinto de `proveedor_no_habilitado`, que es no tener un equipo apto).
 
 ### 3.3 Alcance del mapa
 Todo piloto habilitado ve todas las solicitudes `abierta` y `con_ofertas` de Santa Cruz; los filtros son del usuario, no restricciones. No hay radio fijo de operación.
@@ -194,9 +194,9 @@ Cada elemento: `id`, `centro` (`latitud`, `longitud` del centroide de los lotes)
 
 ### Cambiados
 - `POST /solicitudes`, `PUT /solicitudes/{id}`: reciben `precio_ha_propuesto`, varios terrenos, `observaciones`; ya no calculan tarifa ni recargos. `GET /solicitudes/{id}/estimacion` pasa a devolver el monto estimado con el precio propuesto.
-- `POST /solicitudes/{id}/publicar`: deja la solicitud `abierta` y dispara el aviso a pilotos.
+- `POST /solicitudes/{id}/publicar`: deja la solicitud `abierta` y dispara el aviso a pilotos. Exige la cuenta de cliente aprobada: si no, 403 `cuenta_no_aprobada`; lo mismo vale para aceptar y contraofertar (ADR 0046).
 - `GET /solicitudes`, `GET /solicitudes/{id}`: estados nuevos, `precio_ha_acordado`, `monto_estimado`, `hectareas_ejecutadas`, `porcentaje_avance`, `monto_final`, `oferta_adjudicada`, `proveedor` (con contacto solo adjudicado).
-- `GET /ofertas`, `GET /ofertas/{id}`, `POST /ofertas/{id}/aceptar`, `POST /ofertas/{id}/rechazar`: pasan a ser de la negociación y sirven a ambos roles; el lado lo decide el rol del token.
+- `GET /ofertas`, `GET /ofertas/{id}`, `POST /ofertas/{id}/aceptar`, `POST /ofertas/{id}/rechazar`: pasan a ser de la negociación y sirven a ambos lados; el lado lo decide el tipo de la cuenta (ADR 0046).
 - `POST /solicitudes/{id}/cancelar`: sin penalidad; registra en `neg_cancelaciones` si la solicitud estaba adjudicada. `POST /solicitudes/{id}/cancelar-proveedor` reabre la solicitud (§1).
 - `GET /reputacion`: calificación, tasa de cancelación y alertas; sin sanciones ni tasa de aceptación.
 - `GET /sync/catalogo`: `servicios_asignados` pasa a ser las solicitudes `adjudicada` y `en_ejecucion` del equipo con lotes, datos de contacto y precio acordado; suma `mensajes`.

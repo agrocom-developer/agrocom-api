@@ -1,6 +1,6 @@
 # ADR 0032 — Registro y aprobación de proveedores, pilotos, auxiliares y drones
 
-**Estado:** aceptada, revisable · **Fecha:** 2026-11-23 · **Decide:** el dueño (autonomía delegada)
+**Estado:** aceptada, revisable; complementada por el ADR 0046 (verificación de identidad por cuenta, y el cliente también se aprueba) · **Fecha:** 2026-11-23 · **Decide:** el dueño (autonomía delegada)
 
 ## Contexto
 

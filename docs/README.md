@@ -5,7 +5,7 @@ Este `docs/` contiene la documentación vigente de Agrocom, un marketplace de se
 ## Estructura
 
 - **`especificacion/marketplace.md`**: la fuente de verdad funcional y técnica. Actores, flujo, modelo de datos, máquinas de estado, negociación, endpoints, eventos, notificaciones, métricas y alcance de la primera versión. **`especificacion/negociacion-contrato.md`** lista con precisión los estados, las reglas y los recursos para implementar.
-- **`decisiones/`**: ADRs (contexto, decisión, alternativas descartadas, consecuencias). Los ADR 0027 a 0042 definen el marketplace:
+- **`decisiones/`**: ADRs (contexto, decisión, alternativas descartadas, consecuencias). Los ADR 0027 a 0044 y 0046 definen el marketplace:
   - 0027 solicitud de servicio
   - 0028 proveedores propio, independiente y tercero
   - 0029 dron como vehículo con dueño
@@ -22,6 +22,9 @@ Este `docs/` contiene la documentación vigente de Agrocom, un marketplace de se
   - 0040 seguimiento: fotos de avance, mensajes y ubicación del piloto
   - 0041 mapa de solicitudes abiertas y notificaciones con preferencias
   - 0042 registro del proveedor con datos de la persona y fotos del dron
+  - 0043 contactos de referencia del cliente
+  - 0044 alta manual en el panel
+  - 0046 cuentas separadas por app (cliente y proveedor), persona única, verificación de identidad y roles del panel (Administrador y Operador)
 - **`politicas/`**: una política por tema, que operan lo decidido: `negociacion.md`, `precio_y_pago.md`, `cancelacion.md`, `calificacion.md`, `verificacion_proveedores.md`, `seguimiento_y_privacidad.md`, `seguridad.md`, `disputas.md`.
 - **`gestion/`**: cola de tareas del ciclo automático, `estado-api.md` (qué está hecho en la API y qué falta), entornos, automatización del desarrollo y el plan de homogeneización del panel; `respuestas_campo/capturas_rc/` guarda las capturas del control remoto del dron.
 - **`diseno/`**: sistema de diseño del panel (tokens CSS, catálogo Atomic Design) y guía de construcción de pantallas.

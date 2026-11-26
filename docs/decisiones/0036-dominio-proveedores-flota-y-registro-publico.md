@@ -1,6 +1,6 @@
 # ADR 0036 — Dominio de proveedores y flota: módulos, roles, registro público y aprobación
 
-**Estado:** aceptada · **Fecha:** 2026-11-23 · **Decide:** el dueño (autonomía delegada)
+**Estado:** aceptada; el punto 4 queda sustituido por el ADR 0046 (la cuenta de app no tiene roles `cliente` ni `proveedor`: tiene un tipo de cuenta, y el token no lleva rol) · **Fecha:** 2026-11-23 · **Decide:** el dueño (autonomía delegada)
 
 ## Contexto
 

@@ -9,17 +9,26 @@ Referencia rápida de vocabulario, de negocio y técnico, para que cualquier per
 | Término | Definición | Referencia |
 |---|---|---|
 | **Marketplace** | Plataforma donde clientes publican solicitudes de fumigación con drones y proveedores ofertan; el precio se negocia. Agrocom es el nexo y el registro del resultado | `especificacion/marketplace.md` |
-| **Cliente** | Quien publica la solicitud, elige la oferta, sigue el avance y califica | especificación §2 |
+| **Cliente** | Tipo de cuenta de app: quien publica la solicitud, elige la oferta, sigue el avance y califica; persona o empresa; debe estar aprobado para publicar y aceptar | especificación §2; ADR 0046 |
+| **Cuenta de panel** | Cuenta del personal de Agrocom; tiene un solo rol, Administrador u Operador | ADR 0046 |
+| **Cuenta de app** | Cuenta de una persona en una de las dos apps; es de cliente o de proveedor, sin roles ni conversión entre tipos; con su propia verificación y aprobación | ADR 0046 |
+| **Administrador** | Rol del panel que ve todo: verifica y aprueba, atiende, modera y configura | ADR 0046 |
+| **Operador** | Rol del panel que ve las partes de algunos módulos que el administrador le asigna | ADR 0046 |
+| **Persona** (`sec_personas`) | Persona real dueña de una o dos cuentas de app, identificada por su documento (único): nombres, apellidos, documento y celular. Tiene a lo sumo una cuenta de cliente y una de proveedor | ADR 0046 |
+| **Verificación de identidad** | Selfie tomada con la cámara y documento (carnet de identidad, licencia de conducir o pasaporte) que cada cuenta de app necesita para ser aprobada | ADR 0046; `politicas/verificacion_proveedores.md` |
+| **Selfie** | Foto del rostro tomada en el momento con la cámara de la app, distinta de la foto de perfil; solo la ve quien revisa | ADR 0046 |
+| **Cargada por administrador** | Marca de una verificación que el administrador creó desde el panel; si no hay documento de la persona, lleva un archivo marcador generado por el sistema y el motivo | ADR 0046 |
 | **Solicitud de servicio** | Pedido del cliente sobre sus lotes: hectáreas, tipo de aplicación, producto, fecha deseada y precio por hectárea propuesto. Es la unidad de negocio | especificación §4.2; ADR 0027 |
 | **Terreno** | Superficie del cliente con geometría y hectáreas, sobre la que se pide un servicio | especificación §4.1 |
 | **Proveedor** | Entidad que presta el servicio: propio, independiente o tercero | ADR 0028 |
 | **Proveedor propio** | Agrocom como proveedor, con sus pilotos y drones; compite como cualquier otro | ADR 0028 |
-| **Proveedor independiente** | Piloto que es su propio proveedor; se registra solo y lo aprueba un administrador | ADR 0028, 0032 |
+| **Proveedor independiente** | Piloto que es su propio proveedor; se registra solo (o lo registra la oficina) y lo aprueba un administrador | ADR 0028, 0032, 0046 |
 | **Proveedor tercero** | Empresa o dueño de drones con pilotos a su cargo | ADR 0028 |
 | **Piloto** | Persona que opera el dron, ve el mapa de solicitudes abiertas, ofrece y marca el avance | especificación §2 |
 | **Dron (vehículo)** | Activo que presta el servicio, con dueño y operador; requiere aprobación | ADR 0029 |
 | **Dueño del dron** | Proveedor que posee el dron, aunque lo opere otro | ADR 0029 |
 | **Equipo** | Combinación operativa de piloto y dron que ejecuta una solicitud | especificación §4.4 |
+| **Integrantes del equipo del servicio** | Personas que el proveedor anota, de forma opcional y solo como información, junto al piloto (nombre y celular opcional); sin cuenta ni verificación; el cliente las ve solo tras adjudicar | ADR 0046 |
 | **Mapa de solicitudes abiertas** | Vista del piloto con las solicitudes `abierta` y `con_ofertas`, filtros por zona, hectáreas y precio, y resumen por zona | ADR 0041 |
 | **Oferta** | Precio por hectárea que una parte propone en una negociación, con vencimiento; se acepta, se contraoferta o se rechaza | especificación §4.5, §5.3 |
 | **Negociación** | Conjunto de ofertas entre el cliente y un proveedor sobre una solicitud; hay una sola oferta vigente y un máximo de ofertas | ADR 0030 |
