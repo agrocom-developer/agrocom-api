@@ -679,6 +679,7 @@ return [
         'rol_protegido_ultimo_portador' => "':permiso' quedaría sin ningún rol activo que lo tenga. Otórgaselo antes a otro rol: nadie puede conceder un permiso que no tiene, así que un permiso huérfano no se recupera desde el panel.",
         'rol_protegido_permiso_reservado' => "':permiso' es exclusivo del administrador: no se puede otorgar al rol ':rol'.",
         'rol_protegido_permiso_de_app' => "':permiso' lo ejerce una cuenta de la app y no se asigna a un rol del panel.",
+        'rol_protegido_cuenta_de_app' => 'Las cuentas de la app (cliente y proveedor) no se administran desde Usuarios: tienen su ficha en Clientes y Proveedores.',
         'rol_protegido_matriz_administrador' => 'El administrador ve y hace todo: su matriz de permisos no se edita.',
         'rol_protegido_catalogo_fijo' => 'El panel tiene dos roles, administrador y operador. No se crean roles nuevos ni se cambia el nombre de estos.',
         'rol_protegido_rol_del_panel' => "El rol ':rol' es del sistema: no se elimina ni se desactiva.",
@@ -691,7 +692,7 @@ return [
         'vista_como_cuenta_no_disponible' => 'No puedes ver el sistema como esa cuenta: está bloqueada, eliminada o es la tuya.',
         'vista_como_rol_requerido' => 'Elige el rol con el que quieres ver el sistema: esa cuenta tiene más de uno.',
         'vista_como_rol_no_disponible' => 'Esa cuenta no tiene ese rol activo, así que no se puede ver con él.',
-        'vista_como_sin_contrato' => 'Esa cuenta de portal no tiene un contrato asignado: no hay nada que ver.',
+        'vista_como_solo_cuentas_de_panel' => 'Solo puedes ver como una cuenta del panel. Las cuentas de la app (cliente y proveedor) no se pueden ver como.',
         'usuario_duplicado_username' => "Ya existe una cuenta activa con el username ':username'.",
         'usuario_duplicado_persona' => 'La persona #:persona_id ya tiene una cuenta activa — una persona operativa, una sola cuenta.',
         'usuario_duplicado_email' => "Ya existe una cuenta activa con el correo ':email'.",
@@ -715,10 +716,18 @@ return [
         'perfil_password_confirmacion' => 'La confirmación no coincide con la contraseña nueva.',
     ],
 
+    // Tipo de cuenta (ADR 0046), tal como se le nombra a quien ingresó en la app equivocada.
+    'tipos_de_cuenta' => [
+        'panel' => 'panel',
+        'cliente' => 'cliente',
+        'proveedor' => 'proveedor',
+    ],
+
     // Respuestas del sistema.
     'respuestas' => [
         'sesion_finalizada' => 'Sesión finalizada.',
         'rol_dispositivo_requerido' => 'Debes indicar con qué rol opera este dispositivo.',
+        'tipo_de_cuenta_incorrecto' => 'Esta cuenta es de :tipo: ingresa en la app :app.',
         'rol_activo_requerido' => 'Debes seleccionar un rol activo antes de continuar.',
         'badge_solicitudes_esperando' => ':cantidad esperando proveedor',
         'badge_sesiones_pendientes' => ':cantidad sin validar',
