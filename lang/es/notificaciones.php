@@ -48,6 +48,25 @@ return [
         'dispositivo_no_encontrado' => 'No encontramos ese dispositivo entre los tuyos.',
     ],
 
+    // «Mis notificaciones»: los avisos de la propia cuenta (la campana muestra los 3 últimos).
+    'mias' => [
+        'titulo' => 'Mis notificaciones',
+        'subtitulo' => 'Los avisos de tu cuenta, del más nuevo al más viejo.',
+        'vacio_titulo' => 'No tienes notificaciones',
+        'vacio_detalle' => 'Cuando pase algo que te importe —una oferta, una aprobación, un reclamo— te avisamos aquí.',
+        'col_aviso' => 'Aviso',
+        'col_estado' => 'Estado',
+        'col_fecha' => 'Fecha',
+        'ver' => 'Ver',
+        'marcar_todas' => 'Marcar todas como leídas',
+        'eliminar_todas' => 'Eliminar todas',
+        'eliminar_titulo' => 'Eliminar todas tus notificaciones',
+        'eliminar_mensaje' => 'Se eliminan las leídas y las no leídas. Esta acción no se puede deshacer.',
+        'paginacion_aria' => 'Paginación de tus notificaciones',
+        'leida' => 'Leída',
+        'sin_leer' => 'Sin leer',
+    ],
+
     'panel' => [
         'titulo' => 'Avisos del sistema',
         'subtitulo' => 'Lo que el sistema avisó a clientes, proveedores y administradores, del más nuevo al más viejo.',
