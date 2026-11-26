@@ -1,6 +1,6 @@
 # ADR 0041 — Mapa de solicitudes abiertas y notificaciones con preferencias
 
-**Estado:** aceptada, revisable · **Fecha:** 2026-11-24 · **Decide:** el dueño
+**Estado:** aceptada, revisable · **Fecha:** 2026-11-24 · **Decide:** el dueño · **Reemplazado en parte por:** ADR 0045 (puntos 1, 3, 4 y 6: sin zonas ni distancia, filtros por departamento y avisos por oleadas)
 
 ## Contexto
 
