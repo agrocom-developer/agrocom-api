@@ -13,7 +13,7 @@ interface LecturaEquipos
 {
     /**
      * Equipos de un proveedor que hoy pueden recibir ofertas: proveedor, piloto,
-     * dron y auxiliar (si lo lleva) aprobados, documentos vigentes y vigencia
+     * y dron aprobados, documentos vigentes y vigencia
      * abarcando la fecha. Vacío si el proveedor no está aprobado.
      *
      * @return list<DatosEquipoApto>
@@ -21,7 +21,7 @@ interface LecturaEquipos
     public function aptosDe(int $proveedorId, ?DateTimeImmutable $hoy = null): array;
 
     /**
-     * Ids de los equipos en los que la cuenta es piloto o auxiliar. Con
+     * Ids de los equipos en los que la cuenta es piloto. Con
      * `$soloVigentes` solo los vigentes en la fecha; sin él, también los que ya
      * terminaron (la app de campo los necesita para retirar lo que ya no es suyo).
      * No juzga aptitud: eso es de {@see aptosDe()}.

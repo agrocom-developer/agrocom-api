@@ -218,11 +218,6 @@ return [
                 'descripcion' => 'Ofrece, ejecuta los servicios adjudicados y sube las fotos desde la app.',
                 'permisos' => ['Ofertas', 'Servicios', 'Fotos'],
             ],
-            'auxiliar' => [
-                'nombre' => 'Auxiliar',
-                'descripcion' => 'Apoya al piloto en el lote y sube fotos de avance desde la app.',
-                'permisos' => ['Servicios', 'Fotos'],
-            ],
             'jefe_campo' => [
                 'nombre' => 'Jefe de campo',
                 'descripcion' => 'Rol retirado del marketplace; se conserva mientras tenga cuentas asignadas.',
@@ -266,7 +261,6 @@ return [
         'pendiente' => [
             'proveedores' => 'Proveedores por aprobar',
             'pilotos' => 'Pilotos por aprobar',
-            'auxiliares' => 'Auxiliares por aprobar',
             'drones' => 'Drones por aprobar',
             'fotos_de_dron' => 'Fotos de dron por revisar',
             'documentos' => 'Documentos por revisar',
@@ -384,12 +378,6 @@ return [
         'aside_persona_vacio_detalle' => 'Sin persona, la cuenta no puede hacer lo que exige una persona, como validar una sesión. Vincúlala en «Persona y roles».',
         'aside_persona_baja_titulo' => 'La persona ya no existe',
         'aside_persona_baja_detalle' => 'La persona vinculada fue eliminada. Elige otra en «Persona y roles».',
-        'aside_dispositivos_titulo' => 'Dispositivos',
-        'aside_dispositivos_total' => 'Sesiones abiertas',
-        'aside_dispositivos_ultimo_uso' => 'Último uso',
-        'aside_dispositivos_accion' => 'Ver dispositivos',
-        'aside_dispositivos_vacio_titulo' => 'Sin dispositivos con sesión',
-        'aside_dispositivos_vacio_detalle' => 'Esta cuenta no tiene sesión abierta en la app de campo.',
         'aside_contrato_titulo' => 'Contrato del portal',
         'aside_contrato_cliente' => 'Cliente',
         'aside_contrato_campania' => 'Campaña',
@@ -401,33 +389,6 @@ return [
         'aside_bitacora_accion' => 'Ver en la bitácora',
         'aside_bitacora_vacio_titulo' => 'Sin movimientos',
         'aside_bitacora_vacio_detalle' => 'Todavía no hay movimientos registrados de esta cuenta.',
-    ],
-
-    // Revocación de sesiones de la app de campo (HU-03). El nombre del rol
-    // (`sec_role.name`) NO se traduce acá: es vocabulario de dominio y llega
-    // resuelto desde la base (ADR 0013 punto 3).
-    'dispositivos' => [
-        'titulo' => 'Dispositivos',
-        'subtitulo' => 'Equipos con sesión abierta en la app de campo. Revocar deja al dispositivo sin acceso en el acto: quien lo use tendrá que volver a iniciar sesión.',
-        'col_usuario' => 'Usuario',
-        'col_dispositivo' => 'Dispositivo',
-        'col_rol' => 'Rol',
-        'col_ultimo_uso' => 'Último uso',
-        'revocar' => 'Revocar',
-        'revocado' => 'El dispositivo perdió el acceso.',
-        'confirmar_revocar_titulo' => 'Revocar el acceso',
-        'confirmar_revocar' => '¿Confirmas revocar el acceso de :usuario desde «:dispositivo»? Quien lo use tendrá que volver a iniciar sesión.',
-        'filtro_busqueda_placeholder' => 'Usuario o dispositivo…',
-        'filtro_rol' => 'Rol',
-        'filtro_rol_todos' => 'Todos',
-        'filtro_vacio_titulo' => 'Sin resultados para este filtro',
-        'filtro_vacio_detalle' => 'Ningún dispositivo coincide con la búsqueda o el filtro aplicado. Prueba con otro término o quita el filtro.',
-        'paginacion_aria' => 'Paginación de dispositivos',
-        'vacio_titulo' => 'Todavía no hay dispositivos con sesión',
-        'vacio_detalle' => 'Los dispositivos aparecen acá cuando la app de campo se usa en un equipo. Vuelve a esta pantalla después de tu primer vuelo.',
-        'equipo_sin_nombre' => 'Equipo sin nombre',
-        'usuario_desconocido' => 'Cuenta eliminada',
-        'sin_uso' => 'Todavía sin uso',
     ],
 
     // Mockup de "Registro de la compañía" (GET /panel/organizacion, vista previa de SaaS

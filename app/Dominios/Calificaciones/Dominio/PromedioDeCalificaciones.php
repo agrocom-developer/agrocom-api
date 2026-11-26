@@ -8,14 +8,14 @@ use Brick\Math\RoundingMode;
 /**
  * El promedio de una reputación (política de calificación, «Promedio y umbrales»),
  * en decimal exacto. La reputación de un proveedor es el promedio ponderado de lo
- * que recibe él, su piloto y su auxiliar, con un peso por tipo de sujeto (ADR 0039);
+ * que recibe él y su piloto, con un peso por tipo de sujeto (ADR 0039);
  * la de un cliente es el promedio simple de lo que le dan los proveedores. Pura.
  */
 final class PromedioDeCalificaciones
 {
     /**
      * @param  list<array{sujeto: string, estrellas: int}>  $calificaciones
-     * @param  array<string, string>  $pesos  peso por tipo de sujeto (`proveedor`, `piloto`, `auxiliar`); un tipo sin peso no cuenta.
+     * @param  array<string, string>  $pesos  peso por tipo de sujeto (`proveedor`, `piloto`); un tipo sin peso no cuenta.
      * @return string promedio a dos decimales, o `0.00` si no hay nada que ponderar.
      */
     public static function ponderado(array $calificaciones, array $pesos): string

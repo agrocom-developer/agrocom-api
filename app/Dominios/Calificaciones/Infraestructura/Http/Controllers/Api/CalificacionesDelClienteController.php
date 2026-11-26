@@ -26,7 +26,7 @@ use OpenApi\Attributes as OA;
  */
 #[OA\Tag(
     name: 'Calificaciones',
-    description: 'El cliente califica al proveedor, al piloto y al auxiliar de un servicio completado, durante 7 días; el proveedor califica al cliente en privado y ve las calificaciones que recibe (ADR 0031).',
+    description: 'El cliente califica al proveedor y al piloto de un servicio completado, durante 7 días; el proveedor califica al cliente en privado y ve las calificaciones que recibe (ADR 0031).',
 )]
 #[OA\Schema(
     schema: 'CalificacionesDelServicio',
@@ -43,7 +43,7 @@ use OpenApi\Attributes as OA;
             items: new OA\Items(
                 required: ['tipo', 'id', 'nombre'],
                 properties: [
-                    new OA\Property(property: 'tipo', type: 'string', enum: ['proveedor', 'piloto', 'auxiliar', 'cliente']),
+                    new OA\Property(property: 'tipo', type: 'string', enum: ['proveedor', 'piloto', 'cliente']),
                     new OA\Property(property: 'id', type: 'integer'),
                     new OA\Property(property: 'nombre', type: 'string'),
                     new OA\Property(property: 'calificacion', nullable: true, allOf: [new OA\Schema(ref: '#/components/schemas/Calificacion')]),
@@ -69,7 +69,7 @@ final class CalificacionesDelClienteController
     #[OA\Get(
         path: '/api/solicitudes/{id}/calificaciones',
         operationId: 'verCalificacionesDelServicio',
-        description: 'A quiénes puedes calificar en un servicio tuyo (el proveedor, el piloto y, si el equipo lo llevaba, el auxiliar), a quiénes ya calificaste y hasta cuándo. '
+        description: 'A quiénes puedes calificar en un servicio tuyo (el proveedor y el piloto), a quiénes ya calificaste y hasta cuándo. '
             .'Solo un servicio `completada` se califica, durante 7 días desde que se completó.',
         summary: 'Estado de la calificación de un servicio',
         security: [['tokenDispositivo' => []]],
@@ -98,7 +98,7 @@ final class CalificacionesDelClienteController
     #[OA\Post(
         path: '/api/solicitudes/{id}/calificaciones',
         operationId: 'calificarServicio',
-        description: 'Califica al proveedor, al piloto y al auxiliar de un servicio completado: de 1 a 5 estrellas, etiquetas de un catálogo cerrado y un comentario opcional. '
+        description: 'Califica al proveedor y al piloto de un servicio completado: de 1 a 5 estrellas, etiquetas de un catálogo cerrado y un comentario opcional. '
             .'Cada calificación lleva su `uuid_cliente` (idempotente: reintentar el mismo devuelve la calificación ya guardada) y se guarda una sola vez por sujeto: no se edita. '
             .'Las de una misma llamada se guardan juntas o ninguna. Responde 201 si se creó alguna y 200 si todas eran reintentos.',
         summary: 'Calificar un servicio completado',
@@ -112,12 +112,12 @@ final class CalificacionesDelClienteController
                         property: 'calificaciones',
                         type: 'array',
                         minItems: 1,
-                        maxItems: 3,
+                        maxItems: 2,
                         items: new OA\Items(
                             required: ['uuid_cliente', 'sujeto_tipo', 'estrellas'],
                             properties: [
                                 new OA\Property(property: 'uuid_cliente', type: 'string', format: 'uuid'),
-                                new OA\Property(property: 'sujeto_tipo', type: 'string', enum: ['proveedor', 'piloto', 'auxiliar']),
+                                new OA\Property(property: 'sujeto_tipo', type: 'string', enum: ['proveedor', 'piloto']),
                                 new OA\Property(property: 'estrellas', type: 'integer', minimum: 1, maximum: 5, example: 5),
                                 new OA\Property(property: 'etiquetas', type: 'array', items: new OA\Items(type: 'string', enum: ['puntualidad', 'cobertura_pareja', 'comunicacion', 'cuidado_entorno', 'orden_lote']), nullable: true),
                                 new OA\Property(property: 'comentario', type: 'string', nullable: true),

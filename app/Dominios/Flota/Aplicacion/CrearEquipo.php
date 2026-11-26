@@ -13,9 +13,9 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
 /**
- * El titular arma un equipo operativo: un piloto, un dron y, si hace falta, un
- * auxiliar, todos de su proveedor (especificación §4.4). Reglas:
- * - el piloto y el auxiliar son del proveedor y el dron lo opera el proveedor;
+ * El titular arma un equipo operativo: un piloto y un dron, ambos de su
+ * proveedor (especificación §4.4). Reglas:
+ * - el piloto es del proveedor y el dron lo opera el proveedor;
  * - ninguno está rechazado, suspendido ni dado de baja (un integrante pendiente
  *   sí entra: el equipo no recibe ofertas hasta que todos estén aprobados);
  * - un piloto y un dron no pueden estar en dos equipos vigentes a la vez: dos
@@ -36,7 +36,6 @@ final class CrearEquipo
         int $actorUsuarioId,
         int $pilotoId,
         int $dronId,
-        ?int $auxiliarId,
         string $vigenteDesde,
         ?string $vigenteHasta = null,
     ): Equipo {
@@ -60,17 +59,7 @@ final class CrearEquipo
 
         $this->exigirOperable($piloto->estado, 'piloto');
 
-        if ($auxiliarId !== null) {
-            $auxiliar = $this->proveedores->auxiliar($auxiliarId);
-
-            if ($auxiliar === null || $auxiliar->proveedorId !== $proveedor->id) {
-                throw OperacionDeFlotaInvalida::auxiliarAjeno();
-            }
-
-            $this->exigirOperable($auxiliar->estado, 'auxiliar');
-        }
-
-        return DB::transaction(function () use ($proveedor, $pilotoId, $dronId, $auxiliarId, $vigencia, $vigenteDesde, $vigenteHasta, $actorUsuarioId): Equipo {
+        return DB::transaction(function () use ($proveedor, $pilotoId, $dronId, $vigencia, $vigenteDesde, $vigenteHasta, $actorUsuarioId): Equipo {
             $dron = Dron::query()->lockForUpdate()->find($dronId);
 
             if ($dron === null || $dron->operador_proveedor_id !== $proveedor->id) {
@@ -89,7 +78,6 @@ final class CrearEquipo
                     'proveedor_id' => $proveedor->id,
                     'piloto_id' => $pilotoId,
                     'dron_id' => $dronId,
-                    'auxiliar_id' => $auxiliarId,
                     'vigente_desde' => $vigenteDesde,
                     'vigente_hasta' => $vigenteHasta,
                     'created_by' => $actorUsuarioId,

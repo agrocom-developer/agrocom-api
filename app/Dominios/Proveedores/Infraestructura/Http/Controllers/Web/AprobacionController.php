@@ -15,7 +15,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * `POST /panel/{proveedores|pilotos|auxiliares}/{id}/resolver`: aprobar,
+ * `POST /panel/{proveedores|pilotos}/{id}/resolver`: aprobar,
  * rechazar, suspender, rehabilitar o dar de baja, con motivo donde corresponde
  * (ADR 0032). El permiso es por entidad y por acción y se verifica contra el
  * ROL ACTIVO; la transición la valida {@see ResolverAprobacion}, nunca esta
@@ -28,13 +28,11 @@ final class AprobacionController
     private const PERMISO_POR_SUJETO = [
         'proveedor' => 'proveedores.proveedor',
         'piloto' => 'proveedores.piloto',
-        'auxiliar' => 'proveedores.auxiliar',
     ];
 
     private const RUTA_POR_SUJETO = [
         'proveedor' => 'panel.proveedores.show',
         'piloto' => 'panel.pilotos.show',
-        'auxiliar' => 'panel.auxiliares.show',
     ];
 
     public function __construct(
@@ -50,11 +48,6 @@ final class AprobacionController
     public function piloto(ResolverAprobacionRequest $request, int $id): RedirectResponse
     {
         return $this->resolver($request, TipoSujeto::Piloto, $id);
-    }
-
-    public function auxiliar(ResolverAprobacionRequest $request, int $id): RedirectResponse
-    {
-        return $this->resolver($request, TipoSujeto::Auxiliar, $id);
     }
 
     private function resolver(ResolverAprobacionRequest $request, TipoSujeto $tipo, int $id): RedirectResponse

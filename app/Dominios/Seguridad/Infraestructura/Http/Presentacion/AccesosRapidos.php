@@ -54,7 +54,6 @@ final class AccesosRapidos
             'panel.bitacora.index',
             'panel.configuracion.index',
             'panel.organizacion.index',
-            'panel.dispositivos.index',
         ],
     ];
 

@@ -23,7 +23,7 @@ final class FotoDePerfilController
         path: '/api/perfil/foto',
         operationId: 'subirFotoDePerfil',
         description: 'La cuenta del token sube o reemplaza su foto de perfil (multipart, menos de 300 KB: la app la comprime antes). '
-            .'Sirve a clientes, proveedores, pilotos y auxiliares. El cliente la ve en la tarjeta del proveedor al comparar ofertas. '
+            .'Sirve a clientes, proveedores y pilotos. El cliente la ve en la tarjeta del proveedor al comparar ofertas. '
             .'La foto anterior se borra del disco privado.',
         summary: 'Subir mi foto de perfil',
         security: [['tokenDispositivo' => []]],

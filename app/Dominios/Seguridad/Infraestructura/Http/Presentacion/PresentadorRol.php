@@ -29,7 +29,6 @@ final class PresentadorRol
     private const ICONOS = [
         'dueno' => 'shield_person',
         'piloto' => 'flight_takeoff',
-        'auxiliar' => 'engineering',
         'jefe_campo' => 'supervisor_account',
         'encargado_operaciones' => 'fact_check',
         'soporte' => 'support_agent',

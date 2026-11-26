@@ -10,8 +10,7 @@ use App\Dominios\Solicitudes\Contratos\PasosDeSolicitud;
 
 /**
  * Quién es quién en una solicitud adjudicada (invariante 5 de CLAUDE.md): el cliente
- * de la solicitud, o la cuenta del proveedor adjudicado (titular o piloto) y, para las
- * evidencias, el auxiliar del equipo. Cualquier otra cuenta recibe 404: no se revela
+ * de la solicitud, o la cuenta del proveedor adjudicado (titular o piloto). Cualquier otra cuenta recibe 404: no se revela
  * que la solicitud existe.
  */
 final class Participantes
@@ -50,7 +49,7 @@ final class Participantes
     }
 
     /**
-     * La solicitud, si la cuenta es del equipo adjudicado (titular, piloto o auxiliar del equipo).
+     * La solicitud, si la cuenta es del equipo adjudicado (titular o piloto del equipo).
      *
      * @throws NegociacionInvalida `solicitud_ajena` (404), `equipo_ajeno` (403)
      */

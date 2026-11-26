@@ -16,7 +16,6 @@ use App\Dominios\Negociacion\Infraestructura\Http\Controllers\Api\SeguimientoCon
 use App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Api\DispositivosPushController;
 use App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Api\NotificacionesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Api\EvidenciaController;
-use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\AuxiliaresController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\DocumentosController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\MiProveedorController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\PilotosController;
@@ -97,7 +96,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // request). Revocar el de otro es cosa del panel, con permiso propio.
     Route::delete('/auth/token', [SesionCampoController::class, 'destroy'])->name('api.auth.token.revocar');
 
-    // Foto de perfil de la propia cuenta (cliente, proveedor, piloto o auxiliar).
+    // Foto de perfil de la propia cuenta (cliente, proveedor o piloto).
     Route::put('/perfil/foto', [FotoDePerfilController::class, 'update'])->name('api.perfil.foto.update');
     Route::delete('/perfil/foto', [FotoDePerfilController::class, 'destroy'])->name('api.perfil.foto.destroy');
 
@@ -141,12 +140,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/proveedores/pilotos/{id}/reenviar', [PilotosController::class, 'reenviar'])
         ->whereNumber('id')
         ->name('api.proveedores.pilotos.reenviar');
-
-    Route::get('/proveedores/auxiliares', [AuxiliaresController::class, 'index'])->name('api.proveedores.auxiliares.index');
-    Route::post('/proveedores/auxiliares', [AuxiliaresController::class, 'store'])->name('api.proveedores.auxiliares.store');
-    Route::post('/proveedores/auxiliares/{id}/reenviar', [AuxiliaresController::class, 'reenviar'])
-        ->whereNumber('id')
-        ->name('api.proveedores.auxiliares.reenviar');
 
     Route::get('/proveedores/documentos', [DocumentosController::class, 'index'])->name('api.proveedores.documentos.index');
     Route::post('/proveedores/documentos', [DocumentosController::class, 'store'])->name('api.proveedores.documentos.store');
@@ -332,8 +325,8 @@ Route::middleware('auth:sanctum')->group(function () {
         ->whereNumber('id')
         ->name('api.solicitudes.renovar');
 
-    // Calificaciones (ADR 0031 y 0039): el cliente califica al proveedor, al piloto y
-    // al auxiliar de un servicio completado; el proveedor califica al cliente en
+    // Calificaciones (ADR 0031 y 0039): el cliente califica al proveedor y al piloto
+    // de un servicio completado; el proveedor califica al cliente en
     // privado, ve lo que recibe y reporta lo abusivo. Requieren red; el alcance lo
     // hacen los casos de uso (un id ajeno es 404).
     Route::get('/solicitudes/{id}/calificaciones', [CalificacionesDelClienteController::class, 'show'])

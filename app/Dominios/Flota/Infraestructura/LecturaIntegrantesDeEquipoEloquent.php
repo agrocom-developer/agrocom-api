@@ -22,7 +22,6 @@ final class LecturaIntegrantesDeEquipoEloquent implements LecturaIntegrantesDeEq
             proveedorId: $equipo->proveedor_id,
             pilotoId: $equipo->piloto_id,
             dronId: $equipo->dron_id,
-            auxiliarId: $equipo->auxiliar_id,
             dronOrigen: $equipo->dron->origen->value,
         );
     }

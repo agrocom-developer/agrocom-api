@@ -2,6 +2,8 @@
 
 **Estado:** aceptada, revisable · **Fecha:** 2026-11-24 · **Decide:** el dueño
 
+> **Nota de retiro (26/11/2026):** el auxiliar se eliminó del sistema (rol, permisos `proveedores.auxiliar.*`, página del panel, endpoints `/api/proveedores/auxiliares`, documentos y calificación del auxiliar). Donde este ADR lo menciona, ya no aplica; las tablas `prv_auxiliares` y la columna `flo_equipos.auxiliar_id` siguen en el esquema, sin uso, hasta la reconsolidación de migraciones. Un reemplazo (integrantes del equipo del servicio) se define aparte.
+
 ## Contexto
 
 Tras adjudicar, cliente y piloto se ven en el lote y acuerdan cómo trabajar; eso queda fuera de la plataforma. Lo que el cliente necesita de la plataforma es confirmar que el servicio avanza: ver fotos, conversar y saber dónde está el piloto. El lote no tiene señal, y la ubicación y los datos de contacto son datos personales.

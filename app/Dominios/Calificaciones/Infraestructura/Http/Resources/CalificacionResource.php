@@ -18,7 +18,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'id', type: 'integer', example: 17),
         new OA\Property(property: 'uuid_cliente', description: 'Nace en el dispositivo; hace idempotente el reintento.', type: 'string', format: 'uuid'),
         new OA\Property(property: 'solicitud_id', type: 'integer', example: 31),
-        new OA\Property(property: 'sujeto_tipo', type: 'string', enum: ['proveedor', 'piloto', 'auxiliar', 'cliente']),
+        new OA\Property(property: 'sujeto_tipo', type: 'string', enum: ['proveedor', 'piloto', 'cliente']),
         new OA\Property(property: 'sujeto_id', type: 'integer', example: 4),
         new OA\Property(property: 'estrellas', type: 'integer', minimum: 1, maximum: 5, example: 5),
         new OA\Property(property: 'etiquetas', description: 'Del catálogo cerrado: puntualidad, cobertura_pareja, comunicacion, cuidado_entorno, orden_lote, acceso_lote, claridad_pedido.', type: 'array', items: new OA\Items(type: 'string')),

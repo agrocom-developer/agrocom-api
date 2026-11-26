@@ -3,13 +3,11 @@
 use App\Dominios\Calificaciones\Infraestructura\Http\Controllers\Web\CalificacionesController;
 use App\Dominios\Disputas\Infraestructura\Http\Controllers\Web\DisputasController;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Web\DronesController as DronesFlotaController;
-use App\Dominios\Flota\Infraestructura\Http\Controllers\Web\EquiposController as EquiposFlotaController;
 use App\Dominios\Metricas\Infraestructura\Http\Controllers\Web\MetricasController;
 use App\Dominios\Negociacion\Infraestructura\Http\Controllers\Web\IntervencionController;
 use App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Web\AvisosController;
 use App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Web\NotificacionesController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web\AprobacionController;
-use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web\AuxiliaresController as AuxiliaresPanelController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web\DocumentosController as DocumentosPanelController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web\PilotosController as PilotosPanelController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web\ProveedoresController;
@@ -18,7 +16,6 @@ use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\BitacoraControll
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\BusquedaController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\ConfiguracionController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DashboardController;
-use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DispositivosController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\OrganizacionController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\PerfilController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\PerfilPortalController;
@@ -198,7 +195,7 @@ Route::middleware('auth:interno')->group(function () {
         // cinco permisos `seguridad.rol.*` se siembran únicamente para
         // `dueno`, porque quien edita la matriz puede concederse cualquier
         // permiso del sistema. Verificados DENTRO del controlador contra el
-        // ROL ACTIVO, igual que usuarios y dispositivos.
+        // ROL ACTIVO, igual que usuarios.
         Route::get('/panel/roles', [RolesController::class, 'index'])
             ->name('panel.roles.index');
 
@@ -258,16 +255,6 @@ Route::middleware('auth:interno')->group(function () {
 
         Route::put('/panel/roles/{rol}/permisos', [RolesController::class, 'actualizarPermisos'])
             ->name('panel.roles.permisos.update');
-
-        // Revocación de sesiones de la app de campo (HU-03). Los permisos
-        // `seguridad.dispositivo.ver`/`.revocar` se verifican DENTRO del
-        // controlador contra el ROL ACTIVO, igual que en usuarios: no hay
-        // middleware de permiso genérico todavía.
-        Route::get('/panel/dispositivos', [DispositivosController::class, 'index'])
-            ->name('panel.dispositivos.index');
-
-        Route::delete('/panel/dispositivos/{dispositivo}', [DispositivosController::class, 'destroy'])
-            ->name('panel.dispositivos.revocar');
 
         // "Registro de la compañía": el plan de suscripción y multi-sucursal
         // siguen siendo mockup sin persistencia (visión multi-tenant futura,
@@ -403,9 +390,9 @@ Route::middleware('auth:interno')->group(function () {
             ->name('panel.metricas.index');
 
         // Marketplace (ADR 0028, 0029, 0032): cola de aprobación de proveedores,
-        // pilotos, auxiliares, drones y documentos. Los permisos son de grano
+        // pilotos, drones y documentos. Los permisos son de grano
         // fino por entidad y por acción (`proveedores.proveedor.ver`/`.aprobar`/
-        // `.suspender`/`.dar_baja`, y sus pares de piloto, auxiliar y
+        // `.suspender`/`.dar_baja`, y sus pares de piloto y
         // `flota.dron.*`), verificados DENTRO de cada controlador contra el ROL
         // ACTIVO. La ficha de cada uno ofrece las acciones que el rol puede hacer.
         Route::get('/panel/proveedores', [ProveedoresController::class, 'index'])
@@ -443,17 +430,6 @@ Route::middleware('auth:interno')->group(function () {
             ->whereNumber('id')
             ->name('panel.pilotos.resolver');
 
-        Route::get('/panel/auxiliares', [AuxiliaresPanelController::class, 'index'])
-            ->name('panel.auxiliares.index');
-
-        Route::get('/panel/auxiliares/{auxiliar}', [AuxiliaresPanelController::class, 'show'])
-            ->whereNumber('auxiliar')
-            ->name('panel.auxiliares.show');
-
-        Route::post('/panel/auxiliares/{id}/resolver', [AprobacionController::class, 'auxiliar'])
-            ->whereNumber('id')
-            ->name('panel.auxiliares.resolver');
-
         Route::get('/panel/drones-flota', [DronesFlotaController::class, 'index'])
             ->name('panel.drones-flota.index');
 
@@ -478,9 +454,6 @@ Route::middleware('auth:interno')->group(function () {
         Route::post('/panel/drones-flota/{dron}/resolver', [DronesFlotaController::class, 'resolver'])
             ->whereNumber('dron')
             ->name('panel.drones-flota.resolver');
-
-        Route::get('/panel/equipos-flota', [EquiposFlotaController::class, 'index'])
-            ->name('panel.equipos-flota.index');
 
         Route::get('/panel/documentos', [DocumentosPanelController::class, 'index'])
             ->name('panel.documentos.index');

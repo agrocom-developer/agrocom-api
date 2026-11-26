@@ -22,8 +22,8 @@
                 {
                     "id": 9,
                     "tipo": "sujeto_aprobado",
-                    "titulo": "El auxiliar «Esteban Choque Ramos» fue aprobado.",
-                    "recurso_tipo": "auxiliar",
+                    "titulo": "El piloto «Esteban Choque Ramos» fue aprobado.",
+                    "recurso_tipo": "piloto",
                     "recurso_id": 2,
                     "leida": false,
                     "creada_en": "2026-11-24T18:56:32+00:00"

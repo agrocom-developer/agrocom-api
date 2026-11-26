@@ -13,7 +13,7 @@ paths:
       tags:
         - Calificaciones
       summary: 'Estado de la calificación de un servicio'
-      description: 'A quiénes puedes calificar en un servicio tuyo (el proveedor, el piloto y, si el equipo lo llevaba, el auxiliar), a quiénes ya calificaste y hasta cuándo. Solo un servicio `completada` se califica, durante 7 días desde que se completó.'
+      description: 'A quiénes puedes calificar en un servicio tuyo (el proveedor y el piloto), a quiénes ya calificaste y hasta cuándo. Solo un servicio `completada` se califica, durante 7 días desde que se completó.'
       operationId: verCalificacionesDelServicio
       parameters:
         -
@@ -42,7 +42,7 @@ paths:
       tags:
         - Calificaciones
       summary: 'Calificar un servicio completado'
-      description: 'Califica al proveedor, al piloto y al auxiliar de un servicio completado: de 1 a 5 estrellas, etiquetas de un catálogo cerrado y un comentario opcional. Cada calificación lleva su `uuid_cliente` (idempotente: reintentar el mismo devuelve la calificación ya guardada) y se guarda una sola vez por sujeto: no se edita. Las de una misma llamada se guardan juntas o ninguna. Responde 201 si se creó alguna y 200 si todas eran reintentos.'
+      description: 'Califica al proveedor y al piloto de un servicio completado: de 1 a 5 estrellas, etiquetas de un catálogo cerrado y un comentario opcional. Cada calificación lleva su `uuid_cliente` (idempotente: reintentar el mismo devuelve la calificación ya guardada) y se guarda una sola vez por sujeto: no se edita. Las de una misma llamada se guardan juntas o ninguna. Responde 201 si se creó alguna y 200 si todas eran reintentos.'
       operationId: calificarServicio
       parameters:
         -
@@ -75,7 +75,6 @@ paths:
                         enum:
                           - proveedor
                           - piloto
-                          - auxiliar
                       estrellas:
                         type: integer
                         example: 5
@@ -96,7 +95,7 @@ paths:
                         type: string
                         nullable: true
                     type: object
-                  maxItems: 3
+                  maxItems: 2
                   minItems: 1
               type: object
       responses:
@@ -262,7 +261,7 @@ paths:
       tags:
         - Calificaciones
       summary: 'Calificaciones que recibo'
-      description: 'Las calificaciones que recibe tu proveedor (él, su piloto y su auxiliar), de la más nueva a la más vieja, sin las que un administrador ocultó. Incluye el resumen que muestra la app: promedio y conteo (los de tu reputación), distribución por estrellas y etiquetas más frecuentes de las últimas 100.'
+      description: 'Las calificaciones que recibe tu proveedor (él y su piloto), de la más nueva a la más vieja, sin las que un administrador ocultó. Incluye el resumen que muestra la app: promedio y conteo (los de tu reputación), distribución por estrellas y etiquetas más frecuentes de las últimas 100.'
       operationId: listarCalificacionesRecibidas
       parameters:
         -
@@ -1023,7 +1022,7 @@ paths:
       tags:
         - Flota
       summary: 'Crea un equipo'
-      description: 'El titular arma un equipo con un piloto, un dron y, opcionalmente, un auxiliar de su proveedor. Un piloto y un dron no pueden estar en dos equipos vigentes a la vez; el equipo no recibe ofertas hasta que todos sus integrantes estén aprobados con documentos vigentes.'
+      description: 'El titular arma un equipo con un piloto y un dron de su proveedor. Un piloto y un dron no pueden estar en dos equipos vigentes a la vez; el equipo no recibe ofertas hasta que todos sus integrantes estén aprobados con documentos vigentes.'
       operationId: crearEquipo
       requestBody:
         required: true
@@ -1041,9 +1040,6 @@ paths:
                 dron_id:
                   type: integer
                   example: 9
-                auxiliar_id:
-                  type: integer
-                  nullable: true
                 vigente_desde:
                   type: string
                   format: date
@@ -1082,8 +1078,8 @@ paths:
     put:
       tags:
         - Flota
-      summary: 'Cambia el auxiliar o cierra un equipo'
-      description: 'Cambia el auxiliar del equipo o lo cierra poniéndole fin de vigencia. El piloto y el dron de un equipo no se cambian (otro piloto u otro dron es otro equipo) y una vigencia solo se acorta, nunca se alarga.'
+      summary: 'Cierra un equipo'
+      description: 'Cierra el equipo poniéndole fin de vigencia. El piloto y el dron de un equipo no se cambian (otro piloto u otro dron es otro equipo) y una vigencia solo se acorta, nunca se alarga.'
       operationId: actualizarEquipo
       parameters:
         -
@@ -1098,9 +1094,6 @@ paths:
           application/json:
             schema:
               properties:
-                auxiliar_id:
-                  type: integer
-                  nullable: true
                 vigente_hasta:
                   type: string
                   format: date
@@ -1125,7 +1118,7 @@ paths:
         404:
           description: 'El equipo no existe o no es de esta cuenta.'
         422:
-          description: 'Auxiliar ajeno o no disponible, o vigencia inválida.'
+          description: 'Vigencia inválida.'
           content:
             application/json:
               schema:
@@ -2776,7 +2769,7 @@ paths:
       tags:
         - Seguimiento
       summary: 'Subir una foto del servicio'
-      description: 'Sube una foto de avance, final o de incidencia (multipart, menos de 300 KB: la app la comprime antes). Cola separada de los registros livianos. Idempotente por `uuid_cliente`. Pueden subir el piloto y el auxiliar del equipo adjudicado. El cierre pendiente se revisa al subirla.'
+      description: 'Sube una foto de avance, final o de incidencia (multipart, menos de 300 KB: la app la comprime antes). Cola separada de los registros livianos. Idempotente por `uuid_cliente`. Puede subir el piloto del equipo adjudicado. El cierre pendiente se revisa al subirla.'
       operationId: subirEvidenciaDeSolicitud
       parameters:
         -
@@ -3321,121 +3314,6 @@ paths:
       security:
         -
           tokenDispositivo: []
-  /api/proveedores/auxiliares:
-    get:
-      tags:
-        - Proveedores
-      summary: 'Auxiliares que gestiono'
-      description: 'Auxiliares que la cuenta gestiona: todos los de su proveedor si es titular; los que registró si es piloto.'
-      operationId: listarAuxiliares
-      responses:
-        200:
-          description: Auxiliares.
-          content:
-            application/json:
-              schema:
-                required:
-                  - data
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Auxiliar'
-                type: object
-        401:
-          description: 'Token ausente o revocado.'
-        403:
-          description: 'El rol del token no registra auxiliares.'
-      security:
-        -
-          tokenDispositivo: []
-    post:
-      tags:
-        - Proveedores
-      summary: 'Registra un auxiliar'
-      description: 'Un piloto aprobado o el titular de un proveedor registra a un auxiliar: crea la cuenta (rol `auxiliar`) y el auxiliar queda `pendiente` hasta que un administrador lo aprueba (ADR 0032, punto 2).'
-      operationId: registrarAuxiliar
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              required:
-                - nombre
-                - username
-                - password
-              properties:
-                nombre:
-                  type: string
-                  example: 'Lucía Flores'
-                username:
-                  type: string
-                  example: lucia.flores
-                email:
-                  type: string
-                  format: email
-                  nullable: true
-                password:
-                  type: string
-                  format: password
-              type: object
-      responses:
-        201:
-          description: 'Auxiliar creado `pendiente`.'
-          content:
-            application/json:
-              schema:
-                required:
-                  - auxiliar
-                properties:
-                  auxiliar:
-                    $ref: '#/components/schemas/Auxiliar'
-                type: object
-        401:
-          description: 'Token ausente o revocado.'
-        403:
-          description: 'El rol del token no registra auxiliares.'
-        422:
-          description: 'Datos inválidos, login o correo ya registrados, o la cuenta no puede registrar auxiliares todavía.'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorValidacion'
-      security:
-        -
-          tokenDispositivo: []
-  '/api/proveedores/auxiliares/{id}/reenviar':
-    post:
-      tags:
-        - Proveedores
-      summary: 'Reenvía un auxiliar rechazado a revisión'
-      description: 'Un auxiliar rechazado, corregido, vuelve a la cola de revisión (`rechazado` → `pendiente`).'
-      operationId: reenviarAuxiliar
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        204:
-          description: 'Auxiliar otra vez `pendiente`.'
-        401:
-          description: 'Token ausente o revocado.'
-        403:
-          description: 'El rol del token no registra auxiliares.'
-        404:
-          description: 'El auxiliar no existe o no es de esta cuenta.'
-        422:
-          description: 'El auxiliar no está rechazado.'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorValidacion'
-      security:
-        -
-          tokenDispositivo: []
   /api/proveedores/documentos:
     get:
       tags:
@@ -3453,7 +3331,6 @@ paths:
             enum:
               - proveedor
               - piloto
-              - auxiliar
         -
           name: sujeto_id
           in: query
@@ -3487,7 +3364,7 @@ paths:
       tags:
         - Proveedores
       summary: 'Carga un documento de verificación'
-      description: 'Carga un documento (PDF, JPG o PNG, hasta 8 MB) de un proveedor, piloto o auxiliar que la cuenta gestiona. Queda `en_revision` hasta que un administrador lo aprueba o lo rechaza con motivo. Licencia, seguro y habilitación exigen fecha de vencimiento: el sistema avisa a los 30 y 7 días y suspende al sujeto si vence. Va como `multipart/form-data`.'
+      description: 'Carga un documento (PDF, JPG o PNG, hasta 8 MB) de un proveedor o piloto que la cuenta gestiona. Queda `en_revision` hasta que un administrador lo aprueba o lo rechaza con motivo. Licencia, seguro y habilitación exigen fecha de vencimiento: el sistema avisa a los 30 y 7 días y suspende al sujeto si vence. Va como `multipart/form-data`.'
       operationId: cargarDocumentoProveedor
       requestBody:
         required: true
@@ -3505,7 +3382,6 @@ paths:
                   enum:
                     - proveedor
                     - piloto
-                    - auxiliar
                 sujeto_id:
                   type: integer
                   example: 5
@@ -3913,7 +3789,7 @@ paths:
       tags:
         - Seguridad
       summary: 'Subir mi foto de perfil'
-      description: 'La cuenta del token sube o reemplaza su foto de perfil (multipart, menos de 300 KB: la app la comprime antes). Sirve a clientes, proveedores, pilotos y auxiliares. El cliente la ve en la tarjeta del proveedor al comparar ofertas. La foto anterior se borra del disco privado.'
+      description: 'La cuenta del token sube o reemplaza su foto de perfil (multipart, menos de 300 KB: la app la comprime antes). Sirve a clientes, proveedores y pilotos. El cliente la ve en la tarjeta del proveedor al comparar ofertas. La foto anterior se borra del disco privado.'
       operationId: subirFotoDePerfil
       requestBody:
         required: true
@@ -5283,7 +5159,6 @@ components:
                 enum:
                   - proveedor
                   - piloto
-                  - auxiliar
                   - cliente
               id:
                 type: integer
@@ -5330,7 +5205,6 @@ components:
           enum:
             - proveedor
             - piloto
-            - auxiliar
             - cliente
         sujeto_id:
           type: integer
@@ -5716,7 +5590,7 @@ components:
       type: object
     Equipo:
       title: Equipo
-      description: 'Combinación operativa piloto + dron (+ auxiliar) que ejecuta una solicitud. Un piloto y un dron no pueden estar en dos equipos vigentes a la vez.'
+      description: 'Combinación operativa piloto + dron que ejecuta una solicitud. Un piloto y un dron no pueden estar en dos equipos vigentes a la vez.'
       required:
         - id
         - proveedor_id
@@ -5736,9 +5610,6 @@ components:
         dron_id:
           type: integer
           example: 9
-        auxiliar_id:
-          type: integer
-          nullable: true
         vigente_desde:
           type: string
           format: date
@@ -6206,47 +6077,9 @@ components:
           format: date-time
           nullable: true
       type: object
-    Auxiliar:
-      title: Auxiliar
-      description: 'Quien prepara la mezcla y asiste en el lote. Lo registra un piloto o el proveedor y lo aprueba un administrador (ADR 0032).'
-      required:
-        - id
-        - proveedor_id
-        - usuario_id
-        - nombre
-        - estado
-      properties:
-        id:
-          type: integer
-          example: 8
-        proveedor_id:
-          type: integer
-          example: 12
-        usuario_id:
-          type: integer
-          example: 34
-        nombre:
-          type: string
-          example: 'Lucía Flores'
-        registrado_por_piloto_id:
-          type: integer
-          nullable: true
-        estado:
-          type: string
-          example: pendiente
-          enum:
-            - pendiente
-            - aprobado
-            - suspendido
-            - rechazado
-            - baja
-        motivo_estado:
-          type: string
-          nullable: true
-      type: object
     DocumentoProveedor:
       title: 'Documento de verificación'
-      description: 'Documento con vencimiento de un proveedor, piloto, auxiliar o dron. El archivo no se descarga por la API.'
+      description: 'Documento con vencimiento de un proveedor, piloto o dron. El archivo no se descarga por la API.'
       required:
         - id
         - sujeto_tipo
@@ -6264,7 +6097,6 @@ components:
           enum:
             - proveedor
             - piloto
-            - auxiliar
             - dron
         sujeto_id:
           type: integer
@@ -7429,7 +7261,7 @@ components:
 tags:
   -
     name: Calificaciones
-    description: 'El cliente califica al proveedor, al piloto y al auxiliar de un servicio completado, durante 7 días; el proveedor califica al cliente en privado y ve las calificaciones que recibe (ADR 0031).'
+    description: 'El cliente califica al proveedor y al piloto de un servicio completado, durante 7 días; el proveedor califica al cliente en privado y ve las calificaciones que recibe (ADR 0031).'
   -
     name: Disputas
     description: 'El cliente (hasta 72 horas después de `ejecutada`) o el proveedor (cobro pendiente, acceso negado o calificación abusiva) abren una disputa; soporte media y un administrador resuelve; ambas partes pueden apelar una vez en 7 días (ADR 0033). Los reembolsos se liquidan fuera de la app.'

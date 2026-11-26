@@ -443,7 +443,6 @@ try {
     [, $drones] = registrar('flota-drones', 'listarDrones', 'Drones del proveedor, con su modelo.', 'GET', '/api/proveedores/drones', null, $tokenProveedor, 200);
     registrar('flota-equipos', 'listarEquipos', 'Equipos del proveedor.', 'GET', '/api/proveedores/equipos', null, $tokenProveedor, 200);
     registrar('proveedores-pilotos', 'listarPilotos', 'Pilotos del proveedor.', 'GET', '/api/proveedores/pilotos', null, $tokenProveedor, 200);
-    registrar('proveedores-auxiliares', 'listarAuxiliares', 'Auxiliares del proveedor.', 'GET', '/api/proveedores/auxiliares', null, $tokenProveedor, 200);
     registrar('ofertas-reputacion', 'verReputacion', 'Calificación, tasa de cancelación y alertas propias; sin sanciones automáticas.', 'GET', '/api/reputacion', null, $tokenProveedor, 200);
     registrar('calificaciones-recibidas', 'listarCalificacionesRecibidas', 'Calificaciones que recibe el proveedor.', 'GET', '/api/calificaciones/recibidas', null, $tokenProveedor, 200);
     registrar('notificaciones-proveedor', 'listarNotificaciones', 'Bandeja del proveedor: nuevas solicitudes en su zona, ofertas y mensajes.', 'GET', '/api/notificaciones', null, $tokenProveedor, 200);

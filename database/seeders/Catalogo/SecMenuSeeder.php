@@ -74,12 +74,13 @@ class SecMenuSeeder extends Seeder
         'menu.comercial.items.lotes',
         'menu.comercial.items.cultivos',
         'menu.comercial.items.reportes_cliente',
-        // Retirados con el cambio de enfoque: el auxiliar ya no es usuario y el
-        // equipo (piloto + dron) se ve en la ficha del piloto, no en una pantalla.
+        // Tableros retirados con el cambio de enfoque.
         'menu.solicitudes.items.tablero',
         'menu.operacion.items.tablero',
-        // Las apps salen por Play Store y App Store: el panel no administra descargas
-        // ni dispositivos.
+        // Páginas del panel eliminadas (también su código): las apps salen por Play
+        // Store y App Store, así que no hay versiones ni lista de dispositivos; el
+        // auxiliar ya no existe; el equipo (piloto + dron) no se administra desde una
+        // pantalla.
         'menu.seguridad.items.dispositivos',
         'menu.seguridad.items.versiones_apk',
         'menu.sistema.items.versiones_apk',

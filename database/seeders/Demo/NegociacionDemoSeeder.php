@@ -154,7 +154,7 @@ class NegociacionDemoSeeder extends Seeder
         $this->solicitud('neg-con-ofertas-palmas', 'agro.sanrafael', 'Las Palmas', 100, '125', hace: 30, observaciones: 'Entrar por el portón de la calle lateral. Maíz de 1,8 m de altura.', despues: function (int $id): void {
             $uuid = fn (string $clave): string => $this->uuid("{$id}:{$clave}");
 
-            $rodrigo = $this->tras(26, fn () => $this->negociar->ofertar($this->usuarios['rodrigo.suarez'], $id, ['uuid_cliente' => $uuid('rodrigo-1'), 'tipo' => 'contraoferta', 'precio_ha' => '135', 'nota' => 'Dron de 30 litros con auxiliar: terminamos en una jornada.']))[0];
+            $rodrigo = $this->tras(26, fn () => $this->negociar->ofertar($this->usuarios['rodrigo.suarez'], $id, ['uuid_cliente' => $uuid('rodrigo-1'), 'tipo' => 'contraoferta', 'precio_ha' => '135', 'nota' => 'Dron de 30 litros: terminamos en una jornada.']))[0];
             $carlos = $this->tras(22, fn () => $this->negociar->ofertar($this->usuarios['carlos.mamani'], $id, ['uuid_cliente' => $uuid('carlos-1'), 'tipo' => 'contraoferta', 'precio_ha' => '118']))[0];
             $this->tras(20, fn () => $this->negociar->ofertar($this->usuarios['marcelo.terrazas'], $id, ['uuid_cliente' => $uuid('marcelo-1'), 'tipo' => 'contraoferta', 'precio_ha' => '110', 'nota' => 'Tenemos disponibilidad esta semana.']));
 

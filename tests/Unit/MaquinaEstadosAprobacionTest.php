@@ -10,7 +10,7 @@ use App\Dominios\Proveedores\Dominio\EstadoDocumento;
 use App\Dominios\Proveedores\Dominio\TransicionesDocumento;
 
 /*
- * Ciclo de aprobación de proveedor, piloto, auxiliar y dron (especificación del
+ * Ciclo de aprobación de proveedor, piloto y dron (especificación del
  * marketplace §5.2, ADR 0032, invariante 7 de CLAUDE.md). Pura, sin Eloquent ni
  * base: la tabla de transiciones y la guarda de motivo.
  */

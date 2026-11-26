@@ -116,7 +116,7 @@ function negMundo(): void
     {
         public function aptosDe(int $proveedorId, ?DateTimeImmutable $hoy = null): array
         {
-            return [new DatosEquipoApto($proveedorId * 10, $proveedorId, $proveedorId * 10 + 1, $proveedorId * 100, null, '40.00', '11.00')];
+            return [new DatosEquipoApto($proveedorId * 10, $proveedorId, $proveedorId * 10 + 1, $proveedorId * 100, '40.00', '11.00')];
         }
 
         public function equiposDeCuenta(int $usuarioId, bool $soloVigentes = true, ?DateTimeImmutable $hoy = null): array
@@ -139,7 +139,7 @@ function negMundo(): void
     {
         public function integrantes(int $equipoId): ?DatosIntegrantesEquipo
         {
-            return new DatosIntegrantesEquipo($equipoId, intdiv($equipoId, 10), $equipoId + 1, intdiv($equipoId, 10) * 100, null, 'externo');
+            return new DatosIntegrantesEquipo($equipoId, intdiv($equipoId, 10), $equipoId + 1, intdiv($equipoId, 10) * 100, 'externo');
         }
     });
 

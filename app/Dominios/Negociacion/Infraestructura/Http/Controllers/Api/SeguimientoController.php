@@ -180,7 +180,7 @@ final class SeguimientoController
     #[OA\Post(
         path: '/api/solicitudes/{id}/evidencias',
         operationId: 'subirEvidenciaDeSolicitud',
-        description: 'Sube una foto de avance, final o de incidencia (multipart, menos de 300 KB: la app la comprime antes). Cola separada de los registros livianos. Idempotente por `uuid_cliente`. Pueden subir el piloto y el auxiliar del equipo adjudicado. El cierre pendiente se revisa al subirla.',
+        description: 'Sube una foto de avance, final o de incidencia (multipart, menos de 300 KB: la app la comprime antes). Cola separada de los registros livianos. Idempotente por `uuid_cliente`. Puede subir el piloto del equipo adjudicado. El cierre pendiente se revisa al subirla.',
         summary: 'Subir una foto del servicio',
         security: [['tokenDispositivo' => []]],
         requestBody: new OA\RequestBody(required: true, content: new OA\MediaType(mediaType: 'multipart/form-data', schema: new OA\Schema(required: ['uuid_cliente', 'tipo', 'archivo'], properties: [

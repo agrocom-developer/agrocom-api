@@ -181,7 +181,7 @@ it('no otorga ver_como a un rol que no es admin_plataforma, aunque quien lo otor
         ->toThrow(RolProtegido::class, RESERVADOS_VER_COMO);
 
     expect(reservadosDelRol($destino))->toBe([]);
-})->with(['dueno', 'encargado_operaciones', 'jefe_campo', 'piloto', 'auxiliar', 'un_rol_nuevo']);
+})->with(['dueno', 'encargado_operaciones', 'jefe_campo', 'piloto', 'un_rol_nuevo']);
 
 it('rechaza la operación entera: junto a ver_como no se escribe ni el resto', function () {
     [$actor, $rolActor] = reservadosActor('admin_plataforma', [RESERVADOS_ASIGNAR, RESERVADOS_VER_COMO, 'seguridad.usuario.ver']);

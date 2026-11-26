@@ -6,6 +6,7 @@ use App\Dominios\Seguridad\Dominio\PermisosReservados;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecPermission;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRolePermission;
+use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUserRole;
 use Illuminate\Database\Seeder;
 
 /**
@@ -26,7 +27,6 @@ class SeguridadSeeder extends Seeder
     /** @var array<string, string> */
     private const ROLES = [
         'piloto' => 'Piloto de dron: ofrece, ejecuta los servicios adjudicados y sube las fotos desde la app.',
-        'auxiliar' => 'Auxiliar de campo: apoya al piloto en el lote y sube fotos de avance desde la app.',
         // `encargado_operaciones` es el rol del administrador del marketplace; el
         // nombre técnico se conserva porque lo usan los avisos y las cuentas ya creadas.
         'encargado_operaciones' => 'Administrador del marketplace: aprueba proveedores, pilotos, drones y documentos, modera calificaciones y atiende disputas.',
@@ -64,8 +64,6 @@ class SeguridadSeeder extends Seeder
         'seguridad.configuracion.ver' => 'Ver la configuración del sistema (llaves y tokens)',
         'seguridad.configuracion.editar' => 'Editar la configuración del sistema (llaves y tokens)',
         'seguridad.bitacora.ver' => 'Ver la bitácora de auditoría (quién hizo qué, cuándo y en qué zona horaria)',
-        'seguridad.dispositivo.ver' => 'Ver los dispositivos con sesión abierta en la app de campo',
-        'seguridad.dispositivo.revocar' => 'Revocar el acceso de un dispositivo de campo',
         // Proveedores y flota en el panel (ADR 0032): aprobar, suspender y dar de baja.
         'proveedores.proveedor.crear' => 'Registrar a mano a un proveedor que llega a la oficina (queda pendiente; quien lo registra no lo aprueba)',
         'proveedores.piloto.crear' => 'Registrar a mano a un piloto de un proveedor tercero (queda pendiente)',
@@ -78,10 +76,6 @@ class SeguridadSeeder extends Seeder
         'proveedores.piloto.aprobar' => 'Aprobar o rechazar a un piloto y rehabilitar a uno suspendido',
         'proveedores.piloto.suspender' => 'Suspender a un piloto, con motivo',
         'proveedores.piloto.dar_baja' => 'Dar de baja a un piloto, con motivo',
-        'proveedores.auxiliar.ver' => 'Ver el listado y la ficha de auxiliares',
-        'proveedores.auxiliar.aprobar' => 'Aprobar o rechazar a un auxiliar y rehabilitar a uno suspendido',
-        'proveedores.auxiliar.suspender' => 'Suspender a un auxiliar, con motivo',
-        'proveedores.auxiliar.dar_baja' => 'Dar de baja a un auxiliar, con motivo',
         'proveedores.documento.ver' => 'Ver la cola de documentos y descargar su archivo (acceso restringido)',
         'proveedores.documento.revisar' => 'Aprobar o rechazar un documento, con motivo en el rechazo',
         'flota.dron.ver' => 'Ver el listado y la ficha de drones del marketplace',
@@ -89,11 +83,9 @@ class SeguridadSeeder extends Seeder
         'flota.dron.suspender' => 'Suspender un dron, con motivo',
         'flota.dron.dar_baja' => 'Dar de baja un dron, con motivo',
         'flota.dron.revisar_foto' => 'Aprobar o rechazar las fotos de un dron, con motivo en el rechazo',
-        'flota.equipo.ver' => 'Ver los equipos (piloto, dron y auxiliar) de los proveedores',
         // Marketplace, lado app (token de dispositivo): lo que cada rol hace sobre lo SUYO. El alcance lo hacen los casos de uso; el permiso es la puerta.
         'proveedores.cuenta.gestionar' => 'Gestionar su propio proveedor desde la app: pilotos, drones, equipos y documentos',
         'proveedores.cuenta.ver' => 'Ver, solo lectura, el proveedor al que pertenece y los drones de sus equipos desde la app (piloto)',
-        'proveedores.auxiliar.registrar' => 'Registrar a un auxiliar (queda pendiente de aprobación)',
         'proveedores.documento.cargar' => 'Cargar los documentos propios o de lo que uno registró',
         'solicitudes.cliente.gestionar' => 'Gestionar su propio perfil de cliente desde la app',
         'solicitudes.terreno.gestionar' => 'Registrar y consultar sus propios terrenos desde la app',
@@ -121,7 +113,7 @@ class SeguridadSeeder extends Seeder
         'negociacion.mensaje.usar' => 'Leer y escribir mensajes con la otra parte de un servicio adjudicado desde la app',
         'negociacion.preferencias.gestionar' => 'Activar o desactivar los avisos de la cuenta, y las zonas de las nuevas solicitudes, desde la app',
         // Calificaciones (ADR 0031 y 0039): lado app y cola de moderación del panel.
-        'calificaciones.calificacion.calificar_proveedor' => 'Calificar al proveedor, al piloto y al auxiliar de un servicio completado desde la app',
+        'calificaciones.calificacion.calificar_proveedor' => 'Calificar al proveedor y al piloto de un servicio completado desde la app',
         'calificaciones.calificacion.calificar_cliente' => 'Calificar en privado al cliente de un servicio completado desde la app',
         'calificaciones.calificacion.ver_recibidas' => 'Ver las calificaciones que recibe su proveedor desde la app',
         'calificaciones.calificacion.reportar' => 'Reportar desde la app una calificación recibida que considera abusiva',
@@ -151,7 +143,6 @@ class SeguridadSeeder extends Seeder
     /** @var list<string> */
     private const PERMISOS_PROVEEDOR = [
         'proveedores.cuenta.gestionar',
-        'proveedores.auxiliar.registrar',
         'proveedores.documento.cargar',
         'negociacion.mercado.ver',
         'negociacion.oferta.proveedor',
@@ -188,7 +179,6 @@ class SeguridadSeeder extends Seeder
      */
     private const PERMISOS_PILOTO = [
         'proveedores.cuenta.ver',
-        'proveedores.auxiliar.registrar',
         'proveedores.documento.cargar',
         'negociacion.mercado.ver',
         'negociacion.oferta.proveedor',
@@ -202,18 +192,6 @@ class SeguridadSeeder extends Seeder
         'calificaciones.calificacion.ver_recibidas',
         'calificaciones.calificacion.reportar',
         'disputas.disputa.gestionar_proveedor',
-    ];
-
-    /**
-     * Auxiliar: sus documentos y las fotos del servicio de su equipo. No tiene
-     * pantalla del panel.
-     *
-     * @var list<string>
-     */
-    private const PERMISOS_AUXILIAR = [
-        'proveedores.documento.cargar',
-        'negociacion.evidencia.subir',
-        'negociacion.seguimiento.ver',
     ];
 
     /**
@@ -232,8 +210,6 @@ class SeguridadSeeder extends Seeder
         'seguridad.organizacion.ver',
         'seguridad.organizacion.editar',
         'seguridad.bitacora.ver',
-        'seguridad.dispositivo.ver',
-        'seguridad.dispositivo.revocar',
         'proveedores.proveedor.ver',
         'proveedores.proveedor.crear',
         'proveedores.proveedor.aprobar',
@@ -244,10 +220,6 @@ class SeguridadSeeder extends Seeder
         'proveedores.piloto.aprobar',
         'proveedores.piloto.suspender',
         'proveedores.piloto.dar_baja',
-        'proveedores.auxiliar.ver',
-        'proveedores.auxiliar.aprobar',
-        'proveedores.auxiliar.suspender',
-        'proveedores.auxiliar.dar_baja',
         'proveedores.documento.ver',
         'proveedores.documento.revisar',
         'flota.dron.ver',
@@ -256,7 +228,6 @@ class SeguridadSeeder extends Seeder
         'flota.dron.suspender',
         'flota.dron.dar_baja',
         'flota.dron.revisar_foto',
-        'flota.equipo.ver',
         'solicitudes.solicitud.ver',
         'solicitudes.solicitud.cancelar',
         'solicitudes.solicitud.ver_seguimiento',
@@ -285,9 +256,7 @@ class SeguridadSeeder extends Seeder
         'seguridad.dashboard.ver',
         'proveedores.proveedor.ver',
         'proveedores.piloto.ver',
-        'proveedores.auxiliar.ver',
         'flota.dron.ver',
-        'flota.equipo.ver',
         'solicitudes.solicitud.ver',
         'solicitudes.solicitud.cancelar',
         'solicitudes.solicitud.ver_seguimiento',
@@ -315,12 +284,24 @@ class SeguridadSeeder extends Seeder
      *   seguimiento del servicio los ve el administrador en las solicitudes.
      * - `distribucion.version.autorizar`: las apps salen por Play Store y App
      *   Store; el panel ya no sube ni autoriza versiones del APK.
+     * - `seguridad.dispositivo.*` y `flota.equipo.ver`: el panel ya no tiene las
+     *   páginas Dispositivos ni Equipos; el token por dispositivo del login y el
+     *   equipo (piloto + dron) de la solicitud siguen en la API.
+     * - `proveedores.auxiliar.*`: el auxiliar ya no existe en el sistema.
      *
      * @var list<string>
      */
     private const PERMISOS_RETIRADOS = [
         'seguridad.usuario.portal',
         'distribucion.version.autorizar',
+        'seguridad.dispositivo.ver',
+        'seguridad.dispositivo.revocar',
+        'flota.equipo.ver',
+        'proveedores.auxiliar.ver',
+        'proveedores.auxiliar.aprobar',
+        'proveedores.auxiliar.suspender',
+        'proveedores.auxiliar.dar_baja',
+        'proveedores.auxiliar.registrar',
         'operaciones.trabajo.crear',
         'operaciones.trabajo.editar',
         'comercial.cliente.ver',
@@ -445,10 +426,28 @@ class SeguridadSeeder extends Seeder
         'mantenimiento.ficha_dron.eliminar',
     ];
 
+    /**
+     * Roles retirados del catálogo. Una base ya sembrada conserva la fila del
+     * rol, sus permisos y sus asignaciones a usuarios, así que `run()` las da
+     * de baja de forma explícita (soft delete, fila por fila):
+     *
+     * - `auxiliar`: el auxiliar ya no es un rol del sistema (ni usuario móvil ni
+     *   cuenta del panel).
+     *
+     * @var list<string>
+     */
+    private const ROLES_RETIRADOS = [
+        'auxiliar',
+    ];
+
     public function run(): void
     {
         foreach (self::PERMISOS_RETIRADOS as $codigoRetirado) {
             $this->retirarPermiso($codigoRetirado);
+        }
+
+        foreach (self::ROLES_RETIRADOS as $nombreRetirado) {
+            $this->retirarRol($nombreRetirado);
         }
 
         $roles = collect(self::ROLES)->mapWithKeys(
@@ -479,17 +478,14 @@ class SeguridadSeeder extends Seeder
         $this->asignar($roles['encargado_operaciones'], $permisos->only(self::PERMISOS_ADMINISTRADOR)->values()->all());
         $this->asignar($roles['soporte'], $permisos->only(self::PERMISOS_SOPORTE)->values()->all());
 
-        // Marketplace (ADR 0036): proveedor, cliente, piloto y auxiliar operan por la API con lo suyo.
+        // Marketplace (ADR 0036): proveedor, cliente y piloto operan por la API con lo suyo.
         $this->asignar($roles['proveedor'], $permisos->only(self::PERMISOS_PROVEEDOR)->values()->all());
         $this->asignar($roles['cliente'], $permisos->only(self::PERMISOS_CLIENTE)->values()->all());
         $this->asignar($roles['piloto'], $permisos->only(self::PERMISOS_PILOTO)->values()->all());
-        $this->asignar($roles['auxiliar'], $permisos->only(self::PERMISOS_AUXILIAR)->values()->all());
 
-        // Piloto y auxiliar ya no entran al tablero del panel: una base ya
-        // sembrada conserva ese otorgamiento y hay que quitarlo.
-        foreach (['piloto', 'auxiliar'] as $rol) {
-            $this->quitarAsignacion($roles[$rol], 'seguridad.dashboard.ver');
-        }
+        // El piloto ya no entra al tablero del panel: una base ya sembrada
+        // conserva ese otorgamiento y hay que quitarlo.
+        $this->quitarAsignacion($roles['piloto'], 'seguridad.dashboard.ver');
     }
 
     private function rol(string $name, string $description): SecRole
@@ -569,6 +565,33 @@ class SeguridadSeeder extends Seeder
             ->each(fn (SecRolePermission $asignacion) => $asignacion->delete());
 
         $permiso->delete();
+    }
+
+    /**
+     * Da de baja un rol y lo que cuelga de él: sus permisos asignados y sus
+     * asignaciones a usuarios (soft delete, una por una para que cada
+     * `delete()` pase por el observer de bitácora). Idempotente: si el rol ya
+     * no existe, no hace nada.
+     */
+    private function retirarRol(string $name): void
+    {
+        $rol = SecRole::query()->where('name', $name)->first();
+
+        if ($rol === null) {
+            return;
+        }
+
+        SecRolePermission::query()
+            ->where('id_role', $rol->id)
+            ->get()
+            ->each(fn (SecRolePermission $asignacion) => $asignacion->delete());
+
+        SecUserRole::query()
+            ->where('id_role', $rol->id)
+            ->get()
+            ->each(fn (SecUserRole $asignacion) => $asignacion->delete());
+
+        $rol->delete();
     }
 
     /** Quita un otorgamiento puntual (soft delete, por la bitácora de cada fila). */
