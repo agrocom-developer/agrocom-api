@@ -6,8 +6,10 @@ use App\Dominios\Seguridad\Aplicacion\EmitirTokenDispositivo;
 use App\Dominios\Seguridad\Aplicacion\IniciarSesionPanel;
 use App\Dominios\Seguridad\Aplicacion\RevocarTokenDispositivo;
 use App\Dominios\Seguridad\Contratos\TipoCuenta;
+use App\Dominios\Seguridad\Dominio\NumeroDeTelefono;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecTokenDispositivo;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
+use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioApp;
 use App\Dominios\Seguridad\Infraestructura\Http\Requests\EmitirTokenDispositivoRequest;
 use App\Dominios\Seguridad\Infraestructura\Http\Resources\DispositivoResource;
 use App\Dominios\Seguridad\Infraestructura\Http\Resources\RolActivoResource;
@@ -65,7 +67,7 @@ final class SesionCampoController
             content: new OA\JsonContent(
                 required: ['username', 'password', 'uuid_dispositivo'],
                 properties: [
-                    new OA\Property(property: 'username', description: 'Login del operario (nunca un correo).', type: 'string', example: 'camila.rojas'),
+                    new OA\Property(property: 'username', description: 'Usuario de la cuenta (nunca un correo) o su teléfono, en cualquier formato (`70012345`, `+591 700-12345`). El teléfono es único por tipo de cuenta: sin `app`, un teléfono que sirve a dos cuentas (cliente y proveedor) no entra.', type: 'string', example: 'camila.rojas'),
                     new OA\Property(property: 'password', type: 'string', format: 'password', example: 'password'),
                     new OA\Property(property: 'uuid_dispositivo', description: 'UUID generado en el dispositivo.', type: 'string', format: 'uuid', example: '6f1d0a2e-1f34-4c9f-9a8b-2b7c1d5e0f31'),
                     new OA\Property(property: 'nombre_dispositivo', description: 'Nombre legible del equipo, para que el panel sepa cuál revoca.', type: 'string', example: 'Moto G84 — piloto 2', nullable: true),
@@ -132,11 +134,11 @@ final class SesionCampoController
     {
         $datos = $request->validated();
 
-        $usuario = $this->autenticar((string) $datos['username'], (string) $datos['password']);
-
         // La app declara su tipo (ADR 0046). TRANSITORIO: mientras la app no envíe `app`, el
         // tipo se deduce de la propia cuenta y el login no falla.
         $tipoDeApp = isset($datos['app']) ? TipoCuenta::dePedidoDeApp((string) $datos['app']) : null;
+
+        $usuario = $this->autenticar((string) $datos['username'], (string) $datos['password'], $tipoDeApp);
 
         if ($tipoDeApp !== null && $usuario->tipo_cuenta !== $tipoDeApp) {
             return response()->json([
@@ -248,10 +250,10 @@ final class SesionCampoController
      * igual), y distinguir los dos casos le confirmaría a un atacante que ese
      * usuario existe.
      */
-    private function autenticar(string $username, string $password): SecUser
+    private function autenticar(string $identificador, string $password, ?TipoCuenta $tipoDeApp): SecUser
     {
         $proveedor = Auth::createUserProvider('usuarios_app');
-        $usuario = $proveedor?->retrieveByCredentials(['username' => $username]);
+        $usuario = $proveedor?->retrieveByCredentials(['username' => $identificador]) ?? $this->cuentaPorTelefono($identificador, $tipoDeApp);
 
         if ($proveedor === null
             || ! $usuario instanceof SecUser
@@ -264,6 +266,30 @@ final class SesionCampoController
         }
 
         return $usuario;
+    }
+
+    /**
+     * El login acepta el teléfono de la cuenta en lugar del usuario (ADR 0046, punto 17), en
+     * cualquier formato (`70012345`, `+591 700-12345`). El teléfono es único POR TIPO de cuenta,
+     * así que el mismo número puede estar en una cuenta de cliente y en una de proveedor: con
+     * `app` se busca en ese tipo; sin ella, solo se acepta si identifica a una única cuenta, y
+     * si no, se rechaza igual que una credencial inválida (nunca se adivina de cuál es).
+     */
+    private function cuentaPorTelefono(string $identificador, ?TipoCuenta $tipoDeApp): ?SecUser
+    {
+        $telefono = NumeroDeTelefono::normalizar($identificador);
+
+        if ($telefono === null) {
+            return null;
+        }
+
+        $cuentas = SecUsuarioApp::query()
+            ->where('telefono', $telefono)
+            ->when($tipoDeApp !== null, fn ($consulta) => $consulta->where('tipo_cuenta', $tipoDeApp?->value))
+            ->limit(2)
+            ->get();
+
+        return $cuentas->count() === 1 ? $cuentas->first() : null;
     }
 
     private function usuarioAutenticado(Request $request): SecUser
