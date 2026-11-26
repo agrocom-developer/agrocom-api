@@ -12,7 +12,7 @@ use App\Dominios\Notificaciones\Dominio\TipoNotificacion;
 use InvalidArgumentException;
 
 /**
- * Una calificación que el proveedor reporta espera la decisión de quien modera: el dueño y el encargado de operaciones (política de calificación). La clave es la calificación.
+ * Una calificación que el proveedor reporta espera la decisión de quien modera: el administrador (política de calificación). La clave es la calificación.
  */
 final class ReglaCalificacionReportada implements ReglaNotificacion
 {
@@ -33,7 +33,7 @@ final class ReglaCalificacionReportada implements ReglaNotificacion
             parametros: ['solicitud' => $evento->solicitudId, 'proveedor' => $evento->proveedorNombre],
             recurso: RecursoNotificable::Solicitud,
             recursoId: $evento->solicitudId,
-            destinatarios: [Destinatario::rol(RolDestinatario::Dueno), Destinatario::rol(RolDestinatario::EncargadoOperaciones)],
+            destinatarios: [Destinatario::rol(RolDestinatario::Administrador)],
         );
     }
 }

@@ -14,7 +14,7 @@ use InvalidArgumentException;
 
 /**
  * Un proveedor nuevo espera revisión (ADR 0032, punto 1): le importa a quien
- * aprueba, el dueño y el encargado de operaciones. Mide también el «tiempo de
+ * aprueba, el administrador. Mide también el «tiempo de
  * aprobación de un proveedor» de las métricas (especificación §14).
  */
 final class ReglaProveedorRegistrado implements ReglaNotificacion
@@ -40,8 +40,7 @@ final class ReglaProveedorRegistrado implements ReglaNotificacion
             recurso: RecursoNotificable::Proveedor,
             recursoId: $evento->proveedorId,
             destinatarios: [
-                Destinatario::rol(RolDestinatario::Dueno),
-                Destinatario::rol(RolDestinatario::EncargadoOperaciones),
+                Destinatario::rol(RolDestinatario::Administrador),
             ],
         );
     }

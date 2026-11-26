@@ -35,8 +35,7 @@ final class ReglaDisputaApelada implements ReglaNotificacion
             recursoId: $evento->disputaId,
             destinatarios: [
                 ...array_map(static fn (int $usuarioId): Destinatario => Destinatario::usuario($usuarioId), $evento->usuariosContraparte),
-                Destinatario::rol(RolDestinatario::Dueno),
-                Destinatario::rol(RolDestinatario::EncargadoOperaciones),
+                Destinatario::rol(RolDestinatario::Administrador),
             ],
         );
     }
