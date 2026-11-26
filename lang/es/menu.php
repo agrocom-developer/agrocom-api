@@ -8,8 +8,8 @@
  * resuelven vía __() recién en presentación (ADR 0013).
  *
  * Los módulos y su vocabulario salen de la ESPECIFICACIÓN
- * (`docs/especificacion/marketplace.md`): Mercado, Proveedores, Catálogos y
- * Seguridad.
+ * (`docs/especificacion/marketplace.md`): Mercado, Proveedores, Soporte,
+ * Seguridad y Sistema.
  *
  * Archivo propio (no `seguridad.php`): el menú es transversal a todos los
  * módulos de dominio, aunque el catálogo `sec_menu` viva en Seguridad.
@@ -20,14 +20,12 @@ return [
     // Marketplace (ADR 0027): la solicitud de servicio es la unidad de negocio.
     'solicitudes' => [
         'label' => 'Mercado',
-        'descripcion' => 'Solicitudes con sus ofertas, clientes, calificaciones, disputas, métricas y avisos.',
+        'descripcion' => 'El tablero, las solicitudes con sus ofertas, los clientes, las calificaciones y las métricas.',
         'items' => [
             'tablero' => 'Tablero',
             'solicitudes' => 'Solicitudes',
             'clientes' => 'Clientes',
-            'avisos' => 'Avisos',
             'calificaciones' => 'Calificaciones',
-            'disputas' => 'Disputas',
             'metricas' => 'Métricas del mercado',
         ],
     ],
@@ -35,36 +33,47 @@ return [
     // Marketplace (ADR 0028, 0029, 0032): aprobación de quienes prestan el servicio.
     'proveedores' => [
         'label' => 'Proveedores',
-        'descripcion' => 'Aprobación de proveedores, pilotos, auxiliares, drones y documentos de verificación.',
+        'descripcion' => 'Aprobación de proveedores, pilotos, drones y documentos de verificación.',
         'items' => [
+            'documentos' => 'Documentos',
             'proveedores' => 'Proveedores',
             'pilotos' => 'Pilotos',
-            'auxiliares' => 'Auxiliares',
             'drones_flota' => 'Drones',
-            'equipos_flota' => 'Equipos',
-            'documentos' => 'Documentos',
         ],
     ],
 
-    'catalogos' => [
-        'label' => 'Catálogos',
-        'descripcion' => 'Las zonas de Santa Cruz que agrupan el mapa y el tablero.',
+    // Atención a quienes usan la plataforma: reclamos y, más adelante, consultas.
+    // Es un módulo propio porque dar soporte no es operar el mercado.
+    'soporte' => [
+        'label' => 'Soporte',
+        'descripcion' => 'Reclamos de clientes y proveedores sobre servicios ya prestados.',
         'items' => [
-            'zonas' => 'Zonas',
+            'disputas' => 'Disputas',
         ],
     ],
 
     'seguridad' => [
         'label' => 'Seguridad',
-        'descripcion' => 'Usuarios, roles y organización del sistema.',
+        'descripcion' => 'Usuarios, roles, dispositivos y bitácora.',
         'items' => [
             'usuarios' => 'Usuarios',
             'roles' => 'Roles y permisos',
             'dispositivos' => 'Dispositivos',
-            'organizacion' => 'Organización',
-            'versiones_apk' => 'Versiones de las apps',
-            'configuracion' => 'Configuración del sistema',
             'bitacora' => 'Bitácora',
+        ],
+    ],
+
+    // Ajustes de la plataforma que se tocan poco, y los avisos del sistema,
+    // que son una herramienta de auditoría y no de gestión del mercado.
+    'sistema' => [
+        'label' => 'Sistema',
+        'descripcion' => 'Zonas, organización, configuración, versiones de las apps y avisos del sistema.',
+        'items' => [
+            'zonas' => 'Zonas',
+            'organizacion' => 'Organización',
+            'configuracion' => 'Configuración del sistema',
+            'versiones_apk' => 'Versiones de las apps',
+            'avisos' => 'Avisos del sistema',
         ],
     ],
 
