@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Aplicacion;
 
+use App\Dominios\Seguridad\Contratos\TipoCuenta;
 use App\Dominios\Seguridad\Dominio\Excepciones\PermisoDenegado;
 use App\Dominios\Seguridad\Dominio\Excepciones\RolProtegido;
 use App\Dominios\Seguridad\Dominio\Excepciones\UsuarioDuplicado;
@@ -116,6 +117,12 @@ final class AsignarRolesUsuario
                 ? new SecUser
                 : SecUser::query()->findOrFail($usuarioId);
 
+            // Esta pantalla es del personal: una cuenta de app (cliente o proveedor) no
+            // cambia de tipo ni de rol desde acá (ADR 0046, punto 1).
+            if ($usuario->exists && $usuario->tipo_cuenta !== TipoCuenta::Panel) {
+                throw RolProtegido::porCuentaDeApp();
+            }
+
             $rolesActuales = $esAlta ? [] : $usuario->idsDeRoles();
 
             $this->verificarGuardaRolAdministrador($actor, $idRolActivo, $rolesActuales, $roleIds);
@@ -124,6 +131,7 @@ final class AsignarRolesUsuario
             $usuario->username = $username;
             $usuario->email = $email;
             $usuario->type = $type;
+            $usuario->tipo_cuenta = TipoCuenta::Panel;
             $usuario->persona_id = $personaId;
 
             if ($password !== null) {

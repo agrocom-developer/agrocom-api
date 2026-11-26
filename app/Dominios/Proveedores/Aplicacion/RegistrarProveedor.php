@@ -10,6 +10,7 @@ use App\Dominios\Proveedores\Infraestructura\Eloquent\Piloto;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Proveedor;
 use App\Dominios\Seguridad\Contratos\CuentaDuplicada;
 use App\Dominios\Seguridad\Contratos\RegistroCuentas;
+use App\Dominios\Seguridad\Contratos\TipoCuenta;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
@@ -48,7 +49,7 @@ final class RegistrarProveedor
         $proveedor = DB::transaction(function () use ($datos, $tipo): Proveedor {
             $roles = $tipo->titularEsPiloto() ? ['proveedor', 'piloto'] : ['proveedor'];
 
-            $usuarioId = $this->cuentas->crear($datos['nombre'], $datos['username'], $datos['email'] ?? null, $datos['password'], $roles);
+            $usuarioId = $this->cuentas->crear($datos['nombre'], $datos['username'], $datos['email'] ?? null, $datos['password'], TipoCuenta::Proveedor, $roles);
             // Quien registra: la propia cuenta (app) o la persona de la oficina que lo carga a mano (panel).
             $autorId = $datos['registrado_por'] ?? $usuarioId;
 

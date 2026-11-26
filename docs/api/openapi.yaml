@@ -3920,6 +3920,15 @@ paths:
                   type: integer
                   example: 1
                   nullable: true
+                app:
+                  description: 'App desde la que se ingresa (ADR 0046): `cliente` o `proveedor`; `piloto` se acepta como alias de `proveedor` (es el nombre del flavor). Si no coincide con el tipo de la cuenta, responde `403 tipo_de_cuenta_incorrecto` y no emite token. TRANSITORIO: si falta, el tipo se deduce de la cuenta.'
+                  type: string
+                  example: proveedor
+                  nullable: true
+                  enum:
+                    - cliente
+                    - proveedor
+                    - piloto
               type: object
       responses:
         201:
@@ -3949,7 +3958,29 @@ paths:
                     $ref: '#/components/schemas/Dispositivo'
                 type: object
         403:
-          description: 'El `role_id` pedido no está entre los roles vivos del usuario.'
+          description: 'Dos casos. Con `codigo: tipo_de_cuenta_incorrecto`: la cuenta es del otro tipo que la app (ADR 0046: «Esta cuenta es de proveedor: ingresa en la app Agrocom Piloto»); no se emite token. Sin `codigo`: el `role_id` pedido no está entre los roles vivos del usuario.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
+                  codigo:
+                    description: 'Presente solo en `tipo_de_cuenta_incorrecto`.'
+                    type: string
+                    example: tipo_de_cuenta_incorrecto
+                    nullable: true
+                  tipo_cuenta:
+                    description: 'Tipo de la cuenta que ingresó, para decirle a qué app ir.'
+                    type: string
+                    example: proveedor
+                    nullable: true
+                    enum:
+                      - cliente
+                      - proveedor
+                type: object
         409:
           description: 'El usuario tiene más de un rol vivo (o ninguno) y no indicó `role_id`: hay que elegir con cuál entra. Mismo contrato que el 409 del panel.'
           content:

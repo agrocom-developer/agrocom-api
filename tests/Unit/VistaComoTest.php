@@ -106,8 +106,7 @@ it('la bandera de sesión se lee tal como se escribió', function (TipoUsuario $
     expect($leida)->toEqual($vista)
         ->and($leida?->guard())->toBe($tipo->value);
 })->with([
-    'cuenta interna' => [TipoUsuario::Interno],
-    'cuenta de portal' => [TipoUsuario::Cliente],
+    'cuenta de panel' => [TipoUsuario::Interno],
 ]);
 
 it('una bandera mal formada equivale a «no hay vista», nunca a una vista a medias', function (mixed $valor) {
@@ -120,7 +119,8 @@ it('una bandera mal formada equivale a «no hay vista», nunca a una vista a med
     'ids como texto' => [[...vistaComoBandera(), 'usuario_id' => '4']],
     'tipo desconocido' => [[...vistaComoBandera(), 'tipo' => 'root']],
     'una cuenta interna sin rol' => [[...vistaComoBandera(), 'rol_id' => null]],
-    'una cuenta de portal con rol' => [[...vistaComoBandera(TipoUsuario::Cliente), 'rol_id' => 3]],
+    'una bandera de portal heredada, de antes de que se retirara' => [[...vistaComoBandera(TipoUsuario::Cliente), 'rol_id' => null]],
+    'una bandera de portal con rol' => [[...vistaComoBandera(TipoUsuario::Cliente), 'rol_id' => 3]],
 ]);
 
 // --- 2. Solo lectura: se rechaza, no solo se oculta ---------------------------------
@@ -135,7 +135,7 @@ it('con una vista abierta rechaza todo método que escribe, sin llegar al contro
     expect($llamadas)->toBe(0);
 })->with(['POST', 'PUT', 'PATCH', 'DELETE']);
 
-it('lo rechaza igual con la vista de portal', function (string $metodo) {
+it('lo rechaza igual con una bandera de portal heredada, aunque ya no se lea como vista', function (string $metodo) {
     $llamadas = 0;
     $solicitud = vistaComoSolicitud($metodo, [VistaComoActiva::CLAVE_SESION => vistaComoBandera(TipoUsuario::Cliente)]);
 

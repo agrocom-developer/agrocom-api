@@ -18,16 +18,12 @@ use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\ConfiguracionCon
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DashboardController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\OrganizacionController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\PerfilController;
-use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\PerfilPortalController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\PreferenciasController;
-use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\PreferenciasPortalController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RecuperarContrasenaController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RestablecerContrasenaController;
-use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RestablecerContrasenaPortalController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RolActivoController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RolesController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\SesionController;
-use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\SesionPortalController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\UsuariosController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\VistaComoController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Web\ClientesController;
@@ -38,10 +34,10 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Web — panel (AdminLTE/Blade) y, a futuro, portal del cliente
+| Web — panel (AdminLTE/Blade), solo para el personal de Agrocom
 |--------------------------------------------------------------------------
 |
-| Este archivo sirve exclusivamente al panel/portal, con sesión (ADR 0008):
+| Este archivo sirve exclusivamente al panel, con sesión (ADR 0008):
 | nunca comparte middleware ni guards con routes/api.php (apps de campo).
 |
 | HU-02 (ADR 0004, extensión 27/8/2026): login por username + password contra
@@ -54,11 +50,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function (AutorizacionPanelWeb $autorizacion, Request $request) {
     if (! auth('interno')->check()) {
-        // Un solo login para todos (16/9/2026): quien ya entró como cliente
-        // vuelve a su portal, no a un formulario de ingreso.
-        return auth('cliente')->check()
-            ? redirect()->route('portal.perfil.edit')
-            : redirect()->route('login.form');
+        return redirect()->route('login.form');
     }
 
     // Primer ítem visible del menú del rol activo (tarea 62, fuga 2): un
@@ -68,10 +60,9 @@ Route::get('/', function (AutorizacionPanelWeb $autorizacion, Request $request) 
     return redirect()->to($autorizacion->primerDestinoVisible($request));
 });
 
-// Única puerta de entrada del sistema (16/9/2026): personal de Agrocom y
-// clientes ingresan por acá. El portal del cliente (HU-41) conserva su guard
-// `cliente` y sus pantallas, pero ya no tiene URL de login propia —
-// `SesionController::store()` prueba los dos guards.
+// Entrada del panel: solo cuentas de tipo `panel` (ADR 0046). Las cuentas de
+// app ingresan por `POST /api/auth/token`, desde su app; el portal web del
+// cliente se retiró.
 Route::get('/login', function () {
     return view('seguridad::pages.login');
 })->name('login.form');
@@ -80,9 +71,7 @@ Route::post('/login', [SesionController::class, 'store'])->name('login');
 
 // Recuperación de contraseña por correo (tarea 66; ADR 0004, ampliación
 // 9/9/2026) — públicas, sin guard: quien las usa todavía no tiene sesión.
-// `POST /recuperar` sirve a los dos guards (un solo login, un solo "recuperar
-// acceso"); restablecer sí tiene una URL por guard, porque el enlace del
-// correo ya sabe de qué tipo de cuenta es.
+// Solo para el personal del panel: las cuentas de app recuperan su acceso desde la app.
 // `throttle:6,1` por IP, además del throttle por email que ya aplica el
 // broker (`config('auth.passwords.*.throttle')`, 60 s).
 Route::post('/recuperar', [RecuperarContrasenaController::class, 'store'])
@@ -95,13 +84,6 @@ Route::get('/restablecer/{token}', [RestablecerContrasenaController::class, 'cre
 Route::post('/restablecer', [RestablecerContrasenaController::class, 'store'])
     ->middleware('throttle:6,1')
     ->name('restablecer.store');
-
-Route::get('/portal/restablecer/{token}', [RestablecerContrasenaPortalController::class, 'create'])
-    ->name('portal.restablecer.form');
-
-Route::post('/portal/restablecer', [RestablecerContrasenaPortalController::class, 'store'])
-    ->middleware('throttle:6,1')
-    ->name('portal.restablecer.store');
 
 Route::middleware('auth:interno')->group(function () {
     Route::post('/logout', [SesionController::class, 'destroy'])->name('logout');
@@ -456,29 +438,4 @@ Route::middleware('auth:interno')->group(function () {
             ->whereNumber('documento')
             ->name('panel.documentos.revisar');
     });
-});
-
-// HU-41 (tarea 55): portal del cliente — avance, actas firmadas y reportes
-// técnicos, SIEMPRE resueltos desde el `contrato_id` de la sesión de portal
-// (invariante 5 de CLAUDE.md), nunca desde un id de ruta sin verificar. Sin
-// `sec_permission`: el único gate es el guard `cliente` + el contrato
-// resuelto por AutorizacionPortalCliente, verificado DENTRO de cada
-// controlador (mismo patrón que el panel interno).
-Route::middleware('auth:cliente')->group(function () {
-    Route::post('/portal/logout', [SesionPortalController::class, 'destroy'])->name('portal.logout');
-
-    Route::post('/portal/preferencias/tema', [PreferenciasPortalController::class, 'actualizarTema'])
-        ->name('portal.preferencias.tema');
-
-    // Perfil propio (tarea 66): mismo mecanismo que `/panel/perfil`, para el
-    // guard `cliente` — ver PerfilPortalController.
-    Route::get('/portal/perfil', [PerfilPortalController::class, 'edit'])
-        ->name('portal.perfil.edit');
-
-    Route::put('/portal/perfil', [PerfilPortalController::class, 'update'])
-        ->name('portal.perfil.update');
-
-    Route::post('/portal/preferencias/zona-horaria', [PreferenciasPortalController::class, 'actualizarZonaHoraria'])
-        ->name('portal.preferencias.zona-horaria');
-
 });

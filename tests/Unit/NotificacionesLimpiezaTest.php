@@ -37,6 +37,7 @@ function limpiezaEsquema(): void
     $migraciones = [
         'create_plt_bitacoras_table',
         'create_sec_user_table',
+        'agrega_tipo_cuenta_a_sec_user',
         'create_sec_user_preferencia_table',
         'create_ntf_notificaciones_table',
     ];

@@ -85,6 +85,7 @@ function ntfEsquema(): void
     $migraciones = [
         'create_plt_bitacoras_table',
         'create_sec_user_table',
+        'agrega_tipo_cuenta_a_sec_user',
         'create_sec_role_table',
         'create_sec_user_role_table',
         'create_sec_user_preferencia_table',
@@ -417,11 +418,11 @@ test('«por rol» alcanza a la cuenta que tiene el rol asignado aunque también 
         ->and(Notificacion::query()->deUsuario($soloPiloto->id)->count())->toBe(0);
 });
 
-test('quedan fuera del reparto por rol: cuenta bloqueada, de portal, dada de baja, con la asignación revocada o con el rol inactivo', function () {
+test('quedan fuera del reparto por rol: cuenta bloqueada, de app, dada de baja, con la asignación revocada o con el rol inactivo', function () {
     $rol = ntfRol('administrador');
     $vigente = ntfCuenta([$rol]);
     ntfCuenta([$rol], ['state' => false]);
-    ntfCuenta([$rol], ['type' => TipoUsuario::Cliente->value]);
+    ntfCuenta([$rol], ['tipo_cuenta' => 'cliente']);
     ntfCuenta([$rol], ['deleted_at' => now()]);
 
     $revocada = ntfCuenta([$rol]);

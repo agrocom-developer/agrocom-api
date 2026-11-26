@@ -12,6 +12,7 @@ use App\Dominios\Seguridad\Aplicacion\EliminarUsuario;
 use App\Dominios\Seguridad\Aplicacion\ListarBitacora;
 use App\Dominios\Seguridad\Aplicacion\ListarUsuarios;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
+use App\Dominios\Seguridad\Contratos\TipoCuenta;
 use App\Dominios\Seguridad\Dominio\Excepciones\PermisoDenegado;
 use App\Dominios\Seguridad\Dominio\Excepciones\RolProtegido;
 use App\Dominios\Seguridad\Dominio\Excepciones\UsuarioDuplicado;
@@ -92,9 +93,7 @@ final class UsuariosController
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
         $busqueda = TextoDeFiltro::de($request, 'q');
-        $tipoCrudo = $request->query('tipo');
-        $tipo = is_string($tipoCrudo) ? TipoUsuario::tryFrom($tipoCrudo) : null;
-        $usuarios = $listarUsuarios->ejecutar($busqueda !== '' ? $busqueda : null, $tipo);
+        $usuarios = $listarUsuarios->ejecutar($busqueda !== '' ? $busqueda : null);
 
         $idsUsuario = $usuarios->pluck('id')->map(fn ($id) => (int) $id)->all();
         $idsPersona = $usuarios->pluck('persona_id')->filter()->map(fn ($id) => (int) $id)->unique()->values()->all();
@@ -107,7 +106,7 @@ final class UsuariosController
                 ? $this->rolesVivosPorUsuario($idsUsuario)
                 : [],
             'etiquetasPersona' => $this->personas->nombresDe($idsPersona),
-            'filtros' => ['q' => $busqueda, 'tipo' => $tipo->value ?? ''],
+            'filtros' => ['q' => $busqueda],
             'tonoPorEstado' => self::TONO_POR_ESTADO,
         ]);
     }
@@ -163,6 +162,7 @@ final class UsuariosController
         ListarBitacora $listarBitacora,
     ): View {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
+        $this->abortarSiNoEsDePanel($usuario);
 
         $cascara = $this->autorizacion->cascara($request);
 
@@ -188,12 +188,9 @@ final class UsuariosController
 
         $datos = $request->validated();
 
-        // Las cuentas de cliente se registran solas desde la app (ADR 0036): el
-        // panel no las edita.
-        abort_if($usuario->type === TipoUsuario::Cliente, 404);
-
-        // TRANSITORIO hasta A2 (tipo de cuenta): las cuentas de app llevan rol de ámbito `app` y el panel no las edita.
-        abort_if($this->tieneRolDeApp($usuario), 404);
+        // Las cuentas de app (cliente y proveedor) se registran solas desde la app o
+        // las crea la oficina desde su ficha (ADR 0046): Usuarios es solo del personal.
+        $this->abortarSiNoEsDePanel($usuario);
 
         $rolesDeseados = array_map('intval', $datos['roles'] ?? []);
 
@@ -225,6 +222,7 @@ final class UsuariosController
     public function destroy(Request $request, SecUser $usuario, EliminarUsuario $eliminarUsuario): RedirectResponse
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR), 403);
+        $this->abortarSiNoEsDePanel($usuario);
 
         try {
             $eliminarUsuario->ejecutar($request->user('interno'), $usuario);
@@ -242,6 +240,7 @@ final class UsuariosController
     public function alternarBloqueo(Request $request, SecUser $usuario, AlternarBloqueoUsuario $alternarBloqueo): RedirectResponse
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_BLOQUEAR), 403);
+        $this->abortarSiNoEsDePanel($usuario);
 
         try {
             $alternarBloqueo->ejecutar($request->user('interno'), $usuario);
@@ -367,13 +366,10 @@ final class UsuariosController
         }
     }
 
-    /** Cuenta de app: tiene algún rol de ámbito `app` (`cliente`, `proveedor`, `piloto`). */
-    private function tieneRolDeApp(SecUser $usuario): bool
+    /** Usuarios es solo del personal de Agrocom: una cuenta de app responde 404. */
+    private function abortarSiNoEsDePanel(SecUser $usuario): void
     {
-        return SecRole::query()
-            ->whereIn('id', $usuario->idsDeRoles())
-            ->where('ambito', 'app')
-            ->exists();
+        abort_unless($usuario->tipo_cuenta === TipoCuenta::Panel, 404);
     }
 
     /**
