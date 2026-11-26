@@ -1,6 +1,8 @@
 <?php
 
+use App\Dominios\Seguridad\Contratos\DatosDePersona;
 use App\Dominios\Seguridad\Contratos\RegistroCuentas;
+use App\Dominios\Seguridad\Contratos\TipoCuenta;
 use App\Dominios\Solicitudes\Aplicacion\CrearSolicitud;
 use App\Dominios\Solicitudes\Aplicacion\GestionarContactos;
 use App\Dominios\Solicitudes\Aplicacion\RegistrarCliente;
@@ -36,8 +38,12 @@ function contactosEsquema(): void
         'create_sol_solicitudes_servicio_table',
         'create_sol_solicitud_historial_table',
         'agrega_reputacion_a_sol_clientes',
+        'lleva_sol_clientes_al_ciclo_de_aprobacion',
         'agrega_negociacion_a_sol_solicitudes_servicio',
         'crea_sol_cliente_contactos',
+        'agrega_ubicacion_a_sol_terrenos',
+        'agrega_ubicacion_a_sol_solicitudes_servicio',
+        'retira_zonas',
     ]);
 }
 
@@ -50,7 +56,7 @@ function clienteDeTipo(string $tipo, int $usuarioId): Cliente
         'razon_social' => $tipo === 'empresa' ? 'Agropecuaria San Rafael SRL' : "Persona {$usuarioId}",
         'documento_fiscal' => $tipo === 'empresa' ? "NIT-{$usuarioId}" : null,
         'telefono' => '70012345',
-        'estado' => 'activo',
+        'estado' => 'aprobado',
         'created_at' => now(),
         'updated_at' => now(),
     ]);
@@ -275,7 +281,7 @@ test('registrar una empresa crea sus contactos en la misma transacción y la rec
     {
         private int $siguiente = 300;
 
-        public function crear(string $nombre, string $username, ?string $email, string $password, array $roles): int
+        public function crear(string $nombre, string $username, ?string $email, string $password, TipoCuenta $tipoCuenta, array $roles, ?string $telefono = null, ?DatosDePersona $persona = null): int
         {
             return ++$this->siguiente;
         }

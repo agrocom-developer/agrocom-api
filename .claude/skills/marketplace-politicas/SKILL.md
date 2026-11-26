@@ -9,12 +9,14 @@ Agrocom es un marketplace de servicio de fumigación con drones. El cliente publ
 
 ## Roles
 
-| Rol | Qué hace | Superficie |
+| Quién | Qué hace | Superficie |
 |---|---|---|
-| Cliente | Publica la solicitud con su precio, compara y elige ofertas, ve fotos, chat y ubicación del piloto, califica | App `cliente` y portal web |
-| Piloto | Ve el mapa de solicitudes abiertas, ofrece, marca inicio, avance y cierre, sube fotos, chatea | App `piloto` |
-| Proveedor independiente / dueño de drones / Agrocom propio | Se registra con datos de la persona y del dron con fotos; opera tras aprobación | Apps y portal |
-| Admin | Aprueba proveedores, pilotos y drones, modera calificaciones, resuelve reclamos | Panel web |
+| Cliente (cuenta de la app `cliente`) | Publica la solicitud con su precio, compara y elige ofertas, ve fotos, chat y ubicación del piloto, califica; debe estar aprobado | App `cliente` |
+| Proveedor (cuenta de la app `piloto`: independiente, dueño de drones, Agrocom propio o piloto de un tercero) | Se registra con datos de la persona y del dron con fotos; ve el mapa, ofrece, ejecuta y chatea tras la aprobación | App `piloto` |
+| Administrador | Personal de Agrocom: verifica y aprueba clientes y proveedores, modera calificaciones, resuelve disputas, administra usuarios y roles | Panel web |
+| Operador | Personal de Agrocom con acceso a las partes del panel que el administrador le asigna | Panel web |
+
+Cada app admite un solo tipo de cuenta, con su propio usuario, verificación (selfie con cámara y documento de identidad) y aprobación; no hay conversión entre tipos. El teléfono es la referencia para entrar y es único por tipo de cuenta (el mismo teléfono puede estar en una cuenta de cliente y una de proveedor), con un correo de respaldo para recuperar el acceso desde la app con un código; el teléfono no prueba posesión hasta que haya código por SMS o WhatsApp. Una persona (por su documento) tiene a lo sumo una cuenta de cliente y una de proveedor, y cada cuenta sube su propia verificación sin reutilizar la otra. Al registrarse se aceptan los términos y la privacidad vigentes. Un proveedor no pide servicios y nadie ofrece sobre una solicitud propia (ADR 0046).
 
 ## Ciclo de una solicitud
 
@@ -24,14 +26,15 @@ Agrocom es un marketplace de servicio de fumigación con drones. El cliente publ
 
 1. El cliente propone un precio por hectárea; la solicitud queda abierta.
 2. El piloto acepta el precio o contraoferta, con el dron que usará.
-3. En cada negociación hay una sola oferta vigente: quien la recibe acepta, contraoferta o rechaza. Máximo de ofertas por negociación, con la última definitiva. Vigencias de oferta (24 horas) y de solicitud (7 días) por parámetro.
+3. En cada negociación hay una sola oferta vigente: quien la recibe acepta, contraoferta o rechaza. Máximo de ofertas por negociación, con la última definitiva. La oferta vence (24 horas por parámetro, contadas desde que llega a la bandeja); la solicitud no vence sola.
+   La negociación es asíncrona: cada aceptación llega a la bandeja del cliente, que conversa con hasta 3 proveedores a la vez (`cupo_negociaciones`); los excedentes esperan en una cola que el cliente no ve y pasan a la bandeja cuando libera un lugar, tras revisar que el proveedor siga disponible y la solicitud vigente. Ofertar no oculta la solicitud: solo el cliente la detiene al marcarla «En acuerdo». El proveedor ve «Tu oferta está en cola» o «El cliente la está viendo», nunca posiciones ni datos de otros. En una empresa ofrece el encargado (delegable por piloto). ADR 0045.
 4. Aceptar la oferta vigente de la contraparte adjudica la solicitud: precio acordado, proveedor y equipo; las demás ofertas se cierran. La operación es atómica en el servidor.
-5. El cliente elige entre las ofertas: ningún proveedor tiene prioridad sobre otro y no hay puntuación ni sanciones automáticas.
+5. El cliente elige entre las ofertas: ningún proveedor tiene ventaja al adjudicar y no hay puntuación ni sanciones automáticas; la prioridad (propios y mejor calificados) es solo en el aviso, en el orden de la cola y en el orden sugerido.
 
 ## Qué ve cada parte
 
 - Antes de ofertar, el piloto ve lotes, hectáreas, cultivo, accesos, observaciones y fotos del terreno; no ve datos del cliente ni las ofertas de otros pilotos.
-- El cliente ve por oferta el precio, la calificación, el dron con fotos aprobadas y la distancia.
+- El cliente ve por oferta el precio, la calificación, el dron con fotos aprobadas y el requisito que no cumple; no hay distancia calculada.
 - Los datos de contacto se entregan solo tras adjudicar. La ubicación del piloto se comparte solo durante `en_ejecucion`.
 
 ## Reglas de red
@@ -54,7 +57,8 @@ Gratuita y sin registro antes de adjudicar. Tras adjudicar se registra quién ca
 
 ## Alta y aprobación
 
-- El proveedor independiente se registra solo, con datos de la persona y del dron con fotos; un admin lo aprueba antes de que vea el mapa y ofrezca.
+- Cualquiera se registra y entra a la app; el cliente y el proveedor se verifican (selfie con cámara y documento) y un admin aprueba cada cuenta antes de que publique, acepte, ofrezca o vea el mapa; el proveedor no aprobado ve solo un contador de solicitudes abiertas, filtrable por departamento. El proveedor sube además los datos de su dron con fotos y sus documentos.
+- El administrador puede dar de alta y aprobar desde el panel; la verificación queda marcada «cargada por administrador» si no hay documento de la persona. Nadie aprueba su propia cuenta.
 - La aprobación es un permiso propio con autor, fecha y motivo.
 
 ## Lo que no existe

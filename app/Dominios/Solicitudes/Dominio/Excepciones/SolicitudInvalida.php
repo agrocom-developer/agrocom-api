@@ -24,11 +24,6 @@ final class SolicitudInvalida extends RuntimeException
         return new self(Texto::de('solicitudes.errores.cliente_suspendido'));
     }
 
-    public static function zonaEnUso(int $terrenos, int $proveedores): self
-    {
-        return new self(Texto::de('solicitudes.zonas.en_uso', ['terrenos' => $terrenos, 'proveedores' => $proveedores]));
-    }
-
     public static function clienteYaEnEseEstado(): self
     {
         return new self(Texto::de('solicitudes.errores.cliente_ya_en_ese_estado'));
@@ -65,6 +60,23 @@ final class SolicitudInvalida extends RuntimeException
     public static function ventanaVencida(): self
     {
         return new self(Texto::de('solicitudes.errores.ventana_vencida'), false, 'ventana_hasta');
+    }
+
+    /** El terreno de la solicitud no tiene departamento: no se puede publicar sin ubicación (ADR 0045). */
+    public static function terrenoSinDepartamento(): self
+    {
+        return new self(Texto::de('solicitudes.errores.terreno_sin_departamento'), false, 'departamento_codigo');
+    }
+
+    public static function terrenoSinProvincia(): self
+    {
+        return new self(Texto::de('solicitudes.errores.terreno_sin_provincia'), false, 'provincia_codigo');
+    }
+
+    /** La provincia del terreno no pertenece a su departamento (o ya no está en el catálogo). */
+    public static function provinciaNoEsDelDepartamento(): self
+    {
+        return new self(Texto::de('solicitudes.errores.provincia_no_es_del_departamento'), false, 'provincia_codigo');
     }
 
     public static function motivoRequerido(): self

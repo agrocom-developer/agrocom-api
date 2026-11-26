@@ -2,14 +2,13 @@
 
 namespace App\Dominios\Seguridad\Infraestructura\Http\Presentacion;
 
-use App\Dominios\Personal\Contratos\LecturaFichaPersona;
 use App\Dominios\Seguridad\Aplicacion\ConsultarRolesDeUsuarios;
 use App\Dominios\Seguridad\Aplicacion\ListarBitacora;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 
 /**
- * Tarjetas del aside de la ficha de usuario (roles, persona y bitácora
- * de la cuenta): arma el arreglo que pintan las vistas. Lo de otro
+ * Tarjetas del aside de la ficha de usuario (roles y bitácora de la
+ * cuenta): arma el arreglo que pintan las vistas. Lo de otro
  * módulo llega por su `Contratos/`; los permisos de cada tarjeta los decide
  * el controlador.
  */
@@ -49,31 +48,6 @@ final class TarjetasDeUsuario
             'acciones' => $roles !== []
                 ? [['label' => __('seguridad.usuarios.aside_roles_accion'), 'href' => route('panel.roles.index'), 'icono' => 'list']]
                 : [],
-        ];
-    }
-
-    /** @return array{titulo: string, icono: string, tieneDatos: bool, items: list<array<string, mixed>>, vacioTitulo: string, vacioDetalle: string, acciones: list<array{label: string, href: string, icono?: string}>} */
-    public function tarjetaPersona(SecUser $usuario, LecturaFichaPersona $lecturaPersona): array
-    {
-        $ficha = $usuario->persona_id !== null ? $lecturaPersona->dePersona($usuario->persona_id) : null;
-
-        return [
-            'titulo' => __('seguridad.usuarios.aside_persona_titulo'),
-            'icono' => 'badge',
-            'tieneDatos' => $ficha !== null,
-            'items' => $ficha === null ? [] : [
-                ['label' => __('seguridad.usuarios.aside_persona_nombre'), 'value' => $ficha->nombre],
-                ['label' => __('seguridad.usuarios.aside_persona_rol'), 'value' => __('personal.roles.'.$ficha->rol)],
-                ['label' => __('seguridad.usuarios.aside_persona_base'), 'value' => $ficha->baseNombre ?? __('seguridad.usuarios.aside_persona_sin_base')],
-            ],
-            // Sin persona_id, o con una persona dada de baja, la tarjeta dice cuál de las dos es.
-            'vacioTitulo' => $usuario->persona_id === null
-                ? __('seguridad.usuarios.aside_persona_vacio_titulo')
-                : __('seguridad.usuarios.aside_persona_baja_titulo'),
-            'vacioDetalle' => $usuario->persona_id === null
-                ? __('seguridad.usuarios.aside_persona_vacio_detalle')
-                : __('seguridad.usuarios.aside_persona_baja_detalle'),
-            'acciones' => [],
         ];
     }
 

@@ -23,7 +23,7 @@ use App\Dominios\Solicitudes\Aplicacion\PublicarSolicitud;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\SolicitudServicio;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\Terreno;
-use App\Dominios\Solicitudes\Infraestructura\Eloquent\Zona;
+use Database\Seeders\Catalogo\UbicacionesSeeder;
 use Illuminate\Database\Seeder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
@@ -44,17 +44,23 @@ use Ramsey\Uuid\Uuid;
  */
 class NegociacionDemoSeeder extends Seeder
 {
-    /** Terrenos de la demo: cliente, nombre, zona, hectáreas, cultivo. */
+    /** Departamento de todos los terrenos de la demo: Santa Cruz (código del INE). */
+    private const DEPARTAMENTO = '07';
+
+    /**
+     * Terrenos de la demo: cliente, nombre, provincia (código del INE), municipio, latitud y longitud
+     * del centro del lote (de ahí nace el polígono), hectáreas y cultivo (ADR 0045, punto 3).
+     */
     private const TERRENOS = [
-        ['agro.sanrafael', 'Lote Norte', 'Warnes', '80', 'Soya'],
-        ['agro.sanrafael', 'Las Palmas', 'Santa Cruz de la Sierra', '120', 'Maíz'],
-        ['luis.antelo', 'Lote Sur', 'Montero', '120', 'Maíz'],
-        ['luis.antelo', 'La Esperanza', 'Montero', '65', 'Soya'],
-        ['luis.antelo', 'Estancia El Cerro', 'San José de Chiquitos', '200', 'Soya'],
-        ['coop.valle.grande', 'Lote Este', 'Cuatro Cañadas', '160', 'Girasol'],
-        ['coop.valle.grande', 'Parcela Central', 'San Julián', '90', 'Soya'],
-        ['coop.valle.grande', 'Fundo Los Valles', 'Vallegrande', '70', 'Maíz'],
-        ['coop.valle.grande', 'Hacienda Velasco', 'San Ignacio de Velasco', '300', 'Soya'],
+        ['agro.sanrafael', 'Lote Norte', '0702', 'Warnes', '-17.5141', '-63.1668', '80', 'Soya'],
+        ['agro.sanrafael', 'Las Palmas', '0701', 'Santa Cruz de la Sierra', '-17.7833', '-63.1821', '120', 'Maíz'],
+        ['luis.antelo', 'Lote Sur', '0710', 'Montero', '-17.3395', '-63.2528', '120', 'Maíz'],
+        ['luis.antelo', 'La Esperanza', '0710', 'Montero', '-17.3395', '-63.2528', '65', 'Soya'],
+        ['luis.antelo', 'Estancia El Cerro', '0705', 'San José de Chiquitos', '-17.8450', '-60.7390', '200', 'Soya'],
+        ['coop.valle.grande', 'Lote Este', '0711', 'Cuatro Cañadas', '-17.3583', '-62.5667', '160', 'Girasol'],
+        ['coop.valle.grande', 'Parcela Central', '0711', 'San Julián', '-16.9164', '-62.6167', '90', 'Soya'],
+        ['coop.valle.grande', 'Fundo Los Valles', '0708', 'Vallegrande', '-18.4890', '-64.1090', '70', 'Maíz'],
+        ['coop.valle.grande', 'Hacienda Velasco', '0703', 'San Ignacio de Velasco', '-16.3733', '-60.9633', '300', 'Soya'],
     ];
 
     /** @var array<string, Cliente> */
@@ -113,6 +119,9 @@ class NegociacionDemoSeeder extends Seeder
 
             return;
         }
+
+        // Los terrenos apuntan al catálogo oficial de ubicaciones (idempotente: no pisa nada).
+        $this->call(UbicacionesSeeder::class);
 
         $this->origen();
         $this->terrenos();
@@ -440,9 +449,8 @@ class NegociacionDemoSeeder extends Seeder
 
     private function terrenos(): void
     {
-        foreach (self::TERRENOS as $indice => [$username, $nombre, $zonaNombre, $hectareas, $cultivo]) {
+        foreach (self::TERRENOS as $indice => [$username, $nombre, $provincia, $municipio, $latitud, $longitud, $hectareas, $cultivo]) {
             $cliente = $this->clientes[$username];
-            $zona = Zona::query()->where('nombre', $zonaNombre)->first();
 
             $terreno = Terreno::query()->where('cliente_id', $cliente->id)->where('nombre', $nombre)->first()
                 ?? new Terreno(['cliente_id' => $cliente->id, 'nombre' => $nombre]);
@@ -451,8 +459,11 @@ class NegociacionDemoSeeder extends Seeder
                 'hectareas' => $terreno->exists ? $terreno->hectareas : $hectareas,
                 'cultivo' => $terreno->cultivo ?? $cultivo,
                 'referencias_acceso' => $terreno->referencias_acceso ?? 'Camino vecinal a 3 km de la ruta principal.',
-                'zona_id' => $zona?->id,
-                'geometria' => $zona === null ? null : $this->poligono((float) $zona->centroide_lat, (float) $zona->centroide_lng, $indice),
+                'departamento_codigo' => self::DEPARTAMENTO,
+                'provincia_codigo' => $provincia,
+                'municipio' => $terreno->municipio ?? $municipio,
+                'comunidad' => $terreno->comunidad ?? "Comunidad {$nombre}",
+                'geometria' => $this->poligono((float) $latitud, (float) $longitud, $indice),
             ]);
             $terreno->save();
 
@@ -460,7 +471,7 @@ class NegociacionDemoSeeder extends Seeder
         }
     }
 
-    /** Un cuadrado de ~1 km de lado cerca del centro de la zona, desplazado por terreno. */
+    /** Un cuadrado de ~1 km de lado cerca del centro indicado, desplazado por terreno. */
     private function poligono(float $lat, float $lng, int $indice): array
     {
         $lat += ($indice % 3 - 1) * 0.02;
@@ -479,11 +490,11 @@ class NegociacionDemoSeeder extends Seeder
         ];
     }
 
-    /** Los pilotos reciben avisos de nuevas solicitudes: Marcelo solo de Chiquitania y valles, el resto de todo. */
+    /** Los pilotos reciben avisos de nuevas solicitudes: Marcelo solo de las de 50 hectáreas o más, el resto de todas. */
     private function preferenciasDeLosPilotos(): void
     {
         $this->preferencias->guardar($this->usuarios['marcelo.terrazas'], [
-            'nuevas_solicitudes' => ['activo' => true, 'zonas' => [], 'macrorregiones' => ['chiquitania', 'valles'], 'hectareas_minimas' => '50'],
+            'nuevas_solicitudes' => ['activo' => true, 'hectareas_minimas' => '50'],
         ]);
     }
 

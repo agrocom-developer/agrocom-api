@@ -5,8 +5,11 @@ namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api;
 use App\Dominios\Seguridad\Aplicacion\EmitirTokenDispositivo;
 use App\Dominios\Seguridad\Aplicacion\IniciarSesionPanel;
 use App\Dominios\Seguridad\Aplicacion\RevocarTokenDispositivo;
+use App\Dominios\Seguridad\Contratos\TipoCuenta;
+use App\Dominios\Seguridad\Dominio\NumeroDeTelefono;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecTokenDispositivo;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
+use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioApp;
 use App\Dominios\Seguridad\Infraestructura\Http\Requests\EmitirTokenDispositivoRequest;
 use App\Dominios\Seguridad\Infraestructura\Http\Resources\DispositivoResource;
 use App\Dominios\Seguridad\Infraestructura\Http\Resources\RolActivoResource;
@@ -26,7 +29,7 @@ use OpenApi\Attributes as OA;
  * La verificación de `username` + password sí vive en el controlador, igual
  * que en el login del panel ({@see IniciarSesionPanel} declara explícitamente
  * que es plumbing de autenticación, no una regla de dominio). Se valida
- * contra el provider `usuarios_internos` SIN iniciar sesión: `/api/*` no
+ * contra el provider `usuarios_app` SIN iniciar sesión: `/api/*` no
  * tiene sesión ni cookies (ADR 0008), solo el bearer token que se emite acá.
  */
 #[OA\SecurityScheme(
@@ -64,11 +67,12 @@ final class SesionCampoController
             content: new OA\JsonContent(
                 required: ['username', 'password', 'uuid_dispositivo'],
                 properties: [
-                    new OA\Property(property: 'username', description: 'Login del operario (nunca un correo).', type: 'string', example: 'camila.rojas'),
+                    new OA\Property(property: 'username', description: 'Usuario de la cuenta (nunca un correo) o su teléfono, en cualquier formato (`70012345`, `+591 700-12345`). El teléfono es único por tipo de cuenta: sin `app`, un teléfono que sirve a dos cuentas (cliente y proveedor) no entra.', type: 'string', example: 'camila.rojas'),
                     new OA\Property(property: 'password', type: 'string', format: 'password', example: 'password'),
                     new OA\Property(property: 'uuid_dispositivo', description: 'UUID generado en el dispositivo.', type: 'string', format: 'uuid', example: '6f1d0a2e-1f34-4c9f-9a8b-2b7c1d5e0f31'),
                     new OA\Property(property: 'nombre_dispositivo', description: 'Nombre legible del equipo, para que el panel sepa cuál revoca.', type: 'string', example: 'Moto G84 — piloto 2', nullable: true),
                     new OA\Property(property: 'role_id', description: 'Rol con el que se quiere operar. Opcional si el usuario tiene un único rol vivo.', type: 'integer', example: 1, nullable: true),
+                    new OA\Property(property: 'app', description: 'App desde la que se ingresa (ADR 0046): `cliente` o `proveedor`; `piloto` se acepta como alias de `proveedor` (es el nombre del flavor). Si no coincide con el tipo de la cuenta, responde `403 tipo_de_cuenta_incorrecto` y no emite token. TRANSITORIO: si falta, el tipo se deduce de la cuenta.', type: 'string', enum: ['cliente', 'proveedor', 'piloto'], example: 'proveedor', nullable: true),
                 ],
                 type: 'object',
             ),
@@ -92,7 +96,18 @@ final class SesionCampoController
             ),
             new OA\Response(
                 response: 403,
-                description: 'El `role_id` pedido no está entre los roles vivos del usuario.',
+                description: 'Dos casos. Con `codigo: tipo_de_cuenta_incorrecto`: la cuenta es del otro tipo '
+                    .'que la app (ADR 0046: «Esta cuenta es de proveedor: ingresa en la app Agrocom Piloto»); '
+                    .'no se emite token. Sin `codigo`: el `role_id` pedido no está entre los roles vivos del usuario.',
+                content: new OA\JsonContent(
+                    required: ['message'],
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string'),
+                        new OA\Property(property: 'codigo', description: 'Presente solo en `tipo_de_cuenta_incorrecto`.', type: 'string', example: 'tipo_de_cuenta_incorrecto', nullable: true),
+                        new OA\Property(property: 'tipo_cuenta', description: 'Tipo de la cuenta que ingresó, para decirle a qué app ir.', type: 'string', enum: ['cliente', 'proveedor'], example: 'proveedor', nullable: true),
+                    ],
+                    type: 'object',
+                ),
             ),
             new OA\Response(
                 response: 409,
@@ -119,7 +134,22 @@ final class SesionCampoController
     {
         $datos = $request->validated();
 
-        $usuario = $this->autenticar((string) $datos['username'], (string) $datos['password']);
+        // La app declara su tipo (ADR 0046). TRANSITORIO: mientras la app no envíe `app`, el
+        // tipo se deduce de la propia cuenta y el login no falla.
+        $tipoDeApp = isset($datos['app']) ? TipoCuenta::dePedidoDeApp((string) $datos['app']) : null;
+
+        $usuario = $this->autenticar((string) $datos['username'], (string) $datos['password'], $tipoDeApp);
+
+        if ($tipoDeApp !== null && $usuario->tipo_cuenta !== $tipoDeApp) {
+            return response()->json([
+                'message' => __('seguridad.respuestas.tipo_de_cuenta_incorrecto', [
+                    'tipo' => __('seguridad.tipos_de_cuenta.'.$usuario->tipo_cuenta->value),
+                    'app' => $usuario->tipo_cuenta->nombreDeApp(),
+                ]),
+                'codigo' => 'tipo_de_cuenta_incorrecto',
+                'tipo_cuenta' => $usuario->tipo_cuenta->value,
+            ], 403);
+        }
 
         $resultado = $this->emitirToken->ejecutar(
             usuario: $usuario,
@@ -209,8 +239,10 @@ final class SesionCampoController
     }
 
     /**
-     * Verifica `username` + password contra el provider `usuarios_internos`
-     * sin abrir sesión: en `/api/*` no hay cookies ni estado (ADR 0008).
+     * Verifica `username` + password contra el provider `usuarios_app` (solo
+     * cuentas `cliente` y `proveedor`) sin abrir sesión: en `/api/*` no hay
+     * cookies ni estado (ADR 0008). Una cuenta de panel no existe para este
+     * provider: recibe el mismo rechazo que una credencial inválida (ADR 0046).
      *
      * Una cuenta deshabilitada (`state = false`) se rechaza acá con el MISMO
      * mensaje que una credencial incorrecta: emitirle un token sería emitir
@@ -218,10 +250,10 @@ final class SesionCampoController
      * igual), y distinguir los dos casos le confirmaría a un atacante que ese
      * usuario existe.
      */
-    private function autenticar(string $username, string $password): SecUser
+    private function autenticar(string $identificador, string $password, ?TipoCuenta $tipoDeApp): SecUser
     {
-        $proveedor = Auth::createUserProvider('usuarios_internos');
-        $usuario = $proveedor?->retrieveByCredentials(['username' => $username]);
+        $proveedor = Auth::createUserProvider('usuarios_app');
+        $usuario = $proveedor?->retrieveByCredentials(['username' => $identificador]) ?? $this->cuentaPorTelefono($identificador, $tipoDeApp);
 
         if ($proveedor === null
             || ! $usuario instanceof SecUser
@@ -234,6 +266,30 @@ final class SesionCampoController
         }
 
         return $usuario;
+    }
+
+    /**
+     * El login acepta el teléfono de la cuenta en lugar del usuario (ADR 0046, punto 17), en
+     * cualquier formato (`70012345`, `+591 700-12345`). El teléfono es único POR TIPO de cuenta,
+     * así que el mismo número puede estar en una cuenta de cliente y en una de proveedor: con
+     * `app` se busca en ese tipo; sin ella, solo se acepta si identifica a una única cuenta, y
+     * si no, se rechaza igual que una credencial inválida (nunca se adivina de cuál es).
+     */
+    private function cuentaPorTelefono(string $identificador, ?TipoCuenta $tipoDeApp): ?SecUser
+    {
+        $telefono = NumeroDeTelefono::normalizar($identificador);
+
+        if ($telefono === null) {
+            return null;
+        }
+
+        $cuentas = SecUsuarioApp::query()
+            ->where('telefono', $telefono)
+            ->when($tipoDeApp !== null, fn ($consulta) => $consulta->where('tipo_cuenta', $tipoDeApp?->value))
+            ->limit(2)
+            ->get();
+
+        return $cuentas->count() === 1 ? $cuentas->first() : null;
     }
 
     private function usuarioAutenticado(Request $request): SecUser

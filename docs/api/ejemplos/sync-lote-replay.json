@@ -36,7 +36,7 @@
                     "uuid_cliente": "0a1b2c3d-1111-4a11-8a11-000000000002",
                     "trabajo_uuid_cliente": "0a1b2c3d-1111-4a11-8a11-000000000001",
                     "secuencia": 1,
-                    "piloto_id": 10,
+                    "piloto_id": 1,
                     "inicio": "2026-11-24T08:05:00-04:00",
                     "hectareas_declaradas": "0"
                 }

@@ -11,6 +11,12 @@ use Illuminate\Support\Facades\Route;
 
 beforeEach(function () {
     $this->withoutVite();
+
+    // El idioma del panel sale de `APP_LOCALE=es` del `.env`; la prueba no
+    // depende de ese archivo (CI no lo tiene y caería en el idioma por
+    // defecto del framework, sin textos).
+    app()->setLocale('es');
+    app()->setFallbackLocale('es');
 });
 
 dataset('documentos legales', [

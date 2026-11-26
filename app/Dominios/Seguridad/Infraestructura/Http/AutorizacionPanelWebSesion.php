@@ -49,7 +49,9 @@ final class AutorizacionPanelWebSesion implements AutorizacionPanelWeb
         /** @var SecUser|null $usuario */
         $usuario = $request->user('interno');
 
-        return $usuario?->persona_id;
+        // El vínculo con el personal anterior (`per_personas`) vive en `persona_legada_id` hasta el retiro
+        // de `per_*`; `persona_id` es la persona única de las cuentas de app (ADR 0046).
+        return $usuario?->persona_legada_id;
     }
 
     public function primerDestinoVisible(Request $request): string

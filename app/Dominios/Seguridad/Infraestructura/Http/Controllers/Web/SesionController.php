@@ -20,9 +20,8 @@ use Illuminate\Validation\ValidationException;
  * {@see IniciarSesionPanel}, no acá.
  *
  * Autenticación por `username` + password, nunca por correo (memoria del
- * proyecto). `POST /login` es la única puerta de entrada del sistema: atiende
- * al guard `interno` y al guard `cliente` del portal, que ya no tiene URL de
- * ingreso propia (ver `store()`).
+ * proyecto). `POST /login` es la entrada del panel: solo atiende al guard
+ * `interno`, de cuentas `panel` (ADR 0046).
  */
 final class SesionController
 {
@@ -41,59 +40,21 @@ final class SesionController
         // mientras que la sesión sola muere con él. Requiere
         // `sec_user.remember_token` (migración 2026_09_09_130001).
         //
-        // Un solo login para todos (16/9/2026): se prueba el guard `interno`
-        // y, si no es una cuenta interna, el guard `cliente` del portal. Los
-        // guards siguen separados (ADR 0002 punto 6) — lo único compartido es
-        // la puerta de entrada. `sec_user.username` es único entre cuentas
-        // vivas sin importar `type`, así que a lo sumo uno de los dos
-        // intentos puede encontrar la cuenta: nunca entra la persona
-        // equivocada, y cada guard solo autentica las cuentas de su tipo.
-        $guard = null;
-
-        foreach (['interno', 'cliente'] as $candidato) {
-            if (Auth::guard($candidato)->attempt([...$credenciales, 'state' => true], $request->boolean('remember'))) {
-                $guard = $candidato;
-
-                break;
-            }
-        }
-
-        if ($guard === null) {
+        // Solo entran cuentas de panel: el provider del guard `interno` filtra
+        // `tipo_cuenta = panel`, así que una cuenta de app (cliente o proveedor) recibe
+        // el mismo rechazo que una credencial inválida (ADR 0046).
+        if (! Auth::guard('interno')->attempt([...$credenciales, 'state' => true], $request->boolean('remember'))) {
             throw ValidationException::withMessages([
                 'username' => [__('seguridad.login.error_credenciales')],
             ]);
         }
 
-        // Una sesión, una identidad: con una sola puerta de entrada, quien
-        // ingresa reemplaza a quien estuviera en este navegador bajo el OTRO
-        // guard — si no, un cliente que entra en una máquina donde quedó
-        // abierta una sesión interna (o al revés) dejaría las dos vivas.
-        $otroGuard = $guard === 'interno' ? 'cliente' : 'interno';
-
-        if (Auth::guard($otroGuard)->check()) {
-            Auth::guard($otroGuard)->logout();
-            $request->session()->forget('sec_rol_activo_id');
-        }
-
         $request->session()->regenerate();
 
         /** @var SecUser $usuario */
-        $usuario = Auth::guard($guard)->user();
+        $usuario = Auth::guard('interno')->user();
 
         $fijarZonaHoraria->ejecutarSiVacia($usuario, $request->string('zona_horaria')->toString() ?: null);
-
-        // Una cuenta de portal no tiene `sec_user_role` (ADR 0004): no hay
-        // rol que elegir ni menú que resolver, va directo a su portal. Misma
-        // forma de respuesta que el panel, para que `pages/login.js` no
-        // tenga que distinguir quién ingresó.
-        if ($guard === 'cliente') {
-            return response()->json([
-                'requiere_seleccion_rol' => false,
-                'rol_activo_id' => null,
-                'roles' => [],
-                'destino' => route('portal.perfil.edit'),
-            ]);
-        }
 
         $resultado = $iniciarSesion->ejecutar($usuario);
 

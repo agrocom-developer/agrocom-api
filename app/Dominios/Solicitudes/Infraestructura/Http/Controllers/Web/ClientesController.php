@@ -2,14 +2,18 @@
 
 namespace App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Compartido\Dominio\AccionAprobacion;
+use App\Dominios\Compartido\Dominio\EstadoAprobacion;
+use App\Dominios\Compartido\Dominio\Excepciones\MotivoRequerido;
+use App\Dominios\Compartido\Dominio\Excepciones\TransicionDeAprobacionInvalida;
 use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Contratos\CuentaDuplicada;
+use App\Dominios\Seguridad\Contratos\CuentaYaRegistrada;
 use App\Dominios\Seguridad\Contratos\LecturaCuentas;
 use App\Dominios\Solicitudes\Aplicacion\CambiarEstadoDeCliente;
 use App\Dominios\Solicitudes\Aplicacion\RegistrarCliente;
-use App\Dominios\Solicitudes\Dominio\EstadoCliente;
 use App\Dominios\Solicitudes\Dominio\Excepciones\ClienteDuplicado;
 use App\Dominios\Solicitudes\Dominio\Excepciones\SolicitudInvalida;
 use App\Dominios\Solicitudes\Dominio\TipoCliente;
@@ -40,6 +44,8 @@ final class ClientesController
 
     private const PERMISO_SUSPENDER = 'solicitudes.cliente.suspender';
 
+    private const PERMISO_APROBAR = 'solicitudes.cliente.aprobar';
+
     private const PERMISO_CREAR = RegistrarClienteDesdePanelRequest::PERMISO;
 
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
@@ -49,12 +55,13 @@ final class ClientesController
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
         $busqueda = TextoDeFiltro::de($request, 'q');
-        $estado = EstadoCliente::tryFrom(TextoDeFiltro::de($request, 'estado'));
+        $estado = EstadoAprobacion::tryFrom(TextoDeFiltro::de($request, 'estado'));
 
         $clientes = Cliente::query()
             ->when($busqueda !== '', fn ($consulta) => BusquedaTexto::aplicar($consulta, ['razon_social', 'documento_fiscal', 'telefono'], $busqueda))
             ->when($estado !== null, fn ($consulta) => $consulta->where('estado', $estado->value))
-            ->orderByRaw("CASE estado WHEN 'suspendido' THEN 0 ELSE 1 END")
+            // La cola primero: lo que espera una decisión, luego lo suspendido.
+            ->orderByRaw("CASE estado WHEN 'pendiente' THEN 0 WHEN 'suspendido' THEN 1 ELSE 2 END")
             ->orderByDesc('id')
             ->paginate(15)
             ->withQueryString();
@@ -63,7 +70,7 @@ final class ClientesController
             ...$this->autorizacion->cascara($request),
             'clientes' => $clientes,
             'filtros' => ['q' => $busqueda, 'estado' => $estado?->value],
-            'estadosFiltro' => EstadoCliente::cases(),
+            'estadosFiltro' => EstadoAprobacion::cases(),
             'puedeCrear' => $this->autorizacion->tienePermiso($request, self::PERMISO_CREAR),
         ]);
     }
@@ -93,7 +100,7 @@ final class ClientesController
 
         try {
             $cliente = $registrar->ejecutar($datos);
-        } catch (CuentaDuplicada|ClienteDuplicado|SolicitudInvalida $excepcion) {
+        } catch (CuentaYaRegistrada|CuentaDuplicada|ClienteDuplicado|SolicitudInvalida $excepcion) {
             return redirect()->back()->withInput($request->except('password'))->withErrors(['estado' => $excepcion->getMessage()]);
         }
 
@@ -120,6 +127,7 @@ final class ClientesController
             'totalTerrenos' => Terreno::query()->where('cliente_id', $cliente->id)->count(),
             'contactos' => $cliente->contactos()->get(),
             'puedeSuspender' => $this->autorizacion->tienePermiso($request, self::PERMISO_SUSPENDER),
+            'puedeAprobar' => $this->autorizacion->tienePermiso($request, self::PERMISO_APROBAR),
             'puedeVerSolicitudes' => $this->autorizacion->tienePermiso($request, 'solicitudes.solicitud.ver'),
         ]);
     }
@@ -129,8 +137,8 @@ final class ClientesController
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_SUSPENDER), 403);
 
         try {
-            $cambiar->suspender($cliente->id, (string) $request->validated('motivo'));
-        } catch (SolicitudInvalida $excepcion) {
+            $cambiar->suspender($cliente->id, (string) $request->validated('motivo'), (int) Auth::guard('interno')->id());
+        } catch (TransicionDeAprobacionInvalida|MotivoRequerido $excepcion) {
             return redirect()->route('panel.clientes.show', $cliente)->withErrors(['estado' => $excepcion->getMessage()]);
         }
 
@@ -142,11 +150,39 @@ final class ClientesController
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_SUSPENDER), 403);
 
         try {
-            $cambiar->reactivar($cliente->id);
-        } catch (SolicitudInvalida $excepcion) {
+            $cambiar->reactivar($cliente->id, (int) Auth::guard('interno')->id());
+        } catch (TransicionDeAprobacionInvalida $excepcion) {
             return redirect()->route('panel.clientes.show', $cliente)->withErrors(['estado' => $excepcion->getMessage()]);
         }
 
         return redirect()->route('panel.clientes.show', $cliente)->with('estado', __('solicitudes.clientes.reactivado'));
+    }
+
+    /** `POST /panel/clientes/{cliente}/aprobar`: el cliente pendiente pasa a aprobado y puede publicar y negociar. */
+    public function aprobar(Request $request, Cliente $cliente, CambiarEstadoDeCliente $cambiar): RedirectResponse
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_APROBAR), 403);
+
+        try {
+            $cambiar->ejecutar($cliente->id, AccionAprobacion::Aprobar, null, (int) Auth::guard('interno')->id());
+        } catch (TransicionDeAprobacionInvalida $excepcion) {
+            return redirect()->route('panel.clientes.show', $cliente)->withErrors(['estado' => $excepcion->getMessage()]);
+        }
+
+        return redirect()->route('panel.clientes.show', $cliente)->with('estado', __('solicitudes.clientes.aprobado'));
+    }
+
+    /** `POST /panel/clientes/{cliente}/rechazar`: con motivo; el cliente lo ve en su app y puede corregir y reenviar. */
+    public function rechazar(SuspenderClienteRequest $request, Cliente $cliente, CambiarEstadoDeCliente $cambiar): RedirectResponse
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_APROBAR), 403);
+
+        try {
+            $cambiar->ejecutar($cliente->id, AccionAprobacion::Rechazar, (string) $request->validated('motivo'), (int) Auth::guard('interno')->id());
+        } catch (TransicionDeAprobacionInvalida|MotivoRequerido $excepcion) {
+            return redirect()->route('panel.clientes.show', $cliente)->withErrors(['estado' => $excepcion->getMessage()]);
+        }
+
+        return redirect()->route('panel.clientes.show', $cliente)->with('estado', __('solicitudes.clientes.rechazado'));
     }
 }

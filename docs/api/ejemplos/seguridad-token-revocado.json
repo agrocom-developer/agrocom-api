@@ -9,7 +9,7 @@
     "respuesta": {
         "estado": 401,
         "cuerpo": {
-            "message": "Tu sesión no es válida o ya venció. Vuelve a ingresar."
+            "message": "Tu sesión no es válida o ya venció. Vuelve a iniciar sesión."
         }
     }
 }

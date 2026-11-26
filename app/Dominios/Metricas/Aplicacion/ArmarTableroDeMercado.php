@@ -8,8 +8,8 @@ use Brick\Math\RoundingMode;
 use Illuminate\Support\Facades\DB;
 
 /**
- * El tablero del panel (especificación §14): solicitudes por estado y por región
- * (macrorregión de la zona del terreno) y la cola de cosas que esperan una
+ * El tablero del panel (especificación §14): solicitudes por estado y por departamento
+ * (el de la solicitud, o el de su terreno mientras es borrador) y la cola de cosas que esperan una
  * decisión del administrador. Solo lectura sobre las tablas de los módulos
  * dueños (ADR 0012); las hectáreas viajan como decimal exacto en texto
  * (invariante 6 de CLAUDE.md).
@@ -27,32 +27,32 @@ final class ArmarTableroDeMercado implements LecturaTableroDeMercado
 
     private const CANCELADAS = ['cancelada', 'expirada'];
 
-    /** Región de una solicitud cuyo terreno no tiene zona. */
-    public const SIN_REGION = 'sin_region';
+    /** Departamento de una solicitud sin departamento (un borrador cuyo terreno aún no lo tiene). */
+    public const SIN_DEPARTAMENTO = 'sin_departamento';
 
     public function tablero(): array
     {
         $filas = DB::table('sol_solicitudes_servicio as s')
             ->leftJoin('sol_terrenos as t', 't.id', '=', 's.terreno_id')
-            ->leftJoin('sol_zonas as z', 'z.id', '=', 't.zona_id')
+            ->leftJoin('sol_departamentos as d', 'd.codigo', '=', DB::raw('COALESCE(s.departamento_codigo, t.departamento_codigo)'))
             ->whereNull('s.deleted_at')
-            ->selectRaw('s.estado as estado, z.macrorregion as region, COUNT(*) as cantidad, SUM(s.hectareas_solicitadas) as hectareas')
-            ->groupBy('s.estado', 'z.macrorregion')
+            ->selectRaw('s.estado as estado, d.codigo as departamento_codigo, d.nombre as departamento, COUNT(*) as cantidad, SUM(s.hectareas_solicitadas) as hectareas')
+            ->groupBy('s.estado', 'd.codigo', 'd.nombre')
             ->get();
 
         $estados = array_fill_keys(self::ESTADOS, ['cantidad' => 0, 'hectareas' => BigDecimal::zero()]);
-        $regiones = [];
+        $departamentos = [];
         $enMercado = BigDecimal::zero();
 
         foreach ($filas as $fila) {
             $estado = (string) $fila->estado;
-            $region = $fila->region === null || $fila->region === '' ? self::SIN_REGION : (string) $fila->region;
+            $codigo = $fila->departamento_codigo === null || $fila->departamento_codigo === '' ? self::SIN_DEPARTAMENTO : (string) $fila->departamento_codigo;
             $hectareas = BigDecimal::of((string) ($fila->hectareas ?? '0'));
 
             $actual = $estados[$estado] ?? ['cantidad' => 0, 'hectareas' => BigDecimal::zero()];
             $estados[$estado] = ['cantidad' => $actual['cantidad'] + (int) $fila->cantidad, 'hectareas' => $actual['hectareas']->plus($hectareas)];
 
-            $regiones[$region] ??= ['abiertas' => 0, 'en_curso' => 0, 'cerradas' => 0, 'canceladas' => 0, 'total' => 0, 'hectareas' => BigDecimal::zero()];
+            $departamentos[$codigo] ??= ['nombre' => $fila->departamento === null ? null : (string) $fila->departamento, 'abiertas' => 0, 'en_curso' => 0, 'cerradas' => 0, 'canceladas' => 0, 'total' => 0, 'hectareas' => BigDecimal::zero()];
             $grupo = match (true) {
                 in_array($estado, self::EN_MERCADO, true) => 'abiertas',
                 in_array($estado, self::EN_CURSO, true) => 'en_curso',
@@ -61,17 +61,17 @@ final class ArmarTableroDeMercado implements LecturaTableroDeMercado
                 default => null,
             };
             if ($grupo !== null) {
-                $regiones[$region][$grupo] += (int) $fila->cantidad;
+                $departamentos[$codigo][$grupo] += (int) $fila->cantidad;
             }
-            $regiones[$region]['total'] += (int) $fila->cantidad;
+            $departamentos[$codigo]['total'] += (int) $fila->cantidad;
 
             if (in_array($estado, self::EN_MERCADO, true)) {
-                $regiones[$region]['hectareas'] = $regiones[$region]['hectareas']->plus($hectareas);
+                $departamentos[$codigo]['hectareas'] = $departamentos[$codigo]['hectareas']->plus($hectareas);
                 $enMercado = $enMercado->plus($hectareas);
             }
         }
 
-        uasort($regiones, static fn (array $a, array $b): int => $b['total'] <=> $a['total']);
+        uasort($departamentos, static fn (array $a, array $b): int => $b['total'] <=> $a['total']);
 
         return [
             'por_estado' => array_map(
@@ -84,14 +84,15 @@ final class ArmarTableroDeMercado implements LecturaTableroDeMercado
             ),
             'total_solicitudes' => array_sum(array_column($estados, 'cantidad')),
             'hectareas_en_mercado' => (string) $enMercado->toScale(2, RoundingMode::HalfUp),
-            'por_region' => array_map(
-                static fn (string $region, array $datos): array => [
-                    'region' => $region,
-                    ...$datos,
+            'por_departamento' => array_map(
+                static fn (string $codigo, array $datos): array => [
+                    'departamento_codigo' => $codigo,
+                    'departamento' => $datos['nombre'],
+                    ...array_diff_key($datos, ['nombre' => true]),
                     'hectareas' => (string) $datos['hectareas']->toScale(2, RoundingMode::HalfUp),
                 ],
-                array_keys($regiones),
-                array_values($regiones),
+                array_keys($departamentos),
+                array_values($departamentos),
             ),
             'pendientes' => $this->pendientes(),
         ];

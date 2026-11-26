@@ -41,7 +41,8 @@ final class UsuarioCampoResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'username' => $this->username,
-            'persona_id' => $this->persona_id,
+            // Contrato vigente hasta A5: el vínculo con el personal anterior, nulo en toda cuenta de app.
+            'persona_id' => $this->persona_legada_id,
             'foto_url' => app(FotosDePerfil::class)->urlDe($this->id),
         ];
     }

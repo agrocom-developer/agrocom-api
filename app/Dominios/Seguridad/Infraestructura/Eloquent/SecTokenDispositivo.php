@@ -82,18 +82,18 @@ class SecTokenDispositivo extends ModeloDominio implements HasAbilities
      * (`Guard` accede a `$accessToken->tokenable`), no vocabulario del
      * dominio — por eso queda en inglés, como el resto de la infraestructura.
      *
-     * Apunta a `SecUsuarioInterno`, no a `SecUser` a secas: es el modelo del
-     * provider `usuarios_internos` que usa el guard `sanctum`
-     * (`config/auth.php`), y `Guard::hasValidProvider()` compara la instancia
-     * contra esa clase — con `SecUser` la comparación fallaría y ningún token
-     * autenticaría. De paso hereda el global scope `type = 'interno'`: una
-     * cuenta de portal jamás autentica en la API de campo.
+     * Apunta a `SecUsuarioApp`, no a `SecUser` a secas: es el modelo del
+     * provider `usuarios_app` que usa el guard `sanctum` (`config/auth.php`), y
+     * `Guard::hasValidProvider()` compara la instancia contra esa clase — con
+     * `SecUser` la comparación fallaría y ningún token autenticaría. De paso
+     * hereda el global scope `tipo_cuenta IN (cliente, proveedor)`: una cuenta de
+     * panel jamás autentica en la API de las apps.
      *
-     * @return BelongsTo<SecUsuarioInterno, $this>
+     * @return BelongsTo<SecUsuarioApp, $this>
      */
     public function tokenable(): BelongsTo
     {
-        return $this->belongsTo(SecUsuarioInterno::class, 'user_id');
+        return $this->belongsTo(SecUsuarioApp::class, 'user_id');
     }
 
     /**

@@ -94,3 +94,17 @@
     background-color: var(--ag-color-primary-subtle);
     color: var(--ag-color-primary-emphasis);
 }
+
+/* Página actual fuera del menú, bajo el acceso directo a Inicio: se ve
+   seleccionada pero no es un enlace (sin cursor ni hover de enlace). */
+.ag-drawer__actual {
+    display: block;
+    margin-inline-start: var(--ag-space-4);
+    padding: var(--ag-space-2) var(--ag-space-3);
+    border-radius: var(--ag-radius-md);
+    background-color: var(--ag-color-bg-nav-active);
+    color: var(--ag-color-success-strong);
+    font-size: 0.84375rem;
+    font-weight: var(--ag-font-weight-bold);
+    cursor: default;
+}

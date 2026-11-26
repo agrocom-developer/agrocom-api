@@ -10,7 +10,7 @@ use Illuminate\Database\Seeder;
  * Catálogo del menú de tres niveles del panel (módulos raíz en el riel de nivel
  * 1, ítems hijos en el sidebar de nivel 2), según
  * `docs/especificacion/marketplace.md` §10.4: Inicio (acceso directo), Mercado, Proveedores,
- * Atención, Seguridad y Sistema. El mercado de fumigación es de negociación: no hay trabajos
+ * Atención, Seguridad y Sistema (15 ítems). El mercado de fumigación es de negociación: no hay trabajos
  * internos, cuadrillas, bases, personal propio, baterías ni fichas de dron.
  *
  * Corre en todos los entornos, producción incluida — igual que
@@ -21,7 +21,7 @@ use Illuminate\Database\Seeder;
  * `ruta` guarda nombres de ruta Laravel.
  *
  * Idempotente: `firstOrCreate` sobre `(label, padre_id)`. Una base ya sembrada
- * recibe el tablero movido a Mercado y las entradas retiradas dadas de baja
+ * recibe el orden nuevo, Calificaciones movida a Mercado y las entradas retiradas dadas de baja
  * (soft delete, invariante 8): `Seeder::run()` nunca borra lo que ya no siembra.
  */
 class SecMenuSeeder extends Seeder
@@ -86,6 +86,11 @@ class SecMenuSeeder extends Seeder
         'menu.sistema.items.versiones_apk',
         'menu.proveedores.items.auxiliares',
         'menu.proveedores.items.equipos_flota',
+        // Zonas: el concepto está retirado (el mercado no tiene zonas ni restricción
+        // geográfica; la pantalla, su ruta y su código ya no existen). Da de baja las
+        // filas de menú que una base ya sembrada conserva.
+        'menu.catalogos.items.zonas',
+        'menu.sistema.items.zonas',
         // Los módulos raíz, al final: ya sin hijos vivos.
         'menu.catalogos.label',
         'menu.operacion.label',
@@ -111,9 +116,10 @@ class SecMenuSeeder extends Seeder
         // bitácora intactos). El tablero vivía dentro de Mercado y de
         // «Operación»: su fila vieja se da de baja y Inicio ocupa su lugar.
         $this->mover('menu.solicitudes.items.clientes', 'menu.atencion.items.clientes', $atencion, 1);
-        $this->mover('menu.solicitudes.items.calificaciones', 'menu.atencion.items.calificaciones', $atencion, 2);
-        $this->mover('menu.solicitudes.items.disputas', 'menu.atencion.items.reclamos', $atencion, 3);
-        $this->mover('menu.catalogos.items.zonas', 'menu.sistema.items.zonas', $sistema, 1);
+        $this->mover('menu.solicitudes.items.disputas', 'menu.atencion.items.reclamos', $atencion, 2);
+        // Calificaciones vivió en Atención; opinar de un servicio es parte del
+        // mercado y va en Mercado. Conserva su fila (id, permiso y bitácora).
+        $this->mover('menu.atencion.items.calificaciones', 'menu.solicitudes.items.calificaciones', $mercado, 3);
         $this->mover('menu.seguridad.items.organizacion', 'menu.sistema.items.organizacion', $sistema, 2);
         $this->mover('menu.seguridad.items.configuracion', 'menu.sistema.items.configuracion', $sistema, 3);
         $this->mover('menu.solicitudes.items.avisos', 'menu.sistema.items.avisos', $sistema, 4);
@@ -122,36 +128,38 @@ class SecMenuSeeder extends Seeder
         // Mercado (ADR 0027, 0031, 0033, 0039): el ciclo de la solicitud y su
         // medición. Cada ítem va gateado por el permiso de LISTADO (`ver`);
         // cancelar rige el botón de cada pantalla, no la visibilidad del ítem.
-        $this->item($mercado, 'solicitudes', 'solicitudes', 'request_quote', 1, ruta: 'panel.solicitudes.index', codigoPermiso: 'solicitudes.solicitud.ver');
-        $this->item($mercado, 'solicitudes', 'metricas', 'insights', 2, ruta: 'panel.metricas.index', codigoPermiso: 'metricas.panel.ver');
+        // Métricas primero (el pulso del mercado), luego las solicitudes y, al
+        // final, lo que opinan los clientes y proveedores de cada servicio.
+        $this->item($mercado, 'solicitudes', 'metricas', 'insights', 1, ruta: 'panel.metricas.index', codigoPermiso: 'metricas.panel.ver');
+        $this->item($mercado, 'solicitudes', 'solicitudes', 'request_quote', 2, ruta: 'panel.solicitudes.index', codigoPermiso: 'solicitudes.solicitud.ver');
+        $this->item($mercado, 'solicitudes', 'calificaciones', 'star', 3, ruta: 'panel.calificaciones.index', codigoPermiso: 'calificaciones.calificacion.ver');
 
-        // Proveedores (ADR 0032): la cola de aprobación. Documentos va primero:
-        // es la cola que más se mira a diario. Aprobar, suspender y eliminar
-        // rigen los botones de la ficha, no la visibilidad del ítem. El equipo
-        // de un piloto se ve en su ficha, no en un ítem propio.
-        $this->item($proveedores, 'proveedores', 'documentos', 'folder_open', 1, ruta: 'panel.documentos.index', codigoPermiso: 'proveedores.documento.ver');
-        $this->item($proveedores, 'proveedores', 'proveedores', 'local_shipping', 2, ruta: 'panel.proveedores.index', codigoPermiso: 'proveedores.proveedor.ver');
-        $this->item($proveedores, 'proveedores', 'pilotos', 'sports_esports', 3, ruta: 'panel.pilotos.index', codigoPermiso: 'proveedores.piloto.ver');
-        $this->item($proveedores, 'proveedores', 'drones_flota', 'airplanemode_active', 4, ruta: 'panel.drones-flota.index', codigoPermiso: 'flota.dron.ver');
+        // Proveedores (ADR 0032): el directorio de proveedores y, debajo, quienes
+        // los operan (pilotos y drones). Documentos va al final: es la cola de
+        // revisión que se abre desde la ficha o cuando llega algo. Aprobar,
+        // suspender y eliminar rigen los botones de la ficha, no la visibilidad
+        // del ítem. El equipo de un piloto se ve en su ficha, no en un ítem propio.
+        $this->item($proveedores, 'proveedores', 'proveedores', 'local_shipping', 1, ruta: 'panel.proveedores.index', codigoPermiso: 'proveedores.proveedor.ver');
+        $this->item($proveedores, 'proveedores', 'pilotos', 'sports_esports', 2, ruta: 'panel.pilotos.index', codigoPermiso: 'proveedores.piloto.ver');
+        $this->item($proveedores, 'proveedores', 'drones_flota', 'airplanemode_active', 3, ruta: 'panel.drones-flota.index', codigoPermiso: 'flota.dron.ver');
+        $this->item($proveedores, 'proveedores', 'documentos', 'folder_open', 4, ruta: 'panel.documentos.index', codigoPermiso: 'proveedores.documento.ver');
 
-        // Atención: la relación con quienes usan la plataforma. Los clientes, lo
-        // que opinan de un servicio (calificaciones) y lo que reclaman
-        // (reclamos). Reclamos va último: es lo que se atiende cuando llega.
+        // Atención: la relación con quienes usan la plataforma. Los clientes y lo
+        // que reclaman (reclamos). Reclamos va último: es lo que se atiende
+        // cuando llega.
         $this->item($atencion, 'atencion', 'clientes', 'agriculture', 1, ruta: 'panel.clientes.index', codigoPermiso: 'solicitudes.cliente.ver');
-        $this->item($atencion, 'atencion', 'calificaciones', 'star', 2, ruta: 'panel.calificaciones.index', codigoPermiso: 'calificaciones.calificacion.ver');
-        $this->item($atencion, 'atencion', 'reclamos', 'report', 3, ruta: 'panel.disputas.index', codigoPermiso: 'disputas.disputa.ver');
+        $this->item($atencion, 'atencion', 'reclamos', 'report', 2, ruta: 'panel.disputas.index', codigoPermiso: 'disputas.disputa.ver');
 
         // Seguridad: quién es (usuarios), qué puede (permisos) y qué hizo (bitácora).
         $this->item($seguridad, 'seguridad', 'usuarios', 'group', 1, ruta: 'panel.usuarios.index', codigoPermiso: 'seguridad.usuario.ver');
         $this->item($seguridad, 'seguridad', 'roles', 'shield_person', 2, ruta: 'panel.roles.index', codigoPermiso: 'seguridad.rol.ver');
         $this->item($seguridad, 'seguridad', 'bitacora', 'history', 3, ruta: 'panel.bitacora.index', codigoPermiso: 'seguridad.bitacora.ver');
 
-        // Sistema: ajustes que se tocan poco y los avisos del sistema, que son
-        // una herramienta de auditoría (ven los de todas las cuentas).
-        $this->item($sistema, 'sistema', 'zonas', 'pin_drop', 1, ruta: 'panel.zonas.index', codigoPermiso: 'solicitudes.zona.ver');
-        $this->item($sistema, 'sistema', 'organizacion', 'apartment', 2, ruta: 'panel.organizacion.index', codigoPermiso: 'seguridad.organizacion.ver');
+        // Sistema: la organización, los avisos del sistema (una herramienta de
+        // auditoría: ven los de todas las cuentas) y la configuración, que se toca poco.
+        $this->item($sistema, 'sistema', 'organizacion', 'apartment', 1, ruta: 'panel.organizacion.index', codigoPermiso: 'seguridad.organizacion.ver');
+        $this->item($sistema, 'sistema', 'avisos', 'notifications_active', 2, ruta: 'panel.avisos.index', codigoPermiso: 'notificaciones.aviso.ver');
         $this->item($sistema, 'sistema', 'configuracion', 'tune', 3, ruta: 'panel.configuracion.index', codigoPermiso: 'seguridad.configuracion.ver');
-        $this->item($sistema, 'sistema', 'avisos', 'notifications_active', 4, ruta: 'panel.avisos.index', codigoPermiso: 'notificaciones.aviso.ver');
     }
 
     /**

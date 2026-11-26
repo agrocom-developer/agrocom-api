@@ -39,7 +39,7 @@ Zona de revisión línea por línea (CLAUDE.md): este lote toca el motor de sync
 |---|---|---|---|
 | `Negociacion/Aplicacion/Negociar.php` | 504 | SRP y regla del módulo («una clase = una acción»): seis métodos públicos (`ofertar`, `contraofertar`, `aceptar`, `rechazar`, `retirar`, `reabrirSiNoQuedan`) y 20 privados de cálculo de precio, distancia y destinatarios | Una clase por acción; mover precio y vencimiento a `Dominio/` (`PrecioDeOferta`, `VencimientoDeOferta`) y la distancia a un contrato de lectura |
 | `Negociacion/Aplicacion/Seguimiento.php` | 326 | Seis acciones públicas (iniciar, avanzar, cerrar, subir evidencia, consultar, archivo) en una clase | Una clase por acción y un colaborador común `RegistrarAvance` |
-| `Negociacion/Aplicacion/MercadoDeSolicitudes.php` | 276 | Mezcla listado, resumen por zona, detalle y filtrado por `bbox` en PHP después de cargar todas las abiertas | Tres casos de uso; filtro geográfico a la consulta (ver L3) |
+| `Negociacion/Aplicacion/MercadoDeSolicitudes.php` | 276 | Mezcla listado, detalle y filtrado por `bbox` en PHP después de cargar todas las abiertas | Tres casos de uso; filtro geográfico a la consulta (ver L3) |
 | `Metricas/Aplicacion/CalcularMetricas.php` | 279 | Seis bloques de métricas (mercado, calidad, oferta, ingreso, por proveedor, reembolsos) en una clase, con `DB::table` sobre seis módulos | Reemplazar por vistas (L2); mientras tanto, una clase por bloque |
 | `Seguridad/Aplicacion/AsignarPermisosRol.php` | 292 | Cuatro verificaciones de política (plataforma, anti-escalada, llave propia, huérfanos) más la escritura | Una política por regla en `Dominio/Politicas/` y el caso de uso solo orquesta |
 | `Seguridad/Aplicacion/AsignarRolesUsuario.php` | 291 | Alta/edición de usuario, validación de unicidad, asignación de roles y autorización | Separar `CrearUsuario`, `ActualizarUsuario` y `AsignarRoles` |
@@ -76,12 +76,11 @@ El invariante de módulos dice que se viaja por contratos. Lecturas directas de 
 | Origen | Tabla ajena | Archivo |
 |---|---|---|
 | `Seguridad` | `per_` | `Seguridad/Infraestructura/Http/Controllers/Web/UsuariosController.php` |
-| `Solicitudes` | `prv_` | `Solicitudes/Aplicacion/GestionarZonas.php`, `Solicitudes/Infraestructura/Http/Controllers/Web/ZonasController.php` |
 | `Negociacion` | `sol_` | `Negociacion/Aplicacion/ProcesarNegociacion.php` |
 | `Compartido` | `sec_` | `Compartido/Infraestructura/Eloquent/BitacoraObserver.php` |
 | `Metricas` | `sol_`, `neg_`, `prv_`, `cal_`, `dsp_`, `flo_` | `Metricas/Aplicacion/CalcularMetricas.php`, `ArmarTableroDeMercado.php` |
 
-Propuesta: contratos de lectura (`Lectura*`) para los cuatro primeros; para `Metricas`, vistas SQL de solo lectura (ADR 0012), que son la forma sancionada de cruzar módulos en lecturas.
+Propuesta: contratos de lectura (`Lectura*`) para los tres primeros; para `Metricas`, vistas SQL de solo lectura (ADR 0012), que son la forma sancionada de cruzar módulos en lecturas.
 
 ## 3. Procesamiento que debe moverse a la base de datos
 
@@ -106,7 +105,6 @@ PostgreSQL no crea índice sobre una clave foránea. Consulta sobre el esquema m
 | Tabla.columna | Se usa en |
 |---|---|
 | `sol_solicitudes_servicio.proveedor_id`, `.terreno_id` | bandeja del proveedor, ficha y mercado |
-| `sol_terrenos.zona_id`, `prv_proveedores.zona_base_id` | mercado por zona |
 | `neg_ofertas.equipo_id`, `.oferta_anterior_id` | cadena de contraofertas |
 | `neg_cancelaciones.solicitud_id`, `neg_avances.usuario_id`, `neg_evidencias.avance_id`, `.usuario_id`, `neg_mensajes.autor_usuario_id` | seguimiento y mensajes |
 | `neg_pagos_confirmados.confirmado_por_usuario_id`, `sol_solicitud_historial.actor_usuario_id` | auditoría de actor |

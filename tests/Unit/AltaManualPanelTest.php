@@ -41,6 +41,8 @@ beforeEach(function () {
     Esquema::migrar([
         'create_plt_bitacoras_table',
         'create_sec_user_table',
+        'agrega_tipo_cuenta_a_sec_user',
+        'crea_sec_personas_y_telefono_de_cuenta',
         'create_sec_user_preferencia_table',
         'create_sec_role_table',
         'create_sec_user_role_table',
@@ -49,11 +51,15 @@ beforeEach(function () {
         'create_sol_terrenos_table',
         'create_sol_solicitudes_servicio_table',
         'agrega_reputacion_a_sol_clientes',
+        'lleva_sol_clientes_al_ciclo_de_aprobacion',
         'crea_sol_cliente_contactos',
         'create_prv_proveedores_table',
         'create_prv_pilotos_table',
         'create_flo_drones_table',
         'agrega_negociacion_a_sol_solicitudes_servicio',
+        'agrega_ubicacion_a_sol_terrenos',
+        'agrega_ubicacion_a_sol_solicitudes_servicio',
+        'retira_zonas',
     ]);
 
     foreach (['flo_drones', 'prv_pilotos', 'prv_proveedores', 'sol_cliente_contactos', 'sol_clientes', 'sec_user_role', 'sec_user', 'sec_role'] as $tabla) {
@@ -130,7 +136,7 @@ test('registrar una empresa guarda sus contactos, el principal elegido y a quien
     $respuesta->assertRedirect(route('panel.clientes.show', $cliente->id));
 
     expect($cliente->tipo)->toBe('empresa')
-        ->and($cliente->estado)->toBe('activo')
+        ->and($cliente->estado)->toBe('pendiente')
         ->and((int) $cliente->created_by)->toBe(ADMIN_OFICINA)
         ->and(DB::table('sol_cliente_contactos')->count())->toBe(2)
         ->and(DB::table('sol_cliente_contactos')->where('es_principal', true)->value('nombre'))->toBe('Mario Suárez');

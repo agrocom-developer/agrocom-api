@@ -11,5 +11,8 @@ final readonly class DatosCuenta
         public string $username,
         public ?string $email,
         public bool $activa,
+        public TipoCuenta $tipoCuenta = TipoCuenta::Panel,
+        /** `sec_personas.id`: la persona única de la cuenta de app; nulo si no se registró con documento. */
+        public ?int $personaId = null,
     ) {}
 }

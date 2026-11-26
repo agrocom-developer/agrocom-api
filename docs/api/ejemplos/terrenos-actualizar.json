@@ -23,7 +23,10 @@
                 "referencias_acceso": "Camino vecinal, portón azul a 2 km de la ruta.",
                 "colindantes_sensibles": null,
                 "acceso_dificil": false,
-                "zona_id": null,
+                "departamento_codigo": "07",
+                "provincia_codigo": "0702",
+                "municipio": "Warnes",
+                "comunidad": "Los Álamos",
                 "fotos": []
             }
         }

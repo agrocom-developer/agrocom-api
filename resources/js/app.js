@@ -19,7 +19,6 @@ import './organisms/vista-como-banner.js';
 import './organisms/cambiar-vista-modal.js';
 import './templates/auth-layout.js';
 import './pages/login.js';
-import './pages/usuarios-form.js';
 import './pages/roles-permisos.js';
 import './pages/configuracion-form.js';
 // Al final: repone campos y avisa con `change`, así que los átomos y las páginas

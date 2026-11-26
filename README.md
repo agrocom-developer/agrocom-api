@@ -7,7 +7,7 @@ Este repositorio es el backend (API REST) y el panel web de administración. Las
 ## Cómo funciona
 
 1. El cliente marca su propiedad y sus lotes en el mapa y publica una **solicitud** con las hectáreas, los datos previos y un **precio por hectárea**.
-2. Los pilotos ven las solicitudes abiertas en un **mapa** (por zona: valles, Chiquitania y otras), revisan el estado de la propiedad y **aceptan el precio o contraofertan**.
+2. Los pilotos ven las solicitudes abiertas en un **mapa** (sin zonas: cada solicitud lleva su departamento y su provincia), revisan el estado de la propiedad y **aceptan el precio o contraofertan**.
 3. El cliente compara las ofertas (precio, calificación, dron, distancia), negocia ronda por ronda y **elige una**: la solicitud queda adjudicada y se abren el contacto y el chat.
 4. El piloto marca el inicio, **sube fotos y marca su avance**, sin conexión si hace falta, y al final cierra con las hectáreas ejecutadas. El cliente ve las fotos, el chat y la última ubicación del piloto.
 5. El sistema muestra el **precio final** (hectáreas ejecutadas por precio acordado). Después el cliente califica al proveedor y el proveedor califica al cliente de forma privada; cualquiera puede abrir un reclamo.

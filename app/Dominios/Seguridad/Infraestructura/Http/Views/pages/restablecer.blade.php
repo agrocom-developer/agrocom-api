@@ -1,12 +1,11 @@
 {{--
-    Page: restablecer (GET/POST /restablecer y /portal/restablecer)
+    Page: restablecer (GET/POST /restablecer)
     Tarea 66: pantalla de "elegir contraseña nueva" llegada desde el enlace
-    del correo de recuperar acceso — compartida por panel y portal
-    (RestablecerContrasenaController / RestablecerContrasenaPortalController
-    pasan `$accion`/`$volverA` distintos, mismo formulario).
+    del correo de recuperar acceso, solo para el personal del panel
+    (RestablecerContrasenaController pasa `$accion`/`$volverA`).
 
     Sobre `auth-layout` (mismo layout que login) — quien llega acá nunca
-    tiene sesión: es un formulario público, sin cáscara de panel/portal.
+    tiene sesión: es un formulario público, sin cáscara de panel.
 
     Datos esperados: $accion (URL del POST), $volverA (URL del link "Volver
     al ingreso"), $token, $email (prefill, editable — el usuario puede

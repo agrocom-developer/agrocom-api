@@ -1,8 +1,7 @@
 {{--
     Page: login (GET /login, login.form)
-    Único login del sistema (16/9/2026): por acá entran el personal y los
-    clientes del portal — SesionController::store() decide a qué guard
-    pertenece la cuenta.
+    Login del panel: entra el personal de Agrocom (cuentas de tipo `panel`,
+    ADR 0046). Las cuentas de app ingresan desde su app.
     Estructura: layout HTML + auth-layout + login-form. El submit es interceptado
     por resources/js/pages/login.js que hace fetch a POST /login (JSON), no un
     submit tradicional.

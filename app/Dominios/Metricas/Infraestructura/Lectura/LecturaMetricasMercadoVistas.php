@@ -16,13 +16,13 @@ final class LecturaMetricasMercadoVistas implements LecturaMetricasMercado
         $publicadas = fn (): Builder => DB::table('vw_metricas_solicitudes')->whereBetween('publicada_en', VentanaSql::de($periodo));
 
         $porEstado = $publicadas()->selectRaw('estado, COUNT(*) as cantidad')->groupBy('estado')->pluck('cantidad', 'estado')->map(fn ($n): int => (int) $n)->all();
-        $porRegion = $publicadas()->selectRaw('region, COUNT(*) as cantidad')->groupBy('region')->pluck('cantidad', 'region')->map(fn ($n): int => (int) $n)->all();
+        $porDepartamento = $publicadas()->selectRaw("COALESCE(departamento_codigo, 'sin_departamento') as departamento, COUNT(*) as cantidad")->groupBy('departamento_codigo')->pluck('cantidad', 'departamento')->map(fn ($n): int => (int) $n)->all();
 
         return [
             'total' => array_sum($porEstado),
             'adjudicadas' => $publicadas()->whereNotNull('proveedor_id')->count(),
             'por_estado' => $porEstado,
-            'por_region' => $porRegion,
+            'por_departamento' => $porDepartamento,
             'hectareas_solicitadas' => Razones::escalar($publicadas()->sum('hectareas_solicitadas'), 4),
             'hectareas_servidas' => Razones::escalar($publicadas()->whereIn('estado', ['finalizada', 'calificada'])->sum('hectareas_ejecutadas'), 4),
         ];

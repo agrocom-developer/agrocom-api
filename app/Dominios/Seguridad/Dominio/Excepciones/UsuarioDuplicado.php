@@ -20,11 +20,6 @@ final class UsuarioDuplicado extends RuntimeException
         return new self(Texto::de('seguridad.errores.usuario_duplicado_username', ['username' => $username]));
     }
 
-    public static function porPersona(int $personaId): self
-    {
-        return new self(Texto::de('seguridad.errores.usuario_duplicado_persona', ['persona_id' => $personaId]));
-    }
-
     public static function porEmail(string $email): self
     {
         return new self(Texto::de('seguridad.errores.usuario_duplicado_email', ['email' => $email]));

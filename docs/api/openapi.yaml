@@ -1593,24 +1593,6 @@ paths:
             type: string
             example: '-64.5,-18.5,-61.0,-16.5'
         -
-          name: zona_id
-          in: query
-          required: false
-          schema:
-            type: integer
-        -
-          name: macrorregion
-          in: query
-          required: false
-          schema:
-            type: string
-            enum:
-              - cercado
-              - norte_integrado
-              - chiquitania
-              - valles
-              - chaco
-        -
           name: hectareas_min
           in: query
           required: false
@@ -1727,38 +1709,6 @@ paths:
       security:
         -
           tokenDispositivo: []
-  /api/solicitudes-abiertas/resumen-zonas:
-    get:
-      tags:
-        - Mercado
-      summary: 'Resumen por zona y macrorregión'
-      description: 'Cuántas solicitudes, hectáreas y qué precio promedio hay por zona y macrorregión, con los mismos filtros del mapa: responde «cuántos clientes y cuántas hectáreas hay en los valles frente a la Chiquitania».'
-      operationId: resumenZonasAbiertas
-      responses:
-        200:
-          description: 'Una fila por zona.'
-          content:
-            application/json:
-              schema:
-                required:
-                  - zonas
-                properties:
-                  zonas:
-                    type: array
-                    items:
-                      type: object
-                type: object
-        401:
-          description: 'Token ausente o revocado.'
-        403:
-          description: 'El rol no ve el mapa o el proveedor no está habilitado.'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorConflicto'
-      security:
-        -
-          tokenDispositivo: []
   '/api/solicitudes-abiertas/{id}':
     get:
       tags:
@@ -1839,7 +1789,7 @@ paths:
       tags:
         - Ofertas
       summary: 'Ofertar sobre una solicitud'
-      description: 'La primera oferta del proveedor sobre una solicitud `abierta` o `con_ofertas`. `tipo=acepta_propuesta` acepta exactamente el precio propuesto; `tipo=contraoferta` indica `precio_ha`, distinto del propuesto. Sin `equipo_id` usa el primer equipo apto. Idempotente por `uuid_cliente`: reintentar responde 200 con la misma oferta. Solo cuentas de proveedor habilitadas; un proveedor no oferta sobre solicitudes de su propia cuenta de cliente.'
+      description: 'La primera oferta del proveedor sobre una solicitud `abierta` o `con_ofertas`. `tipo=acepta_propuesta` acepta exactamente el precio propuesto; `tipo=contraoferta` indica `precio_ha`, distinto del propuesto. Sin `equipo_id` usa el primer equipo apto. Idempotente por `uuid_cliente`: reintentar responde 200 con la misma oferta. Solo cuentas de proveedor aprobadas y con un equipo apto; un proveedor no oferta sobre solicitudes de su propia cuenta de cliente ni de otra cuenta de la misma persona.'
       operationId: ofertarSolicitud
       parameters:
         -
@@ -1904,7 +1854,7 @@ paths:
         401:
           description: 'Token ausente o revocado.'
         403:
-          description: 'El rol no oferta o el proveedor no está habilitado.'
+          description: 'El rol no oferta, el proveedor no tiene un equipo apto (`proveedor_no_habilitado`) o la cuenta todavía no está aprobada (`cuenta_no_aprobada`, ADR 0046: entra y ve sus pantallas, pero no oferta).'
           content:
             application/json:
               schema:
@@ -2071,7 +2021,11 @@ paths:
         401:
           description: 'Token ausente o revocado.'
         403:
-          description: 'El rol del token no negocia.'
+          description: 'El rol del token no negocia, o la cuenta todavía no está aprobada (`cuenta_no_aprobada`, ADR 0046).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CuentaNoAprobada'
         404:
           description: 'No existe o es de otra cuenta.'
         409:
@@ -2118,7 +2072,11 @@ paths:
         401:
           description: 'Token ausente o revocado.'
         403:
-          description: 'El rol del token no negocia.'
+          description: 'El rol del token no negocia, o la cuenta todavía no está aprobada (`cuenta_no_aprobada`, ADR 0046).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CuentaNoAprobada'
         404:
           description: 'No existe o es de otra cuenta.'
         409:
@@ -2426,7 +2384,7 @@ paths:
       tags:
         - Preferencias
       summary: 'Mis preferencias de aviso'
-      description: 'Las preferencias de aviso de la cuenta. Sin nada guardado: todo activo, todas las zonas y sin mínimo de hectáreas.'
+      description: 'Las preferencias de aviso de la cuenta. Sin nada guardado: todo activo y sin mínimo de hectáreas.'
       operationId: verPreferenciasDeAviso
       responses:
         200:
@@ -2451,7 +2409,7 @@ paths:
       tags:
         - Preferencias
       summary: 'Guardar mis preferencias de aviso'
-      description: 'Guarda las preferencias; lo que no se envía conserva su valor. Un piloto activa o desactiva los avisos de nuevas solicitudes y limita zonas, macrorregiones y hectáreas mínimas.'
+      description: 'Guarda las preferencias; lo que no se envía conserva su valor. Un piloto activa o desactiva los avisos de nuevas solicitudes y fija las hectáreas mínimas.'
       operationId: guardarPreferenciasDeAviso
       requestBody:
         required: true
@@ -2476,7 +2434,7 @@ paths:
         403:
           description: 'El rol del token no gestiona preferencias.'
         422:
-          description: 'Macrorregión inválida o datos mal formados.'
+          description: 'Datos mal formados.'
           content:
             application/json:
               schema:
@@ -3567,6 +3525,32 @@ paths:
                 licencia_numero:
                   type: string
                   example: RPA-2291
+                telefono:
+                  description: 'Teléfono del piloto (E.164, único entre las cuentas de proveedor). Opcional por ahora.'
+                  type: string
+                  example: '+591 70012345'
+                  nullable: true
+                documento_tipo:
+                  type: string
+                  nullable: true
+                  enum:
+                    - ci
+                    - pasaporte
+                    - licencia_conducir
+                documento_numero:
+                  description: 'Documento del piloto: con `nombres` y `apellidos`, lo identifica como persona única.'
+                  type: string
+                  nullable: true
+                nombres:
+                  type: string
+                  nullable: true
+                apellidos:
+                  type: string
+                  nullable: true
+                fecha_nacimiento:
+                  type: string
+                  format: date
+                  nullable: true
                 licencia_vence:
                   type: string
                   format: date
@@ -3591,6 +3575,12 @@ paths:
           description: 'Token ausente o revocado.'
         403:
           description: 'El rol del token no gestiona un proveedor.'
+        409:
+          description: 'Ese teléfono o esa persona (documento) ya tiene una cuenta de proveedor: `codigo: cuenta_ya_registrada`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CuentaYaRegistrada'
         422:
           description: 'Datos inválidos, login o correo ya registrados, o el proveedor no admite pilotos.'
           content:
@@ -3680,6 +3670,7 @@ paths:
                   type: string
                   format: password
                 telefono:
+                  description: 'Teléfono de la cuenta: un celular de Bolivia de 8 dígitos o un número con su código de país. Se guarda en E.164 y es único entre las cuentas de proveedor.'
                   type: string
                   example: '+591 70012345'
                 razon_social:
@@ -3692,9 +3683,25 @@ paths:
                 apellidos:
                   type: string
                   example: 'Mamani Quispe'
-                documento_identidad:
+                documento_tipo:
+                  description: 'Tipo del documento de la persona (por defecto `ci`).'
+                  type: string
+                  example: ci
+                  nullable: true
+                  enum:
+                    - ci
+                    - pasaporte
+                    - licencia_conducir
+                documento_numero:
+                  description: 'Número del documento. Es el nombre nuevo de `documento_identidad`: si llegan los dos, manda este. La persona es única por tipo y número normalizado (mayúsculas, sin espacios ni puntos).'
                   type: string
                   example: '7845123 SC'
+                  nullable: true
+                documento_identidad:
+                  description: 'Número del documento (nombre histórico de `documento_numero`; obligatorio si no se envía `documento_numero`).'
+                  type: string
+                  example: '7845123 SC'
+                  nullable: true
                 fecha_nacimiento:
                   type: string
                   format: date
@@ -3703,15 +3710,6 @@ paths:
                   description: 'NIT o documento de identidad.'
                   type: string
                   example: '4521897012'
-                zona_base_id:
-                  description: 'Zona base (ver `GET /api/zonas`).'
-                  type: integer
-                  nullable: true
-                radio_operacion_km:
-                  description: 'Decimal exacto; por defecto 50.'
-                  type: string
-                  example: '80'
-                  nullable: true
                 licencia_numero:
                   description: 'Obligatoria si el tipo es `independiente`.'
                   type: string
@@ -3741,6 +3739,12 @@ paths:
                   proveedor:
                     $ref: '#/components/schemas/Proveedor'
                 type: object
+        409:
+          description: 'Ese teléfono o esa persona (documento) ya tiene una cuenta de proveedor: `codigo: cuenta_ya_registrada`. No crea nada ni dice cuál de los dos datos chocó; la persona inicia sesión o recupera su acceso.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CuentaYaRegistrada'
         422:
           description: 'Datos inválidos o login, correo o documento ya registrados.'
           content:
@@ -3748,7 +3752,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorValidacion'
         429:
-          description: 'Demasiados registros desde la misma IP; reintentar tras `Retry-After` segundos.'
+          description: 'Demasiados registros desde la misma IP, o demasiados `409` seguidos para esa IP, ese teléfono o ese documento; reintentar tras `Retry-After` segundos.'
   '/api/dispositivos/{id}':
     get:
       tags:
@@ -3898,7 +3902,7 @@ paths:
                 - uuid_dispositivo
               properties:
                 username:
-                  description: 'Login del operario (nunca un correo).'
+                  description: 'Usuario de la cuenta (nunca un correo) o su teléfono, en cualquier formato (`70012345`, `+591 700-12345`). El teléfono es único por tipo de cuenta: sin `app`, un teléfono que sirve a dos cuentas (cliente y proveedor) no entra.'
                   type: string
                   example: camila.rojas
                 password:
@@ -3920,6 +3924,15 @@ paths:
                   type: integer
                   example: 1
                   nullable: true
+                app:
+                  description: 'App desde la que se ingresa (ADR 0046): `cliente` o `proveedor`; `piloto` se acepta como alias de `proveedor` (es el nombre del flavor). Si no coincide con el tipo de la cuenta, responde `403 tipo_de_cuenta_incorrecto` y no emite token. TRANSITORIO: si falta, el tipo se deduce de la cuenta.'
+                  type: string
+                  example: proveedor
+                  nullable: true
+                  enum:
+                    - cliente
+                    - proveedor
+                    - piloto
               type: object
       responses:
         201:
@@ -3949,7 +3962,29 @@ paths:
                     $ref: '#/components/schemas/Dispositivo'
                 type: object
         403:
-          description: 'El `role_id` pedido no está entre los roles vivos del usuario.'
+          description: 'Dos casos. Con `codigo: tipo_de_cuenta_incorrecto`: la cuenta es del otro tipo que la app (ADR 0046: «Esta cuenta es de proveedor: ingresa en la app Agrocom Piloto»); no se emite token. Sin `codigo`: el `role_id` pedido no está entre los roles vivos del usuario.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
+                  codigo:
+                    description: 'Presente solo en `tipo_de_cuenta_incorrecto`.'
+                    type: string
+                    example: tipo_de_cuenta_incorrecto
+                    nullable: true
+                  tipo_cuenta:
+                    description: 'Tipo de la cuenta que ingresó, para decirle a qué app ir.'
+                    type: string
+                    example: proveedor
+                    nullable: true
+                    enum:
+                      - cliente
+                      - proveedor
+                type: object
         409:
           description: 'El usuario tiene más de un rol vivo (o ninguno) y no indicó `role_id`: hay que elegir con cuál entra. Mismo contrato que el 409 del panel.'
           content:
@@ -4118,6 +4153,52 @@ paths:
       security:
         -
           tokenDispositivo: []
+  /api/catalogos/ubicaciones:
+    get:
+      tags:
+        - Clientes
+      summary: 'Catálogo de departamentos y provincias'
+      description: 'Catálogo oficial de Bolivia: los 9 departamentos y sus provincias, con el código del INE (dos dígitos el departamento, cuatro la provincia), ordenados por código. De solo lectura y sin token: las apps lo usan para elegir la ubicación de un terreno sin llevar una copia propia. Solo el departamento sirve de filtro de búsqueda; la provincia informa.'
+      operationId: listarUbicaciones
+      responses:
+        200:
+          description: 'Departamentos con sus provincias.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      required:
+                        - codigo
+                        - nombre
+                        - provincias
+                      properties:
+                        codigo:
+                          type: string
+                          example: '07'
+                        nombre:
+                          type: string
+                          example: 'Santa Cruz'
+                        provincias:
+                          type: array
+                          items:
+                            required:
+                              - codigo
+                              - nombre
+                            properties:
+                              codigo:
+                                type: string
+                                example: '0702'
+                              nombre:
+                                type: string
+                                example: Warnes
+                            type: object
+                      type: object
+                type: object
   /api/clientes/registro:
     post:
       tags:
@@ -4160,8 +4241,35 @@ paths:
                   type: string
                   format: password
                 telefono:
+                  description: 'Teléfono de la cuenta: un celular de Bolivia de 8 dígitos o un número con su código de país. Se guarda en E.164 y es único entre las cuentas de cliente (el mismo teléfono puede ser además de una cuenta de proveedor).'
                   type: string
                   example: '+591 76543210'
+                documento_tipo:
+                  description: 'Tipo del documento de la persona (por defecto `ci`). TRANSITORIO: el documento es opcional hasta que la app lo envíe; con él, `nombres` y `apellidos` son obligatorios.'
+                  type: string
+                  example: ci
+                  nullable: true
+                  enum:
+                    - ci
+                    - pasaporte
+                    - licencia_conducir
+                documento_numero:
+                  description: 'Número del documento: la persona es única por tipo y número normalizado (mayúsculas, sin espacios ni puntos) y tiene a lo sumo una cuenta de cliente.'
+                  type: string
+                  example: '7845123 SC'
+                  nullable: true
+                nombres:
+                  type: string
+                  example: Rosa
+                  nullable: true
+                apellidos:
+                  type: string
+                  example: 'Condori Vargas'
+                  nullable: true
+                fecha_nacimiento:
+                  type: string
+                  format: date
+                  nullable: true
                 razon_social:
                   description: 'Obligatoria para una empresa; si falta, se usa el nombre.'
                   type: string
@@ -4189,6 +4297,12 @@ paths:
                   cliente:
                     $ref: '#/components/schemas/Cliente'
                 type: object
+        409:
+          description: 'Ese teléfono o esa persona (documento) ya tiene una cuenta de cliente: `codigo: cuenta_ya_registrada`. No crea nada ni dice cuál de los dos datos chocó; la persona inicia sesión o recupera su acceso.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CuentaYaRegistrada'
         422:
           description: 'Datos inválidos o login, correo o documento ya registrados.'
           content:
@@ -4196,7 +4310,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorValidacion'
         429:
-          description: 'Demasiados registros desde la misma IP; reintentar tras `Retry-After` segundos.'
+          description: 'Demasiados registros desde la misma IP, o demasiados `409` seguidos para esa IP, ese teléfono o ese documento; reintentar tras `Retry-After` segundos.'
   /api/clientes/mi:
     get:
       tags:
@@ -4624,7 +4738,7 @@ paths:
       tags:
         - Solicitudes
       summary: 'Abrir una solicitud al mercado'
-      description: 'Abre la solicitud a los pilotos: `borrador` pasa a `abierta`, con su vigencia (7 días) y visible en el mapa. Exige precio por hectárea propuesto, hectáreas que no superen las del terreno, fecha deseada no pasada y un teléfono en la cuenta. Avisa a los pilotos cuyas preferencias coinciden con la zona y las hectáreas. Una solicitud `expirada` se renueva igual, dentro del plazo de renovación.'
+      description: 'Abre la solicitud a los pilotos: `borrador` pasa a `abierta`, con su vigencia (7 días) y visible en el mapa. Exige precio por hectárea propuesto, hectáreas que no superen las del terreno, fecha deseada no pasada, un teléfono en la cuenta y que el terreno tenga departamento y provincia coherentes entre sí; esa ubicación (más municipio y comunidad) se congela en la solicitud. Avisa a los pilotos cuyas preferencias coinciden con las hectáreas. Una solicitud `expirada` se renueva igual, dentro del plazo de renovación.'
       operationId: publicarSolicitud
       parameters:
         -
@@ -4648,11 +4762,15 @@ paths:
         401:
           description: 'Token ausente o revocado.'
         403:
-          description: 'El rol del token no es de cliente.'
+          description: 'El rol del token no es de cliente, o la cuenta todavía no está aprobada (`cuenta_no_aprobada`, ADR 0046: entra y arma sus borradores, pero no publica).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CuentaNoAprobada'
         404:
           description: 'No existe o es de otro cliente.'
         422:
-          description: 'Falta el precio o el teléfono, la solicitud no está en un estado que se pueda abrir o la fecha deseada ya pasó.'
+          description: 'Falta el precio o el teléfono, el terreno no tiene departamento o provincia (o no son coherentes), la solicitud no está en un estado que se pueda abrir o la fecha deseada ya pasó.'
           content:
             application/json:
               schema:
@@ -5081,49 +5199,6 @@ paths:
           description: 'Firma inválida o vencida.'
         404:
           description: 'La foto ya no existe.'
-  /api/zonas:
-    get:
-      tags:
-        - Clientes
-      summary: 'Catálogo de zonas'
-      description: 'Zonas geográficas del marketplace con su centroide y radio, ordenadas por nombre. Sin autenticación: el registro de un proveedor las usa para elegir su zona base. Coordenadas y radio como string decimal.'
-      operationId: listarZonas
-      responses:
-        200:
-          description: Zonas.
-          content:
-            application/json:
-              schema:
-                required:
-                  - data
-                properties:
-                  data:
-                    type: array
-                    items:
-                      required:
-                        - id
-                        - nombre
-                        - centroide_lat
-                        - centroide_lng
-                        - radio_km
-                      properties:
-                        id:
-                          type: integer
-                          example: 1
-                        nombre:
-                          type: string
-                          example: 'Santa Cruz de la Sierra'
-                        centroide_lat:
-                          type: string
-                          example: '-17.7833000'
-                        centroide_lng:
-                          type: string
-                          example: '-63.1821000'
-                        radio_km:
-                          type: string
-                          example: '40.0'
-                      type: object
-                type: object
 components:
   schemas:
     CalificacionesDelServicio:
@@ -5348,6 +5423,62 @@ components:
             type: array
             items:
               type: string
+      type: object
+    CuentaNoAprobada:
+      title: 'Cuenta no aprobada'
+      description: 'Respuesta 403 de la compuerta de la cuenta (ADR 0046, punto 12): la cuenta existe pero su estado no permite publicar, aceptar o contraofertar (cliente), ni ofertar, contraofertar o aceptar (proveedor). La app lo muestra como la pantalla de verificación, no como un error genérico. Distinto de `proveedor_no_habilitado` (falta un equipo apto). La app no replica la regla: la decide el servidor.'
+      required:
+        - message
+        - codigo
+        - estado
+        - falta
+      properties:
+        message:
+          type: string
+          example: 'Tu cuenta está en revisión. Cuando la aprobemos podrás publicar y negociar; mientras tanto puedes revisar tus datos.'
+        codigo:
+          type: string
+          example: cuenta_no_aprobada
+          enum:
+            - cuenta_no_aprobada
+        estado:
+          type: string
+          example: pendiente
+          enum:
+            - pendiente
+            - rechazado
+            - suspendido
+            - baja
+        falta:
+          description: 'Qué impide aprobar la cuenta (`verificacion`, `documentos`, `dron_fotos`, `equipo`…). Mientras no existan esos pasos viene vacío.'
+          type: array
+          items:
+            type: string
+          example: []
+      type: object
+    CuentaYaRegistrada:
+      title: 'Cuenta ya registrada'
+      description: 'Respuesta 409 de un registro (ADR 0046): el teléfono o la persona (documento) ya tiene una cuenta de ESE tipo. No dice cuál de los dos datos chocó, ni datos de nadie, ni si la cuenta está completa: la persona inicia sesión o recupera su acceso. Cada 409 cuenta contra un tope por hora por IP, teléfono y documento (después, 429).'
+      required:
+        - message
+        - codigo
+        - tipo_cuenta
+      properties:
+        message:
+          type: string
+          example: 'Ya tienes una cuenta de cliente. Inicia sesión o recupera tu acceso.'
+        codigo:
+          type: string
+          example: cuenta_ya_registrada
+          enum:
+            - cuenta_ya_registrada
+        tipo_cuenta:
+          description: 'Tipo de la cuenta que ya existe.'
+          type: string
+          example: cliente
+          enum:
+            - cliente
+            - proveedor
       type: object
     Disputa:
       title: Disputa
@@ -5717,22 +5848,16 @@ components:
         precio_ha_propuesto:
           type: string
           example: '125.0000'
-        zona:
+        departamento_codigo:
+          description: 'Código INE del departamento de la solicitud (`GET /api/catalogos/ubicaciones`).'
           type: string
-          example: Warnes
+          example: '07'
           nullable: true
-        zona_id:
-          type: integer
-          nullable: true
-        macrorregion:
+        provincia_codigo:
+          description: 'Código INE de la provincia, del mismo departamento.'
           type: string
+          example: '0702'
           nullable: true
-          enum:
-            - cercado
-            - norte_integrado
-            - chiquitania
-            - valles
-            - chaco
         cultivo:
           type: string
           nullable: true
@@ -5868,14 +5993,10 @@ components:
           type: string
           format: date-time
           nullable: true
-        zona:
-          description: 'Solo para el proveedor: nombre de la zona de la solicitud.'
+        departamento_codigo:
+          description: 'Solo para el proveedor: código INE del departamento de la solicitud (`GET /api/catalogos/ubicaciones`).'
           type: string
-          example: 'Valle de Culiacán'
-          nullable: true
-        zona_id:
-          description: 'Solo para el proveedor: id de la zona de la solicitud.'
-          type: integer
+          example: '07'
           nullable: true
         lote:
           description: 'Solo para el proveedor: nombre del lote del cliente. Viene solo cuando la solicitud quedó adjudicada a ese proveedor; antes es `null`.'
@@ -5966,31 +6087,12 @@ components:
         - calificaciones
       properties:
         nuevas_solicitudes:
-          description: 'Solo aplica a cuentas de proveedor. `zonas` y `macrorregiones` vacías significan todas.'
+          description: 'Solo aplica a cuentas de proveedor.'
           properties:
             activo:
-              description: "Preferencias de aviso (`negociacion-contrato.md` §7): el piloto activa o desactiva los\navisos de nuevas solicitudes en sus zonas (el incentivo para recibir ofertas de\ntrabajo) y cada cuenta elige qué categorías recibe. Las obligatorias no se apagan."
+              description: "Preferencias de aviso (`negociacion-contrato.md` §7): el piloto activa o desactiva los\navisos de nuevas solicitudes (el incentivo para recibir ofertas de\ntrabajo) y cada cuenta elige qué categorías recibe. Las obligatorias no se apagan."
               type: boolean
               example: true
-            zonas:
-              type: array
-              items:
-                type: integer
-              example:
-                - 3
-                - 7
-            macrorregiones:
-              type: array
-              items:
-                type: string
-                enum:
-                  - cercado
-                  - norte_integrado
-                  - chiquitania
-                  - valles
-                  - chaco
-              example:
-                - chiquitania
             hectareas_minimas:
               type: string
               example: '50.0000'
@@ -6218,14 +6320,6 @@ components:
           type: string
           example: '+591 70012345'
           nullable: true
-        zona_base_id:
-          type: integer
-          example: 2
-          nullable: true
-        radio_operacion_km:
-          description: 'Decimal exacto en string.'
-          type: string
-          example: '80.0'
         estado:
           type: string
           example: pendiente
@@ -6930,8 +7024,23 @@ components:
         acceso_dificil:
           type: boolean
           nullable: true
-        zona_id:
-          type: integer
+        departamento_codigo:
+          description: 'Código INE del departamento del catálogo (`GET /api/catalogos/ubicaciones`). Si se envía `provincia_codigo`, es obligatorio.'
+          type: string
+          example: '07'
+          nullable: true
+        provincia_codigo:
+          description: 'Código INE de la provincia; debe ser del departamento enviado.'
+          type: string
+          example: '0702'
+          nullable: true
+        municipio:
+          description: 'Texto libre de referencia.'
+          type: string
+          nullable: true
+        comunidad:
+          description: 'Texto libre de referencia.'
+          type: string
           nullable: true
       type: object
     ClienteContacto:
@@ -6991,11 +7100,15 @@ components:
           example: '+591 76543210'
           nullable: true
         estado:
+          description: 'Ciclo de aprobación (ADR 0046): nace `pendiente`; solo `aprobado` publica y negocia.'
           type: string
-          example: activo
+          example: aprobado
           enum:
-            - activo
+            - pendiente
+            - aprobado
             - suspendido
+            - rechazado
+            - baja
         calificacion_promedio:
           description: 'Decimal exacto en string (0 a 5).'
           type: string
@@ -7150,6 +7263,24 @@ components:
             - proveedor
             - administrador
             - sistema
+        departamento_codigo:
+          description: 'Ubicación congelada al publicar: código INE del departamento. Nulo en `borrador`.'
+          type: string
+          example: '07'
+          nullable: true
+        provincia_codigo:
+          description: 'Ubicación congelada al publicar: código INE de la provincia.'
+          type: string
+          example: '0702'
+          nullable: true
+        municipio:
+          description: 'Texto de referencia copiado del terreno al publicar.'
+          type: string
+          nullable: true
+        comunidad:
+          description: 'Texto de referencia copiado del terreno al publicar.'
+          type: string
+          nullable: true
         contacto:
           nullable: true
           allOf:
@@ -7225,9 +7356,25 @@ components:
         acceso_dificil:
           type: boolean
           example: false
-        zona_id:
-          type: integer
-          example: 1
+        departamento_codigo:
+          description: 'Código INE del departamento (`GET /api/catalogos/ubicaciones`). Obligatorio para publicar una solicitud sobre el terreno.'
+          type: string
+          example: '07'
+          nullable: true
+        provincia_codigo:
+          description: 'Código INE de la provincia, del mismo departamento. Obligatorio para publicar una solicitud sobre el terreno.'
+          type: string
+          example: '0702'
+          nullable: true
+        municipio:
+          description: 'Texto libre de referencia.'
+          type: string
+          example: Warnes
+          nullable: true
+        comunidad:
+          description: 'Texto libre de referencia.'
+          type: string
+          example: 'Los Álamos'
           nullable: true
         fotos:
           description: 'Fotos del estado del terreno (hasta 8). Las URLs son firmadas y de corta vida: se piden de nuevo con el terreno.'
@@ -7270,7 +7417,7 @@ tags:
     description: 'Mensajes entre el cliente y el proveedor adjudicado, desde la adjudicación. Texto de hasta 1000 caracteres, fotos de menos de 300 KB y líneas de sistema que el servidor escribe al cambiar la solicitud.'
   -
     name: Mercado
-    description: 'El piloto ve en un mapa las solicitudes abiertas para decidir a qué zona ir con su equipo (los valles frente a la Chiquitania) y a cuáles ofertar.'
+    description: 'El piloto ve en un mapa las solicitudes abiertas para decidir a cuáles ofertar.'
   -
     name: Ofertas
     description: 'El proveedor ofrece su precio por hectárea, cada parte contraoferta a la otra y el cliente elige: aceptar una oferta adjudica la solicitud.'
