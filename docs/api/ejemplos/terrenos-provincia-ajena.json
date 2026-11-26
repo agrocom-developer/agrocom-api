@@ -1,0 +1,26 @@
+{
+    "operationId": "crearTerreno",
+    "descripcion": "Validación: la provincia debe ser del departamento elegido (Cercado, 0301, es de Cochabamba).",
+    "peticion": {
+        "metodo": "POST",
+        "ruta": "/api/terrenos",
+        "autenticada": true,
+        "cuerpo": {
+            "nombre": "Lote Sur",
+            "hectareas": "40",
+            "departamento_codigo": "07",
+            "provincia_codigo": "0301"
+        }
+    },
+    "respuesta": {
+        "estado": 422,
+        "cuerpo": {
+            "message": "La opción elegida no es válida.",
+            "errors": {
+                "provincia_codigo": [
+                    "La opción elegida no es válida."
+                ]
+            }
+        }
+    }
+}
