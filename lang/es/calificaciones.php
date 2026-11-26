@@ -53,7 +53,7 @@ return [
     'causa' => [
         'insultos_o_datos_personales' => 'Insultos o datos personales',
         'causa_ajena' => 'Causa ajena al proveedor (clima o demora del cliente)',
-        'represalia' => 'Represalia tras una disputa',
+        'represalia' => 'Represalia tras un reclamo',
         'sin_servicio_real' => 'Cuenta sin servicio real',
         'otra' => 'Otra causa',
     ],
