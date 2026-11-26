@@ -290,6 +290,14 @@ Route::middleware('auth:interno')->group(function () {
             ->whereNumber('cliente')
             ->name('panel.clientes.show');
 
+        Route::post('/panel/clientes/{cliente}/aprobar', [ClientesController::class, 'aprobar'])
+            ->whereNumber('cliente')
+            ->name('panel.clientes.aprobar');
+
+        Route::post('/panel/clientes/{cliente}/rechazar', [ClientesController::class, 'rechazar'])
+            ->whereNumber('cliente')
+            ->name('panel.clientes.rechazar');
+
         Route::post('/panel/clientes/{cliente}/suspender', [ClientesController::class, 'suspender'])
             ->whereNumber('cliente')
             ->name('panel.clientes.suspender');

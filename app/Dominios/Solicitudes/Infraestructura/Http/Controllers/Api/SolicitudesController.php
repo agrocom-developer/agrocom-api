@@ -245,7 +245,7 @@ final class SolicitudesController
         responses: [
             new OA\Response(response: 200, description: 'Solicitud abierta.', content: new OA\JsonContent(required: ['solicitud'], properties: [new OA\Property(property: 'solicitud', ref: '#/components/schemas/SolicitudServicio')], type: 'object')),
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
-            new OA\Response(response: 403, description: 'El rol del token no es de cliente.'),
+            new OA\Response(response: 403, description: 'El rol del token no es de cliente, o la cuenta todavía no está aprobada (`cuenta_no_aprobada`, ADR 0046: entra y arma sus borradores, pero no publica).', content: new OA\JsonContent(ref: '#/components/schemas/CuentaNoAprobada')),
             new OA\Response(response: 404, description: 'No existe o es de otro cliente.'),
             new OA\Response(response: 422, description: 'Falta el precio o el teléfono, el terreno no tiene departamento o provincia (o no son coherentes), la solicitud no está en un estado que se pueda abrir o la fecha deseada ya pasó.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],

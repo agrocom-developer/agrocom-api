@@ -2,19 +2,23 @@
     Page: clientes/show (GET /panel/clientes/{cliente}, panel.clientes.show)
     Ficha de un cliente — arquetipo Detalle (§6.4 de
     docs/diseno/guia_pantalla_panel.md): cabecera con el estado y la acción de
-    suspender o reactivar (con motivo, en un modal), KPIs, los datos de la cuenta y
-    sus últimas solicitudes.
+    aprobar o rechazar (un cliente pendiente) o suspender o reactivar (con motivo,
+    en un modal), KPIs, los datos de la cuenta y sus últimas solicitudes.
 
     Datos esperados (ver ClientesController::show()): la cáscara de CascaraPanel,
     más $cliente, $cuenta (?DatosCuenta), $contactos (Collection<ClienteContacto>), $solicitudes (Collection<SolicitudServicio>),
-    $totalSolicitudes, $totalTerrenos, $puedeSuspender y $puedeVerSolicitudes.
+    $totalSolicitudes, $totalTerrenos, $puedeSuspender, $puedeAprobar y $puedeVerSolicitudes.
 
     Gateada por `solicitudes.cliente.ver`; suspender y reactivar exigen además
-    `solicitudes.cliente.suspender`, verificado server-side.
+    `solicitudes.cliente.suspender`, y aprobar y rechazar `solicitudes.cliente.aprobar`,
+    verificado server-side.
 --}}
 @php
     $titulo = $cliente->razon_social;
-    $suspendido = $cliente->estado->value === 'suspendido';
+    $estado = $cliente->estado->value;
+    $suspendido = $estado === 'suspendido';
+    $pendiente = $estado === 'pendiente';
+    $aprobado = $estado === 'aprobado';
 @endphp
 <x-templates.panel-shell :title="$titulo" :tema="$tema">
     <x-templates.panel-layout
@@ -39,13 +43,23 @@
                 </x-slot:chip>
                 <x-slot:actions>
                     <x-molecules.boton-volver :href="route('panel.clientes.index')" :label="__('solicitudes.clientes.volver')" />
+                    {{-- Aprobación (ADR 0046): un cliente pendiente espera una decisión. --}}
+                    @if ($puedeAprobar && $pendiente)
+                        <form method="POST" action="{{ route('panel.clientes.aprobar', $cliente) }}">
+                            @csrf
+                            <x-atoms.button type="submit" variant="primary" icon="check_circle">{{ __('solicitudes.clientes.aprobar') }}</x-atoms.button>
+                        </form>
+                        <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#cliente-rechazar-modal" variant="danger-outline" icon="cancel">
+                            {{ __('solicitudes.clientes.rechazar') }}
+                        </x-atoms.button>
+                    @endif
                     @if ($puedeSuspender)
                         @if ($suspendido)
                             <form method="POST" action="{{ route('panel.clientes.reactivar', $cliente) }}">
                                 @csrf
                                 <x-atoms.button type="submit" variant="primary" icon="lock_open">{{ __('solicitudes.clientes.reactivar') }}</x-atoms.button>
                             </form>
-                        @else
+                        @elseif ($aprobado)
                             <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#cliente-suspender-modal" variant="danger-outline" icon="block">
                                 {{ __('solicitudes.clientes.suspender') }}
                             </x-atoms.button>
@@ -54,7 +68,32 @@
                 </x-slot:actions>
             </x-organisms.page-header>
 
-            @if ($puedeSuspender && ! $suspendido)
+            @if ($puedeAprobar && $pendiente)
+                <form id="cliente-rechazar-form" method="POST" action="{{ route('panel.clientes.rechazar', $cliente) }}" hidden>
+                    @csrf
+                </form>
+
+                <x-molecules.confirm-modal
+                    id="cliente-rechazar-modal"
+                    form-id="cliente-rechazar-form"
+                    :title="__('solicitudes.clientes.rechazar_titulo', ['cliente' => $cliente->razon_social])"
+                    :message="__('solicitudes.clientes.rechazar_mensaje')"
+                    :confirm-label="__('solicitudes.clientes.rechazar')"
+                    tone="danger"
+                >
+                    <x-atoms.textarea
+                        name="motivo"
+                        id="cliente-rechazar-motivo"
+                        form="cliente-rechazar-form"
+                        :label="__('solicitudes.clientes.motivo_etiqueta_rechazo')"
+                        :help="__('solicitudes.clientes.motivo_ayuda')"
+                        :rows="3"
+                        required
+                    />
+                </x-molecules.confirm-modal>
+            @endif
+
+            @if ($puedeSuspender && $aprobado)
                 <form id="cliente-suspender-form" method="POST" action="{{ route('panel.clientes.suspender', $cliente) }}" hidden>
                     @csrf
                 </form>
@@ -94,6 +133,10 @@
             @if ($suspendido && $cliente->motivo_estado)
                 <x-molecules.alert-strip variant="danger" icon="info">
                     {{ __('solicitudes.clientes.motivo_suspension', ['motivo' => $cliente->motivo_estado]) }}
+                </x-molecules.alert-strip>
+            @elseif ($estado === 'rechazado' && $cliente->motivo_estado)
+                <x-molecules.alert-strip variant="danger" icon="info">
+                    {{ __('solicitudes.clientes.motivo_rechazo', ['motivo' => $cliente->motivo_estado]) }}
                 </x-molecules.alert-strip>
             @endif
 
