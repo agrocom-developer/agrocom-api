@@ -31,7 +31,7 @@ No existe cancelación desde `en_ejecucion`: lo no ejecutado se cierra con las h
 
 La solicitud **no vence sola**: sigue `abierta`, `con_ofertas` o `en_acuerdo` hasta que se adjudica o el cliente la cancela (ADR 0045, punto 20); no hay estado `expirada` ni renovación. «En acuerdo» es una decisión explícita del cliente y no un cálculo; no se usa la palabra «tomada».
 
-Plazos (parámetros): vigencia de la oferta (24 horas por defecto, contadas desde que llega a la bandeja; 72 propuestas, pendiente del dueño); cupo de negociaciones del cliente 3; anticipación máxima de la fecha deseada 365 días; aviso al cliente de una solicitud sin respuesta cada 7 días; disputa del cliente 72 horas desde `finalizada`; calificación 7 días desde `finalizada`.
+Plazos (parámetros): vigencia de la oferta (72 horas por defecto, contadas desde que llega a la bandeja); cupo de negociaciones del cliente 3; anticipación máxima de la fecha deseada 365 días; aviso al cliente de una solicitud sin respuesta cada 7 días; disputa del cliente 72 horas desde `finalizada`; calificación 7 días desde `finalizada`.
 
 Procesos programados: `negociacion:procesar` cada minuto (vence ofertas, reevalúa `con_ofertas` y `abierta`, barre la cola y libera lo que corresponda (§3.8), avisa al cliente cuánto lleva sin respuesta una solicitud y avanza y relanza las oleadas de aviso, §7.1; idempotente, `withoutOverlapping`, `onOneServer`) y `seguimiento:avisar-inactividad` cada hora (avisa a las partes si una solicitud `en_ejecucion` no tiene avance en `seguimiento.inactividad_horas`, 72 por defecto).
 
