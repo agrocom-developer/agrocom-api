@@ -23,7 +23,7 @@ Este `docs/` contiene la documentación vigente de Agrocom, un marketplace de se
   - 0041 mapa de solicitudes abiertas y notificaciones con preferencias
   - 0042 registro del proveedor con datos de la persona y fotos del dron
   - 0045 mercado sin zonas: filtros combinados, avisos por oleadas, etapa de negociación y vigencia larga (reemplaza en parte 0030, 0034, 0038 y 0041)
-- **`politicas/`**: una política por tema, que operan lo decidido: `negociacion.md`, `precio_y_pago.md`, `cancelacion.md`, `calificacion.md`, `verificacion_proveedores.md`, `seguimiento_y_privacidad.md`, `seguridad.md`, `disputas.md`.
+- **`politicas/`**: una política por tema, que operan lo decidido: `negociacion.md`, `precio_y_pago.md`, `cancelacion.md`, `calificacion.md`, `verificacion_proveedores.md`, `seguimiento_y_privacidad.md`, `seguridad.md`, `disputas.md`, `legal.md` (términos y privacidad públicos).
 - **`gestion/`**: cola de tareas del ciclo automático, `estado-api.md` (qué está hecho en la API y qué falta), entornos, automatización del desarrollo y el plan de homogeneización del panel; `respuestas_campo/capturas_rc/` guarda las capturas del control remoto del dron.
 - **`diseno/`**: sistema de diseño del panel (tokens CSS, catálogo Atomic Design) y guía de construcción de pantallas.
 - **`api/openapi.yaml`**: contrato de API generado desde el código (ADR 0014); no se edita a mano.
