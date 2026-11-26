@@ -1,6 +1,8 @@
 # ADR 0004 — Modelo de seguridad `sec_*`: permiso abstracto + multi-rol
 
-**Estado:** Aceptada · **Reemplaza:** el modelo `sec_*` de rol único de la spec v1.0 legacy.
+**Estado:** Aceptada, **parcialmente sustituida por el ADR 0046** · **Reemplaza:** el modelo `sec_*` de rol único de la spec v1.0 legacy.
+
+> **Nota (26/11/2026).** Siguen vigentes el permiso abstracto con código (`sec_permission`), `sec_role`, `sec_role_permission`, `sec_user_role`, el menú dinámico por permiso, las Policies y la bitácora. Quedan **sustituidos por el ADR 0046**: el multi-rol y el «rol activo por sesión» (el panel tiene dos roles, Administrador y Operador, y un usuario de panel tiene uno solo), los guards `interno` y `cliente` con el portal del cliente por contrato (el panel autentica solo cuentas `panel`; cada cuenta de app tiene un solo tipo, `cliente` o `proveedor`, y no tiene roles), `sec_user.persona_id` hacia `per_personas` (ahora apunta a `sec_personas`) y «ver como» sobre cuentas de app y portal (queda solo sobre cuentas de panel). Las extensiones de más abajo describen el modelo anterior en esos puntos.
 
 ## Contexto
 

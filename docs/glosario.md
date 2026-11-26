@@ -9,17 +9,33 @@ Referencia rápida de vocabulario, de negocio y técnico, para que cualquier per
 | Término | Definición | Referencia |
 |---|---|---|
 | **Marketplace** | Plataforma donde clientes publican solicitudes de fumigación con drones y proveedores ofertan; el precio se negocia. Agrocom es el nexo y el registro del resultado | `especificacion/marketplace.md` |
-| **Cliente** | Quien publica la solicitud, elige la oferta, sigue el avance y califica | especificación §2 |
+| **Cliente** | Tipo de cuenta de app: quien publica la solicitud, elige la oferta, sigue el avance y califica; persona o empresa; debe estar aprobado para publicar y aceptar | especificación §2; ADR 0046 |
+| **Cuenta de panel** | Cuenta del personal de Agrocom; tiene un solo rol, Administrador u Operador | ADR 0046 |
+| **Cuenta de app** | Cuenta de una persona en una de las dos apps; es de cliente o de proveedor, sin roles ni conversión entre tipos; con su propia verificación y aprobación | ADR 0046 |
+| **Administrador** | Rol del panel que ve todo: verifica y aprueba, atiende, modera y configura | ADR 0046 |
+| **Operador** | Rol del panel que ve las partes de algunos módulos que el administrador le asigna | ADR 0046 |
+| **Persona** (`sec_personas`) | Persona real dueña de una o dos cuentas de app, identificada por su documento (único): nombres, apellidos y documento. Tiene a lo sumo una cuenta de cliente y una de proveedor | ADR 0046 |
+| **Teléfono de la cuenta** | Dato de referencia para entrar a una cuenta de app; único por tipo de cuenta (el mismo teléfono puede estar en una cuenta de cliente y una de proveedor); no prueba posesión hasta que exista un código por SMS o WhatsApp | ADR 0046 |
+| **Correo de respaldo** | Correo de la cuenta de app al que llegan los códigos para recuperar el acceso y cambiar el teléfono | ADR 0046 |
+| **Recuperar mi acceso** | Pantalla de la app que, con un código enviado al correo de respaldo, permite fijar una contraseña nueva y ver el usuario; no hay página web de restablecimiento | ADR 0046 |
+| **Aceptación de términos y privacidad** | Registro por cuenta de la versión y la fecha de los términos y de la privacidad que aceptó al registrarse | ADR 0046 |
+| **Contador de solicitudes abiertas** | Número que ve el proveedor no aprobado en lugar del mapa, filtrable por departamento, para saber cuántos trabajos no puede ver todavía | ADR 0045, 0046 |
+| **Encargado de la empresa** | Titular de un proveedor tercero, con su propia cuenta; gestiona el vínculo de los pilotos de la empresa y puede liberarlos | ADR 0046 |
+| **Vínculo de piloto** | Relación entre la cuenta de un piloto y una empresa, con el consentimiento de ambos; el encargado la libera para que el piloto trabaje por su cuenta | ADR 0046 |
+| **Verificación de identidad** | Selfie tomada con la cámara y documento (carnet de identidad, licencia de conducir o pasaporte) que cada cuenta de app necesita para ser aprobada | ADR 0046; `politicas/verificacion_proveedores.md` |
+| **Selfie** | Foto del rostro tomada en el momento con la cámara de la app, distinta de la foto de perfil; solo la ve quien revisa, con permiso; se conserva 12 meses después de la baja de la cuenta | ADR 0046 |
+| **Cargada por administrador** | Marca de una verificación que el administrador creó desde el panel; si no hay documento de la persona, lleva un archivo marcador generado por el sistema y el motivo | ADR 0046 |
 | **Solicitud de servicio** | Pedido del cliente sobre sus lotes: hectáreas, tipo de aplicación, producto, fecha deseada y precio por hectárea propuesto. Es la unidad de negocio | especificación §4.2; ADR 0027 |
 | **Terreno** | Superficie del cliente con geometría y hectáreas, sobre la que se pide un servicio | especificación §4.1 |
 | **Proveedor** | Entidad que presta el servicio: propio, independiente o tercero | ADR 0028 |
 | **Proveedor propio** | Agrocom como proveedor, con sus pilotos y drones; compite como cualquier otro | ADR 0028 |
-| **Proveedor independiente** | Piloto que es su propio proveedor; se registra solo y lo aprueba un administrador | ADR 0028, 0032 |
+| **Proveedor independiente** | Piloto que es su propio proveedor; se registra solo (o lo registra la oficina) y lo aprueba un administrador | ADR 0028, 0032, 0046 |
 | **Proveedor tercero** | Empresa o dueño de drones con pilotos a su cargo | ADR 0028 |
 | **Piloto** | Persona que opera el dron, ve el mapa de solicitudes abiertas, ofrece y marca el avance | especificación §2 |
 | **Dron (vehículo)** | Activo que presta el servicio, con dueño y operador; requiere aprobación | ADR 0029 |
 | **Dueño del dron** | Proveedor que posee el dron, aunque lo opere otro | ADR 0029 |
 | **Equipo** | Combinación operativa de piloto y dron que ejecuta una solicitud | especificación §4.4 |
+| **Integrantes del equipo del servicio** | Personas que el proveedor anota, de forma opcional y solo como información, junto al piloto (nombre y celular opcional); sin cuenta ni verificación; el cliente las ve solo tras adjudicar | ADR 0046 |
 | **Mapa de solicitudes abiertas** | Vista del piloto con las solicitudes `abierta` y `con_ofertas` que le son visibles, con filtros por departamento, hectáreas, precio, fecha y cultivo; el proveedor aún no aprobado ve solo un contador de solicitudes abiertas | ADR 0041, 0045 |
 | **Departamento y provincia** | Ubicación de la solicitud, elegida de un catálogo de Bolivia (solo el departamento filtra); el municipio y la comunidad son texto libre. No hay zonas ni radio | ADR 0045 |
 | **Criterio de alcance (filtro)** | Regla que decide si un proveedor es alcanzable por una solicitud; hay del sistema, del cliente y del proveedor, y la lista crece sin migraciones | ADR 0045 |

@@ -1,6 +1,6 @@
 # Política de seguimiento, mensajes y privacidad
 
-**Agrocom SRL · Vigente** · Decisión: ADR 0040, ADR 0041, ADR 0045 · Especificación: `docs/especificacion/marketplace.md` §9.2
+**Agrocom SRL · Vigente** · Decisión: ADR 0040, ADR 0041, ADR 0045, ADR 0046 · Especificación: `docs/especificacion/marketplace.md` §9.2
 
 ## Qué hace el piloto en la plataforma
 
@@ -17,11 +17,16 @@ Las fotos de avance, el porcentaje y las hectáreas ejecutadas, los mensajes con
 | Lotes, departamento, provincia, municipio y comunidad, hectáreas, cultivo, accesos, observaciones, estado y fotos del terreno | Sí | Sí | Sí | Solo si la solicitud les es visible (política de negociación) |
 | Nombre, teléfono, documento y dirección del cliente | No | Sí | Sí | No |
 | Teléfono y documento del piloto | — | — | Solo tras adjudicar | — |
+| Equipo del servicio: el piloto (marcado como tal) y los demás integrantes con su nombre y celular opcional | — | — | Solo tras adjudicar | — |
+| Logo y nombre comercial del cliente | No | Sí | Sí | No |
+| Selfie y documento de identidad de una persona | No | No | No | No |
 | Ofertas de otros pilotos | No | No | Sí | No |
 | Fotos y avance | — | Sí | Sí | No |
 | Ubicación del piloto | — | Sí (la propia) | Durante la ejecución | No |
 | Mensajes | — | Sí | Sí | No |
 | Documentos del proveedor (licencias, matrículas) | No | No | No | No |
+
+La selfie y el documento de identidad de la verificación los ve solo quien revisa, con permiso propio; las demás partes ven únicamente la insignia «Verificado». Se conservan mientras exista la cuenta y 12 meses después de su baja, luego se eliminan; cada acceso y cada eliminación quedan registrados sin el contenido (ADR 0046). El teléfono y el correo de respaldo de una cuenta no los ve ninguna otra parte; el teléfono del proveedor lo ve el cliente solo después de adjudicar. Los integrantes del equipo son informativos y no tienen cuenta: los carga el proveedor, que responde por esos datos, y se borran con el equipo.
 
 ## Ubicación
 

@@ -7,7 +7,7 @@ Este directorio describe los controles de seguridad vigentes. La política de re
 | [`rulesets.md`](rulesets.md) | Reglas de rama y del environment que el dueño activa en la web de GitHub |
 | [`ci-cd.md`](ci-cd.md) | Permisos de los workflows, acciones fijadas por SHA, auditoría de dependencias, Dependabot, CODEOWNERS |
 | [`despliegue.md`](despliegue.md) | Respaldo previo a migrar, verificación y procedimiento de rollback |
-| [`autenticacion.md`](autenticacion.md) | Límite de intentos del login de campo y vigencia de los tokens |
+| [`autenticacion.md`](autenticacion.md) | Tipos de cuenta, verificación de identidad, límite de intentos del login y vigencia de los tokens |
 
 ## Hechos de contexto
 
