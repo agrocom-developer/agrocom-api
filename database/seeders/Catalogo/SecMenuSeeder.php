@@ -87,7 +87,8 @@ class SecMenuSeeder extends Seeder
         'menu.proveedores.items.auxiliares',
         'menu.proveedores.items.equipos_flota',
         // Zonas: el concepto está retirado (el mercado no tiene zonas ni restricción
-        // geográfica). Sale del menú; la ruta y el código se retiran en otra fase.
+        // geográfica; la pantalla, su ruta y su código ya no existen). Da de baja las
+        // filas de menú que una base ya sembrada conserva.
         'menu.catalogos.items.zonas',
         'menu.sistema.items.zonas',
         // Los módulos raíz, al final: ya sin hijos vivos.

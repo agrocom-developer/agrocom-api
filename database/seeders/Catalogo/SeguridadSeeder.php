@@ -98,15 +98,13 @@ class SeguridadSeeder extends Seeder
         'solicitudes.cliente.gestionar' => 'Gestionar su propio perfil de cliente desde la app',
         'solicitudes.terreno.gestionar' => 'Registrar y consultar sus propios terrenos desde la app',
         'solicitudes.solicitud.gestionar' => 'Crear, consultar, publicar y cancelar sus propias solicitudes de servicio desde la app',
-        // Solicitudes, clientes y zonas en el panel (ADR 0027): consulta, cancelación e intervención con motivo.
+        // Solicitudes y clientes en el panel (ADR 0027): consulta, cancelación e intervención con motivo.
         'solicitudes.solicitud.ver' => 'Ver el listado y la ficha de las solicitudes de servicio',
         'solicitudes.solicitud.cancelar' => 'Cancelar una solicitud de servicio desde el panel, con motivo',
         'solicitudes.cliente.crear' => 'Registrar a mano a un cliente (persona o empresa con sus contactos) que llega a la oficina',
         'solicitudes.cliente.ver' => 'Ver el listado y la ficha de los clientes del marketplace',
         'solicitudes.cliente.aprobar' => 'Aprobar o rechazar a un cliente pendiente, con motivo en el rechazo',
         'solicitudes.cliente.suspender' => 'Suspender a un cliente o reactivarlo, con motivo',
-        'solicitudes.zona.ver' => 'Ver el catálogo de zonas de Santa Cruz',
-        'solicitudes.zona.gestionar' => 'Crear, editar y eliminar zonas',
         'solicitudes.solicitud.ver_seguimiento' => 'Ver el chat, las fotos de avance y la ubicación del piloto de una solicitud',
         'notificaciones.aviso.ver' => 'Ver los avisos que el sistema envía a clientes, proveedores y administradores',
         'solicitudes.solicitud.intervenir' => 'Cerrar la negociación de un proveedor sobre una solicitud, con motivo',
@@ -120,7 +118,7 @@ class SeguridadSeeder extends Seeder
         'negociacion.pago.confirmar' => 'Informar que el proveedor recibió el pago de un servicio finalizado, que ocurre fuera de la aplicación',
         'negociacion.precio_final.confirmar' => 'Confirmar como cliente el precio final de un servicio cerrado por el piloto, o abrir un reclamo en su lugar',
         'negociacion.mensaje.usar' => 'Leer y escribir mensajes con la otra parte de un servicio adjudicado desde la app',
-        'negociacion.preferencias.gestionar' => 'Activar o desactivar los avisos de la cuenta, y las zonas de las nuevas solicitudes, desde la app',
+        'negociacion.preferencias.gestionar' => 'Activar o desactivar los avisos de la cuenta, y las nuevas solicitudes, desde la app',
         // Calificaciones (ADR 0031 y 0039): lado app y cola de moderación del panel.
         'calificaciones.calificacion.calificar_proveedor' => 'Calificar al proveedor y al piloto de un servicio completado desde la app',
         'calificaciones.calificacion.calificar_cliente' => 'Calificar en privado al cliente de un servicio completado desde la app',
@@ -159,10 +157,14 @@ class SeguridadSeeder extends Seeder
      * - `proveedores.auxiliar.*`: el auxiliar ya no existe en el sistema.
      * - `seguridad.usuario.asignar_rol_dueno`: el rol `dueno` sale del panel;
      *   lo reemplaza `seguridad.usuario.asignar_rol_administrador` (ADR 0046).
+     * - `solicitudes.zona.*`: el mercado no tiene zonas (ADR 0045, punto 1); la
+     *   pantalla Zonas y el catálogo se retiraron.
      *
      * @var list<string>
      */
     private const PERMISOS_RETIRADOS = [
+        'solicitudes.zona.ver',
+        'solicitudes.zona.gestionar',
         'seguridad.usuario.asignar_rol_dueno',
         'seguridad.usuario.portal',
         'distribucion.version.autorizar',

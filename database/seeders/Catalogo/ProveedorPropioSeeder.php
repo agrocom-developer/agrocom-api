@@ -5,7 +5,6 @@ namespace Database\Seeders\Catalogo;
 use App\Dominios\Compartido\Dominio\EstadoAprobacion;
 use App\Dominios\Proveedores\Dominio\TipoProveedor;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Proveedor;
-use App\Dominios\Solicitudes\Infraestructura\Eloquent\Zona;
 use Illuminate\Database\Seeder;
 
 /**
@@ -33,8 +32,6 @@ class ProveedorPropioSeeder extends Seeder
             'usuario_titular_id' => null,
             'tipo' => TipoProveedor::Propio,
             'razon_social' => self::RAZON_SOCIAL,
-            'zona_base_id' => Zona::query()->where('nombre', 'Santa Cruz de la Sierra')->value('id'),
-            'radio_operacion_km' => '150.0',
             'estado' => EstadoAprobacion::Pendiente,
         ]);
     }

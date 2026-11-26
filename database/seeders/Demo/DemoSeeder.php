@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 
 /**
  * Datos de demostración del marketplace para recorrer el panel y las apps:
- * plataforma (configuración y zonas), los drones operativos que se enlazan a la
+ * plataforma (configuración), los drones operativos que se enlazan a la
  * flota, clientes, proveedores y pilotos en cada estado de aprobación, y las
  * solicitudes en cada estado con sus ofertas, chat, fotos y ubicaciones.
  * No hay datos del sistema anterior (personal, bases, cuadrillas, baterías ni
