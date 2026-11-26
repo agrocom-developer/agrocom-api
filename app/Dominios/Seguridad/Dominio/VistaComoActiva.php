@@ -25,7 +25,7 @@ final readonly class VistaComoActiva
      * @param  int  $adminId  quien mira de verdad; nunca cambia durante la vista.
      * @param  int  $adminRolId  rol activo del administrador al entrar, para restaurarlo al salir.
      * @param  int  $usuarioId  cuenta observada.
-     * @param  int|null  $rolId  rol activo bajo el que se ve una cuenta interna; `null` en una de portal.
+     * @param  int|null  $rolId  rol activo bajo el que se ve la cuenta de panel.
      */
     public function __construct(
         public int $registroId,
@@ -81,8 +81,9 @@ final readonly class VistaComoActiva
             return null;
         }
 
-        // Una cuenta interna se ve bajo un rol; una de portal no tiene ninguno.
-        if (($tipo === TipoUsuario::Interno) !== ($rolId !== null)) {
+        // Solo se mira a cuentas de panel (ADR 0046), y bajo un rol. Una bandera de
+        // portal —de antes de que se retirara— ya no vale.
+        if ($tipo !== TipoUsuario::Interno || $rolId === null) {
             return null;
         }
 

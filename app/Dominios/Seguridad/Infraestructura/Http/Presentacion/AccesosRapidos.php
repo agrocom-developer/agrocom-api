@@ -15,8 +15,7 @@ use App\Dominios\Seguridad\Aplicacion\ItemMenu;
  * un acceso tampoco es autorizar: cada pantalla revalida en su controlador.
  *
  * Cada rol tiene un orden de preferencia (rutas del panel); se toman las que el
- * menú tiene, hasta {@see self::MAXIMO}. Un rol sin lista propia —uno creado
- * desde la pantalla de roles— cae en las primeras pantallas de su menú, sin
+ * menú tiene, hasta {@see self::MAXIMO}. Un rol sin lista propia cae en las primeras pantallas de su menú, sin
  * repetir el tablero, que ya está en el riel.
  */
 final class AccesosRapidos
@@ -25,35 +24,21 @@ final class AccesosRapidos
 
     /** @var array<string, list<string>> clave del rol → rutas, en orden de preferencia */
     private const POR_ROL = [
-        'dueno' => [
+        'administrador' => [
             'panel.solicitudes.index',
             'panel.proveedores.index',
             'panel.documentos.index',
             'panel.drones-flota.index',
             'panel.disputas.index',
-            'panel.metricas.index',
+            'panel.usuarios.index',
         ],
-        'encargado_operaciones' => [
+        'operador' => [
             'panel.documentos.index',
             'panel.proveedores.index',
-            'panel.drones-flota.index',
             'panel.solicitudes.index',
-            'panel.calificaciones.index',
-            'panel.disputas.index',
-        ],
-        'soporte' => [
-            'panel.solicitudes.index',
-            'panel.disputas.index',
             'panel.clientes.index',
             'panel.calificaciones.index',
-            'panel.proveedores.index',
-        ],
-        'admin_plataforma' => [
-            'panel.usuarios.index',
-            'panel.roles.index',
-            'panel.bitacora.index',
-            'panel.configuracion.index',
-            'panel.organizacion.index',
+            'panel.disputas.index',
         ],
     ];
 

@@ -528,6 +528,7 @@ Y el aviso que ya cobró dos veces: un canvas es un mockup, no la implementació
 **Diseño**
 - [ ] Cero color, tamaño, radio o duración literal en Blade y CSS: todo por token (invariante 11). Verificable con `grep -nE '#[0-9a-fA-F]{3,8}|[0-9]+px' resources/css/pages/<pantalla>.css` — las únicas apariciones legítimas son el hairline `1px solid`, los breakpoints de la escala (768/1200) y los comentarios. Todo lo demás (un `max-width: 600px`, un `minmax(250px, …)`) es una medida inventada que se le escapó al sistema.
 - [ ] Cero texto literal en Blade: todo por `__()`, con las claves en `lang/es/<modulo>.php`.
+- [ ] Los textos siguen `docs/diseno/guia_redaccion_panel.md`: etiquetas con el sustantivo primero, español neutro, una palabra por concepto y mayúscula solo inicial.
 - [ ] Un solo botón sólido sobre el pliegue.
 
 **Layout**
@@ -555,6 +556,7 @@ Y el aviso que ya cobró dos veces: un canvas es un mockup, no la implementació
 ## Referencias
 
 - `docs/diseno/sistema_diseno_panel.md` — valores exactos de tokens y catálogo.
+- `docs/diseno/guia_redaccion_panel.md` — cómo se escriben los textos visibles del panel (registro, etiquetas, vocabulario, mensajes).
 - `docs/decisiones/0002-...`, `0003-...`, `0008-...` — por qué el panel está armado así.
 - `.claude/skills/panel-design-ui/SKILL.md` — mapa rápido y reglas de pulido ya confirmadas.
 - Canvas "Registro de la compañía" (Claude Design) — referencia de composición del arquetipo formulario, §6.3.

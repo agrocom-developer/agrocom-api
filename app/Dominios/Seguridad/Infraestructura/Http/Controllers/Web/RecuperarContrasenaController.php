@@ -12,13 +12,9 @@ use Illuminate\Support\Facades\Password;
  * la cuenta, esté bloqueada o no — nunca revela qué correos existen en el
  * sistema (invariante de negocio de esta tarea).
  *
- * Un solo login para todos (16/9/2026), así que este es también el único
- * "recuperar acceso": prueba el broker `interno` y, si el correo no es de
- * una cuenta interna, el broker `cliente`. `sec_user.email` es único entre
- * cuentas vivas sin importar `type` (ADR 0004), así que a lo sumo un broker
- * encuentra la cuenta, y cada uno manda el enlace a SU pantalla de
- * restablecer (`/restablecer` o `/portal/restablecer`, ver
- * `sendPasswordResetNotification()` en cada subtipo de `SecUser`).
+ * Solo para cuentas de panel (broker `interno`, ADR 0046): una cuenta de app
+ * con ese correo recibe la misma respuesta uniforme y ningún enlace. Las cuentas
+ * de app recuperan su acceso desde la app (fase A10).
  *
  * `state: true` en las credenciales del broker: `EloquentUserProvider`
  * agrega un `WHERE` por cada clave que no sea `password`, así que una
@@ -37,16 +33,10 @@ final class RecuperarContrasenaController
             'email' => ['required', 'string', 'email'],
         ]);
 
-        foreach (['interno', 'cliente'] as $broker) {
-            $estado = Password::broker($broker)->sendResetLink([
-                'email' => $datos['email'],
-                'state' => true,
-            ]);
-
-            if ($estado !== Password::INVALID_USER) {
-                break;
-            }
-        }
+        Password::broker('interno')->sendResetLink([
+            'email' => $datos['email'],
+            'state' => true,
+        ]);
 
         return redirect()
             ->route('login.form')

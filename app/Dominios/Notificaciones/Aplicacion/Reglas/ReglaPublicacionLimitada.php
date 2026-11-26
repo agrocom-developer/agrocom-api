@@ -12,7 +12,7 @@ use App\Dominios\Solicitudes\Contratos\Eventos\PublicacionDeClienteLimitada;
 use InvalidArgumentException;
 
 /**
- * La limitación de la publicación le importa al cliente y a quien la revisa, el dueño y el encargado de operaciones (política de calificación). La clave lleva el cliente y el promedio.
+ * La limitación de la publicación le importa al cliente y a quien la revisa, el administrador (política de calificación). La clave lleva el cliente y el promedio.
  */
 final class ReglaPublicacionLimitada implements ReglaNotificacion
 {
@@ -35,8 +35,7 @@ final class ReglaPublicacionLimitada implements ReglaNotificacion
             recursoId: $evento->clienteId,
             destinatarios: [
                 Destinatario::usuario($evento->clienteUsuarioId),
-                Destinatario::rol(RolDestinatario::Dueno),
-                Destinatario::rol(RolDestinatario::EncargadoOperaciones),
+                Destinatario::rol(RolDestinatario::Administrador),
             ],
         );
     }

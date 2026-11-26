@@ -2,17 +2,17 @@
 
 namespace App\Dominios\Seguridad\Infraestructura\Eloquent;
 
-use App\Dominios\Seguridad\Dominio\TipoUsuario;
+use App\Dominios\Seguridad\Contratos\TipoCuenta;
 use App\Dominios\Seguridad\Infraestructura\Notificaciones\RestablecerContrasena;
 
 /**
- * Modelo de autenticación del guard `interno` (`config/auth.php`): panel y
- * apps de campo. `sec_user` es una tabla física compartida entre cuentas
- * internas y de portal (columna `type`); este subtipo aplica un global scope
- * `type = 'interno'` para que el guard jamás autentique, ni por error, una
- * cuenta de portal — la separación de guards no puede depender de que cada
- * llamador se acuerde de filtrar (HU-01, diseño `modulos-roles` §6, nota de
- * coordinación sobre `App\Models\User`).
+ * Modelo de autenticación del guard `interno` (`config/auth.php`): el panel, con
+ * cuentas de personal de Agrocom. `sec_user` es una tabla física compartida entre
+ * cuentas de panel y de app (columna `tipo_cuenta`, ADR 0046); este subtipo aplica
+ * un global scope `tipo_cuenta = 'panel'` para que el guard jamás autentique, ni
+ * por error, una cuenta de app — la separación de guards no puede depender de que
+ * cada llamador se acuerde de filtrar. Una cuenta de app que prueba entrar al panel
+ * recibe el mismo rechazo que una credencial inválida.
  *
  * No agrega columnas ni tabla propia: es el mismo `sec_user` con un scope,
  * por eso no lleva su propio archivo de migración.
@@ -23,17 +23,16 @@ class SecUsuarioInterno extends SecUser
     {
         parent::booted();
 
-        static::addGlobalScope('tipo_interno', function ($consulta): void {
-            $consulta->where('type', TipoUsuario::Interno->value);
+        static::addGlobalScope('tipo_panel', function ($consulta): void {
+            $consulta->where('tipo_cuenta', TipoCuenta::Panel->value);
         });
     }
 
     /**
      * `Password::broker('interno')` (provider `usuarios_internos`, que
      * instancia ESTA clase) resuelve el usuario y llama a este método —
-     * override de {@see SecUser} (que usa `CanResetPassword` tal cual, sin
-     * saber a qué guard pertenece el destinatario) para que el link apunte
-     * a la pantalla del PANEL, nunca a la del portal.
+     * override de {@see SecUser} (que usa `CanResetPassword` tal cual) para que
+     * el link apunte a la pantalla de restablecer del PANEL.
      */
     public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
     {

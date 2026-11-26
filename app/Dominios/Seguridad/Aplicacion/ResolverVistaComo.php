@@ -2,11 +2,9 @@
 
 namespace App\Dominios\Seguridad\Aplicacion;
 
-use App\Dominios\Seguridad\Dominio\TipoUsuario;
 use App\Dominios\Seguridad\Dominio\VistaComoActiva;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
-use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioCliente;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioInterno;
 
 /**
@@ -21,10 +19,9 @@ use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioInterno;
  *    y el rol con el que entró sigue siendo uno de sus roles vivos.
  * 2. Ese rol sigue teniendo `seguridad.usuario.ver_como` (evaluado contra ESE
  *    rol, no la unión de sus roles: invariante 10 de CLAUDE.md).
- * 3. La cuenta observada existe, no está dada de baja ni bloqueada y no es la
- *    del propio administrador.
- * 4. Una cuenta interna conserva el rol con el que se la veía; una de portal,
- *    su contrato.
+ * 3. La cuenta observada existe, es de panel, no está dada de baja ni bloqueada y no
+ *    es la del propio administrador.
+ * 4. La cuenta observada sigue siendo de panel y conserva el rol con el que se la veía.
  *
  * Quien recibe `null` cierra la vista con {@see TerminarVistaComo}: el request
  * nunca sigue con una identidad a medias.
@@ -47,16 +44,12 @@ final class ResolverVistaComo
             return null;
         }
 
-        $observado = $vista->tipo === TipoUsuario::Interno
-            ? SecUsuarioInterno::query()->find($vista->usuarioId)
-            : SecUsuarioCliente::query()->find($vista->usuarioId);
+        // `SecUsuarioInterno` solo carga cuentas de panel: una vista abierta sobre una
+        // cuenta que ya no lo es (o que nunca lo fue) deja de valer.
+        $observado = SecUsuarioInterno::query()->find($vista->usuarioId);
 
         if ($observado === null || ! $observado->state || $observado->id === $adminReal->id) {
             return null;
-        }
-
-        if ($vista->tipo === TipoUsuario::Cliente) {
-            return new VistaComoResuelta($adminReal, $observado, null);
         }
 
         if ($vista->rolId === null || ! in_array($vista->rolId, $observado->idsDeRolesActivos(), true)) {

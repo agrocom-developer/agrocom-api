@@ -7,10 +7,10 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Rol de seguridad (RBAC), catálogo del sistema (ADR 0004; HU-01 diseño
- * `modulos-roles` §2/§5): `piloto`, `jefe_campo`,
- * `encargado_operaciones`, `dueno`. Un `SecUser` puede tener varios roles
- * vía `sec_user_role` — multi-rol con un único login.
+ * Rol de seguridad (RBAC), catálogo del sistema (ADR 0004; ADR 0046 punto 4).
+ * Los roles del panel son `administrador` y `operador` (ámbito `panel`); los
+ * de ámbito `app` (`cliente`, `proveedor`, `piloto`) son transitorios hasta que
+ * el token deje de llevar rol (fase A5) y no se ven en la pantalla de roles.
  *
  * Lleva {@see RegistraBitacora} (ADR 0007, invariante 9 de CLAUDE.md): es
  * catálogo de control de acceso, con la columna `state` que activa/desactiva
@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $id
  * @property string $name
  * @property string $description
+ * @property string $ambito `panel` (administrador, operador) o `app` (roles de app, transitorios hasta A5)
  * @property bool $state
  */
 class SecRole extends ModeloDominio
@@ -31,6 +32,7 @@ class SecRole extends ModeloDominio
     protected $fillable = [
         'name',
         'description',
+        'ambito',
         'state',
     ];
 

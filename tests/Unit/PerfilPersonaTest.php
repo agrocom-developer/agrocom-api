@@ -33,6 +33,7 @@ function perfilEsquema(): void
     $migraciones = [
         'create_plt_bitacoras_table',
         'create_sec_user_table',
+        'agrega_tipo_cuenta_a_sec_user',
         'create_per_bases_table',
         'create_per_personas_table',
     ];
@@ -181,7 +182,7 @@ test('lo que no está cargado se dice, en vez de dejar un hueco', function () {
     $tarjeta = perfilTarjeta(perfilCuenta($id));
 
     expect(perfilValor($tarjeta, 'Documento (CI)'))->toBe('Sin registrar')
-        ->and(perfilValor($tarjeta, 'Celular'))->toBe('Sin registrar')
+        ->and(perfilValor($tarjeta, 'Teléfono'))->toBe('Sin registrar')
         ->and(perfilValor($tarjeta, 'Correo'))->toBe('Sin registrar')
         ->and(perfilValor($tarjeta, 'Dirección'))->toBe('Sin registrar')
         ->and(perfilValor($tarjeta, 'Base'))->toBe('Sin base asignada')

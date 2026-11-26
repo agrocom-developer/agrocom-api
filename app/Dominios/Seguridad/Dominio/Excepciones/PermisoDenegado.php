@@ -8,8 +8,8 @@ use Illuminate\Auth\Access\AuthorizationException;
 /**
  * El actor que ejecuta un caso de uso de Seguridad no tiene el permiso
  * abstracto requerido (HU-01, diseño `modulos-roles` §3): por ejemplo, un
- * encargado de operaciones sin `seguridad.usuario.asignar_rol_dueno`
- * intentando crear o editar un usuario con el rol `dueno`.
+ * actor sin `seguridad.usuario.asignar_rol_administrador` intentando crear
+ * o editar una cuenta con el rol `administrador`.
  *
  * Extiende la excepción de autorización propia del framework (no un
  * `abort()` de controlador) para que, cuando exista el endpoint HTTP, el

@@ -17,7 +17,7 @@ namespace App\Dominios\Seguridad\Contratos;
 interface LecturaUsuariosPorRol
 {
     /**
-     * `$claveRol` es `sec_role.name` (`dueno`, `jefe_campo`, `encargado_operaciones`…).
+     * `$claveRol` es `sec_role.name` (`administrador`, `operador`).
      * Solo cuentas INTERNAS vivas y no bloqueadas (`sec_user.state`), con la
      * asignación viva y el rol activo en el catálogo (`sec_role.state`). Una
      * clave que no existe devuelve una lista vacía, no un error.

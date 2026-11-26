@@ -14,55 +14,63 @@ use Illuminate\Database\Seeder;
  * todos los entornos, producción incluida — sin roles ni permisos no hay con
  * qué autorizar al primer usuario.
  *
+ * Roles del panel (ADR 0046, punto 4): solo `administrador` (todos los
+ * permisos del panel, siempre) y `operador` (su preset de solo lectura; el
+ * resto lo marca el administrador en la matriz). Los roles `cliente`,
+ * `proveedor` y `piloto` son de ámbito `app`: TRANSITORIOS hasta la fase A5,
+ * porque el token del dispositivo aún resuelve permisos por ellos; sus
+ * permisos salen de `config/permisos_app.php`.
+ *
  * Sin autor explícito (`created_by`/`updated_by` quedan NULL): a diferencia
  * del seeder Demo (que sí asigna un usuario autor porque simula un flujo de
- * negocio), esto es dato de catálogo — nadie "creó" el rol `dueno`, lo
+ * negocio), esto es dato de catálogo — nadie "creó" el rol `administrador`, lo
  * sembró el sistema antes de que exista ningún usuario.
  *
  * Idempotente vía `firstOrCreate`: correrlo de nuevo no duplica filas ni
- * pisa `description`/`state` si ya fueron editados a mano.
+ * pisa `description`/`state` si ya fueron editados a mano. La excepción es el
+ * administrador, cuya matriz no se edita: cada corrida le devuelve todo el
+ * catálogo del panel.
  */
 class SeguridadSeeder extends Seeder
 {
     /** @var array<string, string> */
-    private const ROLES = [
+    private const ROLES_DEL_PANEL = [
+        'administrador' => 'Administrador del panel: ve y hace todo, incluidos usuarios, roles y configuración.',
+        'operador' => 'Operador del panel: ve y hace lo que el administrador marca en la matriz de este rol.',
+    ];
+
+    /**
+     * Roles de app: transitorios hasta la fase A5 (el token aún resuelve
+     * permisos por rol). No tienen ninguna pantalla del panel.
+     *
+     * @var array<string, string>
+     */
+    private const ROLES_DE_APP = [
         'piloto' => 'Piloto de dron: ofrece, ejecuta los servicios adjudicados y sube las fotos desde la app.',
-        // `encargado_operaciones` es el rol del administrador del marketplace; el
-        // nombre técnico se conserva porque lo usan los avisos y las cuentas ya creadas.
-        'encargado_operaciones' => 'Administrador del marketplace: aprueba proveedores, pilotos, drones y documentos, modera calificaciones y atiende reclamos.',
-        'soporte' => 'Soporte: atiende solicitudes, reclamos e incidencias, e interviene en una negociación con motivo.',
-        // Rol de la operación interna anterior: lo usan los avisos de trabajo cerrado y las cuentas ya creadas.
-        'jefe_campo' => 'Jefe de campo: rol sin pantallas en el panel, se conserva para las cuentas y los avisos que ya lo usan.',
-        'dueno' => 'Dueño de Agrocom SRL: acceso total, incluida la gestión de otros dueños.',
-        // Marketplace (ADR 0036): cuentas que se registran por sí mismas desde
-        // la app. No tienen ninguna pantalla del panel; operan por la API.
         'cliente' => 'Cliente del marketplace: solicita servicios de fumigación y califica al proveedor.',
         'proveedor' => 'Proveedor del marketplace: gestiona su personal, sus drones y sus equipos desde la app.',
-        // Descripción recortada a propósito: `sec_role.description` es
-        // `varchar(150)` y el texto original no entra en Postgres.
-        'admin_plataforma' => 'Administrador de la plataforma Agrocom: acceso total, incluida la gestión de dueños — rol técnico, no del negocio del cliente.',
     ];
 
     /** @var array<string, string> */
     private const PERMISOS = [
         // Seguridad: cuentas, roles, dispositivos, organización, configuración y bitácora.
-        'seguridad.usuario.ver' => 'Ver listado/detalle de usuarios',
-        'seguridad.usuario.crear' => 'Crear usuario y asignarle roles (excepto dueño)',
-        'seguridad.usuario.editar' => 'Editar datos y reasignar roles de un usuario (excepto dueño)',
-        'seguridad.usuario.bloquear' => 'Bloquear/desbloquear (toggle de state, no es baja)',
-        'seguridad.usuario.eliminar' => 'Baja lógica (soft delete)',
-        'seguridad.usuario.asignar_rol_dueno' => 'Asignar o quitar el rol dueño a cualquier usuario',
-        'seguridad.usuario.ver_como' => 'Ver el panel o el portal como otro usuario (solo lectura)',
+        'seguridad.usuario.ver' => 'Ver el listado y la ficha de los usuarios',
+        'seguridad.usuario.crear' => 'Crear una cuenta del panel y asignarle su rol (solo el administrador)',
+        'seguridad.usuario.editar' => 'Editar los datos y el rol de una cuenta del panel (solo el administrador)',
+        'seguridad.usuario.bloquear' => 'Bloquear o desbloquear el acceso de un usuario (no lo elimina)',
+        'seguridad.usuario.eliminar' => 'Eliminar un usuario',
+        'seguridad.usuario.asignar_rol_administrador' => 'Asignar o quitar el rol administrador a una cuenta del panel',
+        'seguridad.usuario.ver_como' => 'Ver el panel como una cuenta de panel (solo lectura, solo el administrador)',
         'seguridad.rol.ver' => 'Ver el catálogo de roles y qué permisos tiene cada uno',
         'seguridad.rol.crear' => 'Crear un rol nuevo (nace sin permisos)',
         'seguridad.rol.editar' => 'Editar nombre, descripción y estado de un rol',
-        'seguridad.rol.eliminar' => 'Dar de baja un rol sin usuarios asignados',
+        'seguridad.rol.eliminar' => 'Eliminar un rol sin usuarios asignados',
         'seguridad.rol.asignar_permiso' => 'Otorgar y quitar permisos a un rol',
-        'seguridad.dashboard.ver' => 'Ver el tablero "Operación de hoy" (dashboard)',
-        'seguridad.organizacion.ver' => 'Ver el registro de la compañía (Organización)',
+        'seguridad.dashboard.ver' => 'Ver el tablero del mercado',
+        'seguridad.organizacion.ver' => 'Ver los datos de la empresa (Organización)',
         'seguridad.organizacion.editar' => 'Editar los datos fiscales de la empresa (pestaña Facturación)',
-        'seguridad.configuracion.ver' => 'Ver la configuración del sistema (llaves y tokens)',
-        'seguridad.configuracion.editar' => 'Editar la configuración del sistema (llaves y tokens)',
+        'seguridad.configuracion.ver' => 'Ver la configuración del sistema (claves y tokens)',
+        'seguridad.configuracion.editar' => 'Editar la configuración del sistema (claves y tokens)',
         'seguridad.bitacora.ver' => 'Ver la bitácora de auditoría (quién hizo qué, cuándo y en qué zona horaria)',
         // Proveedores y flota en el panel (ADR 0032): aprobar, suspender y dar de baja.
         'proveedores.proveedor.crear' => 'Registrar a mano a un proveedor que llega a la oficina (queda pendiente; quien lo registra no lo aprueba)',
@@ -71,17 +79,17 @@ class SeguridadSeeder extends Seeder
         'proveedores.proveedor.ver' => 'Ver el listado y la ficha de proveedores',
         'proveedores.proveedor.aprobar' => 'Aprobar o rechazar a un proveedor y rehabilitar a uno suspendido',
         'proveedores.proveedor.suspender' => 'Suspender a un proveedor, con motivo',
-        'proveedores.proveedor.dar_baja' => 'Dar de baja a un proveedor, con motivo',
+        'proveedores.proveedor.dar_baja' => 'Eliminar a un proveedor, con motivo',
         'proveedores.piloto.ver' => 'Ver el listado y la ficha de pilotos',
         'proveedores.piloto.aprobar' => 'Aprobar o rechazar a un piloto y rehabilitar a uno suspendido',
         'proveedores.piloto.suspender' => 'Suspender a un piloto, con motivo',
-        'proveedores.piloto.dar_baja' => 'Dar de baja a un piloto, con motivo',
-        'proveedores.documento.ver' => 'Ver la cola de documentos y descargar su archivo (acceso restringido)',
+        'proveedores.piloto.dar_baja' => 'Eliminar a un piloto, con motivo',
+        'proveedores.documento.ver' => 'Ver los documentos por revisar y descargar su archivo (acceso restringido)',
         'proveedores.documento.revisar' => 'Aprobar o rechazar un documento, con motivo en el rechazo',
         'flota.dron.ver' => 'Ver el listado y la ficha de drones del marketplace',
         'flota.dron.aprobar' => 'Aprobar o rechazar un dron y rehabilitar a uno suspendido',
         'flota.dron.suspender' => 'Suspender un dron, con motivo',
-        'flota.dron.dar_baja' => 'Dar de baja un dron, con motivo',
+        'flota.dron.dar_baja' => 'Eliminar un dron, con motivo',
         'flota.dron.revisar_foto' => 'Aprobar o rechazar las fotos de un dron, con motivo en el rechazo',
         // Marketplace, lado app (token de dispositivo): lo que cada rol hace sobre lo SUYO. El alcance lo hacen los casos de uso; el permiso es la puerta.
         'proveedores.cuenta.gestionar' => 'Gestionar su propio proveedor desde la app: pilotos, drones, equipos y documentos',
@@ -97,7 +105,7 @@ class SeguridadSeeder extends Seeder
         'solicitudes.cliente.ver' => 'Ver el listado y la ficha de los clientes del marketplace',
         'solicitudes.cliente.suspender' => 'Suspender a un cliente o reactivarlo, con motivo',
         'solicitudes.zona.ver' => 'Ver el catálogo de zonas de Santa Cruz',
-        'solicitudes.zona.gestionar' => 'Crear, editar y dar de baja zonas',
+        'solicitudes.zona.gestionar' => 'Crear, editar y eliminar zonas',
         'solicitudes.solicitud.ver_seguimiento' => 'Ver el chat, las fotos de avance y la ubicación del piloto de una solicitud',
         'notificaciones.aviso.ver' => 'Ver los avisos que el sistema envía a clientes, proveedores y administradores',
         'solicitudes.solicitud.intervenir' => 'Cerrar la negociación de un proveedor sobre una solicitud, con motivo',
@@ -117,156 +125,16 @@ class SeguridadSeeder extends Seeder
         'calificaciones.calificacion.calificar_cliente' => 'Calificar en privado al cliente de un servicio completado desde la app',
         'calificaciones.calificacion.ver_recibidas' => 'Ver las calificaciones que recibe su proveedor desde la app',
         'calificaciones.calificacion.reportar' => 'Reportar desde la app una calificación recibida que considera abusiva',
-        'calificaciones.calificacion.ver' => 'Ver las calificaciones y su cola de moderación',
+        'calificaciones.calificacion.ver' => 'Ver las calificaciones y las que esperan moderación',
         'calificaciones.calificacion.moderar' => 'Ocultar o restablecer una calificación, con causa y motivo',
         // Disputas (ADR 0033 y 0039): lado app, cola y resolución en el panel.
         'disputas.disputa.gestionar_cliente' => 'Abrir, argumentar, retirar y apelar un reclamo de su servicio desde la app del cliente',
         'disputas.disputa.gestionar_proveedor' => 'Abrir, argumentar, retirar y apelar un reclamo de su proveedor desde la app',
         'disputas.disputa.ver' => 'Ver los reclamos, sus mensajes y su resolución',
-        'disputas.disputa.atender' => 'Tomar un reclamo, pedir información a las partes y mensajear como soporte',
+        'disputas.disputa.atender' => 'Atender un reclamo, pedir información a las partes y escribirles como soporte',
         'disputas.disputa.resolver' => 'Resolver un reclamo o su apelación, con resultado, reembolso y motivo',
         // Métricas del mercado en el panel (especificación §14).
-        'metricas.panel.ver' => 'Ver las métricas del mercado: solicitudes, aceptación, calificación, tiempos de asignación e ingreso',
-    ];
-
-    /**
-     * Permisos que el catálogo entrega ÚNICAMENTE a `admin_plataforma`, no a
-     * `dueno` (que por lo demás recibe "todo el catálogo, sin excepción"):
-     * capacidades de soporte técnico de la plataforma (tarea 140). Tampoco se
-     * pueden otorgar a otro rol desde la matriz de permisos: la lista es la de
-     * `PermisosReservados`, que `AsignarPermisosRol` hace cumplir.
-     *
-     * @var list<string>
-     */
-    private const PERMISOS_SOLO_ADMIN_PLATAFORMA = PermisosReservados::SOLO_ADMIN_PLATAFORMA;
-
-    /** @var list<string> */
-    private const PERMISOS_PROVEEDOR = [
-        'proveedores.cuenta.gestionar',
-        'proveedores.documento.cargar',
-        'negociacion.mercado.ver',
-        'negociacion.oferta.proveedor',
-        'negociacion.seguimiento.registrar',
-        'negociacion.seguimiento.ver',
-        'negociacion.evidencia.subir',
-        'negociacion.pago.confirmar',
-        'negociacion.mensaje.usar',
-        'negociacion.preferencias.gestionar',
-        'calificaciones.calificacion.calificar_cliente',
-        'calificaciones.calificacion.ver_recibidas',
-        'calificaciones.calificacion.reportar',
-        'disputas.disputa.gestionar_proveedor',
-    ];
-
-    /** @var list<string> */
-    private const PERMISOS_CLIENTE = [
-        'solicitudes.cliente.gestionar',
-        'solicitudes.terreno.gestionar',
-        'solicitudes.solicitud.gestionar',
-        'negociacion.oferta.cliente',
-        'negociacion.seguimiento.ver',
-        'negociacion.precio_final.confirmar',
-        'negociacion.mensaje.usar',
-        'negociacion.preferencias.gestionar',
-        'calificaciones.calificacion.calificar_proveedor',
-        'disputas.disputa.gestionar_cliente',
-    ];
-
-    /**
-     * Piloto: lo que hace desde `agrocom-field`. No tiene pantalla del panel.
-     *
-     * @var list<string>
-     */
-    private const PERMISOS_PILOTO = [
-        'proveedores.cuenta.ver',
-        'proveedores.documento.cargar',
-        'negociacion.mercado.ver',
-        'negociacion.oferta.proveedor',
-        'negociacion.seguimiento.registrar',
-        'negociacion.seguimiento.ver',
-        'negociacion.evidencia.subir',
-        'negociacion.pago.confirmar',
-        'negociacion.mensaje.usar',
-        'negociacion.preferencias.gestionar',
-        'calificaciones.calificacion.calificar_cliente',
-        'calificaciones.calificacion.ver_recibidas',
-        'calificaciones.calificacion.reportar',
-        'disputas.disputa.gestionar_proveedor',
-    ];
-
-    /**
-     * Administrador del marketplace: aprueba, suspende y modera. Todo salvo
-     * gestionar roles, configuración y dueños (esos son del dueño).
-     *
-     * @var list<string>
-     */
-    private const PERMISOS_ADMINISTRADOR = [
-        'seguridad.dashboard.ver',
-        'seguridad.usuario.ver',
-        'seguridad.usuario.crear',
-        'seguridad.usuario.editar',
-        'seguridad.usuario.bloquear',
-        'seguridad.usuario.eliminar',
-        'seguridad.organizacion.ver',
-        'seguridad.organizacion.editar',
-        'seguridad.bitacora.ver',
-        'proveedores.proveedor.ver',
-        'proveedores.proveedor.crear',
-        'proveedores.proveedor.aprobar',
-        'proveedores.proveedor.suspender',
-        'proveedores.proveedor.dar_baja',
-        'proveedores.piloto.ver',
-        'proveedores.piloto.crear',
-        'proveedores.piloto.aprobar',
-        'proveedores.piloto.suspender',
-        'proveedores.piloto.dar_baja',
-        'proveedores.documento.ver',
-        'proveedores.documento.revisar',
-        'flota.dron.ver',
-        'flota.dron.crear',
-        'flota.dron.aprobar',
-        'flota.dron.suspender',
-        'flota.dron.dar_baja',
-        'flota.dron.revisar_foto',
-        'solicitudes.solicitud.ver',
-        'solicitudes.solicitud.cancelar',
-        'solicitudes.solicitud.ver_seguimiento',
-        'solicitudes.solicitud.intervenir',
-        'solicitudes.cliente.ver',
-        'solicitudes.cliente.crear',
-        'solicitudes.cliente.suspender',
-        'solicitudes.zona.ver',
-        'solicitudes.zona.gestionar',
-        'calificaciones.calificacion.ver',
-        'calificaciones.calificacion.moderar',
-        'disputas.disputa.ver',
-        'disputas.disputa.atender',
-        'disputas.disputa.resolver',
-        'metricas.panel.ver',
-        'notificaciones.aviso.ver',
-    ];
-
-    /**
-     * Soporte: atiende solicitudes, clientes y disputas; no aprueba proveedores
-     * ni drones.
-     *
-     * @var list<string>
-     */
-    private const PERMISOS_SOPORTE = [
-        'seguridad.dashboard.ver',
-        'proveedores.proveedor.ver',
-        'proveedores.piloto.ver',
-        'flota.dron.ver',
-        'solicitudes.solicitud.ver',
-        'solicitudes.solicitud.cancelar',
-        'solicitudes.solicitud.ver_seguimiento',
-        'solicitudes.solicitud.intervenir',
-        'solicitudes.cliente.ver',
-        'solicitudes.zona.ver',
-        'calificaciones.calificacion.ver',
-        'disputas.disputa.ver',
-        'disputas.disputa.atender',
-        'metricas.panel.ver',
+        'metricas.panel.ver' => 'Ver las métricas del mercado: solicitudes, aceptación, calificación, tiempos de adjudicación e ingresos',
     ];
 
     /**
@@ -288,10 +156,13 @@ class SeguridadSeeder extends Seeder
      *   páginas Dispositivos ni Equipos; el token por dispositivo del login y el
      *   equipo (piloto + dron) de la solicitud siguen en la API.
      * - `proveedores.auxiliar.*`: el auxiliar ya no existe en el sistema.
+     * - `seguridad.usuario.asignar_rol_dueno`: el rol `dueno` sale del panel;
+     *   lo reemplaza `seguridad.usuario.asignar_rol_administrador` (ADR 0046).
      *
      * @var list<string>
      */
     private const PERMISOS_RETIRADOS = [
+        'seguridad.usuario.asignar_rol_dueno',
         'seguridad.usuario.portal',
         'distribucion.version.autorizar',
         'seguridad.dispositivo.ver',
@@ -433,11 +304,23 @@ class SeguridadSeeder extends Seeder
      *
      * - `auxiliar`: el auxiliar ya no es un rol del sistema (ni usuario móvil ni
      *   cuenta del panel).
+     * - `dueno`, `encargado_operaciones`, `jefe_campo`, `soporte`,
+     *   `admin_plataforma` y `operario`: el panel tiene dos roles,
+     *   `administrador` y `operador` (ADR 0046, punto 4). La migración
+     *   `dos_roles_de_panel_y_ambito_de_roles_y_permisos` ya pasó a
+     *   `administrador` a las cuentas que los tenían; esto cubre una base que
+     *   los trae de nuevo (un restablecimiento, un seeder previo).
      *
      * @var list<string>
      */
     private const ROLES_RETIRADOS = [
         'auxiliar',
+        'dueno',
+        'encargado_operaciones',
+        'jefe_campo',
+        'soporte',
+        'admin_plataforma',
+        'operario',
     ];
 
     public function run(): void
@@ -446,62 +329,113 @@ class SeguridadSeeder extends Seeder
             $this->retirarPermiso($codigoRetirado);
         }
 
-        foreach (self::ROLES_RETIRADOS as $nombreRetirado) {
-            $this->retirarRol($nombreRetirado);
-        }
-
-        $roles = collect(self::ROLES)->mapWithKeys(
-            fn (string $description, string $name) => [$name => $this->rol($name, $description)],
-        );
-
         $permisos = collect(self::PERMISOS)->mapWithKeys(
             fn (string $description, string $code) => [$code => $this->permiso($code, $description)],
         );
 
-        // dueno: todos los permisos del catálogo (diseño §2), salvo los que
-        // son solo de la plataforma (tarea 140).
-        $this->asignar(
-            $roles['dueno'],
-            $permisos->except(self::PERMISOS_SOLO_ADMIN_PLATAFORMA)->values()->all(),
+        $roles = collect(self::ROLES_DEL_PANEL)->mapWithKeys(
+            fn (string $description, string $name) => [$name => $this->rol($name, $description, 'panel')],
+        )->merge(collect(self::ROLES_DE_APP)->mapWithKeys(
+            fn (string $description, string $name) => [$name => $this->rol($name, $description, 'app')],
+        ));
+
+        // Los retirados se dan de baja con sus cuentas ya pasadas a administrador
+        // (por la migración); si una base trae cuentas con un rol retirado y
+        // todavía sin administrador, se las pasa antes de dar de baja el rol.
+        foreach (self::ROLES_RETIRADOS as $nombreRetirado) {
+            $this->retirarRol($nombreRetirado, $roles['administrador']);
+        }
+
+        // Administrador: todo el catálogo del panel, siempre. Su matriz no se
+        // edita (AsignarPermisosRol lo rechaza), así que cada corrida repone lo que falte.
+        $this->asignarTodo(
+            $roles['administrador'],
+            $permisos->filter(fn (SecPermission $permiso, string $codigo): bool => ! $this->esDeApp($codigo))->values()->all(),
         );
 
-        // admin_plataforma (tarea 100): TODO el catálogo, sin excepción — a
-        // diferencia de dueno, recibe también PERMISOS_SOLO_ADMIN_PLATAFORMA
-        // (tarea 140). Es dato de catálogo puro, corre en TODOS los entornos
-        // (un rol sin usuarios asignados no daña nada en producción). Quien
-        // recibe usuarios asignados a este rol es AdminPlataformaSeeder, que
-        // sí está gateado a local/staging.
-        $this->asignar($roles['admin_plataforma'], $permisos->values()->all());
+        // Operador: su preset de solo lectura, una sola vez; después manda la matriz.
+        $this->asignar($roles['operador'], $permisos->only(PermisosReservados::PRESET_OPERADOR)->values()->all());
 
-        // Administrador del marketplace y soporte: las pantallas de aprobación,
-        // moderación y atención.
-        $this->asignar($roles['encargado_operaciones'], $permisos->only(self::PERMISOS_ADMINISTRADOR)->values()->all());
-        $this->asignar($roles['soporte'], $permisos->only(self::PERMISOS_SOPORTE)->values()->all());
+        // Roles de app (transitorios hasta A5): sus permisos salen de config/permisos_app.php.
+        foreach (self::ROLES_DE_APP as $nombre => $_) {
+            $this->asignar($roles[$nombre], $permisos->only(config("permisos_app.{$nombre}", []))->values()->all());
+        }
 
-        // Marketplace (ADR 0036): proveedor, cliente y piloto operan por la API con lo suyo.
-        $this->asignar($roles['proveedor'], $permisos->only(self::PERMISOS_PROVEEDOR)->values()->all());
-        $this->asignar($roles['cliente'], $permisos->only(self::PERMISOS_CLIENTE)->values()->all());
-        $this->asignar($roles['piloto'], $permisos->only(self::PERMISOS_PILOTO)->values()->all());
-
-        // El piloto ya no entra al tablero del panel: una base ya sembrada
+        // El piloto no entra al tablero del panel: una base ya sembrada
         // conserva ese otorgamiento y hay que quitarlo.
         $this->quitarAsignacion($roles['piloto'], 'seguridad.dashboard.ver');
     }
 
-    private function rol(string $name, string $description): SecRole
+    /** Si el código lo ejerce una cuenta de app (config/permisos_app.php). */
+    private function esDeApp(string $codigo): bool
     {
-        return SecRole::query()->firstOrCreate(
+        foreach ((array) config('permisos_app', []) as $codigos) {
+            if (in_array($codigo, $codigos, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function rol(string $name, string $description, string $ambito): SecRole
+    {
+        $rol = SecRole::query()->firstOrCreate(
             ['name' => $name],
-            ['description' => $description, 'state' => true],
+            ['description' => $description, 'ambito' => $ambito, 'state' => true],
         );
+
+        // El ámbito es del catálogo, no editable: se corrige en una base que ya traía el rol.
+        if ($rol->ambito !== $ambito) {
+            $rol->ambito = $ambito;
+            $rol->save();
+        }
+
+        return $rol;
     }
 
     private function permiso(string $code, string $description): SecPermission
     {
-        return SecPermission::query()->firstOrCreate(
+        $ambito = $this->esDeApp($code) ? 'app' : 'panel';
+
+        $permiso = SecPermission::query()->firstOrCreate(
             ['code' => $code],
-            ['description' => $description, 'state' => true],
+            ['description' => $description, 'ambito' => $ambito, 'state' => true],
         );
+
+        if ($permiso->ambito !== $ambito) {
+            $permiso->ambito = $ambito;
+            $permiso->save();
+        }
+
+        return $permiso;
+    }
+
+    /**
+     * Otorga TODOS los permisos dados, también los que alguien quitó (fila
+     * dada de baja): es el rol cuya matriz no se edita, así que "sembrar" es
+     * "reponer".
+     *
+     * @param  list<SecPermission>  $permisos
+     */
+    private function asignarTodo(SecRole $rol, array $permisos): void
+    {
+        foreach ($permisos as $permiso) {
+            $previo = SecRolePermission::withTrashed()
+                ->where('id_role', $rol->id)
+                ->where('id_permission', $permiso->id)
+                ->first();
+
+            if ($previo === null) {
+                (new SecRolePermission(['id_role' => $rol->id, 'id_permission' => $permiso->id]))->save();
+
+                continue;
+            }
+
+            if ($previo->trashed()) {
+                $previo->restore();
+            }
+        }
     }
 
     /**
@@ -573,12 +507,30 @@ class SeguridadSeeder extends Seeder
      * `delete()` pase por el observer de bitácora). Idempotente: si el rol ya
      * no existe, no hace nada.
      */
-    private function retirarRol(string $name): void
+    private function retirarRol(string $name, SecRole $administrador): void
     {
         $rol = SecRole::query()->where('name', $name)->first();
 
         if ($rol === null) {
             return;
+        }
+
+        // Las cuentas del panel que lo tenían pasan a administrador antes de la baja del rol.
+        if ($name !== 'auxiliar') {
+            SecUserRole::query()
+                ->where('id_role', $rol->id)
+                ->pluck('id_user')
+                ->each(function (int|string $idUsuario) use ($administrador): void {
+                    $tiene = SecUserRole::withTrashed()
+                        ->where('id_user', $idUsuario)
+                        ->where('id_role', $administrador->id)
+                        ->whereNull('deleted_at')
+                        ->exists();
+
+                    if (! $tiene) {
+                        (new SecUserRole(['id_user' => (int) $idUsuario, 'id_role' => $administrador->id]))->save();
+                    }
+                });
         }
 
         SecRolePermission::query()

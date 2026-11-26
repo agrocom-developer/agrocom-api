@@ -13,11 +13,8 @@ use App\Dominios\Operaciones\Contratos\Eventos\TrabajoCerrado;
 use InvalidArgumentException;
 
 /**
- * Trabajo cerrado en campo → le importa a quien dirige y a quien planifica:
- * jefe de campo y encargado de operaciones. El dueño NO lo recibe (ADR 0025,
- * punto 10): es el aviso más frecuente (uno por trabajo cerrado) y su tablero ya
- * muestra el avance. Si algún día lo quisiera, es sumar
- * `Destinatario::rol(RolDestinatario::Dueno)` a esta lista. Lleva al trabajo.
+ * Trabajo cerrado en campo → le importa al administrador, el único rol de panel
+ * que queda con alcance sobre la operación (ADR 0046). Lleva al trabajo.
  */
 final class ReglaTrabajoCerrado implements ReglaNotificacion
 {
@@ -42,8 +39,7 @@ final class ReglaTrabajoCerrado implements ReglaNotificacion
             recurso: RecursoNotificable::Trabajo,
             recursoId: $evento->trabajoId,
             destinatarios: [
-                Destinatario::rol(RolDestinatario::JefeCampo),
-                Destinatario::rol(RolDestinatario::EncargadoOperaciones),
+                Destinatario::rol(RolDestinatario::Administrador),
             ],
         );
     }

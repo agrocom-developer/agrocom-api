@@ -2,7 +2,7 @@
     Page: configuracion/index (GET /panel/configuracion, panel.configuracion.index)
     Tarea 78 (HU-55): llaves y tokens con que EL SISTEMA se parametriza (mapas,
     correo, integraciones) — separada a propósito de `/panel/organizacion`
-    (los datos de LA EMPRESA). Exclusiva del rol `dueno`.
+    (los datos de LA EMPRESA). Exclusiva del administrador.
 
     EL CORAZÓN DE LA TAREA: ningún campo `esSecreto` trae su valor real acá.
     El `<input>` de un secreto SIEMPRE llega vacío (`value=""` fijo, nunca

@@ -35,15 +35,7 @@
             <x-organisms.page-header
                 :title="__('seguridad.roles.titulo')"
                 :subtitle="__('seguridad.roles.subtitulo')"
-            >
-                @puede('seguridad.rol.crear')
-                    <x-slot:actions>
-                        <x-atoms.button :href="route('panel.roles.create')" variant="primary" icon="add">
-                            {{ __('seguridad.roles.nuevo') }}
-                        </x-atoms.button>
-                    </x-slot:actions>
-                @endpuede
-            </x-organisms.page-header>
+            />
 
             @if (session('estado'))
                 <x-molecules.alert-strip variant="success" icon="check_circle" class="ag-roles__aviso">
@@ -122,25 +114,6 @@
                                     <x-atoms.button :href="route('panel.roles.permisos.edit', $fila['rol'])" variant="primary" size="sm" icon="tune">
                                         {{ __('seguridad.roles.permisos') }}
                                     </x-atoms.button>
-                                @endpuede
-
-                                {{-- La baja se ofrece solo cuando puede prosperar: con cuentas
-                                     detrás o siendo el rol propio, EliminarRol la rechaza. Mejor
-                                     no ofrecerla que ofrecer un botón que siempre falla. --}}
-                                @puede('seguridad.rol.eliminar')
-                                    @if ($fila['usuarios'] === 0 && ! $fila['esRolActivo'])
-                                        <form
-                                            method="POST"
-                                            action="{{ route('panel.roles.destroy', $fila['rol']) }}"
-                                            onsubmit="return confirm('{{ __('seguridad.roles.eliminar_confirmar', ['rol' => $fila['nombre']]) }}')"
-                                        >
-                                            @csrf
-                                            @method('DELETE')
-                                            <x-atoms.button type="submit" variant="outline" size="sm" icon="delete">
-                                                {{ __('seguridad.roles.eliminar') }}
-                                            </x-atoms.button>
-                                        </form>
-                                    @endif
                                 @endpuede
                             </span>
                         </div>
