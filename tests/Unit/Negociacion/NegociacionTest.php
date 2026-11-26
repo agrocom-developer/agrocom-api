@@ -44,6 +44,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\Soporte\Esquema;
 use Tests\Soporte\ProveedoresFalsos;
+use Tests\Soporte\Ubicaciones;
 use Tests\TestCase;
 
 /*
@@ -83,6 +84,7 @@ function negMundo(): void
         'create_sol_terreno_fotos_table',
         'create_sol_precios_referencia_table',
     ]);
+    Ubicaciones::sembrar();
 
     foreach (['neg_precios_finales_confirmados', 'neg_pagos_confirmados', 'sol_terreno_fotos', 'sol_precios_referencia', 'neg_preferencias', 'neg_ubicaciones', 'neg_evidencias', 'neg_avances', 'neg_mensajes', 'neg_cancelaciones', 'neg_ofertas', 'sol_solicitud_historial', 'sol_solicitudes_servicio', 'sol_terrenos', 'sol_clientes', 'sol_zonas'] as $tabla) {
         DB::table($tabla)->delete();
@@ -99,7 +101,7 @@ function negMundo(): void
     }
 
     DB::table('sol_terrenos')->insert([
-        'id' => 1, 'cliente_id' => 1, 'nombre' => 'Lote Norte', 'hectareas' => '100.0000', 'cultivo' => 'Soya', 'zona_id' => 1, 'acceso_dificil' => false,
+        'id' => 1, 'cliente_id' => 1, 'nombre' => 'Lote Norte', 'hectareas' => '100.0000', 'cultivo' => 'Soya', 'zona_id' => 1, 'acceso_dificil' => false, 'departamento_codigo' => Ubicaciones::DEPARTAMENTO, 'provincia_codigo' => Ubicaciones::PROVINCIA,
         'geometria' => json_encode(['type' => 'Polygon', 'coordinates' => [[[-60.8, -17.8], [-60.7, -17.8], [-60.7, -17.9], [-60.8, -17.9], [-60.8, -17.8]]]]),
         'created_at' => now(), 'updated_at' => now(),
     ]);
@@ -312,7 +314,7 @@ test('una contraoferta del proveedor debe tener un precio distinto del propuesto
 test('un proveedor no oferta sobre su propia cuenta de cliente ni sobre una solicitud ya cerrada', function () {
     negMundo();
     DB::table('sol_clientes')->where('id', 2)->update(['usuario_id' => NEG_TITULAR_8]);
-    DB::table('sol_terrenos')->insert(['id' => 2, 'cliente_id' => 2, 'nombre' => 'Lote Sur', 'hectareas' => '50.0000', 'zona_id' => 1, 'acceso_dificil' => false, 'created_at' => now(), 'updated_at' => now()]);
+    DB::table('sol_terrenos')->insert(['id' => 2, 'cliente_id' => 2, 'nombre' => 'Lote Sur', 'hectareas' => '50.0000', 'zona_id' => 1, 'acceso_dificil' => false, 'departamento_codigo' => Ubicaciones::DEPARTAMENTO, 'provincia_codigo' => Ubicaciones::PROVINCIA, 'created_at' => now(), 'updated_at' => now()]);
     $propia = negAbierta('125', '10', NEG_TITULAR_8, 2);
     $cancelada = negAbierta();
     app(CancelarSolicitud::class)->porCliente(NEG_CLIENTE, $cancelada, 'Cambié de idea');
