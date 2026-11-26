@@ -27,7 +27,7 @@ final class BloqueMercado
             'por_region' => $solicitudes['por_region'],
             'adjudicadas' => $solicitudes['adjudicadas'],
             'tasa_adjudicacion' => Razones::tasa($solicitudes['adjudicadas'], $total),
-            'expiradas' => (int) ($solicitudes['por_estado']['expirada'] ?? 0),
+            'abiertas' => (int) (($solicitudes['por_estado']['abierta'] ?? 0) + ($solicitudes['por_estado']['con_ofertas'] ?? 0)),
             'hectareas_solicitadas' => $solicitudes['hectareas_solicitadas'],
             'hectareas_servidas' => $solicitudes['hectareas_servidas'],
             'tiempo_aceptacion_promedio_min' => Razones::promedio($minutos),

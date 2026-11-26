@@ -15,11 +15,12 @@ use Illuminate\Support\Carbon;
 
 /**
  * Abre una solicitud al mercado (`POST /solicitudes/{id}/publicar`,
- * `negociacion-contrato.md` §1): `borrador` pasa a `abierta` con su vigencia, y una
- * `expirada` se renueva dentro del plazo de renovación. Guardas: precio por
- * hectárea propuesto y dentro del tope de sanidad, hectáreas que no superan las
- * del terreno, fecha deseada no pasada y cuenta con teléfono. El aviso a los
- * pilotos lo da la negociación al escuchar {@see SolicitudAbierta}.
+ * `negociacion-contrato.md` §1): `borrador` pasa a `abierta`. La solicitud no vence
+ * sola: sigue en el mercado hasta que se adjudica o el cliente la cancela. Guardas:
+ * precio por hectárea propuesto y dentro del tope de sanidad, hectáreas que no superan
+ * las del terreno, fecha deseada (opcional) no pasada ni más allá de la anticipación
+ * máxima, y cuenta con teléfono. El aviso a los pilotos lo da la negociación al
+ * escuchar {@see SolicitudAbierta}.
  */
 final class PublicarSolicitud
 {
@@ -46,11 +47,6 @@ final class PublicarSolicitud
         }
 
         $solicitud = $this->solicitudes->ejecutar($usuarioId, $solicitudId);
-        $renueva = $solicitud->estado === EstadoSolicitud::Expirada;
-
-        if ($renueva && ($solicitud->expirada_en === null || $solicitud->expirada_en->lt(Carbon::now()->subDays((int) config('negociacion.plazo_renovacion_dias', 30))))) {
-            throw SolicitudInvalida::noRenovable();
-        }
 
         $this->validarPrecio($solicitud->precio_ha_propuesto);
 
@@ -58,14 +54,10 @@ final class PublicarSolicitud
             throw SolicitudInvalida::hectareasExcedenTerreno($solicitud->hectareas_solicitadas, $solicitud->terreno->hectareas);
         }
 
-        if (Carbon::parse($solicitud->ventana_hasta)->startOfDay()->lt(Carbon::today())) {
-            throw SolicitudInvalida::ventanaVencida();
-        }
+        self::validarVentanaDe($solicitud->ventana_hasta?->toDateString());
 
         $abierta = $this->estados->transicionar($solicitud, EstadoSolicitud::Abierta, ActorSolicitud::Cliente, $usuarioId, null, [
             'publicada_en' => Carbon::now(),
-            'vence_en' => Carbon::now()->addDays((int) config('negociacion.vigencia_solicitud_dias', 7)),
-            'expirada_en' => null,
             'monto_estimado' => MontoDelServicio::monto($solicitud->hectareas_solicitadas, (string) $solicitud->precio_ha_propuesto),
         ]);
 
@@ -80,10 +72,34 @@ final class PublicarSolicitud
             $abierta->terreno->zona?->macrorregion,
             $abierta->hectareas_solicitadas,
             (string) $abierta->precio_ha_propuesto,
-            $renueva,
         ));
 
         return $abierta->load(['terreno', 'historial']);
+    }
+
+    /**
+     * La fecha deseada es opcional y no vence nada: solo se pide que no haya pasado y que no caiga más allá de la
+     * anticipación máxima (`negociacion.anticipacion_maxima_dias`, validación de sanidad).
+     *
+     * @throws SolicitudInvalida
+     */
+    public static function validarVentanaDe(?string $hasta): void
+    {
+        if ($hasta === null) {
+            return;
+        }
+
+        $fecha = Carbon::parse($hasta)->startOfDay();
+
+        if ($fecha->lt(Carbon::today())) {
+            throw SolicitudInvalida::ventanaVencida();
+        }
+
+        $maximo = (int) config('negociacion.anticipacion_maxima_dias', 365);
+
+        if ($fecha->gt(Carbon::today()->addDays($maximo))) {
+            throw SolicitudInvalida::ventanaFueraDeRango($maximo);
+        }
     }
 
     /** @throws SolicitudInvalida */

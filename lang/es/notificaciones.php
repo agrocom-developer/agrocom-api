@@ -19,7 +19,6 @@ return [
         'precio_cambiado' => 'El cliente cambió el precio propuesto de la solicitud #:solicitud a :precio por hectárea. Tu oferta vigente no cambia.',
         'solicitud_adjudicada' => 'La solicitud #:solicitud quedó adjudicada a «:proveedor» a :precio por hectárea. Ya pueden coordinar por el chat.',
         'solicitud_reabierta' => 'El proveedor devolvió la solicitud #:solicitud: vuelve a estar abierta para recibir ofertas.',
-        'solicitud_expirada' => 'La solicitud #:solicitud expiró sin adjudicarse. Puedes renovarla o crear una nueva.',
         'ejecucion_iniciada' => 'El piloto inició el servicio de la solicitud #:solicitud.',
         'avance_registrado' => 'La solicitud #:solicitud lleva :porcentaje % de avance.',
         'solicitud_finalizada' => 'El servicio #:solicitud quedó finalizado. Monto a pagar al proveedor: :monto. Puedes calificarlo durante 7 días o abrir un reclamo.',

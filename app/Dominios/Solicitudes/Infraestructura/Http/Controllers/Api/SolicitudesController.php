@@ -70,7 +70,7 @@ final class SolicitudesController
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ['uuid_cliente', 'terreno_id', 'tipo_aplicacion', 'hectareas_solicitadas', 'producto_indicado', 'ventana_desde', 'ventana_hasta'],
+                required: ['uuid_cliente', 'terreno_id', 'tipo_aplicacion', 'hectareas_solicitadas', 'producto_indicado'],
                 properties: [
                     new OA\Property(property: 'uuid_cliente', type: 'string', format: 'uuid'),
                     new OA\Property(property: 'terreno_id', type: 'integer', example: 12),
@@ -80,8 +80,8 @@ final class SolicitudesController
                     new OA\Property(property: 'cultivo', type: 'string', nullable: true),
                     new OA\Property(property: 'producto_indicado', type: 'string', example: 'Glifosato 480 SL, 2 L/ha'),
                     new OA\Property(property: 'aporta_producto', type: 'string', enum: ['cliente', 'proveedor'], nullable: true),
-                    new OA\Property(property: 'ventana_desde', description: 'Fecha deseada: inicio de la ventana.', type: 'string', format: 'date'),
-                    new OA\Property(property: 'ventana_hasta', description: 'Fecha deseada: fin de la ventana.', type: 'string', format: 'date'),
+                    new OA\Property(property: 'ventana_desde', description: 'Fecha deseada (opcional): inicio de la ventana. Va junto con `ventana_hasta`; no vence nada y no puede estar más allá de la anticipación máxima (365 días).', type: 'string', format: 'date', nullable: true),
+                    new OA\Property(property: 'ventana_hasta', description: 'Fecha deseada (opcional): fin de la ventana.', type: 'string', format: 'date', nullable: true),
                     new OA\Property(property: 'urgente', type: 'boolean', nullable: true),
                     new OA\Property(property: 'observaciones', type: 'string', nullable: true),
                     new OA\Property(property: 'precio_ha_propuesto', type: 'string', nullable: true, example: '125'),
@@ -118,7 +118,7 @@ final class SolicitudesController
         path: '/api/solicitudes',
         operationId: 'listarSolicitudes',
         description: 'Las solicitudes del cliente de la cuenta, de la más nueva a la más vieja. `vista=activas` deja las que siguen vivas; '
-            .'`vista=historial`, las que terminaron (`calificada`, `cancelada` o `expirada`). `estado` filtra por un estado exacto.',
+            .'`vista=historial`, las que terminaron (`calificada` o `cancelada`). `estado` filtra por un estado exacto.',
         summary: 'Mis solicitudes e historial',
         security: [['tokenDispositivo' => []]],
         tags: ['Solicitudes'],
@@ -236,8 +236,8 @@ final class SolicitudesController
     #[OA\Post(
         path: '/api/solicitudes/{id}/publicar',
         operationId: 'publicarSolicitud',
-        description: 'Abre la solicitud a los pilotos: `borrador` pasa a `abierta`, con su vigencia (7 días) y visible en el mapa. Exige precio por hectárea propuesto, hectáreas que no superen las del terreno, fecha deseada no pasada y un teléfono en la cuenta. '
-            .'Avisa a los pilotos cuyas preferencias coinciden con la zona y las hectáreas. Una solicitud `expirada` se renueva igual, dentro del plazo de renovación.',
+        description: 'Abre la solicitud a los pilotos: `borrador` pasa a `abierta` y queda visible en el mapa hasta que se adjudica o el cliente la cancela: la solicitud no vence sola. Exige precio por hectárea propuesto, hectáreas que no superen las del terreno, un teléfono en la cuenta y, si lleva fecha deseada, que no haya pasado. '
+            .'Avisa a los pilotos cuyas preferencias coinciden con la zona y las hectáreas.',
         summary: 'Abrir una solicitud al mercado',
         security: [['tokenDispositivo' => []]],
         tags: ['Solicitudes'],
@@ -328,27 +328,6 @@ final class SolicitudesController
         }
 
         return response()->json(['solicitud' => new SolicitudServicioResource($solicitud)]);
-    }
-
-    #[OA\Post(
-        path: '/api/solicitudes/{id}/renovar',
-        operationId: 'renovarSolicitud',
-        description: 'Vuelve a abrir una solicitud `expirada`, dentro del plazo de renovación (30 días). Nueva vigencia; las ofertas anteriores siguen cerradas.',
-        summary: 'Renovar una solicitud expirada',
-        security: [['tokenDispositivo' => []]],
-        tags: ['Solicitudes'],
-        parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
-        responses: [
-            new OA\Response(response: 200, description: 'Solicitud abierta de nuevo.', content: new OA\JsonContent(required: ['solicitud'], properties: [new OA\Property(property: 'solicitud', ref: '#/components/schemas/SolicitudServicio')], type: 'object')),
-            new OA\Response(response: 401, description: 'Token ausente o revocado.'),
-            new OA\Response(response: 403, description: 'El rol del token no es de cliente.'),
-            new OA\Response(response: 404, description: 'No existe o es de otro cliente.'),
-            new OA\Response(response: 422, description: 'No está expirada o pasó el plazo de renovación.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
-        ],
-    )]
-    public function renovar(Request $request, int $id): JsonResponse
-    {
-        return $this->publicar($request, $id);
     }
 
     private function usuarioId(): int

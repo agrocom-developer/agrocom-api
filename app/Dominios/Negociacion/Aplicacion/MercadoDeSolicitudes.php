@@ -270,7 +270,6 @@ final class MercadoDeSolicitudes
             'mi_negociacion' => $negociacion,
             'distancia_km' => $lat !== null && $lon !== null && $s->centro !== null ? Distancia::km($lat, $lon, $s->centro['latitud'], $s->centro['longitud']) : null,
             'publicada_en' => $s->publicadaEn,
-            'vence_en' => $s->venceEn,
         ];
     }
 }

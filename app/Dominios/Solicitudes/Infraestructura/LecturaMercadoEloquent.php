@@ -32,7 +32,7 @@ final class LecturaMercadoEloquent implements LecturaMercado
             ->when(isset($filtros['hectareas_max']), fn (Builder $q) => $q->where('hectareas_solicitadas', '<=', $filtros['hectareas_max']))
             ->when(isset($filtros['precio_ha_min']), fn (Builder $q) => $q->where('precio_ha_propuesto', '>=', $filtros['precio_ha_min']))
             ->when(isset($filtros['precio_ha_max']), fn (Builder $q) => $q->where('precio_ha_propuesto', '<=', $filtros['precio_ha_max']))
-            ->when(! empty($filtros['fecha_hasta']), fn (Builder $q) => $q->whereDate('ventana_desde', '<=', $filtros['fecha_hasta']))
+            ->when(! empty($filtros['fecha_hasta']), fn (Builder $q) => $q->where(fn (Builder $f) => $f->whereNull('ventana_desde')->orWhereDate('ventana_desde', '<=', $filtros['fecha_hasta'])))
             ->when(! empty($filtros['cultivo']), fn (Builder $q) => $q->where('cultivo', 'like', '%'.$filtros['cultivo'].'%'))
             ->when(! empty($filtros['tipo_aplicacion']), fn (Builder $q) => $q->where('tipo_aplicacion', $filtros['tipo_aplicacion']))
             ->orderByDesc('id')
@@ -76,12 +76,11 @@ final class LecturaMercadoEloquent implements LecturaMercado
             tipoAplicacion: $solicitud->tipo_aplicacion->value,
             productoIndicado: $solicitud->producto_indicado,
             aportaProducto: $solicitud->aporta_producto->value,
-            ventanaDesde: $solicitud->ventana_desde->toDateString(),
-            ventanaHasta: $solicitud->ventana_hasta->toDateString(),
+            ventanaDesde: $solicitud->ventana_desde?->toDateString(),
+            ventanaHasta: $solicitud->ventana_hasta?->toDateString(),
             urgente: $solicitud->urgente,
             observaciones: $solicitud->observaciones,
             publicadaEn: $solicitud->publicada_en?->toIso8601String(),
-            venceEn: $solicitud->vence_en?->toIso8601String(),
             terreno: $conTerreno ? [
                 'nombre' => $terreno->nombre,
                 'hectareas' => $terreno->hectareas,

@@ -13,14 +13,16 @@
 */
 
 return [
-    /** Cuántos días vive una solicitud abierta antes de expirar. */
-    'vigencia_solicitud_dias' => (int) env('NEGOCIACION_VIGENCIA_SOLICITUD_DIAS', 7),
+    /*
+     * La solicitud no vence sola: sigue en el mercado hasta que se adjudica o el
+     * cliente la cancela (ADR 0045, punto 20). No hay vigencia ni plazo de renovación.
+     */
 
-    /** Cuántos días después de expirar el cliente puede renovarla. */
-    'plazo_renovacion_dias' => (int) env('NEGOCIACION_PLAZO_RENOVACION_DIAS', 30),
+    /** Hasta cuántos días en el futuro puede pedirse la fecha deseada (validación de sanidad; no vence nada). */
+    'anticipacion_maxima_dias' => (int) env('NEGOCIACION_ANTICIPACION_MAXIMA_DIAS', 365),
 
-    /** Cuántas horas vive una oferta (sin pasar de la vigencia de la solicitud). */
-    'vigencia_oferta_horas' => (int) env('NEGOCIACION_VIGENCIA_OFERTA_HORAS', 48),
+    /** Cuántas horas vive una oferta (720 son 30 días). La oferta sí vence; la solicitud no la acota. */
+    'vigencia_oferta_horas' => (int) env('NEGOCIACION_VIGENCIA_OFERTA_HORAS', 24),
 
     /** La oferta con este número es definitiva: solo se acepta o se rechaza. */
     'max_ofertas_por_negociacion' => (int) env('NEGOCIACION_MAX_OFERTAS', 5),

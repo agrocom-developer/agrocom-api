@@ -52,7 +52,7 @@
 
             <h2 class="ag-detalle__campo-label">{{ __('metricas.seccion_mercado') }}</h2>
             <div class="ag-detalle__kpis">
-                <x-molecules.stat-card :label="__('metricas.solicitudes')" icon="request_quote" :value="$entero($m['mercado']['solicitudes_publicadas'])" :foot="__('metricas.solicitudes_pie', ['sin' => $m['mercado']['expiradas']])" state="info" />
+                <x-molecules.stat-card :label="__('metricas.solicitudes')" icon="request_quote" :value="$entero($m['mercado']['solicitudes_publicadas'])" :foot="__('metricas.solicitudes_pie', ['abiertas' => $m['mercado']['abiertas']])" state="info" />
                 <x-molecules.stat-card :label="__('metricas.tasa_adjudicacion')" icon="handshake" :value="$pct($m['mercado']['tasa_adjudicacion'])" :foot="__('metricas.tasa_adjudicacion_pie', ['adjudicadas' => $m['mercado']['adjudicadas']])" state="success" />
                 <x-molecules.stat-card :label="__('metricas.tiempo_aceptacion')" icon="timer" :value="$min($m['mercado']['tiempo_aceptacion_promedio_min'])" :foot="__('metricas.tiempo_aceptacion_pie', ['mediana' => $min($m['mercado']['tiempo_aceptacion_mediana_min']), 'cantidad' => $m['mercado']['aceptaciones']])" state="distintivo-1" />
                 <x-molecules.stat-card :label="__('metricas.ofertas_por_solicitud')" icon="forum" :value="$m['mercado']['ofertas_por_solicitud'] ?? $sinDatos" :foot="__('metricas.rondas_pie', ['rondas' => $m['mercado']['rondas_promedio'] ?? $sinDatos, 'cantidad' => $m['mercado']['negociaciones']])" state="primary-2" />

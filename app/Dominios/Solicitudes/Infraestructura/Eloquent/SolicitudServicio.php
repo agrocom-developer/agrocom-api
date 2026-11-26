@@ -28,8 +28,8 @@ use Illuminate\Support\Carbon;
  * @property string|null $cultivo
  * @property string $producto_indicado
  * @property AportaProducto $aporta_producto
- * @property Carbon $ventana_desde
- * @property Carbon $ventana_hasta
+ * @property Carbon|null $ventana_desde fecha deseada (opcional; no vence nada)
+ * @property Carbon|null $ventana_hasta
  * @property bool $urgente
  * @property string|null $observaciones
  * @property string|null $tarifa_hectarea
@@ -40,12 +40,10 @@ use Illuminate\Support\Carbon;
  * @property int|null $oferta_adjudicada_id
  * @property string|null $hectareas_ejecutadas
  * @property string $porcentaje_avance
- * @property Carbon|null $vence_en
  * @property Carbon|null $adjudicada_en
  * @property Carbon|null $iniciada_en
  * @property Carbon|null $cierre_solicitado_en
  * @property Carbon|null $finalizada_en
- * @property Carbon|null $expirada_en
  * @property Carbon|null $ultimo_avance_en
  * @property EstadoSolicitud $estado
  * @property int|null $proveedor_id
@@ -109,12 +107,10 @@ class SolicitudServicio extends ModeloDominio
             'oferta_adjudicada_id' => 'integer',
             'hectareas_ejecutadas' => 'decimal:4',
             'porcentaje_avance' => 'decimal:2',
-            'vence_en' => 'datetime',
             'adjudicada_en' => 'datetime',
             'iniciada_en' => 'datetime',
             'cierre_solicitado_en' => 'datetime',
             'finalizada_en' => 'datetime',
-            'expirada_en' => 'datetime',
             'ultimo_avance_en' => 'datetime',
             'urgente' => 'boolean',
             'ventana_desde' => 'date',

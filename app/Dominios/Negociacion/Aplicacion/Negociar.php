@@ -77,10 +77,6 @@ final class Negociar
             return [DB::transaction(function () use ($proveedor, $solicitudId, $datos): Oferta {
                 $solicitud = $this->bloquear($solicitudId, true);
 
-                if ($solicitud->venceEn !== null && Carbon::parse($solicitud->venceEn)->lte(Carbon::now())) {
-                    throw NegociacionInvalida::conflicto('solicitud_no_abierta');
-                }
-
                 if (in_array($solicitud->clienteUsuarioId, $this->proveedores->usuariosDeAviso($proveedor->id), true)) {
                     throw NegociacionInvalida::dato('propia_cuenta');
                 }
@@ -101,7 +97,7 @@ final class Negociar
                     'monto_estimado' => $this->monto($solicitud, $precio),
                     'es_definitiva' => $numero >= $this->parametros->maxOfertas(),
                     'nota' => $this->nota($datos['nota'] ?? null),
-                    'vence_en' => $this->venceEn($solicitud),
+                    'vence_en' => $this->venceEn(),
                     'distancia_km' => $this->distancia($proveedor, $solicitudId),
                 ]);
 
@@ -174,7 +170,7 @@ final class Negociar
                 'es_definitiva' => $actual->numero + 1 >= $this->parametros->maxOfertas(),
                 'nota' => $this->nota($nota),
                 'oferta_anterior_id' => $actual->id,
-                'vence_en' => $this->venceEn($solicitud),
+                'vence_en' => $this->venceEn(),
                 'distancia_km' => $actual->distancia_km,
             ]);
 
@@ -463,12 +459,10 @@ final class Negociar
         return (string) BigDecimal::of($solicitud->hectareasSolicitadas)->multipliedBy(BigDecimal::of($precioHa))->toScale(2, RoundingMode::HalfUp);
     }
 
-    /** `min(ahora + vigencia de la oferta, vence_en de la solicitud)`. */
-    private function venceEn(DatosSolicitudNegociable $solicitud): Carbon
+    /** `ahora + vigencia de la oferta`: la oferta vence por su propio parámetro; la solicitud no la acota porque no vence. */
+    private function venceEn(): Carbon
     {
-        $propia = Carbon::now()->addHours($this->parametros->vigenciaOfertaHoras());
-
-        return $solicitud->venceEn !== null && Carbon::parse($solicitud->venceEn)->lt($propia) ? Carbon::parse($solicitud->venceEn) : $propia;
+        return Carbon::now()->addHours($this->parametros->vigenciaOfertaHoras());
     }
 
     private function nota(?string $nota): ?string

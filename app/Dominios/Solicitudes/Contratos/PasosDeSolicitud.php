@@ -28,9 +28,6 @@ interface PasosDeSolicitud
      */
     public function adjudicar(int $solicitudId, int $proveedorId, int $equipoId, int $ofertaId, string $precioHaAcordado, string $origen, ?int $actorUsuarioId): void;
 
-    /** `abierta` o `con_ofertas` pasa a `expirada`. Devuelve `false` si ya no estaba en el mercado. */
-    public function expirar(int $solicitudId): bool;
-
     /**
      * `adjudicada` pasa a `en_ejecucion`.
      *
@@ -58,6 +55,6 @@ interface PasosDeSolicitud
      */
     public function devolverAbierta(int $solicitudId, ?int $actorUsuarioId, string $motivo): void;
 
-    /** Estados de las solicitudes que cruzan la ventana de fecha deseada del equipo (para la disponibilidad al adjudicar). */
-    public function equipoOcupado(int $equipoId, string $ventanaDesde, string $ventanaHasta, int $exceptoSolicitudId): bool;
+    /** Estados de las solicitudes que cruzan la ventana de fecha deseada del equipo (para la disponibilidad al adjudicar); sin fecha deseada no hay cruce. */
+    public function equipoOcupado(int $equipoId, ?string $ventanaDesde, ?string $ventanaHasta, int $exceptoSolicitudId): bool;
 }

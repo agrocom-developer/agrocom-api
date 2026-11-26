@@ -10,7 +10,6 @@ use App\Dominios\Solicitudes\Infraestructura\Eloquent\SolicitudServicio;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\Terreno;
 use Brick\Math\BigDecimal;
 use Illuminate\Database\QueryException;
-use Illuminate\Support\Carbon;
 
 /**
  * Crea una solicitud de servicio en `borrador` (especificación §10.1,
@@ -30,7 +29,7 @@ final class CrearSolicitud
     ) {}
 
     /**
-     * @param  array{uuid_cliente: string, terreno_id: int, contacto_id?: ?int, tipo_aplicacion: string, hectareas_solicitadas: string|int|float, cultivo?: ?string, producto_indicado: string, aporta_producto?: ?string, ventana_desde: string, ventana_hasta: string, urgente?: ?bool, observaciones?: ?string, precio_ha_propuesto?: string|int|float|null}  $datos
+     * @param  array{uuid_cliente: string, terreno_id: int, contacto_id?: ?int, tipo_aplicacion: string, hectareas_solicitadas: string|int|float, cultivo?: ?string, producto_indicado: string, aporta_producto?: ?string, ventana_desde?: ?string, ventana_hasta?: ?string, urgente?: ?bool, observaciones?: ?string, precio_ha_propuesto?: string|int|float|null}  $datos
      * @return array{0: SolicitudServicio, 1: bool} la solicitud y si se creó ahora (`false` = reintento).
      *
      * @throws SolicitudInvalida
@@ -57,9 +56,7 @@ final class CrearSolicitud
             throw SolicitudInvalida::hectareasExcedenTerreno((string) $hectareas, $terreno->hectareas);
         }
 
-        if (Carbon::parse($datos['ventana_hasta'])->startOfDay()->lt(Carbon::today())) {
-            throw SolicitudInvalida::ventanaVencida();
-        }
+        PublicarSolicitud::validarVentanaDe($datos['ventana_hasta'] ?? null);
 
         $precio = isset($datos['precio_ha_propuesto']) ? (string) $datos['precio_ha_propuesto'] : null;
         if ($precio !== null) {
@@ -76,8 +73,8 @@ final class CrearSolicitud
             'cultivo' => $datos['cultivo'] ?? $terreno->cultivo,
             'producto_indicado' => trim($datos['producto_indicado']),
             'aporta_producto' => AportaProducto::from($datos['aporta_producto'] ?? AportaProducto::Cliente->value),
-            'ventana_desde' => $datos['ventana_desde'],
-            'ventana_hasta' => $datos['ventana_hasta'],
+            'ventana_desde' => $datos['ventana_desde'] ?? null,
+            'ventana_hasta' => $datos['ventana_hasta'] ?? null,
             'urgente' => (bool) ($datos['urgente'] ?? false),
             'observaciones' => $datos['observaciones'] ?? null,
             'precio_ha_propuesto' => $precio,

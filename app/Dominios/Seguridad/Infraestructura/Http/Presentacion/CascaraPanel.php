@@ -89,9 +89,9 @@ final class CascaraPanel
     {
         $badges = [];
 
-        // Solicitudes que esperan proveedor: abiertas, con ofertas o expiradas.
+        // Solicitudes que esperan proveedor: abiertas o con ofertas.
         $conteo = $this->solicitudes->conteoPorEstado();
-        $esperandoProveedor = ($conteo['abierta'] ?? 0) + ($conteo['con_ofertas'] ?? 0) + ($conteo['expirada'] ?? 0);
+        $esperandoProveedor = ($conteo['abierta'] ?? 0) + ($conteo['con_ofertas'] ?? 0);
         if ($esperandoProveedor > 0) {
             $badges['menu.solicitudes.items.solicitudes'] = [
                 'numero' => (string) $esperandoProveedor,
