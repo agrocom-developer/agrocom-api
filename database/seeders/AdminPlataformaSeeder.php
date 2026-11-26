@@ -12,7 +12,7 @@ use Illuminate\Database\Seeder;
 
 /**
  * Tarea 100: la única cuenta con la que arranca una instalación nueva de
- * `local`/`staging` — el resto de los datos (clientes, contratos, personas,
+ * `local`/`staging` (`miguelo`, rol `administrador` — ADR 0046) — el resto de los datos (clientes, contratos, personas,
  * órdenes...) los carga el usuario a mano desde el panel, ya no hay familia
  * `Demo/`.
  *
@@ -40,7 +40,7 @@ class AdminPlataformaSeeder extends Seeder
 
     public function run(): void
     {
-        $rol = SecRole::query()->where('name', 'admin_plataforma')->first();
+        $rol = SecRole::query()->where('name', 'administrador')->first();
 
         if ($rol === null) {
             return; // catálogo de roles no sembrado — nada que asignar
