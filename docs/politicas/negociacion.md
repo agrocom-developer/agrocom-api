@@ -11,11 +11,11 @@
 
 ## Cómo se negocia
 
-1. El cliente publica la solicitud con un precio por hectárea, el departamento y la provincia del terreno y, si quiere, requisitos como la capacidad mínima del dron. Queda abierta. El sistema avisa a los proveedores por oleadas y la solicitud es visible para los pilotos habilitados que le corresponde (ver «Quién recibe el aviso»).
-2. Un piloto acepta el precio o propone el suyo, con el dron que usará. Esa es su primera oferta.
+1. El cliente publica la solicitud con un precio por hectárea, el departamento y la provincia del terreno y, si quiere, requisitos como la capacidad mínima del dron. Queda abierta. El sistema avisa a los proveedores por oleadas y la solicitud es visible para los pilotos habilitados que le corresponde (ver «Quién recibe el aviso»). No tiene vencimiento: sigue en el mercado hasta que se adjudica o el cliente la cancela.
+2. Un piloto acepta el precio o propone el suyo, con el dron que usará. Esa es su primera oferta y, desde que se registra, la solicitud pasa a estar «En negociación» (ver más abajo). Abrir la pantalla de precios sin enviar nada no cambia nada.
 3. El cliente puede aceptar, contraofertar o rechazar. Si contraoferta, el piloto puede aceptar, contraofertar o rechazar, y así por rondas. Hay una sola oferta vigente por negociación.
 4. El máximo de ofertas por negociación es 5; la última es definitiva y solo se acepta o se rechaza.
-5. Cada oferta vence a las 24 horas (parámetro, admite días o semanas). La fecha deseada puede estar a semanas o meses: una solicitud sin adjudicar expira al fin de su fecha deseada, con un máximo de un año desde que se publica (30 días si no tiene fecha deseada). El cliente recibe un aviso antes del vencimiento y puede renovarla dentro de 30 días.
+5. Cada oferta vence a las 24 horas (parámetro, admite días o semanas). La solicitud no: puede esperar semanas hasta cerrar trato y solo la cancela el cliente (o se adjudica). Puede llevar una fecha deseada de fumigación, hasta un año adelante. Mientras no hay trato, el cliente recibe un recordatorio periódico para que ajuste el precio o los requisitos, o la cancele.
 6. Cuando una parte acepta la oferta vigente de la otra, la solicitud queda adjudicada con ese precio. Las demás negociaciones se cierran y sus pilotos reciben el aviso.
 
 ## Qué puede y qué no puede hacer cada parte
@@ -37,15 +37,19 @@ Los mensajes y las ofertas respetan a la contraparte. Pactar por fuera de la pla
 ## Quién recibe el aviso
 
 - No hay zonas ni límite geográfico. La solicitud lleva su departamento y su provincia, y cualquier piloto habilitado decide si quiere ir; la distancia se acuerda en la negociación.
-- Al publicar, el sistema avisa a los proveedores que cumplen **todos** los filtros: los del sistema (aprobado con equipo apto, disponible, calificación), los del cliente (como la capacidad mínima del dron) y los del proveedor, que él ajusta en su app (departamentos que no acepta, hectáreas mínimas, tipos de aplicación que no quiere). La lista de filtros puede crecer.
-- Los primeros avisos favorecen a los proveedores propios de Agrocom y a los mejor calificados. Cada pocos minutos, si nadie ofertó, se relaja un filtro y se avisa a los nuevos que cumplen; a quien ya se avisó no se le avisa de nuevo. Cuando no quedan filtros por relajar, la solicitud se abre a todos en el mapa y, pasado un tiempo, se vuelve a avisar a los del inicio.
-- Un proveedor que se marca `ocupado` o `en_trabajo` no recibe avisos; puede seguir viendo el mapa.
+- **Primera ola.** Al publicar, el sistema avisa a los proveedores que cumplen **todos** los filtros: los del sistema (aprobado con equipo apto, disponible, calificación), los del cliente (como la capacidad mínima del dron) y los del proveedor, que él ajusta en su app (departamentos que no acepta, hectáreas mínimas, tipos de aplicación que no quiere). La lista de filtros puede crecer. Los propios de Agrocom entran desde la primera ola.
+- **Anillos.** Pasado un tiempo sin que nadie acepte ni contraoferte, se relanza la ola saltando a quienes ya la recibieron: se relaja un filtro (primero la calificación mínima, luego el requisito de dron del cliente) y se avisa solo a los nuevos que cumplen. Nadie recibe dos veces el mismo aviso dentro de un ciclo.
+- **Súper ola.** Cuando ya no quedan filtros por relajar, la solicitud se avisa a todos los elegibles y se abre a todos en el mapa. Nunca se avisa a quien está `ocupado` o `en_trabajo`, ni se relajan los filtros que el proveedor puso.
+- **Esperando piloto.** Si nadie acepta ni contraoferta, la solicitud queda «Esperando piloto». El sistema no la desactiva ni la vence. El cliente puede ajustar sus parámetros y volver a lanzar la ola, o cancelarla. Si no lo hace a mano, el sistema la relanza según el horario que el cliente eligió: al menos 2 días por semana, a lo más una vez por día, a la hora que prefiera. Cada relanzamiento vuelve a avisar desde el primer anillo.
+- **Disponibilidad.** Cada cuenta de proveedor tiene un interruptor «Disponible», «Ocupado» o «En trabajo»; quien no está disponible no recibe avisos, pero puede seguir viendo el mapa. Un piloto de una empresa tiene el suyo y el encargado de la empresa puede marcarlo ocupado. Al volver a «Disponible» no recibe avisos atrasados.
+- **Avisos sin push.** Mientras no haya notificaciones push, los avisos se ven dentro de la app (campana y lista) y el tiempo entre olas es más largo; el modelo es el mismo.
+- **Proveedor aún no aprobado.** No ve el mapa ni ofrece. Ve solo cuántas solicitudes abiertas hay, que puede filtrar por departamento, sin lotes, clientes ni ubicación detallada.
 - Quien tiene un dron que no cumple lo que pidió el cliente puede ofertar: la oferta se marca y el cliente decide.
 - Nadie tiene prioridad al adjudicar. La prioridad es solo en el aviso y en el orden sugerido de las ofertas (propios de Agrocom primero, luego calificación); el cliente elige y puede ordenar como quiera.
 
 ## Etapa de negociación
 
-Mientras el cliente negocia con proveedores, la solicitud está «En negociación»: deja de aparecer a los demás pilotos y no se avisa a más proveedores. Vuelve a aparecer cuando esas negociaciones terminan sin acuerdo. El cliente también puede elegir «Sin buscar más pilotos» cuando ya conversa con quien le interesa: la solicitud sigue disponible para quienes ya la ven, pero no se ofrece a más proveedores. Puede volver a buscar cuando quiera.
+Cuando un proveedor toma la solicitud para negociar, es decir, cuando registra su primera oferta (acepta el precio o propone el suyo), la solicitud está «En negociación»: deja de ofertarse y de aparecer a los demás pilotos y no se avisa a más proveedores hasta que el cliente cierre esa negociación o se cierre el trato. Si la negociación termina sin acuerdo (el cliente rechaza, el piloto retira o la oferta vence), la solicitud vuelve a ofertarse y las olas continúan. El cliente también puede elegir «Sin buscar más pilotos» cuando ya conversa con quien le interesa: no se ofrece a más proveedores ni se relanza sola, y puede volver a buscar cuando quiera.
 
 ## Precios
 

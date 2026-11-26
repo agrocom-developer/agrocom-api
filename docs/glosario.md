@@ -20,19 +20,21 @@ Referencia rápida de vocabulario, de negocio y técnico, para que cualquier per
 | **Dron (vehículo)** | Activo que presta el servicio, con dueño y operador; requiere aprobación | ADR 0029 |
 | **Dueño del dron** | Proveedor que posee el dron, aunque lo opere otro | ADR 0029 |
 | **Equipo** | Combinación operativa de piloto y dron que ejecuta una solicitud | especificación §4.4 |
-| **Mapa de solicitudes abiertas** | Vista del piloto con las solicitudes `abierta` y `con_ofertas` que le son visibles, con filtros por departamento, hectáreas, precio, fecha y cultivo | ADR 0041, 0045 |
+| **Mapa de solicitudes abiertas** | Vista del piloto con las solicitudes `abierta` y `con_ofertas` que le son visibles, con filtros por departamento, hectáreas, precio, fecha y cultivo; el proveedor aún no aprobado ve solo un contador de solicitudes abiertas | ADR 0041, 0045 |
 | **Departamento y provincia** | Ubicación de la solicitud, elegida de un catálogo de Bolivia (solo el departamento filtra); el municipio y la comunidad son texto libre. No hay zonas ni radio | ADR 0045 |
 | **Criterio de alcance (filtro)** | Regla que decide si un proveedor es alcanzable por una solicitud; hay del sistema, del cliente y del proveedor, y la lista crece sin migraciones | ADR 0045 |
-| **Oleada de aviso** | Aviso de una nueva solicitud en pasos: primero a quienes cumplen todos los filtros (propios y mejor calificados primero) y, cada pocos minutos, a los nuevos que cumplen tras relajar un filtro; a nadie dos veces por ciclo | ADR 0045 |
+| **Oleada de aviso** | Aviso de una nueva solicitud por anillos de prioridad («sistema solar»): primero a quienes cumplen todos los filtros (propios y mejor calificados primero) y, pasado un intervalo, a los nuevos que cumplen tras relajar un filtro; a nadie dos veces por ciclo | ADR 0045 |
+| **Súper ola** | Último paso de la escalera: aviso a todos los elegibles (aprobados, disponibles y que no excluyeron la solicitud con sus filtros); nunca a quien está ocupado o en trabajo | ADR 0045 |
+| **Esperando piloto** | Etapa de la solicitud a la que nadie aceptó ni contraofertó tras la súper ola; no se desactiva ni vence, y el cliente la relanza a mano o por su horario (nombre visible a confirmar) | ADR 0045 |
+| **Relanzamiento** | Ciclo nuevo de oleadas desde el primer anillo; lo pide el cliente o lo hace el sistema según los días y la hora que el cliente eligió (mínimo 2 días por semana, a lo más uno por día) | ADR 0045 |
 | **Escalera de oleadas** | Lista ordenada de pasos que dice qué filtro se relaja en cada oleada | ADR 0045 |
-| **En negociación** | Etapa en la que el cliente negocia con proveedores: la solicitud deja de aparecer a los demás pilotos y se pausan las oleadas | ADR 0045 |
+| **En negociación** | Etapa que empieza cuando un proveedor registra su primera oferta: la solicitud deja de ofertarse y de aparecer a los demás pilotos y se pausan las oleadas; si termina sin acuerdo, vuelve a ofertarse | ADR 0045 |
 | **Sin buscar más pilotos** | Opción del cliente que detiene las oleadas; la solicitud sigue disponible para quienes ya la ven | ADR 0045 |
-| **Disponibilidad** | Estado manual del proveedor (`disponible`, `ocupado`, `en_trabajo`); los dos últimos no reciben avisos | ADR 0045 |
+| **Disponibilidad** | Interruptor manual de cada cuenta de proveedor (`disponible`, `ocupado`, `en_trabajo`); un piloto de una empresa tiene el suyo y el encargado puede marcarlo; los dos últimos estados no reciben avisos | ADR 0045 |
 | **Oferta que no cumple** | Oferta de un equipo que no cumple un requisito del cliente (p. ej. la capacidad del dron); se marca y el cliente decide | ADR 0045 |
 | **Oferta** | Precio por hectárea que una parte propone en una negociación, con vencimiento; se acepta, se contraoferta o se rechaza | especificación §4.5, §5.3 |
 | **Negociación** | Conjunto de ofertas entre el cliente y un proveedor sobre una solicitud; hay una sola oferta vigente y un máximo de ofertas | ADR 0030 |
 | **Adjudicación** | Aceptar la oferta vigente de la contraparte: fija el precio acordado, el proveedor y el equipo y cierra las demás negociaciones | ADR 0030 |
-| **Expirada** | Estado de la solicitud que venció sin adjudicar (al fin de su fecha deseada, hasta un año); el cliente puede renovarla | especificación §5.1 |
 | **Precio por hectárea** | Precio que el cliente propone y que se negocia; se congela al adjudicar como precio acordado. No hay precio de referencia | ADR 0030, 0034, 0045 |
 | **Precio final** | Hectáreas ejecutadas por precio acordado; es el monto a pagar, fuera de la app | ADR 0034 |
 | **Avance** | Registro del piloto con hectáreas acumuladas o porcentaje, junto con fotos; lo ve el cliente | ADR 0040 |
