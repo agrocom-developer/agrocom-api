@@ -10,7 +10,7 @@ Este repositorio es el backend (API REST) y el panel web de administración. Las
 2. Los pilotos ven las solicitudes abiertas en un **mapa** (por zona: valles, Chiquitania y otras), revisan el estado de la propiedad y **aceptan el precio o contraofertan**.
 3. El cliente compara las ofertas (precio, calificación, dron, distancia), negocia ronda por ronda y **elige una**: la solicitud queda adjudicada y se abren el contacto y el chat.
 4. El piloto marca el inicio, **sube fotos y marca su avance**, sin conexión si hace falta, y al final cierra con las hectáreas ejecutadas. El cliente ve las fotos, el chat y la última ubicación del piloto.
-5. El sistema muestra el **precio final** (hectáreas ejecutadas por precio acordado). Después el cliente califica al proveedor y el proveedor califica al cliente de forma privada; cualquiera puede abrir una disputa.
+5. El sistema muestra el **precio final** (hectáreas ejecutadas por precio acordado). Después el cliente califica al proveedor y el proveedor califica al cliente de forma privada; cualquiera puede abrir un reclamo.
 
 La app no cobra: el pago se hace fuera de ella.
 
@@ -21,7 +21,7 @@ La app no cobra: el pago se hace fuera de ella.
 | **Cliente** | App móvil `cliente` (online) | Propiedad, solicitudes, comparar y elegir ofertas, seguimiento, chat y calificación |
 | **Piloto** | App móvil `piloto` (offline en el lote) | Mapa de solicitudes, ofertas, avance, fotos y chat |
 | **Proveedor** | Web y app | Flota, equipo, documentos y reputación |
-| **Administrador y soporte** | Panel web | Aprobaciones, moderación, disputas, parámetros y métricas |
+| **Administrador y soporte** | Panel web | Aprobaciones, moderación, reclamos, parámetros y métricas |
 
 Una misma persona puede cumplir varios roles con un solo usuario, y opera bajo un único rol activo por sesión.
 
@@ -30,7 +30,7 @@ Una misma persona puede cumplir varios roles con un solo usuario, y opera bajo u
 - [`docs/README.md`](docs/README.md): mapa de la documentación y orden de lectura.
 - [`docs/especificacion/marketplace.md`](docs/especificacion/marketplace.md): la fuente de verdad funcional y técnica.
 - [`docs/decisiones/`](docs/decisiones/): los porqués, como ADRs. Los 0027 a 0042 definen el marketplace.
-- [`docs/politicas/`](docs/politicas/): negociación, precio y pago, cancelación, calificación, verificación de proveedores, seguimiento y privacidad, seguridad y disputas.
+- [`docs/politicas/`](docs/politicas/): negociación, precio y pago, cancelación, calificación, verificación de proveedores, seguimiento y privacidad, seguridad y reclamos.
 - [`docs/glosario.md`](docs/glosario.md): el vocabulario del negocio y del campo.
 - [`docs/api/openapi.yaml`](docs/api/openapi.yaml): el contrato de API que consumen las apps, generado desde el código.
 - [`docs/gestion/estado-api.md`](docs/gestion/estado-api.md): qué quedó hecho en la API y qué falta.

@@ -32,7 +32,7 @@ Las fotos de avance, el porcentaje y las hectáreas ejecutadas, los mensajes con
 
 ## Mensajes
 
-Solo texto, entre el cliente y el proveedor adjudicado, desde la adjudicación hasta que cierra el plazo de calificación o la disputa. Soporte puede leer una conversación solo si hay una disputa abierta. Se prohíben insultos, amenazas y datos de terceros.
+Solo texto, entre el cliente y el proveedor adjudicado, desde la adjudicación hasta que cierra el plazo de calificación o el reclamo. Soporte puede leer una conversación solo si hay un reclamo abierto. Se prohíben insultos, amenazas y datos de terceros.
 
 ## Fotos
 
@@ -40,4 +40,4 @@ Comprimidas a menos de 300 KB antes de subir. Las fotos de avance son de lo trab
 
 ## Retención
 
-Los mensajes y las fotos de un servicio se conservan mientras sea posible una disputa y luego según la política de retención de la plataforma. La ubicación no se conserva.
+Los mensajes y las fotos de un servicio se conservan mientras sea posible un reclamo y luego según la política de retención de la plataforma. La ubicación no se conserva.

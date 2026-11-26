@@ -32,7 +32,7 @@ Rechazar, retirar o dejar vencer una oferta no tiene consecuencia. Lo que sí qu
 
 ## Conducta
 
-Los mensajes y las ofertas respetan a la contraparte. Pactar por fuera de la plataforma lo ya adjudicado no está prohibido, pero la calificación y la disputa solo cubren lo registrado en ella. Un precio claramente fuera de lo razonable puede ocultarlo un administrador.
+Los mensajes y las ofertas respetan a la contraparte. Pactar por fuera de la plataforma lo ya adjudicado no está prohibido, pero la calificación y el reclamo solo cubren lo registrado en ella. Un precio claramente fuera de lo razonable puede ocultarlo un administrador.
 
 ## Referencia de precios
 

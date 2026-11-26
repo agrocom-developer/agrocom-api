@@ -1,12 +1,12 @@
-# Política de disputas y reembolsos
+# Política de reclamos y reembolsos
 
 **Agrocom SRL · Vigente** · Decisión: ADR 0033 · Especificación: `docs/especificacion/marketplace.md` §4.8, §8.4
 
 ## Cuándo se abre
 
-- El **cliente** puede abrir una disputa desde `finalizada` hasta 72 horas después.
-- El **proveedor** puede abrirla por cobro pendiente, por acceso negado al lote o por una calificación abusiva.
-- Una disputa por solicitud.
+- El **cliente** puede abrir un reclamo desde `finalizada` hasta 72 horas después.
+- El **proveedor** puede abrirlo por cobro pendiente, por acceso negado al lote o por una calificación abusiva.
+- Un reclamo por solicitud.
 
 ## Motivos
 
@@ -14,11 +14,11 @@ Cobertura incompleta, mala aplicación (franjas sin cubrir o doble pasada), dañ
 
 ## Evidencia
 
-La plataforma conserva las fotos de avance con su fecha, los registros de avance y cierre con las hectáreas, la ubicación no (se elimina al finalizar) y los mensajes. Quien abre la disputa agrega sus pruebas. Un cierre sin fotos de avance pesa en contra del proveedor.
+La plataforma conserva las fotos de avance con su fecha, los registros de avance y cierre con las hectáreas, la ubicación no (se elimina al finalizar) y los mensajes. Quien abre el reclamo agrega sus pruebas. Un cierre sin fotos de avance pesa en contra del proveedor.
 
 ## Proceso
 
-1. Apertura con motivo y monto en disputa. La solicitud pasa a `disputada`.
+1. Apertura con motivo y monto reclamado. La solicitud pasa a `disputada`.
 2. Soporte pide información a la contraparte, que responde en 48 horas.
 3. Un administrador resuelve: `a_favor_cliente`, `a_favor_proveedor`, `parcial` o `sin_lugar`.
 4. La decisión es un registro con autor y motivo; ambas partes pueden apelar una vez en 7 días con pruebas nuevas.
@@ -37,4 +37,4 @@ La resolución fija un monto ajustado que pasa a ser el precio final vigente. Lo
 
 ## Represalias
 
-Se prohíbe calificar o presionar por haber abierto una disputa; se modera y se sanciona.
+Se prohíbe calificar o presionar por haber abierto un reclamo; se modera y se sanciona.

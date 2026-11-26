@@ -23,13 +23,13 @@ Toda transición pasa por `MaquinaEstadosSolicitud` (invariante 7), con fila de 
 | `adjudicada` | `cancelada` | cliente | Motivo obligatorio | Registra en `neg_cancelaciones` (parte `cliente`); sin penalidad en dinero |
 | `en_ejecucion` | `finalizada` | proveedor (piloto del equipo) | Registro `cierre` válido y evidencias mínimas subidas (§4) | Congela `hectareas_ejecutadas` y `monto_final`; elimina la ubicación; emite `SolicitudFinalizada` |
 | `finalizada` | `calificada` | sistema | El cliente registra su calificación | — |
-| `finalizada`, `calificada` | `disputada` | cliente (plazo de disputa) o proveedor (por motivo permitido) | Una disputa por solicitud | Ver `disputas.md` |
+| `finalizada`, `calificada` | `disputada` | cliente (plazo de reclamo) o proveedor (por motivo permitido) | Un reclamo por solicitud | Ver `disputas.md` |
 | `disputada` | `finalizada` o `calificada` | sistema, al resolver | Resolución distinta de reembolso total | Aplica `monto_ajustado` como precio final vigente |
 | `disputada` | `cancelada` | sistema, al resolver | Reembolso total a favor del cliente | — |
 
-No existe cancelación desde `en_ejecucion`: lo no ejecutado se cierra con las hectáreas realmente ejecutadas y, si hay desacuerdo, con una disputa.
+No existe cancelación desde `en_ejecucion`: lo no ejecutado se cierra con las hectáreas realmente ejecutadas y, si hay desacuerdo, con un reclamo.
 
-Plazos (parámetros): vigencia de la solicitud 7 días; renovación 30 días; disputa del cliente 72 horas desde `finalizada`; calificación 7 días desde `finalizada`.
+Plazos (parámetros): vigencia de la solicitud 7 días; renovación 30 días; reclamo del cliente 72 horas desde `finalizada`; calificación 7 días desde `finalizada`.
 
 Procesos programados: `negociacion:procesar` cada minuto (vence ofertas, expira solicitudes, reevalúa `con_ofertas` y `abierta`; idempotente, `withoutOverlapping`, `onOneServer`) y `seguimiento:avisar-inactividad` cada hora (avisa a las partes si una solicitud `en_ejecucion` no tiene avance en `seguimiento.inactividad_horas`, 72 por defecto).
 
@@ -115,7 +115,7 @@ Evidencias: la ruta es `POST /solicitudes/{id}/evidencias` (multipart, cola sepa
 
 Pago confirmado: el pago ocurre fuera de la aplicación (ADR 0034). `POST /solicitudes/{id}/pago-confirmado` (`uuid_cliente`, `metodo` opcional, `nota` opcional) lo escribe un solo rol, el titular del proveedor adjudicado (quien cobra); el piloto que no es titular responde 403 `pago_solo_titular` y el cliente 403 `pago_solo_proveedor`. Solo con la solicitud `finalizada`, `calificada` o `disputada` (si no, 409 `estado_invalido`). El monto lo fija el servidor con el monto final congelado. Es único por solicitud e idempotente por `uuid_cliente` (201 la primera vez, 200 el reintento); otro `uuid_cliente` después responde 409 `pago_ya_confirmado` y lo confirmado no se reescribe. No cambia el estado. Ambas partes lo leen con `GET /solicitudes/{id}/pago-confirmado` (`pago: null` si aún no se informó); una solicitud ajena responde 404.
 
-Precio final confirmado por el cliente: el cliente paga, así que tiene la última palabra sobre el precio final (`hectareas_ejecutadas` × `precio_ha_acordado`, congelado en `monto_final`): lo confirma o abre una disputa. `POST /solicitudes/{id}/precio-final/confirmar` (sin cuerpo) lo escribe un solo rol, el cliente de la solicitud; el proveedor responde 403 `precio_final_solo_cliente` y una solicitud ajena 404. Solo con la solicitud `finalizada` o `calificada` (el piloto ya cerró con las hectáreas ejecutadas; si no, o con una disputa abierta, 409 `estado_invalido`). El servidor copia hectáreas, precio y monto del cierre en `neg_precios_finales_confirmados`; es único por solicitud e idempotente (201 la primera vez, 200 el reintento con el mismo registro) y lo confirmado no se reescribe. No cambia el estado, no mueve dinero y no cierra el plazo de disputa. La bitácora registra al actor y se avisa a las cuentas del proveedor adjudicado (`precio_final_confirmado`). Ambas partes lo leen con `GET /solicitudes/{id}/precio-final` (`precio_final: null` mientras el piloto no cierre; con `confirmado` y `confirmado_en`).
+Precio final confirmado por el cliente: el cliente paga, así que tiene la última palabra sobre el precio final (`hectareas_ejecutadas` × `precio_ha_acordado`, congelado en `monto_final`): lo confirma o abre un reclamo. `POST /solicitudes/{id}/precio-final/confirmar` (sin cuerpo) lo escribe un solo rol, el cliente de la solicitud; el proveedor responde 403 `precio_final_solo_cliente` y una solicitud ajena 404. Solo con la solicitud `finalizada` o `calificada` (el piloto ya cerró con las hectáreas ejecutadas; si no, o con un reclamo abierto, 409 `estado_invalido`). El servidor copia hectáreas, precio y monto del cierre en `neg_precios_finales_confirmados`; es único por solicitud e idempotente (201 la primera vez, 200 el reintento con el mismo registro) y lo confirmado no se reescribe. No cambia el estado, no mueve dinero y no cierra el plazo de reclamo. La bitácora registra al actor y se avisa a las cuentas del proveedor adjudicado (`precio_final_confirmado`). Ambas partes lo leen con `GET /solicitudes/{id}/precio-final` (`precio_final: null` mientras el piloto no cierre; con `confirmado` y `confirmado_en`).
 
 Respuesta por registro: 201 si se aplicó, 200 con el mismo registro si el `uuid_cliente` ya existía (duplicado), o 404, 409 o 422 con el `codigo` del motivo (`solicitud_ajena`, `estado_invalido`, `hectareas_exceden_tolerancia`, `correccion_sin_motivo`).
 
@@ -123,7 +123,7 @@ Finalizar no exige ningún otro tipo de registro operativo: solo `cierre` y las 
 
 ## 5. Mensajes
 
-- Solo entre el cliente y la cuenta de proveedor adjudicada (titular y piloto del equipo), desde `adjudicada`. Lectura y escritura hasta el cierre del plazo de calificación (7 días tras `finalizada`) o mientras haya una disputa abierta; después, solo lectura.
+- Solo entre el cliente y la cuenta de proveedor adjudicada (titular y piloto del equipo), desde `adjudicada`. Lectura y escritura hasta el cierre del plazo de calificación (7 días tras `finalizada`) o mientras haya un reclamo abierto; después, solo lectura.
 - Cada mensaje tiene un `tipo`: `texto` (`texto` obligatorio, hasta 1000 caracteres), `foto` o `sistema`.
 - Foto: `POST /solicitudes/{id}/mensajes/fotos` (multipart: `uuid_cliente`, `archivo` jpg, png o webp, `texto` opcional como pie de hasta 280 caracteres). Reglas de las evidencias: menos de `seguimiento.evidencia_max_kb` (300; la app la comprime antes, si no 422 `evidencia_muy_grande`), disco privado, hash y peso guardados, idempotente por `uuid_cliente`. El mensaje trae `url` (`GET /mensajes/{id}/archivo`, solo las dos partes; otra cuenta 404). Escriben el cliente y la cuenta del proveedor adjudicado, y avisan a la otra parte como un mensaje de texto.
 - Sistema: líneas que escribe el servidor cuando la negociación avisa de un hecho de la solicitud, sin autor (`autor_rol` `sistema`, `propio` falso, nunca se marcan leídas): `solicitud_adjudicada`, `servicio_iniciado` («El piloto inició el servicio.»), `servicio_finalizado` y `precio_final_confirmado`. `evento` dice cuál y `texto` ya viene en español. Una por hecho (idempotente por la clave del aviso) y se escriben aunque el chat esté en solo lectura.
@@ -152,7 +152,7 @@ Finalizar no exige ningún otro tipo de registro operativo: solo `cierre` y las 
 ```
 
 - `nuevas_solicitudes` aplica solo a cuentas de proveedor. `zonas` y `macrorregiones` vacías significan todas. Por defecto activo, todas las zonas, sin mínimo de hectáreas.
-- Las categorías obligatorias (`SolicitudAdjudicada`, cierre, precio final confirmado, expiración, cuenta y aprobación, disputas, emergencias) no se pueden desactivar y no aparecen en las preferencias.
+- Las categorías obligatorias (`SolicitudAdjudicada`, cierre, precio final confirmado, expiración, cuenta y aprobación, reclamos, emergencias) no se pueden desactivar y no aparecen en las preferencias.
 - `POST /dispositivos` registra `{ token, plataforma: android|ios }` del push (201 la primera vez, 200 si ya estaba; si el token estaba a nombre de otra cuenta pasa a la actual); `DELETE /dispositivos/{token}` lo retira al cerrar sesión (404 si no existe o es de otra cuenta). El token nunca se devuelve ni se escribe en logs ni en la bitácora. El envío al sistema operativo requiere configurar el proveedor de push (credencial fuera del repositorio); mientras no esté, el aviso vive en la lista `GET /notificaciones` y se consulta por sondeo.
 - Al abrir una solicitud se envía un aviso a cada cuenta de proveedor aprobada cuyas preferencias coincidan con la zona y las hectáreas. Una solicitud avisa a una cuenta una sola vez.
 
@@ -200,11 +200,11 @@ Cada elemento: `id`, `centro` (`latitud`, `longitud` del centroide de los lotes)
 - `POST /solicitudes/{id}/cancelar`: sin penalidad; registra en `neg_cancelaciones` si la solicitud estaba adjudicada. `POST /solicitudes/{id}/cancelar-proveedor` reabre la solicitud (§1).
 - `GET /reputacion`: calificación, tasa de cancelación y alertas; sin sanciones ni tasa de aceptación.
 - `GET /sync/catalogo`: `servicios_asignados` pasa a ser las solicitudes `adjudicada` y `en_ejecucion` del equipo con lotes, datos de contacto y precio acordado; suma `mensajes`.
-- Disputas: motivos §8.3 de `marketplace.md`; el resultado ajusta `monto_ajustado`, sin comisión.
+- Reclamos: motivos §8.3 de `marketplace.md`; el resultado ajusta `monto_ajustado`, sin comisión.
 - `POST /proveedores/registro`, `/proveedores/drones`: datos de persona y dron (§9).
 
 ### Retirados
-`PUT|GET /disponibilidad` y la noción de equipo en línea; `POST /solicitudes/{id}/conformidad` y `POST /solicitudes/{id}/acta/firmar` (el cierre lo marca el piloto y el cliente puede disputar); la penalidad de cancelación, la comisión (`comision_porcentaje`, `comision_monto`, estado de cuenta, bloqueo por comisión vencida) y las sanciones automáticas (`asg_sanciones`, tasa de aceptación).
+`PUT|GET /disponibilidad` y la noción de equipo en línea; `POST /solicitudes/{id}/conformidad` y `POST /solicitudes/{id}/acta/firmar` (el cierre lo marca el piloto y el cliente puede reclamar); la penalidad de cancelación, la comisión (`comision_porcentaje`, `comision_monto`, estado de cuenta, bloqueo por comisión vencida) y las sanciones automáticas (`asg_sanciones`, tasa de aceptación).
 
 ## 11. Datos existentes
 
