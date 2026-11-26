@@ -46,8 +46,8 @@ it('siembra los módulos con sus ítems en este orden', function () use ($raiz) 
         'solicitudes' => ['solicitudes', 'metricas'],
         'proveedores' => ['documentos', 'proveedores', 'pilotos', 'drones_flota'],
         'atencion' => ['clientes', 'calificaciones', 'reclamos'],
-        'seguridad' => ['usuarios', 'roles', 'dispositivos', 'bitacora'],
-        'sistema' => ['zonas', 'organizacion', 'configuracion', 'versiones_apk', 'avisos'],
+        'seguridad' => ['usuarios', 'roles', 'bitacora'],
+        'sistema' => ['zonas', 'organizacion', 'configuracion', 'avisos'],
     ]);
 });
 
@@ -116,6 +116,8 @@ it('no siembra Auxiliares, Equipos ni Soporte y da de baja lo que ya no va', fun
         ->toContain("'menu.proveedores.items.auxiliares'")
         ->toContain("'menu.proveedores.items.equipos_flota'")
         ->toContain("'menu.catalogos.label'")
-        ->toContain("'menu.solicitudes.items.tablero'");
+        ->toContain("'menu.solicitudes.items.tablero'")
+        ->toContain("'menu.seguridad.items.dispositivos'")
+        ->toContain("'menu.sistema.items.versiones_apk'");
     expect($codigo)->not->toContain("'soporte'");
 });

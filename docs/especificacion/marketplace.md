@@ -323,10 +323,8 @@ Son pantallas del panel (ADR 0008), no endpoints de la API de las apps. El riel 
 | Proveedores | `panel/documentos` | Revisión de documentos y descarga restringida |
 | Proveedores | `panel/drones-flota` | Aprobación del dron y revisión de sus fotos (`flota.dron.revisar_foto`); no se aprueba sin las fotos de `flota.fotos_obligatorias` aprobadas |
 | Sistema | `panel/zonas` | Zonas de Santa Cruz con su región y su centro |
-| Sistema | organización, configuración y versiones de las apps | Ajustes de la plataforma que se tocan poco |
-| Seguridad | usuarios, roles, dispositivos y bitácora | Roles del panel: `dueno`, `encargado_operaciones` (administrador del marketplace), `soporte` y `admin_plataforma` |
-
-La tabla del menú se mantiene con el panel que existe. El ADR 0045 retira la pantalla `panel/zonas` y los filtros y el tablero por región: pasan a departamento (en solicitudes y tablero), y la ficha de cada solicitud suma las oleadas de aviso (paso, a cuántos proveedores se avisó). La tabla se corrige en el mismo PR que cambia el menú.
+| Sistema | organización y configuración | Ajustes de la plataforma que se tocan poco |
+| Seguridad | usuarios, permisos y bitácora | Roles del panel: `dueno`, `encargado_operaciones` (administrador del marketplace), `soporte` y `admin_plataforma` |
 
 El administrador lee el chat y la ubicación solo para atender una disputa o una intervención; no escribe en ellos. Cerrar una negociación no es una sanción: no restringe ninguna cuenta (ADR 0033).
 

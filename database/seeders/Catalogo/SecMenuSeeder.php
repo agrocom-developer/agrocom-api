@@ -78,6 +78,11 @@ class SecMenuSeeder extends Seeder
         // equipo (piloto + dron) se ve en la ficha del piloto, no en una pantalla.
         'menu.solicitudes.items.tablero',
         'menu.operacion.items.tablero',
+        // Las apps salen por Play Store y App Store: el panel no administra descargas
+        // ni dispositivos.
+        'menu.seguridad.items.dispositivos',
+        'menu.seguridad.items.versiones_apk',
+        'menu.sistema.items.versiones_apk',
         'menu.proveedores.items.auxiliares',
         'menu.proveedores.items.equipos_flota',
         // Los módulos raíz, al final: ya sin hijos vivos.
@@ -110,8 +115,7 @@ class SecMenuSeeder extends Seeder
         $this->mover('menu.catalogos.items.zonas', 'menu.sistema.items.zonas', $sistema, 1);
         $this->mover('menu.seguridad.items.organizacion', 'menu.sistema.items.organizacion', $sistema, 2);
         $this->mover('menu.seguridad.items.configuracion', 'menu.sistema.items.configuracion', $sistema, 3);
-        $this->mover('menu.seguridad.items.versiones_apk', 'menu.sistema.items.versiones_apk', $sistema, 4);
-        $this->mover('menu.solicitudes.items.avisos', 'menu.sistema.items.avisos', $sistema, 5);
+        $this->mover('menu.solicitudes.items.avisos', 'menu.sistema.items.avisos', $sistema, 4);
         $this->retirarEntradas(self::RETIRADAS);
 
         // Mercado (ADR 0027, 0031, 0033, 0039): el ciclo de la solicitud y su
@@ -136,20 +140,17 @@ class SecMenuSeeder extends Seeder
         $this->item($atencion, 'atencion', 'calificaciones', 'star', 2, ruta: 'panel.calificaciones.index', codigoPermiso: 'calificaciones.calificacion.ver');
         $this->item($atencion, 'atencion', 'reclamos', 'report', 3, ruta: 'panel.disputas.index', codigoPermiso: 'disputas.disputa.ver');
 
-        // Seguridad: quién es (usuarios), qué puede (roles), con qué entra
-        // (dispositivos) y qué hizo (bitácora).
+        // Seguridad: quién es (usuarios), qué puede (permisos) y qué hizo (bitácora).
         $this->item($seguridad, 'seguridad', 'usuarios', 'group', 1, ruta: 'panel.usuarios.index', codigoPermiso: 'seguridad.usuario.ver');
         $this->item($seguridad, 'seguridad', 'roles', 'shield_person', 2, ruta: 'panel.roles.index', codigoPermiso: 'seguridad.rol.ver');
-        $this->item($seguridad, 'seguridad', 'dispositivos', 'smartphone', 3, ruta: 'panel.dispositivos.index', codigoPermiso: 'seguridad.dispositivo.ver');
-        $this->item($seguridad, 'seguridad', 'bitacora', 'history', 4, ruta: 'panel.bitacora.index', codigoPermiso: 'seguridad.bitacora.ver');
+        $this->item($seguridad, 'seguridad', 'bitacora', 'history', 3, ruta: 'panel.bitacora.index', codigoPermiso: 'seguridad.bitacora.ver');
 
         // Sistema: ajustes que se tocan poco y los avisos del sistema, que son
         // una herramienta de auditoría (ven los de todas las cuentas).
         $this->item($sistema, 'sistema', 'zonas', 'pin_drop', 1, ruta: 'panel.zonas.index', codigoPermiso: 'solicitudes.zona.ver');
         $this->item($sistema, 'sistema', 'organizacion', 'apartment', 2, ruta: 'panel.organizacion.index', codigoPermiso: 'seguridad.organizacion.ver');
         $this->item($sistema, 'sistema', 'configuracion', 'tune', 3, ruta: 'panel.configuracion.index', codigoPermiso: 'seguridad.configuracion.ver');
-        $this->item($sistema, 'sistema', 'versiones_apk', 'system_update', 4, ruta: 'panel.versiones-apk.index', codigoPermiso: 'distribucion.version.autorizar');
-        $this->item($sistema, 'sistema', 'avisos', 'notifications_active', 5, ruta: 'panel.avisos.index', codigoPermiso: 'notificaciones.aviso.ver');
+        $this->item($sistema, 'sistema', 'avisos', 'notifications_active', 4, ruta: 'panel.avisos.index', codigoPermiso: 'notificaciones.aviso.ver');
     }
 
     /**
