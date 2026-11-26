@@ -16,7 +16,7 @@ Agrocom es un marketplace de servicio de fumigación con drones. El cliente publ
 | Administrador | Personal de Agrocom: verifica y aprueba clientes y proveedores, modera calificaciones, resuelve disputas, administra usuarios y roles | Panel web |
 | Operador | Personal de Agrocom con acceso a las partes del panel que el administrador le asigna | Panel web |
 
-Cada app admite un solo tipo de cuenta, con su propio usuario, verificación (selfie con cámara y documento de identidad) y aprobación; no hay conversión entre tipos. Una persona (por su documento) tiene a lo sumo una cuenta de cliente y una de proveedor. Un proveedor no pide servicios y nadie ofrece sobre una solicitud propia (ADR 0046).
+Cada app admite un solo tipo de cuenta, con su propio usuario, verificación (selfie con cámara y documento de identidad) y aprobación; no hay conversión entre tipos. El teléfono es la referencia para entrar y es único por tipo de cuenta (el mismo teléfono puede estar en una cuenta de cliente y una de proveedor), con un correo de respaldo para recuperar el acceso desde la app con un código; el teléfono no prueba posesión hasta que haya código por SMS o WhatsApp. Una persona (por su documento) tiene a lo sumo una cuenta de cliente y una de proveedor, y cada cuenta sube su propia verificación sin reutilizar la otra. Al registrarse se aceptan los términos y la privacidad vigentes. Un proveedor no pide servicios y nadie ofrece sobre una solicitud propia (ADR 0046).
 
 ## Ciclo de una solicitud
 
@@ -56,7 +56,7 @@ Gratuita y sin registro antes de adjudicar. Tras adjudicar se registra quién ca
 
 ## Alta y aprobación
 
-- Cualquiera se registra y entra a la app; el cliente y el proveedor se verifican (selfie con cámara y documento) y un admin aprueba cada cuenta antes de que publique, acepte, ofrezca o vea el mapa. El proveedor sube además los datos de su dron con fotos y sus documentos.
+- Cualquiera se registra y entra a la app; el cliente y el proveedor se verifican (selfie con cámara y documento) y un admin aprueba cada cuenta antes de que publique, acepte, ofrezca o vea el mapa; el proveedor no aprobado ve solo un contador de solicitudes abiertas, filtrable por departamento. El proveedor sube además los datos de su dron con fotos y sus documentos.
 - El administrador puede dar de alta y aprobar desde el panel; la verificación queda marcada «cargada por administrador» si no hay documento de la persona. Nadie aprueba su propia cuenta.
 - La aprobación es un permiso propio con autor, fecha y motivo.
 

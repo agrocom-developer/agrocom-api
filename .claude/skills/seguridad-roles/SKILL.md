@@ -22,8 +22,12 @@ ya está implementado y las trampas conocidas; donde diga «rol activo», «guar
   `tipo_de_cuenta_incorrecto`. Lo que puede hacer lo decide el caso de uso según
   el tipo y el estado de aprobación (403 `cuenta_no_aprobada`). Los permisos de
   app viven en `config/permisos_app.php`, no en `sec_role`.
+- El teléfono (`sec_user.telefono`, único por `tipo_cuenta`) es la referencia de
+  autenticación y el correo es el respaldo para recuperar el acceso desde la app
+  con un código (`sec_codigos_verificacion`); el teléfono no prueba posesión hasta
+  que exista un código por SMS o WhatsApp.
 - Una persona (`sec_personas`, documento único) tiene a lo sumo una cuenta de
-  cada tipo; nadie aprueba su propia cuenta y el administrador sí aprueba lo que
+  cada tipo, y cada cuenta sube su propia verificación; nadie aprueba su propia cuenta y el administrador sí aprueba lo que
   dio de alta. Una persona no ofrece sobre solicitudes suyas (invariantes 10 y 16).
 
 ## Autenticación

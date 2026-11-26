@@ -26,7 +26,7 @@ Las fotos de avance, el porcentaje y las hectáreas ejecutadas, los mensajes con
 | Mensajes | — | Sí | Sí | No |
 | Documentos del proveedor (licencias, matrículas) | No | No | No | No |
 
-La selfie y el documento de identidad de la verificación los ve solo quien revisa, con permiso propio; las demás partes ven únicamente la insignia «Verificado». Los integrantes del equipo son informativos y no tienen cuenta: los carga el proveedor, que responde por esos datos, y se borran con el equipo.
+La selfie y el documento de identidad de la verificación los ve solo quien revisa, con permiso propio; las demás partes ven únicamente la insignia «Verificado». Se conservan mientras exista la cuenta y 12 meses después de su baja, luego se eliminan; cada acceso y cada eliminación quedan registrados sin el contenido (ADR 0046). El teléfono y el correo de respaldo de una cuenta no los ve ninguna otra parte; el teléfono del proveedor lo ve el cliente solo después de adjudicar. Los integrantes del equipo son informativos y no tienen cuenta: los carga el proveedor, que responde por esos datos, y se borran con el equipo.
 
 ## Ubicación
 
