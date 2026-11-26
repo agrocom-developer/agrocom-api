@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraAutoria;
+use App\Dominios\Seguridad\Contratos\TipoCuenta;
 use App\Dominios\Seguridad\Dominio\TipoUsuario;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
@@ -53,6 +54,7 @@ class AdminPlataformaSeeder extends Seeder
                 'email' => null,
                 'password' => self::PASSWORD,
                 'type' => TipoUsuario::Interno,
+                'tipo_cuenta' => TipoCuenta::Panel,
                 'persona_id' => null,
             ],
         );

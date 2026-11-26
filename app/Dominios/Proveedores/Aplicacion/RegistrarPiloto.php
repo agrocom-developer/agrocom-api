@@ -10,6 +10,7 @@ use App\Dominios\Proveedores\Infraestructura\Eloquent\Piloto;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Proveedor;
 use App\Dominios\Seguridad\Contratos\CuentaDuplicada;
 use App\Dominios\Seguridad\Contratos\RegistroCuentas;
+use App\Dominios\Seguridad\Contratos\TipoCuenta;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -67,7 +68,7 @@ final class RegistrarPiloto
         }
 
         return DB::transaction(function () use ($proveedor, $datos, $actorUsuarioId): Piloto {
-            $usuarioId = $this->cuentas->crear($datos['nombre'], $datos['username'], $datos['email'] ?? null, $datos['password'], ['piloto']);
+            $usuarioId = $this->cuentas->crear($datos['nombre'], $datos['username'], $datos['email'] ?? null, $datos['password'], TipoCuenta::Proveedor, ['piloto']);
 
             return $this->estados->registrarPiloto([
                 'proveedor_id' => $proveedor->id,
