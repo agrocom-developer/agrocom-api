@@ -12,8 +12,8 @@ bin/demo up      # postgres en docker + migra + siembra + sirve la API
 
 | Subcomando | Qué hace |
 |---|---|
-| `bin/demo up` | Levanta postgres en docker (un puerto libre desde el 55440), migra, siembra catálogo y demo, y sirve la API en `0.0.0.0:8000`. Se puede repetir: solo completa lo que falta y renueva la vigencia de las solicitudes y ofertas abiertas. |
-| `bin/demo seed` | Vuelve a sembrar sobre la base actual (idempotente) y renueva la vigencia de las solicitudes y ofertas abiertas y las ventanas de fechas que caducaron. |
+| `bin/demo up` | Levanta postgres en docker (un puerto libre desde el 55440), migra, siembra catálogo y demo, y sirve la API en `0.0.0.0:8000`. Se puede repetir: solo completa lo que falta y renueva el plazo de las ofertas abiertas. |
+| `bin/demo seed` | Vuelve a sembrar sobre la base actual (idempotente) y renueva el plazo de las ofertas abiertas y las fechas deseadas que ya pasaron. La solicitud no vence, así que no hay nada que renovar en ella. |
 | `bin/demo reset` | Borra todos los esquemas de la base, migra y siembra de cero. |
 | `bin/demo down` | Detiene la API y postgres; los datos se conservan. Con `--borrar` elimina también el contenedor y su volumen. |
 | `bin/demo estado` | Dice qué está corriendo. |
@@ -41,7 +41,7 @@ Contraseña de todos: `0000`. El login es por `username` y pide `uuid_dispositiv
 |---|---|---|
 | `agro.sanrafael` | cliente | Una solicitud con cuatro ofertas y contraofertas en curso, una en ejecución con fotos y ubicación, una calificada, una reabierta y un borrador. |
 | `luis.antelo` | cliente | Solicitudes abiertas en la Chiquitania, una con una oferta rechazada, una adjudicada con chat, una finalizada sin calificar y una cancelada. |
-| `coop.valle.grande` | cliente | Abiertas en valles y en la Chiquitania, una adjudicada con chat, una en ejecución, una en reclamo y una expirada. |
+| `coop.valle.grande` | cliente | Abiertas en valles y en la Chiquitania, una adjudicada con chat, una en ejecución, una en reclamo y una abierta sin trato desde hace nueve días. |
 | `rodrigo.suarez` | piloto (Agrocom) | El mapa de abiertas, su negociación por 100 ha y su servicio en ejecución. |
 | `valeria.montano` | piloto (Agrocom) | Un servicio ya calificado por el cliente. |
 | `carlos.mamani` | piloto y proveedor (independiente) | Ofertas vigentes, un servicio adjudicado y uno finalizado, calificaciones recibidas. |
@@ -68,11 +68,11 @@ Cada solicitud nace con un `uuid_cliente` determinista, así que volver a sembra
 | `calificada` | `agro.sanrafael`, Las Palmas (Valeria) | Calificación del cliente y del proveedor. |
 | `disputada` | `coop.valle.grande`, Lote Este (Marcelo) | Un reclamo abierto con un mensaje de soporte. |
 | `cancelada` | `luis.antelo`, La Esperanza | Sin penalidad. |
-| `expirada` | `coop.valle.grande`, Parcela Central | Se puede renovar dentro de 30 días. |
+| `abierta`, sin trato | `coop.valle.grande`, Parcela Central | Lleva nueve días abierta, sin ofertas y sin fecha deseada: la solicitud no vence y sigue en el mercado hasta que se adjudique o el cliente la cancele. |
 
 Además: nueve terrenos con zona, región y polígono (valles, Chiquitania, norte integrado y Chaco), proveedores en cada estado de aprobación con sus documentos, drones y equipos, calificaciones y reputación, y avisos in-app para cada cuenta (nuevas solicitudes en su zona, ofertas, mensajes, avance). Cada piloto tiene su persona operativa vinculada (`usuario.persona_id` en `GET /api/auth/sesion`).
 
-Cada vez que corre `bin/demo up` o `bin/demo seed`, las solicitudes y ofertas abiertas recuperan su vigencia (cinco días y 24 horas).
+Cada vez que corre `bin/demo up` o `bin/demo seed`, las ofertas abiertas recuperan su plazo (24 horas); las solicitudes no tienen vigencia.
 
 ## El recorrido
 
