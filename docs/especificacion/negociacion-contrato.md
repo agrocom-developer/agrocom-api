@@ -10,14 +10,14 @@ Toda transición pasa por `MaquinaEstadosSolicitud` (invariante 7), con fila de 
 
 | De | A | Actor / origen | Guarda | Efecto |
 |---|---|---|---|---|
-| `borrador` | `abierta` | cliente | Terrenos propios, `hectareas_solicitadas > 0` y no mayores a las del terreno, `precio_ha_propuesto > 0` y no mayor al máximo de sanidad, fecha deseada no pasada, cuenta con teléfono | Fija `vence_en`; emite `SolicitudAbierta` |
+| `borrador` | `abierta` | cliente | Terrenos propios con `departamento_codigo` y `provincia_codigo`, todos en el mismo departamento; `hectareas_solicitadas > 0` y no mayores a las del terreno, `precio_ha_propuesto > 0` y no mayor al máximo de sanidad, fecha deseada no pasada y dentro de `anticipacion_maxima_dias`, `requisitos` válidos, cuenta con teléfono | Congela departamento y provincia; fija `vence_en`; abre la oleada (paso 0); emite `SolicitudAbierta` |
 | `borrador` | `cancelada` | cliente | — | Sin registro |
 | `abierta` | `con_ofertas` | sistema | Llega una oferta `vigente` | — |
 | `con_ofertas` | `abierta` | sistema | La última oferta vigente deja de estarlo (rechazada, retirada, vencida) y no queda otra | — |
 | `abierta`, `con_ofertas` | `adjudicada` | cliente o proveedor | Se acepta la oferta vigente de la contraparte; equipo apto y libre (ver §3.6) | Fija `precio_ha_acordado`, `monto_estimado`, `proveedor_id`, `equipo_id`, `oferta_adjudicada_id`; cierra las demás ofertas vigentes; abre contacto y chat; emite `SolicitudAdjudicada` |
-| `abierta`, `con_ofertas` | `expirada` | sistema | `vence_en` pasó | Cierra ofertas vigentes; emite `SolicitudExpirada` |
+| `abierta`, `con_ofertas` | `expirada` | sistema | `vence_en` pasó | Cierra ofertas vigentes y la oleada; emite `SolicitudExpirada` |
 | `abierta`, `con_ofertas` | `cancelada` | cliente | Motivo opcional | Cierra ofertas vigentes; sin registro de cancelación |
-| `expirada` | `abierta` | cliente | Dentro de `negociacion.plazo_renovacion_dias` (30) desde que expiró | Nuevo `vence_en`; las ofertas anteriores siguen cerradas |
+| `expirada` | `abierta` | cliente | Dentro de `negociacion.plazo_renovacion_dias` (30) desde que expiró | Nuevo `vence_en`; las ofertas anteriores siguen cerradas; abre un ciclo nuevo de oleada |
 | `adjudicada` | `en_ejecucion` | proveedor (piloto del equipo) | Registro `inicio` válido | Emite `EjecucionIniciada` |
 | `adjudicada` | `abierta` | proveedor | Motivo obligatorio | Libera proveedor y equipo; registra en `neg_cancelaciones` y `tasa_cancelacion`; el proveedor no puede volver a ofertar en esta solicitud; las demás ofertas siguen cerradas; chat de solo lectura |
 | `adjudicada` | `cancelada` | cliente | Motivo obligatorio | Registra en `neg_cancelaciones` (parte `cliente`); sin penalidad en dinero |
@@ -29,9 +29,9 @@ Toda transición pasa por `MaquinaEstadosSolicitud` (invariante 7), con fila de 
 
 No existe cancelación desde `en_ejecucion`: lo no ejecutado se cierra con las hectáreas realmente ejecutadas y, si hay desacuerdo, con una disputa.
 
-Plazos (parámetros): vigencia de la solicitud 7 días; renovación 30 días; disputa del cliente 72 horas desde `finalizada`; calificación 7 días desde `finalizada`.
+Plazos (parámetros): vigencia de la solicitud hasta el fin de la fecha deseada, con máximo de 365 días (30 si no hay fecha deseada); anticipación máxima de la fecha deseada 365 días; aviso al cliente 3 días antes de vencer; renovación 30 días; disputa del cliente 72 horas desde `finalizada`; calificación 7 días desde `finalizada`.
 
-Procesos programados: `negociacion:procesar` cada minuto (vence ofertas, expira solicitudes, reevalúa `con_ofertas` y `abierta`; idempotente, `withoutOverlapping`, `onOneServer`) y `seguimiento:avisar-inactividad` cada hora (avisa a las partes si una solicitud `en_ejecucion` no tiene avance en `seguimiento.inactividad_horas`, 72 por defecto).
+Procesos programados: `negociacion:procesar` cada minuto (vence ofertas, expira solicitudes, reevalúa `con_ofertas` y `abierta`, avisa los vencimientos próximos y avanza las oleadas de aviso, §7.1; idempotente, `withoutOverlapping`, `onOneServer`) y `seguimiento:avisar-inactividad` cada hora (avisa a las partes si una solicitud `en_ejecucion` no tiene avance en `seguimiento.inactividad_horas`, 72 por defecto).
 
 ## 2. Máquina de estados de la oferta
 
@@ -52,7 +52,7 @@ Reglas:
 2. Cada oferta siguiente la crea la contraparte del autor de la vigente, con `numero + 1`. El autor alterna: impar proveedor, par cliente.
 3. `numero = negociacion.max_ofertas_por_negociacion` (5) marca `es_definitiva = true`: no admite contraoferta, solo aceptar o rechazar.
 4. Una sola oferta `vigente` por `(solicitud_id, proveedor_id)` y una sola `aceptada` por solicitud (índices únicos parciales).
-5. `vence_en = min(ahora + vigencia_oferta_horas, vence_en de la solicitud)`; en solicitudes `abierta` o `con_ofertas`.
+5. `vence_en = min(ahora + vigencia_oferta_horas, vence_en de la solicitud)`; en solicitudes `abierta` o `con_ofertas`. `vigencia_oferta_horas` admite cualquier cantidad de horas (720 son 30 días).
 6. Un proveedor con una negociación cerrada por `vencida` o `retirada` puede abrir otra mientras la solicitud siga abierta; tras `rechazada` por el cliente no.
 7. Si el proveedor `acepta_propuesta`, el cliente no queda obligado: elige entre las ofertas. Aceptarla es lo que adjudica.
 8. Aceptar, rechazar y contraofertar una oferta que no es `vigente` o cuyo `vence_en` pasó responde 409 `oferta_no_vigente`. Aceptar cuando la solicitud ya está adjudicada responde 409 `solicitud_ya_adjudicada`.
@@ -65,13 +65,15 @@ Reglas:
 - `precio_ha > 0` y `<= negociacion.precio_ha_maximo`; escala de 4 decimales.
 - `monto_estimado = hectareas_solicitadas × precio_ha_acordado`; `monto_final = hectareas_ejecutadas × precio_ha_acordado`, congelado en `finalizada` (redondeo a 2 decimales).
 - `hectareas_ejecutadas <= hectareas_solicitadas × (1 + seguimiento.tolerancia_hectareas_pct / 100)`; la tolerancia por defecto es 5 %. Pasarse responde 422.
+- No hay precio de referencia: lo ponen el cliente y el proveedor.
 - El cliente puede cambiar `precio_ha_propuesto` con `POST /solicitudes/{id}/precio` mientras la solicitud está `abierta` o `con_ofertas`. Las ofertas vigentes no cambian; se notifica a los proveedores con negociación vigente.
+- Un equipo que no cumple un requisito del cliente (§3.7) puede ofertar.
 
 ### 3.2 Quién puede ofertar
 Cuenta de proveedor (titular o piloto) con proveedor `aprobado`, al menos un equipo apto (piloto y dron aprobados, dron con fotos aprobadas, documentos vigentes), sin suspensión. El `equipo_id` de la oferta debe ser de su proveedor y apto. Un proveedor no oferta sobre solicitudes de su propia cuenta de cliente.
 
 ### 3.3 Alcance del mapa
-Todo piloto habilitado ve todas las solicitudes `abierta` y `con_ofertas` de Santa Cruz; los filtros son del usuario, no restricciones. No hay radio fijo de operación.
+No hay zonas, radio ni restricción geográfica. Un piloto habilitado ve una solicitud `abierta` o `con_ofertas` si tiene una negociación en ella o si no está en negociación y, o bien ya se abrió a todos (la oleada llegó a `paso_apertura_general`), o bien una oleada lo alcanzó. Los filtros del mapa son del usuario, no restricciones; el único filtro geográfico es el departamento. Ofertar sobre una solicitud que no ve responde 409 `solicitud_no_disponible`.
 
 ### 3.4 Qué ve cada parte en cada estado
 
@@ -82,7 +84,7 @@ Todo piloto habilitado ve todas las solicitudes `abierta` y `con_ofertas` de San
 | Cantidad de ofertas vigentes | Sí | Sí | Sí | — | — |
 | Precios de las ofertas de otros proveedores | No | No | Sí | No | No |
 | Nombre, teléfono y documento del cliente, referencia textual de dirección | No | No | — | Sí | No |
-| Nombre, foto, calificación y servicios del proveedor, modelo y fotos aprobadas del dron, distancia | — | — | Sí, por oferta | — | — |
+| Nombre, foto, calificación y servicios del proveedor, modelo y fotos aprobadas del dron, requisitos que no cumple | — | — | Sí, por oferta | — | — |
 | Teléfono y documento del piloto | — | — | Solo adjudicado | — | — |
 | Fotos de avance, porcentaje y hectáreas ejecutadas | — | — | Sí | Sí | No |
 | Ubicación del piloto | — | — | Solo en `en_ejecucion` | Sí (la propia) | No |
@@ -97,6 +99,17 @@ Sin penalidad en dinero ni restricción automática. `neg_cancelaciones` aliment
 
 ### 3.6 Elegibilidad al adjudicar
 Antes de adjudicar se revalida bajo bloqueo: proveedor aprobado, equipo apto y sin otra solicitud `adjudicada` o `en_ejecucion` cuyo rango de fecha deseada se cruce con la de esta. Si falla, 409 `equipo_no_disponible` y la oferta sigue vigente.
+
+### 3.7 Requisitos del cliente y equipo que no cumple
+`requisitos` de la solicitud es un objeto por clave de criterio (`{"dron_capacidad_min_l": "20.00"}`; decimales como cadena). Cada clave la valida su criterio de alcance (ADR 0045); una clave desconocida se rechaza al crear con 422 `requisito_desconocido`. Al ofertar el servidor evalúa los requisitos contra el equipo y guarda en la oferta `incumple` (lista de claves que no cumple, vacía si cumple todo). No bloquea. El comparador y el aviso de oferta recibida muestran qué requisito no se cumple y, si todas las ofertas vigentes incumplen, lo dicen de forma explícita.
+
+### 3.8 Etapa de negociación y búsqueda detenida
+- La solicitud está **en negociación** cuando alguna de sus negociaciones tiene una oferta `vigente` con `numero >= 2` (el cliente ya respondió). Se calcula de las ofertas, no se guarda: termina sola al rechazarse, retirarse o vencer esa oferta y al adjudicar. Mientras dura, no aparece en el mapa de los demás proveedores y la oleada queda `en_pausa`; al terminar, la oleada continúa y el reloj del siguiente paso se reinicia.
+- `POST /solicitudes/{id}/busqueda/detener` (solo el cliente, solicitud `abierta` o `con_ofertas`) detiene las oleadas y congela el alcance: no se abre a más proveedores y sigue visible para quienes ya la ven. `POST /solicitudes/{id}/busqueda/reanudar` la reactiva. Ambos son idempotentes y devuelven el estado de la búsqueda; en otro estado, 409 `estado_invalido`.
+- La solicitud del cliente trae `etapa` (`buscando`, `en_negociacion` o `busqueda_detenida`) y `busqueda` (`estado` de la oleada, `ciclo`, `paso`, `avisados`: cantidad, nunca quiénes).
+
+### 3.9 Orden de las ofertas
+`GET /solicitudes/{id}/ofertas?orden=` acepta `recomendado` (por defecto: proveedores `propio` primero; luego mayor calificación, con quien tiene menos de `negociacion.oleadas.calificaciones_minimas_para_contar` calificaciones al final de su grupo; luego menor `precio_ha`; luego la más antigua), `precio`, `calificacion` y `reciente`. No hay orden por distancia: no se calcula.
 
 ## 4. Seguimiento y cierre
 
@@ -142,7 +155,12 @@ Finalizar no exige ningún otro tipo de registro operativo: solo `cierre` y las 
 
 ```json
 {
-  "nuevas_solicitudes": { "activo": true, "zonas": [3, 7], "macrorregiones": ["chiquitania"], "hectareas_minimas": "50.0000" },
+  "nuevas_solicitudes": {
+    "activo": true,
+    "hectareas_minimas": "50.0000",
+    "departamentos_excluidos": ["04", "09"],
+    "tipos_aplicacion_excluidos": ["desecante"]
+  },
   "ofertas": true,
   "mensajes": true,
   "avance": true,
@@ -150,10 +168,18 @@ Finalizar no exige ningún otro tipo de registro operativo: solo `cierre` y las 
 }
 ```
 
-- `nuevas_solicitudes` aplica solo a cuentas de proveedor. `zonas` y `macrorregiones` vacías significan todas. Por defecto activo, todas las zonas, sin mínimo de hectáreas.
+- `nuevas_solicitudes` aplica solo a cuentas de proveedor. Los filtros (`hectareas_minimas`, `departamentos_excluidos` con el código del catálogo, `tipos_aplicacion_excluidos`) son preferencias del proveedor que gobiernan solo los avisos; vacíos o ausentes no restringen. Se guardan en `neg_preferencias.filtros` y una clave desconocida se rechaza al guardar con 422. La respuesta incluye `filtros_disponibles` (lista de claves que el servidor conoce, con su tipo de valor) para que la app pinte los que sabe. Por defecto activo y sin filtros.
 - Las categorías obligatorias (`SolicitudAdjudicada`, cierre, precio final confirmado, expiración, cuenta y aprobación, disputas, emergencias) no se pueden desactivar y no aparecen en las preferencias.
 - `POST /dispositivos` registra `{ token, plataforma: android|ios }` del push (201 la primera vez, 200 si ya estaba; si el token estaba a nombre de otra cuenta pasa a la actual); `DELETE /dispositivos/{token}` lo retira al cerrar sesión (404 si no existe o es de otra cuenta). El token nunca se devuelve ni se escribe en logs ni en la bitácora. El envío al sistema operativo requiere configurar el proveedor de push (credencial fuera del repositorio); mientras no esté, el aviso vive en la lista `GET /notificaciones` y se consulta por sondeo.
-- Al abrir una solicitud se envía un aviso a cada cuenta de proveedor aprobada cuyas preferencias coincidan con la zona y las hectáreas. Una solicitud avisa a una cuenta una sola vez.
+- El aviso de una nueva solicitud sale por oleadas (§7.1): una solicitud avisa a una cuenta una sola vez por ciclo.
+
+### 7.1 Oleadas de aviso
+- Al publicar, el servidor arma la lista de proveedores que cumplen **todos** los criterios de alcance en el paso 0 y los avisa en el acto. Cada `negociacion.oleadas.intervalo_minutos` (2), si la solicitud sigue sin ofertas, avanza un paso de la escalera (`negociacion.oleadas.escalera`: cada paso relaja criterios y cambia parámetros, de forma acumulativa) y avisa solo a quienes ahora cumplen y no habían sido avisados. Un paso sin proveedores nuevos no espera: pasa al siguiente en la misma pasada.
+- Criterios iniciales: `aprobado` (proveedor aprobado con equipo apto), `disponible` (`disponibilidad = disponible`), `calificacion` (mínimo del paso; los propios siempre cumplen; quien tiene menos de `calificaciones_minimas_para_contar` calificaciones cuenta como sin calificación), `dron_capacidad` (requisito del cliente) y los filtros del proveedor (§7). Solo `calificacion` y los requisitos del cliente son relajables; `aprobado`, `disponible` y los filtros del proveedor nunca se relajan.
+- Escalera inicial: paso 0 calificación mínima 4,50; paso 1, 4,00; paso 2 sin mínimo (y la solicitud se abre a todos en el mapa, `paso_apertura_general`); paso 3 sin el requisito de dron del cliente.
+- Al agotarse la escalera la oleada queda `agotada`; tras `reinicio_horas` (24) abre un ciclo nuevo desde el paso 0, hasta `max_reinicios` (2) veces. Renovar una solicitud expirada abre un ciclo nuevo.
+- Registro de avisos `neg_oleada_avisos` con `UNIQUE (solicitud_id, proveedor_id, ciclo)`; la clave del aviso es `nueva_solicitud_abierta:{solicitud}:{ciclo}`. Correr la pasada dos, tres o diez veces deja las mismas filas y los mismos avisos; un aviso insertado y no entregado se reintenta.
+- Estados de `neg_oleadas.estado`: `activa`, `en_pausa` (en negociación), `detenida` (el cliente dejó de buscar), `agotada` (espera el reinicio) y `terminada` (adjudicada, cancelada, expirada o sin reinicios). Una cuenta con `nuevas_solicitudes` apagado no recibe estos avisos.
 
 ## 8. Mapa de solicitudes abiertas
 
@@ -162,24 +188,25 @@ Finalizar no exige ningún otro tipo de registro operativo: solo `cierre` y las 
 | Parámetro | Significado |
 |---|---|
 | `bbox` | `oeste,sur,este,norte` del encuadre del mapa |
-| `zona_id`, `macrorregion` | Filtro de zona o de región |
+| `departamento` | Código del departamento del catálogo |
 | `hectareas_min`, `hectareas_max` | Rango de hectáreas solicitadas |
 | `precio_ha_min`, `precio_ha_max` | Rango del precio propuesto |
 | `fecha_hasta` | Ventana deseada que empieza antes de esa fecha |
 | `cultivo`, `tipo_aplicacion` | Filtros de contenido |
-| `orden` | `distancia` (usa `lat` y `lon` del piloto, que no se guardan), `precio_ha`, `hectareas`, `reciente` |
+| `orden` | `reciente` (por defecto), `precio_ha`, `hectareas`, `fecha_deseada` |
 | `cursor`, `limite` | Paginación por cursor (máximo 100) |
 
-Cada elemento: `id`, `centro` (`latitud`, `longitud` del centroide de los lotes), `hectareas_solicitadas`, `precio_ha_propuesto`, `zona`, `macrorregion`, `cultivo`, `tipo_aplicacion`, `ventana_desde`, `ventana_hasta`, `ofertas_vigentes`, `mi_negociacion` (estado de su oferta o `null`), `distancia_km`, `publicada_en`, `vence_en`.
+Cada elemento: `id`, `centro` (`latitud`, `longitud` del centroide de los lotes), `hectareas_solicitadas`, `precio_ha_propuesto`, `departamento`, `provincia`, `municipio`, `comunidad`, `cultivo`, `tipo_aplicacion`, `requisitos`, `ventana_desde`, `ventana_hasta`, `ofertas_vigentes`, `mi_negociacion` (estado de su oferta o `null`), `publicada_en`, `vence_en`. Solo trae lo visible para ese proveedor (§3.3).
 
-`GET /solicitudes-abiertas/resumen-zonas` (mismos filtros): por zona y macrorregión, `solicitudes`, `hectareas_total`, `precio_ha_promedio`, `centro`. Responde la pregunta «cuántos clientes y cuántas hectáreas hay en los valles frente a la Chiquitania».
+No hay resumen por zona ni cálculo de distancia: el mapa no recibe la posición del piloto.
 
 `GET /solicitudes-abiertas/{id}`: detalle previo a ofertar con los datos de la primera columna de §3.4 (polígonos GeoJSON de cada lote, estado del terreno, fotos con URL firmada de corta vida). No incluye datos del cliente.
 
 ## 9. Registro del proveedor, datos de la persona y dron con fotos
 
-- `POST /proveedores/registro`: cuenta, `tipo` (`independiente` | `tercero`), datos de la persona (`nombres`, `apellidos`, `documento_identidad`, `telefono`, `fecha_nacimiento`), `zona_base_id`, datos del piloto (`licencia_numero`, `licencia_vence`) y datos del dron (`marca`, `modelo`, `anio`, `numero_serie`, `capacidad_tanque_l`, `ancho_pasada_m`). Idempotente por `uuid_cliente`. Queda `pendiente`.
+- `POST /proveedores/registro`: cuenta, `tipo` (`independiente` | `tercero`), datos de la persona (`nombres`, `apellidos`, `documento_identidad`, `telefono`, `fecha_nacimiento`), datos del piloto (`licencia_numero`, `licencia_vence`) y datos del dron (`marca`, `modelo`, `anio`, `numero_serie`, `capacidad_tanque_l`, `ancho_pasada_m`). Idempotente por `uuid_cliente`. Queda `pendiente`.
 - `PUT /perfil/foto` y `DELETE /perfil/foto` (foto de perfil de la cuenta del token: cliente, titular o piloto; menos de 300 KB). La imagen se entrega por una URL firmada de corta vida (`GET /personas/{usuario}/foto`, sin token): `foto_url` viaja en `GET /auth/sesion` para la propia cuenta y en la tarjeta del proveedor (`proveedor.foto_url`, la del piloto del equipo o, si no tiene, la del titular) que ve el cliente al comparar ofertas.
+- `PUT /proveedores/mi/disponibilidad` (`disponibilidad`: `disponible`, `ocupado` o `en_trabajo`; solo el titular, `proveedores.cuenta.gestionar`) cambia el estado manual; `GET /proveedores/mi` lo devuelve. `ocupado` y `en_trabajo` dejan de recibir avisos de nuevas solicitudes; el proveedor sigue viendo el mapa y puede ofertar.
 - `GET /proveedores/mi` y `GET /proveedores/drones`: el titular (`proveedores.cuenta.gestionar`) gestiona su proveedor y sus drones; el piloto de un proveedor, incluido el piloto propio de Agrocom (`proveedores.cuenta.ver`), los ve en solo lectura: el proveedor al que pertenece (sin documento fiscal) y los drones de sus equipos vigentes. Un rol sin ninguno de los dos permisos responde 403, y nadie ve el proveedor ni los drones de otro.
 - `POST /proveedores/drones/{id}/fotos` (multipart; campos `tipo`, `archivo`); `GET` lista con estado; `DELETE /proveedores/drones/{id}/fotos/{foto}` solo mientras `en_revision` o `rechazada`.
 - Fotos obligatorias para aprobar el dron: las del parámetro `flota.fotos_obligatorias` (`frontal`, `lateral`, `placa_serie`). El administrador aprueba o rechaza cada foto con motivo en `panel/drones-flota`.
@@ -189,7 +216,7 @@ Cada elemento: `id`, `centro` (`latitud`, `longitud` del centroide de los lotes)
 ## 10. Recursos nuevos, cambiados y retirados
 
 ### Nuevos
-`GET /solicitudes-abiertas`, `GET /solicitudes-abiertas/resumen-zonas`, `GET /solicitudes-abiertas/{id}`, `POST /solicitudes/{id}/ofertas`, `GET /solicitudes/{id}/ofertas`, `GET /ofertas/{id}`, `POST /ofertas/{id}/contraofertar`, `POST /ofertas/{id}/retirar`, `POST /solicitudes/{id}/precio`, `POST /solicitudes/{id}/renovar`, `GET /solicitudes/{id}/avance`, `POST /solicitudes/{id}/{inicio|avance|cierre|evidencias}`, `GET /solicitudes/{id}/ubicacion-piloto`, `GET /solicitudes/{id}/precio-final`, `POST /solicitudes/{id}/precio-final/confirmar`, `PUT /ubicacion`, `GET|POST /solicitudes/{id}/mensajes`, `POST /solicitudes/{id}/mensajes/leidos`, `POST /solicitudes/{id}/pago-confirmado`, `GET|PUT /notificaciones/preferencias`, `POST /dispositivos`, `DELETE /dispositivos/{token}`, `POST /terrenos/{id}/fotos`, `DELETE /terrenos/{id}/fotos/{foto}`, `GET /terrenos/fotos/{foto}/archivo`, `GET /referencias/precio`, `POST|GET|DELETE /proveedores/drones/{id}/fotos`, `PUT|DELETE /perfil/foto`, `GET /personas/{usuario}/foto`, `GET /solicitudes/{id}/pago-confirmado`; registros `inicio`, `avance`, `cierre` y `mensaje`.
+`GET /solicitudes-abiertas`, `GET /solicitudes-abiertas/{id}`, `GET /catalogos/ubicaciones`, `POST /solicitudes/{id}/busqueda/detener`, `POST /solicitudes/{id}/busqueda/reanudar`, `PUT /proveedores/mi/disponibilidad`, `POST /solicitudes/{id}/ofertas`, `GET /solicitudes/{id}/ofertas`, `GET /ofertas/{id}`, `POST /ofertas/{id}/contraofertar`, `POST /ofertas/{id}/retirar`, `POST /solicitudes/{id}/precio`, `POST /solicitudes/{id}/renovar`, `GET /solicitudes/{id}/avance`, `POST /solicitudes/{id}/{inicio|avance|cierre|evidencias}`, `GET /solicitudes/{id}/ubicacion-piloto`, `GET /solicitudes/{id}/precio-final`, `POST /solicitudes/{id}/precio-final/confirmar`, `PUT /ubicacion`, `GET|POST /solicitudes/{id}/mensajes`, `POST /solicitudes/{id}/mensajes/leidos`, `POST /solicitudes/{id}/pago-confirmado`, `GET|PUT /notificaciones/preferencias`, `POST /dispositivos`, `DELETE /dispositivos/{token}`, `POST /terrenos/{id}/fotos`, `DELETE /terrenos/{id}/fotos/{foto}`, `GET /terrenos/fotos/{foto}/archivo`, `POST|GET|DELETE /proveedores/drones/{id}/fotos`, `PUT|DELETE /perfil/foto`, `GET /personas/{usuario}/foto`, `GET /solicitudes/{id}/pago-confirmado`; registros `inicio`, `avance`, `cierre` y `mensaje`.
 
 ### Cambiados
 - `POST /solicitudes`, `PUT /solicitudes/{id}`: reciben `precio_ha_propuesto`, varios terrenos, `observaciones`; ya no calculan tarifa ni recargos. `GET /solicitudes/{id}/estimacion` pasa a devolver el monto estimado con el precio propuesto.
@@ -200,14 +227,21 @@ Cada elemento: `id`, `centro` (`latitud`, `longitud` del centroide de los lotes)
 - `GET /reputacion`: calificación, tasa de cancelación y alertas; sin sanciones ni tasa de aceptación.
 - `GET /sync/catalogo`: `servicios_asignados` pasa a ser las solicitudes `adjudicada` y `en_ejecucion` del equipo con lotes, datos de contacto y precio acordado; suma `mensajes`.
 - Disputas: motivos §8.3 de `marketplace.md`; el resultado ajusta `monto_ajustado`, sin comisión.
-- `POST /proveedores/registro`, `/proveedores/drones`: datos de persona y dron (§9).
+- `POST /proveedores/registro`, `/proveedores/drones`: datos de persona y dron (§9); `zona_base_id` y `radio_operacion_km` ya no existen.
+- `POST/PUT /terrenos`: `departamento_codigo` y `provincia_codigo` (del catálogo), `municipio` y `comunidad`; `zona_id` ya no existe.
+- `POST/PUT /solicitudes`: `requisitos`, fecha deseada hasta la anticipación máxima; `GET /solicitudes` y `/{id}` suman `departamento`, `provincia`, `etapa` y `busqueda`; `GET /solicitudes/{id}/estimacion` ya no trae `precio_referencia_ha`.
+- `GET /solicitudes-abiertas`: filtro `departamento`, solo lo visible para el proveedor (§3.3), sin `zona`, `macrorregion`, `distancia_km` ni `lat`/`lon`.
+- `GET /solicitudes/{id}/ofertas`: `orden` por defecto `recomendado`, `incumple` por oferta, sin `distancia_km`.
+- `GET/PUT /notificaciones/preferencias`: filtros del proveedor (§7) en lugar de zonas y macrorregiones.
 
 ### Retirados
-`PUT|GET /disponibilidad` y la noción de equipo en línea; `POST /solicitudes/{id}/conformidad` y `POST /solicitudes/{id}/acta/firmar` (el cierre lo marca el piloto y el cliente puede disputar); la penalidad de cancelación, la comisión (`comision_porcentaje`, `comision_monto`, estado de cuenta, bloqueo por comisión vencida) y las sanciones automáticas (`asg_sanciones`, tasa de aceptación).
+`GET /zonas`, `GET /solicitudes-abiertas/resumen-zonas`, `GET /referencias/precio`, el cálculo de distancia (`distancia_km`, `orden=distancia`, posición en la consulta del mapa), las zonas y macrorregiones, el precio de referencia y la base y el radio de operación del proveedor (ADR 0045); `PUT|GET /disponibilidad` y la noción de equipo en línea (la disponibilidad actual es solo el estado manual del proveedor, `PUT /proveedores/mi/disponibilidad`); `POST /solicitudes/{id}/conformidad` y `POST /solicitudes/{id}/acta/firmar` (el cierre lo marca el piloto y el cliente puede disputar); la penalidad de cancelación, la comisión (`comision_porcentaje`, `comision_monto`, estado de cuenta, bloqueo por comisión vencida) y las sanciones automáticas (`asg_sanciones`, tasa de aceptación).
 
 ## 11. Datos existentes
 
-Ninguna migración borra datos; toda tabla o columna que sale de `public` se mueve a un esquema `respaldo_*` (`ALTER TABLE … SET SCHEMA` o copia previa a la columna) con `down()` que la restaura, y se verifica contra PostgreSQL. Los esquemas `respaldo_*` los elimina la migración `2026_12_04_100100_elimina_esquemas_de_respaldo` (el sistema no conserva datos retirados).
+Salvo la excepción de abajo, ninguna migración borra datos; toda tabla o columna que sale de `public` se mueve a un esquema `respaldo_*` (`ALTER TABLE … SET SCHEMA` o copia previa a la columna) con `down()` que la restaura, y se verifica contra PostgreSQL. Los esquemas `respaldo_*` los elimina la migración `2026_12_04_100100_elimina_esquemas_de_respaldo` (el sistema no conserva datos retirados).
+
+Excepción del ADR 0045 (punto 26): el retiro de las zonas (`sol_zonas`, `zona_id`, `zona_base_id`, `radio_operacion_km`, zonas de las preferencias), del precio de referencia (`sol_precios_referencia`) y de la distancia (`neg_ofertas.distancia_km`) no pasa por `respaldo_*`, porque en beta solo hay datos de prueba y los catálogos son semillas. Las migraciones de retiro son nuevas, con `down()` verificado, y después se reconsolidan (ADR 0024). La excepción caduca si existe un dato real al integrarlas.
 
 | Origen | Destino |
 |---|---|

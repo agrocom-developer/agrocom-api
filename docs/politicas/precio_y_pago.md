@@ -1,12 +1,12 @@
 # Política de precio y pago
 
-**Agrocom SRL · Vigente** · Decisión: ADR 0034 · Especificación: `docs/especificacion/marketplace.md` §8.2
+**Agrocom SRL · Vigente** · Decisión: ADR 0034, ADR 0045 · Especificación: `docs/especificacion/marketplace.md` §8.2
 
 ## Precio por hectárea
 
 - Lo propone el cliente al publicar y se negocia con cada piloto (política de negociación).
 - Al adjudicar queda congelado como `precio_ha_acordado`; no cambia después, salvo por la resolución de una disputa.
-- El sistema no sugiere ni limita precios: el cliente fija el suyo al publicar y el proveedor el suyo al ofertar.
+- No hay precio de referencia: lo ponen el cliente y el proveedor. El sistema solo rechaza un precio por encima de un máximo de sanidad (parámetro) para evitar errores de digitación.
 
 ## Monto
 
