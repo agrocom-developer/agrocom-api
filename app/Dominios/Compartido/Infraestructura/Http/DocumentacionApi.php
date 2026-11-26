@@ -91,6 +91,18 @@ use OpenApi\Attributes as OA;
     ],
     type: 'object',
 )]
+#[OA\Schema(
+    schema: 'CuentaYaRegistrada',
+    title: 'Cuenta ya registrada',
+    description: 'Respuesta 409 de un registro (ADR 0046): el teléfono o la persona (documento) ya tiene una cuenta de ESE tipo. No dice cuál de los dos datos chocó, ni datos de nadie, ni si la cuenta está completa: la persona inicia sesión o recupera su acceso. Cada 409 cuenta contra un tope por hora por IP, teléfono y documento (después, 429).',
+    required: ['message', 'codigo', 'tipo_cuenta'],
+    properties: [
+        new OA\Property(property: 'message', type: 'string', example: 'Ya tienes una cuenta de cliente. Inicia sesión o recupera tu acceso.'),
+        new OA\Property(property: 'codigo', type: 'string', enum: ['cuenta_ya_registrada'], example: 'cuenta_ya_registrada'),
+        new OA\Property(property: 'tipo_cuenta', description: 'Tipo de la cuenta que ya existe.', type: 'string', enum: ['cliente', 'proveedor'], example: 'cliente'),
+    ],
+    type: 'object',
+)]
 final class DocumentacionApi
 {
     // Intencionalmente vacía: existe solo como ancla de los atributos OpenAPI.

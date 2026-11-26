@@ -3,7 +3,7 @@
     Listado de cuentas del panel, solo personal de Agrocom (HU-45, tarea 39; ADR 0046): arquetipo
     Listado, §6.2 de docs/diseno/guia_pantalla_panel.md — cabecera →
     filtros → tabla → paginación. Mismo molde que clientes/index.blade.php,
-    con una columna de roles (chips) y persona asociada, y con el estado de
+    con una columna de roles (chips) y con el estado de
     acceso de la cuenta (activo/bloqueado).
 
     Datos esperados (ver UsuariosController::index()):
@@ -16,8 +16,6 @@
       cada cuenta (`id de usuario => [id de rol => nombre legible]`), para el
       selector de «Ver como». Vacío si el rol activo no tiene
       `seguridad.usuario.ver_como` (tarea 140).
-    - $etiquetasPersona (array<int, string>): nombre de persona por
-      persona_id.
     - $filtros (array{q: string}): búsqueda aplicada.
     - $tonoPorEstado (array<string, string>): estado de acceso → tono, el mismo
       mapa para el badge, el botón de la fila y el modal
@@ -110,13 +108,12 @@
                      (1440 con el menú lateral) ocho columnas no dejan sitio al texto. --}}
                 <x-molecules.index-table
                     class="ag-usuarios__listado"
-                    columns="3rem minmax(0, 1.8fr) minmax(0, 1.5fr) minmax(0, 1.2fr) 6rem var(--ag-row-actions-width)"
+                    columns="3rem minmax(0, 1.8fr) minmax(0, 1.8fr) 6rem var(--ag-row-actions-width)"
                 >
                     <x-slot:head>
                         <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('seguridad.usuarios.col_nombre_usuario') }}</span>
                         <span role="columnheader">{{ __('seguridad.usuarios.col_roles') }}</span>
-                        <span role="columnheader">{{ __('seguridad.usuarios.col_persona') }}</span>
                         <span role="columnheader">{{ __('seguridad.usuarios.col_estado') }}</span>
                         <span role="columnheader" class="ag-index-table__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
                     </x-slot:head>
@@ -155,7 +152,6 @@
                                     {{ __('seguridad.usuarios.sin_roles') }}
                                 @endforelse
                             </span>
-                            <span role="cell">{{ $usuario->persona_id !== null ? ($etiquetasPersona[$usuario->persona_id] ?? __('seguridad.usuarios.sin_persona')) : __('seguridad.usuarios.sin_persona') }}</span>
                             <span role="cell">
                                 <x-atoms.badge :variant="$tonoPorEstado[$estadoValor]">
                                     {{ __('seguridad.usuarios.estado_'.$estadoValor) }}

@@ -8,9 +8,9 @@ use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Contratos\FotosDePerfil;
 use App\Dominios\Seguridad\Contratos\IdentidadOperarioToken;
 use App\Dominios\Seguridad\Contratos\LecturaCuentas;
-use App\Dominios\Seguridad\Contratos\LecturaUsuarioDePersona;
 use App\Dominios\Seguridad\Contratos\LecturaUsuariosPorRol;
 use App\Dominios\Seguridad\Contratos\RegistroCuentas;
+use App\Dominios\Seguridad\Dominio\NumeroDeTelefono;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecTokenDispositivo;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioApp;
 use App\Dominios\Seguridad\Infraestructura\Http\AutorizacionPanelWebSesion;
@@ -64,10 +64,6 @@ final class SeguridadServiceProvider extends ServiceProvider
         // necesita saber qué persona de `Personal` firma el token sin
         // importar `SecUser`.
         $this->app->bind(IdentidadOperarioToken::class, IdentidadOperarioTokenSanctum::class);
-
-        // Misma frontera, para la ficha de una persona (tarea 112): `Personal`
-        // muestra la cuenta vinculada sin importar `SecUser`.
-        $this->app->bind(LecturaUsuarioDePersona::class, LecturaUsuarioDePersonaEloquent::class);
 
         // Misma frontera, para `Notificaciones` (tarea 141, ADR 0025): a qué
         // cuentas avisar cuando un hecho le importa a un rol.
@@ -139,7 +135,9 @@ final class SeguridadServiceProvider extends ServiceProvider
     private function configurarLimitesDeLogin(): void
     {
         RateLimiter::for('login-campo', function (Request $request): array {
-            $usuario = mb_strtolower(trim((string) $request->input('username')));
+            // El teléfono se normaliza igual que en el login: `70012345` y `+591 700-12345` son el mismo cubo.
+            $crudo = trim((string) $request->input('username'));
+            $usuario = NumeroDeTelefono::normalizar($crudo) ?? mb_strtolower($crudo);
 
             return [
                 Limit::perMinute(6)->by('login-campo|usuario|'.sha1($usuario).'|'.$request->ip()),

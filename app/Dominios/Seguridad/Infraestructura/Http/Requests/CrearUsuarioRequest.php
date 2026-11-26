@@ -6,21 +6,13 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * `POST /panel/usuarios` (HU-45, tarea 39; tarea 65 le agrega `type`).
- * Validación de forma/feedback temprano — la guarda de negocio real
- * (duplicado de `username`/`persona_id`, permisos de rol dueño y de portal,
- * contrato vigente) sigue viviendo en `AsignarRolesUsuario`/
- * `CrearCuentaPortal`, que el controlador invoca después; esto es la
- * segunda línea de defensa, no la primera.
- *
- * Un solo formulario para los dos tipos (interno/cliente): `persona_id` y
- * `roles` son del camino interno, `contrato_id` es del camino portal.
- * `present_if`/`prohibited_if`/`required_if` sobre `type` (el propio campo
- * del payload) hacen que mezclar campos de un camino con el tipo del otro
- * (p. ej. `type=cliente` + `persona_id`) sea un 422, nunca un dato ignorado
- * en silencio. `roles` usa `present_if`, no `required_if`: una cuenta
- * interna sin ningún rol asignado es un estado válido (el array puede
- * llegar vacío), lo que no se permite es OMITIR la clave.
+ * `POST /panel/usuarios`: alta de una cuenta de panel (HU-45, tarea 39). Validación de
+ * forma y feedback temprano — la guarda de negocio real (duplicado de
+ * `username`/`email`, permiso de `administrador`, un solo rol del panel) vive en
+ * `AsignarRolesUsuario`, que el controlador invoca después; esto es la segunda línea
+ * de defensa, no la primera. Solo se crean cuentas de panel (`type = interno`): las
+ * de app se registran por su app o las crea la oficina desde la ficha del cliente o
+ * del proveedor (ADR 0046).
  */
 final class CrearUsuarioRequest extends FormRequest
 {
@@ -41,15 +33,9 @@ final class CrearUsuarioRequest extends FormRequest
                 'string',
                 'email',
                 'max:150',
-                Rule::unique('sec_user', 'email')->whereNull('deleted_at'),
+                Rule::unique('sec_user', 'email')->where('tipo_cuenta', 'panel')->whereNull('deleted_at'),
             ],
             'password' => ['required', 'string', 'min:8'],
-            'persona_id' => [
-                'prohibited_if:type,cliente',
-                'nullable',
-                'integer',
-                Rule::exists('per_personas', 'id')->whereNull('deleted_at'),
-            ],
             // Una cuenta de panel tiene un solo rol (ADR 0046, punto 4); el catálogo de roles
             // del panel es fijo y `AsignarRolesUsuario` revalida que sea administrador u operador.
             'roles' => [
@@ -72,8 +58,6 @@ final class CrearUsuarioRequest extends FormRequest
             'password.required' => __('seguridad.usuarios.error_password_requerido'),
             'username.unique' => __('seguridad.validacion.usuario_username_unico'),
             'email.unique' => __('seguridad.validacion.usuario_email_unico'),
-            'persona_id.exists' => __('seguridad.validacion.usuario_persona_invalida'),
-            'persona_id.prohibited_if' => __('seguridad.validacion.usuario_persona_prohibida_portal'),
             'roles.present_if' => __('seguridad.validacion.usuario_roles_requerido'),
             'roles.size' => __('seguridad.validacion.usuario_roles_un_solo_rol'),
             'roles.prohibited_if' => __('seguridad.validacion.usuario_roles_prohibido_portal'),

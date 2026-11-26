@@ -15,6 +15,7 @@ use App\Dominios\Proveedores\Infraestructura\Eloquent\Proveedor;
 use App\Dominios\Proveedores\Infraestructura\Http\Requests\RegistrarPilotoDesdePanelRequest;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Contratos\CuentaDuplicada;
+use App\Dominios\Seguridad\Contratos\CuentaYaRegistrada;
 use App\Dominios\Seguridad\Contratos\LecturaCuentas;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -94,7 +95,7 @@ final class PilotosController
 
         try {
             $piloto = $registrar->ejecutarParaProveedor($proveedorId, (int) Auth::guard('interno')->id(), $datos);
-        } catch (CuentaDuplicada|RegistroInvalido $excepcion) {
+        } catch (CuentaYaRegistrada|CuentaDuplicada|RegistroInvalido $excepcion) {
             return redirect()->back()->withInput($request->except('password'))->withErrors(['estado' => $excepcion->getMessage()]);
         }
 

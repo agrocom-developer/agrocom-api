@@ -225,7 +225,7 @@ test('una cuenta de panel tiene un solo rol, de los dos del panel', function () 
     $actor = SecUser::query()->findOrFail(matrizCuenta('actor', ['administrador']));
     $asignar = app(AsignarRolesUsuario::class);
 
-    $alta = fn (array $roles): SecUser => $asignar->ejecutar($actor, null, 'nuevo.'.uniqid(), null, 'secreto123', 'Nuevo', TipoUsuario::Interno, null, $roles, null);
+    $alta = fn (array $roles): SecUser => $asignar->ejecutar($actor, null, 'nuevo.'.uniqid(), null, 'secreto123', 'Nuevo', TipoUsuario::Interno, $roles, null);
 
     expect($alta([$operadorId]))->toBeInstanceOf(SecUser::class)
         ->and(fn () => $alta([]))->toThrow(RolProtegido::class)
@@ -244,10 +244,10 @@ test('asignar el rol administrador exige asignar_rol_administrador', function ()
     DB::table('sec_role_permission')->insert(['id_role' => $operadorId, 'id_permission' => $permisoCrear, 'created_at' => now(), 'updated_at' => now()]);
     $operador = SecUser::query()->findOrFail(matrizCuenta('op', ['operador']));
 
-    expect(fn () => app(AsignarRolesUsuario::class)->ejecutar($operador, null, 'nuevo.admin', null, 'secreto123', 'Nuevo', TipoUsuario::Interno, null, [$administradorId], null))
+    expect(fn () => app(AsignarRolesUsuario::class)->ejecutar($operador, null, 'nuevo.admin', null, 'secreto123', 'Nuevo', TipoUsuario::Interno, [$administradorId], null))
         ->toThrow(PermisoDenegado::class);
 
-    expect(app(AsignarRolesUsuario::class)->ejecutar($operador, null, 'nuevo.op', null, 'secreto123', 'Nuevo', TipoUsuario::Interno, null, [$operadorId], null))
+    expect(app(AsignarRolesUsuario::class)->ejecutar($operador, null, 'nuevo.op', null, 'secreto123', 'Nuevo', TipoUsuario::Interno, [$operadorId], null))
         ->toBeInstanceOf(SecUser::class);
 });
 

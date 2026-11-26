@@ -6,6 +6,7 @@ use App\Dominios\Personal\Aplicacion\CrearPersona;
 use App\Dominios\Personal\Aplicacion\DatosPersona;
 use App\Dominios\Personal\Dominio\RolOperativoPersona;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Da una persona operativa a cada piloto de los proveedores de la
@@ -14,7 +15,12 @@ use Illuminate\Database\Seeder;
  * una cuenta sin persona no puede abrir sesiones. Un proveedor real recibe su
  * persona al aprobarse; la demo la siembra aquí.
  *
- * Idempotente: una cuenta que ya tiene `persona_id` no se toca.
+ * El vínculo vive en `sec_user.persona_legada_id` (el personal anterior, `per_personas`):
+ * `persona_id` es ahora la persona única de la cuenta (`sec_personas`, ADR 0046) y no se
+ * toca. La API sigue entregando `persona_legada_id` como `persona_id` hasta el contrato
+ * nuevo del token.
+ *
+ * Idempotente: una cuenta que ya tiene vínculo no se toca.
  */
 class PersonasDeOperariosDemoSeeder extends Seeder
 {
@@ -36,7 +42,7 @@ class PersonasDeOperariosDemoSeeder extends Seeder
         foreach (self::OPERARIOS as $indice => [$username, $nombres, $paterno, $materno, $celular, $rol]) {
             $usuario = $this->usuarioPorUsername($username);
 
-            if ($usuario === null || $usuario->persona_id !== null) {
+            if ($usuario === null || $usuario->persona_legada_id !== null) {
                 continue;
             }
 
@@ -54,8 +60,8 @@ class PersonasDeOperariosDemoSeeder extends Seeder
                 baseId: null,
             ));
 
-            $usuario->persona_id = $persona->id;
-            $usuario->save();
+            // `persona_legada_id` no es asignable en masa: se escribe directo, sin pasar por el modelo.
+            DB::table('sec_user')->where('id', $usuario->id)->update(['persona_legada_id' => $persona->id]);
         }
     }
 }

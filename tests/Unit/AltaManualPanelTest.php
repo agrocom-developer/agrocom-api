@@ -42,6 +42,7 @@ beforeEach(function () {
         'create_plt_bitacoras_table',
         'create_sec_user_table',
         'agrega_tipo_cuenta_a_sec_user',
+        'crea_sec_personas_y_telefono_de_cuenta',
         'create_sec_user_preferencia_table',
         'create_sec_role_table',
         'create_sec_user_role_table',

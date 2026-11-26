@@ -3,6 +3,7 @@
 use App\Dominios\Compartido\Infraestructura\Http\ErroresHttpEnEspanol;
 use App\Dominios\Compartido\Infraestructura\Http\Middleware\RecordarOrigenNavegacion;
 use App\Dominios\Seguridad\Infraestructura\Http\Middleware\AplicarVistaComo;
+use App\Dominios\Seguridad\Infraestructura\Http\Middleware\LimitarSondeoDeCuentas;
 use App\Dominios\Seguridad\Infraestructura\Http\Middleware\ResolverRolActivo;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
@@ -35,14 +36,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'rol.activo' => ResolverRolActivo::class,
             'origen.navegacion' => RecordarOrigenNavegacion::class,
+            'sondeo.cuentas' => LimitarSondeoDeCuentas::class,
         ]);
 
         // Tarea 140: "ver como otro usuario". Va en el grupo `web` (todo el
-        // panel y el portal) y, en la lista de prioridad, JUSTO ANTES de la
-        // autenticación: `auth:interno`/`auth:cliente` tienen que preguntar
-        // "¿quién está autenticado?" cuando la cuenta observada ya está puesta
-        // en el guard — si corriera después, un administrador que mira el
-        // portal rebotaría a `/login` porque el guard `cliente` está vacío.
+        // panel) y, en la lista de prioridad, JUSTO ANTES de la autenticación:
+        // `auth:interno` tiene que preguntar "¿quién está autenticado?" cuando
+        // la cuenta observada ya está puesta en el guard — si corriera después,
+        // el administrador rebotaría a `/login`.
         // Sin lista de prioridad, el orden depende de dónde caiga en el
         // arreglo del grupo respecto de `SubstituteBindings`.
         $middleware->web(append: [AplicarVistaComo::class]);
@@ -51,9 +52,7 @@ return Application::configure(basePath: dirname(__DIR__))
             prepend: AplicarVistaComo::class,
         );
 
-        // Un solo login para todos (16/9/2026): sin sesión, sea cual sea el
-        // guard que rechazó el request (`interno` o el `cliente` del portal),
-        // se va al mismo formulario de ingreso.
+        // Sin sesión, el panel va al formulario de ingreso.
         $middleware->redirectGuestsTo(fn (): string => route('login.form'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {

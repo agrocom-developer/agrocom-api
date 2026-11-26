@@ -6,6 +6,7 @@ use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Contratos\CuentaDuplicada;
+use App\Dominios\Seguridad\Contratos\CuentaYaRegistrada;
 use App\Dominios\Seguridad\Contratos\LecturaCuentas;
 use App\Dominios\Solicitudes\Aplicacion\CambiarEstadoDeCliente;
 use App\Dominios\Solicitudes\Aplicacion\RegistrarCliente;
@@ -93,7 +94,7 @@ final class ClientesController
 
         try {
             $cliente = $registrar->ejecutar($datos);
-        } catch (CuentaDuplicada|ClienteDuplicado|SolicitudInvalida $excepcion) {
+        } catch (CuentaYaRegistrada|CuentaDuplicada|ClienteDuplicado|SolicitudInvalida $excepcion) {
             return redirect()->back()->withInput($request->except('password'))->withErrors(['estado' => $excepcion->getMessage()]);
         }
 
