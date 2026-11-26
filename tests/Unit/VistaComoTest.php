@@ -282,26 +282,21 @@ it('el modo de solo lectura se enciende y se apaga, y apagado no estorba', funct
 
 // --- 4. Siembra y esquema ----------------------------------------------------------
 
-it('el permiso ver_como es solo del administrador de plataforma', function () use ($raizProyecto) {
+it('el permiso ver_como es solo del administrador', function () use ($raizProyecto) {
     $semilla = (string) file_get_contents($raizProyecto.'/database/seeders/Catalogo/SeguridadSeeder.php');
     $codigo = 'seguridad.usuario.ver_como';
 
     // Existe en el catálogo…
     expect($semilla)->toContain("'{$codigo}' =>");
 
-    // …ninguna lista de rol lo nombra…
-    foreach (['PERMISOS_ADMINISTRADOR', 'PERMISOS_SOPORTE', 'PERMISOS_PILOTO'] as $lista) {
-        preg_match('/private const '.$lista.' = \[(.*?)\];/s', $semilla, $coincidencia);
+    // …es un permiso reservado —la misma lista que `AsignarPermisosRol` hace cumplir para que
+    // no se delegue— y el preset del operador no lo nombra…
+    expect(PermisosReservados::SOLO_ADMINISTRADOR)->toContain($codigo)
+        ->and(PermisosReservados::PRESET_OPERADOR)->not->toContain($codigo);
 
-        expect($coincidencia)->not->toBeEmpty()
-            ->and($coincidencia[1] ?? '')->not->toContain($codigo);
-    }
-
-    // …está en la lista de plataforma —la misma que `AsignarPermisosRol` hace cumplir para que
-    // no se delegue— y el seeder la toma de ahí; el dueño la deja afuera.
-    expect(PermisosReservados::SOLO_ADMIN_PLATAFORMA)->toContain($codigo)
-        ->and($semilla)->toContain('private const PERMISOS_SOLO_ADMIN_PLATAFORMA = PermisosReservados::SOLO_ADMIN_PLATAFORMA;')
-        ->and($semilla)->toMatch('/\$roles\[\'dueno\'\],\s*\$permisos->except\(self::PERMISOS_SOLO_ADMIN_PLATAFORMA\)/');
+    // …y el seeder le da al administrador todo el catálogo del panel y al operador solo su preset.
+    expect($semilla)->toContain('$this->asignarTodo(')
+        ->and($semilla)->toContain('$this->asignar($roles[\'operador\'], $permisos->only(PermisosReservados::PRESET_OPERADOR)');
 });
 
 it('el enum de motivos y el de tipos no se desincronizan del CHECK del esquema', function () use ($raizProyecto) {
