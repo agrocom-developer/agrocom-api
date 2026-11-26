@@ -1,5 +1,7 @@
 <?php
 
+use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\CascaraPanel;
+
 /*
  * La campana del header muestra solo los 3 últimos avisos y enlaza a «Mis
  * notificaciones», donde están todos los de la cuenta. «Eliminar todas» quita los
@@ -8,8 +10,8 @@
 
 $raiz = dirname(__DIR__, 2);
 
-it('la campana muestra 3 avisos', function () use ($raiz) {
-    $cascara = new ReflectionClass(\App\Dominios\Seguridad\Infraestructura\Http\Presentacion\CascaraPanel::class);
+it('la campana muestra 3 avisos', function () {
+    $cascara = new ReflectionClass(CascaraPanel::class);
 
     expect($cascara->getReflectionConstant('MAXIMO_EN_CAMPANA')->getValue())->toBe(3);
 });
