@@ -295,7 +295,7 @@ La sincronización es idempotente: reaplicar un lote dos, tres o diez veces, en 
 
 ### 10.4 Administración y soporte
 
-Son pantallas del panel (ADR 0008), no endpoints de la API de las apps. El menú tiene cuatro módulos y cada pantalla se muestra solo si el rol activo tiene su permiso de listado (`.ver`); las acciones de cada una exigen su permiso propio.
+Son pantallas del panel (ADR 0008), no endpoints de la API de las apps. El menú tiene cinco módulos en el riel (Mercado, Proveedores, Soporte, Seguridad y Sistema; el logo lleva al tablero) y cada pantalla se muestra solo si el rol activo tiene su permiso de listado (`.ver`); las acciones de cada una exigen su permiso propio.
 
 | Módulo | Pantalla | Qué hace |
 |---|---|---|
@@ -304,15 +304,15 @@ Son pantallas del panel (ADR 0008), no endpoints de la API de las apps. El menú
 | Mercado | `panel/clientes` | Ficha del cliente con su reputación, sus contactos y sus solicitudes; suspende y reactiva con motivo (`solicitudes.cliente.suspender`); alta a mano de persona o empresa con contactos (`solicitudes.cliente.crear`) |
 | Proveedores | `panel/proveedores/crear`, `panel/pilotos/crear`, `panel/drones-flota/crear` | Alta a mano de proveedor (independiente con su piloto, o tercero), de un piloto de un tercero y del dron de un proveedor, con `proveedores.proveedor.crear`, `proveedores.piloto.crear` y `flota.dron.crear`; quedan `pendientes` y quien los cargó no los aprueba (ADR 0044) |
 | Mercado | `panel/calificaciones` | Oculta o deja visible una calificación con causa y motivo |
-| Mercado | `panel/disputas` | Toma, media y resuelve |
+| Soporte | `panel/disputas` | Reclamos sobre un servicio ya prestado: toma, media y resuelve. Va en su propio módulo porque atender a quien usa la plataforma no es operar el mercado |
 | Mercado | `panel/metricas` | Adjudicación, ofertas por solicitud, rondas por negociación, tiempos, calidad y volumen |
-| Mercado | `panel/avisos` | Lo que el sistema avisó a cada cuenta y si lo leyó; solo lectura (`notificaciones.aviso.ver`) |
+| Sistema | `panel/avisos` | Auditoría: lo que el sistema avisó a cada cuenta y si lo leyó; solo lectura (`notificaciones.aviso.ver`). Los avisos de la propia cuenta están en la campana |
 | Proveedores | `panel/proveedores`, `panel/pilotos` | Aprobar, rechazar, suspender y dar de baja, con motivo |
 | Proveedores | `panel/documentos` | Revisión de documentos y descarga restringida |
 | Proveedores | `panel/drones-flota` | Aprobación del dron y revisión de sus fotos (`flota.dron.revisar_foto`); no se aprueba sin las fotos de `flota.fotos_obligatorias` aprobadas |
-| Proveedores | `panel/equipos-flota` | Consulta de equipos |
-| Catálogos | `panel/zonas` | Zonas de Santa Cruz con su región y su centro |
-| Seguridad | usuarios, roles, dispositivos, organización, versiones de las apps, configuración y bitácora | Roles del panel: `dueno`, `encargado_operaciones` (administrador del marketplace), `soporte` y `admin_plataforma` |
+| Sistema | `panel/zonas` | Zonas de Santa Cruz con su región y su centro |
+| Sistema | organización, configuración y versiones de las apps | Ajustes de la plataforma que se tocan poco |
+| Seguridad | usuarios, roles, dispositivos y bitácora | Roles del panel: `dueno`, `encargado_operaciones` (administrador del marketplace), `soporte` y `admin_plataforma` |
 
 El administrador lee el chat y la ubicación solo para atender una disputa o una intervención; no escribe en ellos. Cerrar una negociación no es una sanción: no restringe ninguna cuenta (ADR 0033).
 

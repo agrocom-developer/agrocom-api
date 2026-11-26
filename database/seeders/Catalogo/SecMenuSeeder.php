@@ -9,8 +9,8 @@ use Illuminate\Database\Seeder;
 /**
  * Catálogo del menú de tres niveles del panel (módulos raíz en el riel de nivel
  * 1, ítems hijos en el sidebar de nivel 2), según
- * `docs/especificacion/marketplace.md` §10.4: Mercado, Proveedores, Catálogos y
- * Seguridad. El mercado de fumigación es de negociación: no hay trabajos
+ * `docs/especificacion/marketplace.md` §10.4: Mercado, Proveedores, Soporte,
+ * Seguridad y Sistema. El mercado de fumigación es de negociación: no hay trabajos
  * internos, cuadrillas, bases, personal propio, baterías ni fichas de dron.
  *
  * Corre en todos los entornos, producción incluida — igual que
@@ -74,7 +74,12 @@ class SecMenuSeeder extends Seeder
         'menu.comercial.items.lotes',
         'menu.comercial.items.cultivos',
         'menu.comercial.items.reportes_cliente',
+        // Retirados con el cambio de enfoque: el auxiliar ya no es usuario y el
+        // equipo (piloto + dron) se ve en la ficha del piloto, no en una pantalla.
+        'menu.proveedores.items.auxiliares',
+        'menu.proveedores.items.equipos_flota',
         // Los módulos raíz, al final: ya sin hijos vivos.
+        'menu.catalogos.label',
         'menu.operacion.label',
         'menu.recursos.label',
         'menu.reportes.label',
@@ -87,49 +92,60 @@ class SecMenuSeeder extends Seeder
     {
         $mercado = $this->modulo('solicitudes', 'storefront', 1);
         $proveedores = $this->modulo('proveedores', 'local_shipping', 2);
-        $catalogos = $this->modulo('catalogos', 'map', 3);
+        $soporte = $this->modulo('soporte', 'headset_mic', 3);
         $seguridad = $this->modulo('seguridad', 'admin_panel_settings', 4);
+        $sistema = $this->modulo('sistema', 'tune', 5);
 
         // El tablero vivía en «Operación»: se mueve la MISMA fila (id, permiso y
         // bitácora intactos) a Mercado antes de dar de baja el módulo viejo.
         $this->mover('menu.operacion.items.tablero', 'menu.solicitudes.items.tablero', $mercado, 1);
+        // Las pantallas que cambian de módulo también conservan su fila.
+        $this->mover('menu.solicitudes.items.disputas', 'menu.soporte.items.disputas', $soporte, 1);
+        $this->mover('menu.catalogos.items.zonas', 'menu.sistema.items.zonas', $sistema, 1);
+        $this->mover('menu.seguridad.items.organizacion', 'menu.sistema.items.organizacion', $sistema, 2);
+        $this->mover('menu.seguridad.items.configuracion', 'menu.sistema.items.configuracion', $sistema, 3);
+        $this->mover('menu.seguridad.items.versiones_apk', 'menu.sistema.items.versiones_apk', $sistema, 4);
+        $this->mover('menu.solicitudes.items.avisos', 'menu.sistema.items.avisos', $sistema, 5);
         $this->retirarEntradas(self::RETIRADAS);
 
         // Mercado (ADR 0027, 0031, 0033, 0039): el ciclo de la solicitud, sus
-        // clientes y la posventa. Cada ítem va gateado por el permiso de
-        // LISTADO (`ver`); cancelar, moderar y resolver rigen los botones de
+        // clientes y la calidad del servicio. Cada ítem va gateado por el
+        // permiso de LISTADO (`ver`); cancelar y moderar rigen los botones de
         // cada pantalla, no la visibilidad del ítem.
         $this->item($mercado, 'solicitudes', 'tablero', 'dashboard', 1, ruta: 'panel.dashboard', codigoPermiso: 'seguridad.dashboard.ver');
         $this->item($mercado, 'solicitudes', 'solicitudes', 'request_quote', 2, ruta: 'panel.solicitudes.index', codigoPermiso: 'solicitudes.solicitud.ver');
         $this->item($mercado, 'solicitudes', 'clientes', 'agriculture', 3, ruta: 'panel.clientes.index', codigoPermiso: 'solicitudes.cliente.ver');
         $this->item($mercado, 'solicitudes', 'calificaciones', 'star', 4, ruta: 'panel.calificaciones.index', codigoPermiso: 'calificaciones.calificacion.ver');
-        $this->item($mercado, 'solicitudes', 'disputas', 'report', 5, ruta: 'panel.disputas.index', codigoPermiso: 'disputas.disputa.ver');
-        $this->item($mercado, 'solicitudes', 'metricas', 'insights', 6, ruta: 'panel.metricas.index', codigoPermiso: 'metricas.panel.ver');
-        $this->item($mercado, 'solicitudes', 'avisos', 'notifications_active', 7, ruta: 'panel.avisos.index', codigoPermiso: 'notificaciones.aviso.ver');
+        $this->item($mercado, 'solicitudes', 'metricas', 'insights', 5, ruta: 'panel.metricas.index', codigoPermiso: 'metricas.panel.ver');
 
         // Proveedores (ADR 0032): la cola de aprobación. Documentos va primero:
-        // es la cola que más se mira a diario. Aprobar, suspender y dar de baja
-        // rigen los botones de la ficha, no la visibilidad del ítem.
+        // es la cola que más se mira a diario. Aprobar, suspender y eliminar
+        // rigen los botones de la ficha, no la visibilidad del ítem. El equipo
+        // de un piloto se ve en su ficha, no en un ítem propio.
         $this->item($proveedores, 'proveedores', 'documentos', 'folder_open', 1, ruta: 'panel.documentos.index', codigoPermiso: 'proveedores.documento.ver');
         $this->item($proveedores, 'proveedores', 'proveedores', 'local_shipping', 2, ruta: 'panel.proveedores.index', codigoPermiso: 'proveedores.proveedor.ver');
         $this->item($proveedores, 'proveedores', 'pilotos', 'sports_esports', 3, ruta: 'panel.pilotos.index', codigoPermiso: 'proveedores.piloto.ver');
-        $this->item($proveedores, 'proveedores', 'auxiliares', 'support_agent', 4, ruta: 'panel.auxiliares.index', codigoPermiso: 'proveedores.auxiliar.ver');
-        $this->item($proveedores, 'proveedores', 'drones_flota', 'airplanemode_active', 5, ruta: 'panel.drones-flota.index', codigoPermiso: 'flota.dron.ver');
-        $this->item($proveedores, 'proveedores', 'equipos_flota', 'groups', 6, ruta: 'panel.equipos-flota.index', codigoPermiso: 'flota.equipo.ver');
+        $this->item($proveedores, 'proveedores', 'drones_flota', 'airplanemode_active', 4, ruta: 'panel.drones-flota.index', codigoPermiso: 'flota.dron.ver');
 
-        // Catálogos: las zonas de Santa Cruz que agrupan el mapa y el tablero.
-        $this->item($catalogos, 'catalogos', 'zonas', 'pin_drop', 1, ruta: 'panel.zonas.index', codigoPermiso: 'solicitudes.zona.ver');
+        // Soporte: los reclamos sobre un servicio ya prestado. Atender a quien
+        // usa la plataforma no es operar el mercado, aunque el reclamo nazca de
+        // una solicitud. Es el lugar de las futuras consultas.
+        $this->item($soporte, 'soporte', 'disputas', 'report', 1, ruta: 'panel.disputas.index', codigoPermiso: 'disputas.disputa.ver');
 
         // Seguridad: quién es (usuarios), qué puede (roles), con qué entra
-        // (dispositivos), la empresa, las versiones de las apps, la
-        // configuración y la bitácora.
+        // (dispositivos) y qué hizo (bitácora).
         $this->item($seguridad, 'seguridad', 'usuarios', 'group', 1, ruta: 'panel.usuarios.index', codigoPermiso: 'seguridad.usuario.ver');
         $this->item($seguridad, 'seguridad', 'roles', 'shield_person', 2, ruta: 'panel.roles.index', codigoPermiso: 'seguridad.rol.ver');
         $this->item($seguridad, 'seguridad', 'dispositivos', 'smartphone', 3, ruta: 'panel.dispositivos.index', codigoPermiso: 'seguridad.dispositivo.ver');
-        $this->item($seguridad, 'seguridad', 'organizacion', 'apartment', 4, ruta: 'panel.organizacion.index', codigoPermiso: 'seguridad.organizacion.ver');
-        $this->item($seguridad, 'seguridad', 'versiones_apk', 'system_update', 5, ruta: 'panel.versiones-apk.index', codigoPermiso: 'distribucion.version.autorizar');
-        $this->item($seguridad, 'seguridad', 'configuracion', 'tune', 7, ruta: 'panel.configuracion.index', codigoPermiso: 'seguridad.configuracion.ver');
-        $this->item($seguridad, 'seguridad', 'bitacora', 'history', 8, ruta: 'panel.bitacora.index', codigoPermiso: 'seguridad.bitacora.ver');
+        $this->item($seguridad, 'seguridad', 'bitacora', 'history', 4, ruta: 'panel.bitacora.index', codigoPermiso: 'seguridad.bitacora.ver');
+
+        // Sistema: ajustes que se tocan poco y los avisos del sistema, que son
+        // una herramienta de auditoría (ven los de todas las cuentas).
+        $this->item($sistema, 'sistema', 'zonas', 'pin_drop', 1, ruta: 'panel.zonas.index', codigoPermiso: 'solicitudes.zona.ver');
+        $this->item($sistema, 'sistema', 'organizacion', 'apartment', 2, ruta: 'panel.organizacion.index', codigoPermiso: 'seguridad.organizacion.ver');
+        $this->item($sistema, 'sistema', 'configuracion', 'tune', 3, ruta: 'panel.configuracion.index', codigoPermiso: 'seguridad.configuracion.ver');
+        $this->item($sistema, 'sistema', 'versiones_apk', 'system_update', 4, ruta: 'panel.versiones-apk.index', codigoPermiso: 'distribucion.version.autorizar');
+        $this->item($sistema, 'sistema', 'avisos', 'notifications_active', 5, ruta: 'panel.avisos.index', codigoPermiso: 'notificaciones.aviso.ver');
     }
 
     /**
