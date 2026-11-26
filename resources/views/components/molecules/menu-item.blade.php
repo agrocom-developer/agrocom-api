@@ -29,6 +29,10 @@
       "Hoy · 3"), se resuelve como tooltip nativo de Bootstrap
       (`data-bs-toggle="tooltip"`, inicializado globalmente en app.js) sobre
       el badge — sin ella el badge no lleva tooltip.
+    - current (bool, default false): página actual que no está en el menú
+      (módulo Inicio en búsqueda, perfil, etc.). Sin `href`, se pinta como
+      ítem seleccionado pero NO como enlace ni botón: un `<span
+      aria-current="page">` que no navega.
     - permission (nullable string): código `sec_permission`, informativo —
       esta molécula no consulta `sec_*`, el filtrado ya ocurrió antes
       (App\Dominios\Seguridad\Aplicacion\ObtenerMenuPorRolActivo).
@@ -42,6 +46,7 @@
     'icon' => null,
     'href' => null,
     'active' => false,
+    'current' => false,
     'badge' => null,
     'badgeTitle' => null,
     'permission' => null,
@@ -54,7 +59,21 @@
     $style = $staggerIndex !== null ? "--ag-menu-item-index: {$staggerIndex}" : null;
 @endphp
 
-@if ($href)
+@if ($current && ! $href)
+    <span
+        {{ $attributes->class([...$classes, 'ag-menu-item--actual']) }}
+        @if ($style) style="{{ $style }}" @endif
+        aria-current="page"
+        data-bs-toggle="tooltip"
+        data-bs-placement="right"
+        data-bs-title="{{ $resolvedLabel }}"
+    >
+        @if ($icon)
+            <x-atoms.icon :name="$icon" size="md" class="ag-menu-item__icon" />
+        @endif
+        <span class="ag-menu-item__label">{{ $resolvedLabel }}</span>
+    </span>
+@elseif ($href)
     <a
         href="{{ $href }}"
         {{ $attributes->class($classes) }}

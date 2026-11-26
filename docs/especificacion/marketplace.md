@@ -364,21 +364,35 @@ La sincronización es idempotente: reaplicar un lote dos, tres o diez veces, en 
 
 Son pantallas del panel (ADR 0008), no endpoints de la API de las apps. El riel tiene un acceso directo, Inicio (el tablero), y cinco módulos: Mercado, Proveedores, Atención, Seguridad y Sistema y cada pantalla se muestra solo si el rol activo tiene su permiso de listado (`.ver`); las acciones de cada una exigen su permiso propio.
 
+El menú son 15 ítems, en este orden (el seeder `SecMenuSeeder` es su única fuente; una base ya sembrada lo recibe con `php artisan db:seed --class=SecMenuSeeder` o `bin/demo seed`):
+
+| Módulo | Ítems, en orden |
+|---|---|
+| Inicio | acceso directo al tablero, sin ítems |
+| Mercado | Métricas del mercado, Solicitudes, Calificaciones (las que reciben pilotos y clientes) |
+| Proveedores | Cuentas (`panel/proveedores`: personas y empresas que ofrecen el servicio), Pilotos, Drones, Documentos |
+| Atención | Clientes, Reclamos |
+| Seguridad | Usuarios, Permisos, Bitácora |
+| Sistema | Organización, Avisos del sistema, Configuración |
+
+Zonas no está en el menú: el mercado no usa zonas ni restricción geográfica.
+
+En una página que no pertenece a ningún ítem (búsqueda, perfil, Mis notificaciones), Inicio queda activo en el riel y su panel muestra un solo ítem, sin enlace, con el nombre de la página actual.
+
 | Módulo | Pantalla | Qué hace |
 |---|---|---|
 | Inicio | `panel/dashboard` | Tablero: solicitudes por estado y por región (macrorregión de la zona del terreno), hectáreas abiertas a ofertas y la cola de lo que espera una decisión |
 | Mercado | `panel/solicitudes` | Lista con filtros por estado, región y zona; la ficha muestra cada negociación por proveedor con sus rondas y, con `solicitudes.solicitud.ver_seguimiento`, el chat, el avance, las fotos y la última ubicación del piloto (datos de las partes). Cancela con motivo (`solicitudes.solicitud.cancelar`) o cierra la negociación de un proveedor con motivo (`solicitudes.solicitud.intervenir`) mientras la solicitud sigue abierta a ofertas |
 | Atención | `panel/clientes` | Ficha del cliente con su reputación, sus contactos y sus solicitudes; suspende y reactiva con motivo (`solicitudes.cliente.suspender`); alta a mano de persona o empresa con contactos (`solicitudes.cliente.crear`) |
 | Proveedores | `panel/proveedores/crear`, `panel/pilotos/crear`, `panel/drones-flota/crear` | Alta a mano de proveedor (independiente con su piloto, o tercero), de un piloto de un tercero y del dron de un proveedor, con `proveedores.proveedor.crear`, `proveedores.piloto.crear` y `flota.dron.crear`; quedan `pendientes` y quien los cargó no los aprueba (ADR 0044) |
-| Atención | `panel/calificaciones` | Oculta o deja visible una calificación con causa y motivo |
+| Mercado | `panel/calificaciones` | Oculta o deja visible una calificación con causa y motivo |
 | Atención | `panel/disputas` | Reclamos: lo que un cliente o un proveedor reclama sobre un servicio ya prestado; se toma, se media y se resuelve. Va en Atención porque atender a quien usa la plataforma no es operar el mercado |
 | Mercado | `panel/metricas` | Adjudicación, ofertas por solicitud, rondas por negociación, tiempos, calidad y volumen |
 | Sistema | `panel/avisos` | Auditoría: lo que el sistema avisó a cada cuenta y si lo leyó; solo lectura (`notificaciones.aviso.ver`). Los avisos de la propia cuenta están en la campana |
 | Proveedores | `panel/proveedores`, `panel/pilotos` | Aprobar, rechazar, suspender y dar de baja, con motivo |
 | Proveedores | `panel/documentos` | Revisión de documentos y descarga restringida |
 | Proveedores | `panel/drones-flota` | Aprobación del dron y revisión de sus fotos (`flota.dron.revisar_foto`); no se aprueba sin las fotos de `flota.fotos_obligatorias` aprobadas |
-| Sistema | `panel/zonas` | Zonas de Santa Cruz con su región y su centro |
-| Sistema | organización y configuración | Ajustes de la plataforma que se tocan poco |
+| Sistema | organización y configuración | Ajustes de la plataforma que se tocan poco; la organización va primero, luego los avisos y al final la configuración |
 | Seguridad | usuarios, permisos y bitácora | Roles del panel: `administrador` (todo) y `operador` (lo que marca su matriz) |
 
 Solicitudes urgentes en el panel (ADR 0045, punto K): el tablero suma la tarjeta «Urgentes sin aceptación» (urgentes vigentes sin ninguna negociación en cola, bandeja ni conversación a las que faltan menos de `negociacion.urgencia.alerta_admin_horas`, 48); el listado de solicitudes suma el filtro «Urgentes» y la columna de fecha límite con cuenta regresiva (la insignia «Urgente» se conserva); la ficha suma la línea de tiempo de oleadas con los parámetros de urgencia usados y la acción «Avisar ahora a todos» (`solicitudes.solicitud.avisar_a_todos`, con motivo y bitácora; 409 `solicitud_en_acuerdo`, `aviso_manual_demasiado_pronto`); las métricas suman el tiempo hasta la primera aceptación de las urgentes frente a las normales. El administrador no edita la urgencia, el precio ni las fechas del cliente. La tabla de arriba sigue describiendo el menú; sus filas del tablero y de `panel/solicitudes` se actualizan con la fase de retiro de zonas.

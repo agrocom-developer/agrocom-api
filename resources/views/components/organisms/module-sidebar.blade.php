@@ -21,7 +21,9 @@
 
     Props:
     - modulo (nullable array): `{label, descripcion, items: [{label, icono,
-      href, active, badge, badgeTitle}]}` ya normalizado por panel-layout.
+      href, active, badge, badgeTitle, actual}]}` ya normalizado por
+      panel-layout. `actual` marca la página fuera del menú que Inicio muestra
+      como único ítem: seleccionada y sin enlace.
     - cambiarRolHref (nullable string): link a la pantalla de selección de
       rol (`?cambiar=1`) — null con un solo rol (no se muestra).
 --}}
@@ -63,6 +65,7 @@
                     :active="$item['active']"
                     :badge="$item['badge']"
                     :badge-title="$item['badgeTitle'] ?? null"
+                    :current="$item['actual'] ?? false"
                     :stagger-index="$index"
                 />
             @endforeach
