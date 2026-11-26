@@ -24,7 +24,7 @@ return [
     'inicial_ayuda' => 'Se busca en clientes, proveedores y drones. Puedes escribir varias palabras y no hace falta que estén en orden ni con acentos.',
 
     'corta_titulo' => 'Escribe un poco más',
-    'corta_ayuda' => 'Con una sola letra entra casi todo. Prueba con al menos dos.',
+    'corta_ayuda' => 'Con una sola letra salen casi todos los resultados. Escribe al menos dos.',
 
     'ver_todos' => 'Ver los :total en :bloque',
 

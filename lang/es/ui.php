@@ -115,7 +115,7 @@ return [
     'sidebar' => [
         'open' => 'Abrir menú',
         'close' => 'Cerrar menú',
-        'collapse' => 'Colapsar menú',
+        'collapse' => 'Contraer menú',
         'expand' => 'Expandir menú',
     ],
 
@@ -132,7 +132,7 @@ return [
         'configuracion' => 'Configuración',
     ],
     'header' => [
-        'buscador_placeholder' => 'Buscar lote, orden, piloto o dron',
+        'buscador_placeholder' => 'Buscar cliente, proveedor o dron',
         'buscador_aria' => 'Buscador global',
         'atajo_buscador' => '⌘K',
     ],
@@ -174,7 +174,7 @@ return [
         'filtro_placeholder' => 'Filtrar…',
         'vista_grupo' => 'Vista del listado',
         'vista_lista' => 'Ver como lista',
-        'vista_grilla' => 'Ver como grilla',
+        'vista_grilla' => 'Ver como cuadrícula',
     ],
 
     // Paginador de listas que ya están completas en la página (modal de
@@ -222,9 +222,9 @@ return [
     // Mensajes de error.
     'errores' => [
         'borrado_fisico_no_permitido' => 'Borrado físico bloqueado para :clase: los modelos de dominio solo admiten borrado lógico (ADR 0007 — soft delete y bitácora de auditoría).',
-        'escritura_en_modo_solo_lectura' => 'Estás en modo de solo lectura: no se puede guardar, borrar ni restaurar nada. Vuelve a tu vista para hacerlo.',
+        'escritura_en_modo_solo_lectura' => 'Estás en modo de solo lectura: no se puede guardar, eliminar ni restaurar nada. Vuelve a tu vista para hacerlo.',
         // Aviso cuando no carga el mapa de Google.
-        'google_maps_no_disponible' => 'No se pudo cargar el SDK de Google Maps',
+        'google_maps_no_disponible' => 'No se pudo cargar Google Maps. Revisa tu conexión y vuelve a intentarlo.',
     ],
 
     // Textos de los comandos de consola.
