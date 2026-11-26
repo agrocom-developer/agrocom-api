@@ -1,6 +1,6 @@
 {
     "operationId": "listarDisputas",
-    "descripcion": "Disputas del cliente.",
+    "descripcion": "Reclamos del cliente.",
     "peticion": {
         "metodo": "GET",
         "ruta": "/api/disputas",

@@ -186,7 +186,7 @@ final class CalificacionesDelProveedorController
     #[OA\Post(
         path: '/api/calificaciones/{id}/reportar',
         operationId: 'reportarCalificacion',
-        description: 'Reporta con motivo una calificación que recibiste y consideras abusiva (insultos, datos personales, factores ajenos como el clima, represalia tras una disputa). '
+        description: 'Reporta con motivo una calificación que recibiste y consideras abusiva (insultos, datos personales, factores ajenos como el clima, represalia tras un reclamo). '
             .'Queda `en_moderacion` y un administrador decide; reportar no la oculta ni la saca del promedio. Reportar dos veces la misma devuelve la misma calificación.',
         summary: 'Reportar una calificación',
         security: [['tokenDispositivo' => []]],

@@ -36,7 +36,7 @@ Los archivos son generados: no se editan a mano. Se regeneran con `bin/generar-e
 - Proveedor y flota: perfil, pilotos, auxiliares, documentos, drones y equipos.
 - Mercado y negociación: mapa de solicitudes abiertas con filtros, resumen por zona, detalle previo a ofertar, ofertar (y reintento idempotente), comparar, contraofertar, aceptar y aceptar otra vez.
 - Ejecución: inicio, avance, foto de avance, ubicación del piloto (enviar y ver), cierre, chat y preferencias de aviso.
-- Posventa y avisos: calificaciones, disputas y notificaciones.
+- Posventa y avisos: calificaciones, reclamos y notificaciones.
 - Sincronización del lote offline: catálogo completo e incremental, lote nuevo, replay del mismo lote (todos `duplicado`), rechazo parcial, lote sin registros y sin token; y la subida de evidencia.
 
 ## Cómo se validan

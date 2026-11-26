@@ -337,7 +337,7 @@ paths:
       tags:
         - Calificaciones
       summary: 'Reportar una calificación'
-      description: 'Reporta con motivo una calificación que recibiste y consideras abusiva (insultos, datos personales, factores ajenos como el clima, represalia tras una disputa). Queda `en_moderacion` y un administrador decide; reportar no la oculta ni la saca del promedio. Reportar dos veces la misma devuelve la misma calificación.'
+      description: 'Reporta con motivo una calificación que recibiste y consideras abusiva (insultos, datos personales, factores ajenos como el clima, represalia tras un reclamo). Queda `en_moderacion` y un administrador decide; reportar no la oculta ni la saca del promedio. Reportar dos veces la misma devuelve la misma calificación.'
       operationId: reportarCalificacion
       parameters:
         -
@@ -389,8 +389,8 @@ paths:
     post:
       tags:
         - Disputas
-      summary: 'Abrir una disputa'
-      description: 'Abre la disputa de un servicio (una por solicitud). El cliente puede hacerlo desde `ejecutada` hasta 72 horas después, por: `cobertura_incompleta`, `mala_aplicacion`, `dano_a_cultivos_o_terceros`, `producto_distinto`, `equipo_ausente`, `evidencia_faltante`, `cobro_indebido` o `trato_inadecuado`; la solicitud pasa a `en_disputa`. El proveedor puede abrirla por `cobro_pendiente`, `acceso_negado` o `calificacion_abusiva`. `monto_en_disputa` es opcional (por defecto, todo el monto del servicio) y no puede pasar de él. La contraparte tiene 48 horas para responder (`responde_antes_de`).'
+      summary: 'Abrir un reclamo'
+      description: 'Abre el reclamo de un servicio (uno por solicitud). El cliente puede hacerlo desde `ejecutada` hasta 72 horas después, por: `cobertura_incompleta`, `mala_aplicacion`, `dano_a_cultivos_o_terceros`, `producto_distinto`, `equipo_ausente`, `evidencia_faltante`, `cobro_indebido` o `trato_inadecuado`; la solicitud pasa a `en_disputa`. El proveedor puede abrirlo por `cobro_pendiente`, `acceso_negado` o `calificacion_abusiva`. `monto_en_disputa` es opcional (por defecto, todo el monto del servicio) y no puede pasar de él. La contraparte tiene 48 horas para responder (`responde_antes_de`).'
       operationId: abrirDisputa
       parameters:
         -
@@ -421,7 +421,7 @@ paths:
               type: object
       responses:
         201:
-          description: 'Disputa abierta.'
+          description: 'Reclamo abierto.'
           content:
             application/json:
               schema:
@@ -434,11 +434,11 @@ paths:
         401:
           description: 'Token ausente o revocado.'
         403:
-          description: 'El rol del token no abre disputas.'
+          description: 'El rol del token no abre reclamos.'
         404:
           description: 'El servicio no existe o no es tuyo.'
         409:
-          description: 'El servicio ya tiene una disputa.'
+          description: 'El servicio ya tiene un reclamo.'
         422:
           description: 'El motivo no corresponde a tu lado, el servicio no está en un estado disputable, el plazo venció o el monto es inválido.'
           content:
@@ -452,8 +452,8 @@ paths:
     get:
       tags:
         - Disputas
-      summary: 'La disputa de una solicitud'
-      description: 'La disputa de un servicio tuyo, con su conversación y sus resoluciones. Responde 404 si la solicitud no tiene disputa o no es tuya.'
+      summary: 'El reclamo de una solicitud'
+      description: 'El reclamo de un servicio tuyo, con su conversación y sus resoluciones. Responde 404 si la solicitud no tiene reclamo o no es tuya.'
       operationId: verDisputaDeLaSolicitud
       parameters:
         -
@@ -464,7 +464,7 @@ paths:
             type: integer
       responses:
         200:
-          description: 'La disputa.'
+          description: 'El reclamo.'
           content:
             application/json:
               schema:
@@ -477,9 +477,9 @@ paths:
         401:
           description: 'Token ausente o revocado.'
         403:
-          description: 'El rol del token no ve disputas.'
+          description: 'El rol del token no ve reclamos.'
         404:
-          description: 'No hay disputa en esa solicitud o no es tuya.'
+          description: 'No hay reclamo en esa solicitud o no es tuya.'
       security:
         -
           tokenDispositivo: []
@@ -487,8 +487,8 @@ paths:
     get:
       tags:
         - Disputas
-      summary: 'Mis disputas'
-      description: 'Tus disputas (las de tu cuenta o las de tu proveedor), de la más nueva a la más vieja. `estado` filtra por un estado exacto.'
+      summary: 'Mis reclamos'
+      description: 'Tus reclamos (los de tu cuenta o los de tu proveedor), de la más nueva a la más vieja. `estado` filtra por un estado exacto.'
       operationId: listarDisputas
       parameters:
         -
@@ -511,7 +511,7 @@ paths:
             minimum: 1
       responses:
         200:
-          description: 'Página de disputas.'
+          description: 'Página de reclamos.'
           content:
             application/json:
               schema:
@@ -538,7 +538,7 @@ paths:
         401:
           description: 'Token ausente o revocado.'
         403:
-          description: 'El rol del token no ve disputas.'
+          description: 'El rol del token no ve reclamos.'
         404:
           description: 'La cuenta no pertenece a ningún proveedor.'
       security:
@@ -548,8 +548,8 @@ paths:
     get:
       tags:
         - Disputas
-      summary: 'Detalle de una disputa'
-      description: 'Una disputa tuya con su conversación y sus resoluciones. Una de otra cuenta responde 404.'
+      summary: 'Detalle de un reclamo'
+      description: 'Un reclamo tuyo con su conversación y sus resoluciones. Una de otra cuenta responde 404.'
       operationId: verDisputa
       parameters:
         -
@@ -560,7 +560,7 @@ paths:
             type: integer
       responses:
         200:
-          description: 'La disputa.'
+          description: 'El reclamo.'
           content:
             application/json:
               schema:
@@ -573,7 +573,7 @@ paths:
         401:
           description: 'Token ausente o revocado.'
         403:
-          description: 'El rol del token no ve disputas.'
+          description: 'El rol del token no ve reclamos.'
         404:
           description: 'No existe o no es tuya.'
       security:
@@ -583,8 +583,8 @@ paths:
     post:
       tags:
         - Disputas
-      summary: 'Escribir en una disputa'
-      description: 'Agrega un mensaje a la conversación de una disputa viva (`abierta` o `en_revision`): tu respuesta a la contraparte o a soporte. Una disputa resuelta se reabre apelando, no escribiendo.'
+      summary: 'Escribir en un reclamo'
+      description: 'Agrega un mensaje a la conversación de un reclamo vivo (`abierta` o `en_revision`): tu respuesta a la contraparte o a soporte. Un reclamo resuelto se reabre apelando, no escribiendo.'
       operationId: enviarMensajeDeDisputa
       parameters:
         -
@@ -607,7 +607,7 @@ paths:
               type: object
       responses:
         201:
-          description: 'Mensaje guardado; devuelve la disputa con su conversación.'
+          description: 'Mensaje guardado; devuelve el reclamo con su conversación.'
           content:
             application/json:
               schema:
@@ -620,11 +620,11 @@ paths:
         401:
           description: 'Token ausente o revocado.'
         403:
-          description: 'El rol del token no escribe en disputas.'
+          description: 'El rol del token no escribe en reclamos.'
         404:
           description: 'No existe o no es tuya.'
         409:
-          description: 'La disputa ya no admite mensajes.'
+          description: 'El reclamo ya no admite mensajes.'
         422:
           description: 'Falta el texto.'
           content:
@@ -638,8 +638,8 @@ paths:
     post:
       tags:
         - Disputas
-      summary: 'Retirar una disputa'
-      description: 'Quien abrió la disputa la retira mientras está viva. Si había movido la solicitud a `en_disputa`, la solicitud se completa como si el reclamo no se hubiera hecho. Retirar dos veces devuelve la misma disputa.'
+      summary: 'Retirar un reclamo'
+      description: 'Quien abrió el reclamo lo retira mientras está vivo. Si había movido la solicitud a `en_disputa`, la solicitud se completa como si el reclamo no se hubiera hecho. Retirar dos veces devuelve el mismo reclamo.'
       operationId: retirarDisputa
       parameters:
         -
@@ -650,7 +650,7 @@ paths:
             type: integer
       responses:
         200:
-          description: 'Disputa retirada.'
+          description: 'Reclamo retirado.'
           content:
             application/json:
               schema:
@@ -663,13 +663,13 @@ paths:
         401:
           description: 'Token ausente o revocado.'
         403:
-          description: 'El rol del token no gestiona disputas.'
+          description: 'El rol del token no gestiona reclamos.'
         404:
           description: 'No existe o no es tuya.'
         409:
-          description: 'La disputa ya está resuelta y no se retira.'
+          description: 'El reclamo ya está resuelto y no se retira.'
         422:
-          description: 'Solo quien abrió la disputa puede retirarla.'
+          description: 'Solo quien abrió el reclamo puede retirarlo.'
           content:
             application/json:
               schema:
@@ -682,7 +682,7 @@ paths:
       tags:
         - Disputas
       summary: 'Apelar una resolución'
-      description: 'Apela la resolución con pruebas nuevas: una sola vez y dentro de 7 días desde la resolución (`apelable_hasta`). La disputa vuelve a revisión en su segunda ronda y un administrador la resuelve de nuevo; la primera resolución rige hasta entonces.'
+      description: 'Apela la resolución con pruebas nuevas: una sola vez y dentro de 7 días desde la resolución (`apelable_hasta`). El reclamo vuelve a revisión en su segunda ronda y un administrador lo resuelve de nuevo; la primera resolución rige hasta entonces.'
       operationId: apelarDisputa
       parameters:
         -
@@ -718,11 +718,11 @@ paths:
         401:
           description: 'Token ausente o revocado.'
         403:
-          description: 'El rol del token no gestiona disputas.'
+          description: 'El rol del token no gestiona reclamos.'
         404:
           description: 'No existe o no es tuya.'
         409:
-          description: 'La disputa no está resuelta o ya se apeló.'
+          description: 'El reclamo no está resuelto o ya se apeló.'
         422:
           description: 'Faltan las pruebas o el plazo de 7 días venció.'
           content:
@@ -2371,7 +2371,7 @@ paths:
       tags:
         - Seguimiento
       summary: 'Confirmar el precio final'
-      description: 'El cliente de la solicitud confirma el precio final (hectáreas ejecutadas por precio acordado) cuando el piloto ya cerró el servicio: solo con la solicitud `finalizada` o `calificada`. Sin cuerpo: el servidor copia las hectáreas, el precio y el monto del cierre. Idempotente por solicitud (repetirlo responde 200 con el mismo precio final) y lo confirmado no se reescribe. No cambia el estado ni cobra nada: el pago es directo. Si el cliente no está de acuerdo, la salida es abrir una disputa. Avisa al proveedor adjudicado.'
+      description: 'El cliente de la solicitud confirma el precio final (hectáreas ejecutadas por precio acordado) cuando el piloto ya cerró el servicio: solo con la solicitud `finalizada` o `calificada`. Sin cuerpo: el servidor copia las hectáreas, el precio y el monto del cierre. Idempotente por solicitud (repetirlo responde 200 con el mismo precio final) y lo confirmado no se reescribe. No cambia el estado ni cobra nada: el pago es directo. Si el cliente no está de acuerdo, la salida es abrir un reclamo. Avisa al proveedor adjudicado.'
       operationId: confirmarPrecioFinalDeSolicitud
       parameters:
         -
@@ -2410,7 +2410,7 @@ paths:
         404:
           description: 'La solicitud no es de la cuenta.'
         409:
-          description: 'El piloto aún no cerró el servicio, o hay una disputa abierta (`estado_invalido`).'
+          description: 'El piloto aún no cerró el servicio, o hay un reclamo abierto (`estado_invalido`).'
           content:
             application/json:
               schema:
@@ -4899,7 +4899,7 @@ paths:
       tags:
         - Solicitudes
       summary: 'Cancelar una solicitud'
-      description: 'Cancela una solicitud propia con motivo. Es gratuita y sin penalidad en dinero; si ya estaba adjudicada, queda registrada en la tasa de cancelación del cliente y el proveedor queda libre. Una solicitud en ejecución o finalizada no se cancela por este camino: si hay desacuerdo, se abre una disputa.'
+      description: 'Cancela una solicitud propia con motivo. Es gratuita y sin penalidad en dinero; si ya estaba adjudicada, queda registrada en la tasa de cancelación del cliente y el proveedor queda libre. Una solicitud en ejecución o finalizada no se cancela por este camino: si hay desacuerdo, se abre un reclamo.'
       operationId: cancelarSolicitud
       parameters:
         -
@@ -5587,7 +5587,7 @@ components:
       type: object
     Disputa:
       title: Disputa
-      description: 'La disputa de un servicio (especificación §4.8, ADR 0033): una por solicitud. La abre el cliente (hasta 72 horas después de `ejecutada`) o el proveedor (cobro pendiente, acceso negado o calificación abusiva). Los importes son decimales exactos en string. `mensajes` y `resoluciones` solo viajan en el detalle. Los reembolsos se liquidan entre las partes fuera de la app.'
+      description: 'El reclamo de un servicio (especificación §4.8, ADR 0033): uno por solicitud. Lo abre el cliente (hasta 72 horas después de `ejecutada`) o el proveedor (cobro pendiente, acceso negado o calificación abusiva). Los importes son decimales exactos en string. `mensajes` y `resoluciones` solo viajan en el detalle. Los reembolsos se liquidan entre las partes fuera de la app.'
       required:
         - id
         - solicitud_id
@@ -5637,7 +5637,7 @@ components:
             - resuelta
             - retirada
         ronda:
-          description: '1 es la disputa original; 2, la apelación (una sola vez).'
+          description: '1 es el reclamo original; 2, la apelación (una sola vez).'
           type: integer
           enum:
             - 1
@@ -7568,7 +7568,7 @@ tags:
     description: 'El cliente califica al proveedor, al piloto y al auxiliar de un servicio completado, durante 7 días; el proveedor califica al cliente en privado y ve las calificaciones que recibe (ADR 0031).'
   -
     name: Disputas
-    description: 'El cliente (hasta 72 horas después de `ejecutada`) o el proveedor (cobro pendiente, acceso negado o calificación abusiva) abren una disputa; soporte media y un administrador resuelve; ambas partes pueden apelar una vez en 7 días (ADR 0033). Los reembolsos se liquidan fuera de la app.'
+    description: 'El cliente (hasta 72 horas después de `ejecutada`) o el proveedor (cobro pendiente, acceso negado o calificación abusiva) abren un reclamo; soporte media y un administrador resuelve; ambas partes pueden apelar una vez en 7 días (ADR 0033). Los reembolsos se liquidan fuera de la app.'
   -
     name: Distribucion
     description: 'Versionado y distribución del APK de agrocom-field (HU-20).'
@@ -7583,7 +7583,7 @@ tags:
     description: 'El proveedor ofrece su precio por hectárea, cada parte contraoferta a la otra y el cliente elige: aceptar una oferta adjudica la solicitud.'
   -
     name: Preferencias
-    description: 'Qué avisos recibe la cuenta. Las categorías obligatorias (adjudicación, cierre, expiración, cuenta y aprobación, disputas, emergencias) no aparecen y no se pueden desactivar.'
+    description: 'Qué avisos recibe la cuenta. Las categorías obligatorias (adjudicación, cierre, expiración, cuenta y aprobación, reclamos, emergencias) no aparecen y no se pueden desactivar.'
   -
     name: Seguimiento
     description: 'Inicio, avance con fotos, cierre y ubicación del piloto. El piloto solo sube fotos y marca el avance; lo operativo se acuerda en persona.'
