@@ -41,15 +41,19 @@ Referencia rápida de vocabulario, de negocio y técnico, para que cualquier per
 | **Criterio de alcance (filtro)** | Regla que decide si un proveedor es alcanzable por una solicitud; hay del sistema, del cliente y del proveedor, y la lista crece sin migraciones | ADR 0045 |
 | **Oleada de aviso** | Aviso de una nueva solicitud por anillos de prioridad («sistema solar»): primero a quienes cumplen todos los filtros (propios y mejor calificados primero) y, pasado un intervalo, a los nuevos que cumplen tras relajar un filtro; a nadie dos veces por ciclo | ADR 0045 |
 | **Súper ola** | Último paso de la escalera: aviso a todos los elegibles (aprobados, disponibles y que no excluyeron la solicitud con sus filtros); nunca a quien está ocupado o en trabajo | ADR 0045 |
-| **Esperando piloto** | Etapa de la solicitud a la que nadie aceptó ni contraofertó tras la súper ola; no se desactiva ni vence, y el cliente la relanza a mano o por su horario (nombre visible a confirmar) | ADR 0045 |
+| **Esperando piloto** | Etapa de la solicitud a la que nadie aceptó tras la súper ola; no se desactiva ni vence, y el cliente la relanza a mano o por su horario; al cliente solo se le avisa cuánto lleva sin respuesta (nombre visible confirmado) | ADR 0045 |
 | **Relanzamiento** | Ciclo nuevo de oleadas desde el primer anillo; lo pide el cliente o lo hace el sistema según los días y la hora que el cliente eligió (mínimo 2 días por semana, a lo más uno por día) | ADR 0045 |
 | **Escalera de oleadas** | Lista ordenada de pasos que dice qué filtro se relaja en cada oleada | ADR 0045 |
-| **En negociación** | Etapa que empieza cuando un proveedor registra su primera oferta: la solicitud deja de ofertarse y de aparecer a los demás pilotos y se pausan las oleadas; si termina sin acuerdo, vuelve a ofertarse | ADR 0045 |
-| **Sin buscar más pilotos** | Opción del cliente que detiene las oleadas; la solicitud sigue disponible para quienes ya la ven | ADR 0045 |
+| **Aceptación** | Primera oferta de un proveedor sobre una solicitud (acepta el precio o contraoferta); llega a la bandeja del cliente o espera en la cola | ADR 0045 |
+| **Bandeja** | Aceptaciones que el cliente ve y puede responder («Tienes N aceptaciones nuevas»); nunca más que el cupo a la vez | ADR 0045 |
+| **Cupo de negociaciones** | Cuántos proveedores conversan a la vez con el cliente en una solicitud (`cupo_negociaciones`, 3 por defecto) | ADR 0045 |
+| **Cola** | Aceptaciones que superan el cupo o cuyo proveedor no está disponible; el cliente no las ve ni sabe cuántas son; se ordenan por propios, calificación y llegada y pasan a la bandeja cuando se libera un lugar | ADR 0045 |
+| **Casilla** | Lugar de la bandeja que ocupa una negociación `en_bandeja` o `en_conversacion`; hay tantas como el cupo | ADR 0045 |
+| **En acuerdo** | Estado de la solicitud que el cliente marca cuando la conversación llega a un punto sólido: ya no se avisa a más pilotos y la cola se congela; se puede volver a buscar (el término «tomada» no se usa) | ADR 0045 |
 | **Disponibilidad** | Interruptor manual de cada cuenta de proveedor (`disponible`, `ocupado`, `en_trabajo`); un piloto de una empresa tiene el suyo y el encargado puede marcarlo; los dos últimos estados no reciben avisos | ADR 0045 |
 | **Oferta que no cumple** | Oferta de un equipo que no cumple un requisito del cliente (p. ej. la capacidad del dron); se marca y el cliente decide | ADR 0045 |
 | **Oferta** | Precio por hectárea que una parte propone en una negociación, con vencimiento; se acepta, se contraoferta o se rechaza | especificación §4.5, §5.3 |
-| **Negociación** | Conjunto de ofertas entre el cliente y un proveedor sobre una solicitud; hay una sola oferta vigente y un máximo de ofertas | ADR 0030 |
+| **Negociación** | Conjunto de ofertas entre el cliente y un proveedor sobre una solicitud; hay una sola oferta vigente y un máximo de ofertas; es asíncrona (cada quien responde cuando puede) y pasa por `en_cola`, `en_bandeja` y `en_conversacion` | ADR 0030, 0045 |
 | **Adjudicación** | Aceptar la oferta vigente de la contraparte: fija el precio acordado, el proveedor y el equipo y cierra las demás negociaciones | ADR 0030 |
 | **Precio por hectárea** | Precio que el cliente propone y que se negocia; se congela al adjudicar como precio acordado. No hay precio de referencia | ADR 0030, 0034, 0045 |
 | **Precio final** | Hectáreas ejecutadas por precio acordado; es el monto a pagar, fuera de la app | ADR 0034 |

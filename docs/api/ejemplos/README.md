@@ -32,7 +32,7 @@ Los archivos son generados: no se editan a mano. Se regeneran con `bin/generar-e
 ## Qué cubren
 
 - Sesión por token de dispositivo: sesión de cliente y de piloto, credenciales inválidas, token ausente, revocado y de un rol equivocado, cierre de sesión y dispositivos.
-- Cliente: zonas, terrenos y solicitudes (crear, reintentar con el mismo `uuid_cliente`, estimar, publicar, cambiar precio, cancelar, recurso ajeno).
+- Cliente: zonas, catálogo de ubicaciones (sin token), terrenos y solicitudes (crear, reintentar con el mismo `uuid_cliente`, estimar, publicar, cambiar precio, cancelar, recurso ajeno).
 - Proveedor y flota: perfil, pilotos, documentos, drones y equipos.
 - Mercado y negociación: mapa de solicitudes abiertas con filtros, resumen por zona, detalle previo a ofertar, ofertar (y reintento idempotente), comparar, contraofertar, aceptar y aceptar otra vez.
 - Ejecución: inicio, avance, foto de avance, ubicación del piloto (enviar y ver), cierre, chat y preferencias de aviso.

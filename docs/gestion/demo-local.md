@@ -70,7 +70,7 @@ Cada solicitud nace con un `uuid_cliente` determinista, así que volver a sembra
 | `cancelada` | `luis.antelo`, La Esperanza | Sin penalidad. |
 | `expirada` | `coop.valle.grande`, Parcela Central | Se puede renovar dentro de 30 días. |
 
-Además: nueve terrenos con zona, región y polígono (valles, Chiquitania, norte integrado y Chaco), proveedores en cada estado de aprobación con sus documentos, drones y equipos, calificaciones y reputación, y avisos in-app para cada cuenta (nuevas solicitudes en su zona, ofertas, mensajes, avance). Cada piloto tiene su persona operativa vinculada (`usuario.persona_id` en `GET /api/auth/sesion`).
+Además: nueve terrenos con zona, región, departamento y provincia (todos de Santa Cruz) y polígono (valles, Chiquitania, norte integrado y Chaco), proveedores en cada estado de aprobación con sus documentos, drones y equipos, calificaciones y reputación, y avisos in-app para cada cuenta (nuevas solicitudes en su zona, ofertas, mensajes, avance). Cada piloto tiene su persona operativa vinculada (`usuario.persona_id` en `GET /api/auth/sesion`).
 
 Cada vez que corre `bin/demo up` o `bin/demo seed`, las solicitudes y ofertas abiertas recuperan su vigencia (cinco días y 24 horas).
 
