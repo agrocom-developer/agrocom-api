@@ -1,6 +1,6 @@
 # ADR 0028 — Proveedores: propio, independiente y tercero
 
-**Estado:** aceptada, revisable · **Fecha:** 2026-11-23 · **Decide:** el dueño (autonomía delegada)
+**Estado:** aceptada, revisable · **Fecha:** 2026-11-23 · **Decide:** el dueño (autonomía delegada) · **Aclarado por:** ADR 0045 (el proveedor propio compite en igualdad ante el cliente y en la adjudicación; solo tiene prioridad en el aviso y en el orden sugerido de ofertas)
 
 ## Contexto
 
