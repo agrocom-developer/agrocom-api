@@ -40,7 +40,7 @@ return [
     'equipos_trabajo' => [
         'creado' => 'La cuadrilla se dio de alta correctamente.',
         'actualizado' => 'Los datos de la cuadrilla se actualizaron correctamente.',
-        'eliminado' => 'La cuadrilla se dio de baja correctamente.',
+        'eliminado' => 'La cuadrilla se eliminó correctamente.',
         'estado_cambiado' => 'El estado de la cuadrilla se actualizó correctamente.',
         'integrante_asignado' => 'El integrante se asignó correctamente.',
         'integrante_finalizado' => 'Se finalizó la vigencia del integrante.',
@@ -103,7 +103,7 @@ return [
         'ver' => 'Ver ficha',
         'editar' => 'Editar',
         'eliminar_accion' => 'Eliminar',
-        'confirmar_baja' => '¿Confirmas la baja de esta cuadrilla?',
+        'confirmar_baja' => '¿Confirmas eliminar esta cuadrilla?',
         'paginacion_aria' => 'Paginación de cuadrillas',
         'paginacion_anterior' => 'Anterior',
         'paginacion_siguiente' => 'Siguiente',
