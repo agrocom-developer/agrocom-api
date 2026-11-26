@@ -14,10 +14,10 @@
     "respuesta": {
         "estado": 422,
         "cuerpo": {
-            "message": "Las credenciales no coinciden con ningún registro.",
+            "message": "El usuario o la contraseña no son correctos.",
             "errors": {
                 "username": [
-                    "Las credenciales no coinciden con ningún registro."
+                    "El usuario o la contraseña no son correctos."
                 ]
             }
         }

@@ -10,7 +10,7 @@
             "password": "0000",
             "uuid_dispositivo": "7a2e1b3f-2a45-4d0a-8b9c-3c8d2e6f1a42",
             "nombre_dispositivo": "Celular del proveedor",
-            "role_id": 8
+            "role_id": 5
         }
     },
     "respuesta": {
@@ -19,28 +19,28 @@
             "token": "12|<token-del-dispositivo>",
             "token_type": "Bearer",
             "usuario": {
-                "id": 12,
+                "id": 4,
                 "name": "Carlos Mamani Quispe",
                 "username": "carlos.mamani",
-                "persona_id": 13,
+                "persona_id": 3,
                 "foto_url": null
             },
             "rol": {
-                "id": 8,
+                "id": 5,
                 "name": "proveedor",
                 "description": "Proveedor del marketplace: gestiona su personal, sus drones y sus equipos desde la app."
             },
             "dispositivo": {
-                "id": 10,
+                "id": 7,
                 "uuid_dispositivo": "7a2e1b3f-2a45-4d0a-8b9c-3c8d2e6f1a42",
                 "nombre_dispositivo": "Celular del proveedor",
                 "rol": {
-                    "id": 8,
+                    "id": 5,
                     "name": "proveedor",
                     "description": "Proveedor del marketplace: gestiona su personal, sus drones y sus equipos desde la app."
                 },
                 "last_used_at": null,
-                "created_at": "2026-11-24T18:56:44+00:00"
+                "created_at": "2026-11-26T21:56:01+00:00"
             }
         }
     }

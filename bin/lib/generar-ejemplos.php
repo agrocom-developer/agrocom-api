@@ -249,7 +249,6 @@ try {
     registrar('contactos-ajeno', 'actualizarContacto', 'Un id que no es del cliente responde 404, nunca 403 (invariante 5).', 'PUT', '/api/clientes/mi/contactos/999999', [
         'nombre' => 'Otra persona', 'telefono' => '+591 70011225',
     ], $tokenCliente, 404);
-    registrar('clientes-zonas', 'listarZonas', 'Catálogo de zonas de operación.', 'GET', '/api/zonas', null, $tokenCliente, 200);
     registrar('catalogos-ubicaciones', 'listarUbicaciones', 'Catálogo oficial de departamentos y provincias de Bolivia con su código del INE; sin token, de solo lectura.', 'GET', '/api/catalogos/ubicaciones', null, null, 200);
     registrar('terrenos-lista', 'listarTerrenos', 'Terrenos del cliente.', 'GET', '/api/terrenos', null, $tokenCliente, 200);
 
@@ -320,7 +319,7 @@ try {
 
     if ($solicitudId !== null) {
         registrar('solicitudes-estimacion', 'estimarSolicitud', 'Monto estimado con el precio propuesto, antes de abrirla.', 'GET', "/api/solicitudes/{$solicitudId}/estimacion", null, $tokenCliente, 200);
-        registrar('solicitudes-publicar', 'publicarSolicitud', 'La deja abierta a ofertas: los pilotos la ven en el mapa y reciben el aviso de su zona.', 'POST', "/api/solicitudes/{$solicitudId}/publicar", null, $tokenCliente, 200);
+        registrar('solicitudes-publicar', 'publicarSolicitud', 'La deja abierta a ofertas: los pilotos la ven en el mapa y reciben el aviso.', 'POST', "/api/solicitudes/{$solicitudId}/publicar", null, $tokenCliente, 200);
         registrar('solicitudes-precio', 'cambiarPrecioSolicitud', 'El cliente cambia el precio propuesto mientras la solicitud sigue abierta; las ofertas vigentes no cambian.', 'POST', "/api/solicitudes/{$solicitudId}/precio", ['precio_ha_propuesto' => '128.0000'], $tokenCliente, 200);
         registrar('solicitudes-ver', 'verSolicitud', 'Detalle con su historial de estados.', 'GET', "/api/solicitudes/{$solicitudId}", null, $tokenCliente, 200);
     }
@@ -463,15 +462,14 @@ try {
     registrar('proveedores-pilotos', 'listarPilotos', 'Pilotos del proveedor.', 'GET', '/api/proveedores/pilotos', null, $tokenProveedor, 200);
     registrar('ofertas-reputacion', 'verReputacion', 'Calificación, tasa de cancelación y alertas propias; sin sanciones automáticas.', 'GET', '/api/reputacion', null, $tokenProveedor, 200);
     registrar('calificaciones-recibidas', 'listarCalificacionesRecibidas', 'Calificaciones que recibe el proveedor.', 'GET', '/api/calificaciones/recibidas', null, $tokenProveedor, 200);
-    registrar('notificaciones-proveedor', 'listarNotificaciones', 'Bandeja del proveedor: nuevas solicitudes en su zona, ofertas y mensajes.', 'GET', '/api/notificaciones', null, $tokenProveedor, 200);
-    registrar('notificaciones-preferencias', 'verPreferenciasDeAviso', 'Qué avisos recibe el piloto: nuevas solicitudes por zona, región y hectáreas mínimas.', 'GET', '/api/notificaciones/preferencias', null, $tokenProveedor, 200);
-    registrar('notificaciones-preferencias-guardar', 'guardarPreferenciasDeAviso', 'Activa o apaga los avisos de nuevas solicitudes y los acota a una región.', 'PUT', '/api/notificaciones/preferencias', [
-        'nuevas_solicitudes' => ['activo' => true, 'zonas' => [], 'macrorregiones' => ['chiquitania', 'valles'], 'hectareas_minimas' => '50.0000'], 'ofertas' => true, 'mensajes' => true, 'avance' => true, 'calificaciones' => true,
+    registrar('notificaciones-proveedor', 'listarNotificaciones', 'Bandeja del proveedor: nuevas solicitudes, ofertas y mensajes.', 'GET', '/api/notificaciones', null, $tokenProveedor, 200);
+    registrar('notificaciones-preferencias', 'verPreferenciasDeAviso', 'Qué avisos recibe el piloto: nuevas solicitudes y hectáreas mínimas.', 'GET', '/api/notificaciones/preferencias', null, $tokenProveedor, 200);
+    registrar('notificaciones-preferencias-guardar', 'guardarPreferenciasDeAviso', 'Activa o apaga los avisos de nuevas solicitudes y fija las hectáreas mínimas.', 'PUT', '/api/notificaciones/preferencias', [
+        'nuevas_solicitudes' => ['activo' => true, 'hectareas_minimas' => '50.0000'], 'ofertas' => true, 'mensajes' => true, 'avance' => true, 'calificaciones' => true,
     ], $tokenProveedor, 200);
 
     // Mapa de solicitudes abiertas: sin datos privados del cliente.
-    [, $mapa] = registrar('mercado-mapa', 'listarSolicitudesAbiertas', 'Solicitudes abiertas para el mapa del piloto, con sus filtros; sin nombre ni teléfono del cliente.', 'GET', '/api/solicitudes-abiertas?macrorregion=chiquitania&hectareas_min=50', null, $tokenProveedor, 200);
-    registrar('mercado-resumen-zonas', 'resumenZonasAbiertas', 'Cuántas solicitudes y hectáreas hay por zona y región (valles frente a Chiquitania).', 'GET', '/api/solicitudes-abiertas/resumen-zonas', null, $tokenProveedor, 200);
+    [, $mapa] = registrar('mercado-mapa', 'listarSolicitudesAbiertas', 'Solicitudes abiertas para el mapa del piloto, con sus filtros; sin nombre ni teléfono del cliente.', 'GET', '/api/solicitudes-abiertas?hectareas_min=50', null, $tokenProveedor, 200);
     $abierta = $solicitudId !== null ? ['id' => $solicitudId] : buscar($mapa['solicitudes'] ?? [], fn ($fila) => ($fila['mi_negociacion'] ?? null) === null);
 
     if ($abierta !== null) {
