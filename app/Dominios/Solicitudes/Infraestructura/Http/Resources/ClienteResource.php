@@ -19,7 +19,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'razon_social', type: 'string', example: 'Agropecuaria San Rafael SRL'),
         new OA\Property(property: 'documento_fiscal', type: 'string', nullable: true, example: '1029384027'),
         new OA\Property(property: 'telefono', type: 'string', nullable: true, example: '+591 76543210'),
-        new OA\Property(property: 'estado', type: 'string', enum: ['activo', 'suspendido'], example: 'activo'),
+        new OA\Property(property: 'estado', description: 'Ciclo de aprobación (ADR 0046): nace `pendiente`; solo `aprobado` publica y negocia.', type: 'string', enum: ['pendiente', 'aprobado', 'suspendido', 'rechazado', 'baja'], example: 'aprobado'),
         new OA\Property(property: 'calificacion_promedio', description: 'Decimal exacto en string (0 a 5).', type: 'string', example: '0.00'),
         new OA\Property(property: 'calificaciones_conteo', type: 'integer', example: 0),
         new OA\Property(property: 'publicacion_limitada', description: 'Verdadero si la publicación de solicitudes está limitada hasta una revisión por calificación baja (política de calificación).', type: 'boolean', example: false),

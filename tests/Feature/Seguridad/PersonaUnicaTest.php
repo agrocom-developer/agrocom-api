@@ -37,6 +37,7 @@ beforeEach(function () {
         'create_sol_terrenos_table',
         'create_sol_solicitudes_servicio_table',
         'agrega_reputacion_a_sol_clientes',
+        'lleva_sol_clientes_al_ciclo_de_aprobacion',
         'agrega_motivo_estado_a_sol_clientes',
         'crea_sol_cliente_contactos',
         'create_prv_proveedores_table',

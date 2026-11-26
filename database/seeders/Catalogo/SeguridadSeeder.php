@@ -103,6 +103,7 @@ class SeguridadSeeder extends Seeder
         'solicitudes.solicitud.cancelar' => 'Cancelar una solicitud de servicio desde el panel, con motivo',
         'solicitudes.cliente.crear' => 'Registrar a mano a un cliente (persona o empresa con sus contactos) que llega a la oficina',
         'solicitudes.cliente.ver' => 'Ver el listado y la ficha de los clientes del marketplace',
+        'solicitudes.cliente.aprobar' => 'Aprobar o rechazar a un cliente pendiente, con motivo en el rechazo',
         'solicitudes.cliente.suspender' => 'Suspender a un cliente o reactivarlo, con motivo',
         'solicitudes.zona.ver' => 'Ver el catálogo de zonas de Santa Cruz',
         'solicitudes.zona.gestionar' => 'Crear, editar y eliminar zonas',

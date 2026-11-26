@@ -2,16 +2,16 @@
 
 namespace App\Dominios\Solicitudes\Infraestructura\Eloquent;
 
+use App\Dominios\Compartido\Dominio\EstadoAprobacion;
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
-use App\Dominios\Solicitudes\Dominio\EstadoCliente;
 use App\Dominios\Solicitudes\Dominio\TipoCliente;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
  * Cliente del marketplace (`sol_clientes`, especificación §4.1): la ficha de
- * negocio de una cuenta con el rol `cliente`. La calificación promedio la
+ * negocio de una cuenta de tipo `cliente`. La calificación promedio la
  * mantiene el módulo de calificaciones; nace en cero.
  *
  * @property int $id
@@ -20,8 +20,10 @@ use Illuminate\Support\Carbon;
  * @property string $razon_social
  * @property string|null $documento_fiscal
  * @property string|null $telefono
- * @property EstadoCliente $estado
+ * @property EstadoAprobacion $estado Ciclo único de aprobación (ADR 0046): nace `pendiente`; solo `aprobado` publica y negocia.
  * @property string|null $motivo_estado
+ * @property int|null $aprobado_por
+ * @property Carbon|null $aprobado_en
  * @property string $calificacion_promedio
  * @property int $calificaciones_conteo
  * @property Carbon|null $aviso_calificacion_en
@@ -48,7 +50,8 @@ class Cliente extends ModeloDominio
     {
         return [
             'tipo' => TipoCliente::class,
-            'estado' => EstadoCliente::class,
+            'estado' => EstadoAprobacion::class,
+            'aprobado_en' => 'datetime',
             'usuario_id' => 'integer',
             'calificaciones_conteo' => 'integer',
             'aviso_calificacion_en' => 'datetime',

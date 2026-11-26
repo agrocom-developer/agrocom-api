@@ -59,7 +59,7 @@ function clienteConTerreno(int $usuarioId, string $hectareas = '100.0000', bool 
         'tipo' => 'persona',
         'razon_social' => "Cliente {$usuarioId}",
         'telefono' => '70012345',
-        'estado' => 'activo',
+        'estado' => 'aprobado',
         'created_at' => now(),
         'updated_at' => now(),
     ]);

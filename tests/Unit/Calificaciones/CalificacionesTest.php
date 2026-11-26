@@ -85,7 +85,7 @@ function calMundo(): CalificacionesGuardadas
     }
 
     DB::table('sol_clientes')->insert([
-        'id' => 1, 'usuario_id' => CAL_CLIENTE_USUARIO, 'tipo' => 'persona', 'razon_social' => 'Cliente Ana', 'estado' => 'activo',
+        'id' => 1, 'usuario_id' => CAL_CLIENTE_USUARIO, 'tipo' => 'persona', 'razon_social' => 'Cliente Ana', 'estado' => 'aprobado',
         'created_at' => now(), 'updated_at' => now(),
     ]);
 

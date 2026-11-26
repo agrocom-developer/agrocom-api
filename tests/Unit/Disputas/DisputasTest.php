@@ -75,7 +75,7 @@ function dspMundo(): void
     }
 
     foreach ([1 => DSP_CLIENTE, 2 => DSP_OTRO_CLIENTE] as $id => $usuario) {
-        DB::table('sol_clientes')->insert(['id' => $id, 'usuario_id' => $usuario, 'tipo' => 'persona', 'razon_social' => "Cliente {$id}", 'estado' => 'activo', 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('sol_clientes')->insert(['id' => $id, 'usuario_id' => $usuario, 'tipo' => 'persona', 'razon_social' => "Cliente {$id}", 'estado' => 'aprobado', 'created_at' => now(), 'updated_at' => now()]);
     }
 
     app()->instance(LecturaProveedores::class, new ProveedoresFalsos(

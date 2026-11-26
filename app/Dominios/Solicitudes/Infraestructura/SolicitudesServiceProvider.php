@@ -7,6 +7,7 @@ use App\Dominios\Solicitudes\Aplicacion\PasosDeSolicitudPorMaquina;
 use App\Dominios\Solicitudes\Aplicacion\ReputacionDeClientePorSolicitudes;
 use App\Dominios\Solicitudes\Aplicacion\ResolucionDeServicioPorMaquina;
 use App\Dominios\Solicitudes\Contratos\LecturaContextoSolicitudes;
+use App\Dominios\Solicitudes\Contratos\LecturaEstadoDeCliente;
 use App\Dominios\Solicitudes\Contratos\LecturaMercado;
 use App\Dominios\Solicitudes\Contratos\LecturaServicios;
 use App\Dominios\Solicitudes\Contratos\LecturaServiciosAsignados;
@@ -42,6 +43,7 @@ final class SolicitudesServiceProvider extends ServiceProvider
         $this->app->bind(LecturaServicios::class, LecturaServiciosEloquent::class);
         $this->app->bind(ResolucionDeServicio::class, ResolucionDeServicioPorMaquina::class);
         $this->app->bind(ReputacionDeClientes::class, ReputacionDeClientePorSolicitudes::class);
+        $this->app->bind(LecturaEstadoDeCliente::class, LecturaEstadoDeClienteEloquent::class);
 
         // Buscador global (`busqueda.proveedores`): el agregador de Seguridad
         // no conoce estas clases, las recibe por tag.

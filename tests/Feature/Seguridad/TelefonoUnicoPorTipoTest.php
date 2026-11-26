@@ -41,6 +41,7 @@ beforeEach(function () {
         'create_sol_terrenos_table',
         'create_sol_solicitudes_servicio_table',
         'agrega_reputacion_a_sol_clientes',
+        'lleva_sol_clientes_al_ciclo_de_aprobacion',
         'agrega_motivo_estado_a_sol_clientes',
         'crea_sol_cliente_contactos',
         'create_prv_proveedores_table',
@@ -275,7 +276,7 @@ it('la migración copia los teléfonos de las fichas a la cuenta, normalizados, 
 
         DB::table('sol_clientes')->insert([
             'usuario_id' => $usuario, 'tipo' => 'persona', 'razon_social' => 'x'.$usuario, 'telefono' => $telefono,
-            'estado' => 'activo', 'created_at' => $ahora, 'updated_at' => $ahora,
+            'estado' => 'aprobado', 'created_at' => $ahora, 'updated_at' => $ahora,
         ]);
     }
 

@@ -111,9 +111,9 @@ final class RegistroCuentasEloquent implements LecturaCuentas, RegistroCuentas
 
         return SecUser::query()
             ->whereIn('id', array_values(array_unique($ids)))
-            ->get(['id', 'name', 'username', 'email', 'state', 'tipo_cuenta'])
+            ->get(['id', 'name', 'username', 'email', 'state', 'tipo_cuenta', 'persona_id'])
             ->mapWithKeys(static fn (SecUser $cuenta): array => [
-                $cuenta->id => new DatosCuenta($cuenta->id, $cuenta->name, $cuenta->username, $cuenta->email, (bool) $cuenta->state, $cuenta->tipo_cuenta),
+                $cuenta->id => new DatosCuenta($cuenta->id, $cuenta->name, $cuenta->username, $cuenta->email, (bool) $cuenta->state, $cuenta->tipo_cuenta, $cuenta->persona_id),
             ])
             ->all();
     }
