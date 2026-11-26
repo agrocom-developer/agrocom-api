@@ -32,8 +32,8 @@ return [
     'seccion_calidad' => 'Calidad',
     'calificacion' => 'Calificación promedio',
     'calificacion_pie' => ':conteo calificaciones; :reportadas por moderar',
-    'tasa_disputas' => 'Tasa de disputas',
-    'tasa_disputas_pie' => ':abiertas disputas sobre :ejecutados servicios ejecutados',
+    'tasa_disputas' => 'Tasa de reclamos',
+    'tasa_disputas_pie' => ':abiertas reclamos sobre :ejecutados servicios ejecutados',
     'tasa_reembolso' => 'Tasa de reembolso',
     'tasa_reembolso_pie' => ':monto reembolsado sobre el volumen completado',
 

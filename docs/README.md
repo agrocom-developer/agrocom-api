@@ -12,13 +12,13 @@ Este `docs/` contiene la documentación vigente de Agrocom, un marketplace de se
   - 0030 negociación oferta-demanda
   - 0031 calificación
   - 0032 registro y aprobación de proveedores
-  - 0033 cancelación sin penalidad automática y disputas
+  - 0033 cancelación sin penalidad automática y reclamos
   - 0034 precio acordado y pago fuera de la app
   - 0035 retiro de la operación interna (finanzas, inventario y mantenimiento de flota)
   - 0036 dominio de proveedores y flota: módulos, roles, registro público y aprobación
   - 0037 solicitud de servicio y ejecución: la ejecución cuelga de una solicitud adjudicada y se retira el modelo de contratos
   - 0038 motor de negociación: ofertas, rondas, adjudicación atómica y vencimientos
-  - 0039 calificaciones, disputas y métricas: cierre del servicio, reputación ponderada, moderación, monto ajustado y panel de métricas
+  - 0039 calificaciones, reclamos y métricas: cierre del servicio, reputación ponderada, moderación, monto ajustado y panel de métricas
   - 0040 seguimiento: fotos de avance, mensajes y ubicación del piloto
   - 0041 mapa de solicitudes abiertas y notificaciones con preferencias
   - 0042 registro del proveedor con datos de la persona y fotos del dron

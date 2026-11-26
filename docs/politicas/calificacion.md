@@ -16,7 +16,7 @@
 
 ## Moderación
 
-El administrador oculta, con motivo y autor, calificaciones con insultos o datos personales, calificaciones por factores ajenos al proveedor (clima o demora del cliente), represalias tras una disputa y calificaciones de cuentas sin servicio real. Ocultar no borra: la calificación conserva el registro y deja de contar para el promedio.
+El administrador oculta, con motivo y autor, calificaciones con insultos o datos personales, calificaciones por factores ajenos al proveedor (clima o demora del cliente), represalias tras un reclamo y calificaciones de cuentas sin servicio real. Ocultar no borra: la calificación conserva el registro y deja de contar para el promedio.
 
 ## Promedio y umbrales
 

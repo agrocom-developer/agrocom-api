@@ -42,7 +42,7 @@ Referencia rápida de vocabulario, de negocio y técnico, para que cualquier per
 | **Evidencia** | Foto comprimida (menos de 300 KB) que respalda un avance, una incidencia o una disputa | especificación §4.6 |
 | **Calificación** | Valoración de 1 a 5 estrellas con etiquetas que el cliente da a un proveedor; el proveedor la ve y un administrador la modera | ADR 0031 |
 | **Moderación** | Ocultamiento con motivo y autor de una calificación que incumple la política | `politicas/calificacion.md` |
-| **Disputa** | Reclamo sobre un servicio finalizado, resuelto por un administrador con evidencia y un monto ajustado | ADR 0033 |
+| **Reclamo** | Queja sobre un servicio ya prestado que abre un cliente o un proveedor y atiende un administrador, con evidencia y un monto ajustado; la solicitud en reclamo tiene el estado interno `disputada` | ADR 0033 |
 | **Incidencia** | Evento anómalo (deriva, caída, lesión, derrame, conflicto) reportado durante o tras un servicio | `politicas/seguridad.md` |
 | **SOS** | Botón de emergencia que avisa a soporte con la ubicación | `politicas/seguridad.md` |
 | **Tasa de cancelación** | Proporción de servicios adjudicados que cancela una parte; es visible y alimenta alertas, no sanciones automáticas | ADR 0033 |

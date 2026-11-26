@@ -180,7 +180,7 @@ Pantallas actuales (rutas de `routes/web.php`, menú de `SecMenuSeeder`) y lo qu
 |---|---|---|---|
 | Solicitudes (`panel/solicitudes`, ficha con `_negociacion`, `_chat`, `_seguimiento`) | Listado, ficha con ofertas, chat, fotos y ubicación; cancelar con motivo; cerrar la negociación de un proveedor | Línea de tiempo de las **rondas** (número, autor, precio, vigencia, `es_definitiva`) en una sola vista; filtro por estado, zona y vencimiento; indicador de «vence pronto»; exportar | Alto |
 | Ofertas y rondas | Dentro de la ficha de solicitud | Pantalla de ofertas global con las negociaciones abiertas, las que no tienen respuesta y las vencidas | Medio |
-| Disputas (`panel/disputas`) | Listado, ficha, tomar, mensajes, resolver | Cola por antigüedad, plazos de apelación, monto ajustado visible antes de resolver | Medio |
+| Reclamos (`panel/disputas`) | Listado, ficha, tomar, mensajes, resolver | Cola por antigüedad, plazos de apelación, monto ajustado visible antes de resolver | Medio |
 | Calificaciones (`panel/calificaciones`) | Ocultar y restablecer | Cola de calificaciones reportadas primero | Bajo |
 | Métricas (`panel/metricas`) | KPIs de mercado, calidad, oferta, ingreso y tabla de proveedores sobre vistas `vw_metricas_*` | Embudo solicitud, oferta, adjudicación, ejecución y cierre; tiempo hasta la primera oferta; tasa de contraoferta por ronda | Alto |
 | Proveedores, pilotos, drones (`panel/proveedores`, `/pilotos`, `/drones-flota`, `/documentos`) | Listado, ficha, aprobar, rechazar, suspender y dar de baja con motivo; revisión de fotos y documentos | Cola única «pendientes de aprobación» con antigüedad y documentos por vencer; la revisión de fotos obligatorias para aprobar el dron (pendiente en `estado-api.md`) | Alto |

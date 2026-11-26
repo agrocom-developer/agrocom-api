@@ -3,11 +3,11 @@
 return [
     /*
     |--------------------------------------------------------------------------
-    | Disputas y reembolsos del marketplace (ADR 0033 y 0039)
+    | Reclamos y reembolsos del marketplace (ADR 0033 y 0039)
     |--------------------------------------------------------------------------
     |
     | El cliente (hasta 72 horas después de `ejecutada`) o el proveedor abren una
-    | disputa por servicio; soporte media; un administrador resuelve; ambas partes
+    | reclamo por servicio; soporte media; un administrador resuelve; ambas partes
     | pueden apelar una vez. Los reembolsos se liquidan entre las partes fuera de la
     | app (ADR 0034). Español neutro, tuteo (CLAUDE.md, «Tuteo estándar»).
     */
@@ -15,7 +15,7 @@ return [
     'campos' => [
         'motivo' => 'motivo',
         'detalle' => 'detalle',
-        'monto_en_disputa' => 'monto en disputa',
+        'monto_en_disputa' => 'monto reclamado',
         'texto' => 'mensaje',
         'pruebas' => 'pruebas',
         'resultado' => 'resultado',
@@ -54,27 +54,27 @@ return [
     ],
 
     'historial' => [
-        'retirada' => 'La parte que abrió la disputa la retiró.',
+        'retirada' => 'La parte que abrió el reclamo lo retiró.',
     ],
 
     'errores' => [
         'servicio_ajeno' => 'El servicio no existe.',
-        'disputa_ajena' => 'La disputa no existe.',
+        'disputa_ajena' => 'El reclamo no existe.',
         'sin_proveedor' => 'Tu cuenta no pertenece a ningún proveedor.',
-        'ya_existe' => 'Este servicio ya tiene una disputa. Hay una sola por servicio.',
-        'motivo_invalido' => 'El motivo «:motivo» no corresponde a tu lado de la disputa.',
-        'servicio_no_disputable' => 'Un servicio «:estado» no admite esta disputa.',
-        'plazo_vencido' => 'El plazo para abrir la disputa venció.',
-        'monto_invalido' => 'El monto en disputa debe ser mayor que cero y no pasar de :monto.',
+        'ya_existe' => 'Este servicio ya tiene un reclamo. Hay uno solo por servicio.',
+        'motivo_invalido' => 'El motivo «:motivo» no corresponde a tu lado del reclamo.',
+        'servicio_no_disputable' => 'Un servicio «:estado» no admite este reclamo.',
+        'plazo_vencido' => 'El plazo para abrir el reclamo venció.',
+        'monto_invalido' => 'El monto reclamado debe ser mayor que cero y no pasar de :monto.',
         'texto_requerido' => 'Escribe el texto.',
         'motivo_requerido' => 'Indica el motivo de la decisión.',
-        'no_admite_mensajes' => 'La disputa ya no admite mensajes: si fue resuelta, puedes apelar.',
-        'no_se_retira' => 'La disputa ya está resuelta y no se retira.',
-        'solo_quien_la_abrio' => 'Solo quien abrió la disputa puede retirarla.',
-        'no_se_apela' => 'Solo se apela una disputa resuelta, y una sola vez.',
+        'no_admite_mensajes' => 'El reclamo ya no admite mensajes: si fue resuelto, puedes apelar.',
+        'no_se_retira' => 'El reclamo ya está resuelto y no se retira.',
+        'solo_quien_la_abrio' => 'Solo quien abrió el reclamo puede retirarlo.',
+        'no_se_apela' => 'Solo se apela un reclamo resuelto, y una sola vez.',
         'apelacion_vencida' => 'El plazo para apelar venció.',
-        'no_se_resuelve' => 'La disputa ya fue resuelta o retirada.',
-        'transicion_no_permitida' => 'La disputa no puede pasar de «:desde» a «:hacia».',
+        'no_se_resuelve' => 'El reclamo ya fue resuelto o retirado.',
+        'transicion_no_permitida' => 'El reclamo no puede pasar de «:desde» a «:hacia».',
         'reembolso' => [
             'negativo' => 'El reembolso no puede ser negativo.',
             'sin_reembolso' => 'Un resultado a favor del proveedor o sin lugar no lleva reembolso.',

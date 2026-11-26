@@ -13,7 +13,7 @@ use OpenApi\Attributes as OA;
 #[OA\Schema(
     schema: 'Disputa',
     title: 'Disputa',
-    description: 'La disputa de un servicio (especificación §4.8, ADR 0033): una por solicitud. La abre el cliente (hasta 72 horas después de `ejecutada`) o el proveedor (cobro pendiente, acceso negado o calificación abusiva). '
+    description: 'El reclamo de un servicio (especificación §4.8, ADR 0033): uno por solicitud. Lo abre el cliente (hasta 72 horas después de `ejecutada`) o el proveedor (cobro pendiente, acceso negado o calificación abusiva). '
         .'Los importes son decimales exactos en string. `mensajes` y `resoluciones` solo viajan en el detalle. Los reembolsos se liquidan entre las partes fuera de la app.',
     required: ['id', 'solicitud_id', 'abierta_por', 'motivo', 'detalle', 'monto_en_disputa', 'estado', 'ronda', 'creada_en'],
     properties: [
@@ -24,7 +24,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'detalle', type: 'string'),
         new OA\Property(property: 'monto_en_disputa', type: 'string', example: '12000.00'),
         new OA\Property(property: 'estado', type: 'string', enum: ['abierta', 'en_revision', 'resuelta', 'retirada']),
-        new OA\Property(property: 'ronda', description: '1 es la disputa original; 2, la apelación (una sola vez).', type: 'integer', enum: [1, 2]),
+        new OA\Property(property: 'ronda', description: '1 es el reclamo original; 2, la apelación (una sola vez).', type: 'integer', enum: [1, 2]),
         new OA\Property(property: 'responde_antes_de', description: 'Hasta cuándo responde la contraparte (48 horas por defecto).', type: 'string', format: 'date-time', nullable: true),
         new OA\Property(property: 'apelable_hasta', description: 'Hasta cuándo se puede apelar la resolución (7 días); nulo si no hay resolución apelable.', type: 'string', format: 'date-time', nullable: true),
         new OA\Property(property: 'creada_en', type: 'string', format: 'date-time'),

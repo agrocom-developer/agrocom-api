@@ -29,8 +29,8 @@ El botón SOS de las apps avisa a soporte con la ubicación, abre una incidencia
 
 ## Consecuencias
 
-Una incidencia grave probada con responsabilidad del proveedor suspende al proveedor y puede dar lugar a una disputa o a una baja. El soporte guarda el expediente de cada incidencia.
+Una incidencia grave probada con responsabilidad del proveedor suspende al proveedor y puede dar lugar a un reclamo o a una baja. El soporte guarda el expediente de cada incidencia.
 
 ## Soporte
 
-Disponible desde la app y la web. Primera respuesta a disputas e incidencias no urgentes en 24 horas hábiles (parámetro).
+Disponible desde la app y la web. Primera respuesta a reclamos e incidencias no urgentes en 24 horas hábiles (parámetro).

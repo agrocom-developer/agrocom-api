@@ -14,7 +14,7 @@
 |---|---|
 | Antes de adjudicar (`borrador`, `abierta`, `con_ofertas`) | Ninguno; las ofertas vigentes se cierran |
 | Adjudicada y antes de iniciar | Motivo obligatorio; queda registrada en su tasa de cancelación; el piloto recibe el aviso |
-| En ejecución | No se cancela: se cierra con las hectáreas realmente ejecutadas y, si hay desacuerdo, se abre una disputa |
+| En ejecución | No se cancela: se cierra con las hectáreas realmente ejecutadas y, si hay desacuerdo, se abre un reclamo |
 
 ## Cancelación del proveedor
 

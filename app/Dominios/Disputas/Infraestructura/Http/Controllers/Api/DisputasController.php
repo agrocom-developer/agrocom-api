@@ -30,7 +30,7 @@ use OpenApi\Attributes as OA;
  */
 #[OA\Tag(
     name: 'Disputas',
-    description: 'El cliente (hasta 72 horas después de `ejecutada`) o el proveedor (cobro pendiente, acceso negado o calificación abusiva) abren una disputa; soporte media y un administrador resuelve; ambas partes pueden apelar una vez en 7 días (ADR 0033). Los reembolsos se liquidan fuera de la app.',
+    description: 'El cliente (hasta 72 horas después de `ejecutada`) o el proveedor (cobro pendiente, acceso negado o calificación abusiva) abren un reclamo; soporte media y un administrador resuelve; ambas partes pueden apelar una vez en 7 días (ADR 0033). Los reembolsos se liquidan fuera de la app.',
 )]
 final class DisputasController
 {
@@ -50,10 +50,10 @@ final class DisputasController
     #[OA\Post(
         path: '/api/solicitudes/{id}/disputas',
         operationId: 'abrirDisputa',
-        description: 'Abre la disputa de un servicio (una por solicitud). El cliente puede hacerlo desde `ejecutada` hasta 72 horas después, por: `cobertura_incompleta`, `mala_aplicacion`, `dano_a_cultivos_o_terceros`, `producto_distinto`, `equipo_ausente`, `evidencia_faltante`, `cobro_indebido` o `trato_inadecuado`; la solicitud pasa a `en_disputa`. '
-            .'El proveedor puede abrirla por `cobro_pendiente`, `acceso_negado` o `calificacion_abusiva`. `monto_en_disputa` es opcional (por defecto, todo el monto del servicio) y no puede pasar de él. '
+        description: 'Abre el reclamo de un servicio (uno por solicitud). El cliente puede hacerlo desde `ejecutada` hasta 72 horas después, por: `cobertura_incompleta`, `mala_aplicacion`, `dano_a_cultivos_o_terceros`, `producto_distinto`, `equipo_ausente`, `evidencia_faltante`, `cobro_indebido` o `trato_inadecuado`; la solicitud pasa a `en_disputa`. '
+            .'El proveedor puede abrirlo por `cobro_pendiente`, `acceso_negado` o `calificacion_abusiva`. `monto_en_disputa` es opcional (por defecto, todo el monto del servicio) y no puede pasar de él. '
             .'La contraparte tiene 48 horas para responder (`responde_antes_de`).',
-        summary: 'Abrir una disputa',
+        summary: 'Abrir un reclamo',
         security: [['tokenDispositivo' => []]],
         requestBody: new OA\RequestBody(
             required: true,
@@ -70,11 +70,11 @@ final class DisputasController
         tags: ['Disputas'],
         parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
         responses: [
-            new OA\Response(response: 201, description: 'Disputa abierta.', content: new OA\JsonContent(required: ['disputa'], properties: [new OA\Property(property: 'disputa', ref: '#/components/schemas/Disputa')], type: 'object')),
+            new OA\Response(response: 201, description: 'Reclamo abierto.', content: new OA\JsonContent(required: ['disputa'], properties: [new OA\Property(property: 'disputa', ref: '#/components/schemas/Disputa')], type: 'object')),
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
-            new OA\Response(response: 403, description: 'El rol del token no abre disputas.'),
+            new OA\Response(response: 403, description: 'El rol del token no abre reclamos.'),
             new OA\Response(response: 404, description: 'El servicio no existe o no es tuyo.'),
-            new OA\Response(response: 409, description: 'El servicio ya tiene una disputa.'),
+            new OA\Response(response: 409, description: 'El servicio ya tiene un reclamo.'),
             new OA\Response(response: 422, description: 'El motivo no corresponde a tu lado, el servicio no está en un estado disputable, el plazo venció o el monto es inválido.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],
     )]
@@ -94,16 +94,16 @@ final class DisputasController
     #[OA\Get(
         path: '/api/solicitudes/{id}/disputa',
         operationId: 'verDisputaDeLaSolicitud',
-        description: 'La disputa de un servicio tuyo, con su conversación y sus resoluciones. Responde 404 si la solicitud no tiene disputa o no es tuya.',
-        summary: 'La disputa de una solicitud',
+        description: 'El reclamo de un servicio tuyo, con su conversación y sus resoluciones. Responde 404 si la solicitud no tiene reclamo o no es tuya.',
+        summary: 'El reclamo de una solicitud',
         security: [['tokenDispositivo' => []]],
         tags: ['Disputas'],
         parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
         responses: [
-            new OA\Response(response: 200, description: 'La disputa.', content: new OA\JsonContent(required: ['disputa'], properties: [new OA\Property(property: 'disputa', ref: '#/components/schemas/Disputa')], type: 'object')),
+            new OA\Response(response: 200, description: 'El reclamo.', content: new OA\JsonContent(required: ['disputa'], properties: [new OA\Property(property: 'disputa', ref: '#/components/schemas/Disputa')], type: 'object')),
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
-            new OA\Response(response: 403, description: 'El rol del token no ve disputas.'),
-            new OA\Response(response: 404, description: 'No hay disputa en esa solicitud o no es tuya.'),
+            new OA\Response(response: 403, description: 'El rol del token no ve reclamos.'),
+            new OA\Response(response: 404, description: 'No hay reclamo en esa solicitud o no es tuya.'),
         ],
     )]
     public function deLaSolicitud(Request $request, int $id): JsonResponse
@@ -122,8 +122,8 @@ final class DisputasController
     #[OA\Get(
         path: '/api/disputas',
         operationId: 'listarDisputas',
-        description: 'Tus disputas (las de tu cuenta o las de tu proveedor), de la más nueva a la más vieja. `estado` filtra por un estado exacto.',
-        summary: 'Mis disputas',
+        description: 'Tus reclamos (los de tu cuenta o los de tu proveedor), de la más nueva a la más vieja. `estado` filtra por un estado exacto.',
+        summary: 'Mis reclamos',
         security: [['tokenDispositivo' => []]],
         tags: ['Disputas'],
         parameters: [
@@ -133,7 +133,7 @@ final class DisputasController
         responses: [
             new OA\Response(
                 response: 200,
-                description: 'Página de disputas.',
+                description: 'Página de reclamos.',
                 content: new OA\JsonContent(
                     required: ['disputas', 'pagina', 'paginas', 'total'],
                     properties: [
@@ -146,7 +146,7 @@ final class DisputasController
                 ),
             ),
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
-            new OA\Response(response: 403, description: 'El rol del token no ve disputas.'),
+            new OA\Response(response: 403, description: 'El rol del token no ve reclamos.'),
             new OA\Response(response: 404, description: 'La cuenta no pertenece a ningún proveedor.'),
         ],
     )]
@@ -171,15 +171,15 @@ final class DisputasController
     #[OA\Get(
         path: '/api/disputas/{id}',
         operationId: 'verDisputa',
-        description: 'Una disputa tuya con su conversación y sus resoluciones. Una de otra cuenta responde 404.',
-        summary: 'Detalle de una disputa',
+        description: 'Un reclamo tuyo con su conversación y sus resoluciones. Una de otra cuenta responde 404.',
+        summary: 'Detalle de un reclamo',
         security: [['tokenDispositivo' => []]],
         tags: ['Disputas'],
         parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
         responses: [
-            new OA\Response(response: 200, description: 'La disputa.', content: new OA\JsonContent(required: ['disputa'], properties: [new OA\Property(property: 'disputa', ref: '#/components/schemas/Disputa')], type: 'object')),
+            new OA\Response(response: 200, description: 'El reclamo.', content: new OA\JsonContent(required: ['disputa'], properties: [new OA\Property(property: 'disputa', ref: '#/components/schemas/Disputa')], type: 'object')),
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
-            new OA\Response(response: 403, description: 'El rol del token no ve disputas.'),
+            new OA\Response(response: 403, description: 'El rol del token no ve reclamos.'),
             new OA\Response(response: 404, description: 'No existe o no es tuya.'),
         ],
     )]
@@ -199,8 +199,8 @@ final class DisputasController
     #[OA\Post(
         path: '/api/disputas/{id}/mensajes',
         operationId: 'enviarMensajeDeDisputa',
-        description: 'Agrega un mensaje a la conversación de una disputa viva (`abierta` o `en_revision`): tu respuesta a la contraparte o a soporte. Una disputa resuelta se reabre apelando, no escribiendo.',
-        summary: 'Escribir en una disputa',
+        description: 'Agrega un mensaje a la conversación de un reclamo vivo (`abierta` o `en_revision`): tu respuesta a la contraparte o a soporte. Un reclamo resuelto se reabre apelando, no escribiendo.',
+        summary: 'Escribir en un reclamo',
         security: [['tokenDispositivo' => []]],
         requestBody: new OA\RequestBody(
             required: true,
@@ -209,11 +209,11 @@ final class DisputasController
         tags: ['Disputas'],
         parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
         responses: [
-            new OA\Response(response: 201, description: 'Mensaje guardado; devuelve la disputa con su conversación.', content: new OA\JsonContent(required: ['disputa'], properties: [new OA\Property(property: 'disputa', ref: '#/components/schemas/Disputa')], type: 'object')),
+            new OA\Response(response: 201, description: 'Mensaje guardado; devuelve el reclamo con su conversación.', content: new OA\JsonContent(required: ['disputa'], properties: [new OA\Property(property: 'disputa', ref: '#/components/schemas/Disputa')], type: 'object')),
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
-            new OA\Response(response: 403, description: 'El rol del token no escribe en disputas.'),
+            new OA\Response(response: 403, description: 'El rol del token no escribe en reclamos.'),
             new OA\Response(response: 404, description: 'No existe o no es tuya.'),
-            new OA\Response(response: 409, description: 'La disputa ya no admite mensajes.'),
+            new OA\Response(response: 409, description: 'El reclamo ya no admite mensajes.'),
             new OA\Response(response: 422, description: 'Falta el texto.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],
     )]
@@ -234,18 +234,18 @@ final class DisputasController
     #[OA\Post(
         path: '/api/disputas/{id}/retirar',
         operationId: 'retirarDisputa',
-        description: 'Quien abrió la disputa la retira mientras está viva. Si había movido la solicitud a `en_disputa`, la solicitud se completa como si el reclamo no se hubiera hecho. Retirar dos veces devuelve la misma disputa.',
-        summary: 'Retirar una disputa',
+        description: 'Quien abrió el reclamo lo retira mientras está vivo. Si había movido la solicitud a `en_disputa`, la solicitud se completa como si el reclamo no se hubiera hecho. Retirar dos veces devuelve el mismo reclamo.',
+        summary: 'Retirar un reclamo',
         security: [['tokenDispositivo' => []]],
         tags: ['Disputas'],
         parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
         responses: [
-            new OA\Response(response: 200, description: 'Disputa retirada.', content: new OA\JsonContent(required: ['disputa'], properties: [new OA\Property(property: 'disputa', ref: '#/components/schemas/Disputa')], type: 'object')),
+            new OA\Response(response: 200, description: 'Reclamo retirado.', content: new OA\JsonContent(required: ['disputa'], properties: [new OA\Property(property: 'disputa', ref: '#/components/schemas/Disputa')], type: 'object')),
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
-            new OA\Response(response: 403, description: 'El rol del token no gestiona disputas.'),
+            new OA\Response(response: 403, description: 'El rol del token no gestiona reclamos.'),
             new OA\Response(response: 404, description: 'No existe o no es tuya.'),
-            new OA\Response(response: 409, description: 'La disputa ya está resuelta y no se retira.'),
-            new OA\Response(response: 422, description: 'Solo quien abrió la disputa puede retirarla.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
+            new OA\Response(response: 409, description: 'El reclamo ya está resuelto y no se retira.'),
+            new OA\Response(response: 422, description: 'Solo quien abrió el reclamo puede retirarlo.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],
     )]
     public function retirar(Request $request, int $id): JsonResponse
@@ -265,7 +265,7 @@ final class DisputasController
     #[OA\Post(
         path: '/api/disputas/{id}/apelar',
         operationId: 'apelarDisputa',
-        description: 'Apela la resolución con pruebas nuevas: una sola vez y dentro de 7 días desde la resolución (`apelable_hasta`). La disputa vuelve a revisión en su segunda ronda y un administrador la resuelve de nuevo; la primera resolución rige hasta entonces.',
+        description: 'Apela la resolución con pruebas nuevas: una sola vez y dentro de 7 días desde la resolución (`apelable_hasta`). El reclamo vuelve a revisión en su segunda ronda y un administrador lo resuelve de nuevo; la primera resolución rige hasta entonces.',
         summary: 'Apelar una resolución',
         security: [['tokenDispositivo' => []]],
         requestBody: new OA\RequestBody(
@@ -277,9 +277,9 @@ final class DisputasController
         responses: [
             new OA\Response(response: 200, description: 'Apelación registrada.', content: new OA\JsonContent(required: ['disputa'], properties: [new OA\Property(property: 'disputa', ref: '#/components/schemas/Disputa')], type: 'object')),
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
-            new OA\Response(response: 403, description: 'El rol del token no gestiona disputas.'),
+            new OA\Response(response: 403, description: 'El rol del token no gestiona reclamos.'),
             new OA\Response(response: 404, description: 'No existe o no es tuya.'),
-            new OA\Response(response: 409, description: 'La disputa no está resuelta o ya se apeló.'),
+            new OA\Response(response: 409, description: 'El reclamo no está resuelto o ya se apeló.'),
             new OA\Response(response: 422, description: 'Faltan las pruebas o el plazo de 7 días venció.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],
     )]

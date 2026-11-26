@@ -27,8 +27,8 @@ Este documento define el producto. Las decisiones que lo sostienen están en `do
 | **Piloto** | Opera el dron. Puede ser empleado de Agrocom, independiente o piloto de un proveedor tercero. Ve el mapa de solicitudes abiertas, ofrece, ejecuta y sube fotos de avance. | App móvil `piloto` (offline en el lote) |
 | **Proveedor** | Entidad que presta el servicio: Agrocom (propio), un piloto independiente o una empresa o dueño de drones con sus pilotos (tercero). | Web y app |
 | **Dueño de dron** | Quien posee el dron. | Web y app |
-| **Administrador** | Aprueba proveedores, pilotos y drones con sus fotos; modera calificaciones; resuelve disputas; configura parámetros. | Web |
-| **Soporte** | Atiende incidencias, emergencias y disputas. Es un rol del panel. | Web |
+| **Administrador** | Aprueba proveedores, pilotos y drones con sus fotos; modera calificaciones; resuelve reclamos; configura parámetros. | Web |
+| **Soporte** | Atiende incidencias, emergencias y reclamos. Es un rol del panel. | Web |
 
 Un usuario puede tener varios roles (ADR 0004). Las acciones se autorizan por permiso del rol activo. Un administrador no modera lo que él mismo calificó.
 
@@ -42,12 +42,12 @@ Un usuario puede tener varios roles (ADR 0004). Las acciones se autorizan por pe
 6. El cliente compara las ofertas (precio por hectárea y total, calificación, dron), ordenadas por defecto con los proveedores propios primero y luego por calificación, y **acepta una**, **contraoferta** o **rechaza**. La negociación avanza por rondas: en cada una solo una parte tiene la oferta vigente (ADR 0030). Mientras el cliente negocia, la solicitud está **en negociación** y deja de aparecer a los demás pilotos (§6.11); el cliente puede además dejar de buscar más pilotos.
 7. Cuando una parte acepta la oferta vigente de la otra, la oferta se **adjudica**: la solicitud queda `adjudicada` con su precio acordado, las demás negociaciones se cierran y se abren los datos de contacto y el chat entre las dos partes.
 8. Las partes acuerdan en persona cómo trabajan. El piloto marca **en ejecución**, sube fotos y marca su avance (porcentaje u hectáreas). El cliente ve las fotos, el avance, la última ubicación de la app del piloto y conversa con él por mensajes (ADR 0040).
-9. El piloto **finaliza** con las hectáreas ejecutadas. El sistema calcula el **precio final** (hectáreas ejecutadas por precio acordado) y se muestra a ambos como el monto a pagar. La solicitud queda `finalizada`. El cliente, que es quien paga, tiene la última palabra: confirma el precio final o abre una disputa.
-10. El cliente califica al proveedor y la solicitud queda `calificada`; el proveedor califica al cliente en privado. Cualquiera puede abrir una disputa dentro de su plazo.
+9. El piloto **finaliza** con las hectáreas ejecutadas. El sistema calcula el **precio final** (hectáreas ejecutadas por precio acordado) y se muestra a ambos como el monto a pagar. La solicitud queda `finalizada`. El cliente, que es quien paga, tiene la última palabra: confirma el precio final o abre un reclamo.
+10. El cliente califica al proveedor y la solicitud queda `calificada`; el proveedor califica al cliente en privado. Cualquiera puede abrir un reclamo dentro de su plazo.
 
 ## 4. Modelo de datos
 
-Convenciones: dominio en español, prefijo de tabla por módulo (ADR 0011), borrado lógico (ADR 0007), importes y hectáreas en `DECIMAL`. Cada módulo escribe solo sus tablas y se comunica con los demás por contratos y eventos (ADR 0003). Prefijos: `sol_` (clientes, propiedades y solicitudes), `prv_` (proveedores), `flo_` (flota), `neg_` (negociación), `seg_` (seguimiento: avance, mensajes y ubicación), `cal_` (calificaciones), `dsp_` (disputas).
+Convenciones: dominio en español, prefijo de tabla por módulo (ADR 0011), borrado lógico (ADR 0007), importes y hectáreas en `DECIMAL`. Cada módulo escribe solo sus tablas y se comunica con los demás por contratos y eventos (ADR 0003). Prefijos: `sol_` (clientes, propiedades y solicitudes), `prv_` (proveedores), `flo_` (flota), `neg_` (negociación), `seg_` (seguimiento: avance, mensajes y ubicación), `cal_` (calificaciones), `dsp_` (reclamos).
 
 ### 4.1 Clientes y propiedades
 
@@ -121,7 +121,7 @@ Las tablas de ejecución que el piloto escribe en el lote llevan `uuid_cliente`,
 
 **`cal_calificaciones`**: `id`, `uuid_cliente`, `solicitud_id`, `autor_usuario_id`, `autor_rol` (`cliente` | `proveedor`), `sujeto_tipo` (`proveedor` | `piloto` | `cliente`), `sujeto_id`, `estrellas` (entero 1 a 5), `etiquetas` (lista de un catálogo cerrado), `comentario`, `estado` (`visible` | `en_moderacion` | `oculta`), `moderada_por`, `motivo_moderacion`. Única por `(solicitud_id, autor_rol, sujeto_tipo, sujeto_id)`. La escribe un solo actor y nunca se edita: moderar cambia `estado`, no el contenido.
 
-### 4.8 Disputas
+### 4.8 Reclamos
 
 - **`dsp_disputas`**: `id`, `solicitud_id`, `abierta_por_rol` (`cliente` | `proveedor`), `motivo` (§8.3), `detalle`, `monto_en_disputa`, `estado` (§5.5), `resolucion` (`a_favor_cliente` | `a_favor_proveedor` | `parcial` | `sin_lugar`), `monto_ajustado` (nuevo precio final tras la resolución), `resuelta_por`, `resuelta_en`.
 - **`dsp_mensajes`**: `disputa_id`, `autor_usuario_id`, `texto`, `creado_en`.
@@ -148,9 +148,9 @@ Las tablas de ejecución que el piloto escribe en el lote llevan `uuid_cliente`,
 | `con_ofertas` | Hay al menos una oferta vigente. | `abierta` (sistema, cuando no queda ninguna vigente), `adjudicada`, `expirada` (sistema), `cancelada` (cliente) |
 | `adjudicada` | Hay precio acordado y un equipo. Se abren contacto y chat. | `en_ejecucion` (piloto), `abierta` (proveedor cancela), `cancelada` (cliente) |
 | `en_ejecucion` | El piloto marcó el inicio. Hay fotos y avance. | `finalizada` (piloto, al cerrar con evidencia subida) |
-| `finalizada` | Terminada; muestra el precio final a pagar. Se puede calificar y disputar. | `calificada` (sistema, al calificar el cliente), `disputada` (cliente o proveedor) |
+| `finalizada` | Terminada; muestra el precio final a pagar. Se puede calificar y reclamar. | `calificada` (sistema, al calificar el cliente), `disputada` (cliente o proveedor) |
 | `calificada` | El cliente calificó al proveedor. | `disputada` (dentro del plazo) |
-| `disputada` | Hay una disputa abierta. | `finalizada` o `calificada` (la que tenía), `cancelada` (reembolso total) |
+| `disputada` | Hay un reclamo abierto. | `finalizada` o `calificada` (la que tenía), `cancelada` (reembolso total) |
 | `expirada` | Venció sin adjudicar. | `abierta` (cliente, al renovar dentro de su plazo) |
 | `cancelada` | Terminal; guarda quién y por qué. | — |
 
@@ -177,9 +177,9 @@ Solo una oferta por solicitud llega a `aceptada`; la aceptación es atómica sob
 
 El avance es un registro de `seg_avances`: `inicio` (pasa la solicitud a `en_ejecucion`), `avance` (hectáreas acumuladas o porcentaje) y `cierre` (hectáreas ejecutadas finales). El servidor valida cada registro por `uuid_cliente`, en orden de `secuencia`. El cierre deja la solicitud en `en_ejecucion` con la marca `cierre_solicitado_en` hasta que al menos `seguimiento.evidencias_minimas_cierre` fotos de avance estén subidas; entonces pasa a `finalizada` y calcula el precio final.
 
-### 5.5 Disputa
+### 5.5 Reclamo
 
-`abierta` → `en_revision` → `resuelta`; `abierta` → `retirada` (por quien la abrió). Una sola disputa abierta por solicitud.
+`abierta` → `en_revision` → `resuelta`; `abierta` → `retirada` (por quien lo abrió). Un solo reclamo abierto por solicitud.
 
 ### 5.6 Incidencia
 
@@ -219,9 +219,9 @@ Gratuita y sin registro antes de adjudicar. Tras adjudicar, el cliente o el prov
 
 El precio por hectárea se negocia y queda congelado al adjudicar. El precio final es hectáreas ejecutadas por precio acordado. La app no procesa cobros ni calcula comisión; el pago se hace fuera de ella. Ver `precio_y_pago.md`.
 
-### 8.3 Calificación y disputas
+### 8.3 Calificación y reclamos
 
-El cliente califica al proveedor y al piloto de 1 a 5 estrellas con etiquetas; el proveedor califica al cliente en privado y el administrador modera. Motivos de disputa: cobertura incompleta, mala aplicación, daño a cultivos o terceros, producto distinto al pactado, no se presentó el equipo, hectáreas ejecutadas discutidas, precio final discutido, cobro pendiente, acceso negado. Ver `calificacion.md` y `disputas.md`.
+El cliente califica al proveedor y al piloto de 1 a 5 estrellas con etiquetas; el proveedor califica al cliente en privado y el administrador modera. Motivos de reclamo: cobertura incompleta, mala aplicación, daño a cultivos o terceros, producto distinto al pactado, no se presentó el equipo, hectáreas ejecutadas discutidas, precio final discutido, cobro pendiente, acceso negado. Ver `calificacion.md` y `disputas.md`.
 
 ## 9. Seguridad y confianza
 
@@ -243,7 +243,7 @@ Documentos vencidos, fraude o incidencia grave probada suspenden al proveedor, c
 
 ### 9.5 Soporte
 
-Canal por la app y por la web, con cola de casos por severidad. Una incidencia `emergencia` se atiende de inmediato; una disputa recibe primera respuesta en 24 horas hábiles (parámetro).
+Canal por la app y por la web, con cola de casos por severidad. Una incidencia `emergencia` se atiende de inmediato; un reclamo recibe primera respuesta en 24 horas hábiles (parámetro).
 
 ## 10. Endpoints
 
@@ -270,7 +270,7 @@ Prefijo `/api`. Autenticación por token de dispositivo (`POST /auth/token`). El
 | `GET/POST /solicitudes/{id}/mensajes` | Chat con el piloto adjudicado |
 | `GET /solicitudes/{id}/precio-final`, `POST /solicitudes/{id}/precio-final/confirmar` | Ver y confirmar el precio final del servicio cerrado |
 | `GET/POST /solicitudes/{id}/calificaciones` | A quién calificar y calificar al proveedor o al piloto (7 días) |
-| `POST /solicitudes/{id}/disputas`, `GET /solicitudes/{id}/disputa`, `GET /disputas`, `GET /disputas/{id}`, `POST /disputas/{id}/mensajes`, `/retirar`, `/apelar` | Disputa |
+| `POST /solicitudes/{id}/disputas`, `GET /solicitudes/{id}/disputa`, `GET /disputas`, `GET /disputas/{id}`, `POST /disputas/{id}/mensajes`, `/retirar`, `/apelar` | Reclamo |
 | `POST /incidencias`, `POST /emergencias` | Reporte y SOS |
 
 ### 10.2 Proveedor
@@ -293,7 +293,7 @@ Prefijo `/api`. Autenticación por token de dispositivo (`POST /auth/token`). El
 | `GET/PUT /notificaciones/preferencias`, `POST/DELETE /dispositivos` | Preferencias de aviso, filtros de aviso del proveedor y token de push |
 | `GET /reputacion`, `GET /calificaciones/recibidas`, `POST /calificaciones/{id}/reportar` | Reputación y calificaciones recibidas |
 | `GET/POST /solicitudes/{id}/calificar-cliente` | Califica al cliente en privado (7 días) |
-| Rutas de disputa e incidencias | Las mismas del cliente; el lado lo decide el rol del token |
+| Rutas de reclamo e incidencias | Las mismas del cliente; el lado lo decide el rol del token |
 
 ### 10.3 Sincronización del lote (piloto)
 
@@ -326,7 +326,7 @@ Son pantallas del panel (ADR 0008), no endpoints de la API de las apps. El riel 
 | Sistema | organización y configuración | Ajustes de la plataforma que se tocan poco |
 | Seguridad | usuarios, permisos y bitácora | Roles del panel: `dueno`, `encargado_operaciones` (administrador del marketplace), `soporte` y `admin_plataforma` |
 
-El administrador lee el chat y la ubicación solo para atender una disputa o una intervención; no escribe en ellos. Cerrar una negociación no es una sanción: no restringe ninguna cuenta (ADR 0033).
+El administrador lee el chat y la ubicación solo para atender un reclamo o una intervención; no escribe en ellos. Cerrar una negociación no es una sanción: no restringe ninguna cuenta (ADR 0033).
 
 ## 11. Parámetros configurables
 
@@ -368,4 +368,4 @@ En el lote: todo registro nace con su `uuid_cliente` en el dispositivo, escribir
 
 ## 15. Alcance de la primera versión
 
-Incluye: registro y aprobación de proveedores con datos de la persona y del dron con fotos, propiedad y lotes en mapa, solicitud con precio por hectárea, mapa de solicitudes abiertas, negociación por rondas, adjudicación, ejecución con fotos y avance, ubicación del piloto, chat, precio final, calificación, disputas, incidencias y SOS, notificaciones con preferencias y métricas básicas. No incluye: cobro dentro de la app, comisión calculada por la plataforma, cobertura de seguro propia, ruta ni tiempo estimado de llegada, ni facturación electrónica.
+Incluye: registro y aprobación de proveedores con datos de la persona y del dron con fotos, propiedad y lotes en mapa, solicitud con precio por hectárea, mapa de solicitudes abiertas, negociación por rondas, adjudicación, ejecución con fotos y avance, ubicación del piloto, chat, precio final, calificación, reclamos, incidencias y SOS, notificaciones con preferencias y métricas básicas. No incluye: cobro dentro de la app, comisión calculada por la plataforma, cobertura de seguro propia, ruta ni tiempo estimado de llegada, ni facturación electrónica.

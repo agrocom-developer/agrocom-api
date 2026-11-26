@@ -267,7 +267,7 @@ final class SolicitudesController
         path: '/api/solicitudes/{id}/cancelar',
         operationId: 'cancelarSolicitud',
         description: 'Cancela una solicitud propia con motivo. Es gratuita y sin penalidad en dinero; si ya estaba adjudicada, queda registrada en la tasa de cancelación del cliente y el proveedor queda libre. '
-            .'Una solicitud en ejecución o finalizada no se cancela por este camino: si hay desacuerdo, se abre una disputa.',
+            .'Una solicitud en ejecución o finalizada no se cancela por este camino: si hay desacuerdo, se abre un reclamo.',
         summary: 'Cancelar una solicitud',
         security: [['tokenDispositivo' => []]],
         requestBody: new OA\RequestBody(

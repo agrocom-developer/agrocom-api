@@ -29,8 +29,8 @@ class SeguridadSeeder extends Seeder
         'piloto' => 'Piloto de dron: ofrece, ejecuta los servicios adjudicados y sube las fotos desde la app.',
         // `encargado_operaciones` es el rol del administrador del marketplace; el
         // nombre técnico se conserva porque lo usan los avisos y las cuentas ya creadas.
-        'encargado_operaciones' => 'Administrador del marketplace: aprueba proveedores, pilotos, drones y documentos, modera calificaciones y atiende disputas.',
-        'soporte' => 'Soporte: atiende solicitudes, disputas e incidencias, e interviene en una negociación con motivo.',
+        'encargado_operaciones' => 'Administrador del marketplace: aprueba proveedores, pilotos, drones y documentos, modera calificaciones y atiende reclamos.',
+        'soporte' => 'Soporte: atiende solicitudes, reclamos e incidencias, e interviene en una negociación con motivo.',
         // Rol de la operación interna anterior: lo usan los avisos de trabajo cerrado y las cuentas ya creadas.
         'jefe_campo' => 'Jefe de campo: rol sin pantallas en el panel, se conserva para las cuentas y los avisos que ya lo usan.',
         'dueno' => 'Dueño de Agrocom SRL: acceso total, incluida la gestión de otros dueños.',
@@ -109,7 +109,7 @@ class SeguridadSeeder extends Seeder
         'negociacion.seguimiento.ver' => 'Ver el avance y las fotos de un servicio propio desde la app',
         'negociacion.evidencia.subir' => 'Subir fotos de avance, finales y de incidencia de un servicio adjudicado desde la app',
         'negociacion.pago.confirmar' => 'Informar que el proveedor recibió el pago de un servicio finalizado, que ocurre fuera de la aplicación',
-        'negociacion.precio_final.confirmar' => 'Confirmar como cliente el precio final de un servicio cerrado por el piloto, o abrir una disputa en su lugar',
+        'negociacion.precio_final.confirmar' => 'Confirmar como cliente el precio final de un servicio cerrado por el piloto, o abrir un reclamo en su lugar',
         'negociacion.mensaje.usar' => 'Leer y escribir mensajes con la otra parte de un servicio adjudicado desde la app',
         'negociacion.preferencias.gestionar' => 'Activar o desactivar los avisos de la cuenta, y las zonas de las nuevas solicitudes, desde la app',
         // Calificaciones (ADR 0031 y 0039): lado app y cola de moderación del panel.
@@ -120,11 +120,11 @@ class SeguridadSeeder extends Seeder
         'calificaciones.calificacion.ver' => 'Ver las calificaciones y su cola de moderación',
         'calificaciones.calificacion.moderar' => 'Ocultar o restablecer una calificación, con causa y motivo',
         // Disputas (ADR 0033 y 0039): lado app, cola y resolución en el panel.
-        'disputas.disputa.gestionar_cliente' => 'Abrir, argumentar, retirar y apelar una disputa de su servicio desde la app del cliente',
-        'disputas.disputa.gestionar_proveedor' => 'Abrir, argumentar, retirar y apelar una disputa de su proveedor desde la app',
-        'disputas.disputa.ver' => 'Ver las disputas, sus mensajes y su resolución',
-        'disputas.disputa.atender' => 'Tomar una disputa, pedir información a las partes y mensajear como soporte',
-        'disputas.disputa.resolver' => 'Resolver una disputa o su apelación, con resultado, reembolso y motivo',
+        'disputas.disputa.gestionar_cliente' => 'Abrir, argumentar, retirar y apelar un reclamo de su servicio desde la app del cliente',
+        'disputas.disputa.gestionar_proveedor' => 'Abrir, argumentar, retirar y apelar un reclamo de su proveedor desde la app',
+        'disputas.disputa.ver' => 'Ver los reclamos, sus mensajes y su resolución',
+        'disputas.disputa.atender' => 'Tomar un reclamo, pedir información a las partes y mensajear como soporte',
+        'disputas.disputa.resolver' => 'Resolver un reclamo o su apelación, con resultado, reembolso y motivo',
         // Métricas del mercado en el panel (especificación §14).
         'metricas.panel.ver' => 'Ver las métricas del mercado: solicitudes, aceptación, calificación, tiempos de asignación e ingreso',
     ];

@@ -44,7 +44,7 @@ final class PrecioFinalController
         operationId: 'confirmarPrecioFinalDeSolicitud',
         description: 'El cliente de la solicitud confirma el precio final (hectáreas ejecutadas por precio acordado) cuando el piloto ya cerró el servicio: solo con la solicitud `finalizada` o `calificada`. '
             .'Sin cuerpo: el servidor copia las hectáreas, el precio y el monto del cierre. Idempotente por solicitud (repetirlo responde 200 con el mismo precio final) y lo confirmado no se reescribe. '
-            .'No cambia el estado ni cobra nada: el pago es directo. Si el cliente no está de acuerdo, la salida es abrir una disputa. Avisa al proveedor adjudicado.',
+            .'No cambia el estado ni cobra nada: el pago es directo. Si el cliente no está de acuerdo, la salida es abrir un reclamo. Avisa al proveedor adjudicado.',
         summary: 'Confirmar el precio final',
         security: [['tokenDispositivo' => []]],
         tags: ['Seguimiento'],
@@ -55,7 +55,7 @@ final class PrecioFinalController
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
             new OA\Response(response: 403, description: 'El rol del token no confirma el precio final (solo `message`), o la cuenta es del proveedor (`message` y `codigo`: `precio_final_solo_cliente`).'),
             new OA\Response(response: 404, description: 'La solicitud no es de la cuenta.'),
-            new OA\Response(response: 409, description: 'El piloto aún no cerró el servicio, o hay una disputa abierta (`estado_invalido`).', content: new OA\JsonContent(ref: '#/components/schemas/ErrorConflicto')),
+            new OA\Response(response: 409, description: 'El piloto aún no cerró el servicio, o hay un reclamo abierto (`estado_invalido`).', content: new OA\JsonContent(ref: '#/components/schemas/ErrorConflicto')),
         ],
     )]
     public function confirmar(Request $request, int $id): JsonResponse

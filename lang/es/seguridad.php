@@ -205,13 +205,13 @@ return [
             ],
             'encargado_operaciones' => [
                 'nombre' => 'Administrador',
-                'descripcion' => 'Aprueba proveedores, pilotos, drones y documentos, modera calificaciones y resuelve disputas.',
-                'permisos' => ['Aprobaciones', 'Solicitudes', 'Calificaciones y disputas'],
+                'descripcion' => 'Aprueba proveedores, pilotos, drones y documentos, modera calificaciones y resuelve reclamos.',
+                'permisos' => ['Aprobaciones', 'Solicitudes', 'Calificaciones y reclamos'],
             ],
             'soporte' => [
                 'nombre' => 'Soporte',
-                'descripcion' => 'Atiende solicitudes, clientes y disputas, e interviene en una negociación con motivo.',
-                'permisos' => ['Solicitudes', 'Clientes', 'Disputas'],
+                'descripcion' => 'Atiende solicitudes, clientes y reclamos, e interviene en una negociación con motivo.',
+                'permisos' => ['Solicitudes', 'Clientes', 'Reclamos'],
             ],
             'piloto' => [
                 'nombre' => 'Piloto de dron',
@@ -256,7 +256,7 @@ return [
         'col_total' => 'Total',
         'region_sin_zona' => 'Sin zona',
         'pendientes_titulo' => 'Pendiente de tu decisión',
-        'pendientes_vacio' => 'No hay nada pendiente. Cuando un proveedor, un dron, un documento o una disputa necesite tu decisión, aparecerá aquí.',
+        'pendientes_vacio' => 'No hay nada pendiente. Cuando un proveedor, un dron, un documento o un reclamo necesite tu decisión, aparecerá aquí.',
         'pendientes_ver' => 'Revisar',
         'pendiente' => [
             'proveedores' => 'Proveedores por aprobar',
@@ -265,7 +265,7 @@ return [
             'fotos_de_dron' => 'Fotos de dron por revisar',
             'documentos' => 'Documentos por revisar',
             'calificaciones' => 'Calificaciones en moderación',
-            'disputas' => 'Disputas abiertas',
+            'reclamos' => 'Reclamos abiertos',
         ],
         'vacio_titulo' => 'Todavía no hay solicitudes',
         'vacio_detalle' => 'Cuando un cliente publique una solicitud, verás aquí cómo avanza por estado y por región.',
