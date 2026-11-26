@@ -4372,88 +4372,6 @@ paths:
       security:
         -
           tokenDispositivo: []
-  /api/referencias/precio:
-    get:
-      tags:
-        - Solicitudes
-      summary: 'Precio de referencia por hectárea'
-      description: 'El precio por hectárea de referencia para un tipo de aplicación, de lo más específico a lo más general: la zona, su macrorregión o el precio general del tipo. `nivel` dice de dónde salió (`zona`, `macrorregion`, `general` o `respaldo`). Es una guía, no un límite: el precio máximo de sanidad es otro parámetro. Sin `zona_id` ni `macrorregion` devuelve el precio general. Importe como decimal exacto en string.'
-      operationId: precioDeReferencia
-      parameters:
-        -
-          name: tipo_aplicacion
-          in: query
-          required: true
-          schema:
-            type: string
-            enum:
-              - herbicida
-              - insecticida
-              - fungicida
-              - fertilizante_foliar
-              - desecante
-              - otro
-        -
-          name: zona_id
-          in: query
-          description: 'Ver `GET /api/zonas`.'
-          required: false
-          schema:
-            type: integer
-        -
-          name: macrorregion
-          in: query
-          required: false
-          schema:
-            type: string
-            example: chiquitania
-      responses:
-        200:
-          description: 'El precio de referencia.'
-          content:
-            application/json:
-              schema:
-                required:
-                  - tipo_aplicacion
-                  - precio_ha
-                  - nivel
-                properties:
-                  tipo_aplicacion:
-                    type: string
-                    example: herbicida
-                  zona_id:
-                    type: integer
-                    nullable: true
-                  macrorregion:
-                    type: string
-                    example: chiquitania
-                    nullable: true
-                  precio_ha:
-                    type: string
-                    example: '132.0000'
-                    nullable: true
-                  nivel:
-                    type: string
-                    nullable: true
-                    enum:
-                      - zona
-                      - macrorregion
-                      - general
-                      - respaldo
-                type: object
-        401:
-          description: 'Token ausente o revocado.'
-        403:
-          description: 'El rol del token no es de cliente ni de proveedor.'
-        422:
-          description: 'Tipo de aplicación, zona o macrorregión inválidos.'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorValidacion'
-      security:
-        -
-          tokenDispositivo: []
   /api/solicitudes:
     get:
       tags:
@@ -4671,7 +4589,7 @@ paths:
       tags:
         - Solicitudes
       summary: 'Monto estimado de una solicitud'
-      description: 'El monto estimado: hectáreas solicitadas por el precio por hectárea vigente (el propuesto, o el acordado una vez adjudicada), con el precio de referencia como guía.'
+      description: 'El monto estimado: hectáreas solicitadas por el precio por hectárea vigente (el propuesto, o el acordado una vez adjudicada).'
       operationId: estimarSolicitud
       parameters:
         -
@@ -6980,11 +6898,6 @@ components:
         monto_estimado:
           type: string
           example: '10000.00'
-          nullable: true
-        precio_referencia_ha:
-          description: 'Guía de mercado para el tipo de aplicación; no es un límite.'
-          type: string
-          example: '120.00'
           nullable: true
       type: object
     TerrenoEntrada:
