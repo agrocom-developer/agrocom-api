@@ -38,6 +38,7 @@ function contactosEsquema(): void
         'create_sol_solicitudes_servicio_table',
         'create_sol_solicitud_historial_table',
         'agrega_reputacion_a_sol_clientes',
+        'lleva_sol_clientes_al_ciclo_de_aprobacion',
         'agrega_negociacion_a_sol_solicitudes_servicio',
         'crea_sol_cliente_contactos',
     ]);
@@ -52,7 +53,7 @@ function clienteDeTipo(string $tipo, int $usuarioId): Cliente
         'razon_social' => $tipo === 'empresa' ? 'Agropecuaria San Rafael SRL' : "Persona {$usuarioId}",
         'documento_fiscal' => $tipo === 'empresa' ? "NIT-{$usuarioId}" : null,
         'telefono' => '70012345',
-        'estado' => 'activo',
+        'estado' => 'aprobado',
         'created_at' => now(),
         'updated_at' => now(),
     ]);

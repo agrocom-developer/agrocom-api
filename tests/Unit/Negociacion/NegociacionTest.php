@@ -1,5 +1,11 @@
 <?php
 
+use App\Dominios\Compartido\Contratos\Eventos\EstadoDeAprobacionCambiado;
+use App\Dominios\Compartido\Dominio\AccionAprobacion;
+use App\Dominios\Compartido\Dominio\EstadoAprobacion;
+use App\Dominios\Compartido\Dominio\Excepciones\CuentaNoAprobada;
+use App\Dominios\Compartido\Dominio\Excepciones\MotivoRequerido;
+use App\Dominios\Compartido\Dominio\Excepciones\TransicionDeAprobacionInvalida;
 use App\Dominios\Compartido\Dominio\MontoDelServicio;
 use App\Dominios\Flota\Contratos\DatosDron;
 use App\Dominios\Flota\Contratos\DatosEquipoApto;
@@ -27,6 +33,8 @@ use App\Dominios\Proveedores\Contratos\DatosPiloto;
 use App\Dominios\Proveedores\Contratos\DatosProveedor;
 use App\Dominios\Proveedores\Contratos\LecturaProveedores;
 use App\Dominios\Seguridad\Contratos\FotosDePerfil;
+use App\Dominios\Seguridad\Contratos\LecturaCuentas;
+use App\Dominios\Solicitudes\Aplicacion\CambiarEstadoDeCliente;
 use App\Dominios\Solicitudes\Aplicacion\CambiarPrecioPropuesto;
 use App\Dominios\Solicitudes\Aplicacion\CancelarSolicitud;
 use App\Dominios\Solicitudes\Aplicacion\CrearSolicitud;
@@ -36,12 +44,16 @@ use App\Dominios\Solicitudes\Contratos\Eventos\PrecioPropuestoCambiado;
 use App\Dominios\Solicitudes\Contratos\Eventos\SolicitudAbierta;
 use App\Dominios\Solicitudes\Contratos\Eventos\SolicitudCancelada;
 use App\Dominios\Solicitudes\Dominio\Excepciones\SolicitudInvalida;
+use App\Dominios\Solicitudes\Infraestructura\Eloquent\Cliente;
+use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Tests\Soporte\CuentasFalsas;
 use Tests\Soporte\Esquema;
 use Tests\Soporte\ProveedoresFalsos;
 use Tests\Soporte\Ubicaciones;
@@ -75,6 +87,8 @@ function negMundo(): void
         'create_sol_solicitudes_servicio_table',
         'create_sol_solicitud_historial_table',
         'agrega_reputacion_a_sol_clientes',
+        'agrega_motivo_estado_a_sol_clientes',
+        'lleva_sol_clientes_al_ciclo_de_aprobacion',
         'agrega_negociacion_a_sol_solicitudes_servicio',
         'crea_sol_cliente_contactos',
         'create_neg_tablas_de_negociacion',
@@ -86,7 +100,7 @@ function negMundo(): void
     ]);
     Ubicaciones::sembrar();
 
-    foreach (['neg_precios_finales_confirmados', 'neg_pagos_confirmados', 'sol_terreno_fotos', 'sol_precios_referencia', 'neg_preferencias', 'neg_ubicaciones', 'neg_evidencias', 'neg_avances', 'neg_mensajes', 'neg_cancelaciones', 'neg_ofertas', 'sol_solicitud_historial', 'sol_solicitudes_servicio', 'sol_terrenos', 'sol_clientes', 'sol_zonas'] as $tabla) {
+    foreach (['sol_cliente_historial_estados', 'neg_precios_finales_confirmados', 'neg_pagos_confirmados', 'sol_terreno_fotos', 'sol_precios_referencia', 'neg_preferencias', 'neg_ubicaciones', 'neg_evidencias', 'neg_avances', 'neg_mensajes', 'neg_cancelaciones', 'neg_ofertas', 'sol_solicitud_historial', 'sol_solicitudes_servicio', 'sol_terrenos', 'sol_clientes', 'sol_zonas'] as $tabla) {
         DB::table($tabla)->delete();
     }
 
@@ -97,7 +111,7 @@ function negMundo(): void
     DB::table('sol_zonas')->insert(['id' => 1, 'nombre' => 'San José de Chiquitos', 'centroide_lat' => '-17.8450000', 'centroide_lng' => '-60.7390000', 'radio_km' => '60.0', 'macrorregion' => 'chiquitania', 'created_at' => now(), 'updated_at' => now()]);
 
     foreach ([1 => [NEG_CLIENTE, 'Cliente Ana', '70011122'], 2 => [NEG_OTRO_CLIENTE, 'Cliente Beto', '70033344']] as $id => [$usuario, $nombre, $telefono]) {
-        DB::table('sol_clientes')->insert(['id' => $id, 'usuario_id' => $usuario, 'tipo' => 'persona', 'razon_social' => $nombre, 'telefono' => $telefono, 'estado' => 'activo', 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('sol_clientes')->insert(['id' => $id, 'usuario_id' => $usuario, 'tipo' => 'persona', 'razon_social' => $nombre, 'telefono' => $telefono, 'estado' => 'aprobado', 'created_at' => now(), 'updated_at' => now()]);
     }
 
     DB::table('sol_terrenos')->insert([
@@ -113,6 +127,9 @@ function negMundo(): void
         ],
         [71 => new DatosPiloto(71, 7, NEG_PILOTO_7, 'Piloto Siete', 'aprobado')],
     ));
+
+    // Las cuentas: ninguna comparte persona con otra, salvo que una prueba lo pida (autocontratación).
+    app()->instance(LecturaCuentas::class, new CuentasFalsas);
 
     app()->instance(LecturaEquipos::class, new class implements LecturaEquipos
     {
@@ -894,4 +911,188 @@ test('el cliente ve la foto de perfil del piloto del equipo en la tarjeta de la 
     $comparador = app(ConsultarOfertas::class)->delCliente(NEG_CLIENTE, $solicitud);
 
     expect($comparador[0]['proveedor']['foto_url'])->toContain('/api/personas/'.NEG_PILOTO_7.'/foto');
+});
+
+// ── Compuerta de la cuenta aprobada y sin autocontratación (ADR 0046, puntos 10 y 12) ────────────
+
+/** Deja a un proveedor en el estado indicado (la lectura de proveedores de las pruebas es de mentira). */
+function negProveedorEn(string $estado, int $id = 7): void
+{
+    $base = [
+        7 => new DatosProveedor(7, NEG_TITULAR_7, 'independiente', 'Proveedor Siete', $estado, 1, calificacionPromedio: '4.60', calificacionesConteo: 12),
+        8 => new DatosProveedor(8, NEG_TITULAR_8, 'tercero', 'Proveedor Ocho', 'aprobado', 1),
+    ];
+    $base[$id] = new DatosProveedor($id, $id === 7 ? NEG_TITULAR_7 : NEG_TITULAR_8, $id === 7 ? 'independiente' : 'tercero', 'Proveedor', $estado, 1);
+
+    app()->instance(LecturaProveedores::class, new ProveedoresFalsos($base, [71 => new DatosPiloto(71, 7, NEG_PILOTO_7, 'Piloto Siete', 'aprobado')]));
+}
+
+function negClienteEn(string $estado, int $usuario = NEG_CLIENTE): void
+{
+    DB::table('sol_clientes')->where('usuario_id', $usuario)->update(['estado' => $estado]);
+}
+
+/** @return array{codigo: string, estado: string}|null el rechazo de la compuerta, o `null` si la acción pasó */
+function negCompuerta(callable $accion): ?array
+{
+    try {
+        $accion();
+    } catch (CuentaNoAprobada $excepcion) {
+        return ['codigo' => $excepcion->cuerpo()['codigo'], 'estado' => $excepcion->estado->value];
+    }
+
+    return null;
+}
+
+test('un proveedor que no está aprobado entra pero no ofrece: 403 cuenta_no_aprobada con su estado', function (string $estado) {
+    negMundo();
+    $solicitud = negAbierta();
+    negProveedorEn($estado);
+
+    expect(negCompuerta(fn () => negOfertar(NEG_TITULAR_7, $solicitud)))->toBe(['codigo' => 'cuenta_no_aprobada', 'estado' => $estado])
+        ->and(Oferta::query()->count())->toBe(0);
+})->with(['pendiente', 'rechazado', 'suspendido', 'baja']);
+
+test('el rechazo de la compuerta sale como 403 con el estado y lo que falta', function () {
+    $excepcion = new CuentaNoAprobada(EstadoAprobacion::Pendiente, ['verificacion']);
+
+    $respuesta = app(ExceptionHandler::class)->render(Request::create('/api/solicitudes/1/publicar', 'POST', server: ['HTTP_ACCEPT' => 'application/json']), $excepcion);
+
+    expect($respuesta->getStatusCode())->toBe(403)
+        ->and(json_decode($respuesta->getContent(), true))->toMatchArray(['codigo' => 'cuenta_no_aprobada', 'estado' => 'pendiente', 'falta' => ['verificacion']]);
+});
+
+test('un cliente pendiente arma sus terrenos y borradores pero no publica: 403 cuenta_no_aprobada', function () {
+    negMundo();
+    negClienteEn('pendiente');
+
+    [$borrador] = app(CrearSolicitud::class)->ejecutar(NEG_CLIENTE, [
+        'uuid_cliente' => (string) Str::uuid(), 'terreno_id' => 1, 'tipo_aplicacion' => 'herbicida', 'hectareas_solicitadas' => '80',
+        'producto_indicado' => 'Glifosato', 'ventana_desde' => '2026-12-12', 'ventana_hasta' => '2026-12-20', 'precio_ha_propuesto' => '125',
+    ]);
+
+    expect(negCompuerta(fn () => app(PublicarSolicitud::class)->ejecutar(NEG_CLIENTE, $borrador->id)))->toBe(['codigo' => 'cuenta_no_aprobada', 'estado' => 'pendiente'])
+        ->and(negEstado($borrador->id))->toBe('borrador');
+
+    // Aprobado, publica.
+    negClienteEn('aprobado');
+    expect(app(PublicarSolicitud::class)->ejecutar(NEG_CLIENTE, $borrador->id)->estado->value)->toBe('abierta');
+});
+
+test('un cliente rechazado, suspendido o dado de baja tampoco publica', function (string $estado) {
+    negMundo();
+    $solicitud = negAbierta();
+    negClienteEn('aprobado');
+    [$borrador] = app(CrearSolicitud::class)->ejecutar(NEG_CLIENTE, [
+        'uuid_cliente' => (string) Str::uuid(), 'terreno_id' => 1, 'tipo_aplicacion' => 'herbicida', 'hectareas_solicitadas' => '80',
+        'producto_indicado' => 'Glifosato', 'ventana_desde' => '2026-12-12', 'ventana_hasta' => '2026-12-20', 'precio_ha_propuesto' => '125',
+    ]);
+    negClienteEn($estado);
+
+    expect(negCompuerta(fn () => app(PublicarSolicitud::class)->ejecutar(NEG_CLIENTE, $borrador->id)))->toBe(['codigo' => 'cuenta_no_aprobada', 'estado' => $estado]);
+})->with(['rechazado', 'suspendido', 'baja']);
+
+test('contraofertar y aceptar exigen la cuenta aprobada de cada parte; rechazar y retirar no se frenan', function () {
+    negMundo();
+    $solicitud = negAbierta();
+    $oferta = negOfertar(NEG_TITULAR_7, $solicitud);
+
+    // El cliente deja de estar aprobado a mitad de la negociación.
+    negClienteEn('suspendido');
+    expect(negCompuerta(fn () => app(Negociar::class)->contraofertar('cliente', NEG_CLIENTE, $oferta->id, '118', null, null)))->toBe(['codigo' => 'cuenta_no_aprobada', 'estado' => 'suspendido'])
+        ->and(negCompuerta(fn () => app(Negociar::class)->aceptar('cliente', NEG_CLIENTE, $oferta->id)))->toBe(['codigo' => 'cuenta_no_aprobada', 'estado' => 'suspendido'])
+        ->and(negEstado($solicitud))->toBe('con_ofertas');
+
+    // Salir de la negociación siempre se puede: rechazar no pasa por la compuerta.
+    expect(negCompuerta(fn () => app(Negociar::class)->rechazar('cliente', NEG_CLIENTE, $oferta->id)))->toBeNull();
+});
+
+test('un proveedor suspendido a mitad de la negociación no contraoferta ni acepta, pero sí retira su oferta', function () {
+    negMundo();
+    $solicitud = negAbierta();
+    $oferta = negOfertar(NEG_TITULAR_7, $solicitud, 'contraoferta', '118');
+    $respuesta = app(Negociar::class)->contraofertar('cliente', NEG_CLIENTE, $oferta->id, '121', null, null)[0];
+
+    negProveedorEn('suspendido');
+
+    expect(negCompuerta(fn () => app(Negociar::class)->contraofertar('proveedor', NEG_TITULAR_7, $respuesta->id, '119', null, null)))->toBe(['codigo' => 'cuenta_no_aprobada', 'estado' => 'suspendido'])
+        ->and(negCompuerta(fn () => app(Negociar::class)->aceptar('proveedor', NEG_TITULAR_7, $respuesta->id)))->toBe(['codigo' => 'cuenta_no_aprobada', 'estado' => 'suspendido']);
+});
+
+test('un proveedor no oferta sobre la solicitud de otra cuenta de su misma persona, y no la ve en el mapa', function () {
+    negMundo();
+    DB::table('sol_terrenos')->insert(['id' => 2, 'cliente_id' => 2, 'nombre' => 'Lote Sur', 'hectareas' => '100.0000', 'zona_id' => 1, 'acceso_dificil' => false, 'departamento_codigo' => Ubicaciones::DEPARTAMENTO, 'provincia_codigo' => Ubicaciones::PROVINCIA, 'created_at' => now(), 'updated_at' => now()]);
+    $propia = negAbierta();
+    $ajena = negAbierta('125', '80', NEG_OTRO_CLIENTE, 2);
+
+    // Las cuentas 900 (cliente) y 701 (titular del proveedor 7) son de la misma persona.
+    app()->instance(LecturaCuentas::class, new CuentasFalsas([NEG_CLIENTE => 55, NEG_TITULAR_7 => 55, NEG_OTRO_CLIENTE => 56]));
+
+    expect(negCodigo(fn () => negOfertar(NEG_TITULAR_7, $propia)))->toBe('propia_cuenta:422')
+        ->and(negOfertar(NEG_TITULAR_7, $ajena)->solicitud_id)->toBe($ajena)
+        ->and(collect(app(MercadoDeSolicitudes::class)->listar(NEG_TITULAR_7, [])['items'])->pluck('id')->all())->toBe([$ajena]);
+});
+
+test('también cuenta la persona del piloto con cuenta propia del proveedor', function () {
+    negMundo();
+    $solicitud = negAbierta();
+
+    app()->instance(LecturaCuentas::class, new CuentasFalsas([NEG_CLIENTE => 77, NEG_PILOTO_7 => 77]));
+
+    expect(negCodigo(fn () => negOfertar(NEG_TITULAR_7, $solicitud)))->toBe('propia_cuenta:422');
+});
+
+test('sin persona en común, nadie bloquea a nadie: personas distintas o cuentas sin persona ofertan normal', function () {
+    negMundo();
+    $solicitud = negAbierta();
+
+    app()->instance(LecturaCuentas::class, new CuentasFalsas([NEG_CLIENTE => 55, NEG_TITULAR_7 => 56]));
+    expect(negOfertar(NEG_TITULAR_7, $solicitud)->solicitud_id)->toBe($solicitud);
+
+    app()->instance(LecturaCuentas::class, new CuentasFalsas([NEG_CLIENTE => null, NEG_TITULAR_8 => null]));
+    expect(negOfertar(NEG_TITULAR_8, $solicitud)->solicitud_id)->toBe($solicitud);
+});
+
+test('el cliente nuevo nace pendiente, la oficina lo aprueba con historial y quien aprobó queda registrado', function () {
+    negMundo();
+    $cliente = Cliente::query()->where('usuario_id', NEG_CLIENTE)->firstOrFail();
+    $cambiar = app(CambiarEstadoDeCliente::class);
+    DB::table('sol_clientes')->where('id', $cliente->id)->update(['estado' => 'pendiente']);
+    Event::fake([EstadoDeAprobacionCambiado::class]);
+
+    $aprobado = $cambiar->ejecutar($cliente->id, AccionAprobacion::Aprobar, null, 8001);
+
+    expect($aprobado->estado)->toBe(EstadoAprobacion::Aprobado)
+        ->and($aprobado->aprobado_por)->toBe(8001)
+        ->and($aprobado->aprobado_en)->not->toBeNull();
+    Event::assertDispatched(EstadoDeAprobacionCambiado::class, fn (EstadoDeAprobacionCambiado $e): bool => $e->sujetoTipo === 'cliente' && $e->usuariosDestinatarios === [NEG_CLIENTE] && $e->accion === AccionAprobacion::Aprobar);
+
+    // Suspender y reactivar exigen motivo la primera vez y dejan cada paso en el historial.
+    expect(fn () => $cambiar->suspender($cliente->id, '', 8001))->toThrow(MotivoRequerido::class);
+    $cambiar->suspender($cliente->id, 'Reclamo repetido', 8001);
+    $cambiar->reactivar($cliente->id, 8001);
+
+    $pasos = DB::table('sol_cliente_historial_estados')->where('cliente_id', $cliente->id)->orderBy('id')->get(['estado_anterior', 'estado_nuevo', 'accion', 'actor_usuario_id', 'motivo']);
+
+    expect($pasos->map(fn ($p) => "{$p->estado_anterior}>{$p->estado_nuevo}:{$p->accion}")->all())->toBe(['pendiente>aprobado:aprobar', 'aprobado>suspendido:suspender', 'suspendido>aprobado:rehabilitar'])
+        ->and($pasos[1]->motivo)->toBe('Reclamo repetido')
+        ->and($pasos->pluck('actor_usuario_id')->unique()->map(fn ($id) => (int) $id)->all())->toBe([8001]);
+});
+
+test('el cliente sigue el ciclo único: un rechazado reenvía, y de una baja no se vuelve', function () {
+    negMundo();
+    $cliente = Cliente::query()->where('usuario_id', NEG_CLIENTE)->firstOrFail();
+    $cambiar = app(CambiarEstadoDeCliente::class);
+    DB::table('sol_clientes')->where('id', $cliente->id)->update(['estado' => 'pendiente']);
+    Event::fake([EstadoDeAprobacionCambiado::class]);
+
+    expect(fn () => $cambiar->ejecutar($cliente->id, AccionAprobacion::Rechazar, null, 8001))->toThrow(MotivoRequerido::class)
+        ->and(fn () => $cambiar->ejecutar($cliente->id, AccionAprobacion::Rehabilitar, null, 8001))->toThrow(TransicionDeAprobacionInvalida::class);
+
+    $rechazado = $cambiar->ejecutar($cliente->id, AccionAprobacion::Rechazar, 'Documento ilegible', 8001);
+    expect($rechazado->estado)->toBe(EstadoAprobacion::Rechazado)->and($rechazado->motivo_estado)->toBe('Documento ilegible');
+
+    $cambiar->ejecutar($cliente->id, AccionAprobacion::DarDeBaja, 'Cuenta falsa', 8001);
+
+    expect(fn () => $cambiar->ejecutar($cliente->id, AccionAprobacion::Aprobar, null, 8001))->toThrow(TransicionDeAprobacionInvalida::class);
 });

@@ -51,6 +51,7 @@ beforeEach(function () {
         'create_sol_terrenos_table',
         'create_sol_solicitudes_servicio_table',
         'agrega_reputacion_a_sol_clientes',
+        'lleva_sol_clientes_al_ciclo_de_aprobacion',
         'crea_sol_cliente_contactos',
         'create_prv_proveedores_table',
         'create_prv_pilotos_table',
@@ -132,7 +133,7 @@ test('registrar una empresa guarda sus contactos, el principal elegido y a quien
     $respuesta->assertRedirect(route('panel.clientes.show', $cliente->id));
 
     expect($cliente->tipo)->toBe('empresa')
-        ->and($cliente->estado)->toBe('activo')
+        ->and($cliente->estado)->toBe('pendiente')
         ->and((int) $cliente->created_by)->toBe(ADMIN_OFICINA)
         ->and(DB::table('sol_cliente_contactos')->count())->toBe(2)
         ->and(DB::table('sol_cliente_contactos')->where('es_principal', true)->value('nombre'))->toBe('Mario Suárez');

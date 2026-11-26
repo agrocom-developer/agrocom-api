@@ -126,7 +126,7 @@ test('un terreno rechaza un departamento inexistente, una provincia de otro depa
 
 test('cambiar el departamento de un terreno sin elegir provincia suelta la provincia anterior', function () {
     ubicacionesSembradas();
-    DB::table('sol_clientes')->insert(['id' => 1, 'usuario_id' => 301, 'tipo' => 'persona', 'razon_social' => 'Cliente', 'telefono' => '70000000', 'estado' => 'activo', 'created_at' => now(), 'updated_at' => now()]);
+    DB::table('sol_clientes')->insert(['id' => 1, 'usuario_id' => 301, 'tipo' => 'persona', 'razon_social' => 'Cliente', 'telefono' => '70000000', 'estado' => 'aprobado', 'created_at' => now(), 'updated_at' => now()]);
     $terrenos = app(GestionarTerrenos::class);
     $terreno = $terrenos->crear(301, ['nombre' => 'Lote', 'hectareas' => '10', 'departamento_codigo' => '07', 'provincia_codigo' => '0702', 'municipio' => 'Warnes']);
 
