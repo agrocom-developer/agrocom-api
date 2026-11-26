@@ -30,7 +30,7 @@ Una misma persona puede cumplir varios roles con un solo usuario, y opera bajo u
 - [`docs/README.md`](docs/README.md): mapa de la documentación y orden de lectura.
 - [`docs/especificacion/marketplace.md`](docs/especificacion/marketplace.md): la fuente de verdad funcional y técnica.
 - [`docs/decisiones/`](docs/decisiones/): los porqués, como ADRs. Los 0027 a 0042 definen el marketplace.
-- [`docs/politicas/`](docs/politicas/): negociación, precio y pago, cancelación, calificación, verificación de proveedores, seguimiento y privacidad, seguridad y reclamos.
+- [`docs/politicas/`](docs/politicas/): negociación, precio y pago, cancelación, calificación, verificación de proveedores, seguimiento y privacidad, seguridad, reclamos y los documentos legales públicos.
 - [`docs/glosario.md`](docs/glosario.md): el vocabulario del negocio y del campo.
 - [`docs/api/openapi.yaml`](docs/api/openapi.yaml): el contrato de API que consumen las apps, generado desde el código.
 - [`docs/gestion/estado-api.md`](docs/gestion/estado-api.md): qué quedó hecho en la API y qué falta.
