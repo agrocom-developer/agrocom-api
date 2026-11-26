@@ -207,6 +207,9 @@ Route::middleware('auth:interno')->group(function () {
         // sujeto es siempre la cuenta autenticada, nunca un id de la petición
         // — `abrir` busca el aviso ENTRE LOS DE ESA CUENTA (404 si es de otra)
         // y resuelve el destino contra el rol activo.
+        Route::get('/panel/notificaciones', [NotificacionesController::class, 'index'])
+            ->name('panel.notificaciones.index');
+
         Route::get('/panel/notificaciones/{notificacion}/abrir', [NotificacionesController::class, 'abrir'])
             // Hasta 18 dígitos: un id más largo no cabe en un bigint ni en el `int` del controlador y daría 500.
             ->where('notificacion', '[0-9]{1,18}')
