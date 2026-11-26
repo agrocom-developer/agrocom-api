@@ -5,6 +5,7 @@ namespace App\Dominios\Seguridad\Infraestructura\Eloquent;
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
 use App\Dominios\Seguridad\Dominio\TipoDocumento;
+use Illuminate\Support\Carbon;
 
 /**
  * Persona real, única por su documento (ADR 0046, punto 7): `(documento_tipo, documento_numero)`
@@ -20,7 +21,7 @@ use App\Dominios\Seguridad\Dominio\TipoDocumento;
  * @property string $documento_numero
  * @property string $nombres
  * @property string $apellidos
- * @property string|null $fecha_nacimiento
+ * @property Carbon|null $fecha_nacimiento
  */
 class SecPersona extends ModeloDominio
 {
