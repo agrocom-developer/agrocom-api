@@ -10,7 +10,6 @@ final readonly class DatosEquipoApto
         public int $proveedorId,
         public int $pilotoId,
         public int $dronId,
-        public ?int $auxiliarId,
         public string $capacidadTanqueL,
         public string $anchoPasadaM,
     ) {}

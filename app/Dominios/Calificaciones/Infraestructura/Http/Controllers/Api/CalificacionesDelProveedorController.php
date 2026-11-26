@@ -120,7 +120,7 @@ final class CalificacionesDelProveedorController
     #[OA\Get(
         path: '/api/calificaciones/recibidas',
         operationId: 'listarCalificacionesRecibidas',
-        description: 'Las calificaciones que recibe tu proveedor (él, su piloto y su auxiliar), de la más nueva a la más vieja, sin las que un administrador ocultó. '
+        description: 'Las calificaciones que recibe tu proveedor (él y su piloto), de la más nueva a la más vieja, sin las que un administrador ocultó. '
             .'Incluye el resumen que muestra la app: promedio y conteo (los de tu reputación), distribución por estrellas y etiquetas más frecuentes de las últimas 100.',
         summary: 'Calificaciones que recibo',
         security: [['tokenDispositivo' => []]],

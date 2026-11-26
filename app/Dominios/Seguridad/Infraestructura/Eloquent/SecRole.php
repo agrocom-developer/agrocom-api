@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Rol de seguridad (RBAC), catálogo del sistema (ADR 0004; HU-01 diseño
- * `modulos-roles` §2/§5): `piloto`, `auxiliar`, `jefe_campo`,
+ * `modulos-roles` §2/§5): `piloto`, `jefe_campo`,
  * `encargado_operaciones`, `dueno`. Un `SecUser` puede tener varios roles
  * vía `sec_user_role` — multi-rol con un único login.
  *

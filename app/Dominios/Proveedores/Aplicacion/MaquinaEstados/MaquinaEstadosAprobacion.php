@@ -8,14 +8,13 @@ use App\Dominios\Compartido\Dominio\EstadoAprobacion;
 use App\Dominios\Compartido\Dominio\Excepciones\MotivoRequerido;
 use App\Dominios\Compartido\Dominio\Excepciones\TransicionDeAprobacionInvalida;
 use App\Dominios\Compartido\Dominio\TransicionesAprobacion;
-use App\Dominios\Proveedores\Infraestructura\Eloquent\Auxiliar;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Piloto;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Proveedor;
 use Illuminate\Support\Carbon;
 
 /**
- * Única clase que crea y cambia el `estado` de aprobación de un proveedor,
- * piloto o auxiliar (invariante 7 de CLAUDE.md; ADR 0032): consulta la tabla
+ * Única clase que crea y cambia el `estado` de aprobación de un proveedor
+ * o piloto (invariante 7 de CLAUDE.md; ADR 0032): consulta la tabla
  * de {@see TransicionesAprobacion} (a través de {@see DecisionDeAprobacion})
  * antes de escribir. Todo nace `pendiente`; el estado nunca llega de un
  * formulario.
@@ -39,25 +38,19 @@ final class MaquinaEstadosAprobacion
         return Piloto::query()->create([...$atributos, 'estado' => EstadoAprobacion::Pendiente]);
     }
 
-    /** @param  array<string, mixed>  $atributos  sin `estado`: lo fija esta clase. */
-    public function registrarAuxiliar(array $atributos): Auxiliar
-    {
-        return Auxiliar::query()->create([...$atributos, 'estado' => EstadoAprobacion::Pendiente]);
-    }
-
     /**
      * Estado al que llevaría la acción, sin escribir nada.
      *
      * @throws TransicionDeAprobacionInvalida si la acción no corresponde al estado actual.
      * @throws MotivoRequerido si rechazar, suspender o dar de baja llega sin motivo.
      */
-    public function destino(Proveedor|Piloto|Auxiliar $sujeto, AccionAprobacion $accion, ?string $motivo): EstadoAprobacion
+    public function destino(Proveedor|Piloto $sujeto, AccionAprobacion $accion, ?string $motivo): EstadoAprobacion
     {
         return DecisionDeAprobacion::validar($sujeto->estado, $accion, $motivo);
     }
 
     /** Escribe el estado que devolvió {@see destino()}. Aprobar deja quién y cuándo. */
-    public function aplicar(Proveedor|Piloto|Auxiliar $sujeto, AccionAprobacion $accion, EstadoAprobacion $destino, ?int $actorUsuarioId, ?string $motivo): void
+    public function aplicar(Proveedor|Piloto $sujeto, AccionAprobacion $accion, EstadoAprobacion $destino, ?int $actorUsuarioId, ?string $motivo): void
     {
         $sujeto->estado = $destino;
         $sujeto->motivo_estado = DecisionDeAprobacion::motivoAGuardar($accion, $motivo);

@@ -11,7 +11,7 @@ use Illuminate\Console\Command;
 /**
  * `php artisan proveedores:titular-propio {username}`: asigna la cuenta que
  * administra el proveedor propio (Agrocom) y le da el rol `proveedor`, para que
- * registre desde la app a sus pilotos, auxiliares y drones. Agrocom existe como
+ * registre desde la app a sus pilotos y drones. Agrocom existe como
  * proveedor desde el catálogo, pero sin titular (ADR 0028 y 0036): lo asigna el
  * dueño una sola vez. Idempotente.
  */

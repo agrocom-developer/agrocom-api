@@ -88,10 +88,8 @@
  * (azul acero) son los dos tonos semánticos MENOS cargados (solo aparecen
  * como color de ícono de un link-row, nunca como estado real todavía); el
  * verde de marca (`primary`) y el ámbar de marca (`accent`) son los dos
- * colores de identidad de Agrocom. `distintivo-2` (magenta) queda para
- * `auxiliar` — es el único de los seis con un uso de estado real
- * (`finalizado` de Contrato), aceptado porque un avatar de este modal y un
- * chip de estado de contrato no conviven nunca en la misma pantalla.
+ * colores de identidad de Agrocom. `distintivo-2` (magenta) no se usa en
+ * este modal: era del rol `auxiliar`, que ya no existe.
  *
  * Séptimo caso, `dueno` (26/9/2026 — rol de negocio, distinto de
  * `admin_plataforma`, que es técnico): agotados los seis semánticos
@@ -171,15 +169,6 @@
  * estado real todavía). */
 .ag-cambiar-vista__opcion-avatar--piloto {
     background: var(--ag-color-primary-2-contrast-fill);
-    color: var(--ag-color-gray-0);
-}
-
-/* auxiliar ("Ayudante" en el panel, la clave interna sigue siendo
- * `auxiliar`): magenta — único de los seis con un uso de estado real
- * (`finalizado` de Contrato), aceptado por no convivir nunca con este
- * modal en la misma pantalla. */
-.ag-cambiar-vista__opcion-avatar--auxiliar {
-    background: var(--ag-color-distintivo-2-contrast-fill);
     color: var(--ag-color-gray-0);
 }
 

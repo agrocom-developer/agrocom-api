@@ -326,7 +326,7 @@ it('hay cuentas que no se pueden mirar', function (string $caso, Closure $prepar
     'una bloqueada' => ['bloqueada', fn () => [vistaComoCuenta(TipoUsuario::Cliente, [], ['state' => false])->id, null, null]],
     'una dada de baja' => ['baja', fn () => [vistaComoCuenta(TipoUsuario::Cliente, [], ['deleted_at' => now()])->id, null, null]],
     'una interna sin roles' => ['sin roles', fn () => [vistaComoCuenta(TipoUsuario::Interno)->id, null, null]],
-    'una interna con dos roles sin elegir uno' => ['dos roles', fn () => [vistaComoCuenta(TipoUsuario::Interno, [vistaComoRol('piloto'), vistaComoRol('auxiliar')])->id, null, null]],
+    'una interna con dos roles sin elegir uno' => ['dos roles', fn () => [vistaComoCuenta(TipoUsuario::Interno, [vistaComoRol('piloto'), vistaComoRol('proveedor')])->id, null, null]],
     'una interna bajo un rol que no tiene' => ['rol ajeno', fn () => [vistaComoCuenta(TipoUsuario::Interno, [vistaComoRol('piloto')])->id, vistaComoRol('dueno'), null]],
 ]);
 

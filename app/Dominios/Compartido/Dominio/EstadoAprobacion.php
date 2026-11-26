@@ -3,10 +3,10 @@
 namespace App\Dominios\Compartido\Dominio;
 
 /**
- * Estado de aprobación de un proveedor, piloto, auxiliar o dron (especificación
- * del marketplace §5.2, ADR 0032). Es el mismo ciclo para los cuatro sujetos:
+ * Estado de aprobación de un proveedor, piloto o dron (especificación
+ * del marketplace §5.2, ADR 0032). Es el mismo ciclo para los tres sujetos:
  * solo un administrador aprueba, suspende o da de baja. Vive en `Compartido`
- * porque lo usan `Proveedores` (proveedor, piloto, auxiliar) y `Flota` (dron)
+ * porque lo usan `Proveedores` (proveedor, piloto) y `Flota` (dron)
  * sin importarse entre sí.
  */
 enum EstadoAprobacion: string

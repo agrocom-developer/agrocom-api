@@ -3,8 +3,8 @@
 namespace App\Dominios\Proveedores\Contratos;
 
 /**
- * Lo que `Flota` (y `Negociacion`) necesita saber de proveedores,
- * pilotos y auxiliares sin importar sus modelos (ADR 0003, regla 2).
+ * Lo que `Flota` (y `Negociacion`) necesita saber de proveedores y
+ * pilotos sin importar sus modelos (ADR 0003, regla 2).
  */
 interface LecturaProveedores
 {
@@ -26,14 +26,11 @@ interface LecturaProveedores
 
     public function piloto(int $id): ?DatosPiloto;
 
-    public function auxiliar(int $id): ?DatosAuxiliar;
-
     /**
-     * Ids de los registros de piloto y de auxiliar de una cuenta (una cuenta
-     * puede ser ambos). El equipo de flota los referencia por esos ids; la app
-     * de campo conoce a la persona por su cuenta.
+     * Ids de los registros de piloto de una cuenta. El equipo de flota los
+     * referencia por esos ids; la app de campo conoce a la persona por su cuenta.
      *
-     * @return array{pilotos: list<int>, auxiliares: list<int>}
+     * @return array{pilotos: list<int>}
      */
     public function registrosDeCuenta(int $usuarioId): array;
 

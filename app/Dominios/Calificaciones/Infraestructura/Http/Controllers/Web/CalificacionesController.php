@@ -109,7 +109,6 @@ final class CalificacionesController
             $nombres[$calificacion->id] = match ($calificacion->sujeto_tipo) {
                 SujetoCalificacion::Proveedor => $this->proveedores->proveedor($calificacion->sujeto_id)->razonSocial ?? "#{$calificacion->sujeto_id}",
                 SujetoCalificacion::Piloto => $this->proveedores->piloto($calificacion->sujeto_id)->nombre ?? "#{$calificacion->sujeto_id}",
-                SujetoCalificacion::Auxiliar => $this->proveedores->auxiliar($calificacion->sujeto_id)->nombre ?? "#{$calificacion->sujeto_id}",
                 SujetoCalificacion::Cliente => $this->servicios->datos($calificacion->solicitud_id)->clienteNombre ?? "#{$calificacion->sujeto_id}",
             };
         }

@@ -218,11 +218,6 @@ return [
                 'descripcion' => 'Ofrece, ejecuta los servicios adjudicados y sube las fotos desde la app.',
                 'permisos' => ['Ofertas', 'Servicios', 'Fotos'],
             ],
-            'auxiliar' => [
-                'nombre' => 'Auxiliar',
-                'descripcion' => 'Apoya al piloto en el lote y sube fotos de avance desde la app.',
-                'permisos' => ['Servicios', 'Fotos'],
-            ],
             'jefe_campo' => [
                 'nombre' => 'Jefe de campo',
                 'descripcion' => 'Rol retirado del marketplace; se conserva mientras tenga cuentas asignadas.',
@@ -266,7 +261,6 @@ return [
         'pendiente' => [
             'proveedores' => 'Proveedores por aprobar',
             'pilotos' => 'Pilotos por aprobar',
-            'auxiliares' => 'Auxiliares por aprobar',
             'drones' => 'Drones por aprobar',
             'fotos_de_dron' => 'Fotos de dron por revisar',
             'documentos' => 'Documentos por revisar',

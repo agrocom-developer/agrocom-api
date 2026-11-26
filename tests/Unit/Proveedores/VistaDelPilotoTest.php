@@ -175,13 +175,12 @@ test('el piloto ve solo los drones de sus equipos y nunca los de otro proveedor'
         ->and(array_column($titular, 'modelo'))->toBe(['Agras T40', 'Agras T25']);
 });
 
-test('el permiso de ver lo tiene el piloto y no el auxiliar ni el cliente', function () {
+test('el permiso de ver lo tiene el piloto y no el cliente', function () {
     $catalogo = new ReflectionClass(SeguridadSeeder::class);
     $de = fn (string $constante): array => $catalogo->getReflectionConstant($constante)->getValue();
 
     expect($de('PERMISOS_PILOTO'))->toContain('proveedores.cuenta.ver')
         ->and($de('PERMISOS_PROVEEDOR'))->not->toContain('proveedores.cuenta.ver')
-        ->and($de('PERMISOS_AUXILIAR'))->not->toContain('proveedores.cuenta.ver')
         ->and($de('PERMISOS_CLIENTE'))->not->toContain('proveedores.cuenta.ver')
         ->and($de('PERMISOS_PILOTO'))->not->toContain('proveedores.cuenta.gestionar');
 });

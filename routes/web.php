@@ -8,7 +8,6 @@ use App\Dominios\Negociacion\Infraestructura\Http\Controllers\Web\IntervencionCo
 use App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Web\AvisosController;
 use App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Web\NotificacionesController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web\AprobacionController;
-use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web\AuxiliaresController as AuxiliaresPanelController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web\DocumentosController as DocumentosPanelController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web\PilotosController as PilotosPanelController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web\ProveedoresController;
@@ -391,9 +390,9 @@ Route::middleware('auth:interno')->group(function () {
             ->name('panel.metricas.index');
 
         // Marketplace (ADR 0028, 0029, 0032): cola de aprobación de proveedores,
-        // pilotos, auxiliares, drones y documentos. Los permisos son de grano
+        // pilotos, drones y documentos. Los permisos son de grano
         // fino por entidad y por acción (`proveedores.proveedor.ver`/`.aprobar`/
-        // `.suspender`/`.dar_baja`, y sus pares de piloto, auxiliar y
+        // `.suspender`/`.dar_baja`, y sus pares de piloto y
         // `flota.dron.*`), verificados DENTRO de cada controlador contra el ROL
         // ACTIVO. La ficha de cada uno ofrece las acciones que el rol puede hacer.
         Route::get('/panel/proveedores', [ProveedoresController::class, 'index'])
@@ -430,17 +429,6 @@ Route::middleware('auth:interno')->group(function () {
         Route::post('/panel/pilotos/{id}/resolver', [AprobacionController::class, 'piloto'])
             ->whereNumber('id')
             ->name('panel.pilotos.resolver');
-
-        Route::get('/panel/auxiliares', [AuxiliaresPanelController::class, 'index'])
-            ->name('panel.auxiliares.index');
-
-        Route::get('/panel/auxiliares/{auxiliar}', [AuxiliaresPanelController::class, 'show'])
-            ->whereNumber('auxiliar')
-            ->name('panel.auxiliares.show');
-
-        Route::post('/panel/auxiliares/{id}/resolver', [AprobacionController::class, 'auxiliar'])
-            ->whereNumber('id')
-            ->name('panel.auxiliares.resolver');
 
         Route::get('/panel/drones-flota', [DronesFlotaController::class, 'index'])
             ->name('panel.drones-flota.index');

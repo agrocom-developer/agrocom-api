@@ -11,6 +11,5 @@ enum TipoSujeto: string
 {
     case Proveedor = 'proveedor';
     case Piloto = 'piloto';
-    case Auxiliar = 'auxiliar';
     case Dron = 'dron';
 }

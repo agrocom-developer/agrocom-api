@@ -21,7 +21,6 @@ return [
         'proveedor_id' => 'proveedor',
         'piloto_id' => 'piloto',
         'dron_id' => 'dron',
-        'auxiliar_id' => 'auxiliar',
         'en_linea' => 'estado en línea',
         'lat' => 'latitud',
         'lng' => 'longitud',
@@ -41,7 +40,6 @@ return [
         'dron_no_editable' => 'Un dron aprobado no se edita. Si es otro dron, regístralo como uno nuevo.',
         'numero_serie_duplicado' => 'Ya hay un dron registrado con el número de serie :serie.',
         'piloto_ajeno' => 'Ese piloto no es de tu proveedor.',
-        'auxiliar_ajeno' => 'Ese auxiliar no es de tu proveedor.',
         'integrante_no_disponible' => 'El :rol no está disponible: debe estar pendiente o aprobado.',
         'integrante_en_otro_equipo' => 'El :rol ya está en otro equipo vigente en esas fechas.',
         'dron_no_operable' => 'El dron no está disponible: debe estar pendiente o aprobado.',
@@ -108,7 +106,6 @@ return [
         'rol' => [
             'piloto' => 'piloto',
             'dron' => 'dron',
-            'auxiliar' => 'auxiliar',
         ],
         'col_piloto' => 'Piloto',
         'col_vigencia' => 'Vigencia',

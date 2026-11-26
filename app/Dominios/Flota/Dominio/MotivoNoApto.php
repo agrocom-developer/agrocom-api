@@ -8,7 +8,6 @@ enum MotivoNoApto: string
     case ProveedorNoAprobado = 'proveedor_no_aprobado';
     case PilotoNoAprobado = 'piloto_no_aprobado';
     case DronNoAprobado = 'dron_no_aprobado';
-    case AuxiliarNoAprobado = 'auxiliar_no_aprobado';
     case DocumentosPilotoVencidos = 'documentos_piloto_incompletos';
     case DocumentosDronVencidos = 'documentos_dron_incompletos';
     case FueraDeVigencia = 'fuera_de_vigencia';

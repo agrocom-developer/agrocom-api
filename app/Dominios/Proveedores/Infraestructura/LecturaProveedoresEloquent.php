@@ -3,12 +3,10 @@
 namespace App\Dominios\Proveedores\Infraestructura;
 
 use App\Dominios\Compartido\Dominio\EstadoAprobacion;
-use App\Dominios\Proveedores\Contratos\DatosAuxiliar;
 use App\Dominios\Proveedores\Contratos\DatosPiloto;
 use App\Dominios\Proveedores\Contratos\DatosProveedor;
 use App\Dominios\Proveedores\Contratos\LecturaProveedores;
 use App\Dominios\Proveedores\Dominio\TipoProveedor;
-use App\Dominios\Proveedores\Infraestructura\Eloquent\Auxiliar;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Piloto;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Proveedor;
 use App\Dominios\Seguridad\Contratos\LecturaCuentas;
@@ -46,24 +44,10 @@ final class LecturaProveedoresEloquent implements LecturaProveedores
         return $piloto === null ? null : $this->datosPiloto($piloto, $this->nombres([$piloto->usuario_id]));
     }
 
-    public function auxiliar(int $id): ?DatosAuxiliar
-    {
-        $auxiliar = Auxiliar::query()->find($id);
-
-        if ($auxiliar === null) {
-            return null;
-        }
-
-        $nombres = $this->nombres([$auxiliar->usuario_id]);
-
-        return new DatosAuxiliar($auxiliar->id, $auxiliar->proveedor_id, $auxiliar->usuario_id, $nombres[$auxiliar->usuario_id] ?? "#{$auxiliar->usuario_id}", $auxiliar->estado->value);
-    }
-
     public function registrosDeCuenta(int $usuarioId): array
     {
         return [
             'pilotos' => array_map('intval', Piloto::query()->where('usuario_id', $usuarioId)->pluck('id')->all()),
-            'auxiliares' => array_map('intval', Auxiliar::query()->where('usuario_id', $usuarioId)->pluck('id')->all()),
         ];
     }
 

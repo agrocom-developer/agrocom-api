@@ -2,6 +2,8 @@
 
 **Estado:** aceptada · **Fecha:** 2026-11-24 · **Decide:** el dueño (autonomía delegada)
 
+> **Nota de retiro (26/11/2026):** el auxiliar se eliminó del sistema (rol, permisos `proveedores.auxiliar.*`, página del panel, endpoints `/api/proveedores/auxiliares`, documentos y calificación del auxiliar). Donde este ADR lo menciona, ya no aplica; las tablas `prv_auxiliares` y la columna `flo_equipos.auxiliar_id` siguen en el esquema, sin uso, hasta la reconsolidación de migraciones. Un reemplazo (integrantes del equipo del servicio) se define aparte.
+
 ## Contexto
 
 Los ADR 0031, 0033 y 0034 fijan el qué de la reputación, las disputas y el precio final, y `docs/politicas/` las opera. La especificación (`docs/especificacion/marketplace.md`, §4.7, §4.8, §5.5, §8.3 y §14) define las tablas, el ciclo de la disputa y las métricas. Falta el cómo en el código: en qué módulo vive cada pieza, quién cierra la solicitud para que se pueda calificar, cómo se pondera una reputación que reparte una sola calificación entre tres sujetos y qué hace el sistema donde la política deja una decisión abierta.

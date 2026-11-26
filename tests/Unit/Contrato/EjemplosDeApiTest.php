@@ -3,7 +3,7 @@
 use Tests\Soporte\ContratoOpenApi;
 
 /*
- * Pruebas de contrato para las apps (cliente, piloto, auxiliar): cada fixture
+ * Pruebas de contrato para las apps (cliente y piloto): cada fixture
  * de `docs/api/ejemplos/` es un intercambio REAL (request y response) capturado
  * contra la API con `bin/generar-ejemplos`, y tiene que seguir cumpliendo el
  * contrato versionado (`docs/api/openapi.yaml`, ADR 0014). Si el código cambia
@@ -143,7 +143,7 @@ test('los ejemplos cubren las operaciones que las apps necesitan', function () {
     $necesarias = [
         // Acceso y sesión de las tres apps.
         'emitirTokenDispositivo', 'verSesionCampo', 'cerrarSesionCampo',
-        // Sincronización del lote (piloto y auxiliar).
+        // Sincronización del lote (piloto).
         'obtenerCatalogoSincronizacion', 'sincronizarLote', 'subirEvidencia',
         // Negociación: mapa de abiertas, ofertas y contraofertas (requieren red).
         'listarSolicitudesAbiertas', 'resumenZonasAbiertas', 'verSolicitudAbierta', 'ofertarSolicitud', 'compararOfertas',

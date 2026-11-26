@@ -12,7 +12,7 @@ use DateTimeImmutable;
 
 /**
  * Calcula qué equipos de un proveedor pueden recibir ofertas hoy. Los estados
- * de proveedor, piloto y auxiliar salen del contrato de `Proveedores`; los
+ * de proveedor y piloto salen del contrato de `Proveedores`; los
  * documentos se verifican en vivo (no solo por el estado), de modo que un
  * documento que venció esta madrugada deja al equipo fuera antes de que corra el
  * proceso diario que suspende.
@@ -47,9 +47,8 @@ final class LecturaEquiposEloquent implements LecturaEquipos
 
         foreach ($equipos as $equipo) {
             $piloto = $this->proveedores->piloto($equipo->piloto_id);
-            $auxiliar = $equipo->auxiliar_id === null ? null : $this->proveedores->auxiliar($equipo->auxiliar_id);
 
-            if ($piloto === null || ($equipo->auxiliar_id !== null && $auxiliar === null)) {
+            if ($piloto === null) {
                 continue;
             }
 
@@ -57,7 +56,6 @@ final class LecturaEquiposEloquent implements LecturaEquipos
                 $proveedor->estado,
                 $piloto->estado,
                 $equipo->dron->estado->value,
-                $auxiliar?->estado,
                 $this->documentos->faltantes('piloto', $piloto->id) === [],
                 $this->documentos->faltantes('dron', $equipo->dron_id) === [],
                 $equipo->vigencia(),
@@ -70,7 +68,6 @@ final class LecturaEquiposEloquent implements LecturaEquipos
                     $proveedorId,
                     $equipo->piloto_id,
                     $equipo->dron_id,
-                    $equipo->auxiliar_id,
                     $equipo->dron->capacidad_tanque_l,
                     $equipo->dron->ancho_pasada_m,
                 );
@@ -84,16 +81,14 @@ final class LecturaEquiposEloquent implements LecturaEquipos
     {
         $registros = $this->proveedores->registrosDeCuenta($usuarioId);
 
-        if ($registros['pilotos'] === [] && $registros['auxiliares'] === []) {
+        if ($registros['pilotos'] === []) {
             return [];
         }
 
         $fecha = ($hoy ?? new DateTimeImmutable('today'))->format('Y-m-d');
 
         return array_map('intval', Equipo::query()
-            ->where(fn ($consulta) => $consulta
-                ->whereIn('piloto_id', $registros['pilotos'])
-                ->orWhereIn('auxiliar_id', $registros['auxiliares']))
+            ->whereIn('piloto_id', $registros['pilotos'])
             ->when($soloVigentes, fn ($consulta) => $consulta
                 ->whereDate('vigente_desde', '<=', $fecha)
                 ->where(fn ($vigencia) => $vigencia->whereNull('vigente_hasta')->orWhereDate('vigente_hasta', '>=', $fecha)))

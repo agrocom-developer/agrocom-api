@@ -7,7 +7,7 @@ use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 /**
  * Hecho de dominio: un documento aprobado venció (ADR 0032, punto 4). El
  * proceso diario ya lo marcó `vencido`. `Flota` reacciona suspendiendo al dron
- * cuando el sujeto es un dron; para proveedor, piloto y auxiliar el propio
+ * cuando el sujeto es un dron; para proveedor y piloto el propio
  * módulo `Proveedores` suspende en el mismo proceso. DTO de primitivos.
  */
 final readonly class DocumentoVencido implements ShouldDispatchAfterCommit

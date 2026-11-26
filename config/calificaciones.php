@@ -23,13 +23,11 @@ return [
 
     /*
      * Peso de cada sujeto en la reputación del proveedor: lo que recibe el
-     * proveedor, su piloto y su auxiliar. Un servicio sin auxiliar pondera solo
-     * los dos primeros.
+     * proveedor y su piloto.
      */
     'pesos' => [
         'proveedor' => env('CALIFICACIONES_PESO_PROVEEDOR', '0.50'),
         'piloto' => env('CALIFICACIONES_PESO_PILOTO', '0.35'),
-        'auxiliar' => env('CALIFICACIONES_PESO_AUXILIAR', '0.15'),
     ],
 
     /* Longitud máxima del comentario. */

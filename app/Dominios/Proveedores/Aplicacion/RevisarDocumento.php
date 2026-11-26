@@ -82,7 +82,7 @@ final class RevisarDocumento
 
     /**
      * El dron lo resuelve Flota al escuchar `DocumentoAprobado`; acá solo
-     * proveedor, piloto y auxiliar.
+     * proveedor y piloto.
      */
     private function levantarSuspensionAutomatica(Documento $documento): void
     {

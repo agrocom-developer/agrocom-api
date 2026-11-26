@@ -8,7 +8,7 @@
 
     Datos esperados (ver ProveedoresController::show()): la cáscara de
     CascaraPanel, más $proveedor, $titular (?DatosCuenta), $zona (?string),
-    $pilotos / $auxiliares (Collection), $nombres (array<int, DatosCuenta>),
+    $pilotos (Collection), $nombres (array<int, DatosCuenta>),
     $documentos (list<DatosDocumento>), $documentosFaltantes, $aptoParaOfertas,
     $acciones (list<AccionAprobacion>), los permisos `$puede*` y $lineaDeTiempo.
 
@@ -98,8 +98,8 @@
                 <x-molecules.stat-card
                     :label="__('proveedores.proveedores.kpi_personal')"
                     icon="groups"
-                    :value="(string) ($pilotos->count() + $auxiliares->count())"
-                    :foot="__('proveedores.proveedores.kpi_personal_pie', ['pilotos' => $pilotos->count(), 'auxiliares' => $auxiliares->count()])"
+                    :value="(string) $pilotos->count()"
+                    :foot="__('proveedores.proveedores.kpi_personal_pie', ['pilotos' => $pilotos->count()])"
                     state="info"
                 />
                 <x-molecules.stat-card
@@ -178,37 +178,6 @@
                                             @if ($puedeVerPilotos)
                                                 <x-organisms.row-actions>
                                                     <x-atoms.button :href="route('panel.pilotos.show', $piloto)" variant="info-outline" size="sm" icon="visibility">{{ __('proveedores.ver') }}</x-atoms.button>
-                                                </x-organisms.row-actions>
-                                            @endif
-                                        </span>
-                                    </div>
-                                @endforeach
-                            </x-molecules.index-table>
-                        </div>
-                    @endif
-                </x-molecules.form-section>
-
-                <x-molecules.form-section accent="distintivo-2" :title="__('proveedores.proveedores.seccion_auxiliares')" :count="(string) $auxiliares->count()">
-                    @if ($auxiliares->isEmpty())
-                        <div class="ag-form-section__field--full">
-                            <x-molecules.empty-state icon="person_off" :title="__('proveedores.proveedores.auxiliares_vacio_titulo')" :detail="__('proveedores.proveedores.auxiliares_vacio_detalle')" />
-                        </div>
-                    @else
-                        <div class="ag-form-section__field--full">
-                            <x-molecules.index-table columns="minmax(0, 1.4fr) minmax(0, 0.8fr) var(--ag-row-actions-width)">
-                                <x-slot:head>
-                                    <span role="columnheader">{{ __('proveedores.auxiliares.col_auxiliar') }}</span>
-                                    <span role="columnheader">{{ __('proveedores.auxiliares.col_estado') }}</span>
-                                    <span role="columnheader" class="ag-index-table__acciones-head">{{ __('ui.tabla.col_acciones') }}</span>
-                                </x-slot:head>
-                                @foreach ($auxiliares as $auxiliar)
-                                    <div class="ag-index-table__row" role="row">
-                                        <span role="cell">{{ $nombres[$auxiliar->usuario_id]->nombre ?? "#{$auxiliar->usuario_id}" }}</span>
-                                        <span role="cell"><x-atoms.badge :variant="$auxiliar->estado->tono()">{{ __('aprobacion.estado.'.$auxiliar->estado->value) }}</x-atoms.badge></span>
-                                        <span role="cell" class="ag-index-table__acciones">
-                                            @if ($puedeVerAuxiliares)
-                                                <x-organisms.row-actions>
-                                                    <x-atoms.button :href="route('panel.auxiliares.show', $auxiliar)" variant="info-outline" size="sm" icon="visibility">{{ __('proveedores.ver') }}</x-atoms.button>
                                                 </x-organisms.row-actions>
                                             @endif
                                         </span>

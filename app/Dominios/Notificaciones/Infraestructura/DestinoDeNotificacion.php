@@ -30,7 +30,6 @@ final class DestinoDeNotificacion
             RecursoNotificable::Trabajo => [null, null, false],
             RecursoNotificable::Proveedor => ['panel.proveedores.show', 'proveedores.proveedor.ver', true],
             RecursoNotificable::Piloto => ['panel.pilotos.show', 'proveedores.piloto.ver', true],
-            RecursoNotificable::Auxiliar => ['panel.auxiliares.show', 'proveedores.auxiliar.ver', true],
             RecursoNotificable::Dron => ['panel.drones-flota.show', 'flota.dron.ver', true],
             // La cola de documentos no tiene ficha por documento: lleva a la cola.
             RecursoNotificable::Documento => ['panel.documentos.index', 'proveedores.documento.ver', false],

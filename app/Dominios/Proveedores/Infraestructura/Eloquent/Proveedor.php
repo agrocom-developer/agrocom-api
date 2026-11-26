@@ -75,10 +75,4 @@ class Proveedor extends ModeloDominio
     {
         return $this->hasMany(Piloto::class, 'proveedor_id');
     }
-
-    /** @return HasMany<Auxiliar, $this> */
-    public function auxiliares(): HasMany
-    {
-        return $this->hasMany(Auxiliar::class, 'proveedor_id');
-    }
 }

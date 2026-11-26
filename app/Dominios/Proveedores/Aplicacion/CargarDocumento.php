@@ -27,7 +27,6 @@ final class CargarDocumento implements CargaDocumentos
     private const array RAIZ_POR_SUJETO = [
         'proveedor' => 'proveedores',
         'piloto' => 'pilotos',
-        'auxiliar' => 'auxiliares',
         'dron' => 'drones',
     ];
 

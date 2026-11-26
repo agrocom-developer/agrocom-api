@@ -16,7 +16,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 /**
- * Lo que comparten las fichas de proveedor, piloto, auxiliar y dron del panel:
+ * Lo que comparten las fichas de proveedor, piloto y dron del panel:
  * qué acciones de aprobación ofrecer según el estado y el permiso del rol
  * activo, la línea de tiempo del historial y las filas de documentos. Las
  * decisiones (la tabla de transiciones, el motivo, los documentos exigidos) no
@@ -29,7 +29,7 @@ trait ArmaFichasDeAprobacion
      * las que la tabla de transiciones admite, menos el reenvío (es del
      * solicitante) y las que el rol no tiene permiso de hacer.
      *
-     * @param  string  $prefijoPermiso  `proveedores.proveedor`, `proveedores.piloto`, `proveedores.auxiliar` o `flota.dron`.
+     * @param  string  $prefijoPermiso  `proveedores.proveedor`, `proveedores.piloto` o `flota.dron`.
      * @return list<AccionAprobacion>
      */
     private function accionesOfrecidas(Request $request, AutorizacionPanelWeb $autorizacion, string $prefijoPermiso, EstadoAprobacion $estado): array

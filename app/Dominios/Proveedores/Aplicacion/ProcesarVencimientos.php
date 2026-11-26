@@ -12,7 +12,6 @@ use App\Dominios\Proveedores\Contratos\Eventos\DocumentoVencido;
 use App\Dominios\Proveedores\Dominio\EstadoDocumento;
 use App\Dominios\Proveedores\Dominio\TipoSujeto;
 use App\Dominios\Proveedores\Dominio\VencimientoDocumento;
-use App\Dominios\Proveedores\Infraestructura\Eloquent\Auxiliar;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Documento;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Piloto;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Proveedor;
@@ -158,7 +157,6 @@ final class ProcesarVencimientos
         return match ($tipo) {
             TipoSujeto::Proveedor => Proveedor::query()->find($id)?->estado,
             TipoSujeto::Piloto => Piloto::query()->find($id)?->estado,
-            TipoSujeto::Auxiliar => Auxiliar::query()->find($id)?->estado,
             TipoSujeto::Dron => null,
         };
     }
