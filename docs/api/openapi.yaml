@@ -1839,7 +1839,7 @@ paths:
       tags:
         - Ofertas
       summary: 'Ofertar sobre una solicitud'
-      description: 'La primera oferta del proveedor sobre una solicitud `abierta` o `con_ofertas`. `tipo=acepta_propuesta` acepta exactamente el precio propuesto; `tipo=contraoferta` indica `precio_ha`, distinto del propuesto. Sin `equipo_id` usa el primer equipo apto. Idempotente por `uuid_cliente`: reintentar responde 200 con la misma oferta. Solo cuentas de proveedor habilitadas; un proveedor no oferta sobre solicitudes de su propia cuenta de cliente.'
+      description: 'La primera oferta del proveedor sobre una solicitud `abierta` o `con_ofertas`. `tipo=acepta_propuesta` acepta exactamente el precio propuesto; `tipo=contraoferta` indica `precio_ha`, distinto del propuesto. Sin `equipo_id` usa el primer equipo apto. Idempotente por `uuid_cliente`: reintentar responde 200 con la misma oferta. Solo cuentas de proveedor aprobadas y con un equipo apto; un proveedor no oferta sobre solicitudes de su propia cuenta de cliente ni de otra cuenta de la misma persona.'
       operationId: ofertarSolicitud
       parameters:
         -
@@ -1904,7 +1904,7 @@ paths:
         401:
           description: 'Token ausente o revocado.'
         403:
-          description: 'El rol no oferta o el proveedor no está habilitado.'
+          description: 'El rol no oferta, el proveedor no tiene un equipo apto (`proveedor_no_habilitado`) o la cuenta todavía no está aprobada (`cuenta_no_aprobada`, ADR 0046: entra y ve sus pantallas, pero no oferta).'
           content:
             application/json:
               schema:
@@ -2071,7 +2071,11 @@ paths:
         401:
           description: 'Token ausente o revocado.'
         403:
-          description: 'El rol del token no negocia.'
+          description: 'El rol del token no negocia, o la cuenta todavía no está aprobada (`cuenta_no_aprobada`, ADR 0046).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CuentaNoAprobada'
         404:
           description: 'No existe o es de otra cuenta.'
         409:
@@ -2118,7 +2122,11 @@ paths:
         401:
           description: 'Token ausente o revocado.'
         403:
-          description: 'El rol del token no negocia.'
+          description: 'El rol del token no negocia, o la cuenta todavía no está aprobada (`cuenta_no_aprobada`, ADR 0046).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CuentaNoAprobada'
         404:
           description: 'No existe o es de otra cuenta.'
         409:
@@ -4813,7 +4821,11 @@ paths:
         401:
           description: 'Token ausente o revocado.'
         403:
-          description: 'El rol del token no es de cliente.'
+          description: 'El rol del token no es de cliente, o la cuenta todavía no está aprobada (`cuenta_no_aprobada`, ADR 0046: entra y arma sus borradores, pero no publica).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CuentaNoAprobada'
         404:
           description: 'No existe o es de otro cliente.'
         422:
@@ -5513,6 +5525,38 @@ components:
             type: array
             items:
               type: string
+      type: object
+    CuentaNoAprobada:
+      title: 'Cuenta no aprobada'
+      description: 'Respuesta 403 de la compuerta de la cuenta (ADR 0046, punto 12): la cuenta existe pero su estado no permite publicar, aceptar o contraofertar (cliente), ni ofertar, contraofertar o aceptar (proveedor). La app lo muestra como la pantalla de verificación, no como un error genérico. Distinto de `proveedor_no_habilitado` (falta un equipo apto). La app no replica la regla: la decide el servidor.'
+      required:
+        - message
+        - codigo
+        - estado
+        - falta
+      properties:
+        message:
+          type: string
+          example: 'Tu cuenta está en revisión. Cuando la aprobemos podrás publicar y negociar; mientras tanto puedes revisar tus datos.'
+        codigo:
+          type: string
+          example: cuenta_no_aprobada
+          enum:
+            - cuenta_no_aprobada
+        estado:
+          type: string
+          example: pendiente
+          enum:
+            - pendiente
+            - rechazado
+            - suspendido
+            - baja
+        falta:
+          description: 'Qué impide aprobar la cuenta (`verificacion`, `documentos`, `dron_fotos`, `equipo`…). Mientras no existan esos pasos viene vacío.'
+          type: array
+          items:
+            type: string
+          example: []
       type: object
     CuentaYaRegistrada:
       title: 'Cuenta ya registrada'
@@ -7198,11 +7242,15 @@ components:
           example: '+591 76543210'
           nullable: true
         estado:
+          description: 'Ciclo de aprobación (ADR 0046): nace `pendiente`; solo `aprobado` publica y negocia.'
           type: string
-          example: activo
+          example: aprobado
           enum:
-            - activo
+            - pendiente
+            - aprobado
             - suspendido
+            - rechazado
+            - baja
         calificacion_promedio:
           description: 'Decimal exacto en string (0 a 5).'
           type: string
