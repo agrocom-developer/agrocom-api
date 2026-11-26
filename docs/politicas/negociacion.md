@@ -1,6 +1,6 @@
 # Política de negociación de ofertas
 
-**Agrocom SRL · Vigente** · Decisión: ADR 0030, ADR 0038, ADR 0045 (revisión del 27/11/2026) · Especificación: `docs/especificacion/marketplace.md` §6 · Reglas exactas: `docs/especificacion/negociacion-contrato.md`
+**Agrocom SRL · Vigente** · Decisión: ADR 0030, ADR 0038, ADR 0045 (revisión del 27/11/2026), ADR 0047 (bloquear) · Especificación: `docs/especificacion/marketplace.md` §6 · Reglas exactas: `docs/especificacion/negociacion-contrato.md`
 
 ## Principios
 
@@ -29,6 +29,15 @@ La negociación es **asíncrona**, como una bandeja de entrada y no como un chat
 | Encargado de una empresa | Ofertar por la empresa; delegar la oferta a pilotos concretos (apagada por defecto); marcar a sus pilotos como ocupados | Ofertar dos veces sobre la misma solicitud con la misma empresa |
 | Piloto de una empresa | Ver el mapa; ofertar solo si el encargado le delegó la oferta | Ofertar sin delegación |
 | Administrador | Ver todas las negociaciones; cancelar una solicitud con motivo | Adjudicar por el cliente ni cambiar un precio |
+
+## Bloquear
+
+Cualquiera de las dos partes puede **bloquear** a la otra desde el chat, la negociación o su perfil (política de mensajes en `seguimiento_y_privacidad.md`). En el mercado significa:
+
+- **La negociación en curso se cierra** como si la parte la hubiera rechazado o cerrado, con el mismo aviso neutro: el bloqueado no sabe que fue un bloqueo. Si bloquea el cliente, se libera su lugar en la bandeja y pasan las siguientes de la cola; si bloquea el proveedor, su oferta vigente se retira y se libera igual.
+- **Hacia adelante** el bloqueado no ve en el mapa las solicitudes de quien lo bloqueó, no recibe sus avisos de oleada y no puede ofertarlas; es simétrico: quien bloquea tampoco ve las del otro. Cuando bloquea el cliente se bloquea al proveedor de la oferta (la empresa entera); cuando bloquea un proveedor independiente o el encargado, vale para su proveedor; cuando bloquea un piloto vinculado, solo para su cuenta.
+- **Un servicio ya adjudicado o en ejecución sigue.** Bloquear no rompe el acuerdo: se ejecuta, se cancela sin penalidad automática o se abre un reclamo, y los datos de contacto ya entregados siguen en el detalle del servicio. Solo se cierra el chat.
+- Lo ya hecho no se borra (servicios, calificaciones, reclamos) y desbloquear no reabre lo cerrado. Bloquear no es una sanción ni una penalidad.
 
 ## Sin penalidades automáticas
 

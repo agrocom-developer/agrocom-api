@@ -8,7 +8,7 @@ El workflow `.github/workflows/deploy.yml` se dispara al pushear un tag `vX.Y.Z`
 2. Checkout del tag, sin persistir credenciales.
 3. Copia de `~/agrocom-api.env` a `.env`.
 4. `docker compose up -d --build`.
-5. **Respaldo**: `pg_dump --format=custom` desde el contenedor `db` hacia `~/agrocom-backups/pre-<tag>-<fecha>.dump`, fuera del checkout, con permisos `600` en un directorio `700`. Se verifica que el archivo no esté vacío y que `pg_restore --list` lo lea. Si falla, el job se detiene antes de migrar. Se conservan los 14 respaldos más recientes.
+5. **Respaldo**: `pg_dump --format=custom` desde el contenedor `db` hacia `~/agrocom-backups/pre-<tag>-<fecha>.dump`, fuera del checkout, con permisos `600` en un directorio `700`. Se verifica que el archivo no esté vacío y que `pg_restore --list` lo lea. Si falla, el job se detiene antes de migrar. Se conservan los 14 respaldos más recientes y ninguno de más de 30 días (`respaldos.retencion_dias`; ver «Respaldos y cuentas eliminadas»).
 6. `php artisan migrate --force`, seguido de una verificación de que no quedan migraciones pendientes.
 7. Espera del endpoint `/up`.
 
@@ -29,3 +29,13 @@ El workflow `.github/workflows/deploy.yml` se dispara al pushear un tag `vX.Y.Z`
 ## Prueba periódica
 
 Restaurar un respaldo en una base descartable una vez por mes y comprobar que `migrate:status` y una consulta de conteo coinciden con producción.
+
+## Respaldos y cuentas eliminadas
+
+Un respaldo contiene los datos de las cuentas que existían cuando se hizo, también los de una cuenta que la persona eliminó después. Para que la eliminación sea real (ADR 0047):
+
+- **Rotación.** Ningún respaldo de la base ni de los archivos privados vive más de **30 días** (`respaldos.retencion_dias`); la política de privacidad dice esa cifra. El respaldo previo al despliegue se borra con el mismo plazo aunque no se llegue a 14.
+- **Registro de eliminaciones fuera de la base.** Cada día que `EjecutarEliminacionesDeCuenta` ejecuta una eliminación, agrega una línea (id de cuenta y fecha, sin datos personales) a un archivo del servidor que no forma parte del respaldo ni se restaura con él (`~/agrocom-backups/eliminaciones-ejecutadas.log`, permisos `600`).
+- **Restaurar reaplica las eliminaciones.** Después de `pg_restore`, y antes de abrir el servicio, se corre `bin/reaplicar-eliminaciones`, que vuelve a ejecutar la anonimización de cada cuenta del registro que reaparezca con datos. Sin ese paso, una restauración revive a una cuenta eliminada.
+- **Archivos.** El almacenamiento de objetos de las evidencias no conserva versiones de lo borrado más allá de los 30 días (sin versionado, o con una regla de ciclo de vida que elimine las versiones antiguas).
+- **Prueba periódica.** La restauración mensual de esta página comprueba también que una cuenta eliminada después del respaldo queda anonimizada tras `bin/reaplicar-eliminaciones`.
