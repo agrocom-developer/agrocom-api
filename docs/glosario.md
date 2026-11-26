@@ -23,8 +23,16 @@ Referencia rápida de vocabulario, de negocio y técnico, para que cualquier per
 | **Encargado de la empresa** | Titular de un proveedor tercero, con su propia cuenta; gestiona el vínculo de los pilotos de la empresa y puede liberarlos | ADR 0046 |
 | **Vínculo de piloto** | Relación entre la cuenta de un piloto y una empresa, con el consentimiento de ambos; el encargado la libera para que el piloto trabaje por su cuenta | ADR 0046 |
 | **Verificación de identidad** | Selfie tomada con la cámara y documento (carnet de identidad, licencia de conducir o pasaporte) que cada cuenta de app necesita para ser aprobada | ADR 0046; `politicas/verificacion_proveedores.md` |
-| **Selfie** | Foto del rostro tomada en el momento con la cámara de la app, distinta de la foto de perfil; solo la ve quien revisa, con permiso; se conserva 12 meses después de la baja de la cuenta | ADR 0046 |
+| **Selfie** | Foto del rostro tomada en el momento con la cámara de la app, distinta de la foto de perfil; solo la ve quien revisa, con permiso; se conserva mientras exista la cuenta y después 12 meses si hubo antecedentes o 90 días si la persona eliminó su cuenta sin antecedentes | ADR 0046, 0047 |
 | **Cargada por administrador** | Marca de una verificación que el administrador creó desde el panel; si no hay documento de la persona, lleva un archivo marcador generado por el sistema y el motivo | ADR 0046 |
+| **Eliminación de cuenta** | Lo que pide la persona para dejar de existir en Agrocom: anonimiza sus datos personales en el lugar tras 7 días de gracia; no es la baja administrativa ni un congelamiento | ADR 0047; `politicas/eliminacion_de_cuenta.md` |
+| **Anonimización** | Reemplazar o borrar los datos personales de una cuenta eliminada (nombre, teléfono, correo, foto, documento, textos), conservando servicios, ofertas y calificaciones sin datos identificables | ADR 0047 |
+| **Antecedentes** | Suspensión, rechazo por fraude o falsedad documental, incidencia grave o reclamo con responsabilidad de la cuenta, o baja administrativa; alargan a 12 meses la retención de la selfie y el documento | ADR 0047 |
+| **Registro mínimo antifraude** | Lo único que queda de una cuenta eliminada: una huella del documento con clave del servidor, el motivo y la fecha, sin imágenes ni nombre | ADR 0047 |
+| **Reclamo de conducta** | Reclamo que nace al reportar un mensaje, una conversación o una foto; sin monto; soporte lee solo lo reportado | ADR 0047; `politicas/disputas.md` |
+| **Reportar** | Avisar a soporte de un mensaje, una conversación o una foto que incumple la política de conducta, con un motivo | ADR 0047 |
+| **Bloquear** | Cerrar el chat y la negociación con la otra parte y dejar de verse en el mapa y en los avisos; un servicio adjudicado sigue | ADR 0047 |
+| **Ubicación de emergencia** | Posición que acompaña a un SOS o una incidencia; se guarda 90 días después de cerrar la incidencia | ADR 0047 |
 | **Solicitud de servicio** | Pedido del cliente sobre sus lotes: hectáreas, tipo de aplicación, producto, fecha deseada y precio por hectárea propuesto. Es la unidad de negocio | especificación §4.2; ADR 0027 |
 | **Terreno** | Superficie del cliente con geometría y hectáreas, sobre la que se pide un servicio | especificación §4.1 |
 | **Proveedor** | Entidad que presta el servicio: propio, independiente o tercero | ADR 0028 |
@@ -72,7 +80,7 @@ Referencia rápida de vocabulario, de negocio y técnico, para que cualquier per
 | **Moderación** | Ocultamiento con motivo y autor de una calificación que incumple la política | `politicas/calificacion.md` |
 | **Reclamo** | Queja sobre un servicio ya prestado que abre un cliente o un proveedor y atiende un administrador, con evidencia y un monto ajustado; la solicitud en reclamo tiene el estado interno `disputada` | ADR 0033 |
 | **Incidencia** | Evento anómalo (deriva, caída, lesión, derrame, conflicto) reportado durante o tras un servicio | `politicas/seguridad.md` |
-| **SOS** | Botón de emergencia que avisa a soporte con la ubicación | `politicas/seguridad.md` |
+| **SOS** | Botón de emergencia que avisa a soporte con la ubicación (la del dispositivo en el piloto; la del terreno en el cliente) | `politicas/seguridad.md`; ADR 0047 |
 | **Tasa de cancelación** | Proporción de servicios adjudicados que cancela una parte; es visible y alimenta alertas, no sanciones automáticas | ADR 0033 |
 | **Suspensión** | Retiro de la cuenta por documentos vencidos, incidencia grave o decisión de un administrador | `politicas/verificacion_proveedores.md` |
 | **Ciclos de batería** | Contador conservado dentro del dron | ADR 0029 |

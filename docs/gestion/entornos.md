@@ -26,6 +26,8 @@
 - `SENTRY_LARAVEL_DSN`: proyecto Sentry específico para beta, si existe monitoreo; vacío en local.
 - `APP_URL` / `SANCTUM_STATEFUL_DOMAINS`: IP pública del contenedor 119 + puerto en producción beta (ej. `http://<IP>:80`), `localhost:8000` en desarrollo.
 
+**Antes de publicar en las tiendas** hace falta dominio y HTTPS: `APP_URL` pasa a una dirección `https://` y las páginas públicas `/terminos`, `/privacidad` y `/eliminar-cuenta` deben abrirse sin sesión (lista de verificación en `docs/politicas/tiendas-y-privacidad.md`; ADR 0017, revisión del 27/11/2026).
+
 **Nota:** Hoy existe un único ambiente productivo (contenedor 119 en Proxmox, "producción beta"). Un ambiente de staging separado es una decisión futura — ver ADR 0017, sección "Decisión" §3.
 
 ## Secretos
