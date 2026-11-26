@@ -39,7 +39,6 @@ return [
         'precio_sin_cambio' => 'Ese es el mismo precio de la oferta vigente: indica uno distinto.',
         'uuid_en_uso' => 'Ese identificador ya se usó. Genera uno nuevo.',
         'motivo_requerido' => 'Indica el motivo.',
-        'macrorregion_invalida' => 'La macrorregión no existe.',
         'estado_invalido' => 'La solicitud no está en un estado que permita esta acción.',
         'avance_requiere_uno' => 'Indica las hectáreas ejecutadas o el porcentaje, no los dos ni ninguno.',
         'avance_invalido' => 'El avance no puede ser negativo.',

@@ -10,7 +10,7 @@ use App\Dominios\Solicitudes\Contratos\Eventos\SolicitudAbierta;
 
 /**
  * Al abrirse una solicitud avisa a cada cuenta de proveedor aprobada cuyas preferencias
- * coinciden con la zona y las hectáreas (`negociacion-contrato.md` §7). Una solicitud avisa
+ * coinciden con las hectáreas (`negociacion-contrato.md` §7). Una solicitud avisa
  * a una cuenta una sola vez: la clave del aviso es la solicitud, así que renovarla no repite.
  * Es el incentivo para que los pilotos reciban ofertas de trabajo sin abrir la app.
  */
@@ -31,7 +31,7 @@ final class AvisarNuevaSolicitud
 
         foreach ($aprobados as $proveedor) {
             foreach ($this->proveedores->usuariosDeAviso($proveedor->id) as $usuarioId) {
-                if ($usuarioId !== $evento->clienteUsuarioId && $this->preferencias->coincide($usuarioId, $evento->zonaId, $evento->macrorregion, $evento->hectareas)) {
+                if ($usuarioId !== $evento->clienteUsuarioId && $this->preferencias->coincide($usuarioId, $evento->hectareas)) {
                     $usuarios[] = $usuarioId;
                 }
             }
@@ -40,7 +40,6 @@ final class AvisarNuevaSolicitud
         $this->avisos->avisar('nueva_solicitud_abierta', "nueva_solicitud_abierta:{$evento->solicitudId}", [
             'solicitud' => $evento->solicitudId,
             'hectareas' => $evento->hectareas,
-            'zona' => $evento->zona ?? '',
             'precio' => $evento->precioHa,
         ], $evento->solicitudId, $usuarios);
     }

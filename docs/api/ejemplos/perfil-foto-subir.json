@@ -13,7 +13,7 @@
     "respuesta": {
         "estado": 200,
         "cuerpo": {
-            "foto_url": "/api/personas/9/foto?expires=1795547503&signature=d730c29fde419e62088986f65e6c66c92d98aa23f68b3c9b95d73274fb34b790"
+            "foto_url": "/api/personas/2/foto?expires=1795731060&signature=41b56465336a700a66b2c6f702953a0dd1fb459155acf565aa741f1aa5a0af00"
         }
     }
 }

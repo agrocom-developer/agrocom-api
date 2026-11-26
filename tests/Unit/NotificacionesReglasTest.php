@@ -171,7 +171,7 @@ test('cada tipo de aviso tiene su texto en lang/es/notificaciones.php y usa solo
         'equipo_en_camino' => ['solicitud'],
         'solicitud_ejecutada' => ['solicitud'],
         // Negociación (ADR 0030, 0038 y 0041).
-        'nueva_solicitud_abierta' => ['solicitud', 'hectareas', 'zona', 'precio'],
+        'nueva_solicitud_abierta' => ['solicitud', 'hectareas', 'precio'],
         'oferta_recibida' => ['proveedor', 'precio', 'solicitud'],
         'precio_cambiado' => ['solicitud', 'precio'],
         'solicitud_adjudicada' => ['solicitud', 'proveedor', 'precio'],

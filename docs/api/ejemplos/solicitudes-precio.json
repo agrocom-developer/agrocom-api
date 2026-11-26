@@ -34,9 +34,9 @@
                 "monto_final": null,
                 "estado": "abierta",
                 "oferta_adjudicada_id": null,
-                "vence_en": "2026-12-03T20:41:12+00:00",
+                "vence_en": "2026-12-03T21:55:58+00:00",
                 "proveedor_id": null,
-                "publicada_en": "2026-11-26T20:41:12+00:00",
+                "publicada_en": "2026-11-26T21:55:58+00:00",
                 "motivo_cancelacion": null,
                 "cancelada_por": null,
                 "departamento_codigo": "07",
@@ -52,7 +52,6 @@
                     "referencias_acceso": "Camino vecinal, portón azul a 2 km de la ruta.",
                     "colindantes_sensibles": null,
                     "acceso_dificil": false,
-                    "zona_id": null,
                     "departamento_codigo": "07",
                     "provincia_codigo": "0702",
                     "municipio": "Warnes",
@@ -64,14 +63,14 @@
                         "estado_nuevo": "borrador",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-26T20:41:12+00:00"
+                        "creado_en": "2026-11-26T21:55:58+00:00"
                     },
                     {
                         "estado_anterior": "borrador",
                         "estado_nuevo": "abierta",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-26T20:41:12+00:00"
+                        "creado_en": "2026-11-26T21:55:58+00:00"
                     }
                 ]
             }

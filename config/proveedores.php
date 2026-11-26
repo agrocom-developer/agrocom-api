@@ -9,7 +9,7 @@ use App\Dominios\Proveedores\Dominio\RequisitosDocumentales;
 |
 | Parámetros de la verificación de proveedores, pilotos y drones.
 | «El catálogo de documentos se ajusta por parámetro» (política de verificación):
-| la normativa local de una zona puede pedir, por ejemplo, el certificado de
+| la normativa local de una región puede pedir, por ejemplo, el certificado de
 | aplicador de agroquímicos al piloto. Los valores de aquí son el piso; no hay
 | secretos.
 |
@@ -44,7 +44,4 @@ return [
      * dron en el panel no lo aprueba él mismo. `false` lo permite (decisión del dueño).
      */
     'separar_funciones' => (bool) env('PROVEEDORES_SEPARAR_FUNCIONES', true),
-
-    /* Radio de operación (km) con que nace un proveedor que no lo declara. */
-    'radio_operacion_defecto_km' => 50,
 ];

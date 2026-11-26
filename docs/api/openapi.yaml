@@ -1593,24 +1593,6 @@ paths:
             type: string
             example: '-64.5,-18.5,-61.0,-16.5'
         -
-          name: zona_id
-          in: query
-          required: false
-          schema:
-            type: integer
-        -
-          name: macrorregion
-          in: query
-          required: false
-          schema:
-            type: string
-            enum:
-              - cercado
-              - norte_integrado
-              - chiquitania
-              - valles
-              - chaco
-        -
           name: hectareas_min
           in: query
           required: false
@@ -1724,38 +1706,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorValidacion'
-      security:
-        -
-          tokenDispositivo: []
-  /api/solicitudes-abiertas/resumen-zonas:
-    get:
-      tags:
-        - Mercado
-      summary: 'Resumen por zona y macrorregión'
-      description: 'Cuántas solicitudes, hectáreas y qué precio promedio hay por zona y macrorregión, con los mismos filtros del mapa: responde «cuántos clientes y cuántas hectáreas hay en los valles frente a la Chiquitania».'
-      operationId: resumenZonasAbiertas
-      responses:
-        200:
-          description: 'Una fila por zona.'
-          content:
-            application/json:
-              schema:
-                required:
-                  - zonas
-                properties:
-                  zonas:
-                    type: array
-                    items:
-                      type: object
-                type: object
-        401:
-          description: 'Token ausente o revocado.'
-        403:
-          description: 'El rol no ve el mapa o el proveedor no está habilitado.'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorConflicto'
       security:
         -
           tokenDispositivo: []
@@ -2434,7 +2384,7 @@ paths:
       tags:
         - Preferencias
       summary: 'Mis preferencias de aviso'
-      description: 'Las preferencias de aviso de la cuenta. Sin nada guardado: todo activo, todas las zonas y sin mínimo de hectáreas.'
+      description: 'Las preferencias de aviso de la cuenta. Sin nada guardado: todo activo y sin mínimo de hectáreas.'
       operationId: verPreferenciasDeAviso
       responses:
         200:
@@ -2459,7 +2409,7 @@ paths:
       tags:
         - Preferencias
       summary: 'Guardar mis preferencias de aviso'
-      description: 'Guarda las preferencias; lo que no se envía conserva su valor. Un piloto activa o desactiva los avisos de nuevas solicitudes y limita zonas, macrorregiones y hectáreas mínimas.'
+      description: 'Guarda las preferencias; lo que no se envía conserva su valor. Un piloto activa o desactiva los avisos de nuevas solicitudes y fija las hectáreas mínimas.'
       operationId: guardarPreferenciasDeAviso
       requestBody:
         required: true
@@ -2484,7 +2434,7 @@ paths:
         403:
           description: 'El rol del token no gestiona preferencias.'
         422:
-          description: 'Macrorregión inválida o datos mal formados.'
+          description: 'Datos mal formados.'
           content:
             application/json:
               schema:
@@ -3760,15 +3710,6 @@ paths:
                   description: 'NIT o documento de identidad.'
                   type: string
                   example: '4521897012'
-                zona_base_id:
-                  description: 'Zona base (ver `GET /api/zonas`).'
-                  type: integer
-                  nullable: true
-                radio_operacion_km:
-                  description: 'Decimal exacto; por defecto 50.'
-                  type: string
-                  example: '80'
-                  nullable: true
                 licencia_numero:
                   description: 'Obligatoria si el tipo es `independiente`.'
                   type: string
@@ -4797,7 +4738,7 @@ paths:
       tags:
         - Solicitudes
       summary: 'Abrir una solicitud al mercado'
-      description: 'Abre la solicitud a los pilotos: `borrador` pasa a `abierta`, con su vigencia (7 días) y visible en el mapa. Exige precio por hectárea propuesto, hectáreas que no superen las del terreno, fecha deseada no pasada, un teléfono en la cuenta y que el terreno tenga departamento y provincia coherentes entre sí; esa ubicación (más municipio y comunidad) se congela en la solicitud. Avisa a los pilotos cuyas preferencias coinciden con la zona y las hectáreas. Una solicitud `expirada` se renueva igual, dentro del plazo de renovación.'
+      description: 'Abre la solicitud a los pilotos: `borrador` pasa a `abierta`, con su vigencia (7 días) y visible en el mapa. Exige precio por hectárea propuesto, hectáreas que no superen las del terreno, fecha deseada no pasada, un teléfono en la cuenta y que el terreno tenga departamento y provincia coherentes entre sí; esa ubicación (más municipio y comunidad) se congela en la solicitud. Avisa a los pilotos cuyas preferencias coinciden con las hectáreas. Una solicitud `expirada` se renueva igual, dentro del plazo de renovación.'
       operationId: publicarSolicitud
       parameters:
         -
@@ -5258,49 +5199,6 @@ paths:
           description: 'Firma inválida o vencida.'
         404:
           description: 'La foto ya no existe.'
-  /api/zonas:
-    get:
-      tags:
-        - Clientes
-      summary: 'Catálogo de zonas'
-      description: 'Zonas geográficas del marketplace con su centroide y radio, ordenadas por nombre. Sin autenticación: el registro de un proveedor las usa para elegir su zona base. Coordenadas y radio como string decimal.'
-      operationId: listarZonas
-      responses:
-        200:
-          description: Zonas.
-          content:
-            application/json:
-              schema:
-                required:
-                  - data
-                properties:
-                  data:
-                    type: array
-                    items:
-                      required:
-                        - id
-                        - nombre
-                        - centroide_lat
-                        - centroide_lng
-                        - radio_km
-                      properties:
-                        id:
-                          type: integer
-                          example: 1
-                        nombre:
-                          type: string
-                          example: 'Santa Cruz de la Sierra'
-                        centroide_lat:
-                          type: string
-                          example: '-17.7833000'
-                        centroide_lng:
-                          type: string
-                          example: '-63.1821000'
-                        radio_km:
-                          type: string
-                          example: '40.0'
-                      type: object
-                type: object
 components:
   schemas:
     CalificacionesDelServicio:
@@ -5950,22 +5848,16 @@ components:
         precio_ha_propuesto:
           type: string
           example: '125.0000'
-        zona:
+        departamento_codigo:
+          description: 'Código INE del departamento de la solicitud (`GET /api/catalogos/ubicaciones`).'
           type: string
-          example: Warnes
+          example: '07'
           nullable: true
-        zona_id:
-          type: integer
-          nullable: true
-        macrorregion:
+        provincia_codigo:
+          description: 'Código INE de la provincia, del mismo departamento.'
           type: string
+          example: '0702'
           nullable: true
-          enum:
-            - cercado
-            - norte_integrado
-            - chiquitania
-            - valles
-            - chaco
         cultivo:
           type: string
           nullable: true
@@ -6101,14 +5993,10 @@ components:
           type: string
           format: date-time
           nullable: true
-        zona:
-          description: 'Solo para el proveedor: nombre de la zona de la solicitud.'
+        departamento_codigo:
+          description: 'Solo para el proveedor: código INE del departamento de la solicitud (`GET /api/catalogos/ubicaciones`).'
           type: string
-          example: 'Valle de Culiacán'
-          nullable: true
-        zona_id:
-          description: 'Solo para el proveedor: id de la zona de la solicitud.'
-          type: integer
+          example: '07'
           nullable: true
         lote:
           description: 'Solo para el proveedor: nombre del lote del cliente. Viene solo cuando la solicitud quedó adjudicada a ese proveedor; antes es `null`.'
@@ -6199,31 +6087,12 @@ components:
         - calificaciones
       properties:
         nuevas_solicitudes:
-          description: 'Solo aplica a cuentas de proveedor. `zonas` y `macrorregiones` vacías significan todas.'
+          description: 'Solo aplica a cuentas de proveedor.'
           properties:
             activo:
-              description: "Preferencias de aviso (`negociacion-contrato.md` §7): el piloto activa o desactiva los\navisos de nuevas solicitudes en sus zonas (el incentivo para recibir ofertas de\ntrabajo) y cada cuenta elige qué categorías recibe. Las obligatorias no se apagan."
+              description: "Preferencias de aviso (`negociacion-contrato.md` §7): el piloto activa o desactiva los\navisos de nuevas solicitudes (el incentivo para recibir ofertas de\ntrabajo) y cada cuenta elige qué categorías recibe. Las obligatorias no se apagan."
               type: boolean
               example: true
-            zonas:
-              type: array
-              items:
-                type: integer
-              example:
-                - 3
-                - 7
-            macrorregiones:
-              type: array
-              items:
-                type: string
-                enum:
-                  - cercado
-                  - norte_integrado
-                  - chiquitania
-                  - valles
-                  - chaco
-              example:
-                - chiquitania
             hectareas_minimas:
               type: string
               example: '50.0000'
@@ -6451,14 +6320,6 @@ components:
           type: string
           example: '+591 70012345'
           nullable: true
-        zona_base_id:
-          type: integer
-          example: 2
-          nullable: true
-        radio_operacion_km:
-          description: 'Decimal exacto en string.'
-          type: string
-          example: '80.0'
         estado:
           type: string
           example: pendiente
@@ -7163,9 +7024,6 @@ components:
         acceso_dificil:
           type: boolean
           nullable: true
-        zona_id:
-          type: integer
-          nullable: true
         departamento_codigo:
           description: 'Código INE del departamento del catálogo (`GET /api/catalogos/ubicaciones`). Si se envía `provincia_codigo`, es obligatorio.'
           type: string
@@ -7498,10 +7356,6 @@ components:
         acceso_dificil:
           type: boolean
           example: false
-        zona_id:
-          type: integer
-          example: 1
-          nullable: true
         departamento_codigo:
           description: 'Código INE del departamento (`GET /api/catalogos/ubicaciones`). Obligatorio para publicar una solicitud sobre el terreno.'
           type: string
@@ -7563,7 +7417,7 @@ tags:
     description: 'Mensajes entre el cliente y el proveedor adjudicado, desde la adjudicación. Texto de hasta 1000 caracteres, fotos de menos de 300 KB y líneas de sistema que el servidor escribe al cambiar la solicitud.'
   -
     name: Mercado
-    description: 'El piloto ve en un mapa las solicitudes abiertas para decidir a qué zona ir con su equipo (los valles frente a la Chiquitania) y a cuáles ofertar.'
+    description: 'El piloto ve en un mapa las solicitudes abiertas para decidir a cuáles ofertar.'
   -
     name: Ofertas
     description: 'El proveedor ofrece su precio por hectárea, cada parte contraoferta a la otra y el cliente elige: aceptar una oferta adjudica la solicitud.'

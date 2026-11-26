@@ -1,6 +1,6 @@
 {
     "operationId": "guardarPreferenciasDeAviso",
-    "descripcion": "Activa o apaga los avisos de nuevas solicitudes y los acota a una región.",
+    "descripcion": "Activa o apaga los avisos de nuevas solicitudes y fija las hectáreas mínimas.",
     "peticion": {
         "metodo": "PUT",
         "ruta": "/api/notificaciones/preferencias",
@@ -8,11 +8,6 @@
         "cuerpo": {
             "nuevas_solicitudes": {
                 "activo": true,
-                "zonas": [],
-                "macrorregiones": [
-                    "chiquitania",
-                    "valles"
-                ],
                 "hectareas_minimas": "50.0000"
             },
             "ofertas": true,
@@ -27,11 +22,6 @@
             "preferencias": {
                 "nuevas_solicitudes": {
                     "activo": true,
-                    "zonas": [],
-                    "macrorregiones": [
-                        "chiquitania",
-                        "valles"
-                    ],
                     "hectareas_minimas": "50.0000"
                 },
                 "ofertas": true,

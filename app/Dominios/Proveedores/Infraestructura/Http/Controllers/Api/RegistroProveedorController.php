@@ -51,8 +51,6 @@ final class RegistroProveedorController
                     new OA\Property(property: 'documento_identidad', description: 'Número del documento (nombre histórico de `documento_numero`; obligatorio si no se envía `documento_numero`).', type: 'string', example: '7845123 SC', nullable: true),
                     new OA\Property(property: 'fecha_nacimiento', type: 'string', format: 'date', example: '1988-04-12'),
                     new OA\Property(property: 'documento_fiscal', description: 'NIT o documento de identidad.', type: 'string', example: '4521897012'),
-                    new OA\Property(property: 'zona_base_id', description: 'Zona base (ver `GET /api/zonas`).', type: 'integer', nullable: true),
-                    new OA\Property(property: 'radio_operacion_km', description: 'Decimal exacto; por defecto 50.', type: 'string', example: '80', nullable: true),
                     new OA\Property(property: 'licencia_numero', description: 'Obligatoria si el tipo es `independiente`.', type: 'string', example: 'RPA-2291', nullable: true),
                     new OA\Property(property: 'licencia_vence', description: 'Obligatoria si el tipo es `independiente`; debe ser futura.', type: 'string', format: 'date', example: '2027-06-30', nullable: true),
                     new OA\Property(property: 'categoria_habilitacion', description: 'Obligatoria si el tipo es `independiente`.', type: 'string', example: 'RPAS agrícola', nullable: true),

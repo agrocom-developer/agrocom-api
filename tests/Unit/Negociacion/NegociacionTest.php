@@ -66,7 +66,7 @@ use Tests\TestCase;
  * casos de uso reales y con los contratos de `Proveedores` y `Flota` reemplazados por datos controlados.
  *
  * Mundo: cliente 900 (cliente 1) y 901 (cliente 2); proveedor 7 (titular 701, piloto 711, equipo 70) y
- * proveedor 8 (titular 702, equipo 80); un terreno de 100 ha en la zona 1 (Chiquitania).
+ * proveedor 8 (titular 702, equipo 80); un terreno de 100 ha en Santa Cruz (departamento y provincia del catálogo).
  */
 
 uses(TestCase::class);
@@ -97,10 +97,13 @@ function negMundo(): void
         'create_neg_precios_finales_confirmados_table',
         'create_sol_terreno_fotos_table',
         'create_sol_precios_referencia_table',
+        'agrega_ubicacion_a_sol_terrenos',
+        'agrega_ubicacion_a_sol_solicitudes_servicio',
+        'retira_zonas',
     ]);
     Ubicaciones::sembrar();
 
-    foreach (['sol_cliente_historial_estados', 'neg_precios_finales_confirmados', 'neg_pagos_confirmados', 'sol_terreno_fotos', 'sol_precios_referencia', 'neg_preferencias', 'neg_ubicaciones', 'neg_evidencias', 'neg_avances', 'neg_mensajes', 'neg_cancelaciones', 'neg_ofertas', 'sol_solicitud_historial', 'sol_solicitudes_servicio', 'sol_terrenos', 'sol_clientes', 'sol_zonas'] as $tabla) {
+    foreach (['sol_cliente_historial_estados', 'neg_precios_finales_confirmados', 'neg_pagos_confirmados', 'sol_terreno_fotos', 'neg_preferencias', 'neg_ubicaciones', 'neg_evidencias', 'neg_avances', 'neg_mensajes', 'neg_cancelaciones', 'neg_ofertas', 'sol_solicitud_historial', 'sol_solicitudes_servicio', 'sol_terrenos', 'sol_clientes'] as $tabla) {
         DB::table($tabla)->delete();
     }
 
@@ -108,22 +111,20 @@ function negMundo(): void
     Storage::fake('local');
     Carbon::setTestNow(Carbon::parse('2026-12-10 09:00:00'));
 
-    DB::table('sol_zonas')->insert(['id' => 1, 'nombre' => 'San José de Chiquitos', 'centroide_lat' => '-17.8450000', 'centroide_lng' => '-60.7390000', 'radio_km' => '60.0', 'macrorregion' => 'chiquitania', 'created_at' => now(), 'updated_at' => now()]);
-
     foreach ([1 => [NEG_CLIENTE, 'Cliente Ana', '70011122'], 2 => [NEG_OTRO_CLIENTE, 'Cliente Beto', '70033344']] as $id => [$usuario, $nombre, $telefono]) {
         DB::table('sol_clientes')->insert(['id' => $id, 'usuario_id' => $usuario, 'tipo' => 'persona', 'razon_social' => $nombre, 'telefono' => $telefono, 'estado' => 'aprobado', 'created_at' => now(), 'updated_at' => now()]);
     }
 
     DB::table('sol_terrenos')->insert([
-        'id' => 1, 'cliente_id' => 1, 'nombre' => 'Lote Norte', 'hectareas' => '100.0000', 'cultivo' => 'Soya', 'zona_id' => 1, 'acceso_dificil' => false, 'departamento_codigo' => Ubicaciones::DEPARTAMENTO, 'provincia_codigo' => Ubicaciones::PROVINCIA,
+        'id' => 1, 'cliente_id' => 1, 'nombre' => 'Lote Norte', 'hectareas' => '100.0000', 'cultivo' => 'Soya', 'acceso_dificil' => false, 'departamento_codigo' => Ubicaciones::DEPARTAMENTO, 'provincia_codigo' => Ubicaciones::PROVINCIA,
         'geometria' => json_encode(['type' => 'Polygon', 'coordinates' => [[[-60.8, -17.8], [-60.7, -17.8], [-60.7, -17.9], [-60.8, -17.9], [-60.8, -17.8]]]]),
         'created_at' => now(), 'updated_at' => now(),
     ]);
 
     app()->instance(LecturaProveedores::class, new ProveedoresFalsos(
         [
-            7 => new DatosProveedor(7, NEG_TITULAR_7, 'independiente', 'Proveedor Siete', 'aprobado', 1, calificacionPromedio: '4.60', calificacionesConteo: 12),
-            8 => new DatosProveedor(8, NEG_TITULAR_8, 'tercero', 'Proveedor Ocho', 'aprobado', 1),
+            7 => new DatosProveedor(7, NEG_TITULAR_7, 'independiente', 'Proveedor Siete', 'aprobado', calificacionPromedio: '4.60', calificacionesConteo: 12),
+            8 => new DatosProveedor(8, NEG_TITULAR_8, 'tercero', 'Proveedor Ocho', 'aprobado'),
         ],
         [71 => new DatosPiloto(71, 7, NEG_PILOTO_7, 'Piloto Siete', 'aprobado')],
     ));
@@ -243,29 +244,28 @@ test('abrir una solicitud exige precio propuesto y teléfono, y la deja visible 
         ->and($fila->precio_ha_propuesto)->toEqual('125.0000')
         ->and($fila->monto_estimado)->toEqual('10000.00')
         ->and(Carbon::parse($fila->vence_en)->toDateString())->toBe('2026-12-17');
-    Event::assertDispatched(SolicitudAbierta::class, fn (SolicitudAbierta $e): bool => $e->solicitudId === $abierta && $e->macrorregion === 'chiquitania');
+    Event::assertDispatched(SolicitudAbierta::class, fn (SolicitudAbierta $e): bool => $e->solicitudId === $abierta && $e->hectareas === '80.0000');
 });
 
 test('el mapa muestra lotes, precio y estado sin ningún dato privado del cliente', function () {
     negMundo();
     $solicitud = negAbierta();
 
-    $lista = app(MercadoDeSolicitudes::class)->listar(NEG_TITULAR_7, ['macrorregion' => 'chiquitania']);
+    $lista = app(MercadoDeSolicitudes::class)->listar(NEG_TITULAR_7, []);
     $detalle = app(MercadoDeSolicitudes::class)->detalle(NEG_TITULAR_7, $solicitud);
-    $resumen = app(MercadoDeSolicitudes::class)->resumenDeZonas(NEG_TITULAR_7, []);
-    $publico = json_encode([$lista, $detalle, $resumen], JSON_THROW_ON_ERROR);
+    $publico = json_encode([$lista, $detalle], JSON_THROW_ON_ERROR);
 
     expect($lista['items'])->toHaveCount(1)
         ->and($lista['items'][0]['precio_ha_propuesto'])->toBe('125.0000')
-        ->and($lista['items'][0]['macrorregion'])->toBe('chiquitania')
+        ->and($lista['items'][0]['departamento_codigo'])->toBe(Ubicaciones::DEPARTAMENTO)
+        ->and($lista['items'][0]['provincia_codigo'])->toBe(Ubicaciones::PROVINCIA)
+        ->and($lista['items'][0])->not->toHaveKeys(['zona', 'zona_id', 'macrorregion'])
         ->and($lista['items'][0]['centro'])->not->toBeNull()
         ->and($detalle['terreno']['geometria']['type'])->toBe('Polygon')
-        ->and($resumen[0]['solicitudes'])->toBe(1)
-        ->and($resumen[0]['hectareas_total'])->toBe('80.0000')
         ->and($publico)->not->toContain('Cliente Ana')->not->toContain('70011122')->not->toContain('usuario_id');
 });
 
-test('el mapa filtra por zona, hectáreas y precio, y ordena por distancia', function () {
+test('el mapa filtra por hectáreas y precio, y ordena por distancia', function () {
     negMundo();
     negAbierta('125', '80');
     negAbierta('90', '20');
@@ -273,8 +273,6 @@ test('el mapa filtra por zona, hectáreas y precio, y ordena por distancia', fun
 
     expect($mercado->listar(NEG_TITULAR_7, ['hectareas_min' => '50'])['items'])->toHaveCount(1)
         ->and($mercado->listar(NEG_TITULAR_7, ['precio_ha_max' => '100'])['items'])->toHaveCount(1)
-        ->and($mercado->listar(NEG_TITULAR_7, ['zona_id' => 99])['items'])->toHaveCount(0)
-        ->and($mercado->listar(NEG_TITULAR_7, ['macrorregion' => 'valles'])['items'])->toHaveCount(0)
         ->and($mercado->listar(NEG_TITULAR_7, ['bbox' => '-61,-18.5,-60,-17'])['items'])->toHaveCount(2)
         ->and($mercado->listar(NEG_TITULAR_7, ['bbox' => '-70,-30,-65,-25'])['items'])->toHaveCount(0)
         ->and($mercado->listar(NEG_TITULAR_7, ['orden' => 'distancia', 'lat' => -17.8, 'lon' => -60.7])['items'][0]['distancia_km'])->not->toBeNull()
@@ -331,7 +329,7 @@ test('una contraoferta del proveedor debe tener un precio distinto del propuesto
 test('un proveedor no oferta sobre su propia cuenta de cliente ni sobre una solicitud ya cerrada', function () {
     negMundo();
     DB::table('sol_clientes')->where('id', 2)->update(['usuario_id' => NEG_TITULAR_8]);
-    DB::table('sol_terrenos')->insert(['id' => 2, 'cliente_id' => 2, 'nombre' => 'Lote Sur', 'hectareas' => '50.0000', 'zona_id' => 1, 'acceso_dificil' => false, 'departamento_codigo' => Ubicaciones::DEPARTAMENTO, 'provincia_codigo' => Ubicaciones::PROVINCIA, 'created_at' => now(), 'updated_at' => now()]);
+    DB::table('sol_terrenos')->insert(['id' => 2, 'cliente_id' => 2, 'nombre' => 'Lote Sur', 'hectareas' => '50.0000', 'acceso_dificil' => false, 'departamento_codigo' => Ubicaciones::DEPARTAMENTO, 'provincia_codigo' => Ubicaciones::PROVINCIA, 'created_at' => now(), 'updated_at' => now()]);
     $propia = negAbierta('125', '10', NEG_TITULAR_8, 2);
     $cancelada = negAbierta();
     app(CancelarSolicitud::class)->porCliente(NEG_CLIENTE, $cancelada, 'Cambié de idea');
@@ -493,7 +491,7 @@ test('un proveedor solo ve sus ofertas y el cliente solo las de sus solicitudes 
         ->and($comparador[0]['proveedor']['calificacion_promedio'])->not->toBeNull();
 });
 
-test('las ofertas del proveedor traen la zona y el lote solo cuando la solicitud quedó adjudicada a él', function () {
+test('las ofertas del proveedor traen el departamento y el lote solo cuando la solicitud quedó adjudicada a él', function () {
     negMundo();
     $solicitud = negAbierta();
     $de7 = negOfertar(NEG_TITULAR_7, $solicitud, 'contraoferta', '118');
@@ -504,9 +502,11 @@ test('las ofertas del proveedor traen la zona y el lote solo cuando la solicitud
     $despues = $consultar->delProveedor(NEG_TITULAR_7)[0];
     $detalle = $consultar->una(Negociar::LADO_PROVEEDOR, NEG_TITULAR_7, $de7->id);
 
-    expect($antes)->toHaveKeys(['zona', 'zona_id', 'lote'])->and($antes['lote'])->toBeNull()
+    expect($antes)->toHaveKeys(['departamento_codigo', 'lote'])->not->toHaveKeys(['zona', 'zona_id'])
+        ->and($antes['departamento_codigo'])->toBe(Ubicaciones::DEPARTAMENTO)
+        ->and($antes['lote'])->toBeNull()
         ->and($despues['lote'])->toBe(DB::table('sol_terrenos')->where('id', 1)->value('nombre'))
-        ->and($despues['zona_id'])->toBe($antes['zona_id'])
+        ->and($despues['departamento_codigo'])->toBe($antes['departamento_codigo'])
         ->and($detalle['lote'])->toBe($despues['lote'])
         ->and(json_encode($consultar->delCliente(NEG_CLIENTE, $solicitud)))->not->toContain('"lote"');
 });
@@ -735,23 +735,22 @@ test('el proveedor adjudicado devuelve la solicitud con motivo y no vuelve a ofe
     expect(negEstado($solicitud))->toBe('adjudicada');
 });
 
-test('las preferencias activan, filtran y apagan los avisos de nuevas solicitudes', function () {
+test('las preferencias activan, filtran por hectáreas y apagan los avisos de nuevas solicitudes', function () {
     negMundo();
     $preferencias = app(PreferenciasDeAviso::class);
 
     expect($preferencias->de(NEG_TITULAR_7)['nuevas_solicitudes']['activo'])->toBeTrue()
-        ->and($preferencias->coincide(NEG_TITULAR_7, 1, 'chiquitania', '10'))->toBeTrue();
+        ->and($preferencias->de(NEG_TITULAR_7)['nuevas_solicitudes'])->toBe(['activo' => true, 'hectareas_minimas' => null])
+        ->and($preferencias->coincide(NEG_TITULAR_7, '10'))->toBeTrue();
 
-    $preferencias->guardar(NEG_TITULAR_7, ['nuevas_solicitudes' => ['zonas' => [3, 7], 'macrorregiones' => ['valles'], 'hectareas_minimas' => '50']]);
+    $preferencias->guardar(NEG_TITULAR_7, ['nuevas_solicitudes' => ['hectareas_minimas' => '50']]);
 
-    expect($preferencias->coincide(NEG_TITULAR_7, 1, 'chiquitania', '80'))->toBeFalse()
-        ->and($preferencias->coincide(NEG_TITULAR_7, 3, 'valles', '49'))->toBeFalse()
-        ->and($preferencias->coincide(NEG_TITULAR_7, 3, 'valles', '50'))->toBeTrue()
-        ->and(negCodigo(fn () => $preferencias->guardar(NEG_TITULAR_7, ['nuevas_solicitudes' => ['macrorregiones' => ['marte']]])))->toBe('macrorregion_invalida:422');
+    expect($preferencias->coincide(NEG_TITULAR_7, '49'))->toBeFalse()
+        ->and($preferencias->coincide(NEG_TITULAR_7, '50'))->toBeTrue();
 
     $preferencias->guardar(NEG_TITULAR_7, ['nuevas_solicitudes' => ['activo' => false], 'mensajes' => false]);
 
-    expect($preferencias->coincide(NEG_TITULAR_7, 3, 'valles', '500'))->toBeFalse()
+    expect($preferencias->coincide(NEG_TITULAR_7, '500'))->toBeFalse()
         ->and($preferencias->permite(NEG_TITULAR_7, 'mensajes'))->toBeFalse()
         ->and($preferencias->permite(NEG_TITULAR_7, 'ofertas'))->toBeTrue();
 });
@@ -919,10 +918,10 @@ test('el cliente ve la foto de perfil del piloto del equipo en la tarjeta de la 
 function negProveedorEn(string $estado, int $id = 7): void
 {
     $base = [
-        7 => new DatosProveedor(7, NEG_TITULAR_7, 'independiente', 'Proveedor Siete', $estado, 1, calificacionPromedio: '4.60', calificacionesConteo: 12),
-        8 => new DatosProveedor(8, NEG_TITULAR_8, 'tercero', 'Proveedor Ocho', 'aprobado', 1),
+        7 => new DatosProveedor(7, NEG_TITULAR_7, 'independiente', 'Proveedor Siete', $estado, calificacionPromedio: '4.60', calificacionesConteo: 12),
+        8 => new DatosProveedor(8, NEG_TITULAR_8, 'tercero', 'Proveedor Ocho', 'aprobado'),
     ];
-    $base[$id] = new DatosProveedor($id, $id === 7 ? NEG_TITULAR_7 : NEG_TITULAR_8, $id === 7 ? 'independiente' : 'tercero', 'Proveedor', $estado, 1);
+    $base[$id] = new DatosProveedor($id, $id === 7 ? NEG_TITULAR_7 : NEG_TITULAR_8, $id === 7 ? 'independiente' : 'tercero', 'Proveedor', $estado);
 
     app()->instance(LecturaProveedores::class, new ProveedoresFalsos($base, [71 => new DatosPiloto(71, 7, NEG_PILOTO_7, 'Piloto Siete', 'aprobado')]));
 }
@@ -1021,7 +1020,7 @@ test('un proveedor suspendido a mitad de la negociación no contraoferta ni acep
 
 test('un proveedor no oferta sobre la solicitud de otra cuenta de su misma persona, y no la ve en el mapa', function () {
     negMundo();
-    DB::table('sol_terrenos')->insert(['id' => 2, 'cliente_id' => 2, 'nombre' => 'Lote Sur', 'hectareas' => '100.0000', 'zona_id' => 1, 'acceso_dificil' => false, 'departamento_codigo' => Ubicaciones::DEPARTAMENTO, 'provincia_codigo' => Ubicaciones::PROVINCIA, 'created_at' => now(), 'updated_at' => now()]);
+    DB::table('sol_terrenos')->insert(['id' => 2, 'cliente_id' => 2, 'nombre' => 'Lote Sur', 'hectareas' => '100.0000', 'acceso_dificil' => false, 'departamento_codigo' => Ubicaciones::DEPARTAMENTO, 'provincia_codigo' => Ubicaciones::PROVINCIA, 'created_at' => now(), 'updated_at' => now()]);
     $propia = negAbierta();
     $ajena = negAbierta('125', '80', NEG_OTRO_CLIENTE, 2);
 

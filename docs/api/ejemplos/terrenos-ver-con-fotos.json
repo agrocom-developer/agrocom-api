@@ -18,7 +18,6 @@
                 "referencias_acceso": "Camino vecinal, portón azul a 2 km de la ruta.",
                 "colindantes_sensibles": null,
                 "acceso_dificil": false,
-                "zona_id": null,
                 "departamento_codigo": "07",
                 "provincia_codigo": "0702",
                 "municipio": "Warnes",
@@ -27,7 +26,7 @@
                     {
                         "id": 1,
                         "descripcion": "Borde norte con maleza alta",
-                        "url": "/api/terrenos/fotos/1/archivo?expires=1795726571&signature=22e49125d289819bebb833a85c7709067edc057b78c67b9d504c3cd8ad1a37a8"
+                        "url": "/api/terrenos/fotos/1/archivo?expires=1795731058&signature=870fd0a651a89a6beae34465eae0abfb299821f595642bd80b5557bbf8d6637c"
                     }
                 ]
             }

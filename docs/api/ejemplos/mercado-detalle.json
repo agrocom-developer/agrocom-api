@@ -14,18 +14,17 @@
                 "centro": null,
                 "hectareas_solicitadas": "100.0000",
                 "precio_ha_propuesto": "128.0000",
-                "zona": null,
-                "zona_id": null,
-                "macrorregion": null,
+                "departamento_codigo": "07",
+                "provincia_codigo": "0702",
                 "cultivo": "Soya",
                 "tipo_aplicacion": "herbicida",
-                "ventana_desde": "2026-12-14",
-                "ventana_hasta": "2026-12-20",
+                "ventana_desde": "2026-12-16",
+                "ventana_hasta": "2026-12-22",
                 "ofertas_vigentes": 0,
                 "mi_negociacion": null,
                 "distancia_km": null,
-                "publicada_en": "2026-11-24T18:56:42+00:00",
-                "vence_en": "2026-12-01T18:56:42+00:00",
+                "publicada_en": "2026-11-26T21:55:58+00:00",
+                "vence_en": "2026-12-03T21:55:58+00:00",
                 "producto_indicado": "Glifosato 480 SL, 2 L/ha",
                 "aporta_producto": "cliente",
                 "urgente": false,
@@ -42,7 +41,7 @@
                         {
                             "id": 1,
                             "descripcion": "Borde norte con maleza alta",
-                            "url": "/api/terrenos/fotos/1/archivo?expires=1795547504&signature=34e4d92e0e432825498b23b1b5df21720df06098decaad9764847a5547ec0fd9"
+                            "url": "/api/terrenos/fotos/1/archivo?expires=1795731061&signature=f5e661e709740091b33eb2fd56dbe52daa3ab170b366b420e9e0b274bc969e93"
                         }
                     ]
                 }

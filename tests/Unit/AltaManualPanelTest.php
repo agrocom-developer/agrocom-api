@@ -57,6 +57,9 @@ beforeEach(function () {
         'create_prv_pilotos_table',
         'create_flo_drones_table',
         'agrega_negociacion_a_sol_solicitudes_servicio',
+        'agrega_ubicacion_a_sol_terrenos',
+        'agrega_ubicacion_a_sol_solicitudes_servicio',
+        'retira_zonas',
     ]);
 
     foreach (['flo_drones', 'prv_pilotos', 'prv_proveedores', 'sol_cliente_contactos', 'sol_clientes', 'sec_user_role', 'sec_user', 'sec_role'] as $tabla) {

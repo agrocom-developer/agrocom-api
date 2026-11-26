@@ -78,6 +78,9 @@ function calMundo(): CalificacionesGuardadas
         'agrega_reputacion_a_sol_clientes',
         'create_cal_calificaciones_table',
         'create_cal_moderaciones_table',
+        'agrega_ubicacion_a_sol_terrenos',
+        'agrega_ubicacion_a_sol_solicitudes_servicio',
+        'retira_zonas',
     ]);
 
     foreach (['cal_moderaciones', 'cal_calificaciones', 'sol_solicitud_historial', 'sol_solicitudes_servicio', 'sol_clientes'] as $tabla) {

@@ -28,7 +28,6 @@ use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\UsuariosControll
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\VistaComoController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Web\ClientesController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Web\SolicitudesController as SolicitudesPanelController;
-use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Web\ZonasController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -313,27 +312,6 @@ Route::middleware('auth:interno')->group(function () {
         // (`notificaciones.aviso.ver`). Solo lectura.
         Route::get('/panel/avisos', [AvisosController::class, 'index'])
             ->name('panel.avisos.index');
-
-        Route::get('/panel/zonas', [ZonasController::class, 'index'])
-            ->name('panel.zonas.index');
-
-        Route::get('/panel/zonas/crear', [ZonasController::class, 'create'])
-            ->name('panel.zonas.create');
-
-        Route::post('/panel/zonas', [ZonasController::class, 'store'])
-            ->name('panel.zonas.store');
-
-        Route::get('/panel/zonas/{zona}/editar', [ZonasController::class, 'edit'])
-            ->whereNumber('zona')
-            ->name('panel.zonas.edit');
-
-        Route::put('/panel/zonas/{zona}', [ZonasController::class, 'update'])
-            ->whereNumber('zona')
-            ->name('panel.zonas.update');
-
-        Route::delete('/panel/zonas/{zona}', [ZonasController::class, 'destroy'])
-            ->whereNumber('zona')
-            ->name('panel.zonas.destroy');
 
         Route::get('/panel/calificaciones', [CalificacionesController::class, 'index'])
             ->name('panel.calificaciones.index');

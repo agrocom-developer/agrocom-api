@@ -30,7 +30,6 @@ use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\ClientesContro
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\ContactosController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\SolicitudesController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\TerrenosController;
-use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\ZonasController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -71,12 +70,6 @@ Route::post('/clientes/registro', [ClientesController::class, 'store'])
 Route::post('/proveedores/registro', [RegistroProveedorController::class, 'store'])
     ->middleware(['throttle:registro-publico', 'sondeo.cuentas'])
     ->name('api.proveedores.registro');
-
-// Catálogo de zonas: el formulario de registro lo necesita antes de tener
-// cuenta. Mismo throttle suave que /version: es lectura pública.
-Route::get('/zonas', [ZonasController::class, 'index'])
-    ->middleware('throttle:60,1')
-    ->name('api.zonas.index');
 
 // Catálogo oficial de departamentos y provincias de Bolivia (ADR 0045): solo
 // lectura y sin token, lo usan las dos apps para ubicar un terreno.
@@ -189,7 +182,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // red (no pasan por el outbox). El permiso del rol del token es la puerta; el alcance (solo lo
     // propio, un id ajeno es 404) lo hacen los casos de uso.
     Route::get('/solicitudes-abiertas', [MercadoController::class, 'index'])->name('api.solicitudes-abiertas.index');
-    Route::get('/solicitudes-abiertas/resumen-zonas', [MercadoController::class, 'resumen'])->name('api.solicitudes-abiertas.resumen');
     Route::get('/solicitudes-abiertas/{id}', [MercadoController::class, 'show'])
         ->whereNumber('id')
         ->name('api.solicitudes-abiertas.show');
@@ -277,7 +269,7 @@ Route::middleware('auth:sanctum')->group(function () {
         ->whereNumber('id')
         ->name('api.solicitudes.mensajes.leidos');
 
-    // Preferencias de aviso: el piloto activa o desactiva las nuevas solicitudes en sus zonas.
+    // Preferencias de aviso: el piloto activa o desactiva las nuevas solicitudes.
     Route::get('/notificaciones/preferencias', [PreferenciasController::class, 'show'])->name('api.notificaciones.preferencias.show');
     Route::put('/notificaciones/preferencias', [PreferenciasController::class, 'update'])->name('api.notificaciones.preferencias.update');
 

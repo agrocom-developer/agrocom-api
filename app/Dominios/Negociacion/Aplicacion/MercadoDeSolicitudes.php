@@ -11,14 +11,11 @@ use App\Dominios\Proveedores\Contratos\DatosProveedor;
 use App\Dominios\Proveedores\Contratos\LecturaProveedores;
 use App\Dominios\Solicitudes\Contratos\DatosSolicitudAbierta;
 use App\Dominios\Solicitudes\Contratos\LecturaMercado;
-use Brick\Math\BigDecimal;
-use Brick\Math\RoundingMode;
 
 /**
  * El mapa de solicitudes abiertas del piloto (`negociacion-contrato.md` §8): todas las
  * solicitudes `abierta` y `con_ofertas` de Santa Cruz, con filtros del usuario y sin
- * radio fijo de operación, para decidir a qué zona ir (los valles frente a la
- * Chiquitania). Solo cuentas de proveedor habilitadas. Nunca devuelve nombre, teléfono,
+ * radio fijo de operación ni división por zonas. Solo cuentas de proveedor habilitadas. Nunca devuelve nombre, teléfono,
  * documento ni dirección del cliente (§3.4), ni precios de las ofertas de otros proveedores.
  */
 final class MercadoDeSolicitudes
@@ -31,7 +28,7 @@ final class MercadoDeSolicitudes
     ) {}
 
     /**
-     * @param  array<string, mixed>  $filtros  zona_id, macrorregion, hectareas_min/max, precio_ha_min/max, fecha_hasta, cultivo, tipo_aplicacion, bbox, lat, lon, orden, cursor, limite
+     * @param  array<string, mixed>  $filtros  hectareas_min/max, precio_ha_min/max, fecha_hasta, cultivo, tipo_aplicacion, bbox, lat, lon, orden, cursor, limite
      * @return array{items: list<array<string, mixed>>, siguiente_cursor: string|null}
      *
      * @throws NegociacionInvalida
@@ -60,53 +57,6 @@ final class MercadoDeSolicitudes
         $siguiente = $desde + $limite < count($items) ? base64_encode((string) ($desde + $limite)) : null;
 
         return ['items' => $pagina, 'siguiente_cursor' => $siguiente];
-    }
-
-    /**
-     * Cuántas solicitudes y hectáreas hay por zona y macrorregión (los mismos filtros del mapa).
-     *
-     * @param  array<string, mixed>  $filtros
-     * @return list<array<string, mixed>>
-     *
-     * @throws NegociacionInvalida
-     */
-    public function resumenDeZonas(int $usuarioId, array $filtros): array
-    {
-        $proveedor = $this->habilitado($usuarioId);
-        $grupos = [];
-
-        foreach ($this->filtrar($proveedor, $filtros) as $fila) {
-            $s = $fila['solicitud'];
-            $clave = ($s->zonaId ?? 0).'|'.($s->macrorregion ?? '');
-            $grupos[$clave] ??= ['zona_id' => $s->zonaId, 'zona' => $s->zona, 'macrorregion' => $s->macrorregion, 'solicitudes' => 0, 'hectareas' => BigDecimal::zero(), 'precios' => [], 'centros' => []];
-            $grupos[$clave]['solicitudes']++;
-            $grupos[$clave]['hectareas'] = $grupos[$clave]['hectareas']->plus(BigDecimal::of($s->hectareasSolicitadas));
-            $grupos[$clave]['precios'][] = BigDecimal::of($s->precioHaPropuesto);
-            if ($s->centro !== null) {
-                $grupos[$clave]['centros'][] = $s->centro;
-            }
-        }
-
-        $resumen = array_map(function (array $g): array {
-            $centros = $g['centros'];
-
-            return [
-                'zona_id' => $g['zona_id'],
-                'zona' => $g['zona'],
-                'macrorregion' => $g['macrorregion'],
-                'solicitudes' => $g['solicitudes'],
-                'hectareas_total' => (string) $g['hectareas']->toScale(4),
-                'precio_ha_promedio' => (string) BigDecimal::sum(...$g['precios'])->dividedBy(count($g['precios']), 4, RoundingMode::HalfUp),
-                'centro' => $centros === [] ? null : [
-                    'latitud' => array_sum(array_column($centros, 'latitud')) / count($centros),
-                    'longitud' => array_sum(array_column($centros, 'longitud')) / count($centros),
-                ],
-            ];
-        }, array_values($grupos));
-
-        usort($resumen, fn (array $a, array $b): int => $b['solicitudes'] <=> $a['solicitudes']);
-
-        return $resumen;
     }
 
     /**
@@ -186,8 +136,6 @@ final class MercadoDeSolicitudes
     private function filtrosDeContenido(array $filtros): array
     {
         return array_filter([
-            'zona_id' => isset($filtros['zona_id']) ? (int) $filtros['zona_id'] : null,
-            'macrorregion' => $filtros['macrorregion'] ?? null,
             'hectareas_min' => $filtros['hectareas_min'] ?? null,
             'hectareas_max' => $filtros['hectareas_max'] ?? null,
             'precio_ha_min' => $filtros['precio_ha_min'] ?? null,
@@ -260,9 +208,8 @@ final class MercadoDeSolicitudes
             'centro' => $s->centro,
             'hectareas_solicitadas' => $s->hectareasSolicitadas,
             'precio_ha_propuesto' => $s->precioHaPropuesto,
-            'zona' => $s->zona,
-            'zona_id' => $s->zonaId,
-            'macrorregion' => $s->macrorregion,
+            'departamento_codigo' => $s->departamentoCodigo,
+            'provincia_codigo' => $s->provinciaCodigo,
             'cultivo' => $s->cultivo,
             'tipo_aplicacion' => $s->tipoAplicacion,
             'ventana_desde' => $s->ventanaDesde,

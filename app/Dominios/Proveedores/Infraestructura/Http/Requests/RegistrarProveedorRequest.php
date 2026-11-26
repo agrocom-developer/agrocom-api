@@ -46,8 +46,6 @@ final class RegistrarProveedorRequest extends FormRequest
             'documento_identidad' => ['required_without:documento_numero', 'nullable', 'string', 'max:30'],
             'fecha_nacimiento' => ['required', 'date_format:Y-m-d', 'before:-18 years'],
             'documento_fiscal' => ['required', 'string', 'max:30'],
-            'zona_base_id' => ['nullable', 'integer', Rule::exists('sol_zonas', 'id')->whereNull('deleted_at')],
-            'radio_operacion_km' => ['nullable', 'numeric', 'between:1,500'],
             // El independiente es su propio piloto: sin licencia no hay proveedor.
             'licencia_numero' => ['required_if:tipo,independiente', 'nullable', 'string', 'max:40'],
             'licencia_vence' => ['required_if:tipo,independiente', 'nullable', 'date', 'after:today'],

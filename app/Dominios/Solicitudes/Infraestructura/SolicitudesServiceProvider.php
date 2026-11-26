@@ -12,7 +12,6 @@ use App\Dominios\Solicitudes\Contratos\LecturaMercado;
 use App\Dominios\Solicitudes\Contratos\LecturaServicios;
 use App\Dominios\Solicitudes\Contratos\LecturaServiciosAsignados;
 use App\Dominios\Solicitudes\Contratos\LecturaUbicaciones;
-use App\Dominios\Solicitudes\Contratos\LecturaZonas;
 use App\Dominios\Solicitudes\Contratos\PasosDeSolicitud;
 use App\Dominios\Solicitudes\Contratos\ReputacionDeClientes;
 use App\Dominios\Solicitudes\Contratos\ResolucionDeServicio;
@@ -24,16 +23,13 @@ use Illuminate\Support\ServiceProvider;
 
 /**
  * Cablea el módulo `Solicitudes` (especificación del marketplace §4.1 y §4.2,
- * ADR 0027 y 0036). Aloja al cliente, las zonas, los terrenos y la solicitud
+ * ADR 0027 y 0036). Aloja al cliente, los terrenos y la solicitud
  * de servicio con su máquina de estados.
  */
 final class SolicitudesServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // El registro del cliente usa el contrato `RegistroCuentas` que
-        // Seguridad enlaza; acá solo se ofrece la lectura de zonas.
-        $this->app->bind(LecturaZonas::class, LecturaZonasEloquent::class);
         $this->app->bind(LecturaUbicaciones::class, LecturaUbicacionesEloquent::class);
         $this->app->bind(SolicitudParaTrabajo::class, AvanceDeSolicitud::class);
         $this->app->bind(LecturaServiciosAsignados::class, LecturaServiciosAsignadosEloquent::class);

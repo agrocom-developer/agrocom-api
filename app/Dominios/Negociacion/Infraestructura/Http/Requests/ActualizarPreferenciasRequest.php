@@ -18,10 +18,6 @@ final class ActualizarPreferenciasRequest extends FormRequest
         return [
             'nuevas_solicitudes' => ['sometimes', 'array'],
             'nuevas_solicitudes.activo' => ['sometimes', 'boolean'],
-            'nuevas_solicitudes.zonas' => ['sometimes', 'array'],
-            'nuevas_solicitudes.zonas.*' => ['integer'],
-            'nuevas_solicitudes.macrorregiones' => ['sometimes', 'array'],
-            'nuevas_solicitudes.macrorregiones.*' => ['string'],
             'nuevas_solicitudes.hectareas_minimas' => ['sometimes', 'nullable', 'numeric', 'min:0', 'decimal:0,4'],
             'ofertas' => ['sometimes', 'boolean'],
             'mensajes' => ['sometimes', 'boolean'],

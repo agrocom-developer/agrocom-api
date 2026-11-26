@@ -31,9 +31,9 @@
                 "monto_final": null,
                 "estado": "adjudicada",
                 "oferta_adjudicada_id": 18,
-                "vence_en": "2026-12-03T20:41:12+00:00",
+                "vence_en": "2026-12-03T21:55:58+00:00",
                 "proveedor_id": 2,
-                "publicada_en": "2026-11-26T20:41:12+00:00",
+                "publicada_en": "2026-11-26T21:55:58+00:00",
                 "motivo_cancelacion": null,
                 "cancelada_por": null,
                 "departamento_codigo": "07",
@@ -56,7 +56,6 @@
                     "referencias_acceso": "Camino vecinal, portón azul a 2 km de la ruta.",
                     "colindantes_sensibles": null,
                     "acceso_dificil": false,
-                    "zona_id": null,
                     "departamento_codigo": "07",
                     "provincia_codigo": "0702",
                     "municipio": "Warnes",
@@ -65,7 +64,7 @@
                         {
                             "id": 1,
                             "descripcion": "Borde norte con maleza alta",
-                            "url": "/api/terrenos/fotos/1/archivo?expires=1795726575&signature=b51f0efaafef1ec2254cf2f6eb1e90001cc96b7bf328fd45f356b44ede30f574"
+                            "url": "/api/terrenos/fotos/1/archivo?expires=1795731062&signature=ec3752810641c3454852adc47632222544e1ac1b51e00c87c8875c54a669a50e"
                         }
                     ]
                 },
@@ -75,28 +74,28 @@
                         "estado_nuevo": "borrador",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-26T20:41:12+00:00"
+                        "creado_en": "2026-11-26T21:55:58+00:00"
                     },
                     {
                         "estado_anterior": "borrador",
                         "estado_nuevo": "abierta",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-26T20:41:12+00:00"
+                        "creado_en": "2026-11-26T21:55:58+00:00"
                     },
                     {
                         "estado_anterior": "abierta",
                         "estado_nuevo": "con_ofertas",
                         "origen": "sistema",
                         "motivo": null,
-                        "creado_en": "2026-11-26T20:41:15+00:00"
+                        "creado_en": "2026-11-26T21:56:01+00:00"
                     },
                     {
                         "estado_anterior": "con_ofertas",
                         "estado_nuevo": "adjudicada",
                         "origen": "proveedor",
                         "motivo": null,
-                        "creado_en": "2026-11-26T20:41:15+00:00"
+                        "creado_en": "2026-11-26T21:56:02+00:00"
                     }
                 ]
             }

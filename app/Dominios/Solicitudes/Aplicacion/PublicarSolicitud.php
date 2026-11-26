@@ -84,15 +84,10 @@ final class PublicarSolicitud
             'monto_estimado' => MontoDelServicio::monto($solicitud->hectareas_solicitadas, (string) $solicitud->precio_ha_propuesto),
         ]);
 
-        $abierta->loadMissing('terreno.zona');
-
         event(new SolicitudAbierta(
             $abierta->id,
             $abierta->cliente_id,
             $cliente->usuario_id,
-            $abierta->terreno->zona_id,
-            $abierta->terreno->zona?->nombre,
-            $abierta->terreno->zona?->macrorregion,
             $abierta->hectareas_solicitadas,
             (string) $abierta->precio_ha_propuesto,
             $renueva,
