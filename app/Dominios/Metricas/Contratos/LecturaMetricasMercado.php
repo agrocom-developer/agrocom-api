@@ -16,7 +16,7 @@ interface LecturaMetricasMercado
      *     total: int,
      *     adjudicadas: int,
      *     por_estado: array<string, int>,
-     *     por_region: array<string, int>,
+     *     por_departamento: array<string, int>,
      *     hectareas_solicitadas: string,
      *     hectareas_servidas: string
      * }

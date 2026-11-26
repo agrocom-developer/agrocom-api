@@ -226,11 +226,11 @@ return [
         ],
     ],
 
-    // Tablero del panel: cómo está el mercado por estado y por región, y qué
+    // Tablero del panel: cómo está el mercado por estado y por departamento, y qué
     // espera una decisión del administrador.
     'dashboard' => [
         'titulo' => 'Tablero del mercado',
-        'bajada' => ':fecha · solicitudes por estado y por región, y lo que espera tu decisión.',
+        'bajada' => ':fecha · solicitudes por estado y por departamento, y lo que espera tu decisión.',
         'viendo_como' => 'Viendo como :rol',
         'kpi_solicitudes' => 'Solicitudes',
         'kpi_en_mercado' => 'Ofertas abiertas',
@@ -238,18 +238,18 @@ return [
         'kpi_hectareas' => 'Hectáreas en el mercado',
         'kpi_pendientes' => 'Esperan tu decisión',
         'por_estado_titulo' => 'Solicitudes por estado',
-        'por_region_titulo' => 'Solicitudes por región',
-        'por_region_ayuda' => 'La región es la de la zona del terreno de cada solicitud.',
+        'por_departamento_titulo' => 'Solicitudes por departamento',
+        'por_departamento_ayuda' => 'El departamento es el que tiene cada solicitud al publicarse; un borrador usa el de su terreno.',
         'col_estado' => 'Estado',
         'col_cantidad' => 'Solicitudes',
         'col_hectareas' => 'Hectáreas',
-        'col_region' => 'Región',
+        'col_departamento' => 'Departamento',
         'col_abiertas' => 'Abiertas',
         'col_en_curso' => 'En curso',
         'col_cerradas' => 'Finalizadas',
         'col_canceladas' => 'Canceladas o vencidas',
         'col_total' => 'Total',
-        'region_sin_zona' => 'Sin zona',
+        'departamento_sin_dato' => 'Sin departamento',
         'pendientes_titulo' => 'Esperan tu decisión',
         'pendientes_vacio' => 'No hay nada pendiente. Cuando un proveedor, un dron, un documento o un reclamo necesite tu decisión, aparecerá aquí.',
         'pendientes_ver' => 'Revisar',
@@ -263,7 +263,7 @@ return [
             'reclamos' => 'Reclamos abiertos',
         ],
         'vacio_titulo' => 'Todavía no hay solicitudes',
-        'vacio_detalle' => 'Cuando un cliente publique una solicitud, verás aquí cómo avanza por estado y por región.',
+        'vacio_detalle' => 'Cuando un cliente publique una solicitud, verás aquí cómo avanza por estado y por departamento.',
     ],
 
     // HU-45 (tarea 39): alta y mantenimiento de usuarios internos del panel,
