@@ -59,7 +59,7 @@ Cada solicitud nace con un `uuid_cliente` determinista, así que volver a sembra
 | Estado | Solicitud | Qué muestra |
 |---|---|---|
 | `borrador` | `agro.sanrafael`, Las Palmas, 30 ha | Antes de abrirla. |
-| `abierta`, sin ofertas | `luis.antelo` (Estancia El Cerro, Chiquitania), `coop.valle.grande` (Hacienda Velasco, Chiquitania; Fundo Los Valles, valles), `agro.sanrafael` (Lote Norte, norte integrado) | El mapa del piloto repartido por región; la de Warnes es urgente y otra se reabrió porque el proveedor devolvió el servicio. |
+| `abierta`, sin ofertas | `luis.antelo` (Estancia El Cerro, San José de Chiquitos), `coop.valle.grande` (Hacienda Velasco, San Ignacio de Velasco; Fundo Los Valles, Vallegrande), `agro.sanrafael` (Lote Norte, Warnes) | El mapa del piloto con terrenos de varias provincias de Santa Cruz; la de Warnes es urgente y otra se reabrió porque el proveedor devolvió el servicio. |
 | `con_ofertas` | `agro.sanrafael`, Las Palmas, 100 ha | Tres proveedores ofertan; el cliente y Agrocom negocian por rondas (135, 122, 128) y Carlos baja a 118 y recibe 115. |
 | `con_ofertas` | `luis.antelo`, Lote Sur, 90 ha | Una oferta que acepta el precio propuesto y otra que el cliente rechazó. |
 | `adjudicada` | `coop.valle.grande` (Marcelo, 118 por ha), `luis.antelo` (Carlos, 120 por ha) | Precio acordado congelado, datos de contacto entregados y chat con mensajes. |
@@ -70,14 +70,14 @@ Cada solicitud nace con un `uuid_cliente` determinista, así que volver a sembra
 | `cancelada` | `luis.antelo`, La Esperanza | Sin penalidad. |
 | `expirada` | `coop.valle.grande`, Parcela Central | Se puede renovar dentro de 30 días. |
 
-Además: nueve terrenos con zona, región, departamento y provincia (todos de Santa Cruz) y polígono (valles, Chiquitania, norte integrado y Chaco), proveedores en cada estado de aprobación con sus documentos, drones y equipos, calificaciones y reputación, y avisos in-app para cada cuenta (nuevas solicitudes en su zona, ofertas, mensajes, avance). Cada piloto tiene su persona operativa vinculada (`usuario.persona_id` en `GET /api/auth/sesion`).
+Además: nueve terrenos con departamento, provincia y municipio (todos de Santa Cruz) y polígono, proveedores en cada estado de aprobación con sus documentos, drones y equipos, calificaciones y reputación, y avisos in-app para cada cuenta (nuevas solicitudes, ofertas, mensajes, avance). Cada piloto tiene su persona operativa vinculada (`usuario.persona_id` en `GET /api/auth/sesion`).
 
 Cada vez que corre `bin/demo up` o `bin/demo seed`, las solicitudes y ofertas abiertas recuperan su vigencia (cinco días y 24 horas).
 
 ## El recorrido
 
-1. **Cliente.** `agro.sanrafael` crea una solicitud sobre su terreno con `precio_ha_propuesto` (`POST /api/solicitudes`), ve la estimación (`GET /api/solicitudes/{id}/estimacion`) y la abre (`POST /api/solicitudes/{id}/publicar`). Los pilotos con avisos activos de esa zona reciben la notificación.
-2. **Mapa.** Un piloto o proveedor ve las solicitudes abiertas (`GET /api/solicitudes-abiertas`, con filtros de zona, región, hectáreas y precio), el resumen por región (`GET /api/solicitudes-abiertas/resumen-zonas`) y el detalle con los lotes antes de ofertar (`GET /api/solicitudes-abiertas/{id}`). Nada de eso trae datos del cliente.
+1. **Cliente.** `agro.sanrafael` crea una solicitud sobre su terreno con `precio_ha_propuesto` (`POST /api/solicitudes`), ve la estimación (`GET /api/solicitudes/{id}/estimacion`) y la abre (`POST /api/solicitudes/{id}/publicar`). Los pilotos con avisos activos reciben la notificación.
+2. **Mapa.** Un piloto o proveedor ve las solicitudes abiertas (`GET /api/solicitudes-abiertas`, con filtros de hectáreas y precio) y el detalle con los lotes antes de ofertar (`GET /api/solicitudes-abiertas/{id}`). Nada de eso trae datos del cliente.
 3. **Oferta.** El proveedor acepta el precio propuesto o contraoferta el suyo (`POST /api/solicitudes/{id}/ofertas`).
 4. **Negociación.** El cliente compara (`GET /api/solicitudes/{id}/ofertas`), contraoferta (`POST /api/ofertas/{id}/contraofertar`), rechaza o acepta (`POST /api/ofertas/{id}/aceptar`). Aceptar adjudica: las demás ofertas se cierran y se abren el contacto y el chat.
 5. **Chat.** Cliente y proveedor conversan (`GET` y `POST /api/solicitudes/{id}/mensajes`, con `despues` como cursor).
