@@ -25,7 +25,7 @@
 ## Sin registro para nadie
 
 - Una causa de fuerza mayor declarada con motivo y reconocida por soporte: clima fuera de lo operable, emergencia o incidencia de seguridad, falla comprobada del equipo, error de datos de la solicitud.
-- Falta de ofertas o expiración de la solicitud.
+- Falta de ofertas: el cliente cancela una solicitud que sigue esperando piloto. La solicitud no vence sola.
 
 ## Alertas y decisiones
 
