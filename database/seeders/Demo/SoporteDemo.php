@@ -2,7 +2,6 @@
 
 namespace Database\Seeders\Demo;
 
-use App\Dominios\Personal\Infraestructura\Eloquent\PerBase;
 use App\Dominios\Personal\Infraestructura\Eloquent\PerPersona;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 
@@ -38,11 +37,6 @@ trait SoporteDemo
     protected function personaIdPorCi(string $ci): int
     {
         return (int) PerPersona::query()->where('ci', $ci)->value('id');
-    }
-
-    protected function basePorNombre(string $nombre): ?PerBase
-    {
-        return PerBase::query()->where('nombre', $nombre)->first();
     }
 
     protected function usuarioPorUsername(string $username): ?SecUser
