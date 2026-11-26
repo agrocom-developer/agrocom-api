@@ -22,7 +22,6 @@ use App\Dominios\Calificaciones\Infraestructura\Eloquent\Calificacion;
 use App\Dominios\Flota\Contratos\DatosIntegrantesEquipo;
 use App\Dominios\Flota\Contratos\LecturaIntegrantesDeEquipo;
 use App\Dominios\Proveedores\Contratos\CalificacionDeProveedores;
-use App\Dominios\Proveedores\Contratos\DatosAuxiliar;
 use App\Dominios\Proveedores\Contratos\DatosPiloto;
 use App\Dominios\Proveedores\Contratos\DatosProveedor;
 use App\Dominios\Proveedores\Contratos\LecturaProveedores;
@@ -36,14 +35,14 @@ use Tests\TestCase;
 
 /*
  * Calificación bidireccional del servicio (ADR 0031 y 0039): el cliente califica al
- * proveedor, al piloto y al auxiliar; el proveedor califica al cliente en privado;
+ * proveedor y al piloto; el proveedor califica al cliente en privado;
  * el proveedor reporta y el administrador modera; la reputación se recalcula en
  * decimal exacto. Contra el ESQUEMA REAL de solicitudes y calificaciones (las
  * migraciones, en SQLite en memoria); los módulos vecinos entran por sus contratos,
  * con datos controlados por la prueba.
  *
- * Mundo: cliente 1 (cuenta 900), proveedor 7 (titular 700, piloto 71 con cuenta 710,
- * auxiliar 72), otro proveedor 8 (titular 800). La solicitud 1 está completada ayer.
+ * Mundo: cliente 1 (cuenta 900), proveedor 7 (titular 700, piloto 71 con cuenta 710),
+ * otro proveedor 8 (titular 800). La solicitud 1 está completada ayer.
  */
 
 uses(TestCase::class);
@@ -66,7 +65,7 @@ final class CalificacionesGuardadas implements CalificacionDeProveedores
     }
 }
 
-function calMundo(bool $conAuxiliar = true): CalificacionesGuardadas
+function calMundo(): CalificacionesGuardadas
 {
     Esquema::migrar([
         'create_plt_bitacoras_table',
@@ -96,16 +95,13 @@ function calMundo(bool $conAuxiliar = true): CalificacionesGuardadas
             8 => new DatosProveedor(8, CAL_OTRO_TITULAR, 'tercero', 'Proveedor Ocho', 'aprobado'),
         ],
         [71 => new DatosPiloto(71, 7, CAL_PILOTO_USUARIO, 'Piloto Pedro', 'aprobado')],
-        [72 => new DatosAuxiliar(72, 7, 720, 'Auxiliar Ana', 'aprobado')],
     ));
 
-    app()->instance(LecturaIntegrantesDeEquipo::class, new class($conAuxiliar) implements LecturaIntegrantesDeEquipo
+    app()->instance(LecturaIntegrantesDeEquipo::class, new class implements LecturaIntegrantesDeEquipo
     {
-        public function __construct(private bool $conAuxiliar) {}
-
         public function integrantes(int $equipoId): ?DatosIntegrantesEquipo
         {
-            return new DatosIntegrantesEquipo($equipoId, 7, 71, 701, $this->conAuxiliar ? 72 : null, 'externo');
+            return new DatosIntegrantesEquipo($equipoId, 7, 71, 701, 'externo');
         }
     });
 
@@ -143,13 +139,13 @@ function calItem(string $sujeto, int $estrellas, array $etiquetas = ['puntualida
 // --- Dominio puro ---------------------------------------------------------
 
 test('el promedio del proveedor pondera por sujeto y el del cliente es simple', function () {
-    $pesos = ['proveedor' => '0.50', 'piloto' => '0.35', 'auxiliar' => '0.15'];
+    $pesos = ['proveedor' => '0.50', 'piloto' => '0.35'];
 
     expect(PromedioDeCalificaciones::ponderado([
         ['sujeto' => 'proveedor', 'estrellas' => 5],
         ['sujeto' => 'piloto', 'estrellas' => 4],
         ['sujeto' => 'auxiliar', 'estrellas' => 3],
-    ], $pesos))->toBe('4.35')
+    ], $pesos))->toBe('4.59')
         ->and(PromedioDeCalificaciones::ponderado([['sujeto' => 'proveedor', 'estrellas' => 4], ['sujeto' => 'piloto', 'estrellas' => 5]], $pesos))->toBe('4.41')
         ->and(PromedioDeCalificaciones::ponderado([], $pesos))->toBe('0.00')
         ->and(PromedioDeCalificaciones::ponderado([['sujeto' => 'cliente', 'estrellas' => 5]], $pesos))->toBe('0.00')
@@ -175,7 +171,7 @@ test('el plazo para calificar son siete días desde que se completó', function 
 
 // --- El cliente califica --------------------------------------------------
 
-test('el cliente califica al proveedor, al piloto y al auxiliar y la reputación del proveedor se pondera', function () {
+test('el cliente califica al proveedor y al piloto y la reputación del proveedor se pondera', function () {
     Event::fake([CalificacionRegistrada::class, ReputacionDeProveedorActualizada::class]);
     $guardadas = calMundo();
     $id = calCompletada();
@@ -183,17 +179,16 @@ test('el cliente califica al proveedor, al piloto y al auxiliar y la reputación
     $resultado = app(CalificarComoCliente::class)->ejecutar(CAL_CLIENTE_USUARIO, $id, [
         calItem('proveedor', 5, ['puntualidad', 'comunicacion']),
         calItem('piloto', 4, ['cobertura_pareja']),
-        calItem('auxiliar', 3, []),
     ]);
 
-    expect($resultado)->toHaveCount(3)
-        ->and(array_column($resultado, 'creada'))->toBe([true, true, true])
-        ->and(Calificacion::query()->where('solicitud_id', $id)->pluck('sujeto_id', 'sujeto_tipo')->all())->toEqual(['proveedor' => 7, 'piloto' => 71, 'auxiliar' => 72])
-        ->and($guardadas->porProveedor[7])->toBe(['promedio' => '4.35', 'conteo' => 1]);
+    expect($resultado)->toHaveCount(2)
+        ->and(array_column($resultado, 'creada'))->toBe([true, true])
+        ->and(Calificacion::query()->where('solicitud_id', $id)->pluck('sujeto_id', 'sujeto_tipo')->all())->toEqual(['proveedor' => 7, 'piloto' => 71])
+        ->and($guardadas->porProveedor[7])->toBe(['promedio' => '4.59', 'conteo' => 1]);
 
-    Event::assertDispatchedTimes(CalificacionRegistrada::class, 3);
+    Event::assertDispatchedTimes(CalificacionRegistrada::class, 2);
     Event::assertDispatched(CalificacionRegistrada::class, fn (CalificacionRegistrada $e): bool => $e->sujetoTipo === 'proveedor' && $e->usuariosDestinatarios === [CAL_TITULAR, CAL_PILOTO_USUARIO]);
-    Event::assertDispatched(ReputacionDeProveedorActualizada::class, fn (ReputacionDeProveedorActualizada $e): bool => $e->proveedorId === 7 && $e->promedio === '4.35');
+    Event::assertDispatched(ReputacionDeProveedorActualizada::class, fn (ReputacionDeProveedorActualizada $e): bool => $e->proveedorId === 7 && $e->promedio === '4.59');
 });
 
 test('reintentar con el mismo uuid devuelve lo guardado sin duplicar ni recalcular', function () {
@@ -262,8 +257,8 @@ test('un servicio de otro cliente responde como si no existiera', function () {
     expect(fn () => app(CalificarComoCliente::class)->ejecutar(CAL_CLIENTE_USUARIO, 12345, [calItem('proveedor', 5)]))->toThrow(CalificacionInvalida::class);
 });
 
-test('no se califica a un auxiliar que el equipo no llevaba ni con etiquetas de otro lado', function () {
-    calMundo(conAuxiliar: false);
+test('no se califica a un auxiliar (ya no existe) ni con etiquetas de otro lado', function () {
+    calMundo();
     $id = calCompletada();
 
     expect(fn () => app(CalificarComoCliente::class)->ejecutar(CAL_CLIENTE_USUARIO, $id, [calItem('auxiliar', 4)]))->toRechazarCon(CalificacionInvalida::class, 'calificaciones.errores.sujeto_invalido')
@@ -272,7 +267,7 @@ test('no se califica a un auxiliar que el equipo no llevaba ni con etiquetas de 
 });
 
 test('una llamada con una calificación inválida no guarda ninguna de las demás', function () {
-    calMundo(conAuxiliar: false);
+    calMundo();
     $id = calCompletada();
 
     expect(fn () => app(CalificarComoCliente::class)->ejecutar(CAL_CLIENTE_USUARIO, $id, [calItem('proveedor', 5), calItem('auxiliar', 4)]))->toThrow(CalificacionInvalida::class)
@@ -449,7 +444,7 @@ test('el estado del servicio dice a quién falta calificar y hasta cuándo', fun
     $proveedor = app(ConsultarCalificacionesDelServicio::class)->paraProveedor(CAL_TITULAR, $id);
 
     expect($cliente['puede_calificar'])->toBeTrue()
-        ->and(collect($cliente['sujetos'])->pluck('tipo')->all())->toBe(['proveedor', 'piloto', 'auxiliar'])
+        ->and(collect($cliente['sujetos'])->pluck('tipo')->all())->toBe(['proveedor', 'piloto'])
         ->and($cliente['sujetos'][0]['calificacion']?->estrellas)->toBe(5)
         ->and($cliente['sujetos'][1]['calificacion'])->toBeNull()
         ->and($cliente['vence_en'])->not->toBeNull()

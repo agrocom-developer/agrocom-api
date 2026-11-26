@@ -17,7 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use OpenApi\Attributes as OA;
 
-/** Equipos (piloto + dron + auxiliar) del proveedor del token; el alcance sale del titular autenticado. */
+/** Equipos (piloto + dron) del proveedor del token; el alcance sale del titular autenticado. */
 final class EquiposController
 {
     private const PERMISO = 'proveedores.cuenta.gestionar';
@@ -58,7 +58,7 @@ final class EquiposController
     #[OA\Post(
         path: '/api/proveedores/equipos',
         operationId: 'crearEquipo',
-        description: 'El titular arma un equipo con un piloto, un dron y, opcionalmente, un auxiliar de su proveedor. Un piloto '
+        description: 'El titular arma un equipo con un piloto y un dron de su proveedor. Un piloto '
             .'y un dron no pueden estar en dos equipos vigentes a la vez; el equipo no recibe ofertas hasta que todos sus '
             .'integrantes estén aprobados con documentos vigentes.',
         summary: 'Crea un equipo',
@@ -70,7 +70,6 @@ final class EquiposController
                 properties: [
                     new OA\Property(property: 'piloto_id', type: 'integer', example: 5),
                     new OA\Property(property: 'dron_id', type: 'integer', example: 9),
-                    new OA\Property(property: 'auxiliar_id', type: 'integer', nullable: true),
                     new OA\Property(property: 'vigente_desde', type: 'string', format: 'date', example: '2026-11-23'),
                     new OA\Property(property: 'vigente_hasta', type: 'string', format: 'date', nullable: true),
                 ],
@@ -96,7 +95,6 @@ final class EquiposController
                 $this->usuarioId($request),
                 (int) $datos['piloto_id'],
                 (int) $datos['dron_id'],
-                isset($datos['auxiliar_id']) ? (int) $datos['auxiliar_id'] : null,
                 $datos['vigente_desde'],
                 $datos['vigente_hasta'] ?? null,
             );
@@ -110,15 +108,14 @@ final class EquiposController
     #[OA\Put(
         path: '/api/proveedores/equipos/{id}',
         operationId: 'actualizarEquipo',
-        description: 'Cambia el auxiliar del equipo o lo cierra poniéndole fin de vigencia. El piloto y el dron de un equipo '
+        description: 'Cierra el equipo poniéndole fin de vigencia. El piloto y el dron de un equipo '
             .'no se cambian (otro piloto u otro dron es otro equipo) y una vigencia solo se acorta, nunca se alarga.',
-        summary: 'Cambia el auxiliar o cierra un equipo',
+        summary: 'Cierra un equipo',
         security: [['tokenDispositivo' => []]],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
                 properties: [
-                    new OA\Property(property: 'auxiliar_id', type: 'integer', nullable: true),
                     new OA\Property(property: 'vigente_hasta', type: 'string', format: 'date', nullable: true),
                 ],
                 type: 'object',
@@ -131,7 +128,7 @@ final class EquiposController
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
             new OA\Response(response: 403, description: 'El rol del token no gestiona un proveedor.'),
             new OA\Response(response: 404, description: 'El equipo no existe o no es de esta cuenta.'),
-            new OA\Response(response: 422, description: 'Auxiliar ajeno o no disponible, o vigencia inválida.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
+            new OA\Response(response: 422, description: 'Vigencia inválida.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],
     )]
     public function update(ActualizarEquipoRequest $request, int $id): JsonResponse

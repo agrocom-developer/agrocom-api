@@ -29,7 +29,7 @@ return [
     ],
 
     'guards' => [
-        // Panel web y apps de campo (piloto, auxiliar, jefe de campo,
+        // Panel web y apps de campo (piloto, jefe de campo,
         // encargado de operaciones, dueño).
         'interno' => [
             'driver' => 'session',

@@ -12,7 +12,7 @@ use Illuminate\Http\UploadedFile;
 interface CargaDocumentos
 {
     /**
-     * @param  string  $sujetoTipo  `proveedor`, `piloto`, `auxiliar` o `dron`.
+     * @param  string  $sujetoTipo  `proveedor`, `piloto` o `dron`.
      * @param  string  $tipo  Valor de `TipoDocumento`.
      * @param  string|null  $venceEn  Fecha `Y-m-d`; `null` si el documento no vence.
      * @return int Id del documento, que queda `en_revision`.

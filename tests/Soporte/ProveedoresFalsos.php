@@ -2,27 +2,23 @@
 
 namespace Tests\Soporte;
 
-use App\Dominios\Proveedores\Contratos\DatosAuxiliar;
 use App\Dominios\Proveedores\Contratos\DatosPiloto;
 use App\Dominios\Proveedores\Contratos\DatosProveedor;
 use App\Dominios\Proveedores\Contratos\LecturaProveedores;
 
 /**
  * `LecturaProveedores` con datos controlados por la prueba: la cuenta titular de
- * cada proveedor es su `usuarioTitularId`; los pilotos y auxiliares se dan por
- * separado.
+ * cada proveedor es su `usuarioTitularId`; los pilotos se dan por separado.
  */
 final class ProveedoresFalsos implements LecturaProveedores
 {
     /**
      * @param  array<int, DatosProveedor>  $proveedores
      * @param  array<int, DatosPiloto>  $pilotos
-     * @param  array<int, DatosAuxiliar>  $auxiliares
      */
     public function __construct(
         private readonly array $proveedores,
         private readonly array $pilotos = [],
-        private readonly array $auxiliares = [],
     ) {}
 
     public function proveedor(int $id): ?DatosProveedor
@@ -62,16 +58,10 @@ final class ProveedoresFalsos implements LecturaProveedores
         return $this->pilotos[$id] ?? null;
     }
 
-    public function auxiliar(int $id): ?DatosAuxiliar
-    {
-        return $this->auxiliares[$id] ?? null;
-    }
-
     public function registrosDeCuenta(int $usuarioId): array
     {
         return [
             'pilotos' => array_values(array_map(fn (DatosPiloto $p): int => $p->id, array_filter($this->pilotos, fn (DatosPiloto $p): bool => $p->usuarioId === $usuarioId))),
-            'auxiliares' => array_values(array_map(fn (DatosAuxiliar $a): int => $a->id, array_filter($this->auxiliares, fn (DatosAuxiliar $a): bool => $a->usuarioId === $usuarioId))),
         ];
     }
 

@@ -35,7 +35,7 @@ Quien revisa compara la selfie con el documento y con los datos declarados, y ap
 | Piloto | Licencia o habilitación de piloto remoto vigente, certificado de aplicador de agroquímicos si la normativa local lo exige, antecedentes |
 | Dron | Registro o matrícula ante la autoridad aeronáutica, habilitación para uso agrícola, número de serie, marca y modelo, fotos del equipo (frontal, lateral y placa de serie como mínimo), seguro vigente |
 
-La identidad del titular y del piloto la cubre la verificación de identidad. El piloto además registra nombres, apellidos, teléfono y foto de perfil como parte de los datos de su persona. La normativa local de cada zona puede añadir requisitos; el catálogo de documentos se ajusta por parámetro.
+La identidad del titular y del piloto la cubre la verificación de identidad. El piloto además registra nombres, apellidos, teléfono y foto de perfil como parte de los datos de su persona. La normativa local puede añadir requisitos; el catálogo de documentos se ajusta por parámetro.
 
 Un cliente o un proveedor puede ser una empresa y cargar, de forma opcional, logo, NIT, razón social y nombre comercial.
 

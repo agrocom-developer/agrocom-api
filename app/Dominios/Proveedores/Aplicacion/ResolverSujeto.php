@@ -4,7 +4,6 @@ namespace App\Dominios\Proveedores\Aplicacion;
 
 use App\Dominios\Flota\Contratos\LecturaDrones;
 use App\Dominios\Proveedores\Dominio\TipoSujeto;
-use App\Dominios\Proveedores\Infraestructura\Eloquent\Auxiliar;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Piloto;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Proveedor;
 use App\Dominios\Seguridad\Contratos\LecturaCuentas;
@@ -27,7 +26,6 @@ final class ResolverSujeto
         return match ($tipo) {
             TipoSujeto::Proveedor => $this->deProveedor($id),
             TipoSujeto::Piloto => $this->dePiloto($id),
-            TipoSujeto::Auxiliar => $this->deAuxiliar($id),
             TipoSujeto::Dron => $this->deDron($id),
         };
     }
@@ -50,17 +48,6 @@ final class ResolverSujeto
             TipoSujeto::Piloto, $piloto->id, $piloto->proveedor_id,
             $this->nombreDeCuenta($piloto->usuario_id), $this->cuentasUnicas([$piloto->usuario_id, $piloto->proveedor->usuario_titular_id]),
             $piloto->estado->value,
-        );
-    }
-
-    private function deAuxiliar(int $id): ?SujetoResuelto
-    {
-        $auxiliar = Auxiliar::query()->with('proveedor')->find($id);
-
-        return $auxiliar === null ? null : new SujetoResuelto(
-            TipoSujeto::Auxiliar, $auxiliar->id, $auxiliar->proveedor_id,
-            $this->nombreDeCuenta($auxiliar->usuario_id), $this->cuentasUnicas([$auxiliar->usuario_id, $auxiliar->proveedor->usuario_titular_id]),
-            $auxiliar->estado->value,
         );
     }
 

@@ -22,7 +22,7 @@ final class ParametrosDeCalificacion
     /** @return array<string, string> peso por tipo de sujeto del lado del proveedor. */
     public function pesos(): array
     {
-        return array_map('strval', (array) config('calificaciones.pesos', ['proveedor' => '0.50', 'piloto' => '0.35', 'auxiliar' => '0.15']));
+        return array_map('strval', (array) config('calificaciones.pesos', ['proveedor' => '0.50', 'piloto' => '0.35']));
     }
 
     public function comentarioMax(): int

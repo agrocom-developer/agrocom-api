@@ -14,7 +14,6 @@ use App\Dominios\Compartido\Dominio\OrigenCambio;
 use App\Dominios\Compartido\Dominio\TransicionesAprobacion;
 use App\Dominios\Proveedores\Aplicacion\MaquinaEstados\MaquinaEstadosAprobacion;
 use App\Dominios\Proveedores\Dominio\TipoSujeto;
-use App\Dominios\Proveedores\Infraestructura\Eloquent\Auxiliar;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\HistorialEstado;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Piloto;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Proveedor;
@@ -22,8 +21,8 @@ use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
 /**
- * Único camino para cambiar el estado de aprobación de un proveedor, piloto o
- * auxiliar (invariante 7 de CLAUDE.md; ADR 0032): valida la transición contra
+ * Único camino para cambiar el estado de aprobación de un proveedor o piloto
+ * (invariante 7 de CLAUDE.md; ADR 0032): valida la transición contra
  * la tabla de {@see TransicionesAprobacion},
  * exige motivo donde corresponde, exige los documentos obligatorios vigentes
  * para aprobar o rehabilitar, deja la fila de historial con autor y motivo y
@@ -94,12 +93,11 @@ final class ResolverAprobacion
         });
     }
 
-    private function bloquear(TipoSujeto $tipo, int $id): Proveedor|Piloto|Auxiliar
+    private function bloquear(TipoSujeto $tipo, int $id): Proveedor|Piloto
     {
         $consulta = match ($tipo) {
             TipoSujeto::Proveedor => Proveedor::query(),
             TipoSujeto::Piloto => Piloto::query(),
-            TipoSujeto::Auxiliar => Auxiliar::query(),
             TipoSujeto::Dron => throw new InvalidArgumentException('El dron se resuelve en Flota.'),
         };
 

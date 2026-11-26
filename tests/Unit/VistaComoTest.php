@@ -290,7 +290,7 @@ it('el permiso ver_como es solo del administrador de plataforma', function () us
     expect($semilla)->toContain("'{$codigo}' =>");
 
     // …ninguna lista de rol lo nombra…
-    foreach (['PERMISOS_ADMINISTRADOR', 'PERMISOS_SOPORTE', 'PERMISOS_PILOTO', 'PERMISOS_AUXILIAR'] as $lista) {
+    foreach (['PERMISOS_ADMINISTRADOR', 'PERMISOS_SOPORTE', 'PERMISOS_PILOTO'] as $lista) {
         preg_match('/private const '.$lista.' = \[(.*?)\];/s', $semilla, $coincidencia);
 
         expect($coincidencia)->not->toBeEmpty()

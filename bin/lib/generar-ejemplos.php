@@ -16,7 +16,7 @@
  * credencial viva.
  */
 
-use Database\Seeders\Demo\PersonalDemoSeeder;
+use Database\Seeders\Demo\ProveedoresDemoSeeder;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -40,7 +40,7 @@ if (! app()->environment(['local', 'testing'])) {
 const MARCADOR_TOKEN = '12|<token-del-dispositivo>';
 const UUID_DISPOSITIVO = '6f1d0a2e-1f34-4c9f-9a8b-2b7c1d5e0f31';
 
-$clave = PersonalDemoSeeder::PASSWORD;
+$clave = ProveedoresDemoSeeder::PASSWORD;
 
 if (! is_dir($salida)) {
     mkdir($salida, 0775, true);
@@ -219,8 +219,6 @@ try {
 
     registrar('seguridad-sin-token', 'verSesionCampo', 'Una ruta protegida sin token responde 401.', 'GET', '/api/auth/sesion', null, null, 401);
 
-    registrar('distribucion-version', 'obtenerVersionVigente', 'Versión mínima y vigente del APK; no pide token.', 'GET', '/api/version', null, null, 200);
-
     // ----------------------------------------------------------------- cliente
     [$respuestaEmision, $emision] = (function () use ($clave) {
         [$estado, $cuerpo] = registrar('seguridad-token-cliente', 'emitirTokenDispositivo', 'El cliente ingresa; el token se muestra una sola vez.', 'POST', '/api/auth/token', [
@@ -277,9 +275,6 @@ try {
         registrar('terrenos-ver-con-fotos', 'verTerreno', 'El terreno trae sus fotos con URL firmada de corta vida.', 'GET', "/api/terrenos/{$terrenoId}", null, $tokenCliente, 200);
     }
 
-    registrar('referencias-precio', 'precioDeReferencia', 'Precio por hectárea de referencia para proponer: de la zona, la macrorregión o el general del tipo.', 'GET', '/api/referencias/precio?tipo_aplicacion=herbicida&macrorregion=chiquitania', null, $tokenCliente, 200);
-    registrar('referencias-precio-invalido', 'precioDeReferencia', 'Validación: tipo de aplicación inexistente.', 'GET', '/api/referencias/precio?tipo_aplicacion=riego', null, $tokenCliente, 422);
-
     registrar('solicitudes-lista', 'listarSolicitudes', 'Solicitudes del cliente, la más reciente primero.', 'GET', '/api/solicitudes', null, $tokenCliente, 200);
 
     $uuidSolicitud = '5b0f6a52-0c1e-4b6c-9d57-7f9d3a1c2e01';
@@ -332,7 +327,7 @@ try {
         registrar('calificaciones-servicio', 'verCalificacionesDelServicio', 'Calificaciones de un servicio calificado.', 'GET', "/api/solicitudes/{$calificada['id']}/calificaciones", null, $tokenCliente, 200);
     }
 
-    registrar('disputas-lista', 'listarDisputas', 'Disputas del cliente.', 'GET', '/api/disputas', null, $tokenCliente, 200);
+    registrar('disputas-lista', 'listarDisputas', 'Reclamos del cliente.', 'GET', '/api/disputas', null, $tokenCliente, 200);
     registrar('notificaciones-lista', 'listarNotificaciones', 'Bandeja de notificaciones.', 'GET', '/api/notificaciones', null, $tokenCliente, 200);
 
     // ------------------------------------------------------------------ piloto
@@ -448,7 +443,6 @@ try {
     [, $drones] = registrar('flota-drones', 'listarDrones', 'Drones del proveedor, con su modelo.', 'GET', '/api/proveedores/drones', null, $tokenProveedor, 200);
     registrar('flota-equipos', 'listarEquipos', 'Equipos del proveedor.', 'GET', '/api/proveedores/equipos', null, $tokenProveedor, 200);
     registrar('proveedores-pilotos', 'listarPilotos', 'Pilotos del proveedor.', 'GET', '/api/proveedores/pilotos', null, $tokenProveedor, 200);
-    registrar('proveedores-auxiliares', 'listarAuxiliares', 'Auxiliares del proveedor.', 'GET', '/api/proveedores/auxiliares', null, $tokenProveedor, 200);
     registrar('ofertas-reputacion', 'verReputacion', 'Calificación, tasa de cancelación y alertas propias; sin sanciones automáticas.', 'GET', '/api/reputacion', null, $tokenProveedor, 200);
     registrar('calificaciones-recibidas', 'listarCalificacionesRecibidas', 'Calificaciones que recibe el proveedor.', 'GET', '/api/calificaciones/recibidas', null, $tokenProveedor, 200);
     registrar('notificaciones-proveedor', 'listarNotificaciones', 'Bandeja del proveedor: nuevas solicitudes en su zona, ofertas y mensajes.', 'GET', '/api/notificaciones', null, $tokenProveedor, 200);

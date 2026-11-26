@@ -9,7 +9,7 @@ use App\Dominios\Solicitudes\Contratos\DatosServicio;
 
 /**
  * A quiénes puede calificar el cliente en un servicio (ADR 0031): al proveedor que
- * lo prestó, al piloto del equipo y, si el equipo llevaba uno, a su auxiliar. Los
+ * lo prestó, y al piloto del equipo. Los
  * ids salen de los contratos de `Solicitudes`, `Flota` y `Proveedores`.
  */
 final class SujetosDelServicio
@@ -20,7 +20,7 @@ final class SujetosDelServicio
     ) {}
 
     /**
-     * @return array<string, array{id: int, nombre: string}> por tipo de sujeto (`proveedor`, `piloto`, `auxiliar`).
+     * @return array<string, array{id: int, nombre: string}> por tipo de sujeto (`proveedor`, `piloto`).
      */
     public function delLadoProveedor(DatosServicio $servicio): array
     {
@@ -40,13 +40,6 @@ final class SujetosDelServicio
                 'id' => $equipo->pilotoId,
                 'nombre' => $this->proveedores->piloto($equipo->pilotoId)->nombre ?? "#{$equipo->pilotoId}",
             ];
-
-            if ($equipo->auxiliarId !== null) {
-                $sujetos[SujetoCalificacion::Auxiliar->value] = [
-                    'id' => $equipo->auxiliarId,
-                    'nombre' => $this->proveedores->auxiliar($equipo->auxiliarId)->nombre ?? "#{$equipo->auxiliarId}",
-                ];
-            }
         }
 
         return $sujetos;

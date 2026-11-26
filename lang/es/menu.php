@@ -8,8 +8,8 @@
  * resuelven vía __() recién en presentación (ADR 0013).
  *
  * Los módulos y su vocabulario salen de la ESPECIFICACIÓN
- * (`docs/especificacion/marketplace.md`): Mercado, Proveedores, Soporte,
- * Seguridad y Sistema.
+ * (`docs/especificacion/marketplace.md`): Mercado, Proveedores, Atención,
+ * Seguridad y Sistema, más el acceso directo a Inicio.
  *
  * Archivo propio (no `seguridad.php`): el menú es transversal a todos los
  * módulos de dominio, aunque el catálogo `sec_menu` viva en Seguridad.
@@ -17,15 +17,18 @@
 
 return [
 
+    // Acceso directo del riel al tablero: no es un módulo con ítems.
+    'inicio' => [
+        'label' => 'Inicio',
+        'descripcion' => 'El tablero del mercado: lo que pasa hoy y lo que espera una decisión.',
+    ],
+
     // Marketplace (ADR 0027): la solicitud de servicio es la unidad de negocio.
     'solicitudes' => [
         'label' => 'Mercado',
-        'descripcion' => 'El tablero, las solicitudes con sus ofertas, los clientes, las calificaciones y las métricas.',
+        'descripcion' => 'Las solicitudes con sus ofertas y las métricas del mercado.',
         'items' => [
-            'tablero' => 'Tablero',
             'solicitudes' => 'Solicitudes',
-            'clientes' => 'Clientes',
-            'calificaciones' => 'Calificaciones',
             'metricas' => 'Métricas del mercado',
         ],
     ],
@@ -42,23 +45,24 @@ return [
         ],
     ],
 
-    // Atención a quienes usan la plataforma: reclamos y, más adelante, consultas.
-    // Es un módulo propio porque dar soporte no es operar el mercado.
-    'soporte' => [
-        'label' => 'Soporte',
-        'descripcion' => 'Reclamos de clientes y proveedores sobre servicios ya prestados.',
+    // La relación con quienes usan la plataforma: quiénes son, qué opinan de
+    // un servicio y qué reclaman.
+    'atencion' => [
+        'label' => 'Atención',
+        'descripcion' => 'Clientes, calificaciones y reclamos de quienes usan la plataforma.',
         'items' => [
-            'disputas' => 'Disputas',
+            'clientes' => 'Clientes',
+            'calificaciones' => 'Calificaciones',
+            'reclamos' => 'Reclamos',
         ],
     ],
 
     'seguridad' => [
         'label' => 'Seguridad',
-        'descripcion' => 'Usuarios, roles, dispositivos y bitácora.',
+        'descripcion' => 'Usuarios, permisos y bitácora.',
         'items' => [
             'usuarios' => 'Usuarios',
-            'roles' => 'Roles y permisos',
-            'dispositivos' => 'Dispositivos',
+            'roles' => 'Permisos',
             'bitacora' => 'Bitácora',
         ],
     ],
@@ -67,12 +71,11 @@ return [
     // que son una herramienta de auditoría y no de gestión del mercado.
     'sistema' => [
         'label' => 'Sistema',
-        'descripcion' => 'Zonas, organización, configuración, versiones de las apps y avisos del sistema.',
+        'descripcion' => 'Zonas, organización, configuración y avisos del sistema.',
         'items' => [
             'zonas' => 'Zonas',
             'organizacion' => 'Organización',
             'configuracion' => 'Configuración del sistema',
-            'versiones_apk' => 'Versiones de las apps',
             'avisos' => 'Avisos del sistema',
         ],
     ],

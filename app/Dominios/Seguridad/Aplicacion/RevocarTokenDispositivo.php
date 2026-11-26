@@ -6,7 +6,7 @@ use App\Dominios\Seguridad\Infraestructura\Eloquent\SecTokenDispositivo;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 
 /**
- * Revoca el token de un dispositivo (HU-03, CA "revocable desde el panel").
+ * Revoca el token de un dispositivo (HU-03): cierre de sesión de la app de campo.
  *
  * Revocar es un borrado lógico: `deleted_at` registra cuándo y `updated_by`
  * quién, y {@see SecTokenDispositivo::findToken()} deja de encontrarlo por el
@@ -14,21 +14,16 @@ use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
  * request siguiente, sin esperar a ninguna caducidad. La fila queda para la
  * auditoría (ADR 0007); nunca se borra físico.
  *
- * **La autorización no vive acá, y es a propósito.** Los dos llamadores no
- * comparten la regla: el panel exige el permiso
- * `seguridad.dispositivo.revocar` evaluado contra el ROL ACTIVO de la sesión
- * (estado de sesión que este caso de uso no conoce, mismo criterio que el
- * `UsuariosController` del panel), mientras que la app de campo solo puede
- * cerrar la sesión del dispositivo desde el que está llamando — nunca la de
- * otro. Cada adaptador resuelve su guarda; lo que se comparte, y por eso está
- * acá, es el efecto.
+ * **La autorización no vive acá, y es a propósito.** La app de campo solo
+ * puede cerrar la sesión del dispositivo desde el que está llamando — nunca la
+ * de otro —; esa guarda la resuelve el adaptador HTTP (`SesionCampoController`),
+ * y acá vive el efecto.
  */
 final class RevocarTokenDispositivo
 {
     /**
-     * @param  SecUser  $actor  Quién revoca (queda en `updated_by`): el usuario
-     *                          del panel, o el propio dueño del dispositivo
-     *                          cuando cierra sesión desde la app.
+     * @param  SecUser  $actor  Quién revoca (queda en `updated_by`): el propio
+     *                          dueño del dispositivo, al cerrar sesión desde la app.
      */
     public function ejecutar(SecTokenDispositivo $token, SecUser $actor): void
     {

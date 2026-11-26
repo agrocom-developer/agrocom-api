@@ -6,7 +6,7 @@ return [
     | Calificaciones del marketplace (ADR 0031 y 0039)
     |--------------------------------------------------------------------------
     |
-    | El cliente califica al proveedor, al piloto y al auxiliar de un servicio
+    | El cliente califica al proveedor y al piloto de un servicio
     | completado; el proveedor califica al cliente en privado; el administrador
     | modera. Español neutro, tuteo (CLAUDE.md, «Tuteo estándar»).
     */
@@ -31,7 +31,6 @@ return [
     'sujeto' => [
         'proveedor' => 'Proveedor',
         'piloto' => 'Piloto',
-        'auxiliar' => 'Auxiliar',
         'cliente' => 'Cliente',
     ],
 
@@ -53,7 +52,7 @@ return [
     'causa' => [
         'insultos_o_datos_personales' => 'Insultos o datos personales',
         'causa_ajena' => 'Causa ajena al proveedor (clima o demora del cliente)',
-        'represalia' => 'Represalia tras una disputa',
+        'represalia' => 'Represalia tras un reclamo',
         'sin_servicio_real' => 'Cuenta sin servicio real',
         'otra' => 'Otra causa',
     ],

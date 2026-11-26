@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Regenera docs/api/ejemplos/: fixtures REALES del contrato de API para las
-# apps (cliente, piloto, auxiliar). Corre el recorrido de las apps contra la
+# apps (cliente y piloto). Corre el recorrido de las apps contra la
 # API de verdad y guarda cada request/response como JSON.
 #
 # Necesita una base PostgreSQL VACÍA y DESECHABLE: el script migra el esquema,

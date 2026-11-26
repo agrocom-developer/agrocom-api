@@ -5,12 +5,11 @@ namespace App\Dominios\Seguridad\Infraestructura\Http\Presentacion;
 use App\Dominios\Personal\Contratos\LecturaFichaPersona;
 use App\Dominios\Seguridad\Aplicacion\ConsultarRolesDeUsuarios;
 use App\Dominios\Seguridad\Aplicacion\ListarBitacora;
-use App\Dominios\Seguridad\Aplicacion\ListarDispositivosDeUsuario;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 
 /**
- * Tarjetas del aside de la ficha de usuario (roles, persona, dispositivos y
- * bitácora de la cuenta): arma el arreglo que pintan las vistas. Lo de otro
+ * Tarjetas del aside de la ficha de usuario (roles, persona y bitácora
+ * de la cuenta): arma el arreglo que pintan las vistas. Lo de otro
  * módulo llega por su `Contratos/`; los permisos de cada tarjeta los decide
  * el controlador.
  */
@@ -75,29 +74,6 @@ final class TarjetasDeUsuario
                 ? __('seguridad.usuarios.aside_persona_vacio_detalle')
                 : __('seguridad.usuarios.aside_persona_baja_detalle'),
             'acciones' => [],
-        ];
-    }
-
-    /** @return array{titulo: string, icono: string, tieneDatos: bool, items: list<array<string, mixed>>, vacioTitulo: string, vacioDetalle: string, acciones: list<array{label: string, href: string, icono?: string}>} */
-    public function tarjetaDispositivos(SecUser $usuario, ListarDispositivosDeUsuario $listarDispositivos): array
-    {
-        $dispositivos = $listarDispositivos->ejecutar($usuario);
-        $ultimoUso = $dispositivos->max('last_used_at');
-
-        return [
-            'titulo' => __('seguridad.usuarios.aside_dispositivos_titulo'),
-            'icono' => 'smartphone',
-            'tieneDatos' => $dispositivos->isNotEmpty(),
-            'items' => [
-                ['label' => __('seguridad.usuarios.aside_dispositivos_total'), 'value' => (string) $dispositivos->count(), 'mono' => true],
-                ['label' => __('seguridad.usuarios.aside_dispositivos_ultimo_uso'), 'value' => $ultimoUso !== null ? $ultimoUso->diffForHumans() : __('seguridad.dispositivos.sin_uso')],
-            ],
-            'vacioTitulo' => __('seguridad.usuarios.aside_dispositivos_vacio_titulo'),
-            'vacioDetalle' => __('seguridad.usuarios.aside_dispositivos_vacio_detalle'),
-            // La lista de dispositivos se acota a esta cuenta con su usuario en el buscador.
-            'acciones' => $dispositivos->isNotEmpty()
-                ? [['label' => __('seguridad.usuarios.aside_dispositivos_accion'), 'href' => route('panel.dispositivos.index', ['q' => $usuario->username]), 'icono' => 'list']]
-                : [],
         ];
     }
 

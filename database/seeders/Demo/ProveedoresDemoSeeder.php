@@ -52,7 +52,7 @@ use Illuminate\Support\Facades\Storage;
  */
 class ProveedoresDemoSeeder extends Seeder
 {
-    public const PASSWORD = PersonalDemoSeeder::PASSWORD;
+    public const PASSWORD = '0000';
 
     public const CENTINELA_TERCERO = 'fumigaciones.oriente';
 
@@ -81,15 +81,25 @@ class ProveedoresDemoSeeder extends Seeder
 
         $this->call(ProveedorPropioSeeder::class);
 
-        $this->agrocom();
-        $this->independienteAprobado();
-        $this->terceroAprobado();
-        $this->independientePendiente();
-        $this->terceroRechazado();
-        $this->clientes();
+        // La demo tiene un solo administrador, que registra y aprueba: sin esto
+        // la separación de funciones (quien registra no aprueba lo suyo) frenaría
+        // la siembra. Solo vale mientras siembra; en el panel sigue vigente.
+        $separar = config('proveedores.separar_funciones');
+        config(['proveedores.separar_funciones' => false]);
 
-        // Un seguro que venció ayer: el proceso diario lo marca y suspende al dron.
-        $this->procesarVencimientos->ejecutar();
+        try {
+            $this->agrocom();
+            $this->independienteAprobado();
+            $this->terceroAprobado();
+            $this->independientePendiente();
+            $this->terceroRechazado();
+            $this->clientes();
+
+            // Un seguro que venció ayer: el proceso diario lo marca y suspende al dron.
+            $this->procesarVencimientos->ejecutar();
+        } finally {
+            config(['proveedores.separar_funciones' => $separar]);
+        }
     }
 
     /** Agrocom: titular el admin de la plataforma, que ya tiene sesión en la siembra. */

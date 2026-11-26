@@ -12,7 +12,7 @@ final class CargarDocumentoDeSujetoRequest extends CargarDocumentoRequest
     {
         return [
             // El dron se carga por `/api/proveedores/drones/{dron}/documentos`: lo resuelve Flota.
-            'sujeto_tipo' => ['required', Rule::in(['proveedor', 'piloto', 'auxiliar'])],
+            'sujeto_tipo' => ['required', Rule::in(['proveedor', 'piloto'])],
             'sujeto_id' => ['required', 'integer', 'min:1'],
             ...parent::rules(),
         ];

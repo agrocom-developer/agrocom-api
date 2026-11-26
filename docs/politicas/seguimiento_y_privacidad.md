@@ -1,6 +1,6 @@
 # Política de seguimiento, mensajes y privacidad
 
-**Agrocom SRL · Vigente** · Decisión: ADR 0040, ADR 0041, ADR 0046 · Especificación: `docs/especificacion/marketplace.md` §9.2
+**Agrocom SRL · Vigente** · Decisión: ADR 0040, ADR 0041, ADR 0045, ADR 0046 · Especificación: `docs/especificacion/marketplace.md` §9.2
 
 ## Qué hace el piloto en la plataforma
 
@@ -14,7 +14,7 @@ Las fotos de avance, el porcentaje y las hectáreas ejecutadas, los mensajes con
 
 | Dato | Piloto antes de ofertar | Piloto adjudicado | Cliente | Otros pilotos |
 |---|---|---|---|---|
-| Lotes, hectáreas, cultivo, accesos, observaciones, estado y fotos del terreno | Sí | Sí | Sí | Sí, mientras la solicitud esté abierta |
+| Lotes, departamento, provincia, municipio y comunidad, hectáreas, cultivo, accesos, observaciones, estado y fotos del terreno | Sí | Sí | Sí | Solo si la solicitud les es visible (política de negociación) |
 | Nombre, teléfono, documento y dirección del cliente | No | Sí | Sí | No |
 | Teléfono y documento del piloto | — | — | Solo tras adjudicar | — |
 | Equipo del servicio: el piloto (marcado como tal) y los demás integrantes con su nombre y celular opcional | — | — | Solo tras adjudicar | — |
@@ -33,11 +33,11 @@ La selfie y el documento de identidad de la verificación los ve solo quien revi
 - Se pide solo cuando la función la necesita, explicando el motivo antes del permiso del sistema.
 - Se comparte únicamente mientras la solicitud está en ejecución y la app del piloto está abierta; el piloto puede desactivarla.
 - El servidor guarda solo la última posición. Se elimina al finalizar o cancelar. No se escribe en historial, bitácora, logs ni analíticas.
-- La posición que el piloto envía al consultar el mapa sirve para calcular distancias y no se guarda.
+- El mapa de solicitudes no recibe la posición del piloto ni calcula distancias.
 
 ## Mensajes
 
-Solo texto, entre el cliente y el proveedor adjudicado, desde la adjudicación hasta que cierra el plazo de calificación o la disputa. Soporte puede leer una conversación solo si hay una disputa abierta. Se prohíben insultos, amenazas y datos de terceros.
+Solo texto, entre el cliente y el proveedor adjudicado, desde la adjudicación hasta que cierra el plazo de calificación o el reclamo. Soporte puede leer una conversación solo si hay un reclamo abierto. Se prohíben insultos, amenazas y datos de terceros.
 
 ## Fotos
 
@@ -45,4 +45,4 @@ Comprimidas a menos de 300 KB antes de subir. Las fotos de avance son de lo trab
 
 ## Retención
 
-Los mensajes y las fotos de un servicio se conservan mientras sea posible una disputa y luego según la política de retención de la plataforma. La ubicación no se conserva.
+Los mensajes y las fotos de un servicio se conservan mientras sea posible un reclamo y luego según la política de retención de la plataforma. La ubicación no se conserva.

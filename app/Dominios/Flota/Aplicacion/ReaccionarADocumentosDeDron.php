@@ -17,7 +17,7 @@ use App\Dominios\Proveedores\Contratos\VerificacionDocumental;
  * cargue uno vigente (ADR 0032, punto 4); cuando se aprueba un documento y el
  * dron ya tiene todos los suyos, se levanta la suspensión que puso el sistema.
  * Una suspensión de un administrador nunca se levanta sola. Los documentos de
- * proveedor, piloto y auxiliar los resuelve `Proveedores`.
+ * proveedor y piloto los resuelve `Proveedores`.
  */
 final class ReaccionarADocumentosDeDron
 {

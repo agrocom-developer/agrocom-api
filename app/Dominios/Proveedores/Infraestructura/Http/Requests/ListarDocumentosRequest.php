@@ -16,7 +16,7 @@ final class ListarDocumentosRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'sujeto_tipo' => ['required', 'in:proveedor,piloto,auxiliar'],
+            'sujeto_tipo' => ['required', 'in:proveedor,piloto'],
             'sujeto_id' => ['required', 'integer', 'min:1'],
         ];
     }

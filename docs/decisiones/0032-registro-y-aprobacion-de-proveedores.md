@@ -2,6 +2,8 @@
 
 **Estado:** aceptada, revisable; complementada por el ADR 0046 (verificación de identidad por cuenta, y el cliente también se aprueba) · **Fecha:** 2026-11-23 · **Decide:** el dueño (autonomía delegada)
 
+> **Nota de retiro (26/11/2026):** el auxiliar se eliminó del sistema (rol, permisos `proveedores.auxiliar.*`, página del panel, endpoints `/api/proveedores/auxiliares`, documentos y calificación del auxiliar). Donde este ADR lo menciona, ya no aplica; las tablas `prv_auxiliares` y la columna `flo_equipos.auxiliar_id` siguen en el esquema, sin uso, hasta la reconsolidación de migraciones. Un reemplazo (integrantes del equipo del servicio) se define aparte.
+
 ## Contexto
 
 Un servicio de fumigación aérea implica riesgo para personas, cultivos vecinos y el ambiente. La plataforma debe verificar quién opera y con qué equipo antes de enviarle trabajo.

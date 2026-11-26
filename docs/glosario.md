@@ -19,7 +19,7 @@ Referencia rápida de vocabulario, de negocio y técnico, para que cualquier per
 | **Correo de respaldo** | Correo de la cuenta de app al que llegan los códigos para recuperar el acceso y cambiar el teléfono | ADR 0046 |
 | **Recuperar mi acceso** | Pantalla de la app que, con un código enviado al correo de respaldo, permite fijar una contraseña nueva y ver el usuario; no hay página web de restablecimiento | ADR 0046 |
 | **Aceptación de términos y privacidad** | Registro por cuenta de la versión y la fecha de los términos y de la privacidad que aceptó al registrarse | ADR 0046 |
-| **Contador de solicitudes abiertas** | Número que ve el proveedor no aprobado en lugar del mapa, filtrable por departamento, para saber cuántos trabajos no puede ver todavía | ADR 0046 |
+| **Contador de solicitudes abiertas** | Número que ve el proveedor no aprobado en lugar del mapa, filtrable por departamento, para saber cuántos trabajos no puede ver todavía | ADR 0045, 0046 |
 | **Encargado de la empresa** | Titular de un proveedor tercero, con su propia cuenta; gestiona el vínculo de los pilotos de la empresa y puede liberarlos | ADR 0046 |
 | **Vínculo de piloto** | Relación entre la cuenta de un piloto y una empresa, con el consentimiento de ambos; el encargado la libera para que el piloto trabaje por su cuenta | ADR 0046 |
 | **Verificación de identidad** | Selfie tomada con la cámara y documento (carnet de identidad, licencia de conducir o pasaporte) que cada cuenta de app necesita para ser aprobada | ADR 0046; `politicas/verificacion_proveedores.md` |
@@ -36,21 +36,31 @@ Referencia rápida de vocabulario, de negocio y técnico, para que cualquier per
 | **Dueño del dron** | Proveedor que posee el dron, aunque lo opere otro | ADR 0029 |
 | **Equipo** | Combinación operativa de piloto y dron que ejecuta una solicitud | especificación §4.4 |
 | **Integrantes del equipo del servicio** | Personas que el proveedor anota, de forma opcional y solo como información, junto al piloto (nombre y celular opcional); sin cuenta ni verificación; el cliente las ve solo tras adjudicar | ADR 0046 |
-| **Mapa de solicitudes abiertas** | Vista del piloto con las solicitudes `abierta` y `con_ofertas`, filtros por zona, hectáreas y precio, y resumen por zona | ADR 0041 |
+| **Mapa de solicitudes abiertas** | Vista del piloto con las solicitudes `abierta` y `con_ofertas` que le son visibles, con filtros por departamento, hectáreas, precio, fecha y cultivo; el proveedor aún no aprobado ve solo un contador de solicitudes abiertas | ADR 0041, 0045 |
+| **Departamento y provincia** | Ubicación de la solicitud, elegida de un catálogo de Bolivia (solo el departamento filtra); el municipio y la comunidad son texto libre. No hay zonas ni radio | ADR 0045 |
+| **Criterio de alcance (filtro)** | Regla que decide si un proveedor es alcanzable por una solicitud; hay del sistema, del cliente y del proveedor, y la lista crece sin migraciones | ADR 0045 |
+| **Oleada de aviso** | Aviso de una nueva solicitud por anillos de prioridad («sistema solar»): primero a quienes cumplen todos los filtros (propios y mejor calificados primero) y, pasado un intervalo, a los nuevos que cumplen tras relajar un filtro; a nadie dos veces por ciclo | ADR 0045 |
+| **Súper ola** | Último paso de la escalera: aviso a todos los elegibles (aprobados, disponibles y que no excluyeron la solicitud con sus filtros); nunca a quien está ocupado o en trabajo | ADR 0045 |
+| **Esperando piloto** | Etapa de la solicitud a la que nadie aceptó ni contraofertó tras la súper ola; no se desactiva ni vence, y el cliente la relanza a mano o por su horario (nombre visible a confirmar) | ADR 0045 |
+| **Relanzamiento** | Ciclo nuevo de oleadas desde el primer anillo; lo pide el cliente o lo hace el sistema según los días y la hora que el cliente eligió (mínimo 2 días por semana, a lo más uno por día) | ADR 0045 |
+| **Escalera de oleadas** | Lista ordenada de pasos que dice qué filtro se relaja en cada oleada | ADR 0045 |
+| **En negociación** | Etapa que empieza cuando un proveedor registra su primera oferta: la solicitud deja de ofertarse y de aparecer a los demás pilotos y se pausan las oleadas; si termina sin acuerdo, vuelve a ofertarse | ADR 0045 |
+| **Sin buscar más pilotos** | Opción del cliente que detiene las oleadas; la solicitud sigue disponible para quienes ya la ven | ADR 0045 |
+| **Disponibilidad** | Interruptor manual de cada cuenta de proveedor (`disponible`, `ocupado`, `en_trabajo`); un piloto de una empresa tiene el suyo y el encargado puede marcarlo; los dos últimos estados no reciben avisos | ADR 0045 |
+| **Oferta que no cumple** | Oferta de un equipo que no cumple un requisito del cliente (p. ej. la capacidad del dron); se marca y el cliente decide | ADR 0045 |
 | **Oferta** | Precio por hectárea que una parte propone en una negociación, con vencimiento; se acepta, se contraoferta o se rechaza | especificación §4.5, §5.3 |
 | **Negociación** | Conjunto de ofertas entre el cliente y un proveedor sobre una solicitud; hay una sola oferta vigente y un máximo de ofertas | ADR 0030 |
 | **Adjudicación** | Aceptar la oferta vigente de la contraparte: fija el precio acordado, el proveedor y el equipo y cierra las demás negociaciones | ADR 0030 |
-| **Expirada** | Estado de la solicitud que venció sin adjudicar; el cliente puede renovarla | especificación §5.1 |
-| **Precio por hectárea** | Precio que el cliente propone y que se negocia; se congela al adjudicar como precio acordado | ADR 0030, 0034 |
+| **Precio por hectárea** | Precio que el cliente propone y que se negocia; se congela al adjudicar como precio acordado. No hay precio de referencia | ADR 0030, 0034, 0045 |
 | **Precio final** | Hectáreas ejecutadas por precio acordado; es el monto a pagar, fuera de la app | ADR 0034 |
 | **Avance** | Registro del piloto con hectáreas acumuladas o porcentaje, junto con fotos; lo ve el cliente | ADR 0040 |
 | **Mensajes** | Chat de texto entre el cliente y el proveedor adjudicado | ADR 0040 |
 | **Ubicación del piloto** | Última posición de la app del piloto durante la ejecución; se elimina al finalizar | ADR 0040 |
-| **Preferencias de notificación** | Categorías de aviso que cada cuenta activa o desactiva, con zonas de interés para las nuevas solicitudes | ADR 0041 |
+| **Preferencias de notificación** | Categorías de aviso que cada cuenta activa o desactiva; para las nuevas solicitudes, los filtros del proveedor (departamentos que no acepta, hectáreas mínimas, tipos de aplicación que no quiere) | ADR 0041, 0045 |
 | **Evidencia** | Foto comprimida (menos de 300 KB) que respalda un avance, una incidencia o una disputa | especificación §4.6 |
 | **Calificación** | Valoración de 1 a 5 estrellas con etiquetas que el cliente da a un proveedor; el proveedor la ve y un administrador la modera | ADR 0031 |
 | **Moderación** | Ocultamiento con motivo y autor de una calificación que incumple la política | `politicas/calificacion.md` |
-| **Disputa** | Reclamo sobre un servicio finalizado, resuelto por un administrador con evidencia y un monto ajustado | ADR 0033 |
+| **Reclamo** | Queja sobre un servicio ya prestado que abre un cliente o un proveedor y atiende un administrador, con evidencia y un monto ajustado; la solicitud en reclamo tiene el estado interno `disputada` | ADR 0033 |
 | **Incidencia** | Evento anómalo (deriva, caída, lesión, derrame, conflicto) reportado durante o tras un servicio | `politicas/seguridad.md` |
 | **SOS** | Botón de emergencia que avisa a soporte con la ubicación | `politicas/seguridad.md` |
 | **Tasa de cancelación** | Proporción de servicios adjudicados que cancela una parte; es visible y alimenta alertas, no sanciones automáticas | ADR 0033 |

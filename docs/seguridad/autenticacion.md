@@ -47,7 +47,7 @@ La selfie y el documento de identidad se suben por HTTPS a `PUT /api/verificacio
 
 Los dispositivos del lote comparten la IP del enlace satelital: limitar solo por IP bloquearía a todo el equipo por los errores de una persona. El cubo por usuario aísla ese caso, y el cubo por IP, más amplio, frena el barrido de usuarios distintos desde un mismo origen. Superado el límite, la API responde `429` con `Retry-After`.
 
-El panel web y `GET /api/version` conservan su `throttle:6,1` por IP.
+El panel web conserva su `throttle:6,1` por IP.
 
 ## Vigencia de los tokens
 
@@ -56,6 +56,6 @@ El token de dispositivo caduca a los `SANCTUM_EXPIRATION` minutos de su emisión
 - Valor vacío o no numérico en `SANCTUM_EXPIRATION`: el token no caduca por tiempo.
 - Al vencer, la API responde `401`; la app pide el login en cuanto recupera conexión y lo capturado sin conexión sigue en el outbox hasta enviarse con el token nuevo.
 - Bajar el plazo caduca de golpe los tokens más viejos que el nuevo valor.
-- La revocación desde el panel y la baja de la cuenta siguen invalidando el token en el request siguiente. Un cambio del estado de aprobación no invalida el token: cambia lo que la cuenta puede hacer.
+- El cierre de sesión de la app, la revocación desde el panel y la baja de la cuenta siguen invalidando el token en el request siguiente. Un cambio del estado de aprobación no invalida el token: cambia lo que la cuenta puede hacer.
 
 Las pruebas están en `tests/Feature/Seguridad/LoginCampoSeguridadTest.php`.

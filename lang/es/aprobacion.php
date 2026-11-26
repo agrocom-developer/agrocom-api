@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Vocabulario común del ciclo de aprobación de proveedores, pilotos, auxiliares
+ * Vocabulario común del ciclo de aprobación de proveedores, pilotos
  * y drones (ADR 0032). Lo comparten `Proveedores`, `Flota` y las pantallas del
  * panel, por eso vive aparte de los catálogos de cada módulo.
  */
@@ -33,7 +33,6 @@ return [
     'sujeto' => [
         'proveedor' => 'Proveedor',
         'piloto' => 'Piloto',
-        'auxiliar' => 'Auxiliar',
         'dron' => 'Dron',
     ],
     'errores' => [

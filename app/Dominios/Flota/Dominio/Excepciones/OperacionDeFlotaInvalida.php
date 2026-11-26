@@ -70,11 +70,6 @@ final class OperacionDeFlotaInvalida extends RuntimeException
         return new self(Texto::de('flota.errores.piloto_ajeno'), 'piloto_id');
     }
 
-    public static function auxiliarAjeno(): self
-    {
-        return new self(Texto::de('flota.errores.auxiliar_ajeno'), 'auxiliar_id');
-    }
-
     public static function integranteNoDisponible(string $rol): self
     {
         return new self(Texto::de('flota.errores.integrante_no_disponible', ['rol' => Texto::de('flota.equipos.rol.'.$rol)]), $rol.'_id');

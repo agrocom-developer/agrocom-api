@@ -105,7 +105,6 @@ final class ArmarTableroDeMercado implements LecturaTableroDeMercado
         return [
             'proveedores' => $vivos('prv_proveedores')->where('estado', 'pendiente')->count(),
             'pilotos' => $vivos('prv_pilotos')->where('estado', 'pendiente')->count(),
-            'auxiliares' => $vivos('prv_auxiliares')->where('estado', 'pendiente')->count(),
             'drones' => $vivos('flo_drones')->where('estado', 'pendiente')->count(),
             'fotos_de_dron' => $vivos('flo_dron_fotos')->where('estado', 'en_revision')->count(),
             'documentos' => $vivos('prv_documentos')->where('estado', 'en_revision')->count(),

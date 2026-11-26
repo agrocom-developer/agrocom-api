@@ -14,7 +14,7 @@ use App\Dominios\Notificaciones\Dominio\TipoNotificacion;
 use InvalidArgumentException;
 
 /**
- * Cambió el estado de aprobación de un proveedor, piloto, auxiliar o dron
+ * Cambió el estado de aprobación de un proveedor, piloto o dron
  * (ADR 0032; especificación §12: `ProveedorAprobado`, `ProveedorSuspendido`).
  *
  * - Aprobación, rechazo, suspensión, rehabilitación y baja: le importan a quien

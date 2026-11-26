@@ -13,7 +13,6 @@ final readonly class DatosIntegrantesEquipo
         public int $proveedorId,
         public int $pilotoId,
         public int $dronId,
-        public ?int $auxiliarId,
         public string $dronOrigen,
     ) {}
 

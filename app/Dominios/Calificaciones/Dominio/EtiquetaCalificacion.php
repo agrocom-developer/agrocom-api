@@ -17,7 +17,7 @@ enum EtiquetaCalificacion: string
     case AccesoLote = 'acceso_lote';
     case ClaridadPedido = 'claridad_pedido';
 
-    /** @return list<self> las que el cliente usa al calificar al proveedor, al piloto y al auxiliar. */
+    /** @return list<self> las que el cliente usa al calificar al proveedor y al piloto. */
     public static function haciaProveedor(): array
     {
         return [self::Puntualidad, self::CoberturaPareja, self::Comunicacion, self::CuidadoEntorno, self::OrdenLote];

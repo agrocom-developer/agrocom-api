@@ -1,6 +1,8 @@
 # ADR 0028 — Proveedores: propio, independiente y tercero
 
-**Estado:** aceptada, revisable · **Fecha:** 2026-11-23 · **Decide:** el dueño (autonomía delegada)
+**Estado:** aceptada, revisable · **Fecha:** 2026-11-23 · **Decide:** el dueño (autonomía delegada) · **Aclarado por:** ADR 0045 (el proveedor propio compite en igualdad ante el cliente y en la adjudicación; solo tiene prioridad en el aviso y en el orden sugerido de ofertas)
+
+> **Nota de retiro (26/11/2026):** el auxiliar se eliminó del sistema (rol, permisos `proveedores.auxiliar.*`, página del panel, endpoints `/api/proveedores/auxiliares`, documentos y calificación del auxiliar). Donde este ADR lo menciona, ya no aplica; las tablas `prv_auxiliares` y la columna `flo_equipos.auxiliar_id` siguen en el esquema, sin uso, hasta la reconsolidación de migraciones. Un reemplazo (integrantes del equipo del servicio) se define aparte.
 
 ## Contexto
 

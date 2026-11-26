@@ -5,7 +5,7 @@ use App\Dominios\Flota\Dominio\MotivoNoApto;
 use App\Dominios\Flota\Dominio\Vigencia;
 
 /*
- * Un equipo (piloto + dron + auxiliar opcional) recibe ofertas solo si todo lo
+ * Un equipo (piloto + dron) recibe ofertas solo si todo lo
  * que lo compone está aprobado, con documentos vigentes y dentro de su vigencia
  * (especificación del marketplace §5.2 y §6; ADR 0029). Puro.
  */
@@ -13,7 +13,7 @@ use App\Dominios\Flota\Dominio\Vigencia;
 function motivosDelEquipo(array $cambios = []): array
 {
     $base = [
-        'estadoProveedor' => 'aprobado', 'estadoPiloto' => 'aprobado', 'estadoDron' => 'aprobado', 'estadoAuxiliar' => null,
+        'estadoProveedor' => 'aprobado', 'estadoPiloto' => 'aprobado', 'estadoDron' => 'aprobado',
         'documentosPilotoCompletos' => true, 'documentosDronCompletos' => true,
         'vigencia' => new Vigencia('2026-01-01'), 'hoy' => '2026-11-23',
     ];
@@ -28,13 +28,7 @@ test('un equipo con todo aprobado, documentos vigentes y vigencia abierta es apt
 test('cada componente no aprobado deja su propio motivo', function () {
     expect(motivosDelEquipo(['estadoProveedor' => 'suspendido']))->toBe([MotivoNoApto::ProveedorNoAprobado])
         ->and(motivosDelEquipo(['estadoPiloto' => 'pendiente']))->toBe([MotivoNoApto::PilotoNoAprobado])
-        ->and(motivosDelEquipo(['estadoDron' => 'rechazado']))->toBe([MotivoNoApto::DronNoAprobado])
-        ->and(motivosDelEquipo(['estadoAuxiliar' => 'pendiente']))->toBe([MotivoNoApto::AuxiliarNoAprobado]);
-});
-
-test('el auxiliar es opcional: sin auxiliar no cuenta', function () {
-    expect(motivosDelEquipo(['estadoAuxiliar' => null]))->toBe([])
-        ->and(motivosDelEquipo(['estadoAuxiliar' => 'aprobado']))->toBe([]);
+        ->and(motivosDelEquipo(['estadoDron' => 'rechazado']))->toBe([MotivoNoApto::DronNoAprobado]);
 });
 
 test('documentos incompletos del piloto o del dron vuelven no apto al equipo', function () {
@@ -49,7 +43,7 @@ test('fuera de su vigencia el equipo no es apto, y los motivos se acumulan', fun
     ]);
 
     expect($motivos)->toBe([MotivoNoApto::DronNoAprobado, MotivoNoApto::FueraDeVigencia])
-        ->and(AptitudDeEquipo::esApto('aprobado', 'aprobado', 'suspendido', null, true, true, new Vigencia('2026-01-01'), '2026-11-23'))->toBeFalse();
+        ->and(AptitudDeEquipo::esApto('aprobado', 'aprobado', 'suspendido', true, true, new Vigencia('2026-01-01'), '2026-11-23'))->toBeFalse();
 });
 
 test('la vigencia incluye sus dos extremos y una vigencia abierta no termina', function () {

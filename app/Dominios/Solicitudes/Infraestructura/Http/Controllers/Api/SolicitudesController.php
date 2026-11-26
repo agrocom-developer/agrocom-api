@@ -42,7 +42,6 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'precio_acordado', description: 'Verdadero si la solicitud ya se adjudicó y el precio no cambia.', type: 'boolean'),
         new OA\Property(property: 'hectareas', type: 'string', example: '80.0000'),
         new OA\Property(property: 'monto_estimado', type: 'string', nullable: true, example: '10000.00'),
-        new OA\Property(property: 'precio_referencia_ha', description: 'Guía de mercado para el tipo de aplicación; no es un límite.', type: 'string', nullable: true, example: '120.00'),
     ],
     type: 'object',
 )]
@@ -201,7 +200,7 @@ final class SolicitudesController
     #[OA\Get(
         path: '/api/solicitudes/{id}/estimacion',
         operationId: 'estimarSolicitud',
-        description: 'El monto estimado: hectáreas solicitadas por el precio por hectárea vigente (el propuesto, o el acordado una vez adjudicada), con el precio de referencia como guía.',
+        description: 'El monto estimado: hectáreas solicitadas por el precio por hectárea vigente (el propuesto, o el acordado una vez adjudicada).',
         summary: 'Monto estimado de una solicitud',
         security: [['tokenDispositivo' => []]],
         tags: ['Solicitudes'],
@@ -268,7 +267,7 @@ final class SolicitudesController
         path: '/api/solicitudes/{id}/cancelar',
         operationId: 'cancelarSolicitud',
         description: 'Cancela una solicitud propia con motivo. Es gratuita y sin penalidad en dinero; si ya estaba adjudicada, queda registrada en la tasa de cancelación del cliente y el proveedor queda libre. '
-            .'Una solicitud en ejecución o finalizada no se cancela por este camino: si hay desacuerdo, se abre una disputa.',
+            .'Una solicitud en ejecución o finalizada no se cancela por este camino: si hay desacuerdo, se abre un reclamo.',
         summary: 'Cancelar una solicitud',
         security: [['tokenDispositivo' => []]],
         requestBody: new OA\RequestBody(

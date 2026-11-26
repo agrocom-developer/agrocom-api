@@ -2,6 +2,8 @@
 
 **Estado:** aceptada; el punto 4 queda sustituido por el ADR 0046 (la cuenta de app no tiene roles `cliente` ni `proveedor`: tiene un tipo de cuenta, y el token no lleva rol) · **Fecha:** 2026-11-23 · **Decide:** el dueño (autonomía delegada)
 
+> **Nota de retiro (26/11/2026):** el auxiliar se eliminó del sistema (rol, permisos `proveedores.auxiliar.*`, página del panel, endpoints `/api/proveedores/auxiliares`, documentos y calificación del auxiliar). Donde este ADR lo menciona, ya no aplica; las tablas `prv_auxiliares` y la columna `flo_equipos.auxiliar_id` siguen en el esquema, sin uso, hasta la reconsolidación de migraciones. Un reemplazo (integrantes del equipo del servicio) se define aparte.
+
 ## Contexto
 
 Los ADR 0028, 0029 y 0032 fijan el qué: proveedores propio, independiente y tercero; el dron como vehículo con dueño; el registro por cuenta propia con aprobación de un administrador. Falta el cómo en el código: en qué módulos vive, qué roles y permisos nacen, cómo se protege el registro público, cómo se mantiene la invariante 7 (transiciones de estado por máquina) y qué se reutiliza de lo existente.

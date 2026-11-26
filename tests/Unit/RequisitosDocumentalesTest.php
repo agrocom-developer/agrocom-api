@@ -21,7 +21,6 @@ test('cada sujeto exige sus documentos obligatorios', function () {
 
     expect($requisitos->paraSujeto(TipoSujeto::Piloto))->toBe([TipoDocumento::Identidad, TipoDocumento::LicenciaPiloto, TipoDocumento::Antecedentes])
         ->and($requisitos->paraSujeto(TipoSujeto::Dron))->toBe([TipoDocumento::RegistroDron, TipoDocumento::HabilitacionDron, TipoDocumento::SeguroResponsabilidad])
-        ->and($requisitos->paraSujeto(TipoSujeto::Auxiliar))->toBe([TipoDocumento::Identidad, TipoDocumento::Antecedentes])
         ->and($requisitos->paraSujeto(TipoSujeto::Proveedor))->toBe([TipoDocumento::Identidad, TipoDocumento::SeguroResponsabilidad]);
 });
 

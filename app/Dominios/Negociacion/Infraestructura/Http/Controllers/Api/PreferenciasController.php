@@ -16,7 +16,7 @@ use OpenApi\Attributes as OA;
  * avisos de nuevas solicitudes en sus zonas (el incentivo para recibir ofertas de
  * trabajo) y cada cuenta elige qué categorías recibe. Las obligatorias no se apagan.
  */
-#[OA\Tag(name: 'Preferencias', description: 'Qué avisos recibe la cuenta. Las categorías obligatorias (adjudicación, cierre, expiración, cuenta y aprobación, disputas, emergencias) no aparecen y no se pueden desactivar.')]
+#[OA\Tag(name: 'Preferencias', description: 'Qué avisos recibe la cuenta. Las categorías obligatorias (adjudicación, cierre, expiración, cuenta y aprobación, reclamos, emergencias) no aparecen y no se pueden desactivar.')]
 #[OA\Schema(
     schema: 'PreferenciasDeAviso',
     title: 'Preferencias de aviso',

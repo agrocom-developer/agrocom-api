@@ -22,8 +22,8 @@
                 {
                     "id": 9,
                     "tipo": "sujeto_aprobado",
-                    "titulo": "El auxiliar «Esteban Choque Ramos» fue aprobado.",
-                    "recurso_tipo": "auxiliar",
+                    "titulo": "El piloto «Esteban Choque Ramos» fue aprobado.",
+                    "recurso_tipo": "piloto",
                     "recurso_id": 2,
                     "leida": false,
                     "creada_en": "2026-11-24T18:56:32+00:00"
@@ -139,7 +139,7 @@
                 {
                     "id": 120,
                     "tipo": "solicitud_finalizada",
-                    "titulo": "El servicio #12 quedó finalizado. Monto a pagar al proveedor: 12320.00. Puedes calificarlo durante 7 días o abrir una disputa.",
+                    "titulo": "El servicio #12 quedó finalizado. Monto a pagar al proveedor: 12320.00. Puedes calificarlo durante 7 días o abrir un reclamo.",
                     "recurso_tipo": "solicitud",
                     "recurso_id": 12,
                     "leida": false,

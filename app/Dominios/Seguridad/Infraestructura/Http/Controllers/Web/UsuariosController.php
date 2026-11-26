@@ -10,7 +10,6 @@ use App\Dominios\Seguridad\Aplicacion\AsignarRolesUsuario;
 use App\Dominios\Seguridad\Aplicacion\ConsultarRolesDeUsuarios;
 use App\Dominios\Seguridad\Aplicacion\EliminarUsuario;
 use App\Dominios\Seguridad\Aplicacion\ListarBitacora;
-use App\Dominios\Seguridad\Aplicacion\ListarDispositivosDeUsuario;
 use App\Dominios\Seguridad\Aplicacion\ListarUsuarios;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Dominio\Excepciones\PermisoDenegado;
@@ -161,7 +160,6 @@ final class UsuariosController
         Request $request,
         SecUser $usuario,
         LecturaFichaPersona $lecturaPersona,
-        ListarDispositivosDeUsuario $listarDispositivos,
         ListarBitacora $listarBitacora,
     ): View {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
@@ -179,7 +177,6 @@ final class UsuariosController
                 $request,
                 (string) ($cascara['zonaHoraria'] ?? config('app.timezone')),
                 $lecturaPersona,
-                $listarDispositivos,
                 $listarBitacora,
             ),
         ]);
@@ -258,13 +255,9 @@ final class UsuariosController
 
     /**
      * Resumen relacionado del aside (solo edición, §6.3.1 de la guía de
-     * pantalla): hasta cuatro tarjetas con las relaciones más cercanas de la
-     * cuenta, derivadas de sus FK reales — roles (`sec_user_role`), persona
-     * (`persona_id`), dispositivos (`sec_token_dispositivo.user_id`) y, en
-     * una cuenta de portal, contrato (`contrato_id`); la bitácora de la propia
-     * cuenta cierra la lista. Una cuenta de portal no tiene roles, persona ni
-     * dispositivos (no autentica en la API de campo), así que solo le quedan
-     * contrato y bitácora.
+     * pantalla): hasta tres tarjetas con las relaciones más cercanas de la
+     * cuenta, derivadas de sus FK reales — roles (`sec_user_role`) y persona
+     * (`persona_id`); la bitácora de la propia cuenta cierra la lista.
      *
      * Cada tarjeta se gatea por el permiso `.ver` del módulo de LO QUE MUESTRA
      * contra el ROL ACTIVO (invariante 10 de CLAUDE.md), no por el de
@@ -280,7 +273,6 @@ final class UsuariosController
         Request $request,
         string $zonaQueVe,
         LecturaFichaPersona $lecturaPersona,
-        ListarDispositivosDeUsuario $listarDispositivos,
         ListarBitacora $listarBitacora,
     ): array {
         $resumen = [];
@@ -292,10 +284,6 @@ final class UsuariosController
 
         if ($esInterno && $this->autorizacion->tienePermiso($request, 'personal.persona.ver')) {
             $resumen[] = $this->tarjetas->tarjetaPersona($usuario, $lecturaPersona);
-        }
-
-        if ($esInterno && $this->autorizacion->tienePermiso($request, 'seguridad.dispositivo.ver')) {
-            $resumen[] = $this->tarjetas->tarjetaDispositivos($usuario, $listarDispositivos);
         }
 
         if ($this->autorizacion->tienePermiso($request, 'seguridad.bitacora.ver')) {

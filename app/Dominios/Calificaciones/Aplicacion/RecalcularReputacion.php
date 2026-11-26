@@ -20,8 +20,8 @@ use Illuminate\Support\Facades\DB;
  * resultado.
  *
  * Proveedor: sobre los últimos 100 servicios que recibieron alguna calificación
- * visible del cliente, el promedio ponderado por sujeto (proveedor, piloto y
- * auxiliar). Cliente: el promedio de las últimas 100 calificaciones visibles que
+ * visible del cliente, el promedio ponderado por sujeto (proveedor y
+ * piloto). Cliente: el promedio de las últimas 100 calificaciones visibles que
  * le dieron los proveedores. Una calificación `oculta` no cuenta; una reportada
  * (`en_moderacion`) sí, hasta que un administrador decide.
  */

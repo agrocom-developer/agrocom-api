@@ -482,7 +482,7 @@ de rol" del sidebar/menú de usuario, con `?cambiar=1`).
   `Http/Demo/DatosDemoPanel` (KPIs, 5 sesiones, 5 causas de pausa, 3 ítems
   de stock, ventana volable, badges del menú, campaña/período/versión) —
   marcado MOCK, nunca hardcodeado en vistas; usuario demo multirol
-  `miguelo`/`0000` en `Demo/PersonalDemoSeeder`.
+  `miguelo`/`0000` en `AdminPlataformaSeeder`.
 
 ## 8. Reglas fijas de pulido UI (sexta vuelta, 28/8/2026)
 
