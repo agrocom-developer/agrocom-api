@@ -32,7 +32,7 @@ use Illuminate\Support\Facades\DB;
  *    pantalla se concede el sistema entero en un submit; y aplicarla también
  *    al quite (no solo al otorgamiento) es lo que evita que un rol acotado
  *    sabotee permisos ajenos que no le incumben. Es el mismo criterio de
- *    delta completo que ya usa la guarda de `asignar_rol_dueno`.
+ *    delta completo que ya usa la guarda de `asignar_rol_administrador`.
  * 3. NO QUITARTE LA LLAVE A VOS MISMO — sobre tu propio rol activo no podés
  *    soltar `seguridad.rol.ver` ni `.asignar_permiso`. `ResolverRolActivo`
  *    revalida en CADA request, así que el efecto sería inmediato: el
@@ -49,12 +49,18 @@ use Illuminate\Support\Facades\DB;
  * el otro rol) y aun así te dejaría afuera a vos, sin aviso, en el próximo
  * clic. Por eso las dos existen y ninguna sobra.
  *
- * Y una quinta, que se evalúa antes que la 2 y mira la operación, no al actor: PERMISO DE PLATAFORMA
- * ({@see PermisosReservados}) — `seguridad.usuario.ver_como` solo se otorga al
- * rol `admin_plataforma`. La anti-escalada no alcanza: frena al dueño, que no
- * lo tiene, pero no al propio administrador de plataforma, que podría
- * delegárselo a un rol de negocio y dejarlo ver como un dueño. Solo frena el
- * OTORGAMIENTO: quitarlo de donde no debería estar siempre se puede.
+ * Y tres que se evalúan antes que la 2 y miran la operación, no al actor (ADR 0046,
+ * punto 4; plan de cuentas §7):
+ *
+ * - MATRIZ DEL ADMINISTRADOR — el rol `administrador` ve y hace todo: su matriz no
+ *   se edita. Cada corrida de `SeguridadSeeder` le repone el catálogo del panel.
+ * - PERMISO RESERVADO ({@see PermisosReservados}) — usuarios, roles, configuración,
+ *   «ver como» y la carga de verificación solo los tiene el `administrador`. La
+ *   anti-escalada no alcanza: un administrador los tiene todos y podría delegar
+ *   cualquiera al operador. Solo frena el OTORGAMIENTO: quitarlo de donde no
+ *   debería estar siempre se puede.
+ * - PERMISO DE APP — los permisos que ejercen las apps (`ambito = app`, ver
+ *   `config/permisos_app.php`) no pertenecen a ningún rol del panel.
  */
 final class AsignarPermisosRol
 {
@@ -109,7 +115,9 @@ final class AsignarPermisosRol
             return;
         }
 
-        $this->verificarQueNoSeDelegaUnPermisoDePlataforma($rol, $aOtorgar);
+        $this->verificarQueNoSeEditaLaMatrizDelAdministrador($rol);
+        $this->verificarQueNoSeOtorgaUnPermisoDeApp($aOtorgar);
+        $this->verificarQueNoSeDelegaUnPermisoReservado($rol, $aOtorgar);
         $this->verificarAntiEscalada($actor, $idRolActivo, array_merge($aOtorgar, $aQuitar));
         $this->verificarQueNoSeSueltaLaLlavePropia($rol, $idRolActivo, $aQuitar);
         $this->verificarQueNingunPermisoQuedaHuerfano($rol, $aQuitar);
@@ -124,14 +132,49 @@ final class AsignarPermisosRol
     }
 
     /**
-     * Guarda 5: un permiso de plataforma no se otorga a otro rol que no sea
-     * `admin_plataforma`.
+     * El administrador tiene todo el catálogo del panel; su matriz no cambia.
+     *
+     * @throws RolProtegido
+     */
+    private function verificarQueNoSeEditaLaMatrizDelAdministrador(SecRole $rol): void
+    {
+        if (PermisosReservados::admiteElRol((string) $rol->name)) {
+            throw RolProtegido::porMatrizDelAdministrador();
+        }
+    }
+
+    /**
+     * Un permiso de app no se otorga a un rol del panel.
      *
      * @param  list<int>  $aOtorgar
      *
      * @throws RolProtegido
      */
-    private function verificarQueNoSeDelegaUnPermisoDePlataforma(SecRole $rol, array $aOtorgar): void
+    private function verificarQueNoSeOtorgaUnPermisoDeApp(array $aOtorgar): void
+    {
+        if ($aOtorgar === []) {
+            return;
+        }
+
+        $codigo = SecPermission::query()
+            ->whereIn('id', $aOtorgar)
+            ->where('ambito', 'app')
+            ->orderBy('code')
+            ->value('code');
+
+        if ($codigo !== null) {
+            throw RolProtegido::porPermisoDeApp((string) $codigo);
+        }
+    }
+
+    /**
+     * Un permiso reservado al administrador no se otorga a otro rol.
+     *
+     * @param  list<int>  $aOtorgar
+     *
+     * @throws RolProtegido
+     */
+    private function verificarQueNoSeDelegaUnPermisoReservado(SecRole $rol, array $aOtorgar): void
     {
         if ($aOtorgar === [] || PermisosReservados::admiteElRol((string) $rol->name)) {
             return;
@@ -139,7 +182,7 @@ final class AsignarPermisosRol
 
         $codigo = SecPermission::query()
             ->whereIn('id', $aOtorgar)
-            ->whereIn('code', PermisosReservados::SOLO_ADMIN_PLATAFORMA)
+            ->whereIn('code', PermisosReservados::SOLO_ADMINISTRADOR)
             ->orderBy('code')
             ->value('code');
 

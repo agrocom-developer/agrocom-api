@@ -144,7 +144,8 @@
  * comentario extenso arriba de `.ag-cambiar-vista__opcion-avatar`), no un
  * semantic único existente: los ocho semánticos ya estaban repartidos o
  * cargados de estado. */
-.ag-cambiar-vista__opcion-avatar--dueno {
+.ag-cambiar-vista__opcion-avatar--dueno,
+.ag-cambiar-vista__opcion-avatar--administrador {
     background: color-mix(in srgb, var(--ag-color-accent) 50%, var(--ag-color-bg-rail-active) 50%);
     color: var(--ag-color-gray-0);
 }
@@ -153,7 +154,8 @@
  * Agrocom, para el rol de mayor jerarquía operativa. Texto con el token
  * pensado específicamente para relleno sólido de acento (blanco puro falla
  * AA contra el ámbar, ver theme-light.css), no `--ag-color-gray-0`. */
-.ag-cambiar-vista__opcion-avatar--encargado-operaciones {
+.ag-cambiar-vista__opcion-avatar--encargado-operaciones,
+.ag-cambiar-vista__opcion-avatar--operador {
     background: var(--ag-color-accent);
     color: var(--ag-color-accent-contrast-fill);
 }

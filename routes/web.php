@@ -184,35 +184,25 @@ Route::middleware('auth:interno')->group(function () {
 
         // Tarea 140: mirar el panel o el portal COMO esta cuenta, en solo
         // lectura. Permiso propio `seguridad.usuario.ver_como` (solo
-        // `admin_plataforma`), verificado dentro del controlador contra el ROL
+        // el administrador), verificado dentro del controlador contra el ROL
         // ACTIVO. No cambia nada de la cuenta observada: abre una bandera de
         // sesión y una fila de bitácora — ver IniciarVistaComo.
         Route::post('/panel/usuarios/{usuario}/ver-como', [VistaComoController::class, 'iniciar'])
             ->name('panel.usuarios.ver-como');
 
-        // Administración del catálogo de roles y de la matriz rol↔permiso.
-        // Es lo último del modelo `sec_*` que solo existía como seeder: los
-        // cinco permisos `seguridad.rol.*` se siembran únicamente para
-        // `dueno`, porque quien edita la matriz puede concederse cualquier
-        // permiso del sistema. Verificados DENTRO del controlador contra el
-        // ROL ACTIVO, igual que usuarios.
+        // Matriz rol↔permiso de los dos roles del panel (ADR 0046): no se crean
+        // ni se eliminan roles. Los permisos `seguridad.rol.*` son reservados al
+        // administrador, porque quien edita la matriz puede concederse cualquier
+        // permiso del panel. Verificados DENTRO del controlador contra el ROL
+        // ACTIVO, igual que usuarios.
         Route::get('/panel/roles', [RolesController::class, 'index'])
             ->name('panel.roles.index');
-
-        Route::get('/panel/roles/crear', [RolesController::class, 'create'])
-            ->name('panel.roles.create');
-
-        Route::post('/panel/roles', [RolesController::class, 'store'])
-            ->name('panel.roles.store');
 
         Route::get('/panel/roles/{rol}/editar', [RolesController::class, 'edit'])
             ->name('panel.roles.edit');
 
         Route::put('/panel/roles/{rol}', [RolesController::class, 'update'])
             ->name('panel.roles.update');
-
-        Route::delete('/panel/roles/{rol}', [RolesController::class, 'destroy'])
-            ->name('panel.roles.destroy');
 
         // Tarea 63 (invariante 9 de CLAUDE.md): pantalla de bitácora de
         // auditoría, solo lectura — sin POST/PUT/DELETE, es un libro de

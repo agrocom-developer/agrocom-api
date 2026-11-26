@@ -174,9 +174,11 @@ final class CatalogoDePermisos
      */
     public function arbolDeConcesiones(): array
     {
+        // Solo los permisos del panel: los de las apps (`ambito = app`) no están en ninguna matriz.
         $permisos = DB::table('sec_permission')
             ->whereNull('deleted_at')
             ->where('state', true)
+            ->where('ambito', 'panel')
             ->orderBy('code')
             ->get(['id', 'code', 'description']);
 
