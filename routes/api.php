@@ -29,7 +29,6 @@ use App\Dominios\Sincronizacion\Infraestructura\Http\Controllers\Api\CatalogoCon
 use App\Dominios\Sincronizacion\Infraestructura\Http\Controllers\Api\SyncController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\ClientesController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\ContactosController;
-use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\ReferenciasController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\SolicitudesController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\TerrenosController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\ZonasController;
@@ -319,9 +318,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/terrenos/{id}', [TerrenosController::class, 'update'])
         ->whereNumber('id')
         ->name('api.terrenos.update');
-
-    // Guía de precio por hectárea (§3.1): la usan el cliente al proponer y el piloto al ofertar.
-    Route::get('/referencias/precio', [ReferenciasController::class, 'precio'])->name('api.referencias.precio');
 
     Route::get('/solicitudes', [SolicitudesController::class, 'index'])->name('api.solicitudes.index');
     Route::post('/solicitudes', [SolicitudesController::class, 'store'])->name('api.solicitudes.store');
