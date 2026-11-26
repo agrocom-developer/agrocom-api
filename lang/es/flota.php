@@ -103,32 +103,16 @@ return [
         'equipos_vacio_detalle' => 'El dron todavía no está en ningún equipo.',
     ],
 
+    // Rótulos del equipo (piloto + dron) en la ficha del dron y en los errores de armado.
     'equipos' => [
-        'titulo' => 'Equipos',
-        'subtitulo' => 'La combinación de piloto, dron y auxiliar que ejecuta un servicio. Un piloto y un dron no pueden estar en dos equipos vigentes a la vez.',
         'rol' => [
             'piloto' => 'piloto',
             'dron' => 'dron',
             'auxiliar' => 'auxiliar',
         ],
-        'filtro_vigencia' => 'Vigencia',
-        'vigentes' => 'Vigentes',
-        'cerrados' => 'Cerrados',
-        'filtro_vacio_titulo' => 'Ningún equipo coincide',
-        'filtro_vacio_detalle' => 'Prueba con otro filtro o límpialo para ver todos los equipos.',
-        'vacio_titulo' => 'Todavía no hay equipos',
-        'vacio_detalle' => 'Cada proveedor arma sus equipos desde la app, con un piloto y un dron aprobados.',
-        'col_proveedor' => 'Proveedor',
         'col_piloto' => 'Piloto',
-        'col_dron' => 'Dron',
-        'col_auxiliar' => 'Auxiliar',
         'col_vigencia' => 'Vigencia',
-        'col_estado' => 'Estado',
-        'sin_auxiliar' => 'Sin auxiliar',
         'sin_fin' => 'sin fin',
-        'vigente' => 'Vigente',
-        'cerrado' => 'Cerrado',
-        'paginacion_aria' => 'Paginación de equipos',
     ],
 
     // Revisión de las fotos de un dron (ADR 0042): el administrador aprueba o rechaza cada una.

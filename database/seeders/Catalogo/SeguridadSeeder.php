@@ -64,8 +64,6 @@ class SeguridadSeeder extends Seeder
         'seguridad.configuracion.ver' => 'Ver la configuración del sistema (llaves y tokens)',
         'seguridad.configuracion.editar' => 'Editar la configuración del sistema (llaves y tokens)',
         'seguridad.bitacora.ver' => 'Ver la bitácora de auditoría (quién hizo qué, cuándo y en qué zona horaria)',
-        'seguridad.dispositivo.ver' => 'Ver los dispositivos con sesión abierta en la app de campo',
-        'seguridad.dispositivo.revocar' => 'Revocar el acceso de un dispositivo de campo',
         // Proveedores y flota en el panel (ADR 0032): aprobar, suspender y dar de baja.
         'proveedores.proveedor.crear' => 'Registrar a mano a un proveedor que llega a la oficina (queda pendiente; quien lo registra no lo aprueba)',
         'proveedores.piloto.crear' => 'Registrar a mano a un piloto de un proveedor tercero (queda pendiente)',
@@ -89,7 +87,6 @@ class SeguridadSeeder extends Seeder
         'flota.dron.suspender' => 'Suspender un dron, con motivo',
         'flota.dron.dar_baja' => 'Dar de baja un dron, con motivo',
         'flota.dron.revisar_foto' => 'Aprobar o rechazar las fotos de un dron, con motivo en el rechazo',
-        'flota.equipo.ver' => 'Ver los equipos (piloto, dron y auxiliar) de los proveedores',
         // Marketplace, lado app (token de dispositivo): lo que cada rol hace sobre lo SUYO. El alcance lo hacen los casos de uso; el permiso es la puerta.
         'proveedores.cuenta.gestionar' => 'Gestionar su propio proveedor desde la app: pilotos, drones, equipos y documentos',
         'proveedores.cuenta.ver' => 'Ver, solo lectura, el proveedor al que pertenece y los drones de sus equipos desde la app (piloto)',
@@ -232,8 +229,6 @@ class SeguridadSeeder extends Seeder
         'seguridad.organizacion.ver',
         'seguridad.organizacion.editar',
         'seguridad.bitacora.ver',
-        'seguridad.dispositivo.ver',
-        'seguridad.dispositivo.revocar',
         'proveedores.proveedor.ver',
         'proveedores.proveedor.crear',
         'proveedores.proveedor.aprobar',
@@ -256,7 +251,6 @@ class SeguridadSeeder extends Seeder
         'flota.dron.suspender',
         'flota.dron.dar_baja',
         'flota.dron.revisar_foto',
-        'flota.equipo.ver',
         'solicitudes.solicitud.ver',
         'solicitudes.solicitud.cancelar',
         'solicitudes.solicitud.ver_seguimiento',
@@ -287,7 +281,6 @@ class SeguridadSeeder extends Seeder
         'proveedores.piloto.ver',
         'proveedores.auxiliar.ver',
         'flota.dron.ver',
-        'flota.equipo.ver',
         'solicitudes.solicitud.ver',
         'solicitudes.solicitud.cancelar',
         'solicitudes.solicitud.ver_seguimiento',
@@ -315,12 +308,18 @@ class SeguridadSeeder extends Seeder
      *   seguimiento del servicio los ve el administrador en las solicitudes.
      * - `distribucion.version.autorizar`: las apps salen por Play Store y App
      *   Store; el panel ya no sube ni autoriza versiones del APK.
+     * - `seguridad.dispositivo.*` y `flota.equipo.ver`: el panel ya no tiene las
+     *   páginas Dispositivos ni Equipos; el token por dispositivo del login y el
+     *   equipo (piloto + dron) de la solicitud siguen en la API.
      *
      * @var list<string>
      */
     private const PERMISOS_RETIRADOS = [
         'seguridad.usuario.portal',
         'distribucion.version.autorizar',
+        'seguridad.dispositivo.ver',
+        'seguridad.dispositivo.revocar',
+        'flota.equipo.ver',
         'operaciones.trabajo.crear',
         'operaciones.trabajo.editar',
         'comercial.cliente.ver',

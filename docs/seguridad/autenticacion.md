@@ -20,6 +20,6 @@ El token de dispositivo caduca a los `SANCTUM_EXPIRATION` minutos de su emisión
 - Valor vacío o no numérico en `SANCTUM_EXPIRATION`: el token no caduca por tiempo.
 - Al vencer, la API responde `401`; la app pide el login en cuanto recupera conexión y lo capturado sin conexión sigue en el outbox hasta enviarse con el token nuevo.
 - Bajar el plazo caduca de golpe los tokens más viejos que el nuevo valor.
-- La revocación desde el panel, la baja de la cuenta y el retiro del rol siguen invalidando el token en el request siguiente.
+- El cierre de sesión de la app, la baja de la cuenta y el retiro del rol siguen invalidando el token en el request siguiente.
 
 Las pruebas están en `tests/Feature/Seguridad/LoginCampoSeguridadTest.php`.
