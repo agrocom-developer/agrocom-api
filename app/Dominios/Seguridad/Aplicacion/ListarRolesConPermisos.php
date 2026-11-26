@@ -32,7 +32,8 @@ final class ListarRolesConPermisos
      */
     public function ejecutar(): Collection
     {
-        $roles = SecRole::query()->orderBy('name')->get();
+        // Solo los roles del panel: los de ámbito `app` (transitorios hasta A5) no se administran acá.
+        $roles = SecRole::query()->where('ambito', 'panel')->orderBy('name')->get();
 
         $idsPantalla = DB::table('sec_menu')
             ->whereNull('deleted_at')
@@ -47,6 +48,7 @@ final class ListarRolesConPermisos
             ->whereNull('rp.deleted_at')
             ->whereNull('p.deleted_at')
             ->where('p.state', true)
+            ->where('p.ambito', 'panel')
             ->get(['rp.id_role', 'rp.id_permission'])
             ->groupBy(static fn (object $fila): int => (int) $fila->id_role);
 
@@ -95,6 +97,7 @@ final class ListarRolesConPermisos
         $total = DB::table('sec_permission')
             ->whereNull('deleted_at')
             ->where('state', true)
+            ->where('ambito', 'panel')
             ->count();
 
         return ['pantallas' => $pantallas, 'acciones' => $total - $pantallas];

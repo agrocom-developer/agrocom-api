@@ -116,8 +116,7 @@ return [
      */
     'roles' => [
         'titulo' => 'Permisos',
-        'subtitulo' => 'Qué pantallas ve cada rol y qué puede hacer dentro de ellas. Los roles se asignan a las cuentas desde Usuarios.',
-        'nuevo' => 'Nuevo rol',
+        'subtitulo' => 'El administrador ve y hace todo. Marca qué pantallas ve el operador y qué puede hacer dentro de ellas; los roles se asignan a las cuentas desde Usuarios.',
         'col_rol' => 'Rol',
         'col_pantallas' => 'Pantallas',
         'col_acciones' => 'Acciones',
@@ -147,7 +146,7 @@ return [
         'editar_subtitulo' => 'Nombre, descripción y estado. Los permisos se administran aparte.',
         'seccion_identidad' => 'Identidad del rol',
         'campo_nombre' => 'Nombre interno',
-        'campo_nombre_ayuda' => 'Minúsculas, dígitos y guion bajo, hasta 30 caracteres. Es el identificador del rol y no se libera si el rol se elimina: el catálogo de roles es del sistema.',
+        'campo_nombre_ayuda' => 'Es la identidad del rol en el sistema y no se cambia: el panel tiene dos roles fijos, administrador y operador.',
         'campo_descripcion' => 'Descripción',
         'campo_descripcion_ayuda' => 'Una línea que explique qué hace este rol. Hasta 150 caracteres.',
         'campo_activo' => 'Activo',
@@ -198,35 +197,31 @@ return [
         'switch_titulo' => 'Cambiar de rol activo',
         'badge_activo' => 'Rol activo',
         'meta' => [
-            'dueno' => [
-                'nombre' => 'Dueño',
-                'descripcion' => 'Acceso total: proveedores, solicitudes, roles y gestión de otros dueños.',
-                'permisos' => ['Todos los módulos', 'Aprobaciones', 'Permisos'],
-            ],
-            'encargado_operaciones' => [
+            'administrador' => [
                 'nombre' => 'Administrador',
-                'descripcion' => 'Aprueba proveedores, pilotos, drones y documentos, modera calificaciones y resuelve reclamos.',
-                'permisos' => ['Aprobaciones', 'Solicitudes', 'Calificaciones y reclamos'],
+                'descripcion' => 'Ve y hace todo en el panel, incluidos usuarios, roles y configuración.',
+                'permisos' => ['Todos los módulos', 'Usuarios y roles', 'Configuración'],
             ],
-            'soporte' => [
-                'nombre' => 'Soporte',
-                'descripcion' => 'Atiende solicitudes, clientes y reclamos, e interviene en una negociación con motivo.',
-                'permisos' => ['Solicitudes', 'Clientes', 'Reclamos'],
+            'operador' => [
+                'nombre' => 'Operador',
+                'descripcion' => 'Ve y hace lo que el administrador marca en la matriz de su rol.',
+                'permisos' => ['Lo que marque la matriz'],
             ],
+            // Roles de app, transitorios hasta la fase A5: no son del panel.
             'piloto' => [
                 'nombre' => 'Piloto de dron',
                 'descripcion' => 'Ofrece, ejecuta los servicios adjudicados y sube las fotos desde la app.',
                 'permisos' => ['Ofertas', 'Servicios', 'Fotos'],
             ],
-            'jefe_campo' => [
-                'nombre' => 'Jefe de campo',
-                'descripcion' => 'Rol retirado del marketplace; se conserva mientras tenga cuentas asignadas.',
+            'cliente' => [
+                'nombre' => 'Cliente',
+                'descripcion' => 'Cuenta de la app del cliente: publica solicitudes y califica al proveedor.',
                 'permisos' => [],
             ],
-            'admin_plataforma' => [
-                'nombre' => 'Administrador de plataforma',
-                'descripcion' => 'Acceso técnico total sobre la instalación, incluida la gestión de dueños.',
-                'permisos' => ['Todos los módulos', 'Permisos', 'Configuración'],
+            'proveedor' => [
+                'nombre' => 'Proveedor',
+                'descripcion' => 'Cuenta de la app del piloto: ofrece, ejecuta los servicios y gestiona su equipo.',
+                'permisos' => [],
             ],
         ],
     ],
@@ -336,8 +331,8 @@ return [
         'campo_password_ayuda_edicion' => 'Déjalo vacío para conservar la contraseña actual.',
         'campo_persona' => 'Persona asociada',
         'campo_persona_placeholder' => 'Sin persona asociada',
-        'campo_roles' => 'Roles',
-        'campo_roles_ayuda' => 'Elige uno o más roles. Al guardar, reemplazan a los roles anteriores.',
+        'campo_roles' => 'Rol',
+        'campo_roles_ayuda' => 'El administrador ve y hace todo. El operador ve lo que marque la matriz de su rol.',
         'estado_form' => 'Los cambios se guardan al confirmar.',
 
         // Tipo de cuenta (tarea 65, HU-41): interna (con roles) o de portal
@@ -682,7 +677,12 @@ return [
         'rol_protegido_ultima_llave' => "No se puede dejar el sistema sin ningún rol activo que tenga ':permiso': sería el último rol con ese permiso, y nadie podría volver a otorgarlo desde el panel.",
         'rol_protegido_rol_activo_propio' => "No puedes quitarle ':permiso' al rol con el que estás operando: perderías el acceso a esta pantalla en tu siguiente acción.",
         'rol_protegido_ultimo_portador' => "':permiso' quedaría sin ningún rol activo que lo tenga. Otórgaselo antes a otro rol: nadie puede conceder un permiso que no tiene, así que un permiso que ningún rol tiene no se puede recuperar desde el panel.",
-        'rol_protegido_permiso_reservado' => "':permiso' es exclusivo del administrador de plataforma: no se puede otorgar al rol ':rol'.",
+        'rol_protegido_permiso_reservado' => "':permiso' es exclusivo del administrador: no se puede otorgar al rol ':rol'.",
+        'rol_protegido_permiso_de_app' => "':permiso' lo ejerce una cuenta de la app y no se asigna a un rol del panel.",
+        'rol_protegido_matriz_administrador' => 'El administrador ve y hace todo: su matriz de permisos no se edita.',
+        'rol_protegido_catalogo_fijo' => 'El panel tiene dos roles, administrador y operador. No se crean roles nuevos ni se cambia el nombre de estos.',
+        'rol_protegido_rol_del_panel' => "El rol ':rol' es del sistema: no se elimina ni se desactiva.",
+        'rol_protegido_un_solo_rol' => 'Una cuenta del panel tiene un solo rol: administrador u operador.',
         'rol_protegido_tiene_usuarios_uno' => "El rol ':rol' tiene :cantidad usuario asignado. Reasígnalos antes de eliminarlo.",
         'rol_protegido_tiene_usuarios_varios' => "El rol ':rol' tiene :cantidad usuarios asignados. Reasígnalos antes de eliminarlo.",
         'rol_protegido_es_rol_activo' => "No puedes eliminar ni desactivar ':rol': es el rol con el que estás operando.",
@@ -708,6 +708,7 @@ return [
         'usuario_contrato_prohibido_interno' => 'Una cuenta interna no tiene contrato asociado.',
         'usuario_contrato_invalido' => 'El contrato elegido no existe o no está vigente.',
         'usuario_roles_requerido' => 'Falta el campo de roles.',
+        'usuario_roles_un_solo_rol' => 'Elige un solo rol: administrador u operador.',
         'usuario_roles_prohibido_portal' => 'Una cuenta de portal no tiene roles.',
         'usuario_rol_invalido' => 'Uno de los roles seleccionados no es válido.',
         'perfil_password_actual_requerida' => 'Ingresa tu contraseña actual para poder cambiarla.',

@@ -4,7 +4,6 @@ use App\Dominios\Flota\Contratos\LecturaEquipos;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Api\DronesController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\MiProveedorController;
 use App\Dominios\Seguridad\Contratos\IdentidadOperarioToken;
-use Database\Seeders\Catalogo\SeguridadSeeder;
 use Illuminate\Auth\GenericUser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -176,11 +175,10 @@ test('el piloto ve solo los drones de sus equipos y nunca los de otro proveedor'
 });
 
 test('el permiso de ver lo tiene el piloto y no el cliente', function () {
-    $catalogo = new ReflectionClass(SeguridadSeeder::class);
-    $de = fn (string $constante): array => $catalogo->getReflectionConstant($constante)->getValue();
+    $de = fn (string $lista): array => config('permisos_app.'.$lista);
 
-    expect($de('PERMISOS_PILOTO'))->toContain('proveedores.cuenta.ver')
-        ->and($de('PERMISOS_PROVEEDOR'))->not->toContain('proveedores.cuenta.ver')
-        ->and($de('PERMISOS_CLIENTE'))->not->toContain('proveedores.cuenta.ver')
-        ->and($de('PERMISOS_PILOTO'))->not->toContain('proveedores.cuenta.gestionar');
+    expect($de('piloto'))->toContain('proveedores.cuenta.ver')
+        ->and($de('proveedor'))->not->toContain('proveedores.cuenta.ver')
+        ->and($de('cliente'))->not->toContain('proveedores.cuenta.ver')
+        ->and($de('piloto'))->not->toContain('proveedores.cuenta.gestionar');
 });

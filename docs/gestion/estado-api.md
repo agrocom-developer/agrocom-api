@@ -15,6 +15,7 @@ Qué está hecho en `agrocom-api` para las apps móviles (`cliente` y `piloto` d
 | Seguimiento | Inicio, avance y cierre del piloto con fotos de avance (menos de 300 KB), chat entre cliente y proveedor adjudicado con cursor, última ubicación del piloto solo durante la ejecución, y preferencias de aviso por zona, región y hectáreas. | ADR 0040, 0041 |
 | Calificación y reclamos | Calificación bidireccional (la del cliente por el proveedor es privada), reporte de una calificación abusiva, reclamos con mensajes, retiro y una apelación, y métricas. | ADR 0031, 0033, 0034, 0039 |
 | Ejecución offline | `GET /api/sync/catalogo` con cursor (solicitudes adjudicadas y en ejecución del equipo), registros `inicio`, `avance`, `cierre` y `mensaje` por sus rutas REST idempotentes por `uuid_cliente` y `POST /api/solicitudes/{id}/evidencias` en cola aparte. | ADR 0005, 0040; especificación §10.3 |
+| Roles del panel | El panel tiene dos roles, `administrador` (todos los permisos del panel, matriz fija) y `operador` (la matriz que marca el administrador, con su preset de solo lectura); los permisos reservados al administrador no se asignan al operador y los sensibles se asignan con aviso. Una cuenta de panel tiene un solo rol. Los roles `cliente`, `proveedor` y `piloto` son de ámbito `app` y siguen vivos solo hasta la fase del contrato del token. | ADR 0046 |
 | Retiro de la operación interna | El alcance de finanzas, inventario y mantenimiento de flota no forma parte del marketplace; sus endpoints y esquemas no están en el contrato. | ADR 0035 |
 
 ### Contrato

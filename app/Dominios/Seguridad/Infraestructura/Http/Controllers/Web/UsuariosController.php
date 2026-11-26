@@ -13,7 +13,9 @@ use App\Dominios\Seguridad\Aplicacion\ListarBitacora;
 use App\Dominios\Seguridad\Aplicacion\ListarUsuarios;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Dominio\Excepciones\PermisoDenegado;
+use App\Dominios\Seguridad\Dominio\Excepciones\RolProtegido;
 use App\Dominios\Seguridad\Dominio\Excepciones\UsuarioDuplicado;
+use App\Dominios\Seguridad\Dominio\PermisosReservados;
 use App\Dominios\Seguridad\Dominio\TipoUsuario;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
@@ -35,18 +37,16 @@ use Illuminate\View\View;
  * cualquier guarda de negocio y cada camino invoca su propio caso de uso —
  * {@see AsignarRolesUsuario} (HU-01) para `interno`, {@see CrearCuentaPortal}
  * (tarea 65) para `cliente` — sin que ninguno de los dos reimplemente la
- * guarda del otro (roles/`asignar_rol_dueno` es solo del camino interno;
+ * guarda del otro (rol/`asignar_rol_administrador` es solo del camino interno;
  * contrato vigente/`seguridad.usuario.portal` es solo del camino portal).
  *
- * Siete permisos de grano fino
+ * Permisos de grano fino
  * (`seguridad.usuario.ver`/`.crear`/`.editar`/`.eliminar`/`.bloquear`/
- * `.asignar_rol_dueno`/`.portal`), verificados DENTRO del controlador contra
+ * `.asignar_rol_administrador`/`.portal`), verificados DENTRO del controlador contra
  * el ROL ACTIVO vía {@see AutorizacionPanelWeb} — mismo criterio que el
- * resto del panel. `asignar_rol_dueno` no tiene una acción HTTP propia, pero
- * sí gatea `store`/`update` cuando el payload toca un rol que a su vez tiene
- * ese permiso otorgado (tarea 62: antes solo filtraba el `<select>`,
- * cosmético — un `PUT` armado a mano con ese id en `roles[]` lo aceptaba
- * igual si el actor lo tenía en CUALQUIER rol asignado, no en el activo).
+ * resto del panel. `asignar_rol_administrador` no tiene una acción HTTP propia, pero
+ * sí gatea `store`/`update` cuando el payload asigna o quita el rol `administrador`
+ * (la cuenta de panel tiene un solo rol, ADR 0046).
  * `seguridad.usuario.portal` es análogo para el camino `cliente`: se exige
  * ADEMÁS de `crear`/`editar`, nunca en su lugar.
  *
@@ -76,7 +76,7 @@ final class UsuariosController
 
     private const PERMISO_BLOQUEAR = 'seguridad.usuario.bloquear';
 
-    private const PERMISO_ROL_DUENO = 'seguridad.usuario.asignar_rol_dueno';
+    private const PERMISO_ROL_ADMINISTRADOR = 'seguridad.usuario.asignar_rol_administrador';
 
     private const PERMISO_VER_COMO = 'seguridad.usuario.ver_como';
 
@@ -131,7 +131,7 @@ final class UsuariosController
 
         $rolesDeseados = array_map('intval', $datos['roles'] ?? []);
 
-        $this->abortarSiFaltaPermisoRolDueno($request, [], $rolesDeseados);
+        $this->abortarSiFaltaPermisoRolAdministrador($request, [], $rolesDeseados);
 
         try {
             $usuario = $asignarRoles->ejecutar(
@@ -146,7 +146,7 @@ final class UsuariosController
                 roleIds: $rolesDeseados,
                 idRolActivo: $this->rolActivoId($request),
             );
-        } catch (UsuarioDuplicado|PermisoDenegado $excepcion) {
+        } catch (UsuarioDuplicado|PermisoDenegado|RolProtegido $excepcion) {
             return redirect()->back()->withErrors(['estado' => $excepcion->getMessage()]);
         }
 
@@ -192,9 +192,12 @@ final class UsuariosController
         // panel no las edita.
         abort_if($usuario->type === TipoUsuario::Cliente, 404);
 
+        // TRANSITORIO hasta A2 (tipo de cuenta): las cuentas de app llevan rol de ámbito `app` y el panel no las edita.
+        abort_if($this->tieneRolDeApp($usuario), 404);
+
         $rolesDeseados = array_map('intval', $datos['roles'] ?? []);
 
-        $this->abortarSiFaltaPermisoRolDueno($request, $usuario->idsDeRoles(), $rolesDeseados);
+        $this->abortarSiFaltaPermisoRolAdministrador($request, $usuario->idsDeRoles(), $rolesDeseados);
 
         try {
             $asignarRoles->ejecutar(
@@ -209,7 +212,7 @@ final class UsuariosController
                 roleIds: $rolesDeseados,
                 idRolActivo: $this->rolActivoId($request),
             );
-        } catch (UsuarioDuplicado|PermisoDenegado $excepcion) {
+        } catch (UsuarioDuplicado|PermisoDenegado|RolProtegido $excepcion) {
             return redirect()->back()->withErrors(['estado' => $excepcion->getMessage()]);
         }
 
@@ -316,61 +319,61 @@ final class UsuariosController
     }
 
     /**
-     * Catálogo completo de roles, salvo los que a su vez tienen otorgado
-     * `asignar_rol_dueno` en el catálogo cuando el actor autenticado no tiene
-     * ese permiso en su rol activo: es solo para no ofrecer en el `<select>`
-     * una opción que el submit va a rechazar — la guarda real de la acción
-     * HTTP es {@see self::abortarSiFaltaPermisoRolDueno()}. Por permiso del
-     * rol, no por el nombre `dueno`: el rol que hoy lo tiene podría
-     * renombrarse, o el permiso otorgarse a otro rol nuevo, sin que este
-     * filtro deje de aplicar.
+     * Los dos roles del panel; `administrador` solo se ofrece si el actor puede
+     * asignarlo (`asignar_rol_administrador`). Es solo para no ofrecer una opción
+     * que el submit va a rechazar — la guarda real es
+     * {@see self::abortarSiFaltaPermisoRolAdministrador()}.
      *
      * @return Collection<int, SecRole>
      */
     private function rolesDisponibles(Request $request): Collection
     {
-        $roles = SecRole::query()->orderBy('name')->get();
+        $roles = SecRole::query()->whereIn('name', PermisosReservados::ROLES_DEL_PANEL)->orderBy('name')->get();
 
-        if (! $this->autorizacion->tienePermiso($request, self::PERMISO_ROL_DUENO)) {
-            $idsRolesRestringidos = $this->idsRolesQueExigenPermisoDueno();
-
-            $roles = $roles->reject(fn (SecRole $rol) => in_array($rol->id, $idsRolesRestringidos, true))->values();
+        if (! $this->autorizacion->tienePermiso($request, self::PERMISO_ROL_ADMINISTRADOR)) {
+            $roles = $roles->reject(fn (SecRole $rol) => $rol->name === PermisosReservados::ROL_ADMINISTRADOR)->values();
         }
 
         return $roles;
     }
 
     /**
-     * Guarda real de `asignar_rol_dueno` a nivel de acción HTTP (antes de
-     * esta tarea, el permiso solo filtraba el `<select>` en
-     * {@see self::rolesDisponibles()} — cosmético, no bloqueaba nada: un
-     * `PUT` armado a mano con el id de un rol restringido en `roles[]`
-     * pasaba igual). Se evalúa ANTES de invocar `AsignarRolesUsuario`, con el
-     * mismo criterio 403 que el resto de los permisos de este controlador,
-     * para que la respuesta HTTP sea consistente entre los seis permisos de
-     * grano fino — la guarda interna de `AsignarRolesUsuario` (evaluada
-     * contra el mismo rol activo) queda como defensa en profundidad para
-     * quien invoque el caso de uso sin pasar por acá.
-     *
-     * Por permiso del rol afectado, no por el nombre `dueno`: solo aborta si
-     * el conjunto de roles que cambia de estado (se asigna o se quita)
-     * incluye alguno que tenga otorgado `asignar_rol_dueno`.
+     * Guarda real de `asignar_rol_administrador` a nivel de acción HTTP, antes de
+     * invocar `AsignarRolesUsuario` (que repite la guarda como defensa en
+     * profundidad). Aborta con 403 si el rol que cambia de estado (se asigna o se
+     * quita) es `administrador` y el actor no tiene el permiso.
      *
      * @param  list<int>  $rolesActuales
      * @param  list<int>  $rolesDeseados
      */
-    private function abortarSiFaltaPermisoRolDueno(Request $request, array $rolesActuales, array $rolesDeseados): void
+    private function abortarSiFaltaPermisoRolAdministrador(Request $request, array $rolesActuales, array $rolesDeseados): void
     {
         $rolesAfectados = array_merge(
             array_diff($rolesDeseados, $rolesActuales),
             array_diff($rolesActuales, $rolesDeseados),
         );
 
-        if (array_intersect($rolesAfectados, $this->idsRolesQueExigenPermisoDueno()) === []) {
+        if ($rolesAfectados === []) {
             return;
         }
 
-        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_ROL_DUENO), 403);
+        $tocaAdministrador = SecRole::query()
+            ->whereIn('id', $rolesAfectados)
+            ->where('name', PermisosReservados::ROL_ADMINISTRADOR)
+            ->exists();
+
+        if ($tocaAdministrador) {
+            abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_ROL_ADMINISTRADOR), 403);
+        }
+    }
+
+    /** Cuenta de app: tiene algún rol de ámbito `app` (`cliente`, `proveedor`, `piloto`). */
+    private function tieneRolDeApp(SecUser $usuario): bool
+    {
+        return SecRole::query()
+            ->whereIn('id', $usuario->idsDeRoles())
+            ->where('ambito', 'app')
+            ->exists();
     }
 
     /**
@@ -404,11 +407,5 @@ final class UsuariosController
             ->pluck('persona_id');
 
         return collect($this->personas->vivasExcepto($idsAsignados));
-    }
-
-    /** @return list<int> */
-    private function idsRolesQueExigenPermisoDueno(): array
-    {
-        return $this->roles->idsDeRolesConPermiso(self::PERMISO_ROL_DUENO);
     }
 }

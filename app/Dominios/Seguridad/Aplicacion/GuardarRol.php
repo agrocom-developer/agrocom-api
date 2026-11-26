@@ -3,20 +3,19 @@
 namespace App\Dominios\Seguridad\Aplicacion;
 
 use App\Dominios\Seguridad\Dominio\Excepciones\PermisoDenegado;
-use App\Dominios\Seguridad\Dominio\Excepciones\RolDuplicado;
 use App\Dominios\Seguridad\Dominio\Excepciones\RolProtegido;
+use App\Dominios\Seguridad\Dominio\PermisosReservados;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
-use Illuminate\Database\QueryException;
 
 /**
- * Alta y edición de un rol del catálogo: nombre, descripción y estado. Los
- * permisos NO se tocan acá — eso es {@see AsignarPermisosRol}, que tiene sus
- * propias guardas. Un rol nuevo nace sin ninguno.
+ * Edición de un rol del catálogo: descripción y estado. Los permisos NO se tocan
+ * acá — eso es {@see AsignarPermisosRol}, que tiene sus propias guardas.
  *
- * Alta y edición comparten caso de uso a propósito, mismo criterio que
- * {@see AsignarRolesUsuario}: si la guarda de estado viviera solo en el alta,
- * se la esquivaría creando el rol y editándolo después.
+ * El panel tiene dos roles, `administrador` y `operador` (ADR 0046, punto 4), y
+ * son fijos: no se crean roles nuevos ni se cambia el nombre de estos (el código
+ * los nombra), y el administrador no se desactiva. Una cuenta de panel tiene un
+ * solo rol, así que un tercer rol no tendría a quién asignarse.
  *
  * Desactivar un rol (`state = false`) no es un cambio cosmético: deja de ser
  * elegible al iniciar sesión y deja de contar como portador de sus permisos
@@ -39,14 +38,13 @@ final class GuardarRol
     public function __construct(private readonly CatalogoDePermisos $catalogo) {}
 
     /**
-     * @param  SecRole|null  $rol  `null` = alta; con valor = edición.
+     * @param  SecRole|null  $rol  `null` = alta, que se rechaza (el catálogo es fijo); con valor = edición.
      * @param  int|null  $idRolActivo  Ver la nota de {@see AsignarPermisosRol::ejecutar()}.
      *
      * @throws PermisoDenegado si al actor le falta `crear`/`editar`.
-     * @throws RolProtegido si la desactivación dejaría al actor afuera o al
-     *                      sistema sin quién administre permisos.
-     * @throws RolDuplicado si el nombre ya pertenece a otro rol (vivo o dado
-     *                      de baja: `sec_role.name` es UNIQUE plano).
+     * @throws RolProtegido si es un alta, un cambio de nombre o la desactivación
+     *                      del administrador; o si desactivar dejaría al actor
+     *                      afuera o al sistema sin quién administre permisos.
      */
     public function ejecutar(
         SecUser $actor,
@@ -63,25 +61,23 @@ final class GuardarRol
             throw PermisoDenegado::porFaltaDePermiso($codigo);
         }
 
-        if (! $esAlta && $rol->state && ! $activo) {
+        // Catálogo fijo: solo se edita la descripción y el estado de un rol del panel, nunca su nombre.
+        if ($rol === null || ! PermisosReservados::esRolDelPanel((string) $rol->name) || $nombre !== $rol->name) {
+            throw RolProtegido::porCatalogoFijo();
+        }
+
+        if (! $activo && PermisosReservados::admiteElRol((string) $rol->name)) {
+            throw RolProtegido::porRolDelPanel((string) $rol->name);
+        }
+
+        if ($rol->state && ! $activo) {
             $this->verificarQueSePuedeDesactivar($rol, $idRolActivo);
         }
 
-        $rol ??= new SecRole;
-        $rol->name = $nombre;
         $rol->description = $descripcion;
         $rol->state = $activo;
-
-        if (! $rol->exists) {
-            $rol->created_by = $actor->id;
-        }
         $rol->updated_by = $actor->id;
-
-        try {
-            $rol->save();
-        } catch (QueryException $excepcion) {
-            $this->relanzarComoDuplicado($excepcion, $nombre);
-        }
+        $rol->save();
 
         return $rol->refresh();
     }
@@ -100,27 +96,6 @@ final class GuardarRol
         if ($conLaLlave === [$rol->id]) {
             throw RolProtegido::porUltimaLlave(self::PERMISO_LLAVE);
         }
-    }
-
-    /**
-     * Traduce la violación del índice único de `sec_role.name` a una
-     * excepción de dominio legible — nunca deja propagarse el 500 crudo del
-     * motor (mismo criterio y mismo problema de portabilidad que
-     * {@see AsignarRolesUsuario::relanzarComoDuplicado()}: Postgres nombra el
-     * índice, SQLite nombra tabla.columna, y los tests corren sobre SQLite).
-     *
-     * @throws RolDuplicado
-     * @throws QueryException si la violación no es la contemplada.
-     */
-    private function relanzarComoDuplicado(QueryException $excepcion, string $nombre): never
-    {
-        $mensaje = $excepcion->getMessage();
-
-        if (str_contains($mensaje, 'sec_role_name_unique') || str_contains($mensaje, 'sec_role.name')) {
-            throw RolDuplicado::porNombre($nombre);
-        }
-
-        throw $excepcion;
     }
 
     private function actorTienePermiso(SecUser $actor, ?int $idRolActivo, string $codigo): bool
