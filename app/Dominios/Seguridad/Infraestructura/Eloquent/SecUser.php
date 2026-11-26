@@ -59,7 +59,10 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string $password
  * @property TipoUsuario $type Heredado (`interno` | `cliente`): sin uso desde `tipo_cuenta`; se elimina en la reconsolidación.
  * @property TipoCuenta $tipo_cuenta `panel`, `cliente` o `proveedor` (ADR 0046): una cuenta tiene un solo tipo para siempre.
- * @property int|null $persona_id
+ * @property string|null $telefono Teléfono de la cuenta en E.164: único por tipo de cuenta (ADR 0046). No prueba posesión mientras `telefono_verificado_en` sea nulo.
+ * @property int|null $persona_legada_id Vínculo con `per_personas` (personal anterior), sin FK, hasta su retiro.
+ * @property int|null $persona_id `sec_personas.id` en las cuentas de app; nulo en las de panel.
+ * @property bool $persona_datos_difieren Los datos de persona enviados al registrarse no coinciden con los que ya estaban: lo revisa el administrador.
  * @property string|null $foto_perfil_ref
  * @property bool $state
  */
@@ -119,7 +122,9 @@ class SecUser extends ModeloDominio implements AuthenticatableContract, CanReset
         'password',
         'type',
         'tipo_cuenta',
+        'telefono',
         'persona_id',
+        'persona_datos_difieren',
         'state',
     ];
 
@@ -136,6 +141,9 @@ class SecUser extends ModeloDominio implements AuthenticatableContract, CanReset
             'type' => TipoUsuario::class,
             'tipo_cuenta' => TipoCuenta::class,
             'persona_id' => 'integer',
+            'persona_datos_difieren' => 'boolean',
+            'telefono_verificado_en' => 'datetime',
+            'email_verificado_en' => 'datetime',
             'state' => 'boolean',
             'password' => 'hashed',
         ];
