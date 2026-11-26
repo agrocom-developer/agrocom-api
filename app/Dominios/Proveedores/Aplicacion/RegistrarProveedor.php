@@ -36,7 +36,7 @@ final class RegistrarProveedor
     ) {}
 
     /**
-     * @param  array{tipo: string, nombre: string, username: string, email: ?string, password: string, telefono: ?string, razon_social: string, documento_fiscal: ?string, zona_base_id: ?int, radio_operacion_km: ?string, licencia_numero?: ?string, licencia_vence?: ?string, categoria_habilitacion?: ?string, nombres?: ?string, apellidos?: ?string, documento_identidad?: ?string, fecha_nacimiento?: ?string, registrado_por?: ?int}  $datos
+     * @param  array{tipo: string, nombre: string, username: string, email: ?string, password: string, telefono: ?string, razon_social: string, documento_fiscal: ?string, zona_base_id: ?int, radio_operacion_km: ?string, licencia_numero?: ?string, licencia_vence?: ?string, categoria_habilitacion?: ?string, nombres?: ?string, apellidos?: ?string, documento_identidad?: ?string, fecha_nacimiento?: ?string, registrado_por?: ?int, documento_tipo?: ?string, documento_numero?: ?string}  $datos
      *
      * @throws CuentaDuplicada si el `username` o el `email` ya existen.
      * @throws CuentaYaRegistrada si el teléfono o el documento ya tienen una cuenta de proveedor.

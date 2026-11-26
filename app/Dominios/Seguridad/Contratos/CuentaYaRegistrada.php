@@ -19,7 +19,11 @@ final class CuentaYaRegistrada extends RuntimeException
         ]));
     }
 
-    /** El cuerpo de la respuesta `409`, igual para el teléfono y para el documento. */
+    /**
+     * El cuerpo de la respuesta `409`, igual para el teléfono y para el documento.
+     *
+     * @return array{message: string, codigo: string, tipo_cuenta: string}
+     */
     public function cuerpo(): array
     {
         return [

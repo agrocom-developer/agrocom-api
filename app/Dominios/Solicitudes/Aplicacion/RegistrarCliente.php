@@ -32,7 +32,7 @@ final class RegistrarCliente
     ) {}
 
     /**
-     * @param  array{nombre: string, username: string, email: ?string, password: string, tipo: string, razon_social: ?string, documento_fiscal: ?string, telefono: ?string, contactos?: list<array{nombre: string, telefono: string, cargo?: ?string, es_principal?: ?bool}>, registrado_por?: ?int}  $datos
+     * @param  array{nombre: string, username: string, email: ?string, password: string, tipo: string, razon_social: ?string, documento_fiscal: ?string, telefono: ?string, contactos?: list<array{nombre: string, telefono: string, cargo?: ?string, es_principal?: ?bool}>, registrado_por?: ?int, documento_tipo?: ?string, documento_numero?: ?string, nombres?: ?string, apellidos?: ?string, fecha_nacimiento?: ?string}  $datos
      *
      * @throws CuentaDuplicada si el `username` o el `email` ya existen.
      * @throws CuentaYaRegistrada si el teléfono o el documento ya tienen una cuenta de cliente.
