@@ -11,7 +11,7 @@
 
 Los dispositivos del lote comparten la IP del enlace satelital: limitar solo por IP bloquearía a todo el equipo por los errores de una persona. El cubo por usuario aísla ese caso, y el cubo por IP, más amplio, frena el barrido de usuarios distintos desde un mismo origen. Superado el límite, la API responde `429` con `Retry-After`.
 
-El panel web y `GET /api/version` conservan su `throttle:6,1` por IP.
+El panel web conserva su `throttle:6,1` por IP.
 
 ## Vigencia de los tokens
 

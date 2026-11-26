@@ -58,7 +58,7 @@ final class SeguridadServiceProvider extends ServiceProvider
     public function register(): void
     {
         // Frontera de Seguridad hacia otros módulos (ADR 0003, regla 2): un
-        // controlador web de OTRO módulo (p. ej. Distribucion, HU-20) nunca
+        // controlador web de OTRO módulo (p. ej. Solicitudes) nunca
         // importa `SecUser` — pide el permiso/la cáscara por acá.
         $this->app->bind(AutorizacionPanelWeb::class, AutorizacionPanelWebSesion::class);
 

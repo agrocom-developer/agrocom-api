@@ -142,7 +142,7 @@ test('los ejemplos cubren las operaciones que las apps necesitan', function () {
     $cubiertas = array_unique(array_column(ejemplosDeApi(), 'operationId'));
     $necesarias = [
         // Acceso y sesión de las tres apps.
-        'emitirTokenDispositivo', 'verSesionCampo', 'cerrarSesionCampo', 'obtenerVersionVigente',
+        'emitirTokenDispositivo', 'verSesionCampo', 'cerrarSesionCampo',
         // Sincronización del lote (piloto y auxiliar).
         'obtenerCatalogoSincronizacion', 'sincronizarLote', 'subirEvidencia',
         // Negociación: mapa de abiertas, ofertas y contraofertas (requieren red).
