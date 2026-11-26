@@ -43,6 +43,15 @@
 
     <nav class="ag-drawer__nav" aria-label="{{ __('ui.rail.aria') }}">
         @foreach ($modulos as $index => $modulo)
+            @if (($modulo['items'] ?? []) === [] || collect($modulo['items'])->isEmpty())
+                @if (! empty($modulo['href']))
+                    <a href="{{ $modulo['href'] }}" class="ag-drawer__direct {{ $modulo['active'] ? 'is-active' : '' }}" @if ($modulo['active']) aria-current="page" @endif>
+                        <x-atoms.icon :name="$modulo['icono']" size="sm" />
+                        <span>{{ __($modulo['label']) }}</span>
+                    </a>
+                @endif
+                @continue
+            @endif
             <x-organisms.collapsible-menu-group
                 :label="$modulo['label']"
                 :icon="$modulo['icono']"

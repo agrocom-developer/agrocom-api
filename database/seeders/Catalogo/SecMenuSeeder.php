@@ -9,8 +9,8 @@ use Illuminate\Database\Seeder;
 /**
  * Catálogo del menú de tres niveles del panel (módulos raíz en el riel de nivel
  * 1, ítems hijos en el sidebar de nivel 2), según
- * `docs/especificacion/marketplace.md` §10.4: Mercado, Proveedores, Soporte,
- * Seguridad y Sistema. El mercado de fumigación es de negociación: no hay trabajos
+ * `docs/especificacion/marketplace.md` §10.4: Inicio (acceso directo), Mercado, Proveedores,
+ * Atención, Seguridad y Sistema. El mercado de fumigación es de negociación: no hay trabajos
  * internos, cuadrillas, bases, personal propio, baterías ni fichas de dron.
  *
  * Corre en todos los entornos, producción incluida — igual que
@@ -76,6 +76,8 @@ class SecMenuSeeder extends Seeder
         'menu.comercial.items.reportes_cliente',
         // Retirados con el cambio de enfoque: el auxiliar ya no es usuario y el
         // equipo (piloto + dron) se ve en la ficha del piloto, no en una pantalla.
+        'menu.solicitudes.items.tablero',
+        'menu.operacion.items.tablero',
         'menu.proveedores.items.auxiliares',
         'menu.proveedores.items.equipos_flota',
         // Los módulos raíz, al final: ya sin hijos vivos.
@@ -90,17 +92,21 @@ class SecMenuSeeder extends Seeder
 
     public function run(): void
     {
+        // Inicio no es un módulo con ítems: es un acceso directo del riel al
+        // tablero (un módulo sin hijos y con ruta propia).
+        $this->acceso('inicio', 'home', 0, ruta: 'panel.dashboard', codigoPermiso: 'seguridad.dashboard.ver');
         $mercado = $this->modulo('solicitudes', 'storefront', 1);
         $proveedores = $this->modulo('proveedores', 'local_shipping', 2);
-        $soporte = $this->modulo('soporte', 'headset_mic', 3);
+        $atencion = $this->modulo('atencion', 'support_agent', 3);
         $seguridad = $this->modulo('seguridad', 'admin_panel_settings', 4);
         $sistema = $this->modulo('sistema', 'tune', 5);
 
-        // El tablero vivía en «Operación»: se mueve la MISMA fila (id, permiso y
-        // bitácora intactos) a Mercado antes de dar de baja el módulo viejo.
-        $this->mover('menu.operacion.items.tablero', 'menu.solicitudes.items.tablero', $mercado, 1);
-        // Las pantallas que cambian de módulo también conservan su fila.
-        $this->mover('menu.solicitudes.items.disputas', 'menu.soporte.items.disputas', $soporte, 1);
+        // Las pantallas que cambian de módulo conservan su fila (id, permiso y
+        // bitácora intactos). El tablero vivía dentro de Mercado y de
+        // «Operación»: su fila vieja se da de baja y Inicio ocupa su lugar.
+        $this->mover('menu.solicitudes.items.clientes', 'menu.atencion.items.clientes', $atencion, 1);
+        $this->mover('menu.solicitudes.items.calificaciones', 'menu.atencion.items.calificaciones', $atencion, 2);
+        $this->mover('menu.solicitudes.items.disputas', 'menu.atencion.items.reclamos', $atencion, 3);
         $this->mover('menu.catalogos.items.zonas', 'menu.sistema.items.zonas', $sistema, 1);
         $this->mover('menu.seguridad.items.organizacion', 'menu.sistema.items.organizacion', $sistema, 2);
         $this->mover('menu.seguridad.items.configuracion', 'menu.sistema.items.configuracion', $sistema, 3);
@@ -108,15 +114,11 @@ class SecMenuSeeder extends Seeder
         $this->mover('menu.solicitudes.items.avisos', 'menu.sistema.items.avisos', $sistema, 5);
         $this->retirarEntradas(self::RETIRADAS);
 
-        // Mercado (ADR 0027, 0031, 0033, 0039): el ciclo de la solicitud, sus
-        // clientes y la calidad del servicio. Cada ítem va gateado por el
-        // permiso de LISTADO (`ver`); cancelar y moderar rigen los botones de
-        // cada pantalla, no la visibilidad del ítem.
-        $this->item($mercado, 'solicitudes', 'tablero', 'dashboard', 1, ruta: 'panel.dashboard', codigoPermiso: 'seguridad.dashboard.ver');
-        $this->item($mercado, 'solicitudes', 'solicitudes', 'request_quote', 2, ruta: 'panel.solicitudes.index', codigoPermiso: 'solicitudes.solicitud.ver');
-        $this->item($mercado, 'solicitudes', 'clientes', 'agriculture', 3, ruta: 'panel.clientes.index', codigoPermiso: 'solicitudes.cliente.ver');
-        $this->item($mercado, 'solicitudes', 'calificaciones', 'star', 4, ruta: 'panel.calificaciones.index', codigoPermiso: 'calificaciones.calificacion.ver');
-        $this->item($mercado, 'solicitudes', 'metricas', 'insights', 5, ruta: 'panel.metricas.index', codigoPermiso: 'metricas.panel.ver');
+        // Mercado (ADR 0027, 0031, 0033, 0039): el ciclo de la solicitud y su
+        // medición. Cada ítem va gateado por el permiso de LISTADO (`ver`);
+        // cancelar rige el botón de cada pantalla, no la visibilidad del ítem.
+        $this->item($mercado, 'solicitudes', 'solicitudes', 'request_quote', 1, ruta: 'panel.solicitudes.index', codigoPermiso: 'solicitudes.solicitud.ver');
+        $this->item($mercado, 'solicitudes', 'metricas', 'insights', 2, ruta: 'panel.metricas.index', codigoPermiso: 'metricas.panel.ver');
 
         // Proveedores (ADR 0032): la cola de aprobación. Documentos va primero:
         // es la cola que más se mira a diario. Aprobar, suspender y eliminar
@@ -127,10 +129,12 @@ class SecMenuSeeder extends Seeder
         $this->item($proveedores, 'proveedores', 'pilotos', 'sports_esports', 3, ruta: 'panel.pilotos.index', codigoPermiso: 'proveedores.piloto.ver');
         $this->item($proveedores, 'proveedores', 'drones_flota', 'airplanemode_active', 4, ruta: 'panel.drones-flota.index', codigoPermiso: 'flota.dron.ver');
 
-        // Soporte: los reclamos sobre un servicio ya prestado. Atender a quien
-        // usa la plataforma no es operar el mercado, aunque el reclamo nazca de
-        // una solicitud. Es el lugar de las futuras consultas.
-        $this->item($soporte, 'soporte', 'disputas', 'report', 1, ruta: 'panel.disputas.index', codigoPermiso: 'disputas.disputa.ver');
+        // Atención: la relación con quienes usan la plataforma. Los clientes, lo
+        // que opinan de un servicio (calificaciones) y lo que reclaman
+        // (reclamos). Reclamos va último: es lo que se atiende cuando llega.
+        $this->item($atencion, 'atencion', 'clientes', 'agriculture', 1, ruta: 'panel.clientes.index', codigoPermiso: 'solicitudes.cliente.ver');
+        $this->item($atencion, 'atencion', 'calificaciones', 'star', 2, ruta: 'panel.calificaciones.index', codigoPermiso: 'calificaciones.calificacion.ver');
+        $this->item($atencion, 'atencion', 'reclamos', 'report', 3, ruta: 'panel.disputas.index', codigoPermiso: 'disputas.disputa.ver');
 
         // Seguridad: quién es (usuarios), qué puede (roles), con qué entra
         // (dispositivos) y qué hizo (bitácora).
@@ -161,6 +165,36 @@ class SecMenuSeeder extends Seeder
             ->whereIn('label', $labels)
             ->get()
             ->each(fn (SecMenu $entrada) => $entrada->delete());
+    }
+
+    /**
+     * Acceso directo del riel: un módulo raíz SIN hijos que enlaza a su propia
+     * ruta (Inicio → tablero). Es visible si el rol activo tiene su permiso.
+     */
+    private function acceso(string $clave, string $icono, int $orden, string $ruta, string $codigoPermiso): SecMenu
+    {
+        $permissionId = SecPermission::query()->where('code', $codigoPermiso)->value('id');
+
+        $fila = SecMenu::query()->firstOrCreate(
+            ['label' => "menu.{$clave}.label", 'padre_id' => null],
+            [
+                'descripcion' => "menu.{$clave}.descripcion",
+                'icono' => $icono,
+                'ruta' => $ruta,
+                'orden' => $orden,
+                'permission_id' => $permissionId,
+            ],
+        );
+
+        if ($fila->ruta !== $ruta || $fila->permission_id !== $permissionId || $fila->orden !== $orden || $fila->icono !== $icono) {
+            $fila->ruta = $ruta;
+            $fila->permission_id = $permissionId;
+            $fila->orden = $orden;
+            $fila->icono = $icono;
+            $fila->save();
+        }
+
+        return $fila;
     }
 
     private function modulo(string $clave, string $icono, int $orden): SecMenu

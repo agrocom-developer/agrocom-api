@@ -2,8 +2,8 @@
 
 /*
  * Fija el árbol del menú del panel (docs/especificacion/marketplace.md §10.4):
- * cinco módulos en el riel —Mercado, Proveedores, Soporte, Seguridad y
- * Sistema— con sus ítems en orden. Lee el código del `SecMenuSeeder` (única
+ * un acceso directo (Inicio → tablero) y cinco módulos —Mercado, Proveedores,
+ * Atención, Seguridad y Sistema— con sus ítems en orden. Lee el código del `SecMenuSeeder` (única
  * fuente del menú) sin tocar la base, y comprueba que cada ítem tenga su
  * texto en `lang/es/menu.php` y su ruta en `routes/web.php`.
  *
@@ -41,17 +41,17 @@ function menuSembrado(string $raiz): array
     return $menu;
 }
 
-it('siembra cinco módulos con sus ítems en este orden', function () use ($raiz) {
+it('siembra los módulos con sus ítems en este orden', function () use ($raiz) {
     expect(menuSembrado($raiz))->toBe([
-        'solicitudes' => ['tablero', 'solicitudes', 'clientes', 'calificaciones', 'metricas'],
+        'solicitudes' => ['solicitudes', 'metricas'],
         'proveedores' => ['documentos', 'proveedores', 'pilotos', 'drones_flota'],
-        'soporte' => ['disputas'],
+        'atencion' => ['clientes', 'calificaciones', 'reclamos'],
         'seguridad' => ['usuarios', 'roles', 'dispositivos', 'bitacora'],
         'sistema' => ['zonas', 'organizacion', 'configuracion', 'versiones_apk', 'avisos'],
     ]);
 });
 
-it('ordena los módulos del riel: mercado, proveedores, soporte, seguridad, sistema', function () use ($raiz) {
+it('ordena el riel: inicio, mercado, proveedores, atención, seguridad, sistema', function () use ($raiz) {
     $codigo = (string) file_get_contents($raiz.'/database/seeders/Catalogo/SecMenuSeeder.php');
 
     preg_match_all('/\$this->modulo\(\'(\w+)\', \'\w+\', (\d+)\)/', $codigo, $m, PREG_SET_ORDER);
@@ -61,13 +61,22 @@ it('ordena los módulos del riel: mercado, proveedores, soporte, seguridad, sist
     }
     ksort($porOrden);
 
-    expect(array_values($porOrden))->toBe(['solicitudes', 'proveedores', 'soporte', 'seguridad', 'sistema']);
+    expect(array_values($porOrden))->toBe(['solicitudes', 'proveedores', 'atencion', 'seguridad', 'sistema']);
+
+    // Inicio va primero y no tiene hijos: es un acceso directo al tablero.
+    expect($codigo)->toContain("\$this->acceso('inicio', 'home', 0, ruta: 'panel.dashboard'");
 });
 
 it('cada ítem del menú tiene su texto y su módulo tiene etiqueta y descripción', function () use ($raiz) {
     /** @var array<string, array<string, mixed>> $lang */
     $lang = require $raiz.'/lang/es/menu.php';
     $faltan = [];
+
+    foreach (['label', 'descripcion'] as $campo) {
+        if (! isset($lang['inicio'][$campo])) {
+            $faltan[] = "menu.inicio.{$campo}";
+        }
+    }
 
     foreach (menuSembrado($raiz) as $modulo => $items) {
         foreach (['label', 'descripcion'] as $campo) {
@@ -98,7 +107,7 @@ it('cada ítem apunta a una ruta que existe', function () use ($raiz) {
     expect($huerfanas)->toBe([]);
 });
 
-it('no siembra Auxiliares ni Equipos y los da de baja del menú', function () use ($raiz) {
+it('no siembra Auxiliares, Equipos ni Soporte y da de baja lo que ya no va', function () use ($raiz) {
     $codigo = (string) file_get_contents($raiz.'/database/seeders/Catalogo/SecMenuSeeder.php');
 
     expect($codigo)
@@ -106,5 +115,7 @@ it('no siembra Auxiliares ni Equipos y los da de baja del menú', function () us
         ->not->toContain("'equipos_flota', 'groups'")
         ->toContain("'menu.proveedores.items.auxiliares'")
         ->toContain("'menu.proveedores.items.equipos_flota'")
-        ->toContain("'menu.catalogos.label'");
+        ->toContain("'menu.catalogos.label'")
+        ->toContain("'menu.solicitudes.items.tablero'");
+    expect($codigo)->not->toContain("'soporte'");
 });

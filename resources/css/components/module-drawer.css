@@ -75,3 +75,22 @@
     padding: var(--ag-space-3) var(--ag-space-4);
     border-top: 1px solid var(--ag-color-border-row);
 }
+
+/* Acceso directo del menú móvil (Inicio): un módulo sin ítems que enlaza a su
+   propia pantalla, con el mismo ritmo que el encabezado de un grupo. */
+.ag-drawer__direct {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-3) var(--ag-space-3);
+    border-radius: var(--ag-radius-md);
+    color: var(--ag-color-text);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.ag-drawer__direct:hover,
+.ag-drawer__direct.is-active {
+    background-color: var(--ag-color-primary-subtle);
+    color: var(--ag-color-primary-emphasis);
+}
