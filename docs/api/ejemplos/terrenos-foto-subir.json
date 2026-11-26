@@ -18,7 +18,7 @@
             "foto": {
                 "id": 1,
                 "descripcion": "Borde norte con maleza alta",
-                "url": "/api/terrenos/fotos/1/archivo?expires=1795547502&signature=f3ceb1c5e8beffefdf087906ecebf36e1200a88eb81a76fdda22d74ba1e79a76"
+                "url": "/api/terrenos/fotos/1/archivo?expires=1795726566&signature=c408cea863e113b8b9661bd7dd8894102ea3e90592035831e5b7dfd49aca45cc"
             }
         }
     }

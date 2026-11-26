@@ -13,10 +13,10 @@
                 {
                     "id": 3,
                     "proveedor_id": 2,
-                    "usuario_id": 12,
+                    "usuario_id": 4,
                     "nombre": "Carlos Mamani Quispe",
                     "licencia_numero": "RPA-2291",
-                    "licencia_vence": "2028-05-24",
+                    "licencia_vence": "2028-05-26",
                     "categoria_habilitacion": "RPAS agrícola",
                     "estado": "aprobado",
                     "motivo_estado": null

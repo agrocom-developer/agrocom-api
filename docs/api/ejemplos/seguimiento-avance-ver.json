@@ -19,8 +19,8 @@
                 "precio_ha_acordado": "121.0000",
                 "monto_estimado": "12100.00",
                 "monto_final": null,
-                "iniciada_en": "2026-11-24T18:56:45+00:00",
-                "ultimo_avance_en": "2026-11-24T18:56:45+00:00",
+                "iniciada_en": "2026-11-26T20:41:10+00:00",
+                "ultimo_avance_en": "2026-11-26T20:41:10+00:00",
                 "cierre_solicitado_en": null,
                 "finalizada_en": null,
                 "registros": [
@@ -31,7 +31,7 @@
                         "hectareas_ejecutadas": null,
                         "porcentaje": null,
                         "nota": null,
-                        "registrado_en": "2026-11-24T18:56:45+00:00"
+                        "registrado_en": "2026-11-26T20:41:10+00:00"
                     },
                     {
                         "id": 16,
@@ -40,7 +40,7 @@
                         "hectareas_ejecutadas": "40.0000",
                         "porcentaje": "40.00",
                         "nota": "Primera franja cubierta.",
-                        "registrado_en": "2026-11-24T18:56:45+00:00"
+                        "registrado_en": "2026-11-26T20:41:10+00:00"
                     }
                 ],
                 "fotos": [
@@ -50,7 +50,7 @@
                         "tipo": "foto_avance",
                         "avance_id": null,
                         "url": "/api/evidencias/10/archivo",
-                        "subida_en": "2026-11-24T18:56:45+00:00"
+                        "subida_en": "2026-11-26T20:41:10+00:00"
                     }
                 ]
             }

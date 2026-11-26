@@ -13,13 +13,14 @@
                 "id": 18,
                 "uuid_cliente": "5b0f6a52-0c1e-4b6c-9d57-7f9d3a1c2e01",
                 "terreno_id": 10,
+                "contacto_id": 2,
                 "tipo_aplicacion": "herbicida",
                 "hectareas_solicitadas": "100.0000",
                 "cultivo": "Soya",
                 "producto_indicado": "Glifosato 480 SL, 2 L/ha",
                 "aporta_producto": "cliente",
-                "ventana_desde": "2026-12-14",
-                "ventana_hasta": "2026-12-20",
+                "ventana_desde": "2026-12-16",
+                "ventana_hasta": "2026-12-22",
                 "urgente": false,
                 "observaciones": "Entrar por el portón sur.",
                 "precio_ha_propuesto": "125.0000",
@@ -30,9 +31,8 @@
                 "monto_final": null,
                 "estado": "abierta",
                 "oferta_adjudicada_id": null,
-                "vence_en": "2026-12-01T18:56:42+00:00",
                 "proveedor_id": null,
-                "publicada_en": "2026-11-24T18:56:42+00:00",
+                "publicada_en": "2026-11-26T20:41:06+00:00",
                 "motivo_cancelacion": null,
                 "cancelada_por": null,
                 "terreno": {
@@ -52,14 +52,14 @@
                         "estado_nuevo": "borrador",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-24T18:56:42+00:00"
+                        "creado_en": "2026-11-26T20:41:06+00:00"
                     },
                     {
                         "estado_anterior": "borrador",
                         "estado_nuevo": "abierta",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-24T18:56:42+00:00"
+                        "creado_en": "2026-11-26T20:41:06+00:00"
                     }
                 ]
             }

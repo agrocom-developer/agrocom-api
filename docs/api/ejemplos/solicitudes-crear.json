@@ -13,8 +13,8 @@
             "hectareas_solicitadas": "100.0000",
             "producto_indicado": "Glifosato 480 SL, 2 L/ha",
             "aporta_producto": "cliente",
-            "ventana_desde": "2026-12-15",
-            "ventana_hasta": "2026-12-21",
+            "ventana_desde": "2026-12-16",
+            "ventana_hasta": "2026-12-22",
             "urgente": false,
             "precio_ha_propuesto": "125.0000",
             "observaciones": "Entrar por el portón sur."
@@ -33,8 +33,8 @@
                 "cultivo": "Soya",
                 "producto_indicado": "Glifosato 480 SL, 2 L/ha",
                 "aporta_producto": "cliente",
-                "ventana_desde": "2026-12-15",
-                "ventana_hasta": "2026-12-21",
+                "ventana_desde": "2026-12-16",
+                "ventana_hasta": "2026-12-22",
                 "urgente": false,
                 "observaciones": "Entrar por el portón sur.",
                 "precio_ha_propuesto": "125.0000",
@@ -45,7 +45,6 @@
                 "monto_final": null,
                 "estado": "borrador",
                 "oferta_adjudicada_id": null,
-                "vence_en": null,
                 "proveedor_id": null,
                 "publicada_en": null,
                 "motivo_cancelacion": null,
@@ -74,7 +73,7 @@
                         "estado_nuevo": "borrador",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-25T17:22:40+00:00"
+                        "creado_en": "2026-11-26T20:41:06+00:00"
                     }
                 ]
             }

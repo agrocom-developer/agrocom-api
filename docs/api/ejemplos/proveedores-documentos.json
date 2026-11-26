@@ -11,19 +11,19 @@
         "cuerpo": {
             "data": [
                 {
-                    "id": 21,
+                    "id": 19,
                     "sujeto_tipo": "proveedor",
                     "sujeto_id": 2,
                     "tipo": "seguro_responsabilidad",
                     "estado": "aprobado",
-                    "vence_en": "2027-09-24",
+                    "vence_en": "2027-09-26",
                     "motivo_rechazo": null,
                     "nombre_original": "seguro_responsabilidad-demo.pdf",
                     "bytes": 246,
-                    "subido_en": "2026-11-24T18:56:32+00:00"
+                    "subido_en": "2026-11-26T20:40:54+00:00"
                 },
                 {
-                    "id": 20,
+                    "id": 18,
                     "sujeto_tipo": "proveedor",
                     "sujeto_id": 2,
                     "tipo": "identidad",
@@ -32,7 +32,7 @@
                     "motivo_rechazo": null,
                     "nombre_original": "identidad-demo.pdf",
                     "bytes": 233,
-                    "subido_en": "2026-11-24T18:56:32+00:00"
+                    "subido_en": "2026-11-26T20:40:54+00:00"
                 }
             ]
         }

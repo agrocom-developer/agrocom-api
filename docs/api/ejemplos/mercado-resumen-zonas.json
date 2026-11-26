@@ -32,6 +32,18 @@
                     "centro": null
                 },
                 {
+                    "zona_id": 7,
+                    "zona": "San Julián",
+                    "macrorregion": "norte_integrado",
+                    "solicitudes": 1,
+                    "hectareas_total": "55.0000",
+                    "precio_ha_promedio": "100.0000",
+                    "centro": {
+                        "latitud": -16.9374,
+                        "longitud": -62.5877
+                    }
+                },
+                {
                     "zona_id": 3,
                     "zona": "Montero",
                     "macrorregion": "norte_integrado",

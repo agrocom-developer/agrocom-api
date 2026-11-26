@@ -12,139 +12,43 @@
             "personas": [
                 {
                     "id": 1,
-                    "nombre": "Carlos Ferrufino Vaca",
-                    "rol": "dueno",
-                    "base_id": 1,
-                    "activo": true,
-                    "updated_at": "2026-11-24T18:56:28+00:00"
-                },
-                {
-                    "id": 2,
-                    "nombre": "Marcela Antelo Roca",
-                    "rol": "encargado_operaciones",
-                    "base_id": 1,
-                    "activo": true,
-                    "updated_at": "2026-11-24T18:56:28+00:00"
-                },
-                {
-                    "id": 3,
-                    "nombre": "Abraham Gutiérrez Contreras",
-                    "rol": "jefe_campo",
-                    "base_id": 2,
-                    "activo": true,
-                    "updated_at": "2026-11-24T18:56:28+00:00"
-                },
-                {
-                    "id": 4,
-                    "nombre": "Josué Haenke Paz",
-                    "rol": "piloto",
-                    "base_id": 2,
-                    "activo": true,
-                    "updated_at": "2026-11-24T18:56:29+00:00"
-                },
-                {
-                    "id": 5,
-                    "nombre": "Rodrigo Peña Suárez",
-                    "rol": "piloto",
-                    "base_id": 3,
-                    "activo": true,
-                    "updated_at": "2026-11-24T18:56:29+00:00"
-                },
-                {
-                    "id": 6,
-                    "nombre": "Luis Fernando Mamani Quispe",
-                    "rol": "auxiliar",
-                    "base_id": 2,
-                    "activo": true,
-                    "updated_at": "2026-11-24T18:56:29+00:00"
-                },
-                {
-                    "id": 7,
-                    "nombre": "Wilder Choque Flores",
-                    "rol": "auxiliar",
-                    "base_id": 2,
-                    "activo": true,
-                    "updated_at": "2026-11-24T18:56:29+00:00"
-                },
-                {
-                    "id": 8,
-                    "nombre": "Daniela Rojas Vaca",
-                    "rol": "auxiliar",
-                    "base_id": 3,
-                    "activo": true,
-                    "updated_at": "2026-11-24T18:56:29+00:00"
-                },
-                {
-                    "id": 9,
-                    "nombre": "Pedro Vaca Roca",
-                    "rol": "auxiliar",
-                    "base_id": 1,
-                    "activo": false,
-                    "updated_at": "2026-11-24T18:56:30+00:00"
-                },
-                {
-                    "id": 10,
                     "nombre": "Rodrigo Suárez Peña",
                     "rol": "piloto",
                     "base_id": null,
                     "activo": true,
-                    "updated_at": "2026-11-24T18:56:35+00:00"
+                    "updated_at": "2026-11-26T20:40:57+00:00"
                 },
                 {
-                    "id": 11,
+                    "id": 2,
                     "nombre": "Valeria Montaño Roca",
                     "rol": "piloto",
                     "base_id": null,
                     "activo": true,
-                    "updated_at": "2026-11-24T18:56:35+00:00"
+                    "updated_at": "2026-11-26T20:40:57+00:00"
                 },
                 {
-                    "id": 12,
-                    "nombre": "Diego Parada Cuéllar",
-                    "rol": "auxiliar",
-                    "base_id": null,
-                    "activo": true,
-                    "updated_at": "2026-11-24T18:56:35+00:00"
-                },
-                {
-                    "id": 13,
+                    "id": 3,
                     "nombre": "Carlos Mamani Quispe",
                     "rol": "piloto",
                     "base_id": null,
                     "activo": true,
-                    "updated_at": "2026-11-24T18:56:35+00:00"
+                    "updated_at": "2026-11-26T20:40:57+00:00"
                 },
                 {
-                    "id": 14,
-                    "nombre": "Esteban Choque Ramos",
-                    "rol": "auxiliar",
-                    "base_id": null,
-                    "activo": true,
-                    "updated_at": "2026-11-24T18:56:35+00:00"
-                },
-                {
-                    "id": 15,
+                    "id": 4,
                     "nombre": "Marcelo Terrazas Aguilera",
                     "rol": "piloto",
                     "base_id": null,
                     "activo": true,
-                    "updated_at": "2026-11-24T18:56:35+00:00"
+                    "updated_at": "2026-11-26T20:40:57+00:00"
                 },
                 {
-                    "id": 16,
+                    "id": 5,
                     "nombre": "Iván Cuéllar Soliz",
                     "rol": "piloto",
                     "base_id": null,
                     "activo": true,
-                    "updated_at": "2026-11-24T18:56:35+00:00"
-                },
-                {
-                    "id": 17,
-                    "nombre": "Lucía Flores Justiniano",
-                    "rol": "auxiliar",
-                    "base_id": null,
-                    "activo": true,
-                    "updated_at": "2026-11-24T18:56:35+00:00"
+                    "updated_at": "2026-11-26T20:40:57+00:00"
                 }
             ],
             "servicios_asignados": [
@@ -158,8 +62,8 @@
                     "cultivo": "Soya",
                     "producto_indicado": "Glifosato 480 SL, 2 L/ha",
                     "aporta_producto": "cliente",
-                    "ventana_desde": "2026-11-23",
-                    "ventana_hasta": "2026-11-26",
+                    "ventana_desde": "2026-11-25",
+                    "ventana_hasta": "2026-11-28",
                     "urgente": false,
                     "observaciones": null,
                     "terreno": {
@@ -201,10 +105,12 @@
                     "hectareas_ejecutadas": "51.2000",
                     "porcentaje_avance": "64.00",
                     "contacto": {
-                        "nombre": "Agropecuaria San Rafael SRL",
-                        "telefono": "+591 76543210"
+                        "nombre": "Rosario Antelo Vaca",
+                        "telefono": "+591 76543210",
+                        "cargo": "Gerente",
+                        "empresa": "Agropecuaria San Rafael SRL"
                     },
-                    "updated_at": "2026-11-24T16:56:35+00:00"
+                    "updated_at": "2026-11-26T18:40:57+00:00"
                 }
             ],
             "servicios_retirados": [],
@@ -217,7 +123,7 @@
                 "velocidad_vuelo_kmh": null,
                 "ancho_pasada_m": null
             },
-            "cursor": "eyJwZXJzb25hcyI6eyJ1IjoiMjAyNi0xMS0yNFQxODo1NjozNSswMDowMCIsImlkIjoxN30sInNlcnZpY2lvc19hc2lnbmFkb3MiOnsidSI6IjIwMjYtMTEtMjRUMTY6NTY6MzUrMDA6MDAiLCJpZCI6MTB9LCJzZXJ2aWNpb3NfcmV0aXJhZG9zIjp7InUiOiIyMDI2LTExLTI0VDE4OjU2OjQzKzAwOjAwIiwiaWQiOjB9fQ=="
+            "cursor": "eyJwZXJzb25hcyI6eyJ1IjoiMjAyNi0xMS0yNlQyMDo0MDo1NyswMDowMCIsImlkIjo1fSwic2VydmljaW9zX2FzaWduYWRvcyI6eyJ1IjoiMjAyNi0xMS0yNlQxODo0MDo1NyswMDowMCIsImlkIjoxMH0sInNlcnZpY2lvc19yZXRpcmFkb3MiOnsidSI6IjIwMjYtMTEtMjZUMjA6NDE6MDcrMDA6MDAiLCJpZCI6MH19"
         }
     }
 }
