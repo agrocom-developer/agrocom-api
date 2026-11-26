@@ -2,7 +2,7 @@
 
 namespace App\Dominios\Seguridad\Aplicacion;
 
-use App\Dominios\Seguridad\Dominio\TipoUsuario;
+use App\Dominios\Seguridad\Contratos\TipoCuenta;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -24,31 +24,24 @@ final class ListarCandidatosVerComo
     /**
      * @return array{
      *     grupos: list<array{clave: string, nombre: string, idRol: int, usuarioIds: list<int>}>,
-     *     portalIds: list<int>,
-     *     usuarios: array<int, array{nombre: string, username: string, esPortal: bool, roles: array<int, string>, detalle: string|null}>,
+     *     usuarios: array<int, array{nombre: string, username: string, roles: array<int, string>, detalle: string|null}>,
      * }
      */
     public function ejecutar(SecUser $admin): array
     {
-        $internos = SecUser::query()
-            ->where('type', TipoUsuario::Interno)
+        // Solo cuentas de panel (ADR 0046): «ver como» sobre cuentas de app se retiró.
+        $cuentas = SecUser::query()
+            ->where('tipo_cuenta', TipoCuenta::Panel->value)
             ->where('state', true)
             ->where('id', '!=', $admin->id)
             ->orderBy('name')
             ->get(['id', 'name', 'username']);
 
-        $portal = SecUser::query()
-            ->where('type', TipoUsuario::Cliente)
-            ->where('state', true)
-            ->where('id', '!=', $admin->id)
-            ->orderBy('name')
-            ->get(['id', 'name', 'username']);
-
-        $rolesPorUsuario = $this->rolesVivosPorUsuario($internos->pluck('id')->all());
+        $rolesPorUsuario = $this->rolesVivosPorUsuario($cuentas->pluck('id')->all());
 
         $usuarios = [];
 
-        foreach ($internos as $usuario) {
+        foreach ($cuentas as $usuario) {
             $roles = $rolesPorUsuario[$usuario->id] ?? [];
 
             // Sin rol vivo no hay nada bajo lo cual verla (mismo criterio
@@ -60,27 +53,13 @@ final class ListarCandidatosVerComo
             $usuarios[$usuario->id] = [
                 'nombre' => $usuario->name,
                 'username' => $usuario->username,
-                'esPortal' => false,
                 'roles' => $roles,
                 'detalle' => null,
             ];
         }
 
-        $grupos = $this->gruposDeRoles($rolesPorUsuario);
-
-        foreach ($portal as $cuenta) {
-            $usuarios[$cuenta->id] = [
-                'nombre' => $cuenta->name,
-                'username' => $cuenta->username,
-                'esPortal' => true,
-                'roles' => [],
-                'detalle' => null,
-            ];
-        }
-
         return [
-            'grupos' => $grupos,
-            'portalIds' => $portal->pluck('id')->all(),
+            'grupos' => $this->gruposDeRoles($rolesPorUsuario),
             'usuarios' => $usuarios,
         ];
     }

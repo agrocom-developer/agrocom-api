@@ -118,4 +118,10 @@ final class RolProtegido extends DomainException
     {
         return new self(Texto::de('seguridad.errores.rol_protegido_permiso_de_app', ['permiso' => $codigoPermiso]));
     }
+
+    /** El panel no cambia el tipo ni el rol de una cuenta de app. */
+    public static function porCuentaDeApp(): self
+    {
+        return new self(Texto::de('seguridad.errores.rol_protegido_cuenta_de_app'));
+    }
 }
