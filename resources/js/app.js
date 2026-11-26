@@ -93,4 +93,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.querySelector('[data-ag-datetime]')) {
         import('./atoms/datetime.js');
     }
+
+    // organisms/mapa-marcador (Leaflet): solo en las páginas con un mapa de punto.
+    if (document.querySelector('[data-ag-mapa-marcador]')) {
+        import('./organisms/mapa-marcador.js');
+    }
 });
