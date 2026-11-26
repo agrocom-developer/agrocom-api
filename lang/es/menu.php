@@ -26,10 +26,11 @@ return [
     // Marketplace (ADR 0027): la solicitud de servicio es la unidad de negocio.
     'solicitudes' => [
         'label' => 'Mercado',
-        'descripcion' => 'Las solicitudes con sus ofertas y las métricas del mercado.',
+        'descripcion' => 'Las métricas del mercado, las solicitudes con sus ofertas y las calificaciones.',
         'items' => [
-            'solicitudes' => 'Solicitudes',
             'metricas' => 'Métricas del mercado',
+            'solicitudes' => 'Solicitudes de fumigación',
+            'calificaciones' => 'Calificaciones de servicios',
         ],
     ],
 
@@ -38,22 +39,20 @@ return [
         'label' => 'Proveedores',
         'descripcion' => 'Aprobación de proveedores, pilotos, drones y documentos de verificación.',
         'items' => [
-            'documentos' => 'Documentos',
-            'proveedores' => 'Proveedores',
-            'pilotos' => 'Pilotos',
-            'drones_flota' => 'Drones',
+            'proveedores' => 'Cuentas de proveedores',
+            'pilotos' => 'Pilotos registrados',
+            'drones_flota' => 'Drones registrados',
+            'documentos' => 'Documentos y vigencias',
         ],
     ],
 
-    // La relación con quienes usan la plataforma: quiénes son, qué opinan de
-    // un servicio y qué reclaman.
+    // La relación con quienes usan la plataforma: quiénes son y qué reclaman.
     'atencion' => [
         'label' => 'Atención',
-        'descripcion' => 'Clientes, calificaciones y reclamos de quienes usan la plataforma.',
+        'descripcion' => 'Clientes y reclamos de quienes usan la plataforma.',
         'items' => [
-            'clientes' => 'Clientes',
-            'calificaciones' => 'Calificaciones',
-            'reclamos' => 'Reclamos',
+            'clientes' => 'Clientes registrados',
+            'reclamos' => 'Reclamos de servicios',
         ],
     ],
 
@@ -61,9 +60,9 @@ return [
         'label' => 'Seguridad',
         'descripcion' => 'Usuarios, permisos y bitácora.',
         'items' => [
-            'usuarios' => 'Usuarios',
-            'roles' => 'Permisos',
-            'bitacora' => 'Bitácora',
+            'usuarios' => 'Usuarios del panel',
+            'roles' => 'Permisos del panel',
+            'bitacora' => 'Bitácora de actividad',
         ],
     ],
 
@@ -71,12 +70,11 @@ return [
     // que son una herramienta de auditoría y no de gestión del mercado.
     'sistema' => [
         'label' => 'Sistema',
-        'descripcion' => 'Zonas, organización, configuración y avisos del sistema.',
+        'descripcion' => 'Organización, avisos y configuración del sistema.',
         'items' => [
-            'zonas' => 'Zonas',
-            'organizacion' => 'Organización',
-            'configuracion' => 'Configuración del sistema',
+            'organizacion' => 'Datos de la organización',
             'avisos' => 'Avisos del sistema',
+            'configuracion' => 'Configuración general',
         ],
     ],
 

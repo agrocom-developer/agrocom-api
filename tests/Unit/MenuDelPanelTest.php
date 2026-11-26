@@ -3,7 +3,7 @@
 /*
  * Fija el árbol del menú del panel (docs/especificacion/marketplace.md §10.4):
  * un acceso directo (Inicio → tablero) y cinco módulos —Mercado, Proveedores,
- * Atención, Seguridad y Sistema— con sus ítems en orden. Lee el código del `SecMenuSeeder` (única
+ * Atención, Seguridad y Sistema— con sus ítems en orden (15 en total). Lee el código del `SecMenuSeeder` (única
  * fuente del menú) sin tocar la base, y comprueba que cada ítem tenga su
  * texto en `lang/es/menu.php` y su ruta en `routes/web.php`.
  *
@@ -43,12 +43,39 @@ function menuSembrado(string $raiz): array
 
 it('siembra los módulos con sus ítems en este orden', function () use ($raiz) {
     expect(menuSembrado($raiz))->toBe([
-        'solicitudes' => ['solicitudes', 'metricas'],
-        'proveedores' => ['documentos', 'proveedores', 'pilotos', 'drones_flota'],
-        'atencion' => ['clientes', 'calificaciones', 'reclamos'],
+        'solicitudes' => ['metricas', 'solicitudes', 'calificaciones'],
+        'proveedores' => ['proveedores', 'pilotos', 'drones_flota', 'documentos'],
+        'atencion' => ['clientes', 'reclamos'],
         'seguridad' => ['usuarios', 'roles', 'bitacora'],
-        'sistema' => ['zonas', 'organizacion', 'configuracion', 'avisos'],
+        'sistema' => ['organizacion', 'avisos', 'configuracion'],
     ]);
+});
+
+it('el menú tiene 15 ítems y Zonas ya no está', function () use ($raiz) {
+    $total = array_sum(array_map('count', menuSembrado($raiz)));
+    expect($total)->toBe(15);
+
+    $codigo = (string) file_get_contents($raiz.'/database/seeders/Catalogo/SecMenuSeeder.php');
+    expect($codigo)
+        ->not->toContain("'zonas', 'pin_drop'")
+        ->toContain("'menu.sistema.items.zonas'");
+});
+
+it('los ítems tienen una frase corta que se entiende sola, sin repetir el módulo ni palabras sueltas', function () use ($raiz) {
+    /** @var array<string, array<string, mixed>> $lang */
+    $lang = require $raiz.'/lang/es/menu.php';
+
+    expect($lang['proveedores']['label'])->toBe('Proveedores')
+        ->and($lang['proveedores']['items']['proveedores'])->toBe('Cuentas de proveedores');
+
+    foreach (['solicitudes', 'proveedores', 'atencion', 'seguridad', 'sistema'] as $modulo) {
+        foreach ($lang[$modulo]['items'] as $clave => $etiqueta) {
+            $palabras = count(preg_split('/\s+/', $etiqueta));
+            // Caben en el drawer del móvil: de dos a cuatro palabras, y nunca el nombre del módulo solo.
+            expect($palabras)->toBeBetween(2, 4);
+            expect($etiqueta)->not->toBe($lang[$modulo]['label']);
+        }
+    }
 });
 
 it('ordena el riel: inicio, mercado, proveedores, atención, seguridad, sistema', function () use ($raiz) {

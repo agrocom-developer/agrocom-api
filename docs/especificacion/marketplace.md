@@ -356,21 +356,35 @@ La sincronización es idempotente: reaplicar un lote dos, tres o diez veces, en 
 
 Son pantallas del panel (ADR 0008), no endpoints de la API de las apps. El riel tiene un acceso directo, Inicio (el tablero), y cinco módulos: Mercado, Proveedores, Atención, Seguridad y Sistema y cada pantalla se muestra solo si el rol activo tiene su permiso de listado (`.ver`); las acciones de cada una exigen su permiso propio.
 
+El menú son 15 ítems, en este orden (el seeder `SecMenuSeeder` es su única fuente; una base ya sembrada lo recibe con `php artisan db:seed --class=SecMenuSeeder` o `bin/demo seed`):
+
+| Módulo | Ítems, en orden |
+|---|---|
+| Inicio | acceso directo al tablero, sin ítems |
+| Mercado | Métricas del mercado, Solicitudes de fumigación, Calificaciones de servicios |
+| Proveedores | Cuentas de proveedores (`panel/proveedores`), Pilotos registrados, Drones registrados, Documentos y vigencias |
+| Atención | Clientes registrados, Reclamos de servicios |
+| Seguridad | Usuarios del panel, Permisos del panel, Bitácora de actividad |
+| Sistema | Datos de la organización, Avisos del sistema, Configuración general |
+
+Zonas no está en el menú: el mercado no usa zonas ni restricción geográfica.
+
+En una página que no pertenece a ningún ítem (búsqueda, perfil, Mis notificaciones), Inicio queda activo en el riel y su panel muestra un solo ítem, sin enlace, con el nombre de la página actual.
+
 | Módulo | Pantalla | Qué hace |
 |---|---|---|
 | Inicio | `panel/dashboard` | Tablero: solicitudes por estado y por región (macrorregión de la zona del terreno), hectáreas abiertas a ofertas y la cola de lo que espera una decisión |
 | Mercado | `panel/solicitudes` | Lista con filtros por estado, región y zona; la ficha muestra cada negociación por proveedor con sus rondas y, con `solicitudes.solicitud.ver_seguimiento`, el chat, el avance, las fotos y la última ubicación del piloto (datos de las partes). Cancela con motivo (`solicitudes.solicitud.cancelar`) o cierra la negociación de un proveedor con motivo (`solicitudes.solicitud.intervenir`) mientras la solicitud sigue abierta a ofertas |
 | Atención | `panel/clientes` | Ficha del cliente con su reputación, sus contactos y sus solicitudes; suspende y reactiva con motivo (`solicitudes.cliente.suspender`); alta a mano de persona o empresa con contactos (`solicitudes.cliente.crear`) |
 | Proveedores | `panel/proveedores/crear`, `panel/pilotos/crear`, `panel/drones-flota/crear` | Alta a mano de proveedor (independiente con su piloto, o tercero), de un piloto de un tercero y del dron de un proveedor, con `proveedores.proveedor.crear`, `proveedores.piloto.crear` y `flota.dron.crear`; quedan `pendientes` y quien los cargó no los aprueba (ADR 0044) |
-| Atención | `panel/calificaciones` | Oculta o deja visible una calificación con causa y motivo |
+| Mercado | `panel/calificaciones` | Oculta o deja visible una calificación con causa y motivo |
 | Atención | `panel/disputas` | Reclamos: lo que un cliente o un proveedor reclama sobre un servicio ya prestado; se toma, se media y se resuelve. Va en Atención porque atender a quien usa la plataforma no es operar el mercado |
 | Mercado | `panel/metricas` | Adjudicación, ofertas por solicitud, rondas por negociación, tiempos, calidad y volumen |
 | Sistema | `panel/avisos` | Auditoría: lo que el sistema avisó a cada cuenta y si lo leyó; solo lectura (`notificaciones.aviso.ver`). Los avisos de la propia cuenta están en la campana |
 | Proveedores | `panel/proveedores`, `panel/pilotos` | Aprobar, rechazar, suspender y dar de baja, con motivo |
 | Proveedores | `panel/documentos` | Revisión de documentos y descarga restringida |
 | Proveedores | `panel/drones-flota` | Aprobación del dron y revisión de sus fotos (`flota.dron.revisar_foto`); no se aprueba sin las fotos de `flota.fotos_obligatorias` aprobadas |
-| Sistema | `panel/zonas` | Zonas de Santa Cruz con su región y su centro |
-| Sistema | organización y configuración | Ajustes de la plataforma que se tocan poco |
+| Sistema | organización y configuración | Ajustes de la plataforma que se tocan poco; la organización va primero, luego los avisos y al final la configuración |
 | Seguridad | usuarios, permisos y bitácora | Roles del panel: `administrador` (todo) y `operador` (lo que marca su matriz) |
 
 Roles del panel (ADR 0046): el panel lo usa solo el personal de Agrocom y tiene dos roles, Administrador (ve todo) y Operador (ve las pantallas y acciones cuyos permisos le asigna el administrador en la matriz de roles). Este párrafo manda sobre la fila «Seguridad» de la tabla anterior y sobre «quien los cargó no los aprueba» de la fila de alta a mano: el administrador puede aprobar lo que registró, y «Ver como» solo sobre cuentas de panel. Las altas a mano pueden crear cuentas de app (cliente o proveedor, con la misma regla de una cuenta de cada tipo por persona) y aprobarlas, con la verificación marcada «cargado por administrador» (ADR 0046). La ficha del cliente y del proveedor muestra su verificación (selfie y documento, con `seguridad.verificacion.ver`), con aprobar y rechazar con motivo.
