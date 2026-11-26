@@ -35,6 +35,7 @@ return [
         'documento_fiscal' => 'documento fiscal',
         'zona_base_id' => 'zona base',
         'proveedor_id' => 'proveedor',
+        'disponibilidad' => 'disponibilidad',
         'radio_operacion_km' => 'radio de operación',
         'licencia_numero' => 'número de licencia',
         'licencia_vence' => 'vencimiento de la licencia',

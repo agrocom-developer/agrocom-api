@@ -133,10 +133,14 @@ Route::middleware('auth:sanctum')->group(function () {
     // del token es la puerta; el alcance (solo sus registros, un id ajeno es
     // 404) lo hacen los casos de uso.
     Route::get('/proveedores/mi', [MiProveedorController::class, 'show'])->name('api.proveedores.mi');
+    Route::put('/proveedores/mi/disponibilidad', [MiProveedorController::class, 'cambiarDisponibilidad'])->name('api.proveedores.mi.disponibilidad');
     Route::post('/proveedores/mi/reenviar', [MiProveedorController::class, 'reenviar'])->name('api.proveedores.mi.reenviar');
 
     Route::get('/proveedores/pilotos', [PilotosController::class, 'index'])->name('api.proveedores.pilotos.index');
     Route::post('/proveedores/pilotos', [PilotosController::class, 'store'])->name('api.proveedores.pilotos.store');
+    Route::put('/proveedores/pilotos/{id}/disponibilidad', [PilotosController::class, 'cambiarDisponibilidad'])
+        ->whereNumber('id')
+        ->name('api.proveedores.pilotos.disponibilidad');
     Route::post('/proveedores/pilotos/{id}/reenviar', [PilotosController::class, 'reenviar'])
         ->whereNumber('id')
         ->name('api.proveedores.pilotos.reenviar');

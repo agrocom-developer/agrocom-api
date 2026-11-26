@@ -5,11 +5,14 @@ namespace App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api;
 use App\Dominios\Compartido\Dominio\Excepciones\TransicionDeAprobacionInvalida;
 use App\Dominios\Compartido\Infraestructura\Http\RechazoDeDominio;
 use App\Dominios\Proveedores\Aplicacion\AlcanceDelSolicitante;
+use App\Dominios\Proveedores\Aplicacion\CambiarDisponibilidad;
 use App\Dominios\Proveedores\Aplicacion\ReenviarARevision;
 use App\Dominios\Proveedores\Aplicacion\RegistrarPiloto;
+use App\Dominios\Proveedores\Dominio\Disponibilidad;
 use App\Dominios\Proveedores\Dominio\Excepciones\RegistroInvalido;
 use App\Dominios\Proveedores\Dominio\TipoSujeto;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Piloto;
+use App\Dominios\Proveedores\Infraestructura\Http\Requests\CambiarDisponibilidadRequest;
 use App\Dominios\Proveedores\Infraestructura\Http\Requests\RegistrarPilotoRequest;
 use App\Dominios\Proveedores\Infraestructura\Http\Resources\PilotoResource;
 use App\Dominios\Seguridad\Contratos\CuentaDuplicada;
@@ -32,6 +35,7 @@ final class PilotosController
         private readonly LecturaCuentas $cuentas,
         private readonly RegistrarPiloto $registrar,
         private readonly ReenviarARevision $reenviar,
+        private readonly CambiarDisponibilidad $disponibilidad,
     ) {}
 
     #[OA\Get(
@@ -136,5 +140,39 @@ final class PilotosController
         }
 
         return response()->json(status: 204);
+    }
+
+    #[OA\Put(
+        path: '/api/proveedores/pilotos/{id}/disponibilidad',
+        operationId: 'cambiarDisponibilidadDePiloto',
+        description: 'El encargado (titular del proveedor) marca a un piloto suyo como `disponible`, `ocupado` o `en_trabajo`. '
+            .'Solo silencia o reactiva los avisos de ese piloto. Gana el último cambio entre el encargado y el piloto; la respuesta '
+            .'dice quién lo cambió y la app del piloto lo muestra («Tu empresa te marcó como ocupado»). El piloto de otro proveedor es 404.',
+        summary: 'Cambia la disponibilidad de un piloto de mi proveedor',
+        security: [['tokenDispositivo' => []]],
+        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['disponibilidad'], properties: [new OA\Property(property: 'disponibilidad', type: 'string', enum: ['disponible', 'ocupado', 'en_trabajo'], example: 'ocupado')], type: 'object')),
+        tags: ['Proveedores'],
+        parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
+        responses: [
+            new OA\Response(response: 200, description: 'El piloto con su interruptor tras el cambio.', content: new OA\JsonContent(required: ['piloto'], properties: [new OA\Property(property: 'piloto', ref: '#/components/schemas/Piloto')], type: 'object')),
+            new OA\Response(response: 401, description: 'Token ausente o revocado.'),
+            new OA\Response(response: 403, description: 'El rol del token no gestiona un proveedor.'),
+            new OA\Response(response: 404, description: 'El piloto no existe o no es de este proveedor.'),
+            new OA\Response(response: 422, description: 'Valor de disponibilidad inválido.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
+        ],
+    )]
+    public function cambiarDisponibilidad(CambiarDisponibilidadRequest $request, int $id): JsonResponse
+    {
+        $this->exigirPermiso($this->identidad, $request, self::PERMISO);
+
+        try {
+            $piloto = $this->disponibilidad->deUnPiloto($this->usuarioId($request), $id, Disponibilidad::from((string) $request->validated('disponibilidad')));
+        } catch (RegistroInvalido $excepcion) {
+            return RechazoDeDominio::respuesta($excepcion);
+        }
+
+        $nombres = array_map(static fn ($cuenta): string => $cuenta->nombre, $this->cuentas->porIds([$piloto->usuario_id]));
+
+        return response()->json(['piloto' => PilotoResource::conNombres($piloto, $nombres)]);
     }
 }

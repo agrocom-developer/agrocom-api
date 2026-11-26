@@ -85,6 +85,7 @@ class SeguridadSeeder extends Seeder
         'flota.dron.revisar_foto' => 'Aprobar o rechazar las fotos de un dron, con motivo en el rechazo',
         // Marketplace, lado app (token de dispositivo): lo que cada rol hace sobre lo SUYO. El alcance lo hacen los casos de uso; el permiso es la puerta.
         'proveedores.cuenta.gestionar' => 'Gestionar su propio proveedor desde la app: pilotos, drones, equipos y documentos',
+        'proveedores.disponibilidad.gestionar' => 'Cambiar su propia disponibilidad (disponible, ocupado, en trabajo) para recibir o no avisos de nuevas solicitudes desde la app',
         'proveedores.cuenta.ver' => 'Ver, solo lectura, el proveedor al que pertenece y los drones de sus equipos desde la app (piloto)',
         'proveedores.documento.cargar' => 'Cargar los documentos propios o de lo que uno registró',
         'solicitudes.cliente.gestionar' => 'Gestionar su propio perfil de cliente desde la app',
@@ -143,6 +144,7 @@ class SeguridadSeeder extends Seeder
     /** @var list<string> */
     private const PERMISOS_PROVEEDOR = [
         'proveedores.cuenta.gestionar',
+        'proveedores.disponibilidad.gestionar',
         'proveedores.documento.cargar',
         'negociacion.mercado.ver',
         'negociacion.oferta.proveedor',
@@ -179,6 +181,7 @@ class SeguridadSeeder extends Seeder
      */
     private const PERMISOS_PILOTO = [
         'proveedores.cuenta.ver',
+        'proveedores.disponibilidad.gestionar',
         'proveedores.documento.cargar',
         'negociacion.mercado.ver',
         'negociacion.oferta.proveedor',
