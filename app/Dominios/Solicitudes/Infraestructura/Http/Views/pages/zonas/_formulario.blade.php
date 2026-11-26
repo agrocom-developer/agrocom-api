@@ -73,8 +73,15 @@
                     :error="$errors->first('macrorregion')"
                     required
                 />
+                <x-molecules.mapa-marcador
+                    lat-id="zona-latitud"
+                    lng-id="zona-longitud"
+                    :label="__('solicitudes.zonas.mapa_titulo')"
+                    :help="__('solicitudes.zonas.mapa_ayuda')"
+                />
                 <x-atoms.input
                     type="text"
+                    id="zona-latitud"
                     name="latitud"
                     :label="__('solicitudes.zonas.campo_latitud')"
                     :value="old('latitud', $zona?->centroide_lat ?? '')"
@@ -85,6 +92,7 @@
                 />
                 <x-atoms.input
                     type="text"
+                    id="zona-longitud"
                     name="longitud"
                     :label="__('solicitudes.zonas.campo_longitud')"
                     :value="old('longitud', $zona?->centroide_lng ?? '')"

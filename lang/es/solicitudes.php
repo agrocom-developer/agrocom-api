@@ -339,6 +339,8 @@ return [
         'campo_region_placeholder' => 'Elige una región',
         'campo_latitud' => 'Latitud del centro',
         'campo_longitud' => 'Longitud del centro',
+        'mapa_titulo' => 'Centro de la zona en el mapa',
+        'mapa_ayuda' => 'Haz clic en el mapa o arrastra el marcador para fijar el centro. También puedes escribir las coordenadas.',
         'ayuda_coordenadas' => 'Usa grados decimales, por ejemplo -17.7833 y -63.1821. Es el punto desde el que se mide la distancia a la zona.',
         'creada' => 'La zona quedó creada.',
         'actualizada' => 'Los cambios de la zona quedaron guardados.',
