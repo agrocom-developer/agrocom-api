@@ -151,8 +151,8 @@ class ProveedoresDemoSeeder extends Seeder
         }
 
         $desde = now()->subMonth()->toDateString();
-        $this->crearEquipo->ejecutar($this->admin, $rodrigo->id, $drones['AG-02']->id, null, $desde);
-        $this->crearEquipo->ejecutar($this->admin, $valeria->id, $drones['AG-07']->id, null, $desde);
+        $this->crearEquipo->ejecutar($this->admin, $rodrigo->id, $drones['AG-02']->id, $desde);
+        $this->crearEquipo->ejecutar($this->admin, $valeria->id, $drones['AG-07']->id, $desde);
     }
 
     private function independienteAprobado(): void
@@ -176,7 +176,7 @@ class ProveedoresDemoSeeder extends Seeder
         ]);
         $this->documentosYAprobacion(TipoSujeto::Dron, $dron->id);
 
-        $this->crearEquipo->ejecutar($proveedor->usuario_titular_id, $piloto->id, $dron->id, null, now()->subWeeks(3)->toDateString());
+        $this->crearEquipo->ejecutar($proveedor->usuario_titular_id, $piloto->id, $dron->id, now()->subWeeks(3)->toDateString());
     }
 
     private function terceroAprobado(): void
@@ -221,7 +221,7 @@ class ProveedoresDemoSeeder extends Seeder
         // El P100 Pro todavía espera revisión: sus documentos están cargados, sin revisar.
         $this->subirDocumentos(TipoSujeto::Dron, $tres->id, RequisitosDocumentales::POR_DEFECTO['dron']);
 
-        $this->crearEquipo->ejecutar($titular, $marcelo->id, $uno->id, null, now()->subWeeks(5)->toDateString());
+        $this->crearEquipo->ejecutar($titular, $marcelo->id, $uno->id, now()->subWeeks(5)->toDateString());
     }
 
     private function independientePendiente(): void

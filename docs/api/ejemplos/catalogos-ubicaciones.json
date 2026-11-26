@@ -1,0 +1,518 @@
+{
+    "operationId": "listarUbicaciones",
+    "descripcion": "Catálogo oficial de departamentos y provincias de Bolivia con su código del INE; sin token, de solo lectura.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/catalogos/ubicaciones",
+        "autenticada": false
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "data": [
+                {
+                    "codigo": "01",
+                    "nombre": "Chuquisaca",
+                    "provincias": [
+                        {
+                            "codigo": "0101",
+                            "nombre": "Oropeza"
+                        },
+                        {
+                            "codigo": "0102",
+                            "nombre": "Azurduy"
+                        },
+                        {
+                            "codigo": "0103",
+                            "nombre": "Zudáñez"
+                        },
+                        {
+                            "codigo": "0104",
+                            "nombre": "Tomina"
+                        },
+                        {
+                            "codigo": "0105",
+                            "nombre": "Hernando Siles"
+                        },
+                        {
+                            "codigo": "0106",
+                            "nombre": "Yamparáez"
+                        },
+                        {
+                            "codigo": "0107",
+                            "nombre": "Nor Cinti"
+                        },
+                        {
+                            "codigo": "0108",
+                            "nombre": "Belisario Boeto"
+                        },
+                        {
+                            "codigo": "0109",
+                            "nombre": "Sud Cinti"
+                        },
+                        {
+                            "codigo": "0110",
+                            "nombre": "Luis Calvo"
+                        }
+                    ]
+                },
+                {
+                    "codigo": "02",
+                    "nombre": "La Paz",
+                    "provincias": [
+                        {
+                            "codigo": "0201",
+                            "nombre": "Murillo"
+                        },
+                        {
+                            "codigo": "0202",
+                            "nombre": "Omasuyos"
+                        },
+                        {
+                            "codigo": "0203",
+                            "nombre": "Pacajes"
+                        },
+                        {
+                            "codigo": "0204",
+                            "nombre": "Camacho"
+                        },
+                        {
+                            "codigo": "0205",
+                            "nombre": "Muñecas"
+                        },
+                        {
+                            "codigo": "0206",
+                            "nombre": "Larecaja"
+                        },
+                        {
+                            "codigo": "0207",
+                            "nombre": "Franz Tamayo"
+                        },
+                        {
+                            "codigo": "0208",
+                            "nombre": "Ingavi"
+                        },
+                        {
+                            "codigo": "0209",
+                            "nombre": "Loayza"
+                        },
+                        {
+                            "codigo": "0210",
+                            "nombre": "Inquisivi"
+                        },
+                        {
+                            "codigo": "0211",
+                            "nombre": "Sud Yungas"
+                        },
+                        {
+                            "codigo": "0212",
+                            "nombre": "Los Andes"
+                        },
+                        {
+                            "codigo": "0213",
+                            "nombre": "Aroma"
+                        },
+                        {
+                            "codigo": "0214",
+                            "nombre": "Nor Yungas"
+                        },
+                        {
+                            "codigo": "0215",
+                            "nombre": "Abel Iturralde"
+                        },
+                        {
+                            "codigo": "0216",
+                            "nombre": "Bautista Saavedra"
+                        },
+                        {
+                            "codigo": "0217",
+                            "nombre": "Manco Kapac"
+                        },
+                        {
+                            "codigo": "0218",
+                            "nombre": "Gualberto Villarroel"
+                        },
+                        {
+                            "codigo": "0219",
+                            "nombre": "José Manuel Pando"
+                        },
+                        {
+                            "codigo": "0220",
+                            "nombre": "Caranavi"
+                        }
+                    ]
+                },
+                {
+                    "codigo": "03",
+                    "nombre": "Cochabamba",
+                    "provincias": [
+                        {
+                            "codigo": "0301",
+                            "nombre": "Cercado"
+                        },
+                        {
+                            "codigo": "0302",
+                            "nombre": "Campero"
+                        },
+                        {
+                            "codigo": "0303",
+                            "nombre": "Ayopaya"
+                        },
+                        {
+                            "codigo": "0304",
+                            "nombre": "Esteban Arce"
+                        },
+                        {
+                            "codigo": "0305",
+                            "nombre": "Arani"
+                        },
+                        {
+                            "codigo": "0306",
+                            "nombre": "Arque"
+                        },
+                        {
+                            "codigo": "0307",
+                            "nombre": "Capinota"
+                        },
+                        {
+                            "codigo": "0308",
+                            "nombre": "Germán Jordán"
+                        },
+                        {
+                            "codigo": "0309",
+                            "nombre": "Quillacollo"
+                        },
+                        {
+                            "codigo": "0310",
+                            "nombre": "Chapare"
+                        },
+                        {
+                            "codigo": "0311",
+                            "nombre": "Tapacarí"
+                        },
+                        {
+                            "codigo": "0312",
+                            "nombre": "Carrasco"
+                        },
+                        {
+                            "codigo": "0313",
+                            "nombre": "Mizque"
+                        },
+                        {
+                            "codigo": "0314",
+                            "nombre": "Punata"
+                        },
+                        {
+                            "codigo": "0315",
+                            "nombre": "Bolívar"
+                        },
+                        {
+                            "codigo": "0316",
+                            "nombre": "Tiraque"
+                        }
+                    ]
+                },
+                {
+                    "codigo": "04",
+                    "nombre": "Oruro",
+                    "provincias": [
+                        {
+                            "codigo": "0401",
+                            "nombre": "Cercado"
+                        },
+                        {
+                            "codigo": "0402",
+                            "nombre": "Eduardo Abaroa"
+                        },
+                        {
+                            "codigo": "0403",
+                            "nombre": "Carangas"
+                        },
+                        {
+                            "codigo": "0404",
+                            "nombre": "Sajama"
+                        },
+                        {
+                            "codigo": "0405",
+                            "nombre": "Litoral"
+                        },
+                        {
+                            "codigo": "0406",
+                            "nombre": "Poopó"
+                        },
+                        {
+                            "codigo": "0407",
+                            "nombre": "Pantaleón Dalence"
+                        },
+                        {
+                            "codigo": "0408",
+                            "nombre": "Ladislao Cabrera"
+                        },
+                        {
+                            "codigo": "0409",
+                            "nombre": "Sabaya"
+                        },
+                        {
+                            "codigo": "0410",
+                            "nombre": "Saucarí"
+                        },
+                        {
+                            "codigo": "0411",
+                            "nombre": "Tomás Barrón"
+                        },
+                        {
+                            "codigo": "0412",
+                            "nombre": "Sur Carangas"
+                        },
+                        {
+                            "codigo": "0413",
+                            "nombre": "San Pedro de Totora"
+                        },
+                        {
+                            "codigo": "0414",
+                            "nombre": "Sebastián Pagador"
+                        },
+                        {
+                            "codigo": "0415",
+                            "nombre": "Mejillones"
+                        },
+                        {
+                            "codigo": "0416",
+                            "nombre": "Nor Carangas"
+                        }
+                    ]
+                },
+                {
+                    "codigo": "05",
+                    "nombre": "Potosí",
+                    "provincias": [
+                        {
+                            "codigo": "0501",
+                            "nombre": "Tomás Frías"
+                        },
+                        {
+                            "codigo": "0502",
+                            "nombre": "Rafael Bustillo"
+                        },
+                        {
+                            "codigo": "0503",
+                            "nombre": "Cornelio Saavedra"
+                        },
+                        {
+                            "codigo": "0504",
+                            "nombre": "Chayanta"
+                        },
+                        {
+                            "codigo": "0505",
+                            "nombre": "Charcas"
+                        },
+                        {
+                            "codigo": "0506",
+                            "nombre": "Nor Chichas"
+                        },
+                        {
+                            "codigo": "0507",
+                            "nombre": "Alonso de Ibáñez"
+                        },
+                        {
+                            "codigo": "0508",
+                            "nombre": "Sud Chichas"
+                        },
+                        {
+                            "codigo": "0509",
+                            "nombre": "Nor Lípez"
+                        },
+                        {
+                            "codigo": "0510",
+                            "nombre": "Sud Lípez"
+                        },
+                        {
+                            "codigo": "0511",
+                            "nombre": "José María Linares"
+                        },
+                        {
+                            "codigo": "0512",
+                            "nombre": "Antonio Quijarro"
+                        },
+                        {
+                            "codigo": "0513",
+                            "nombre": "Bernardino Bilbao"
+                        },
+                        {
+                            "codigo": "0514",
+                            "nombre": "Daniel Campos"
+                        },
+                        {
+                            "codigo": "0515",
+                            "nombre": "Modesto Omiste"
+                        },
+                        {
+                            "codigo": "0516",
+                            "nombre": "Enrique Baldivieso"
+                        }
+                    ]
+                },
+                {
+                    "codigo": "06",
+                    "nombre": "Tarija",
+                    "provincias": [
+                        {
+                            "codigo": "0601",
+                            "nombre": "Cercado"
+                        },
+                        {
+                            "codigo": "0602",
+                            "nombre": "Aniceto Arce"
+                        },
+                        {
+                            "codigo": "0603",
+                            "nombre": "Gran Chaco"
+                        },
+                        {
+                            "codigo": "0604",
+                            "nombre": "José María Avilés"
+                        },
+                        {
+                            "codigo": "0605",
+                            "nombre": "Méndez"
+                        },
+                        {
+                            "codigo": "0606",
+                            "nombre": "Burdett O'Connor"
+                        }
+                    ]
+                },
+                {
+                    "codigo": "07",
+                    "nombre": "Santa Cruz",
+                    "provincias": [
+                        {
+                            "codigo": "0701",
+                            "nombre": "Andrés Ibáñez"
+                        },
+                        {
+                            "codigo": "0702",
+                            "nombre": "Warnes"
+                        },
+                        {
+                            "codigo": "0703",
+                            "nombre": "Velasco"
+                        },
+                        {
+                            "codigo": "0704",
+                            "nombre": "Ichilo"
+                        },
+                        {
+                            "codigo": "0705",
+                            "nombre": "Chiquitos"
+                        },
+                        {
+                            "codigo": "0706",
+                            "nombre": "Sara"
+                        },
+                        {
+                            "codigo": "0707",
+                            "nombre": "Cordillera"
+                        },
+                        {
+                            "codigo": "0708",
+                            "nombre": "Vallegrande"
+                        },
+                        {
+                            "codigo": "0709",
+                            "nombre": "Florida"
+                        },
+                        {
+                            "codigo": "0710",
+                            "nombre": "Obispo Santistevan"
+                        },
+                        {
+                            "codigo": "0711",
+                            "nombre": "Ñuflo de Chávez"
+                        },
+                        {
+                            "codigo": "0712",
+                            "nombre": "Ángel Sandóval"
+                        },
+                        {
+                            "codigo": "0713",
+                            "nombre": "Caballero"
+                        },
+                        {
+                            "codigo": "0714",
+                            "nombre": "Germán Busch"
+                        },
+                        {
+                            "codigo": "0715",
+                            "nombre": "Guarayos"
+                        }
+                    ]
+                },
+                {
+                    "codigo": "08",
+                    "nombre": "Beni",
+                    "provincias": [
+                        {
+                            "codigo": "0801",
+                            "nombre": "Cercado"
+                        },
+                        {
+                            "codigo": "0802",
+                            "nombre": "Vaca Díez"
+                        },
+                        {
+                            "codigo": "0803",
+                            "nombre": "José Ballivián"
+                        },
+                        {
+                            "codigo": "0804",
+                            "nombre": "Yacuma"
+                        },
+                        {
+                            "codigo": "0805",
+                            "nombre": "Moxos"
+                        },
+                        {
+                            "codigo": "0806",
+                            "nombre": "Marbán"
+                        },
+                        {
+                            "codigo": "0807",
+                            "nombre": "Mamoré"
+                        },
+                        {
+                            "codigo": "0808",
+                            "nombre": "Iténez"
+                        }
+                    ]
+                },
+                {
+                    "codigo": "09",
+                    "nombre": "Pando",
+                    "provincias": [
+                        {
+                            "codigo": "0901",
+                            "nombre": "Nicolás Suárez"
+                        },
+                        {
+                            "codigo": "0902",
+                            "nombre": "Manuripi"
+                        },
+                        {
+                            "codigo": "0903",
+                            "nombre": "Madre de Dios"
+                        },
+                        {
+                            "codigo": "0904",
+                            "nombre": "Abuná"
+                        },
+                        {
+                            "codigo": "0905",
+                            "nombre": "Federico Román"
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}

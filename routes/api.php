@@ -25,6 +25,7 @@ use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\FotoDePerfilCont
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\SesionCampoController;
 use App\Dominios\Sincronizacion\Infraestructura\Http\Controllers\Api\CatalogoController;
 use App\Dominios\Sincronizacion\Infraestructura\Http\Controllers\Api\SyncController;
+use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\CatalogosController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\ClientesController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\ContactosController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\SolicitudesController;
@@ -74,6 +75,12 @@ Route::post('/proveedores/registro', [RegistroProveedorController::class, 'store
 Route::get('/zonas', [ZonasController::class, 'index'])
     ->middleware('throttle:60,1')
     ->name('api.zonas.index');
+
+// Catálogo oficial de departamentos y provincias de Bolivia (ADR 0045): solo
+// lectura y sin token, lo usan las dos apps para ubicar un terreno.
+Route::get('/catalogos/ubicaciones', [CatalogosController::class, 'ubicaciones'])
+    ->middleware('throttle:60,1')
+    ->name('api.catalogos.ubicaciones');
 
 // Foto del estado de un terreno: la URL es firmada y de corta vida (la entregan el terreno del
 // cliente dueño y el detalle de la solicitud abierta), así que la imagen carga sin token.
