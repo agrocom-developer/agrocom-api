@@ -40,9 +40,10 @@
                 </x-slot:chip>
                 <x-slot:actions>
                     <x-molecules.boton-volver :href="route('panel.auxiliares.index')" :label="__('proveedores.auxiliares.volver')" />
-                    @include('proveedores::pages._acciones-aprobacion', ['acciones' => $acciones, 'modalBase' => 'auxiliar'])
                 </x-slot:actions>
             </x-organisms.page-header>
+
+            @include('proveedores::pages._maquina-estado-aprobacion', ['acciones' => $acciones, 'estado' => $auxiliar->estado, 'modalBase' => 'auxiliar'])
 
             @include('proveedores::pages._modales-aprobacion', [
                 'acciones' => $acciones,

@@ -42,9 +42,10 @@
                 </x-slot:chip>
                 <x-slot:actions>
                     <x-molecules.boton-volver :href="route('panel.drones-flota.index')" :label="__('flota.drones.volver')" />
-                    @include('proveedores::pages._acciones-aprobacion', ['acciones' => $acciones, 'modalBase' => 'dron'])
                 </x-slot:actions>
             </x-organisms.page-header>
+
+            @include('proveedores::pages._maquina-estado-aprobacion', ['acciones' => $acciones, 'estado' => $dron->estado, 'modalBase' => 'dron'])
 
             @include('proveedores::pages._modales-aprobacion', [
                 'acciones' => $acciones,

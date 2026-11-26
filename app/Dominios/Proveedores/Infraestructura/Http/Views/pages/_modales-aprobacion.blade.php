@@ -8,7 +8,7 @@
     Espera:
     - $acciones (list<AccionAprobacion>), $estado (EstadoAprobacion), $nombre (string).
     - $urlResolver (string): a dónde se envía la decisión (POST).
-    - $modalBase (string): prefijo del id de los modales (el mismo de `_acciones-aprobacion`).
+    - $modalBase (string): prefijo del id de los modales (el mismo de `_maquina-estado-aprobacion`).
 --}}
 @php
     $tonoPorAccion = [
