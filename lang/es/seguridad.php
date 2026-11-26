@@ -679,6 +679,7 @@ return [
         'rol_protegido_ultimo_portador' => "':permiso' quedaría sin ningún rol activo que lo tenga. Otórgaselo antes a otro rol: nadie puede conceder un permiso que no tiene, así que un permiso que ningún rol tiene no se puede recuperar desde el panel.",
         'rol_protegido_permiso_reservado' => "':permiso' es exclusivo del administrador: no se puede otorgar al rol ':rol'.",
         'rol_protegido_permiso_de_app' => "':permiso' lo ejerce una cuenta de la app y no se asigna a un rol del panel.",
+        'cuenta_ya_registrada' => 'Ya tienes una cuenta de :tipo. Inicia sesión o recupera tu acceso.',
         'rol_protegido_cuenta_de_app' => 'Las cuentas de la app (cliente y proveedor) no se administran desde Usuarios: tienen su ficha en Clientes y Proveedores.',
         'rol_protegido_matriz_administrador' => 'El administrador ve y hace todo: su matriz de permisos no se edita.',
         'rol_protegido_catalogo_fijo' => 'El panel tiene dos roles, administrador y operador. No se crean roles nuevos ni se cambia el nombre de estos.',
@@ -703,6 +704,7 @@ return [
     'validacion' => [
         'usuario_username_unico' => 'Ya existe una cuenta activa con ese usuario.',
         'usuario_email_unico' => 'Ya existe una cuenta activa con ese correo.',
+        'telefono_invalido' => 'Escribe un teléfono válido: un celular de Bolivia de 8 dígitos o un número con su código de país (por ejemplo +54 9 11 5555 1234).',
         'usuario_persona_invalida' => 'La persona seleccionada no es válida.',
         'usuario_persona_prohibida_portal' => 'Una cuenta de portal no tiene persona asociada.',
         'usuario_contrato_requerido' => 'Elige el contrato de la cuenta de portal.',

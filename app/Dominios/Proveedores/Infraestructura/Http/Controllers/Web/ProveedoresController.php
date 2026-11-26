@@ -17,6 +17,7 @@ use App\Dominios\Proveedores\Infraestructura\Eloquent\Proveedor;
 use App\Dominios\Proveedores\Infraestructura\Http\Requests\RegistrarProveedorDesdePanelRequest;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Contratos\CuentaDuplicada;
+use App\Dominios\Seguridad\Contratos\CuentaYaRegistrada;
 use App\Dominios\Seguridad\Contratos\LecturaCuentas;
 use App\Dominios\Solicitudes\Contratos\LecturaZonas;
 use Illuminate\Http\RedirectResponse;
@@ -100,7 +101,7 @@ final class ProveedoresController
 
         try {
             $proveedor = $registrar->ejecutar($datos);
-        } catch (CuentaDuplicada|RegistroDuplicado $excepcion) {
+        } catch (CuentaYaRegistrada|CuentaDuplicada|RegistroDuplicado $excepcion) {
             return redirect()->back()->withInput($request->except('password'))->withErrors(['estado' => $excepcion->getMessage()]);
         }
 

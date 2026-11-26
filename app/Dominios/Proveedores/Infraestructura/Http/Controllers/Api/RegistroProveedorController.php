@@ -8,6 +8,7 @@ use App\Dominios\Proveedores\Dominio\Excepciones\RegistroDuplicado;
 use App\Dominios\Proveedores\Infraestructura\Http\Requests\RegistrarProveedorRequest;
 use App\Dominios\Proveedores\Infraestructura\Http\Resources\ProveedorResource;
 use App\Dominios\Seguridad\Contratos\CuentaDuplicada;
+use App\Dominios\Seguridad\Contratos\CuentaYaRegistrada;
 use Illuminate\Http\JsonResponse;
 use OpenApi\Attributes as OA;
 
@@ -41,11 +42,13 @@ final class RegistroProveedorController
                     new OA\Property(property: 'username', description: 'Login (nunca un correo): letras, números, punto, guion.', type: 'string', example: 'carlos.mamani'),
                     new OA\Property(property: 'email', type: 'string', format: 'email', nullable: true),
                     new OA\Property(property: 'password', description: 'Mínimo 8 caracteres con letras y números.', type: 'string', format: 'password'),
-                    new OA\Property(property: 'telefono', type: 'string', example: '+591 70012345'),
+                    new OA\Property(property: 'telefono', description: 'Teléfono de la cuenta: un celular de Bolivia de 8 dígitos o un número con su código de país. Se guarda en E.164 y es único entre las cuentas de proveedor.', type: 'string', example: '+591 70012345'),
                     new OA\Property(property: 'razon_social', type: 'string', example: 'Mamani Agroservicios'),
                     new OA\Property(property: 'nombres', description: 'Datos de la persona (piloto o titular); el administrador los revisa al aprobar.', type: 'string', example: 'Carlos'),
                     new OA\Property(property: 'apellidos', type: 'string', example: 'Mamani Quispe'),
-                    new OA\Property(property: 'documento_identidad', type: 'string', example: '7845123 SC'),
+                    new OA\Property(property: 'documento_tipo', description: 'Tipo del documento de la persona (por defecto `ci`).', type: 'string', enum: ['ci', 'pasaporte', 'licencia_conducir'], example: 'ci', nullable: true),
+                    new OA\Property(property: 'documento_numero', description: 'Número del documento. Es el nombre nuevo de `documento_identidad`: si llegan los dos, manda este. La persona es única por tipo y número normalizado (mayúsculas, sin espacios ni puntos).', type: 'string', example: '7845123 SC', nullable: true),
+                    new OA\Property(property: 'documento_identidad', description: 'Número del documento (nombre histórico de `documento_numero`; obligatorio si no se envía `documento_numero`).', type: 'string', example: '7845123 SC', nullable: true),
                     new OA\Property(property: 'fecha_nacimiento', type: 'string', format: 'date', example: '1988-04-12'),
                     new OA\Property(property: 'documento_fiscal', description: 'NIT o documento de identidad.', type: 'string', example: '4521897012'),
                     new OA\Property(property: 'zona_base_id', description: 'Zona base (ver `GET /api/zonas`).', type: 'integer', nullable: true),
@@ -68,14 +71,17 @@ final class RegistroProveedorController
                     type: 'object',
                 ),
             ),
+            new OA\Response(response: 409, description: 'Ese teléfono o esa persona (documento) ya tiene una cuenta de proveedor: `codigo: cuenta_ya_registrada`. No crea nada ni dice cuál de los dos datos chocó; la persona inicia sesión o recupera su acceso.', content: new OA\JsonContent(ref: '#/components/schemas/CuentaYaRegistrada')),
             new OA\Response(response: 422, description: 'Datos inválidos o login, correo o documento ya registrados.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
-            new OA\Response(response: 429, description: 'Demasiados registros desde la misma IP; reintentar tras `Retry-After` segundos.'),
+            new OA\Response(response: 429, description: 'Demasiados registros desde la misma IP, o demasiados `409` seguidos para esa IP, ese teléfono o ese documento; reintentar tras `Retry-After` segundos.'),
         ],
     )]
     public function store(RegistrarProveedorRequest $request): JsonResponse
     {
         try {
             $proveedor = $this->registrar->ejecutar($request->validated());
+        } catch (CuentaYaRegistrada $excepcion) {
+            return response()->json($excepcion->cuerpo(), 409);
         } catch (CuentaDuplicada|RegistroDuplicado $excepcion) {
             return RechazoDeDominio::respuesta($excepcion);
         }
