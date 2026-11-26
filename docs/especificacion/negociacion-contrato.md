@@ -10,7 +10,7 @@ Toda transición pasa por `MaquinaEstadosSolicitud` (invariante 7), con fila de 
 
 | De | A | Actor / origen | Guarda | Efecto |
 |---|---|---|---|---|
-| `borrador` | `abierta` | cliente | Terrenos propios con `departamento_codigo` y `provincia_codigo`, todos en el mismo departamento; `hectareas_solicitadas > 0` y no mayores a las del terreno, `precio_ha_propuesto > 0` y no mayor al máximo de sanidad, fecha deseada, si la hay, no pasada y dentro de `anticipacion_maxima_dias`, `requisitos` válidos, cuenta con teléfono | Congela departamento y provincia; abre la oleada (paso 0); emite `SolicitudAbierta`. La solicitud no tiene vencimiento |
+| `borrador` | `abierta` | cliente | Terrenos propios con `departamento_codigo` y `provincia_codigo` (la provincia, del departamento), todos en el mismo departamento; `hectareas_solicitadas > 0` y no mayores a las del terreno, `precio_ha_propuesto > 0` y no mayor al máximo de sanidad, fecha deseada, si la hay, no pasada y dentro de `anticipacion_maxima_dias`, `requisitos` válidos, cuenta con teléfono | Congela departamento, provincia, municipio y comunidad; abre la oleada (paso 0); emite `SolicitudAbierta`. La solicitud no tiene vencimiento |
 | `borrador` | `cancelada` | cliente | — | Sin registro |
 | `abierta` | `con_ofertas` | sistema | Llega una oferta `vigente` (la primera oferta de un proveedor) | Empieza la etapa de negociación (§3.8) |
 | `con_ofertas` | `abierta` | sistema | La última oferta vigente deja de estarlo (rechazada, retirada, vencida) y no queda otra | — |
@@ -234,8 +234,9 @@ No hay resumen por zona ni cálculo de distancia: el mapa no recibe la posición
 - `GET /sync/catalogo`: `servicios_asignados` pasa a ser las solicitudes `adjudicada` y `en_ejecucion` del equipo con lotes, datos de contacto y precio acordado; suma `mensajes`.
 - Disputas: motivos §8.3 de `marketplace.md`; el resultado ajusta `monto_ajustado`, sin comisión.
 - `POST /proveedores/registro`, `/proveedores/drones`: datos de persona y dron (§9); `zona_base_id` y `radio_operacion_km` ya no existen.
-- `POST/PUT /terrenos`: `departamento_codigo` y `provincia_codigo` (del catálogo), `municipio` y `comunidad`; `zona_id` ya no existe.
-- `POST/PUT /solicitudes`: `requisitos`, fecha deseada hasta la anticipación máxima; `GET /solicitudes` y `/{id}` suman `departamento`, `provincia`, `etapa` y `busqueda`; `GET /solicitudes/{id}/estimacion` ya no trae `precio_referencia_ha`.
+- `GET /catalogos/ubicaciones` (sin token): `{data: [{codigo, nombre, provincias: [{codigo, nombre}]}]}` con los 9 departamentos y 112 provincias del INE, por código.
+- `POST/PUT /terrenos`: `departamento_codigo` y `provincia_codigo` (del catálogo; la provincia debe ser del departamento y no se envía sin él), `municipio` y `comunidad`; `zona_id` ya no existe. Se pueden registrar sin ubicación, pero `POST /solicitudes/{id}/publicar` responde 422 (`departamento_codigo` o `provincia_codigo`) si el terreno no las tiene o no son coherentes.
+- `POST/PUT /solicitudes`: `requisitos`, fecha deseada hasta la anticipación máxima; `GET /solicitudes` y `/{id}` suman `departamento_codigo`, `provincia_codigo`, `municipio` y `comunidad` (la ubicación congelada al publicar; los nombres salen del catálogo) y, en fases posteriores, `etapa` y `busqueda`; `GET /solicitudes/{id}/estimacion` ya no trae `precio_referencia_ha`.
 - `GET /solicitudes-abiertas`: filtro `departamento`, solo lo visible para el proveedor (§3.3), sin `zona`, `macrorregion`, `distancia_km` ni `lat`/`lon`.
 - `GET /solicitudes/{id}/ofertas`: `orden` por defecto `recomendado`, `incumple` por oferta, sin `distancia_km`.
 - `GET/PUT /notificaciones/preferencias`: filtros del proveedor (§7) en lugar de zonas y macrorregiones.

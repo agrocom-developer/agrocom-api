@@ -52,6 +52,14 @@ final class GestionarTerrenos
         $this->clientes->activo($usuarioId);
         $terreno = $this->obtener($usuarioId, $terrenoId);
 
+        // Cambiar o quitar el departamento sin elegir provincia suelta la provincia anterior:
+        // pertenecía a otro departamento y dejarla dejaría la ubicación incoherente.
+        if (array_key_exists('departamento_codigo', $datos)
+            && $datos['departamento_codigo'] !== $terreno->departamento_codigo
+            && ! array_key_exists('provincia_codigo', $datos)) {
+            $datos['provincia_codigo'] = null;
+        }
+
         $terreno->fill($datos)->save();
 
         return $terreno->refresh();

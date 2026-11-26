@@ -9,7 +9,8 @@ Qué está hecho en `agrocom-api` para las apps móviles (`cliente` y `piloto` d
 | Área | Qué existe en la API | Decisión |
 |---|---|---|
 | Proveedores y flota | Registro público de proveedor con datos de la persona y del dron, pilotos, documentos, drones con dueño y fotos, equipos; aprobación y reenvío tras un rechazo. | ADR 0028, 0029, 0032, 0036, 0042 |
-| Solicitud | Terrenos del cliente, solicitud idempotente por `uuid_cliente` con precio por hectárea propuesto, estimación, apertura al mercado, cambio de precio, renovación y cancelación sin penalidad. | ADR 0027, 0034, 0037 |
+| Solicitud | Terrenos del cliente (con departamento y provincia del catálogo oficial más municipio y comunidad), solicitud idempotente por `uuid_cliente` con precio por hectárea propuesto, estimación, apertura al mercado (exige ubicación y la congela), cambio de precio, renovación y cancelación sin penalidad. | ADR 0027, 0034, 0037, 0045 |
+| Ubicación | Catálogo oficial de Bolivia de solo lectura (9 departamentos y 112 provincias con código INE) en `GET /api/catalogos/ubicaciones`, sin token. | ADR 0045 |
 | Negociación | Mapa de solicitudes abiertas con filtros y resumen por región, ofertas y contraofertas por rondas, adjudicación atómica que requiere red, vencimiento de ofertas y solicitudes (`negociacion:procesar`), cancelación del proveedor que reabre la solicitud y reputación sin sanciones automáticas. | ADR 0030, 0038, 0041 |
 | Seguimiento | Inicio, avance y cierre del piloto con fotos de avance (menos de 300 KB), chat entre cliente y proveedor adjudicado con cursor, última ubicación del piloto solo durante la ejecución, y preferencias de aviso por zona, región y hectáreas. | ADR 0040, 0041 |
 | Calificación y reclamos | Calificación bidireccional (la del cliente por el proveedor es privada), reporte de una calificación abusiva, reclamos con mensajes, retiro y una apelación, y métricas. | ADR 0031, 0033, 0034, 0039 |
@@ -18,7 +19,7 @@ Qué está hecho en `agrocom-api` para las apps móviles (`cliente` y `piloto` d
 
 ### Contrato
 
-- `docs/api/openapi.yaml` se regenera con `composer openapi` y coincide con el código: 92 operaciones documentadas, ninguna ruta de `/api` sin documentar ni documentada sin ruta, y la seguridad declarada coincide con la que exigen las rutas.
+- `docs/api/openapi.yaml` se regenera con `composer openapi` y coincide con el código: 103 operaciones documentadas, ninguna ruta de `/api` sin documentar ni documentada sin ruta, y la seguridad declarada coincide con la que exigen las rutas.
 - La sección 10 de la especificación lista las rutas reales de sincronización (`POST /api/sync`, `POST /api/evidencias`, `GET /api/sync/catalogo`) y el prefijo `/api`.
 - Los campos que pueden ser nulos y apuntan a un esquema se declaran con `allOf` y `nullable: true`; el esquema de entrada de terrenos (`TerrenoEntrada`) es distinto del de salida.
 - `docs/api/ejemplos/` guarda 77 intercambios reales (petición y respuesta) de 52 operaciones, capturados con `bin/generar-ejemplos` contra un PostgreSQL desechable. Cubren éxito, validación, recurso ajeno (404), rol equivocado (403), token ausente o revocado (401), reintento idempotente, replay de un lote y rechazo parcial. El formato está en `docs/api/ejemplos/README.md`.

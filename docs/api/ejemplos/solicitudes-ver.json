@@ -19,8 +19,8 @@
                 "cultivo": "Soya",
                 "producto_indicado": "Glifosato 480 SL, 2 L/ha",
                 "aporta_producto": "cliente",
-                "ventana_desde": "2026-12-15",
-                "ventana_hasta": "2026-12-21",
+                "ventana_desde": "2026-12-16",
+                "ventana_hasta": "2026-12-22",
                 "urgente": false,
                 "observaciones": "Entrar por el portón sur.",
                 "precio_ha_propuesto": "128.0000",
@@ -31,11 +31,15 @@
                 "monto_final": null,
                 "estado": "abierta",
                 "oferta_adjudicada_id": null,
-                "vence_en": "2026-12-02T17:22:40+00:00",
+                "vence_en": "2026-12-03T20:41:12+00:00",
                 "proveedor_id": null,
-                "publicada_en": "2026-11-25T17:22:40+00:00",
+                "publicada_en": "2026-11-26T20:41:12+00:00",
                 "motivo_cancelacion": null,
                 "cancelada_por": null,
+                "departamento_codigo": "07",
+                "provincia_codigo": "0702",
+                "municipio": "Warnes",
+                "comunidad": "Los Álamos",
                 "contacto": {
                     "id": 2,
                     "nombre": "Mario Suárez Rojas",
@@ -53,11 +57,15 @@
                     "colindantes_sensibles": null,
                     "acceso_dificil": false,
                     "zona_id": null,
+                    "departamento_codigo": "07",
+                    "provincia_codigo": "0702",
+                    "municipio": "Warnes",
+                    "comunidad": "Los Álamos",
                     "fotos": [
                         {
                             "id": 1,
                             "descripcion": "Borde norte con maleza alta",
-                            "url": "/api/terrenos/fotos/1/archivo?expires=1795628261&signature=5602caea39ec9aeff5bb22595ace284a2ff5767c097c5d8124ac56fd1dd7a006"
+                            "url": "/api/terrenos/fotos/1/archivo?expires=1795726572&signature=67dc1991559c07e3ef4b466932bc02d949b7570a5110b4ae5bac3c0e499c84a3"
                         }
                     ]
                 },
@@ -67,14 +75,14 @@
                         "estado_nuevo": "borrador",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-25T17:22:40+00:00"
+                        "creado_en": "2026-11-26T20:41:12+00:00"
                     },
                     {
                         "estado_anterior": "borrador",
                         "estado_nuevo": "abierta",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-25T17:22:40+00:00"
+                        "creado_en": "2026-11-26T20:41:12+00:00"
                     }
                 ]
             }
