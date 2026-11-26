@@ -10,7 +10,7 @@ Para publicar las dos apps hay que cumplir lo que las tiendas piden a toda app c
 - **El borrado lógico (invariante 8) y el retiro a `respaldo_*` (invariante 15) no sirven para datos personales.** Una fila con nombre y teléfono marcada como borrada sigue siendo el dato, y mover el dato a otro esquema no lo elimina.
 - **Conservar la selfie y el documento 12 meses «por temas legales» no tiene base legal encontrada.** Bolivia no tiene ley general de datos; el motivo real es prevenir fraude y poder defenderse en un reclamo, y Apple solo admite conservar lo que la ley obliga.
 - **El chat no tiene «reportar» ni «bloquear»,** que Google (mensajes entre personas) y Apple 1.2 exigen, y la política decía que soporte lee una conversación solo con un reclamo abierto.
-- **La ubicación del SOS y de las incidencias se guarda** (`seg_incidencias.ubicacion`) y la regla decía que la ubicación no se guarda.
+- **La ubicación del SOS y de las incidencias se guarda según la especificación** (`seg_incidencias.ubicacion`; los endpoints `POST /api/incidencias` y `/api/emergencias` aún no están implementados) y la regla decía que la ubicación no se guarda; se fija antes de construirlo, para que nazca con su retención.
 
 El dueño decidió ajustarse a las tiendas. Este ADR lo fija como política vigente.
 
