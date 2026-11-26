@@ -32,6 +32,7 @@ function pvMundo(): void
     Esquema::migrar([
         'create_plt_bitacoras_table', 'create_sol_zonas_table', 'create_prv_proveedores_table', 'create_prv_pilotos_table',
         'create_prv_auxiliares_table', 'create_prv_documentos_table', 'create_flo_drones_table', 'create_flo_equipos_table',
+        'retira_zonas',
     ]);
 
     foreach (['flo_equipos', 'flo_drones', 'prv_documentos', 'prv_pilotos', 'prv_proveedores'] as $tabla) {

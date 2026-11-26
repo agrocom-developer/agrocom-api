@@ -47,6 +47,9 @@ beforeEach(function () {
         'create_prv_proveedores_table',
         'create_prv_pilotos_table',
         'agrega_negociacion_a_sol_solicitudes_servicio',
+        'agrega_ubicacion_a_sol_terrenos',
+        'agrega_ubicacion_a_sol_solicitudes_servicio',
+        'retira_zonas',
     ]);
 
     foreach (['sec_token_dispositivo', 'prv_pilotos', 'prv_proveedores', 'sol_cliente_contactos', 'sol_clientes', 'sec_user_role', 'sec_user', 'sec_personas', 'sec_role'] as $tabla) {
@@ -282,7 +285,7 @@ it('la migración copia los teléfonos de las fichas a la cuenta, normalizados, 
 
     DB::table('prv_proveedores')->insert([
         'usuario_titular_id' => $proveedor, 'tipo' => 'independiente', 'razon_social' => 'P', 'telefono' => '70012345',
-        'estado' => 'pendiente', 'radio_operacion_km' => '50', 'created_at' => $ahora, 'updated_at' => $ahora,
+        'estado' => 'pendiente', 'created_at' => $ahora, 'updated_at' => $ahora,
     ]);
 
     $migracion->up();

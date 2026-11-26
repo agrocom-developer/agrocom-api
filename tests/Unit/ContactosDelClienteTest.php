@@ -41,6 +41,9 @@ function contactosEsquema(): void
         'lleva_sol_clientes_al_ciclo_de_aprobacion',
         'agrega_negociacion_a_sol_solicitudes_servicio',
         'crea_sol_cliente_contactos',
+        'agrega_ubicacion_a_sol_terrenos',
+        'agrega_ubicacion_a_sol_solicitudes_servicio',
+        'retira_zonas',
     ]);
 }
 

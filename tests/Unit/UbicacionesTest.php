@@ -29,6 +29,7 @@ function ubicacionesSembradas(): void
         'create_sol_departamentos_table',
         'create_sol_provincias_table',
         'agrega_ubicacion_a_sol_terrenos',
+        'retira_zonas',
     ]);
 
     // Otras pruebas del proceso dejan filas mínimas del catálogo: se parte del catálogo completo.

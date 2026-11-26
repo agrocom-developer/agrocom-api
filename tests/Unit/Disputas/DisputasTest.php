@@ -68,6 +68,9 @@ function dspMundo(): void
         'create_dsp_mensajes_table',
         'create_dsp_resoluciones_table',
         'create_dsp_historial_table',
+        'agrega_ubicacion_a_sol_terrenos',
+        'agrega_ubicacion_a_sol_solicitudes_servicio',
+        'retira_zonas',
     ]);
 
     foreach (['dsp_historial', 'dsp_resoluciones', 'dsp_mensajes', 'dsp_disputas', 'sol_solicitud_historial', 'sol_solicitudes_servicio', 'sol_clientes'] as $tabla) {

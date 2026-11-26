@@ -41,6 +41,9 @@ function catalogoEsquema(): void
         'create_sol_solicitudes_servicio_table',
         'agrega_negociacion_a_sol_solicitudes_servicio',
         'crea_sol_cliente_contactos',
+        'agrega_ubicacion_a_sol_terrenos',
+        'agrega_ubicacion_a_sol_solicitudes_servicio',
+        'retira_zonas',
     ];
 
     static $instancias = [];
