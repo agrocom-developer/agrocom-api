@@ -2,7 +2,7 @@
 
 /*
  * Las rutas que cierran las brechas de la app de campo (token de push, pago confirmado, fotos
- * de terreno y de perfil, precio de referencia) exigen token de dispositivo: sin él ninguna
+ * de terreno y de perfil) exigen token de dispositivo: sin él ninguna
  * responde datos (ADR 0008). Las dos que sirven imágenes por URL firmada rechazan una URL sin
  * firma o con la firma alterada. El alcance por cuenta (un id ajeno es 404) vive en los casos
  * de uso y lo cubren sus pruebas de unidad.
@@ -17,7 +17,6 @@ dataset('rutas con token', [
     ['DELETE', '/api/terrenos/1/fotos/1'],
     ['PUT', '/api/perfil/foto'],
     ['DELETE', '/api/perfil/foto'],
-    ['GET', '/api/referencias/precio?tipo_aplicacion=herbicida'],
     ['GET', '/api/proveedores/mi'],
     ['GET', '/api/proveedores/drones'],
 ]);

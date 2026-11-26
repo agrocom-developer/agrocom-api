@@ -39,14 +39,4 @@ return [
 
     /** Plazo para calificar y para el chat tras `finalizada`, en días. */
     'plazo_calificacion_dias' => (int) env('NEGOCIACION_PLAZO_CALIFICACION_DIAS', 7),
-
-    /** Precio de referencia por hectárea según el tipo de aplicación: guía, no límite. */
-    'precio_referencia_ha' => [
-        'herbicida' => env('NEGOCIACION_REF_HERBICIDA', '120.00'),
-        'insecticida' => env('NEGOCIACION_REF_INSECTICIDA', '130.00'),
-        'fungicida' => env('NEGOCIACION_REF_FUNGICIDA', '135.00'),
-        'fertilizante_foliar' => env('NEGOCIACION_REF_FOLIAR', '110.00'),
-        'desecante' => env('NEGOCIACION_REF_DESECANTE', '125.00'),
-        'otro' => env('NEGOCIACION_REF_OTRO', '120.00'),
-    ],
 ];

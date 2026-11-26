@@ -277,9 +277,6 @@ try {
         registrar('terrenos-ver-con-fotos', 'verTerreno', 'El terreno trae sus fotos con URL firmada de corta vida.', 'GET', "/api/terrenos/{$terrenoId}", null, $tokenCliente, 200);
     }
 
-    registrar('referencias-precio', 'precioDeReferencia', 'Precio por hectárea de referencia para proponer: de la zona, la macrorregión o el general del tipo.', 'GET', '/api/referencias/precio?tipo_aplicacion=herbicida&macrorregion=chiquitania', null, $tokenCliente, 200);
-    registrar('referencias-precio-invalido', 'precioDeReferencia', 'Validación: tipo de aplicación inexistente.', 'GET', '/api/referencias/precio?tipo_aplicacion=riego', null, $tokenCliente, 422);
-
     registrar('solicitudes-lista', 'listarSolicitudes', 'Solicitudes del cliente, la más reciente primero.', 'GET', '/api/solicitudes', null, $tokenCliente, 200);
 
     $uuidSolicitud = '5b0f6a52-0c1e-4b6c-9d57-7f9d3a1c2e01';
