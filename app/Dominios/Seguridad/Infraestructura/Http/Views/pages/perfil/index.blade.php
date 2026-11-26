@@ -21,11 +21,6 @@
     - $accesos (list<{href, icono, titulo, meta}>): los accesos rápidos del
       rol activo, sacados de su menú (`Presentacion/AccesosRapidos`). Vacío =
       no hay sección.
-    - $persona: los datos de la persona vinculada a la cuenta, en la columna
-      lateral. Una persona no edita sus datos acá: los ve. Si su rol puede
-      editar personas (`personal.persona.editar`), la tarjeta ofrece ir a
-      Personal; si no, dice que lo corrige un administrador. Sin persona
-      vinculada, un estado vacío lo explica.
 --}}
 <x-templates.panel-shell :title="__('seguridad.perfil.titulo')" :tema="$tema">
     <x-templates.panel-layout
@@ -141,26 +136,6 @@
                     </x-slot:actions>
                 </x-organisms.form-actions-bar>
 
-                <x-slot:aside>
-                    @if ($persona['tieneDatos'])
-                        <x-molecules.summary-card :title="$persona['titulo']" :items="$persona['items']">
-                            @if ($persona['editarHref'])
-                                <x-slot:action>
-                                    <x-atoms.button :href="$persona['editarHref']" variant="outline" icon="edit" block>
-                                        {{ __('seguridad.perfil.persona_editar') }}
-                                    </x-atoms.button>
-                                </x-slot:action>
-                            @endif
-                        </x-molecules.summary-card>
-                        <p class="ag-perfil__nota">{{ $persona['nota'] }}</p>
-                    @else
-                        <x-molecules.empty-state
-                            icon="badge"
-                            :title="$persona['vacioTitulo']"
-                            :detail="$persona['vacioDetalle']"
-                        />
-                    @endif
-                </x-slot:aside>
             </x-molecules.form-layout>
         </form>
     </x-templates.panel-layout>

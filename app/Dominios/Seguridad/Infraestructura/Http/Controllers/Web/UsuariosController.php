@@ -3,8 +3,6 @@
 namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
-use App\Dominios\Personal\Contratos\LecturaFichaPersona;
-use App\Dominios\Personal\Contratos\LecturaNombresDePersonas;
 use App\Dominios\Seguridad\Aplicacion\AlternarBloqueoUsuario;
 use App\Dominios\Seguridad\Aplicacion\AsignarRolesUsuario;
 use App\Dominios\Seguridad\Aplicacion\ConsultarRolesDeUsuarios;
@@ -85,7 +83,6 @@ final class UsuariosController
         private readonly AutorizacionPanelWeb $autorizacion,
         private readonly ConsultarRolesDeUsuarios $roles,
         private readonly TarjetasDeUsuario $tarjetas,
-        private readonly LecturaNombresDePersonas $personas,
     ) {}
 
     public function index(Request $request, ListarUsuarios $listarUsuarios): View
@@ -96,7 +93,6 @@ final class UsuariosController
         $usuarios = $listarUsuarios->ejecutar($busqueda !== '' ? $busqueda : null);
 
         $idsUsuario = $usuarios->pluck('id')->map(fn ($id) => (int) $id)->all();
-        $idsPersona = $usuarios->pluck('persona_id')->filter()->map(fn ($id) => (int) $id)->unique()->values()->all();
 
         return view('seguridad::pages.usuarios.index', [
             ...$this->autorizacion->cascara($request),
@@ -105,7 +101,6 @@ final class UsuariosController
             'rolesVerComoPorUsuario' => $this->autorizacion->tienePermiso($request, self::PERMISO_VER_COMO)
                 ? $this->rolesVivosPorUsuario($idsUsuario)
                 : [],
-            'etiquetasPersona' => $this->personas->nombresDe($idsPersona),
             'filtros' => ['q' => $busqueda],
             'tonoPorEstado' => self::TONO_POR_ESTADO,
         ]);
@@ -118,7 +113,6 @@ final class UsuariosController
         return view('seguridad::pages.usuarios.create', [
             ...$this->autorizacion->cascara($request),
             'rolesDisponibles' => $this->rolesDisponibles($request),
-            'personasDisponibles' => $this->personasDisponibles(null),
         ]);
     }
 
@@ -141,7 +135,6 @@ final class UsuariosController
                 password: (string) $datos['password'],
                 name: (string) $datos['name'],
                 type: TipoUsuario::Interno,
-                personaId: $this->enteroONull($datos['persona_id'] ?? null),
                 roleIds: $rolesDeseados,
                 idRolActivo: $this->rolActivoId($request),
             );
@@ -158,7 +151,6 @@ final class UsuariosController
     public function edit(
         Request $request,
         SecUser $usuario,
-        LecturaFichaPersona $lecturaPersona,
         ListarBitacora $listarBitacora,
     ): View {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
@@ -171,12 +163,10 @@ final class UsuariosController
             'usuario' => $usuario,
             'rolesAsignados' => $usuario->idsDeRoles(),
             'rolesDisponibles' => $this->rolesDisponibles($request),
-            'personasDisponibles' => $this->personasDisponibles($usuario->id),
             'resumenRelacionado' => $this->resumenRelacionado(
                 $usuario,
                 $request,
                 (string) ($cascara['zonaHoraria'] ?? config('app.timezone')),
-                $lecturaPersona,
                 $listarBitacora,
             ),
         ]);
@@ -205,7 +195,6 @@ final class UsuariosController
                 password: $this->cadenaONull($datos['password'] ?? null),
                 name: (string) $datos['name'],
                 type: $usuario->type,
-                personaId: $this->enteroONull($datos['persona_id'] ?? null),
                 roleIds: $rolesDeseados,
                 idRolActivo: $this->rolActivoId($request),
             );
@@ -258,13 +247,13 @@ final class UsuariosController
     /**
      * Resumen relacionado del aside (solo edición, §6.3.1 de la guía de
      * pantalla): hasta tres tarjetas con las relaciones más cercanas de la
-     * cuenta, derivadas de sus FK reales — roles (`sec_user_role`) y persona
-     * (`persona_id`); la bitácora de la propia cuenta cierra la lista.
+     * cuenta, derivadas de sus FK reales — roles (`sec_user_role`); la
+     * bitácora de la propia cuenta cierra la lista.
      *
      * Cada tarjeta se gatea por el permiso `.ver` del módulo de LO QUE MUESTRA
      * contra el ROL ACTIVO (invariante 10 de CLAUDE.md), no por el de
      * usuarios, que ya se verificó arriba; sin él, la tarjeta se omite del
-     * todo. Lo de otro módulo (persona, contrato) llega por su `Contratos/`
+     * todo. Lo de otro módulo llega por su `Contratos/`
      * (ADR 0003, regla 2), nunca con SQL ni modelos ajenos. Los datos los
      * resuelve este método, nunca la vista.
      *
@@ -274,7 +263,6 @@ final class UsuariosController
         SecUser $usuario,
         Request $request,
         string $zonaQueVe,
-        LecturaFichaPersona $lecturaPersona,
         ListarBitacora $listarBitacora,
     ): array {
         $resumen = [];
@@ -282,10 +270,6 @@ final class UsuariosController
 
         if ($esInterno && $this->autorizacion->tienePermiso($request, 'seguridad.rol.ver')) {
             $resumen[] = $this->tarjetas->tarjetaRoles($usuario);
-        }
-
-        if ($esInterno && $this->autorizacion->tienePermiso($request, 'personal.persona.ver')) {
-            $resumen[] = $this->tarjetas->tarjetaPersona($usuario, $lecturaPersona);
         }
 
         if ($this->autorizacion->tienePermiso($request, 'seguridad.bitacora.ver')) {
@@ -305,11 +289,6 @@ final class UsuariosController
     private function rolActivoId(Request $request): int
     {
         return (int) $request->session()->get('sec_rol_activo_id');
-    }
-
-    private function enteroONull(mixed $valor): ?int
-    {
-        return $valor === null || $valor === '' ? null : (int) $valor;
     }
 
     private function cadenaONull(mixed $valor): ?string
@@ -385,23 +364,5 @@ final class UsuariosController
             fn (array $roles): array => array_map(NombreLegibleRol::de(...), $roles),
             $this->roles->slugsVivosPorUsuario($idsUsuario),
         );
-    }
-
-    /**
-     * Personas vivas sin cuenta asignada todavía, más la propia persona del
-     * usuario en edición (si no se excluyera del filtro de «ya asignadas», el
-     * propio registro se autoexcluiría de su lista al re-guardar). `Personal`
-     * es otro módulo: se lee por su contrato (ADR 0003, regla 2).
-     *
-     * @return Collection<int, string>
-     */
-    private function personasDisponibles(?int $usuarioId): Collection
-    {
-        $idsAsignados = SecUser::query()
-            ->whereNotNull('persona_id')
-            ->when($usuarioId !== null, fn ($consulta) => $consulta->whereKeyNot($usuarioId))
-            ->pluck('persona_id');
-
-        return collect($this->personas->vivasExcepto($idsAsignados));
     }
 }

@@ -4,8 +4,7 @@
     real vive en `_formulario.blade.php`, compartido con `edit.blade.php`.
 
     Datos esperados (ver UsuariosController::create()): la cáscara de
-    CascaraPanel, más `$rolesDisponibles` (Collection<int, SecRole>) y
-    `$personasDisponibles` (Collection<int, string>).
+    CascaraPanel, más `$rolesDisponibles` (Collection<int, SecRole>).
 
     Gateada por `seguridad.usuario.crear`, verificado server-side en el
     controlador.
