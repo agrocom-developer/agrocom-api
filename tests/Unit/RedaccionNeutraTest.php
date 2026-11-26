@@ -151,3 +151,73 @@ it('reconoce el voseo y el trato de usted, y deja pasar el tuteo', function () {
         ->and(redaccionFugas('¿Con qué rol vas a trabajar? Necesitarás :cantidad más.'))->toBe([])
         ->and(redaccionFugas('Se enviará un correo. Te avisaré al revés.'))->toBe([]);
 });
+
+/**
+ * Construcciones ya corregidas que no deben volver (docs/diseno/guia_redaccion_panel.md):
+ * frases armadas al revés, calcos del código, jerga de oficina y regionalismos.
+ * Es una lista corta de frases literales, no un analizador: se amplía con criterio
+ * cuando una corrección se repite, y no se usa para frenar texto legítimo.
+ */
+const REDACCION_FRASES_PROHIBIDAS = [
+    '/abiertas? a ofertas/iu' => 'Ofertas abiertas',
+    '/dar(?:se|lo|la|los|las)? de baja|dado de baja|dada de baja|\bdad[oa]s? de baja/iu' => 'Eliminar / Eliminado',
+    '/\bintenta nuevamente\b|\bvuelve a intentar\b(?!lo|se)/iu' => 'Vuelve a intentarlo',
+    '/\b(?:acá|apenas la|apenas lo)\b/iu' => 'aquí / en cuanto',
+    '/\bpendientes? de aprobación de\b/iu' => 'Proveedores por aprobar',
+    '/\bno puede pasar de (?!«)/iu' => 'no puede tener más de / no puede ser mayor que',
+    '/\bsoft delete\b|\bpayload\b|\brequest siguiente\b|\bSDK\b/u' => 'sin jerga técnica',
+];
+
+/**
+ * Claves de `lang/es` que son historia del sistema anterior y no se muestran en
+ * el panel; se revisan en otro trabajo y no entran en la lista de frases.
+ */
+const REDACCION_FRASES_ARCHIVOS_OMITIDOS = ['operaciones.php', 'personal.php', 'mantenimiento.php', 'legal.php'];
+
+it('ningún texto de lang/es repite una construcción ya corregida', function () use ($raizProyecto) {
+    $hallazgos = [];
+
+    foreach (glob($raizProyecto.'/lang/es/*.php') ?: [] as $archivo) {
+        if (in_array(basename($archivo), REDACCION_FRASES_ARCHIVOS_OMITIDOS, true)) {
+            continue;
+        }
+
+        /** @var array<array-key, mixed> $catalogo */
+        $catalogo = require $archivo;
+
+        foreach (redaccionAplanar($catalogo) as $clave => $texto) {
+            foreach (REDACCION_FRASES_PROHIBIDAS as $patron => $alternativa) {
+                if (preg_match($patron, $texto) === 1) {
+                    $hallazgos[] = sprintf('%s.%s → «%s» (usa: %s)', basename($archivo, '.php'), $clave, $texto, $alternativa);
+                }
+            }
+        }
+    }
+
+    expect($hallazgos)->toBe(
+        [],
+        "Construcción que ya se corrigió (ver docs/diseno/guia_redaccion_panel.md):\n  ".implode("\n  ", $hallazgos),
+    );
+});
+
+it('detecta las construcciones prohibidas y deja pasar las correctas', function () {
+    $detecta = static function (string $texto): bool {
+        foreach (array_keys(REDACCION_FRASES_PROHIBIDAS) as $patron) {
+            if (preg_match($patron, $texto) === 1) {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    expect($detecta('Abiertas a ofertas'))->toBeTrue()
+        ->and($detecta('Puedes dar de baja al proveedor'))->toBeTrue()
+        ->and($detecta('Intenta nuevamente'))->toBeTrue()
+        ->and($detecta('Vuelve a intentar en un momento'))->toBeTrue()
+        ->and($detecta('Aparece acá'))->toBeTrue()
+        ->and($detecta('Ofertas abiertas'))->toBeFalse()
+        ->and($detecta('Vuelve a intentarlo en un momento'))->toBeFalse()
+        ->and($detecta('Eliminar el proveedor'))->toBeFalse()
+        ->and($detecta('Aparece aquí'))->toBeFalse();
+});

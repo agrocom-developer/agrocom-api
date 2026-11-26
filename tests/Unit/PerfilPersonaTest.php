@@ -182,7 +182,7 @@ test('lo que no está cargado se dice, en vez de dejar un hueco', function () {
     $tarjeta = perfilTarjeta(perfilCuenta($id));
 
     expect(perfilValor($tarjeta, 'Documento (CI)'))->toBe('Sin registrar')
-        ->and(perfilValor($tarjeta, 'Celular'))->toBe('Sin registrar')
+        ->and(perfilValor($tarjeta, 'Teléfono'))->toBe('Sin registrar')
         ->and(perfilValor($tarjeta, 'Correo'))->toBe('Sin registrar')
         ->and(perfilValor($tarjeta, 'Dirección'))->toBe('Sin registrar')
         ->and(perfilValor($tarjeta, 'Base'))->toBe('Sin base asignada')

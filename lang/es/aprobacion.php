@@ -36,9 +36,9 @@ return [
         'dron' => 'Dron',
     ],
     'errores' => [
-        'transicion_invalida' => 'No se puede :accion un registro que está en estado «:estado».',
+        'transicion_invalida' => 'No se puede :accion: el estado actual es «:estado».',
         'motivo_requerido' => 'Indica el motivo para :accion.',
         'sin_permiso' => 'No tienes permiso para esta acción.',
-        'aprobacion_propia' => 'No puedes aprobar un registro que cargaste tú. Pide a otra persona de la oficina que lo revise y lo apruebe.',
+        'aprobacion_propia' => 'No puedes aprobar lo que registraste tú. Pide a otra persona de la oficina que lo revise y lo apruebe.',
     ],
 ];

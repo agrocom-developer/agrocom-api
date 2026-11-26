@@ -67,6 +67,23 @@ final class SolicitudInvalida extends RuntimeException
         return new self(Texto::de('solicitudes.errores.ventana_vencida'), false, 'ventana_hasta');
     }
 
+    /** El terreno de la solicitud no tiene departamento: no se puede publicar sin ubicación (ADR 0045). */
+    public static function terrenoSinDepartamento(): self
+    {
+        return new self(Texto::de('solicitudes.errores.terreno_sin_departamento'), false, 'departamento_codigo');
+    }
+
+    public static function terrenoSinProvincia(): self
+    {
+        return new self(Texto::de('solicitudes.errores.terreno_sin_provincia'), false, 'provincia_codigo');
+    }
+
+    /** La provincia del terreno no pertenece a su departamento (o ya no está en el catálogo). */
+    public static function provinciaNoEsDelDepartamento(): self
+    {
+        return new self(Texto::de('solicitudes.errores.provincia_no_es_del_departamento'), false, 'provincia_codigo');
+    }
+
     public static function motivoRequerido(): self
     {
         return new self(Texto::de('solicitudes.errores.motivo_requerido'), false, 'motivo');

@@ -84,6 +84,7 @@
     font-family: var(--ag-font-family-mono);
     font-size: 0.59rem;
     letter-spacing: 0.07em;
+    text-transform: uppercase;
     color: var(--ag-color-accent-link);
     background: var(--ag-color-accent-subtle);
     padding: 2px 7px;

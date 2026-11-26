@@ -4149,6 +4149,52 @@ paths:
       security:
         -
           tokenDispositivo: []
+  /api/catalogos/ubicaciones:
+    get:
+      tags:
+        - Clientes
+      summary: 'Catálogo de departamentos y provincias'
+      description: 'Catálogo oficial de Bolivia: los 9 departamentos y sus provincias, con el código del INE (dos dígitos el departamento, cuatro la provincia), ordenados por código. De solo lectura y sin token: las apps lo usan para elegir la ubicación de un terreno sin llevar una copia propia. Solo el departamento sirve de filtro de búsqueda; la provincia informa.'
+      operationId: listarUbicaciones
+      responses:
+        200:
+          description: 'Departamentos con sus provincias.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      required:
+                        - codigo
+                        - nombre
+                        - provincias
+                      properties:
+                        codigo:
+                          type: string
+                          example: '07'
+                        nombre:
+                          type: string
+                          example: 'Santa Cruz'
+                        provincias:
+                          type: array
+                          items:
+                            required:
+                              - codigo
+                              - nombre
+                            properties:
+                              codigo:
+                                type: string
+                                example: '0702'
+                              nombre:
+                                type: string
+                                example: Warnes
+                            type: object
+                      type: object
+                type: object
   /api/clientes/registro:
     post:
       tags:
@@ -4655,7 +4701,7 @@ paths:
       tags:
         - Solicitudes
       summary: 'Abrir una solicitud al mercado'
-      description: 'Abre la solicitud a los pilotos: `borrador` pasa a `abierta`, con su vigencia (7 días) y visible en el mapa. Exige precio por hectárea propuesto, hectáreas que no superen las del terreno, fecha deseada no pasada y un teléfono en la cuenta. Avisa a los pilotos cuyas preferencias coinciden con la zona y las hectáreas. Una solicitud `expirada` se renueva igual, dentro del plazo de renovación.'
+      description: 'Abre la solicitud a los pilotos: `borrador` pasa a `abierta`, con su vigencia (7 días) y visible en el mapa. Exige precio por hectárea propuesto, hectáreas que no superen las del terreno, fecha deseada no pasada, un teléfono en la cuenta y que el terreno tenga departamento y provincia coherentes entre sí; esa ubicación (más municipio y comunidad) se congela en la solicitud. Avisa a los pilotos cuyas preferencias coinciden con la zona y las hectáreas. Una solicitud `expirada` se renueva igual, dentro del plazo de renovación.'
       operationId: publicarSolicitud
       parameters:
         -
@@ -4683,7 +4729,7 @@ paths:
         404:
           description: 'No existe o es de otro cliente.'
         422:
-          description: 'Falta el precio o el teléfono, la solicitud no está en un estado que se pueda abrir o la fecha deseada ya pasó.'
+          description: 'Falta el precio o el teléfono, el terreno no tiene departamento o provincia (o no son coherentes), la solicitud no está en un estado que se pueda abrir o la fecha deseada ya pasó.'
           content:
             application/json:
               schema:
@@ -6964,6 +7010,24 @@ components:
         zona_id:
           type: integer
           nullable: true
+        departamento_codigo:
+          description: 'Código INE del departamento del catálogo (`GET /api/catalogos/ubicaciones`). Si se envía `provincia_codigo`, es obligatorio.'
+          type: string
+          example: '07'
+          nullable: true
+        provincia_codigo:
+          description: 'Código INE de la provincia; debe ser del departamento enviado.'
+          type: string
+          example: '0702'
+          nullable: true
+        municipio:
+          description: 'Texto libre de referencia.'
+          type: string
+          nullable: true
+        comunidad:
+          description: 'Texto libre de referencia.'
+          type: string
+          nullable: true
       type: object
     ClienteContacto:
       title: 'Contacto de referencia del cliente'
@@ -7181,6 +7245,24 @@ components:
             - proveedor
             - administrador
             - sistema
+        departamento_codigo:
+          description: 'Ubicación congelada al publicar: código INE del departamento. Nulo en `borrador`.'
+          type: string
+          example: '07'
+          nullable: true
+        provincia_codigo:
+          description: 'Ubicación congelada al publicar: código INE de la provincia.'
+          type: string
+          example: '0702'
+          nullable: true
+        municipio:
+          description: 'Texto de referencia copiado del terreno al publicar.'
+          type: string
+          nullable: true
+        comunidad:
+          description: 'Texto de referencia copiado del terreno al publicar.'
+          type: string
+          nullable: true
         contacto:
           nullable: true
           allOf:
@@ -7259,6 +7341,26 @@ components:
         zona_id:
           type: integer
           example: 1
+          nullable: true
+        departamento_codigo:
+          description: 'Código INE del departamento (`GET /api/catalogos/ubicaciones`). Obligatorio para publicar una solicitud sobre el terreno.'
+          type: string
+          example: '07'
+          nullable: true
+        provincia_codigo:
+          description: 'Código INE de la provincia, del mismo departamento. Obligatorio para publicar una solicitud sobre el terreno.'
+          type: string
+          example: '0702'
+          nullable: true
+        municipio:
+          description: 'Texto libre de referencia.'
+          type: string
+          example: Warnes
+          nullable: true
+        comunidad:
+          description: 'Texto libre de referencia.'
+          type: string
+          example: 'Los Álamos'
           nullable: true
         fotos:
           description: 'Fotos del estado del terreno (hasta 8). Las URLs son firmadas y de corta vida: se piden de nuevo con el terreno.'

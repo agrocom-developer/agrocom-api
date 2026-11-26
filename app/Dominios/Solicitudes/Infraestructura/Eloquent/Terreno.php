@@ -22,6 +22,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $colindantes_sensibles
  * @property bool $acceso_dificil
  * @property int|null $zona_id
+ * @property string|null $departamento_codigo Código INE del departamento (catálogo `sol_departamentos`).
+ * @property string|null $provincia_codigo Código INE de la provincia, del mismo departamento.
+ * @property string|null $municipio Texto libre de referencia.
+ * @property string|null $comunidad Texto libre de referencia.
  */
 class Terreno extends ModeloDominio
 {
@@ -40,6 +44,10 @@ class Terreno extends ModeloDominio
         'colindantes_sensibles',
         'acceso_dificil',
         'zona_id',
+        'departamento_codigo',
+        'provincia_codigo',
+        'municipio',
+        'comunidad',
     ];
 
     /** @return array<string, string> */
