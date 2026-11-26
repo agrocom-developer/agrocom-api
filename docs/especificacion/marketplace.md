@@ -361,11 +361,11 @@ El menú son 15 ítems, en este orden (el seeder `SecMenuSeeder` es su única fu
 | Módulo | Ítems, en orden |
 |---|---|
 | Inicio | acceso directo al tablero, sin ítems |
-| Mercado | Métricas del mercado, Solicitudes de fumigación, Calificaciones de servicios |
-| Proveedores | Cuentas de proveedores (`panel/proveedores`), Pilotos registrados, Drones registrados, Documentos y vigencias |
-| Atención | Clientes registrados, Reclamos de servicios |
-| Seguridad | Usuarios del panel, Permisos del panel, Bitácora de actividad |
-| Sistema | Datos de la organización, Avisos del sistema, Configuración general |
+| Mercado | Métricas del mercado, Solicitudes, Calificaciones (las que reciben pilotos y clientes) |
+| Proveedores | Cuentas (`panel/proveedores`: personas y empresas que ofrecen el servicio), Pilotos, Drones, Documentos |
+| Atención | Clientes, Reclamos |
+| Seguridad | Usuarios, Permisos, Bitácora |
+| Sistema | Organización, Avisos del sistema, Configuración |
 
 Zonas no está en el menú: el mercado no usa zonas ni restricción geográfica.
 

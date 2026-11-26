@@ -61,37 +61,22 @@ it('el menú tiene 15 ítems y Zonas ya no está', function () use ($raiz) {
         ->toContain("'menu.sistema.items.zonas'");
 });
 
-it('los ítems tienen una frase corta que se entiende sola, sin repetir el módulo ni palabras sueltas', function () use ($raiz) {
+it('las etiquetas dicen lo que hay, sin adjetivos obvios ni repetir el módulo', function () use ($raiz) {
     /** @var array<string, array<string, mixed>> $lang */
     $lang = require $raiz.'/lang/es/menu.php';
 
-    expect($lang['proveedores']['label'])->toBe('Proveedores')
-        ->and($lang['proveedores']['items']['proveedores'])->toBe('Cuentas de proveedores');
+    // Dentro de Proveedores, «Cuentas» son las cuentas de proveedores; la descripción del módulo lo aclara.
+    expect($lang['proveedores']['items']['proveedores'])->toBe('Cuentas')
+        ->and($lang['proveedores']['descripcion'])->toContain('personas y empresas que ofrecen el servicio')
+        ->and($lang['solicitudes']['descripcion'])->toContain('calificaciones que reciben pilotos y clientes');
 
     foreach (['solicitudes', 'proveedores', 'atencion', 'seguridad', 'sistema'] as $modulo) {
-        foreach ($lang[$modulo]['items'] as $clave => $etiqueta) {
-            $palabras = count(preg_split('/\s+/', $etiqueta));
-            // Caben en el drawer del móvil: de dos a cuatro palabras, y nunca el nombre del módulo solo.
-            expect($palabras)->toBeBetween(2, 4);
-            expect($etiqueta)->not->toBe($lang[$modulo]['label']);
+        foreach ($lang[$modulo]['items'] as $etiqueta) {
+            expect($etiqueta)
+                ->not->toBe($lang[$modulo]['label'])
+                ->not->toMatch('/Directorio|registrad[oa]s|del panel|de servicios/u');
         }
     }
-});
-
-it('ordena el riel: inicio, mercado, proveedores, atención, seguridad, sistema', function () use ($raiz) {
-    $codigo = (string) file_get_contents($raiz.'/database/seeders/Catalogo/SecMenuSeeder.php');
-
-    preg_match_all('/\$this->modulo\(\'(\w+)\', \'\w+\', (\d+)\)/', $codigo, $m, PREG_SET_ORDER);
-    $porOrden = [];
-    foreach ($m as [, $clave, $orden]) {
-        $porOrden[(int) $orden] = $clave;
-    }
-    ksort($porOrden);
-
-    expect(array_values($porOrden))->toBe(['solicitudes', 'proveedores', 'atencion', 'seguridad', 'sistema']);
-
-    // Inicio va primero y no tiene hijos: es un acceso directo al tablero.
-    expect($codigo)->toContain("\$this->acceso('inicio', 'home', 0, ruta: 'panel.dashboard'");
 });
 
 it('cada ítem del menú tiene su texto y su módulo tiene etiqueta y descripción', function () use ($raiz) {

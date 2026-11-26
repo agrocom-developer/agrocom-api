@@ -26,23 +26,23 @@ return [
     // Marketplace (ADR 0027): la solicitud de servicio es la unidad de negocio.
     'solicitudes' => [
         'label' => 'Mercado',
-        'descripcion' => 'Las métricas del mercado, las solicitudes con sus ofertas y las calificaciones.',
+        'descripcion' => 'Las métricas del mercado, las solicitudes con sus ofertas y las calificaciones que reciben pilotos y clientes.',
         'items' => [
             'metricas' => 'Métricas del mercado',
-            'solicitudes' => 'Solicitudes de fumigación',
-            'calificaciones' => 'Calificaciones de servicios',
+            'solicitudes' => 'Solicitudes',
+            'calificaciones' => 'Calificaciones',
         ],
     ],
 
     // Marketplace (ADR 0028, 0029, 0032): aprobación de quienes prestan el servicio.
     'proveedores' => [
         'label' => 'Proveedores',
-        'descripcion' => 'Aprobación de proveedores, pilotos, drones y documentos de verificación.',
+        'descripcion' => 'Aprobación de las cuentas de proveedores (personas y empresas que ofrecen el servicio), sus pilotos, sus drones y los documentos de verificación.',
         'items' => [
-            'proveedores' => 'Cuentas de proveedores',
-            'pilotos' => 'Pilotos registrados',
-            'drones_flota' => 'Drones registrados',
-            'documentos' => 'Documentos y vigencias',
+            'proveedores' => 'Cuentas',
+            'pilotos' => 'Pilotos',
+            'drones_flota' => 'Drones',
+            'documentos' => 'Documentos',
         ],
     ],
 
@@ -51,8 +51,8 @@ return [
         'label' => 'Atención',
         'descripcion' => 'Clientes y reclamos de quienes usan la plataforma.',
         'items' => [
-            'clientes' => 'Clientes registrados',
-            'reclamos' => 'Reclamos de servicios',
+            'clientes' => 'Clientes',
+            'reclamos' => 'Reclamos',
         ],
     ],
 
@@ -60,9 +60,9 @@ return [
         'label' => 'Seguridad',
         'descripcion' => 'Usuarios, permisos y bitácora.',
         'items' => [
-            'usuarios' => 'Usuarios del panel',
-            'roles' => 'Permisos del panel',
-            'bitacora' => 'Bitácora de actividad',
+            'usuarios' => 'Usuarios',
+            'roles' => 'Permisos',
+            'bitacora' => 'Bitácora',
         ],
     ],
 
@@ -72,9 +72,9 @@ return [
         'label' => 'Sistema',
         'descripcion' => 'Organización, avisos y configuración del sistema.',
         'items' => [
-            'organizacion' => 'Datos de la organización',
+            'organizacion' => 'Organización',
             'avisos' => 'Avisos del sistema',
-            'configuracion' => 'Configuración general',
+            'configuracion' => 'Configuración',
         ],
     ],
 

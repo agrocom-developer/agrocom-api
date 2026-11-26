@@ -126,7 +126,7 @@ it('en una página de un ítem del menú, Inicio no muestra ningún ítem propio
     $html = panelPintadoEn('panel.solicitudes.index');
 
     expect($html)->not->toContain('ag-menu-item--actual')
-        ->and($html)->toContain('Solicitudes de fumigación');
+        ->and($html)->toContain('ag-menu-item is-active');
 });
 
 it('en el tablero, Inicio sigue siendo un acceso directo sin ítems', function () {
