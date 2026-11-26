@@ -48,7 +48,7 @@ Referencia rápida de vocabulario, de negocio y técnico, para que cualquier per
 | **Departamento y provincia** | Ubicación de la solicitud, elegida de un catálogo de Bolivia (solo el departamento filtra); el municipio y la comunidad son texto libre. No hay zonas ni radio | ADR 0045 |
 | **Criterio de alcance (filtro)** | Regla que decide si un proveedor es alcanzable por una solicitud; hay del sistema, del cliente y del proveedor, y la lista crece sin migraciones | ADR 0045 |
 | **Oleada de aviso** | Aviso de una nueva solicitud por anillos de prioridad («sistema solar»): primero a quienes cumplen todos los filtros (propios y mejor calificados primero) y, pasado un intervalo, a los nuevos que cumplen tras relajar un filtro; a nadie dos veces por ciclo | ADR 0045 |
-| **Súper ola** | Último paso de la escalera: aviso a todos los elegibles (aprobados, disponibles y que no excluyeron la solicitud con sus filtros); nunca a quien está ocupado o en trabajo | ADR 0045 |
+| **Súper ola** | Último paso de la escalera (o único paso de un aviso forzado por el administrador): aviso a todos los elegibles (aprobados, disponibles y que no excluyeron la solicitud con sus filtros); nunca a quien está ocupado o en trabajo | ADR 0045 |
 | **Esperando piloto** | Etapa de la solicitud a la que nadie aceptó tras la súper ola; no se desactiva ni vence, y el cliente la relanza a mano o por su horario; al cliente solo se le avisa cuánto lleva sin respuesta (nombre visible confirmado) | ADR 0045 |
 | **Relanzamiento** | Ciclo nuevo de oleadas desde el primer anillo; lo pide el cliente o lo hace el sistema según los días y la hora que el cliente eligió (mínimo 2 días por semana, a lo más uno por día) | ADR 0045 |
 | **Escalera de oleadas** | Lista ordenada de pasos que dice qué filtro se relaja en cada oleada | ADR 0045 |
@@ -58,6 +58,12 @@ Referencia rápida de vocabulario, de negocio y técnico, para que cualquier per
 | **Cola** | Aceptaciones que superan el cupo o cuyo proveedor no está disponible; el cliente no las ve ni sabe cuántas son; se ordenan por propios, calificación y llegada y pasan a la bandeja cuando se libera un lugar | ADR 0045 |
 | **Casilla** | Lugar de la bandeja que ocupa una negociación `en_bandeja` o `en_conversacion`; hay tantas como el cupo | ADR 0045 |
 | **En acuerdo** | Estado de la solicitud que el cliente marca cuando la conversación llega a un punto sólido: ya no se avisa a más pilotos y la cola se congela; se puede volver a buscar (el término «tomada» no se usa) | ADR 0045 |
+| **Solicitud urgente** | Solicitud que el cliente declara urgente porque pisa una ventana agronómica que se pierde (siembra, cosecha, plaga); lleva una fecha límite obligatoria y un motivo opcional. La declara el cliente, nunca el sistema. Para el piloto cambia la insignia, el orden y la frecuencia de los avisos; no lleva recargo | ADR 0045 (punto K) |
+| **Fecha límite** | Día después del cual el servicio ya no sirve al cliente urgente; es dura y distinta de la fecha deseada (una preferencia). Pasada sin trato, la solicitud no se cancela: deja de recibir olas y queda «Esperando piloto» | ADR 0045 (puntos 38 y 42) |
+| **Motivo de urgencia** | Causa opcional de la urgencia: plaga, siembra, cosecha, clima u otro | ADR 0045 (punto 37) |
+| **Perfil de la oleada** | `normal` o `urgente`; fija por ciclo el intervalo T, la escalera y el relanzamiento por defecto (los de urgencia son más cortos) | ADR 0045 (punto 40) |
+| **Avisar ahora a todos** | Acción manual del administrador, con motivo y en la bitácora, que fuerza una súper ola en un ciclo propio | ADR 0045 (punto 43) |
+| **Recibir solicitudes urgentes** | Filtro del proveedor (`recibir_urgentes`): si lo apaga no recibe avisos de urgentes; nunca se relaja en las oleadas | ADR 0045 (punto 39) |
 | **Disponibilidad** | Interruptor manual de cada cuenta de proveedor (`disponible`, `ocupado`, `en_trabajo`); un piloto de una empresa tiene el suyo y el encargado puede marcarlo; los dos últimos estados no reciben avisos | ADR 0045 |
 | **Oferta que no cumple** | Oferta de un equipo que no cumple un requisito del cliente (p. ej. la capacidad del dron); se marca y el cliente decide | ADR 0045 |
 | **Oferta** | Precio por hectárea que una parte propone en una negociación, con vencimiento; se acepta, se contraoferta o se rechaza | especificación §4.5, §5.3 |

@@ -43,6 +43,19 @@
 
     <nav class="ag-drawer__nav" aria-label="{{ __('ui.rail.aria') }}">
         @foreach ($modulos as $index => $modulo)
+            {{-- Inicio con la página actual fuera del menú: el acceso directo al
+                 tablero sigue ahí y, debajo, el nombre de la página, seleccionado
+                 y sin enlace. --}}
+            @if (! empty($modulo['esInicio']) && collect($modulo['items'])->contains(fn ($item) => $item['actual'] ?? false))
+                <a href="{{ $modulo['href'] }}" class="ag-drawer__direct">
+                    <x-atoms.icon :name="$modulo['icono']" size="sm" />
+                    <span>{{ __($modulo['label']) }}</span>
+                </a>
+                @foreach ($modulo['items'] as $item)
+                    <span class="ag-drawer__actual" aria-current="page">{{ $item['label'] }}</span>
+                @endforeach
+                @continue
+            @endif
             @if (($modulo['items'] ?? []) === [] || collect($modulo['items'])->isEmpty())
                 @if (! empty($modulo['href']))
                     <a href="{{ $modulo['href'] }}" class="ag-drawer__direct {{ $modulo['active'] ? 'is-active' : '' }}" @if ($modulo['active']) aria-current="page" @endif>

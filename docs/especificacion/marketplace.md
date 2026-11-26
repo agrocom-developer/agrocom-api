@@ -35,7 +35,7 @@ Hay tres tipos de cuenta (ADR 0046). La **cuenta de panel** es del personal de A
 ## 3. Flujo de punta a punta
 
 1. El cliente registra su **propiedad** y sus **lotes** en el mapa (geometría y hectáreas) una sola vez, con fotos del estado del terreno si quiere.
-2. El cliente aprobado crea una **solicitud**: lotes a fumigar, hectáreas, cultivo, tipo de aplicación, producto, fecha deseada (que puede estar a semanas o meses), accesos, observaciones, requisitos opcionales (como la capacidad mínima del dron) y **precio por hectárea**, que pone él. La ubicación es el departamento y la provincia del terreno, que elige de un catálogo, más el municipio y la comunidad como texto. Al publicarla queda `abierta`.
+2. El cliente aprobado crea una **solicitud**: lotes a fumigar, hectáreas, cultivo, tipo de aplicación, producto, fecha deseada (que puede estar a semanas o meses), accesos, observaciones, requisitos opcionales (como la capacidad mínima del dron) y **precio por hectárea**, que pone él. Si pisa una ventana agronómica que se pierde (siembra, cosecha, plaga), puede declarar la solicitud **urgente** con una fecha límite (§6.16). La ubicación es el departamento y la provincia del terreno, que elige de un catálogo, más el municipio y la comunidad como texto. Al publicarla queda `abierta`.
 3. Los pilotos aprobados ven la solicitud en el **mapa de solicitudes abiertas**, con filtros por departamento, hectáreas, precio, fecha y cultivo. No hay zonas ni restricción geográfica: el piloto decide si quiere ir. Quien tiene activados los avisos los recibe por **oleadas** (§6.10): primero los proveedores propios de Agrocom y los mejor calificados que cumplen todos los filtros, luego, anillo por anillo, a más, y al final a todos los elegibles (la súper ola), sin avisar dos veces al mismo en un ciclo (ADR 0045). La negociación es **asíncrona**: los pilotos responden cuando pueden y no hay un chat en vivo. Un proveedor aún no aprobado no ve el mapa: ve solo cuántas solicitudes abiertas hay (§6.14).
 4. Antes de ofertar, el piloto abre el detalle: lotes dibujados, hectáreas, cultivo, accesos, observaciones y fotos del terreno. No ve datos de contacto del cliente.
 5. El piloto **acepta el precio propuesto** o **contraoferta** su precio por hectárea, indicando el dron con el que trabajará. Esa es su **aceptación** y llega a la **bandeja de entrada** del cliente (§6.11); ofertar no oculta la solicitud a los demás. Si nadie acepta, queda «Esperando piloto» y el cliente la relanza o la cancela (§6.10).
@@ -74,6 +74,7 @@ Convenciones: dominio en español, prefijo de tabla por módulo (ADR 0011), borr
 | `ventana_desde`, `ventana_hasta` | fecha | Fecha deseada, opcional; puede estar hasta `negociacion.anticipacion_maxima_dias` en el futuro. No vence la solicitud: esta sigue hasta que se adjudica o el cliente la cancela |
 | `departamento_codigo`, `provincia_codigo`, `municipio`, `comunidad` | texto | Se copian del terreno al publicar (con varios terrenos, deben compartir departamento) y no cambian si el terreno se corrige después; nulos en `borrador`. Departamento y provincia son códigos del INE y la provincia debe ser del departamento |
 | `requisitos` | JSON | Requisitos del cliente por clave de criterio, p. ej. `dron_capacidad_min_l`; nulos si no pide ninguno |
+| `urgente`, `fecha_limite`, `motivo_urgencia` | booleano, fecha, texto | La urgencia la declara el cliente; el sistema no la deduce. `fecha_limite` (día de Bolivia) es obligatoria si `urgente`, dentro de `negociacion.urgencia.dias_maximos` (14) desde hoy, y distinta de la fecha deseada: esta no puede ser posterior. `motivo_urgencia` es opcional (`plaga`, `siembra`, `cosecha`, `clima`, `otro`). Sin `urgente`, los otros dos son nulos (CHECK). Ver §6.16 |
 | `observaciones` | texto | Accesos, horarios, restricciones |
 | `precio_ha_propuesto` | decimal 14,4 | Moneda del sistema (parámetro, bolivianos) |
 | `precio_ha_acordado`, `monto_estimado` | decimal | Se fijan al adjudicar; el estimado es hectáreas solicitadas por precio acordado |
@@ -101,8 +102,8 @@ Convenciones: dominio en español, prefijo de tabla por módulo (ADR 0011), borr
 - **`neg_ofertas`**: una fila por oferta de una negociación. `id`, `uuid_cliente`, `solicitud_id`, `proveedor_id`, `equipo_id`, `numero` (1, 2, 3… dentro de la negociación), `autor_rol` (`proveedor` | `cliente`), `autor_usuario_id`, `tipo` (`acepta_propuesta` | `contraoferta`), `precio_ha` (decimal 14,4), `mensaje` (hasta 280 caracteres), `es_definitiva` (bool), `estado` (§5.3), `vence_en`, `respondida_en`, `motivo`. La negociación es el conjunto de ofertas de un `(solicitud_id, proveedor_id)`; un índice único parcial garantiza una sola oferta `vigente` por negociación y otro una sola `aceptada` por solicitud.
 - **`neg_negociaciones`**: una fila por negociación de un proveedor en una solicitud. `id`, `solicitud_id`, `proveedor_id`, `estado` (`en_cola` | `en_bandeja` | `en_conversacion` | `adjudicada` | `rechazada` | `retirada` | `vencida` | `cerrada`; §5.3), `casilla` (1 a `cupo_negociaciones` mientras ocupa un lugar de la bandeja; nula en cola y al cerrarse), `aceptada_en` (llegada, base del orden de la cola), `liberada_en`, `vista_en`, `aviso_entregado_en`, `cerrada_en`. Índice único parcial `(solicitud_id, proveedor_id)` entre las negociaciones activas (`en_cola`, `en_bandeja`, `en_conversacion`) y `UNIQUE (solicitud_id, casilla) WHERE casilla IS NOT NULL`: el cupo del cliente lo garantiza la base de datos. `neg_ofertas.negociacion_id` la referencia y `neg_ofertas.vence_en` es nulo mientras la oferta espera `en_cola`.
 - **`neg_ofertas.incumple`**: lista de claves de requisito del cliente que el equipo de la oferta no cumple (p. ej. `dron_capacidad`); vacía si cumple todo. No bloquea la oferta: el cliente la ve marcada.
-- **`neg_oleadas`**: una fila por solicitud con el estado del aviso por oleadas: `estado` (`activa` | `detenida` | `esperando` | `terminada`; `detenida` es la solicitud «En acuerdo» y `esperando` es «Esperando piloto»), `ciclo`, `paso`, `proxima_en`, `abierta_a_todos_en` (cuando salió la súper ola), `detenida_en`, y la programación del relanzamiento que elige el cliente: `relanzamiento_dias`, `relanzamiento_hora`, `proximo_relanzamiento_en`, `ultimo_relanzamiento_en`.
-- **`neg_oleada_pasos`**: lo que ocurrió en cada paso de cada ciclo: `solicitud_id`, `ciclo`, `paso`, `ejecutado_en`, `cumplen`, `nuevos_avisados`. Solo se inserta.
+- **`neg_oleadas`**: una fila por solicitud con el estado del aviso por oleadas: `estado` (`activa` | `detenida` | `esperando` | `terminada`; `detenida` es la solicitud «En acuerdo» y `esperando` es «Esperando piloto»), `ciclo`, `paso`, `proxima_en`, `abierta_a_todos_en` (cuando salió la súper ola), `detenida_en`, `perfil` (`normal` | `urgente`, fijado por ciclo; §6.16) y la programación del relanzamiento que elige el cliente: `relanzamiento_dias`, `relanzamiento_hora`, `proximo_relanzamiento_en`, `ultimo_relanzamiento_en`.
+- **`neg_oleada_pasos`**: lo que ocurrió en cada paso de cada ciclo: `solicitud_id`, `ciclo`, `paso`, `ejecutado_en`, `cumplen`, `nuevos_avisados`, `origen` (`reloj`, `relanzamiento`, `cliente` o `admin`) y `parametros` (lo que usó el paso: perfil, intervalo, criterios relajados). Solo se inserta.
 - **`neg_oleada_avisos`**: a qué proveedor se avisó, en qué ciclo y paso: `solicitud_id`, `proveedor_id`, `ciclo`, `paso`, `avisado_en`, `entregado_en` (nulo hasta que el aviso sale). `UNIQUE (solicitud_id, proveedor_id, ciclo)`: nunca se avisa dos veces al mismo proveedor en un ciclo. Solo se inserta.
 - **`neg_cancelaciones`**: registro informativo de cancelaciones tras adjudicar: `solicitud_id`, `parte` (`cliente` | `proveedor`), `motivo`, `creado_en`. Alimenta la tasa de cancelación visible; no genera sanción automática (ADR 0033).
 
@@ -209,7 +210,7 @@ Detalle de la decisión en ADR 0030 y reglas exactas en `negociacion-contrato.md
 2. **Una negociación por proveedor y solicitud.** Cada proveedor tiene su propia negociación con el cliente; las ofertas de otros proveedores no se ven entre sí (el piloto solo ve cuántas negociaciones tiene el cliente en su bandeja o en conversación, nunca la cola).
 3. **Rondas.** Las ofertas de una negociación se numeran 1, 2, 3… y alternan autor: la primera la hace el proveedor, la siguiente el cliente, y así. Quien recibe una oferta vigente puede aceptarla, contraofertar o rechazarla. Contraofertar reemplaza la oferta vigente. La negociación admite hasta `negociacion.max_ofertas_por_negociacion` ofertas (parámetro, 5 por defecto); la última se marca `definitiva` y solo se acepta o se rechaza.
 4. **Adjudicación.** Cuando una parte acepta la oferta vigente de la otra, la oferta queda `aceptada`, la solicitud pasa a `adjudicada` con `precio_ha_acordado`, `proveedor_id` y `equipo_id`, y las demás ofertas vigentes de la solicitud pasan a `cerrada`.
-5. **Vigencia.** Cada oferta vence a las `negociacion.vigencia_oferta_horas` (72 por defecto, admite horas, días o semanas) de llegar a la bandeja del cliente; en la cola no vence. La **solicitud no vence sola**: sigue en el mercado hasta que se adjudica o el cliente la cancela, aunque tarde semanas; no hay `vence_en`, estado `expirada` ni renovación. Puede llevar una fecha deseada hasta `negociacion.anticipacion_maxima_dias` (365) adelante. Mientras nadie acepta, el servidor avisa solo al cliente cada `negociacion.pendiente.recordatorio_dias` (7) cuánto lleva sin respuesta, con las opciones de modificarla o retirarla, y si pasa la fecha deseada le avisa y deja de relanzarla sola hasta que la actualice.
+5. **Vigencia.** Cada oferta vence a las `negociacion.vigencia_oferta_horas` (72 por defecto, admite horas, días o semanas) de llegar a la bandeja del cliente; en la cola no vence. La **solicitud no vence sola**: sigue en el mercado hasta que se adjudica o el cliente la cancela, aunque tarde semanas; no hay `vence_en`, estado `expirada` ni renovación. Puede llevar una fecha deseada hasta `negociacion.anticipacion_maxima_dias` (365) adelante. Mientras nadie acepta, el servidor avisa solo al cliente cada `negociacion.pendiente.recordatorio_dias` (7) cuánto lleva sin respuesta, con las opciones de modificarla o retirarla, y si pasa la fecha deseada le avisa y deja de relanzarla sola hasta que la actualice. En una solicitud urgente vigente manda la fecha límite, no la deseada (§6.16).
 6. **Precio.** El precio por hectárea es un decimal positivo con un máximo de sanidad (parámetro). No hay precio de referencia: lo ponen el cliente y el proveedor.
 7. **Sin penalidad automática.** Rechazar, retirar o dejar vencer una oferta no penaliza. Cancelar tras adjudicar queda registrado y visible en la tasa de cancelación, y un administrador decide si actúa (ADR 0033).
 8. **Visibilidad previa a ofertar.** El piloto ve lotes, hectáreas, cultivo, accesos, observaciones y fotos del terreno. No ve nombre, teléfono ni documento del cliente hasta la adjudicación.
@@ -225,10 +226,16 @@ Detalle de la decisión en ADR 0030 y reglas exactas en `negociacion-contrato.md
 13. **Dron que no cumple.** Un equipo que no cumple un requisito del cliente puede ofertar: la oferta se marca y se le informa al cliente, que decide. No se bloquea.
 14. **Proveedor aún no habilitado.** Una cuenta de proveedor cuyo proveedor está `pendiente`, o aprobado sin un equipo apto, no ve el mapa ni el detalle y no ofrece. Ve un **contador** (`GET /solicitudes-abiertas/contador`, con `departamento` opcional) con cuántas solicitudes abiertas hay, sin lotes, clientes ni ubicación detallada, para que sepa cuántos trabajos no puede ver todavía.
 15. **Disponibilidad.** Cada cuenta de proveedor tiene su interruptor `disponible`, `ocupado` o `en_trabajo`; el titular y cada piloto de una empresa tienen el suyo y el encargado puede marcar a sus pilotos. Se avisa a una cuenta solo si su interruptor y el de su empresa están en `disponible`. Al volver a `disponible` no se le mandan avisos atrasados. Quien no está disponible sigue viendo el mapa y puede enviar una oferta, que espera en la cola hasta que vuelva a `disponible`.
+16. **Solicitud urgente** (ADR 0045, punto K; primer modelo, el dueño dijo que «con la práctica entraremos a más detalle», así que lo fino es revisable).
+    - **La declara el cliente**: interruptor `urgente` con `fecha_limite` obligatoria (dura, distinta de la fecha deseada, dentro de un tope de 14 días) y `motivo_urgencia` opcional. La app solo sugiere marcarla cuando la fecha deseada está a menos de 2 días; nunca la marca sola. La urgencia está vigente hasta el fin del día de la fecha límite y entonces pasa a vencida.
+    - **Qué cambia para el piloto**: insignia «Urgente · faltan N días»; el mapa ordena por relevancia (urgentes primero) y tiene el filtro `urgentes`; avisos más frecuentes y prioritarios; y su filtro «Recibir solicitudes urgentes» (clave `recibir_urgentes`), que nunca se relaja en las oleadas y gobierna solo los avisos.
+    - **Oleadas de urgencia**: el ciclo tiene perfil `urgente` con T propio (`negociacion.urgencia.intervalo_minutos`, 15), escalera acelerada (`negociacion.urgencia.escalera`) y relanzamiento diario por defecto, respetando el máximo de un ciclo nuevo por día. Sin recargo: el precio lo negocian las partes; si pasan varias olas sin aceptación, el servidor sugiere al cliente subir el precio, ampliar la fecha o quitar el requisito de dron.
+    - **Pasada la fecha límite sin trato**, la solicitud no se cancela ni vence: dejan de enviarse olas, se avisa al cliente («Pasó tu fecha límite») y queda «Esperando piloto» hasta que actualice la fecha, quite la urgencia o la cancele.
+    - **Administrador**: puede forzar una súper ola («Avisar ahora a todos»), con motivo y auditada en la bitácora; abre un ciclo propio, así que no avisa dos veces a la misma persona dentro de un ciclo.
 
 ## 7. Eventos de dominio
 
-`SolicitudAbierta`, `OfertaRecibida`, `AceptacionLiberada`, `SolicitudEnAcuerdo`, `ContraofertaRecibida`, `OfertaRechazada`, `OfertaRetirada`, `OfertaVencida`, `SolicitudAdjudicada`, `OfertaCerrada`, `EjecucionIniciada`, `AvanceRegistrado`, `EvidenciaSubida`, `SolicitudFinalizada`, `SolicitudCancelada`, `MensajeEnviado`, `ProveedorAprobado`, `ProveedorSuspendido`, `DocumentoPorVencer`, `DocumentoVencido`, `CalificacionRegistrada`, `CalificacionModerada`, `DisputaAbierta`, `DisputaResuelta`, `IncidenciaReportada`, `EmergenciaActivada`, `EliminacionSolicitada`, `CuentaEliminada`, `ReporteDeConductaAbierto`, `CuentaBloqueada`. Cada evento lo emite el módulo dueño del hecho; los demás reaccionan por oyentes (notificaciones, métricas, reputación).
+`SolicitudAbierta`, `UrgenciaDeclarada`, `FechaLimitePasada`, `AvisoForzadoPorAdministrador`, `OfertaRecibida`, `AceptacionLiberada`, `SolicitudEnAcuerdo`, `ContraofertaRecibida`, `OfertaRechazada`, `OfertaRetirada`, `OfertaVencida`, `SolicitudAdjudicada`, `OfertaCerrada`, `EjecucionIniciada`, `AvanceRegistrado`, `EvidenciaSubida`, `SolicitudFinalizada`, `SolicitudCancelada`, `MensajeEnviado`, `ProveedorAprobado`, `ProveedorSuspendido`, `DocumentoPorVencer`, `DocumentoVencido`, `CalificacionRegistrada`, `CalificacionModerada`, `DisputaAbierta`, `DisputaResuelta`, `IncidenciaReportada`, `EmergenciaActivada`, `EliminacionSolicitada`, `CuentaEliminada`, `ReporteDeConductaAbierto`, `CuentaBloqueada`. Cada evento lo emite el módulo dueño del hecho; los demás reaccionan por oyentes (notificaciones, métricas, reputación).
 
 ## 8. Políticas de servicio (resumen)
 
@@ -298,12 +305,13 @@ Cada flavor usa estos endpoints con su tipo de cuenta (ADR 0046).
 | `GET/POST /clientes/mi/contactos`, `PUT/DELETE /clientes/mi/contactos/{id}` | Contactos de referencia del cliente |
 | `GET/POST/PUT /terrenos`, `POST /terrenos/{id}/fotos`, `DELETE /terrenos/{id}/fotos/{foto}` | Propiedad, lotes y fotos de su estado |
 | `GET /catalogos/ubicaciones` | Departamentos y provincias de Bolivia para ubicar el terreno (sin token) |
+| `GET /catalogos/urgencia` | Tope de días de la fecha límite, umbral de sugerencia y motivos de urgencia (sin token) |
 | `GET /solicitudes/{id}/pago-confirmado` | Si el proveedor informó que recibió el pago |
 | `PUT/DELETE /perfil/foto` | Foto de perfil de la cuenta |
 | `POST /solicitudes`, `PUT /solicitudes/{id}` | Crea (idempotente por `uuid_cliente`, con `contacto_id` opcional) y edita el borrador |
 | `GET /solicitudes`, `GET /solicitudes/{id}` | Lista y detalle con avance y precio |
 | `POST /solicitudes/{id}/publicar`, `/cancelar` | Abre la solicitud o la cancela |
-| `PUT /solicitudes/{id}/ajustes` | Cambia requisitos y fecha deseada mientras no hay aceptaciones en la bandeja ni en conversación |
+| `PUT /solicitudes/{id}/ajustes` | Cambia requisitos y fecha deseada mientras no hay aceptaciones en la bandeja ni en conversación; declara, cambia o quita la urgencia (`urgente`, `fecha_limite`, `motivo_urgencia`) mientras no está adjudicada |
 | `POST /solicitudes/{id}/precio` | Cambia el precio propuesto mientras no está adjudicada |
 | `POST /solicitudes/{id}/acuerdo`, `/acuerdo/reabrir` | Marca la solicitud «En acuerdo» (ya no se avisa a más pilotos) o vuelve a buscar |
 | `GET /bandeja`, `POST /ofertas/{id}/vista` | Aceptaciones nuevas en la bandeja del cliente (nunca la cola) y marca de vista |
@@ -325,7 +333,7 @@ Cada flavor usa estos endpoints con su tipo de cuenta (ADR 0046).
 | `POST /proveedores/registro` | Alta con datos de la persona y del dron (queda `pendiente`) |
 | `POST /proveedores/documentos` | Carga documentos |
 | `GET/POST/PUT /proveedores/pilotos`, `/drones`, `/equipos`; `POST/GET/DELETE /proveedores/drones/{id}/fotos` | Personal y flota con fotos del dron |
-| `GET /solicitudes-abiertas`, `/solicitudes-abiertas/{id}` | Mapa con filtro por departamento y detalle previo a ofertar (solo proveedor habilitado) |
+| `GET /solicitudes-abiertas`, `/solicitudes-abiertas/{id}` | Mapa con filtro por departamento y `urgentes`, orden por relevancia (urgentes primero) y detalle previo a ofertar (solo proveedor habilitado) |
 | `GET /solicitudes-abiertas/contador` | Cuántas solicitudes abiertas hay, para el proveedor aún no habilitado; filtro opcional por departamento |
 | `PUT /proveedores/mi/disponibilidad`, `PUT /proveedores/pilotos/{id}/disponibilidad` | La cuenta se marca `disponible`, `ocupado` o `en_trabajo`; el encargado marca a un piloto suyo |
 | `PUT /proveedores/pilotos/{id}/delegacion-oferta` | El encargado delega o retira la oferta de un piloto suyo (apagada por defecto) |
@@ -356,22 +364,38 @@ La sincronización es idempotente: reaplicar un lote dos, tres o diez veces, en 
 
 Son pantallas del panel (ADR 0008), no endpoints de la API de las apps. El riel tiene un acceso directo, Inicio (el tablero), y cinco módulos: Mercado, Proveedores, Atención, Seguridad y Sistema y cada pantalla se muestra solo si el rol activo tiene su permiso de listado (`.ver`); las acciones de cada una exigen su permiso propio.
 
+El menú son 15 ítems, en este orden (el seeder `SecMenuSeeder` es su única fuente; una base ya sembrada lo recibe con `php artisan db:seed --class=SecMenuSeeder` o `bin/demo seed`):
+
+| Módulo | Ítems, en orden |
+|---|---|
+| Inicio | acceso directo al tablero, sin ítems |
+| Mercado | Métricas del mercado, Solicitudes, Calificaciones (las que reciben pilotos y clientes) |
+| Proveedores | Cuentas (`panel/proveedores`: personas y empresas que ofrecen el servicio), Pilotos, Drones, Documentos |
+| Atención | Clientes, Reclamos |
+| Seguridad | Usuarios, Permisos, Bitácora |
+| Sistema | Organización, Avisos del sistema, Configuración |
+
+Zonas no está en el menú: el mercado no usa zonas ni restricción geográfica.
+
+En una página que no pertenece a ningún ítem (búsqueda, perfil, Mis notificaciones), Inicio queda activo en el riel y su panel muestra un solo ítem, sin enlace, con el nombre de la página actual.
+
 | Módulo | Pantalla | Qué hace |
 |---|---|---|
 | Inicio | `panel/dashboard` | Tablero: solicitudes por estado y por región (macrorregión de la zona del terreno), hectáreas abiertas a ofertas y la cola de lo que espera una decisión |
 | Mercado | `panel/solicitudes` | Lista con filtros por estado, región y zona; la ficha muestra cada negociación por proveedor con sus rondas y, con `solicitudes.solicitud.ver_seguimiento`, el chat, el avance, las fotos y la última ubicación del piloto (datos de las partes). Cancela con motivo (`solicitudes.solicitud.cancelar`) o cierra la negociación de un proveedor con motivo (`solicitudes.solicitud.intervenir`) mientras la solicitud sigue abierta a ofertas |
 | Atención | `panel/clientes` | Ficha del cliente con su reputación, sus contactos y sus solicitudes; suspende y reactiva con motivo (`solicitudes.cliente.suspender`); alta a mano de persona o empresa con contactos (`solicitudes.cliente.crear`) |
 | Proveedores | `panel/proveedores/crear`, `panel/pilotos/crear`, `panel/drones-flota/crear` | Alta a mano de proveedor (independiente con su piloto, o tercero), de un piloto de un tercero y del dron de un proveedor, con `proveedores.proveedor.crear`, `proveedores.piloto.crear` y `flota.dron.crear`; quedan `pendientes` y quien los cargó no los aprueba (ADR 0044) |
-| Atención | `panel/calificaciones` | Oculta o deja visible una calificación con causa y motivo |
+| Mercado | `panel/calificaciones` | Oculta o deja visible una calificación con causa y motivo |
 | Atención | `panel/disputas` | Reclamos: lo que un cliente o un proveedor reclama sobre un servicio ya prestado; se toma, se media y se resuelve. Va en Atención porque atender a quien usa la plataforma no es operar el mercado |
 | Mercado | `panel/metricas` | Adjudicación, ofertas por solicitud, rondas por negociación, tiempos, calidad y volumen |
 | Sistema | `panel/avisos` | Auditoría: lo que el sistema avisó a cada cuenta y si lo leyó; solo lectura (`notificaciones.aviso.ver`). Los avisos de la propia cuenta están en la campana |
 | Proveedores | `panel/proveedores`, `panel/pilotos` | Aprobar, rechazar, suspender y dar de baja, con motivo |
 | Proveedores | `panel/documentos` | Revisión de documentos y descarga restringida |
 | Proveedores | `panel/drones-flota` | Aprobación del dron y revisión de sus fotos (`flota.dron.revisar_foto`); no se aprueba sin las fotos de `flota.fotos_obligatorias` aprobadas |
-| Sistema | `panel/zonas` | Zonas de Santa Cruz con su región y su centro |
-| Sistema | organización y configuración | Ajustes de la plataforma que se tocan poco |
+| Sistema | organización y configuración | Ajustes de la plataforma que se tocan poco; la organización va primero, luego los avisos y al final la configuración |
 | Seguridad | usuarios, permisos y bitácora | Roles del panel: `administrador` (todo) y `operador` (lo que marca su matriz) |
+
+Solicitudes urgentes en el panel (ADR 0045, punto K): el tablero suma la tarjeta «Urgentes sin aceptación» (urgentes vigentes sin ninguna negociación en cola, bandeja ni conversación a las que faltan menos de `negociacion.urgencia.alerta_admin_horas`, 48); el listado de solicitudes suma el filtro «Urgentes» y la columna de fecha límite con cuenta regresiva (la insignia «Urgente» se conserva); la ficha suma la línea de tiempo de oleadas con los parámetros de urgencia usados y la acción «Avisar ahora a todos» (`solicitudes.solicitud.avisar_a_todos`, con motivo y bitácora; 409 `solicitud_en_acuerdo`, `aviso_manual_demasiado_pronto`); las métricas suman el tiempo hasta la primera aceptación de las urgentes frente a las normales. El administrador no edita la urgencia, el precio ni las fechas del cliente. La tabla de arriba sigue describiendo el menú; sus filas del tablero y de `panel/solicitudes` se actualizan con la fase de retiro de zonas.
 
 Roles del panel (ADR 0046): el panel lo usa solo el personal de Agrocom y tiene dos roles, Administrador (ve todo) y Operador (ve las pantallas y acciones cuyos permisos le asigna el administrador en la matriz de roles). Este párrafo manda sobre la fila «Seguridad» de la tabla anterior y sobre «quien los cargó no los aprueba» de la fila de alta a mano: el administrador puede aprobar lo que registró, y «Ver como» solo sobre cuentas de panel. Las altas a mano pueden crear cuentas de app (cliente o proveedor, con la misma regla de una cuenta de cada tipo por persona) y aprobarlas, con la verificación marcada «cargado por administrador» (ADR 0046). La ficha del cliente y del proveedor muestra su verificación (selfie y documento, con `seguridad.verificacion.ver`), con aprobar y rechazar con motivo.
 
@@ -379,7 +403,7 @@ El administrador lee el chat y la ubicación solo para atender un reclamo o una 
 
 ## 11. Parámetros configurables
 
-Anticipación máxima de la fecha deseada y recordatorio de solicitud sin trato; vigencia de la oferta; cupo de negociaciones simultáneas del cliente (`cupo_negociaciones`, 3); intervalo (T), escalera, calificaciones mínimas y horario de relanzamiento por defecto de las oleadas; máximo de ofertas por negociación, precio máximo de sanidad por hectárea, moneda, tolerancia de hectáreas ejecutadas sobre las solicitadas, evidencias mínimas de cierre, fotos obligatorias del dron, intervalo y caducidad de la ubicación, plazos de disputa y de calificación, umbral de calificación y de tasa de cancelación para alertar, anticipo de vencimiento de documentos, eliminación de cuenta (`eliminacion.gracia_dias`, 7; `eliminacion.plazo_dias`, 30), retención (`verificacion.retencion_meses_tras_baja`, 12; `verificacion.retencion_eliminacion_dias`, 90; `verificacion.retencion_rechazadas_dias`, 90; `antifraude.registro_meses_sin_antecedentes`, 12; `antifraude.registro_meses_con_antecedentes`, 36; `retencion.servicio_meses`, 12; `retencion.aceptaciones_meses`, 36; `incidencias.ubicacion_retencion_dias`, 90; `respaldos.retencion_dias`, 30) y moderación del chat (`moderacion.contexto_mensajes`, 10; `moderacion.mensajes_conversacion`, 50; `moderacion.bloqueos_alerta`, 3; lista del filtro de mensajes).
+Anticipación máxima de la fecha deseada y recordatorio de solicitud sin trato; parámetros de urgencia (`negociacion.urgencia.*`: tope de días de la fecha límite, umbral de sugerencia, intervalo y escalera acelerados, horario de relanzamiento, umbral de alerta del administrador, ciclos antes de sugerir ajustes, motivos) y separación mínima entre avisos manuales; vigencia de la oferta; cupo de negociaciones simultáneas del cliente (`cupo_negociaciones`, 3); intervalo (T), escalera, calificaciones mínimas y horario de relanzamiento por defecto de las oleadas; máximo de ofertas por negociación, precio máximo de sanidad por hectárea, moneda, tolerancia de hectáreas ejecutadas sobre las solicitadas, evidencias mínimas de cierre, fotos obligatorias del dron, intervalo y caducidad de la ubicación, plazos de disputa y de calificación, umbral de calificación y de tasa de cancelación para alertar, anticipo de vencimiento de documentos, eliminación de cuenta (`eliminacion.gracia_dias`, 7; `eliminacion.plazo_dias`, 30), retención (`verificacion.retencion_meses_tras_baja`, 12; `verificacion.retencion_eliminacion_dias`, 90; `verificacion.retencion_rechazadas_dias`, 90; `antifraude.registro_meses_sin_antecedentes`, 12; `antifraude.registro_meses_con_antecedentes`, 36; `retencion.servicio_meses`, 12; `retencion.aceptaciones_meses`, 36; `incidencias.ubicacion_retencion_dias`, 90; `respaldos.retencion_dias`, 30) y moderación del chat (`moderacion.contexto_mensajes`, 10; `moderacion.mensajes_conversacion`, 50; `moderacion.bloqueos_alerta`, 3; lista del filtro de mensajes).
 
 ## 12. Notificaciones
 
@@ -387,7 +411,7 @@ Mecanismo del ADR 0025 con preferencias del ADR 0041: un aviso por cuenta destin
 
 | Evento | Destinatario | Se puede desactivar |
 |---|---|---|
-| `SolicitudAbierta`, por oleadas según los filtros | Pilotos aprobados, disponibles y con el aviso activo que cumplen los filtros de cada paso; sin push se ve en la lista de la app | Sí (`nuevas_solicitudes`) |
+| `SolicitudAbierta`, por oleadas según los filtros (las urgentes, con más frecuencia y prioridad alta) | Pilotos aprobados, disponibles y con el aviso activo que cumplen los filtros de cada paso (y `recibir_urgentes` si es urgente); sin push se ve en la lista de la app | Sí (`nuevas_solicitudes`; las urgentes también con `recibir_urgentes`) |
 | Aceptación liberada a la bandeja (`aceptacion_en_bandeja`: «Tienes N aceptaciones nuevas»); no avisa mientras la aceptación espera en la cola | Cliente | Sí (`ofertas`) |
 | `OfertaRecibida`, `ContraofertaRecibida` (en una conversación abierta) | La contraparte | Sí (`ofertas`) |
 | Oferta liberada de la cola (`oferta_en_revision`: «El cliente ya está viendo tu oferta») | Proveedor que ofreció | Sí (`ofertas`) |
@@ -397,6 +421,7 @@ Mecanismo del ADR 0025 con preferencias del ADR 0041: un aviso por cuenta destin
 | `MensajeEnviado` | La contraparte | Sí (`mensajes`) |
 | `SolicitudCancelada` | Las partes involucradas | No |
 | Aviso de solicitud sin respuesta (cuánto lleva, con las opciones de modificarla o retirarla) y aviso de fecha deseada pasada | Cliente | No |
+| Urgente sin aceptación tras un ciclo (`urgente_sin_aceptacion`: sugiere subir el precio, ampliar la fecha o quitar el requisito de dron) y fecha límite pasada (`fecha_limite_pasada`: «Pasó tu fecha límite») | Cliente | No |
 | `ProveedorAprobado`, `ProveedorSuspendido`, `DocumentoPorVencer` | Proveedor | No |
 | `EstadoDeAprobacionCambiado` de un cliente (aprobado, rechazado, suspendido) | Cliente | No |
 | `VerificacionEnviada` (selfie y documento en revisión) | Administradores | No |
@@ -415,7 +440,7 @@ En el lote: todo registro nace con su `uuid_cliente` en el dispositivo, escribir
 
 ## 14. Métricas
 
-- **Mercado**: solicitudes abiertas por día, tasa de adjudicación, tiempo hasta la primera oferta, tiempo hasta la adjudicación, ofertas por solicitud, tiempo de espera en la cola y aceptaciones que esperan, diferencia entre precio propuesto y acordado, hectáreas servidas, solicitudes esperando piloto y relanzamientos, demanda abierta por departamento, avisos por paso de oleada y tiempo hasta la primera oferta por paso.
+- **Mercado**: solicitudes abiertas por día, tasa de adjudicación, tiempo hasta la primera oferta, tiempo hasta la adjudicación, ofertas por solicitud, tiempo de espera en la cola y aceptaciones que esperan, diferencia entre precio propuesto y acordado, hectáreas servidas, solicitudes esperando piloto y relanzamientos, demanda abierta por departamento, avisos por paso de oleada, tiempo hasta la primera oferta por paso, y solicitudes urgentes sin aceptación y tiempo hasta la primera aceptación de las urgentes frente a las normales.
 - **Calidad**: calificación promedio, tasa de disputas, incidencias por 1.000 hectáreas.
 - **Oferta**: proveedores activos, drones aprobados, tasa de cancelación del proveedor, tiempo de aprobación de un proveedor.
 - **Volumen**: monto final acumulado de los servicios finalizados e ingreso por hectárea acordado.
