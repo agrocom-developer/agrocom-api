@@ -20,18 +20,26 @@ Referencia rápida de vocabulario, de negocio y técnico, para que cualquier per
 | **Dron (vehículo)** | Activo que presta el servicio, con dueño y operador; requiere aprobación | ADR 0029 |
 | **Dueño del dron** | Proveedor que posee el dron, aunque lo opere otro | ADR 0029 |
 | **Equipo** | Combinación operativa de piloto y dron que ejecuta una solicitud | especificación §4.4 |
-| **Mapa de solicitudes abiertas** | Vista del piloto con las solicitudes `abierta` y `con_ofertas`, filtros por zona, hectáreas y precio, y resumen por zona | ADR 0041 |
+| **Mapa de solicitudes abiertas** | Vista del piloto con las solicitudes `abierta` y `con_ofertas` que le son visibles, con filtros por departamento, hectáreas, precio, fecha y cultivo | ADR 0041, 0045 |
+| **Departamento y provincia** | Ubicación de la solicitud, elegida de un catálogo de Bolivia (solo el departamento filtra); el municipio y la comunidad son texto libre. No hay zonas ni radio | ADR 0045 |
+| **Criterio de alcance (filtro)** | Regla que decide si un proveedor es alcanzable por una solicitud; hay del sistema, del cliente y del proveedor, y la lista crece sin migraciones | ADR 0045 |
+| **Oleada de aviso** | Aviso de una nueva solicitud en pasos: primero a quienes cumplen todos los filtros (propios y mejor calificados primero) y, cada pocos minutos, a los nuevos que cumplen tras relajar un filtro; a nadie dos veces por ciclo | ADR 0045 |
+| **Escalera de oleadas** | Lista ordenada de pasos que dice qué filtro se relaja en cada oleada | ADR 0045 |
+| **En negociación** | Etapa en la que el cliente negocia con proveedores: la solicitud deja de aparecer a los demás pilotos y se pausan las oleadas | ADR 0045 |
+| **Sin buscar más pilotos** | Opción del cliente que detiene las oleadas; la solicitud sigue disponible para quienes ya la ven | ADR 0045 |
+| **Disponibilidad** | Estado manual del proveedor (`disponible`, `ocupado`, `en_trabajo`); los dos últimos no reciben avisos | ADR 0045 |
+| **Oferta que no cumple** | Oferta de un equipo que no cumple un requisito del cliente (p. ej. la capacidad del dron); se marca y el cliente decide | ADR 0045 |
 | **Oferta** | Precio por hectárea que una parte propone en una negociación, con vencimiento; se acepta, se contraoferta o se rechaza | especificación §4.5, §5.3 |
 | **Negociación** | Conjunto de ofertas entre el cliente y un proveedor sobre una solicitud; hay una sola oferta vigente y un máximo de ofertas | ADR 0030 |
 | **Adjudicación** | Aceptar la oferta vigente de la contraparte: fija el precio acordado, el proveedor y el equipo y cierra las demás negociaciones | ADR 0030 |
-| **Expirada** | Estado de la solicitud que venció sin adjudicar; el cliente puede renovarla | especificación §5.1 |
-| **Precio por hectárea** | Precio que el cliente propone y que se negocia; se congela al adjudicar como precio acordado | ADR 0030, 0034 |
+| **Expirada** | Estado de la solicitud que venció sin adjudicar (al fin de su fecha deseada, hasta un año); el cliente puede renovarla | especificación §5.1 |
+| **Precio por hectárea** | Precio que el cliente propone y que se negocia; se congela al adjudicar como precio acordado. No hay precio de referencia | ADR 0030, 0034, 0045 |
 | **Precio final** | Hectáreas ejecutadas por precio acordado; es el monto a pagar, fuera de la app | ADR 0034 |
 | **Avance** | Registro del piloto con hectáreas acumuladas o porcentaje, junto con fotos; lo ve el cliente | ADR 0040 |
 | **Mensajes** | Chat de texto entre el cliente y el proveedor adjudicado | ADR 0040 |
 | **Ubicación del piloto** | Última posición de la app del piloto durante la ejecución; se elimina al finalizar | ADR 0040 |
-| **Preferencias de notificación** | Categorías de aviso que cada cuenta activa o desactiva, con zonas de interés para las nuevas solicitudes | ADR 0041 |
-| **Evidencia** | Foto comprimida (menos de 300 KB) que respalda un avance, una incidencia o un reclamo | especificación §4.6 |
+| **Preferencias de notificación** | Categorías de aviso que cada cuenta activa o desactiva; para las nuevas solicitudes, los filtros del proveedor (departamentos que no acepta, hectáreas mínimas, tipos de aplicación que no quiere) | ADR 0041, 0045 |
+| **Evidencia** | Foto comprimida (menos de 300 KB) que respalda un avance, una incidencia o una disputa | especificación §4.6 |
 | **Calificación** | Valoración de 1 a 5 estrellas con etiquetas que el cliente da a un proveedor; el proveedor la ve y un administrador la modera | ADR 0031 |
 | **Moderación** | Ocultamiento con motivo y autor de una calificación que incumple la política | `politicas/calificacion.md` |
 | **Reclamo** | Queja sobre un servicio ya prestado que abre un cliente o un proveedor y atiende un administrador, con evidencia y un monto ajustado; la solicitud en reclamo tiene el estado interno `disputada` | ADR 0033 |

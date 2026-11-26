@@ -115,7 +115,7 @@ return [
      * operar.
      */
     'roles' => [
-        'titulo' => 'Roles y permisos',
+        'titulo' => 'Permisos',
         'subtitulo' => 'Qué pantallas ve cada rol y qué puede hacer dentro de ellas. Los roles se asignan a las cuentas desde Usuarios.',
         'nuevo' => 'Nuevo rol',
         'col_rol' => 'Rol',
@@ -201,7 +201,7 @@ return [
             'dueno' => [
                 'nombre' => 'Dueño',
                 'descripcion' => 'Acceso total: proveedores, solicitudes, roles y gestión de otros dueños.',
-                'permisos' => ['Todos los módulos', 'Aprobaciones', 'Roles y permisos'],
+                'permisos' => ['Todos los módulos', 'Aprobaciones', 'Permisos'],
             ],
             'encargado_operaciones' => [
                 'nombre' => 'Administrador',
@@ -231,7 +231,7 @@ return [
             'admin_plataforma' => [
                 'nombre' => 'Administrador de plataforma',
                 'descripcion' => 'Acceso técnico total sobre la instalación, incluida la gestión de dueños.',
-                'permisos' => ['Todos los módulos', 'Roles y permisos', 'Configuración'],
+                'permisos' => ['Todos los módulos', 'Permisos', 'Configuración'],
             ],
         ],
     ],

@@ -59,11 +59,10 @@ return [
 
     'seguridad' => [
         'label' => 'Seguridad',
-        'descripcion' => 'Usuarios, roles, dispositivos y bitácora.',
+        'descripcion' => 'Usuarios, permisos y bitácora.',
         'items' => [
             'usuarios' => 'Usuarios',
-            'roles' => 'Roles y permisos',
-            'dispositivos' => 'Dispositivos',
+            'roles' => 'Permisos',
             'bitacora' => 'Bitácora',
         ],
     ],
@@ -72,12 +71,11 @@ return [
     // que son una herramienta de auditoría y no de gestión del mercado.
     'sistema' => [
         'label' => 'Sistema',
-        'descripcion' => 'Zonas, organización, configuración, versiones de las apps y avisos del sistema.',
+        'descripcion' => 'Zonas, organización, configuración y avisos del sistema.',
         'items' => [
             'zonas' => 'Zonas',
             'organizacion' => 'Organización',
             'configuracion' => 'Configuración del sistema',
-            'versiones_apk' => 'Versiones de las apps',
             'avisos' => 'Avisos del sistema',
         ],
     ],

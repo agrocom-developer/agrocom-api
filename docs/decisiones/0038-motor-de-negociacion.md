@@ -1,6 +1,6 @@
 # ADR 0038 — Motor de negociación: módulo, ofertas, adjudicación y vencimientos
 
-**Estado:** aceptada · **Fecha:** 2026-11-24 · **Decide:** el dueño
+**Estado:** aceptada · **Fecha:** 2026-11-24 · **Decide:** el dueño · **Reemplazado en parte por:** ADR 0045 (punto 7: mapa sin zonas ni distancia; punto 12: parámetros de oleadas y vigencia larga, sin precios de referencia)
 
 ## Contexto
 

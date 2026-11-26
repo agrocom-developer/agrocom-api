@@ -1,6 +1,6 @@
 # ADR 0030 — Negociación oferta-demanda entre cliente y pilotos
 
-**Estado:** aceptada, revisable · **Fecha:** 2026-11-24 · **Decide:** el dueño
+**Estado:** aceptada, revisable · **Fecha:** 2026-11-24 · **Decide:** el dueño · **Reemplazado en parte por:** ADR 0045 (punto 6: hay avisos por oleadas y orden sugerido con propios primero, sin asignación automática; punto 7: vigencia larga; distancia y zonas retiradas)
 
 ## Contexto
 
