@@ -307,16 +307,16 @@ La sincronización es idempotente: reaplicar un lote dos, tres o diez veces, en 
 
 ### 10.4 Administración y soporte
 
-Son pantallas del panel (ADR 0008), no endpoints de la API de las apps. El menú tiene cinco módulos en el riel (Mercado, Proveedores, Soporte, Seguridad y Sistema; el logo lleva al tablero) y cada pantalla se muestra solo si el rol activo tiene su permiso de listado (`.ver`); las acciones de cada una exigen su permiso propio.
+Son pantallas del panel (ADR 0008), no endpoints de la API de las apps. El riel tiene un acceso directo, Inicio (el tablero), y cinco módulos: Mercado, Proveedores, Atención, Seguridad y Sistema y cada pantalla se muestra solo si el rol activo tiene su permiso de listado (`.ver`); las acciones de cada una exigen su permiso propio.
 
 | Módulo | Pantalla | Qué hace |
 |---|---|---|
-| Mercado | `panel/dashboard` | Tablero: solicitudes por estado y por región (macrorregión de la zona del terreno), hectáreas abiertas a ofertas y la cola de lo que espera una decisión |
+| Inicio | `panel/dashboard` | Tablero: solicitudes por estado y por región (macrorregión de la zona del terreno), hectáreas abiertas a ofertas y la cola de lo que espera una decisión |
 | Mercado | `panel/solicitudes` | Lista con filtros por estado, región y zona; la ficha muestra cada negociación por proveedor con sus rondas y, con `solicitudes.solicitud.ver_seguimiento`, el chat, el avance, las fotos y la última ubicación del piloto (datos de las partes). Cancela con motivo (`solicitudes.solicitud.cancelar`) o cierra la negociación de un proveedor con motivo (`solicitudes.solicitud.intervenir`) mientras la solicitud sigue abierta a ofertas |
-| Mercado | `panel/clientes` | Ficha del cliente con su reputación, sus contactos y sus solicitudes; suspende y reactiva con motivo (`solicitudes.cliente.suspender`); alta a mano de persona o empresa con contactos (`solicitudes.cliente.crear`) |
+| Atención | `panel/clientes` | Ficha del cliente con su reputación, sus contactos y sus solicitudes; suspende y reactiva con motivo (`solicitudes.cliente.suspender`); alta a mano de persona o empresa con contactos (`solicitudes.cliente.crear`) |
 | Proveedores | `panel/proveedores/crear`, `panel/pilotos/crear`, `panel/drones-flota/crear` | Alta a mano de proveedor (independiente con su piloto, o tercero), de un piloto de un tercero y del dron de un proveedor, con `proveedores.proveedor.crear`, `proveedores.piloto.crear` y `flota.dron.crear`; quedan `pendientes` y quien los cargó no los aprueba (ADR 0044) |
-| Mercado | `panel/calificaciones` | Oculta o deja visible una calificación con causa y motivo |
-| Soporte | `panel/disputas` | Reclamos sobre un servicio ya prestado: toma, media y resuelve. Va en su propio módulo porque atender a quien usa la plataforma no es operar el mercado |
+| Atención | `panel/calificaciones` | Oculta o deja visible una calificación con causa y motivo |
+| Atención | `panel/disputas` | Reclamos: lo que un cliente o un proveedor reclama sobre un servicio ya prestado; se toma, se media y se resuelve. Va en Atención porque atender a quien usa la plataforma no es operar el mercado |
 | Mercado | `panel/metricas` | Adjudicación, ofertas por solicitud, rondas por negociación, tiempos, calidad y volumen |
 | Sistema | `panel/avisos` | Auditoría: lo que el sistema avisó a cada cuenta y si lo leyó; solo lectura (`notificaciones.aviso.ver`). Los avisos de la propia cuenta están en la campana |
 | Proveedores | `panel/proveedores`, `panel/pilotos` | Aprobar, rechazar, suspender y dar de baja, con motivo |

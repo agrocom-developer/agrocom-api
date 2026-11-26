@@ -16,7 +16,7 @@
  * credencial viva.
  */
 
-use Database\Seeders\Demo\PersonalDemoSeeder;
+use Database\Seeders\Demo\ProveedoresDemoSeeder;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -40,7 +40,7 @@ if (! app()->environment(['local', 'testing'])) {
 const MARCADOR_TOKEN = '12|<token-del-dispositivo>';
 const UUID_DISPOSITIVO = '6f1d0a2e-1f34-4c9f-9a8b-2b7c1d5e0f31';
 
-$clave = PersonalDemoSeeder::PASSWORD;
+$clave = ProveedoresDemoSeeder::PASSWORD;
 
 if (! is_dir($salida)) {
     mkdir($salida, 0775, true);

@@ -132,12 +132,18 @@
             ];
         })->values();
 
+        // Un módulo sin ítems pero con ruta propia (Inicio) es un acceso directo:
+        // el riel y el menú móvil enlazan a ella en vez de abrir un sidebar.
+        $rutaPropia = data_get($mod, 'ruta');
+
         return [
             'label' => data_get($mod, 'label'),
             'descripcion' => data_get($mod, 'descripcion'),
             'icono' => data_get($mod, 'icono'),
             'items' => $items,
-            'active' => $items->contains(fn ($item) => $item['active']),
+            'href' => $rutaPropia ? $resolverHref($rutaPropia) : null,
+            'active' => $items->contains(fn ($item) => $item['active'])
+                || ($rutaPropia && $itemEsActivo($rutaPropia)),
         ];
     })->values();
 

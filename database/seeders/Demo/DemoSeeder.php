@@ -7,12 +7,12 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * Datos de demostración para recorrer el panel pantalla por pantalla con
- * TODOS los objetos del esquema poblados (pedido del dueño, 22/9/2026, tras
- * la reestructuración del modelo de datos y del rediseño de UI/UX).
- *
- * Se apoya en lo que ya cargó el dueño a mano en el compose (el dron DRONT50)
- * y suma alrededor: no toca ni borra nada de eso.
+ * Datos de demostración del marketplace para recorrer el panel y las apps:
+ * plataforma (configuración y zonas), los drones operativos que se enlazan a la
+ * flota, clientes, proveedores y pilotos en cada estado de aprobación, y las
+ * solicitudes en cada estado con sus ofertas, chat, fotos y ubicaciones.
+ * No hay datos del sistema anterior (personal, bases, cuadrillas, baterías ni
+ * cuentas de dueño o jefe de campo).
  *
  * Reglas de la familia:
  * - Idempotente: cada seeder mira un centinela (un NIT, un CI, un
@@ -50,9 +50,9 @@ class DemoSeeder extends Seeder
         Auth::guard('interno')->setUser($admin);
 
         $this->call(PlataformaDemoSeeder::class);
-        $this->call(PersonalDemoSeeder::class);
+        // Los drones operativos que el marketplace enlaza a su flota.
         $this->call(FlotaDemoSeeder::class);
-        // Marketplace: usa los drones de `ope_drones` que siembra FlotaDemoSeeder.
+        // Marketplace: clientes, proveedores, pilotos y drones aprobados.
         $this->call(ProveedoresDemoSeeder::class);
         // Cada piloto del marketplace necesita su persona para abrir sesiones.
         $this->call(PersonasDeOperariosDemoSeeder::class);

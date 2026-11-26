@@ -19,7 +19,8 @@
 
     Props:
     - modulos (list): `{label, icono, items: [{href, active…}], active}` ya
-      normalizados. El href del botón es el del primer ítem con ruta.
+      normalizados. El href del botón es el del primer ítem con ruta o, si el módulo es un
+      acceso directo sin ítems (Inicio), el de su propia ruta.
     - configuracionHref (nullable string): destino del engranaje.
 --}}
 @props([
@@ -35,7 +36,7 @@
     <ul class="ag-rail__list">
         @foreach ($modulos as $modulo)
             @php
-                $destino = collect($modulo['items'])->firstWhere('href')['href'] ?? null;
+                $destino = collect($modulo['items'])->firstWhere('href')['href'] ?? ($modulo['href'] ?? null);
                 $nombre = __($modulo['label']);
             @endphp
             <li>
