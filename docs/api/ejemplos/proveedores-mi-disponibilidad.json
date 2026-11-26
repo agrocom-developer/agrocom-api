@@ -1,0 +1,23 @@
+{
+    "operationId": "cambiarMiDisponibilidad",
+    "descripcion": "El titular se marca «en trabajo»: ni él ni sus pilotos reciben avisos de nuevas solicitudes, pero ve el mapa y puede ofertar.",
+    "peticion": {
+        "metodo": "PUT",
+        "ruta": "/api/proveedores/mi/disponibilidad",
+        "autenticada": true,
+        "cuerpo": {
+            "disponibilidad": "en_trabajo"
+        }
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "disponibilidad": {
+                "valor": "en_trabajo",
+                "cambiada_en": "2026-11-26T20:43:36+00:00",
+                "cambiada_por_usuario_id": 4,
+                "cambiada_por_propia": true
+            }
+        }
+    }
+}

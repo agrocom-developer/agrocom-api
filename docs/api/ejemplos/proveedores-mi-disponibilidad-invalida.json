@@ -1,0 +1,23 @@
+{
+    "operationId": "cambiarMiDisponibilidad",
+    "descripcion": "Un valor que no es disponible, ocupado ni en_trabajo se rechaza con 422.",
+    "peticion": {
+        "metodo": "PUT",
+        "ruta": "/api/proveedores/mi/disponibilidad",
+        "autenticada": true,
+        "cuerpo": {
+            "disponibilidad": "vacaciones"
+        }
+    },
+    "respuesta": {
+        "estado": 422,
+        "cuerpo": {
+            "message": "La opción elegida no es válida.",
+            "errors": {
+                "disponibilidad": [
+                    "La opción elegida no es válida."
+                ]
+            }
+        }
+    }
+}

@@ -152,6 +152,8 @@ test('los ejemplos cubren las operaciones que las apps necesitan', function () {
         'iniciarServicio', 'registrarAvance', 'cerrarServicio', 'verAvance', 'subirEvidenciaDeSolicitud',
         'enviarUbicacion', 'verUbicacionDelPiloto', 'enviarMensaje', 'listarMensajes',
         'verPreferenciasDeAviso', 'guardarPreferenciasDeAviso',
+        // Disponibilidad del proveedor (ADR 0045, punto 8).
+        'cambiarMiDisponibilidad', 'cambiarDisponibilidadDePiloto',
         // Cliente: terrenos y solicitudes.
         'listarTerrenos', 'crearTerreno', 'actualizarTerreno', 'listarSolicitudes', 'crearSolicitud', 'estimarSolicitud',
         'publicarSolicitud', 'verSolicitud', 'cancelarSolicitud',

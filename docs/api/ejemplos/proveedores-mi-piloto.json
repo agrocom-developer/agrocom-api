@@ -19,12 +19,30 @@
                 "radio_operacion_km": "150.0",
                 "estado": "aprobado",
                 "motivo_estado": null,
-                "aprobado_en": "2026-11-24T18:56:30+00:00",
+                "aprobado_en": "2026-11-26T20:43:20+00:00",
                 "calificacion_promedio": "4.59",
-                "calificaciones_conteo": 1
+                "calificaciones_conteo": 1,
+                "disponibilidad": {
+                    "valor": "disponible",
+                    "cambiada_en": null,
+                    "cambiada_por_usuario_id": null,
+                    "cambiada_por_propia": null
+                }
             },
             "documentos_faltantes": [],
-            "apto_para_ofertas": true
+            "apto_para_ofertas": true,
+            "disponibilidad": {
+                "valor": "disponible",
+                "cambiada_en": null,
+                "cambiada_por_usuario_id": null,
+                "cambiada_por_propia": null
+            },
+            "disponibilidad_empresa": {
+                "valor": "disponible",
+                "cambiada_en": null,
+                "cambiada_por_usuario_id": null,
+                "cambiada_por_propia": null
+            }
         }
     }
 }

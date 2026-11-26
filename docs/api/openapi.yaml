@@ -2426,7 +2426,7 @@ paths:
       tags:
         - Preferencias
       summary: 'Mis preferencias de aviso'
-      description: 'Las preferencias de aviso de la cuenta. Sin nada guardado: todo activo, todas las zonas y sin mínimo de hectáreas.'
+      description: 'Las preferencias de aviso de la cuenta. Sin nada guardado: todo activo y sin filtros.'
       operationId: verPreferenciasDeAviso
       responses:
         200:
@@ -2451,7 +2451,7 @@ paths:
       tags:
         - Preferencias
       summary: 'Guardar mis preferencias de aviso'
-      description: 'Guarda las preferencias; lo que no se envía conserva su valor. Un piloto activa o desactiva los avisos de nuevas solicitudes y limita zonas, macrorregiones y hectáreas mínimas.'
+      description: 'Guarda las preferencias; lo que no se envía conserva su valor. Un proveedor activa o desactiva los avisos de nuevas solicitudes y los filtra (`hectareas_minimas`, `departamentos_excluidos`, `tipos_aplicacion_excluidos`); enviar un filtro como null o vacío lo quita. Un proveedor no disponible (`ocupado` o `en_trabajo`) no recibe avisos aunque este activo.'
       operationId: guardarPreferenciasDeAviso
       requestBody:
         required: true
@@ -2476,7 +2476,7 @@ paths:
         403:
           description: 'El rol del token no gestiona preferencias.'
         422:
-          description: 'Macrorregión inválida o datos mal formados.'
+          description: 'Filtro desconocido, valor de un filtro inválido o datos mal formados.'
           content:
             application/json:
               schema:
@@ -3436,7 +3436,7 @@ paths:
       tags:
         - Proveedores
       summary: 'Mi proveedor y su estado de verificación'
-      description: 'El proveedor del que la cuenta es titular: estado de aprobación (con el motivo si fue rechazado o suspendido), los documentos obligatorios que aún no tienen uno aprobado y vigente, y si hoy puede recibir ofertas (`apto_para_ofertas`: aprobado y con al menos un equipo apto). La app lo consulta para mostrar «en revisión», «rechazado» o «listo para ponerte en línea». El piloto de un proveedor (por ejemplo, el piloto propio de Agrocom) lo consulta en solo lectura: recibe el proveedor al que pertenece, sin el documento fiscal, y `documentos_faltantes` son los suyos como piloto.'
+      description: 'El proveedor del que la cuenta es titular: estado de aprobación (con el motivo si fue rechazado o suspendido), los documentos obligatorios que aún no tienen uno aprobado y vigente, y si hoy puede recibir ofertas (`apto_para_ofertas`: aprobado y con al menos un equipo apto). La app lo consulta para mostrar «en revisión», «rechazado» o «listo para ponerte en línea». El piloto de un proveedor (por ejemplo, el piloto propio de Agrocom) lo consulta en solo lectura: recibe el proveedor al que pertenece, sin el documento fiscal, y `documentos_faltantes` son los suyos como piloto. `disponibilidad` es el interruptor de la propia cuenta (el del proveedor para el titular, el suyo para el piloto, con quién y cuándo lo cambió) y `disponibilidad_empresa` el de su proveedor.'
       operationId: verMiProveedor
       responses:
         200:
@@ -3448,6 +3448,8 @@ paths:
                   - proveedor
                   - documentos_faltantes
                   - apto_para_ofertas
+                  - disponibilidad
+                  - disponibilidad_empresa
                 properties:
                   proveedor:
                     $ref: '#/components/schemas/Proveedor'
@@ -3460,6 +3462,10 @@ paths:
                   apto_para_ofertas:
                     type: boolean
                     example: false
+                  disponibilidad:
+                    $ref: '#/components/schemas/Disponibilidad'
+                  disponibilidad_empresa:
+                    $ref: '#/components/schemas/Disponibilidad'
                 type: object
         401:
           description: 'Token ausente o revocado.'
@@ -3467,6 +3473,56 @@ paths:
           description: 'El rol del token no gestiona ni ve un proveedor.'
         404:
           description: 'La cuenta no es titular ni piloto de ningún proveedor.'
+      security:
+        -
+          tokenDispositivo: []
+  /api/proveedores/mi/disponibilidad:
+    put:
+      tags:
+        - Proveedores
+      summary: 'Cambia mi disponibilidad'
+      description: 'Mueve el interruptor de la propia cuenta: el titular el de su proveedor (con `ocupado` o `en_trabajo` no se avisa a ningún piloto suyo) y el piloto de una empresa el suyo. `ocupado` y `en_trabajo` dejan de recibir avisos de nuevas solicitudes; la cuenta sigue viendo el mapa y puede ofertar. Al volver a `disponible` no llegan avisos atrasados. Gana el último cambio; la fila guarda cuándo y quién lo hizo.'
+      operationId: cambiarMiDisponibilidad
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - disponibilidad
+              properties:
+                disponibilidad:
+                  type: string
+                  example: en_trabajo
+                  enum:
+                    - disponible
+                    - ocupado
+                    - en_trabajo
+              type: object
+      responses:
+        200:
+          description: 'El interruptor tras el cambio.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - disponibilidad
+                properties:
+                  disponibilidad:
+                    $ref: '#/components/schemas/Disponibilidad'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no gestiona su disponibilidad.'
+        404:
+          description: 'La cuenta no es titular ni piloto de ningún proveedor.'
+        422:
+          description: 'Valor de disponibilidad inválido.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
       security:
         -
           tokenDispositivo: []
@@ -3625,6 +3681,63 @@ paths:
           description: 'El piloto no existe o no es de esta cuenta.'
         422:
           description: 'El piloto no está rechazado.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/proveedores/pilotos/{id}/disponibilidad':
+    put:
+      tags:
+        - Proveedores
+      summary: 'Cambia la disponibilidad de un piloto de mi proveedor'
+      description: 'El encargado (titular del proveedor) marca a un piloto suyo como `disponible`, `ocupado` o `en_trabajo`. Solo silencia o reactiva los avisos de ese piloto. Gana el último cambio entre el encargado y el piloto; la respuesta dice quién lo cambió y la app del piloto lo muestra («Tu empresa te marcó como ocupado»). El piloto de otro proveedor es 404.'
+      operationId: cambiarDisponibilidadDePiloto
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - disponibilidad
+              properties:
+                disponibilidad:
+                  type: string
+                  example: ocupado
+                  enum:
+                    - disponible
+                    - ocupado
+                    - en_trabajo
+              type: object
+      responses:
+        200:
+          description: 'El piloto con su interruptor tras el cambio.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - piloto
+                properties:
+                  piloto:
+                    $ref: '#/components/schemas/Piloto'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no gestiona un proveedor.'
+        404:
+          description: 'El piloto no existe o no es de este proveedor.'
+        422:
+          description: 'Valor de disponibilidad inválido.'
           content:
             application/json:
               schema:
@@ -5966,35 +6079,33 @@ components:
         - calificaciones
       properties:
         nuevas_solicitudes:
-          description: 'Solo aplica a cuentas de proveedor. `zonas` y `macrorregiones` vacías significan todas.'
+          description: 'Solo aplica a cuentas de proveedor. Además de `activo`, cada filtro del proveedor es una clave (ADR 0045): vacío o ausente no restringe, y gobiernan solo los avisos, no el mapa. La lista de filtros no está cerrada: `filtros_disponibles` dice cuáles conoce el servidor; una clave que no conoce se rechaza con 422 al guardar.'
           properties:
             activo:
-              description: "Preferencias de aviso (`negociacion-contrato.md` §7): el piloto activa o desactiva los\navisos de nuevas solicitudes en sus zonas (el incentivo para recibir ofertas de\ntrabajo) y cada cuenta elige qué categorías recibe. Las obligatorias no se apagan."
+              description: "Preferencias de aviso (`negociacion-contrato.md` §7): el piloto activa o desactiva los\navisos de nuevas solicitudes y los filtra con los suyos (el incentivo para recibir ofertas de\ntrabajo) y cada cuenta elige qué categorías recibe. Las obligatorias no se apagan."
               type: boolean
               example: true
-            zonas:
-              type: array
-              items:
-                type: integer
-              example:
-                - 3
-                - 7
-            macrorregiones:
-              type: array
-              items:
-                type: string
-                enum:
-                  - cercado
-                  - norte_integrado
-                  - chiquitania
-                  - valles
-                  - chaco
-              example:
-                - chiquitania
             hectareas_minimas:
+              description: 'No avisar de solicitudes con menos hectáreas. Decimal exacto en string (hasta 4 decimales); null no restringe.'
               type: string
               example: '50.0000'
               nullable: true
+            departamentos_excluidos:
+              description: 'Códigos de departamento (dos dígitos, del catálogo de ubicaciones) de los que no se avisa.'
+              type: array
+              items:
+                type: string
+                example: '09'
+              example:
+                - '04'
+                - '09'
+            tipos_aplicacion_excluidos:
+              description: 'Tipos de aplicación de los que no se avisa (`herbicida`, `desecante`…).'
+              type: array
+              items:
+                type: string
+              example:
+                - desecante
           type: object
         ofertas:
           type: boolean
@@ -6004,6 +6115,19 @@ components:
           type: boolean
         calificaciones:
           type: boolean
+        filtros_disponibles:
+          description: 'Solo en la respuesta: los filtros que el servidor conoce y el tipo de su valor (`decimal`, `departamentos`, `tipos_aplicacion`), para que la app pinte los que sabe y ignore los que no.'
+          type: array
+          items:
+            properties:
+              clave:
+                type: string
+                example: hectareas_minimas
+              tipo:
+                type: string
+                example: decimal
+            type: object
+          readOnly: true
       type: object
     RegistroDeAvance:
       title: 'Registro de seguimiento'
@@ -6075,6 +6199,38 @@ components:
         registrado_en:
           type: string
           format: date-time
+          nullable: true
+      type: object
+    Disponibilidad:
+      title: Disponibilidad
+      description: 'Interruptor manual de la cuenta (ADR 0045, punto 8). `ocupado` y `en_trabajo` dejan de recibir avisos de nuevas solicitudes y se distinguen solo por el texto; la cuenta sigue viendo el mapa y puede ofertar. Al volver a `disponible` no llegan avisos atrasados.'
+      required:
+        - valor
+        - cambiada_en
+        - cambiada_por_usuario_id
+        - cambiada_por_propia
+      properties:
+        valor:
+          description: 'El interruptor de disponibilidad de una cuenta de proveedor, con cuándo y quién lo cambió.'
+          type: string
+          example: ocupado
+          enum:
+            - disponible
+            - ocupado
+            - en_trabajo
+        cambiada_en:
+          description: 'Último cambio; null si nunca se movió.'
+          type: string
+          format: date-time
+          nullable: true
+        cambiada_por_usuario_id:
+          description: 'Cuenta que hizo el último cambio; null si nunca se movió.'
+          type: integer
+          example: 31
+          nullable: true
+        cambiada_por_propia:
+          description: '`true` si la cambió la propia cuenta, `false` si la cambió otra (el encargado de la empresa: la app muestra «Tu empresa te marcó como ocupado»); null si nunca se movió.'
+          type: boolean
           nullable: true
       type: object
     DocumentoProveedor:
@@ -6150,6 +6306,7 @@ components:
         - licencia_vence
         - categoria_habilitacion
         - estado
+        - disponibilidad
       properties:
         id:
           description: 'El nombre no es columna de `prv_pilotos` (vive en la cuenta): quien arma la respuesta lo resuelve por lote.'
@@ -6186,6 +6343,8 @@ components:
         motivo_estado:
           type: string
           nullable: true
+        disponibilidad:
+          $ref: '#/components/schemas/Disponibilidad'
       type: object
     Proveedor:
       title: Proveedor
@@ -6195,6 +6354,7 @@ components:
         - tipo
         - razon_social
         - estado
+        - disponibilidad
       properties:
         id:
           type: integer
@@ -6251,6 +6411,8 @@ components:
         calificaciones_conteo:
           type: integer
           example: 17
+        disponibilidad:
+          $ref: '#/components/schemas/Disponibilidad'
       type: object
     Dispositivo:
       title: 'Dispositivo con sesión'

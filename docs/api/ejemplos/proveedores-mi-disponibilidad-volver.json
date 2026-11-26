@@ -1,0 +1,23 @@
+{
+    "operationId": "cambiarMiDisponibilidad",
+    "descripcion": "El titular vuelve a «disponible».",
+    "peticion": {
+        "metodo": "PUT",
+        "ruta": "/api/proveedores/mi/disponibilidad",
+        "autenticada": true,
+        "cuerpo": {
+            "disponibilidad": "disponible"
+        }
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "disponibilidad": {
+                "valor": "disponible",
+                "cambiada_en": "2026-11-26T20:43:36+00:00",
+                "cambiada_por_usuario_id": 4,
+                "cambiada_por_propia": true
+            }
+        }
+    }
+}
