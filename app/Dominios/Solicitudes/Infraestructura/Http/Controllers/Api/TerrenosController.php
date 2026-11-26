@@ -38,7 +38,6 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
         new OA\Property(property: 'referencias_acceso', type: 'string', nullable: true),
         new OA\Property(property: 'colindantes_sensibles', type: 'string', nullable: true),
         new OA\Property(property: 'acceso_dificil', type: 'boolean', nullable: true),
-        new OA\Property(property: 'zona_id', type: 'integer', nullable: true),
         new OA\Property(property: 'departamento_codigo', description: 'Código INE del departamento del catálogo (`GET /api/catalogos/ubicaciones`). Si se envía `provincia_codigo`, es obligatorio.', type: 'string', nullable: true, example: '07'),
         new OA\Property(property: 'provincia_codigo', description: 'Código INE de la provincia; debe ser del departamento enviado.', type: 'string', nullable: true, example: '0702'),
         new OA\Property(property: 'municipio', description: 'Texto libre de referencia.', type: 'string', nullable: true),

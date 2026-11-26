@@ -237,7 +237,7 @@ final class SolicitudesController
         path: '/api/solicitudes/{id}/publicar',
         operationId: 'publicarSolicitud',
         description: 'Abre la solicitud a los pilotos: `borrador` pasa a `abierta`, con su vigencia (7 días) y visible en el mapa. Exige precio por hectárea propuesto, hectáreas que no superen las del terreno, fecha deseada no pasada, un teléfono en la cuenta y que el terreno tenga departamento y provincia coherentes entre sí; esa ubicación (más municipio y comunidad) se congela en la solicitud. '
-            .'Avisa a los pilotos cuyas preferencias coinciden con la zona y las hectáreas. Una solicitud `expirada` se renueva igual, dentro del plazo de renovación.',
+            .'Avisa a los pilotos cuyas preferencias coinciden con las hectáreas. Una solicitud `expirada` se renueva igual, dentro del plazo de renovación.',
         summary: 'Abrir una solicitud al mercado',
         security: [['tokenDispositivo' => []]],
         tags: ['Solicitudes'],

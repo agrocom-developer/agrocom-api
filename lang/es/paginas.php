@@ -24,12 +24,6 @@ return [
             'perfil' => [
                 'edit' => 'Mi perfil',
             ],
-            // Zonas salió del menú; la pantalla sigue por su ruta mientras no se retire.
-            'zonas' => [
-                'index' => 'Zonas',
-                'create' => 'Nueva zona',
-                'edit' => 'Editar zona',
-            ],
         ],
     ],
 

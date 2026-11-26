@@ -53,7 +53,7 @@ final class PasosDeSolicitudPorMaquina implements PasosDeSolicitud
             venceEn: $solicitud->vence_en?->toIso8601String(),
             ventanaDesde: $solicitud->ventana_desde->toDateString(),
             ventanaHasta: $solicitud->ventana_hasta->toDateString(),
-            zonaId: $solicitud->terreno->zona_id,
+            departamentoCodigo: $solicitud->departamento_codigo,
             finalizadaEn: $solicitud->finalizada_en?->toIso8601String(),
             cierreSolicitadoEn: $solicitud->cierre_solicitado_en?->toIso8601String(),
             ultimoAvanceEn: $solicitud->ultimo_avance_en?->toIso8601String(),

@@ -4,7 +4,7 @@
     oficina: el formulario real vive en `_formulario.blade.php`.
 
     Datos esperados (ver ProveedoresController::create()): la cáscara de
-    CascaraPanel, más $tipos (list<TipoProveedor>) y $zonas (array<int, string>).
+    CascaraPanel, más $tipos (list<TipoProveedor>).
 
     Gateada por `proveedores.proveedor.crear`, verificado server-side.
 --}}

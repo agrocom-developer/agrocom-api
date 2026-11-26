@@ -20,14 +20,7 @@ final class LecturaMercadoEloquent implements LecturaMercado
 {
     public function abiertas(array $filtros): array
     {
-        $zonas = $filtros['zonas'] ?? [];
-        if (isset($filtros['zona_id'])) {
-            $zonas[] = (int) $filtros['zona_id'];
-        }
-
         return $this->consulta()
-            ->when($zonas !== [], fn (Builder $q) => $q->whereHas('terreno', fn (Builder $t) => $t->whereIn('zona_id', $zonas)))
-            ->when(! empty($filtros['macrorregion']), fn (Builder $q) => $q->whereHas('terreno.zona', fn (Builder $z) => $z->where('macrorregion', $filtros['macrorregion'])))
             ->when(isset($filtros['hectareas_min']), fn (Builder $q) => $q->where('hectareas_solicitadas', '>=', $filtros['hectareas_min']))
             ->when(isset($filtros['hectareas_max']), fn (Builder $q) => $q->where('hectareas_solicitadas', '<=', $filtros['hectareas_max']))
             ->when(isset($filtros['precio_ha_min']), fn (Builder $q) => $q->where('precio_ha_propuesto', '>=', $filtros['precio_ha_min']))
@@ -52,7 +45,7 @@ final class LecturaMercadoEloquent implements LecturaMercado
     private function consulta(): Builder
     {
         return SolicitudServicio::query()
-            ->with(['cliente', 'terreno.zona'])
+            ->with(['cliente', 'terreno'])
             ->whereIn('estado', [EstadoSolicitud::Abierta->value, EstadoSolicitud::ConOfertas->value])
             ->whereNotNull('precio_ha_propuesto');
     }
@@ -60,18 +53,16 @@ final class LecturaMercadoEloquent implements LecturaMercado
     private function datos(SolicitudServicio $solicitud, bool $conTerreno): DatosSolicitudAbierta
     {
         $terreno = $solicitud->terreno;
-        $zona = $terreno->zona;
 
         return new DatosSolicitudAbierta(
             id: $solicitud->id,
             estado: $solicitud->estado->value,
             clienteUsuarioId: $solicitud->cliente->usuario_id,
-            centro: $this->centro($terreno->geometria) ?? ($zona === null ? null : ['latitud' => (float) $zona->centroide_lat, 'longitud' => (float) $zona->centroide_lng]),
+            centro: $this->centro($terreno->geometria),
             hectareasSolicitadas: $solicitud->hectareas_solicitadas,
             precioHaPropuesto: (string) $solicitud->precio_ha_propuesto,
-            zonaId: $terreno->zona_id,
-            zona: $zona?->nombre,
-            macrorregion: $zona?->macrorregion,
+            departamentoCodigo: $solicitud->departamento_codigo,
+            provinciaCodigo: $solicitud->provincia_codigo,
             cultivo: $solicitud->cultivo,
             tipoAplicacion: $solicitud->tipo_aplicacion->value,
             productoIndicado: $solicitud->producto_indicado,

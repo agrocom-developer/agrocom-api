@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Solicitudes de servicio del marketplace (ADR 0027): cliente, zonas, terrenos
+ * Solicitudes de servicio del marketplace (ADR 0027): cliente, terrenos
  * y solicitudes, en la API y en el panel.
  */
 return [
@@ -22,7 +22,6 @@ return [
         'referencias_acceso' => 'referencias de acceso',
         'colindantes_sensibles' => 'colindantes sensibles',
         'acceso_dificil' => 'acceso difícil',
-        'zona_id' => 'zona',
         'departamento_codigo' => 'departamento',
         'provincia_codigo' => 'provincia',
         'municipio' => 'municipio',
@@ -126,8 +125,7 @@ return [
         'vacio_detalle' => 'Las solicitudes las crean los clientes desde la app. Cuando llegue la primera, aparece aquí.',
         'filtro_estado' => 'Estado',
         'filtro_todos' => 'Todos',
-        'filtro_region' => 'Región',
-        'filtro_zona' => 'Zona',
+        'filtro_departamento' => 'Departamento',
         'filtro_vacio_titulo' => 'Sin resultados para este filtro',
         'filtro_vacio_detalle' => 'Cambia el estado o la búsqueda para ver más solicitudes.',
         'buscar_placeholder' => 'Buscar por número, producto o cultivo',
@@ -214,15 +212,6 @@ return [
         'historial_titulo' => 'Historial',
         'historial_creada' => 'Solicitud creada',
         'historial_cambio' => 'De «:de» a «:a»',
-    ],
-    // Macrorregiones de Santa Cruz: agrupan las zonas del mapa y del tablero.
-    'region' => [
-        'cercado' => 'Cercado',
-        'norte_integrado' => 'Norte integrado',
-        'chiquitania' => 'Chiquitania',
-        'chaco' => 'Chaco',
-        'valles' => 'Valles',
-        'otras' => 'Otras',
     ],
 
     // Clientes en el panel: consulta, reputación y suspensión con motivo.
@@ -315,58 +304,5 @@ return [
         'guardar' => 'Registrar cliente',
         'solicitudes_vacio_titulo' => 'Todavía no pidió servicios',
         'solicitudes_vacio_detalle' => 'Sus solicitudes aparecerán aquí cuando las publique.',
-    ],
-
-    // Zonas de Santa Cruz: agrupan el mapa de los pilotos y el tablero.
-    'zonas' => [
-        'titulo' => 'Zonas de Santa Cruz',
-        'subtitulo' => 'Cada terreno pertenece a una zona; las zonas se agrupan en regiones para el mapa, los avisos y el tablero.',
-        'vacio_titulo' => 'Todavía no hay zonas',
-        'vacio_detalle' => 'Crea la primera para que los clientes y los proveedores puedan ubicar sus terrenos y su base.',
-        'filtro_region' => 'Región',
-        'buscar_placeholder' => 'Buscar por nombre',
-        'filtro_vacio_titulo' => 'Ninguna zona coincide',
-        'filtro_vacio_detalle' => 'Prueba con otro nombre o región, o límpialos para ver todas.',
-        'paginacion_aria' => 'Paginación de zonas',
-        'col_zona' => 'Zona',
-        'col_region' => 'Región',
-        'col_ubicacion' => 'Centro',
-        'col_terrenos' => 'Terrenos',
-        'col_proveedores' => 'Proveedores con base aquí',
-        'nueva' => 'Nueva zona',
-        'crear_titulo' => 'Nueva zona',
-        'crear_subtitulo' => 'Indica el nombre, la región y el punto central de la zona.',
-        'editar_titulo' => 'Editar zona',
-        'editar_subtitulo' => 'Cambiar el nombre o la región no mueve los terrenos: siguen en esta zona.',
-        'volver' => 'Volver a zonas',
-        'guardar' => 'Guardar zona',
-        'cancelar' => 'Cancelar',
-        'editar' => 'Editar',
-        'eliminar' => 'Eliminar',
-        'eliminar_titulo' => 'Eliminar la zona «:zona»',
-        'eliminar_mensaje' => 'La zona deja de ofrecerse. Solo se puede eliminar si ningún terreno ni proveedor la usa.',
-        'eliminar_confirmar' => 'Eliminar',
-        'seccion_datos' => 'Datos de la zona',
-        'estado_form' => 'Sin cambios pendientes',
-        'uso_titulo' => 'Quién usa esta zona',
-        'campo_nombre' => 'Nombre',
-        'campo_region' => 'Región',
-        'campo_region_placeholder' => 'Elige una región',
-        'campo_latitud' => 'Latitud del centro',
-        'campo_longitud' => 'Longitud del centro',
-        'mapa_titulo' => 'Centro de la zona en el mapa',
-        'mapa_ayuda' => 'Haz clic en el mapa o arrastra el marcador para fijar el centro. También puedes escribir las coordenadas.',
-        'ayuda_coordenadas' => 'Usa grados decimales, por ejemplo -17.7833 y -63.1821. Es el punto desde el que se mide la distancia a la zona.',
-        'creada' => 'La zona quedó creada.',
-        'actualizada' => 'Los cambios de la zona quedaron guardados.',
-        'eliminada' => 'La zona quedó eliminada.',
-        'en_uso' => 'No puedes eliminar la zona: la usan :terrenos terrenos y :proveedores proveedores.',
-        'error_nombre_requerido' => 'Escribe el nombre de la zona.',
-        'error_nombre_largo' => 'El nombre no puede tener más de 80 caracteres.',
-        'error_nombre_duplicado' => 'Ya hay una zona con ese nombre.',
-        'error_region_requerida' => 'Elige la región de la zona.',
-        'error_region_invalida' => 'Esa región no existe.',
-        'error_latitud' => 'La latitud debe ser un número entre -90 y 90.',
-        'error_longitud' => 'La longitud debe ser un número entre -180 y 180.',
     ],
 ];

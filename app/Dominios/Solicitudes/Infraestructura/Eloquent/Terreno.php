@@ -21,7 +21,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $referencias_acceso
  * @property string|null $colindantes_sensibles
  * @property bool $acceso_dificil
- * @property int|null $zona_id
  * @property string|null $departamento_codigo Código INE del departamento (catálogo `sol_departamentos`).
  * @property string|null $provincia_codigo Código INE de la provincia, del mismo departamento.
  * @property string|null $municipio Texto libre de referencia.
@@ -43,7 +42,6 @@ class Terreno extends ModeloDominio
         'referencias_acceso',
         'colindantes_sensibles',
         'acceso_dificil',
-        'zona_id',
         'departamento_codigo',
         'provincia_codigo',
         'municipio',
@@ -55,17 +53,10 @@ class Terreno extends ModeloDominio
     {
         return [
             'cliente_id' => 'integer',
-            'zona_id' => 'integer',
             'geometria' => 'array',
             'acceso_dificil' => 'boolean',
             'hectareas' => 'decimal:4',
         ];
-    }
-
-    /** @return BelongsTo<Zona, $this> */
-    public function zona(): BelongsTo
-    {
-        return $this->belongsTo(Zona::class, 'zona_id');
     }
 
     /** @return BelongsTo<Cliente, $this> */
