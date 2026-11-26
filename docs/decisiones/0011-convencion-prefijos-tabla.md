@@ -109,6 +109,8 @@ La base de datos es dedicada al sistema, así que el prefijo global no aporta ho
 
 13. **Prefijo `dis_` para el módulo `Distribucion`.** Fila agregada a la tabla del punto 1. Primera (y hoy única) tabla: `dis_versiones_apk` (versión SemVer, `version_code` de Android, ruta del `.apk` en el disco `r2`, estado `pendiente`/`autorizada`/`rechazada` — única fila `autorizada` a la vez). Extiende `ModeloDominio` (soft delete + auditoría, ADR 0007) como todo modelo de dominio.
 
+> **Retirado:** el módulo `Distribucion` (modelo, casos de uso, página del panel y `GET /api/version`) se eliminó del código: las apps salen por las tiendas. La tabla `dis_versiones_apk` queda en el esquema, sin uso, hasta la reconsolidación de migraciones.
+
 ### Extensión (3/9/2026) — reparto `man_`/`inv_` entre `Mantenimiento` e `Inventario`, para HU-40
 
 **Contexto de la extensión:** este mismo ADR reservó `man_` (Mantenimiento) e `inv_` (Inventario) desde su versión original (punto 1), y su extensión del 26/8/2026 (punto 3) ya adelantó que `drones`, `baterías`, `vehículos` y `generadores` quedaban "para cuando existan los módulos `Mantenimiento`/`Inventario`". HU-40 ("administrar los vehículos con su asignación a base") es la primera tarea que crea uno de los dos módulos (`Mantenimiento`) — hace falta cerrar el reparto entre ambos antes de la primera migración `man_*`, en vez de decidirlo de nuevo en cada HU siguiente (HU-36 para Inventario, HU-37/HU-38 para planes/órdenes de mantenimiento).

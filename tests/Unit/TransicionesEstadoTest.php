@@ -86,7 +86,7 @@
  *
  * Toda columna literalmente llamada `estado`/`*_estado` en `app/` corresponde
  * a una máquina gobernada (Contrato, OrdenAplicacion, Sesion, Trabajo, Acta,
- * Alerta, VersionApk) — la invariante 7 aplica sin matices. La excepción es
+ * Alerta) — la invariante 7 aplica sin matices. La excepción es
  * `man_baterias.estado` (`activa`/`retirada`/`mantenimiento`): un campo
  * descriptivo libre, sin tabla de transiciones ni guarda de dominio —
  * cualquier valor puede pasar a cualquier otro. La invariante 7 ("toda TRANSICIÓN de estado pasa por el servicio de

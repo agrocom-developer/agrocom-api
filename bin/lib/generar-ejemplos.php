@@ -219,8 +219,6 @@ try {
 
     registrar('seguridad-sin-token', 'verSesionCampo', 'Una ruta protegida sin token responde 401.', 'GET', '/api/auth/sesion', null, null, 401);
 
-    registrar('distribucion-version', 'obtenerVersionVigente', 'Versión mínima y vigente del APK; no pide token.', 'GET', '/api/version', null, null, 200);
-
     // ----------------------------------------------------------------- cliente
     [$respuestaEmision, $emision] = (function () use ($clave) {
         [$estado, $cuerpo] = registrar('seguridad-token-cliente', 'emitirTokenDispositivo', 'El cliente ingresa; el token se muestra una sola vez.', 'POST', '/api/auth/token', [

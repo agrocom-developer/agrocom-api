@@ -732,34 +732,6 @@ paths:
       security:
         -
           tokenDispositivo: []
-  /api/version:
-    get:
-      tags:
-        - Distribucion
-      summary: 'Versión mínima y vigente del APK'
-      description: 'Versión mínima aceptada y versión vigente del APK, con la URL de su release en agrocom-field (GitHub Releases) — el binario no se hospeda en este servidor. Sin autenticación: la app todavía no tiene ningún token emitido cuando la consulta. Con la invariante de negocio "una sola versión autorizada a la vez" (HU-20), hoy `minima` y `vigente` son la misma versión — el contrato ya distingue ambas claves para el día que una historia futura las separe.'
-      operationId: obtenerVersionVigente
-      responses:
-        200:
-          description: 'Ambas claves son `null` si el dueño todavía no autorizó ninguna versión.'
-          content:
-            application/json:
-              schema:
-                required:
-                  - minima
-                  - vigente
-                properties:
-                  minima:
-                    nullable: true
-                    allOf:
-                      -
-                        $ref: '#/components/schemas/VersionApk'
-                  vigente:
-                    nullable: true
-                    allOf:
-                      -
-                        $ref: '#/components/schemas/VersionApk'
-                type: object
   /api/proveedores/drones:
     get:
       tags:
@@ -5719,27 +5691,6 @@ components:
                 format: date-time
             type: object
       type: object
-    VersionApk:
-      title: 'Versión del APK'
-      description: 'Versión autorizada del APK de agrocom-field, con la URL de su release (HU-20).'
-      required:
-        - version
-        - version_code
-        - url_descarga
-      properties:
-        version:
-          description: 'Versión SemVer.'
-          type: string
-          example: 1.4.2
-        version_code:
-          description: 'Código de versión de Android.'
-          type: integer
-          example: 14002
-        url_descarga:
-          description: 'URL del release del `.apk` publicado en agrocom-field (GitHub Releases).'
-          type: string
-          format: uri
-      type: object
     FotoDeDron:
       title: 'Foto de un dron'
       required:
@@ -7569,9 +7520,6 @@ tags:
   -
     name: Disputas
     description: 'El cliente (hasta 72 horas después de `ejecutada`) o el proveedor (cobro pendiente, acceso negado o calificación abusiva) abren una disputa; soporte media y un administrador resuelve; ambas partes pueden apelar una vez en 7 días (ADR 0033). Los reembolsos se liquidan fuera de la app.'
-  -
-    name: Distribucion
-    description: 'Versionado y distribución del APK de agrocom-field (HU-20).'
   -
     name: Mensajes
     description: 'Mensajes entre el cliente y el proveedor adjudicado, desde la adjudicación. Texto de hasta 1000 caracteres, fotos de menos de 300 KB y líneas de sistema que el servidor escribe al cambiar la solicitud.'

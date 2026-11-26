@@ -3,7 +3,6 @@
 use App\Dominios\Calificaciones\Infraestructura\Http\Controllers\Api\CalificacionesDelClienteController;
 use App\Dominios\Calificaciones\Infraestructura\Http\Controllers\Api\CalificacionesDelProveedorController;
 use App\Dominios\Disputas\Infraestructura\Http\Controllers\Api\DisputasController;
-use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Api\VersionController;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Api\DronesController;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Api\EquiposController;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Api\FotosDeDronController;
@@ -60,13 +59,6 @@ use Illuminate\Support\Facades\Route;
 Route::post('/auth/token', [SesionCampoController::class, 'store'])
     ->middleware('throttle:login-campo')
     ->name('api.auth.token.emitir');
-
-// HU-20: la app todavía no tiene token cuando consulta esto — es lo primero
-// que hace antes de operar. Mismo throttle que el login: sin límite sería
-// un endpoint de descubrimiento gratis para golpear el bucket de r2.
-Route::get('/version', [VersionController::class, 'show'])
-    ->middleware('throttle:6,1')
-    ->name('api.version.show');
 
 // Marketplace (ADR 0036): registro público de clientes y proveedores. Crean
 // cuentas sin autenticación, así que llevan el límite `registro-publico`

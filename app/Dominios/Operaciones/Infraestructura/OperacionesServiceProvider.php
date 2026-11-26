@@ -16,8 +16,8 @@ use Illuminate\Support\ServiceProvider;
  * registra su propio provider para lo que el contenedor no resuelve por
  * convención (una interfaz no se autoresuelve sola).
  *
- * `boot()` registra el namespace de vista `operaciones::` (HU-05, tarea 13;
- * mismo patrón que `DistribucionServiceProvider`): las páginas Blade del
+ * `boot()` registra el namespace de vista `operaciones::` (HU-05, tarea 13):
+ * las páginas Blade del
  * módulo viven bajo `Infraestructura/Http/Views/`, no bajo `resources/views/`.
  */
 final class OperacionesServiceProvider extends ServiceProvider
