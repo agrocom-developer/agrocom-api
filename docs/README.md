@@ -26,7 +26,7 @@ Este `docs/` contiene la documentación vigente de Agrocom, un marketplace de se
   - 0044 alta manual en el panel
   - 0045 mercado sin zonas: filtros combinados, avisos por oleadas, etapa de negociación y solicitud sin vencimiento (reemplaza en parte 0030, 0034, 0038 y 0041)
   - 0046 cuentas separadas por app (cliente y proveedor), persona única, verificación de identidad y roles del panel (Administrador y Operador)
-- **`politicas/`**: una política por tema, que operan lo decidido: `negociacion.md`, `precio_y_pago.md`, `cancelacion.md`, `calificacion.md`, `verificacion_proveedores.md`, `seguimiento_y_privacidad.md`, `seguridad.md`, `disputas.md`.
+- **`politicas/`**: una política por tema, que operan lo decidido: `negociacion.md`, `precio_y_pago.md`, `cancelacion.md`, `calificacion.md`, `verificacion_proveedores.md`, `seguimiento_y_privacidad.md`, `seguridad.md`, `disputas.md` y `tiendas-y-privacidad.md` (qué exigen Google Play y la App Store sobre privacidad, eliminación de cuenta y revisión, el panorama de protección de datos en Latinoamérica y las tareas derivadas; no es asesoría legal).
 - **`gestion/`**: cola de tareas del ciclo automático, `estado-api.md` (qué está hecho en la API y qué falta), entornos, automatización del desarrollo y el plan de homogeneización del panel; `respuestas_campo/capturas_rc/` guarda las capturas del control remoto del dron.
 - **`diseno/`**: sistema de diseño del panel (tokens CSS, catálogo Atomic Design) y guía de construcción de pantallas.
 - **`api/openapi.yaml`**: contrato de API generado desde el código (ADR 0014); no se edita a mano.
