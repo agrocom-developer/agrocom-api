@@ -72,7 +72,7 @@ Convenciones: dominio en español, prefijo de tabla por módulo (ADR 0011), borr
 | `producto_indicado` | texto | Producto o caldo que el cliente o su agrónomo indican |
 | `aporta_producto` | enum | `cliente` o `proveedor` |
 | `ventana_desde`, `ventana_hasta` | fecha | Fecha deseada, opcional; puede estar hasta `negociacion.anticipacion_maxima_dias` en el futuro. No vence la solicitud: esta sigue hasta que se adjudica o el cliente la cancela |
-| `departamento_codigo`, `provincia_codigo` | texto | Se congelan al publicar con los de los terrenos, que comparten departamento |
+| `departamento_codigo`, `provincia_codigo`, `municipio`, `comunidad` | texto | Se copian del terreno al publicar (con varios terrenos, deben compartir departamento) y no cambian si el terreno se corrige después; nulos en `borrador`. Departamento y provincia son códigos del INE y la provincia debe ser del departamento |
 | `requisitos` | JSON | Requisitos del cliente por clave de criterio, p. ej. `dron_capacidad_min_l`; nulos si no pide ninguno |
 | `observaciones` | texto | Accesos, horarios, restricciones |
 | `precio_ha_propuesto` | decimal 14,4 | Moneda del sistema (parámetro, bolivianos) |
