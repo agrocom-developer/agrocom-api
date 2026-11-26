@@ -183,7 +183,6 @@ Pantallas actuales (rutas de `routes/web.php`, menú de `SecMenuSeeder`) y lo qu
 | Métricas (`panel/metricas`) | KPIs de mercado, calidad, oferta, ingreso y tabla de proveedores sobre vistas `vw_metricas_*` | Embudo solicitud, oferta, adjudicación, ejecución y cierre; tiempo hasta la primera oferta; tasa de contraoferta por ronda | Alto |
 | Proveedores, pilotos, drones (`panel/proveedores`, `/pilotos`, `/drones-flota`, `/documentos`) | Listado, ficha, aprobar, rechazar, suspender y dar de baja con motivo; revisión de fotos y documentos | Cola única «pendientes de aprobación» con antigüedad y documentos por vencer; la revisión de fotos obligatorias para aprobar el dron (pendiente en `estado-api.md`) | Alto |
 | Clientes (`panel/clientes`) | Listado, ficha, suspender y reactivar | Alta manual, contactos (sección 8), historial de solicitudes y calificaciones del cliente | Alto |
-| Precios de referencia (`sol_precios_referencia`, `PrecioReferencia`) | Modelo y sembrador `PreciosReferenciaSeeder`; **sin pantalla** | CRUD por zona, macrorregión y tipo de aplicación | Medio |
 | Parámetros de negociación (`config/negociacion.php`, `seguimiento.php`) | Solo por archivo de configuración: los grupos editables de `panel/configuracion` son `mapas`, `correo` e `integraciones` | Pantalla de vigencias, máximo de rondas y tolerancia de hectáreas | Medio |
 | Zonas (`panel/zonas`) | CRUD completo | — | — |
 | Avisos (`panel/avisos`), versiones APK, dispositivos, bitácora, roles, usuarios | Vigentes | — | — |
@@ -226,6 +225,6 @@ Cada PR es independiente y lleva la prueba que lo acota, no la suite completa.
 | 10 | Migración con respaldo y `down()`: tablas de T1 a T9, triggers de T12 y columnas de T11 | sección 3 | **Alto, REVISIÓN HUMANA** (esquema con `DROP`) | `SELECT count(*)` en cada entorno; respaldo `pg_dump` guardado |
 | 11 | Unificar dron, equipo y persona | B8, B13, B15, T10 | **Alto** | PR 10 |
 | 12 | Retirar `GET /dispositivos` duplicado, decidir portal del cliente | B18, B19 | Bajo | D2 |
-| 13 | Refinamiento del panel: rondas, embudo de métricas, cola de aprobaciones, precios de referencia | sección 9 | Bajo | — |
+| 13 | Refinamiento del panel: rondas, embudo de métricas, cola de aprobaciones | sección 9 | Bajo | — |
 
 Zonas de revisión humana de este plan: `Negociar::aceptar`, `Participantes`, `UbicacionDelPiloto` (no se tocan en la limpieza, solo se parten en L7), `EscrituraSincronizacionEloquent` (se retira en el PR 8), el esquema y toda migración con `DROP` (PR 10 y 11), y `PerPersona` con la identidad del token de operario (PR 11).

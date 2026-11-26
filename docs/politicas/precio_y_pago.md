@@ -6,7 +6,7 @@
 
 - Lo propone el cliente al publicar y se negocia con cada piloto (política de negociación).
 - Al adjudicar queda congelado como `precio_ha_acordado`; no cambia después, salvo por la resolución de una disputa.
-- El sistema muestra un precio de referencia por tipo de aplicación y zona. Es una guía, no un mínimo ni un máximo.
+- El sistema no sugiere ni limita precios: el cliente fija el suyo al publicar y el proveedor el suyo al ofertar.
 
 ## Monto
 

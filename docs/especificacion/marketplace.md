@@ -35,7 +35,7 @@ Un usuario puede tener varios roles (ADR 0004). Las acciones se autorizan por pe
 ## 3. Flujo de punta a punta
 
 1. El cliente registra su **propiedad** y sus **lotes** en el mapa (geometría y hectáreas) una sola vez, con fotos del estado del terreno si quiere.
-2. El cliente crea una **solicitud**: lotes a fumigar, hectáreas, cultivo, tipo de aplicación, producto, fecha deseada, accesos, observaciones y **precio por hectárea** (el sistema muestra un precio de referencia no vinculante). Al publicarla queda `abierta`.
+2. El cliente crea una **solicitud**: lotes a fumigar, hectáreas, cultivo, tipo de aplicación, producto, fecha deseada, accesos, observaciones y **precio por hectárea** (lo fija el cliente; el sistema no sugiere precios). Al publicarla queda `abierta`.
 3. Los pilotos aprobados ven la solicitud en el **mapa de solicitudes abiertas**, con filtros por zona (valles, Chiquitania y otras), hectáreas y precio. Quien tiene activadas las notificaciones recibe un aviso si la solicitud cae en sus zonas (ADR 0041).
 4. Antes de ofertar, el piloto abre el detalle: lotes dibujados, hectáreas, cultivo, accesos, observaciones y fotos del terreno. No ve datos de contacto del cliente.
 5. El piloto **acepta el precio propuesto** o **contraoferta** su precio por hectárea, indicando el dron con el que trabajará. La solicitud pasa a `con_ofertas`.
@@ -55,7 +55,6 @@ Convenciones: dominio en español, prefijo de tabla por módulo (ADR 0011), borr
 - **`sol_cliente_contactos`**: personas de referencia del cliente. `id`, `cliente_id`, `nombre`, `telefono`, `cargo` (nulo), `es_principal`, baja lógica. Una empresa tiene al menos un contacto vigente; hay un solo principal vigente (el primero que se crea; si se da de baja, lo releva el más antiguo). La solicitud guarda `contacto_id` (`sol_solicitudes_servicio`): el elegido al crearla o, si no elige, el principal de la empresa. Tras adjudicar, el proveedor recibe el nombre, el teléfono y el cargo de esa persona, y la razón social de la empresa; antes de adjudicar no ve ninguno (ADR 0043).
 - **`sol_terrenos`**: la propiedad o lote del cliente. `id`, `cliente_id`, `nombre`, `geometria` (polígono GeoJSON), `hectareas` (decimal 12,4), `cultivo`, `referencias_acceso`, `colindantes_sensibles` (texto: apiarios, cultivos orgánicos, viviendas), `zona_id`, `estado_terreno` (texto breve: maleza, humedad, obstáculos, líneas eléctricas).
 - **`sol_terreno_fotos`**: `id`, `terreno_id`, `archivo`, `hash`, `bytes`, `descripcion`. Imagen comprimida a menos de 300 KB, hasta 8 por terreno (`solicitudes.fotos_terreno.maximo_por_terreno`), en el disco privado. Las sube el cliente dueño y las ve el piloto en el detalle de la solicitud antes de ofertar, con una URL firmada de corta vida (15 minutos).
-- **`sol_precios_referencia`**: `id`, `tipo_aplicacion`, `zona_id` (nulo), `macrorregion` (nulo), `precio_ha` (decimal 14,4). Guía de precio por hectárea con tres niveles de detalle: zona, macrorregión o general por tipo. Datos sembrados que el administrador ajusta; el sembrado no los pisa. Si no hay ninguno, vale el respaldo de `config/negociacion.php`.
 - **`sol_zonas`**: `id`, `nombre`, `macrorregion` (`valles` | `chiquitania` | `otras`; catálogo ampliable por parámetro), `centroide`. Alimentan los filtros del mapa y las notificaciones.
 
 ### 4.2 Solicitud de servicio
@@ -188,7 +187,7 @@ Detalle de la decisión en ADR 0030 y reglas exactas en `negociacion-contrato.md
 3. **Rondas.** Las ofertas de una negociación se numeran 1, 2, 3… y alternan autor: la primera la hace el proveedor, la siguiente el cliente, y así. Quien recibe una oferta vigente puede aceptarla, contraofertar o rechazarla. Contraofertar reemplaza la oferta vigente. La negociación admite hasta `negociacion.max_ofertas_por_negociacion` ofertas (parámetro, 5 por defecto); la última se marca `definitiva` y solo se acepta o se rechaza.
 4. **Adjudicación.** Cuando una parte acepta la oferta vigente de la otra, la oferta queda `aceptada`, la solicitud pasa a `adjudicada` con `precio_ha_acordado`, `proveedor_id` y `equipo_id`, y las demás ofertas vigentes de la solicitud pasan a `cerrada`.
 5. **Vigencia.** Cada oferta vence a las `negociacion.vigencia_oferta_horas` (24 por defecto) y nunca después de la solicitud. Una solicitud sin adjudicar expira a los `negociacion.vigencia_solicitud_dias` (7 por defecto) o al fin de la ventana deseada, lo que ocurra primero; el cliente puede renovarla.
-6. **Precio.** El precio por hectárea es un decimal positivo con un máximo de sanidad (parámetro). El precio de referencia por tipo de aplicación y zona es una guía visible al proponer y al ofertar, no un límite.
+6. **Precio.** El precio por hectárea es un decimal positivo con un máximo de sanidad (parámetro). El sistema no sugiere ni limita precios: los fijan el cliente al proponer y el proveedor al ofertar.
 7. **Sin penalidad automática.** Rechazar, retirar o dejar vencer una oferta no penaliza. Cancelar tras adjudicar queda registrado y visible en la tasa de cancelación, y un administrador decide si actúa (ADR 0033).
 8. **Visibilidad previa a ofertar.** El piloto ve lotes, hectáreas, cultivo, accesos, observaciones y fotos del terreno. No ve nombre, teléfono ni documento del cliente hasta la adjudicación.
 9. **Elección del cliente.** El comparador ordena por precio, calificación o distancia y muestra, por oferta: precio por hectárea, total estimado, calificación y servicios del proveedor, modelo y fotos del dron, distancia y vigencia.
@@ -246,7 +245,6 @@ Prefijo `/api`. Autenticación por token de dispositivo (`POST /auth/token`). El
 | `POST /clientes/registro` | Alta de cliente; una empresa envía `contactos` o queda con quien registra como contacto principal |
 | `GET/POST /clientes/mi/contactos`, `PUT/DELETE /clientes/mi/contactos/{id}` | Contactos de referencia del cliente |
 | `GET/POST/PUT /terrenos`, `POST /terrenos/{id}/fotos`, `DELETE /terrenos/{id}/fotos/{foto}` | Propiedad, lotes y fotos de su estado |
-| `GET /referencias/precio` | Precio por hectárea de referencia para proponer (también lo ve el piloto al ofertar) |
 | `GET /solicitudes/{id}/pago-confirmado` | Si el proveedor informó que recibió el pago |
 | `PUT/DELETE /perfil/foto` | Foto de perfil de la cuenta |
 | `POST /solicitudes`, `PUT /solicitudes/{id}` | Crea (idempotente por `uuid_cliente`, con `contacto_id` opcional) y edita el borrador |
@@ -318,7 +316,7 @@ El administrador lee el chat y la ubicación solo para atender una disputa o una
 
 ## 11. Parámetros configurables
 
-Vigencia de la solicitud y de la oferta, máximo de ofertas por negociación, precio máximo de sanidad por hectárea, precios de referencia por tipo de aplicación y zona, moneda, tolerancia de hectáreas ejecutadas sobre las solicitadas, evidencias mínimas de cierre, fotos obligatorias del dron, intervalo y caducidad de la ubicación, plazos de disputa y de calificación, umbral de calificación y de tasa de cancelación para alertar, anticipo de vencimiento de documentos, catálogo de macrorregiones.
+Vigencia de la solicitud y de la oferta, máximo de ofertas por negociación, precio máximo de sanidad por hectárea, moneda, tolerancia de hectáreas ejecutadas sobre las solicitadas, evidencias mínimas de cierre, fotos obligatorias del dron, intervalo y caducidad de la ubicación, plazos de disputa y de calificación, umbral de calificación y de tasa de cancelación para alertar, anticipo de vencimiento de documentos, catálogo de macrorregiones.
 
 ## 12. Notificaciones
 

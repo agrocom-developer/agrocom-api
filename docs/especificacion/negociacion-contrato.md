@@ -66,7 +66,6 @@ Reglas:
 - `monto_estimado = hectareas_solicitadas × precio_ha_acordado`; `monto_final = hectareas_ejecutadas × precio_ha_acordado`, congelado en `finalizada` (redondeo a 2 decimales).
 - `hectareas_ejecutadas <= hectareas_solicitadas × (1 + seguimiento.tolerancia_hectareas_pct / 100)`; la tolerancia por defecto es 5 %. Pasarse responde 422.
 - El cliente puede cambiar `precio_ha_propuesto` con `POST /solicitudes/{id}/precio` mientras la solicitud está `abierta` o `con_ofertas`. Las ofertas vigentes no cambian; se notifica a los proveedores con negociación vigente.
-- Precio de referencia (`GET /referencias/precio?tipo_aplicacion=&zona_id=&macrorregion=`): guía, no límite. Busca de lo específico a lo general (zona, macrorregión, general del tipo) y responde `precio_ha` con `nivel` (`zona`, `macrorregion`, `general` o `respaldo`). Lo consultan el cliente al proponer y el piloto al ofertar; los valores son datos de `sol_precios_referencia` que el administrador ajusta.
 
 ### 3.2 Quién puede ofertar
 Cuenta de proveedor (titular o piloto) con proveedor `aprobado`, al menos un equipo apto (piloto y dron aprobados, dron con fotos aprobadas, documentos vigentes), sin suspensión. El `equipo_id` de la oferta debe ser de su proveedor y apto. Un proveedor no oferta sobre solicitudes de su propia cuenta de cliente.

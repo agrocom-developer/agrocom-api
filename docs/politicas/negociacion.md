@@ -34,6 +34,6 @@ Rechazar, retirar o dejar vencer una oferta no tiene consecuencia. Lo que sí qu
 
 Los mensajes y las ofertas respetan a la contraparte. Pactar por fuera de la plataforma lo ya adjudicado no está prohibido, pero la calificación y la disputa solo cubren lo registrado en ella. Un precio claramente fuera de lo razonable puede ocultarlo un administrador.
 
-## Referencia de precios
+## Precios
 
-El sistema muestra un precio de referencia por tipo de aplicación y zona. Es una guía visible para ambos lados, no un mínimo ni un máximo.
+El sistema no sugiere ni limita precios: los fijan el cliente y el proveedor.
