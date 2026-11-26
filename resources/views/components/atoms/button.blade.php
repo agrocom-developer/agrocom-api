@@ -6,7 +6,7 @@
 
     Props:
     - variant: primary|accent|outline|text|danger|danger-outline|
-      warning-outline|success-outline|info-outline|distintivo-2-outline|
+      warning-outline|success-outline|info-outline|distintivo-1-outline|distintivo-2-outline|
       alert-outline|neutral-outline|primary-2-outline (default "primary").
       danger-outline (auditoría visual externa, obs. #4): mismo tono
       semántico que "danger" pero sin relleno — para acciones dentro de una

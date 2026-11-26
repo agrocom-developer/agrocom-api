@@ -149,7 +149,7 @@
                             <span role="cell">{{ $proveedor->created_at->format('d/m/Y') }}</span>
                             <span role="cell" class="ag-index-table__acciones">
                                 <x-organisms.row-actions>
-                                    <x-atoms.button :href="route('panel.proveedores.show', $proveedor)" variant="info-outline" size="sm" icon="visibility">
+                                    <x-atoms.button :href="route('panel.proveedores.show', $proveedor)" :variant="$proveedor->estado->value === 'pendiente' ? 'distintivo-1-outline' : 'info-outline'" size="sm" :icon="$proveedor->estado->value === 'pendiente' ? 'fact_check' : 'visibility'">
                                         {{ $proveedor->estado->value === 'pendiente' ? __('proveedores.revisar') : __('proveedores.ver') }}
                                     </x-atoms.button>
                                 </x-organisms.row-actions>

@@ -49,7 +49,7 @@ return [
     'errores' => [
         'documentos_incompletos' => 'Faltan documentos obligatorios aprobados y vigentes: :documentos.',
         'sin_proveedor' => 'Tu cuenta no es titular de ningún proveedor.',
-        'proveedor_no_aprobado' => 'Tu proveedor ya no admite altas: está rechazado, suspendido o dado de baja.',
+        'proveedor_no_aprobado' => 'Tu proveedor ya no admite altas: está rechazado, suspendido o eliminado.',
         'titular_no_es_piloto' => 'El titular de este proveedor no es piloto.',
         'independiente_sin_pilotos' => 'Un proveedor independiente es su propio piloto y no suma otros pilotos. Si quieres operar con más pilotos, regístrate como proveedor tercero.',
         'sujeto_ajeno' => 'No encontramos ese registro entre los tuyos.',
@@ -93,7 +93,7 @@ return [
         'subido_el' => 'Subido el :fecha',
         'aprobar' => 'Aprobar',
         'rechazar' => 'Rechazar',
-        'ver_archivo' => 'Ver archivo',
+        'ver_archivo' => 'Ver',
         'modal' => [
             'aprobar_titulo' => 'Aprobar «:documento»',
             'aprobar_mensaje' => 'El documento queda aprobado y cuenta para la verificación mientras no venza.',
@@ -138,7 +138,7 @@ return [
             'rechazar' => 'Rechazado: el solicitante verá el motivo y podrá reenviarlo.',
             'suspender' => 'Suspendido: deja de recibir ofertas hasta que lo rehabilites.',
             'rehabilitar' => 'Rehabilitado: vuelve a estar aprobado.',
-            'dar_de_baja' => 'Dado de baja.',
+            'dar_de_baja' => 'Eliminado.',
             'reenviar' => 'Reenviado a revisión.',
         ],
         'modal' => [
@@ -159,8 +159,8 @@ return [
                 'mensaje' => 'Vuelve a estar aprobado, siempre que sus documentos estén vigentes.',
             ],
             'dar_de_baja' => [
-                'titulo' => 'Dar de baja «:nombre»',
-                'mensaje' => 'La baja es definitiva: no se puede deshacer.',
+                'titulo' => 'Eliminar «:nombre»',
+                'mensaje' => 'Esta acción es definitiva: no se puede deshacer.',
             ],
         ],
     ],

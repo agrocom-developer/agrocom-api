@@ -138,6 +138,11 @@ le inventa una.
    `danger-outline`**. Toda otra acción es un cambio de estado y lleva **el tono
    del estado al que lleva** (`<tono>-outline`), el mismo de su badge y de su
    modal — el mapa vive una sola vez en `TONO_POR_ESTADO`.
+   **Revisar** (colas de aprobación de proveedores, pilotos, auxiliares y
+   drones pendientes) no cambia ningún estado, así que no hereda tono: lleva
+   `distintivo-1-outline` (violeta) con el ícono `fact_check`, para que no se
+   confunda con Ver. Al usuario la baja lógica no le importa: la acción y el
+   estado se llaman siempre **Eliminar** / **Eliminado**, nunca «dar de baja».
 2. **Ninguna confirmación nativa.** `confirm()` de navegador se reemplaza por
    `molecules/confirm-modal`; un aviso que no confirma nada, por
    `molecules/info-modal`. Forms y modales van **fuera** de `row-actions` (el

@@ -253,6 +253,23 @@
     background-color: var(--ag-color-distintivo-2-subtle);
 }
 
+/* distintivo-1-outline ("violet"): «Revisar» de las colas de aprobación
+   (proveedores, pilotos, auxiliares, drones pendientes). No puede ser
+   `info-outline` porque ese tono es «Ver»; ni `warning` (Editar), ni `danger`
+   (Eliminar), ni el de un estado de llegada: revisar no cambia el estado. Es
+   el único violeta de las acciones de fila, así que no se confunde con otro
+   significado. Token PLANO, mismo criterio que el resto de la familia. */
+.ag-button--distintivo-1-outline {
+    background-color: transparent;
+    color: var(--ag-color-distintivo-1);
+    border-color: var(--ag-color-distintivo-1);
+    box-shadow: none;
+}
+
+.ag-button--distintivo-1-outline:hover {
+    background-color: var(--ag-color-distintivo-1-subtle);
+}
+
 /* alert-outline (18/9/2026, novena vuelta): rojo-700 `#880000`, más oscuro
    y severo que danger (rojo-600 `#bb0000`) — pedido explícito del usuario
    para "Cerrar" de Campania (→ `cerrada`), que había pasado por magenta

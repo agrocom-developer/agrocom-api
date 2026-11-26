@@ -122,7 +122,7 @@
                             </span>
                             <span role="cell" class="ag-index-table__acciones">
                                 <x-organisms.row-actions>
-                                    <x-atoms.button :href="route('panel.pilotos.show', $fila)" variant="info-outline" size="sm" icon="visibility">
+                                    <x-atoms.button :href="route('panel.pilotos.show', $fila)" :variant="$fila->estado->value === 'pendiente' ? 'distintivo-1-outline' : 'info-outline'" size="sm" :icon="$fila->estado->value === 'pendiente' ? 'fact_check' : 'visibility'">
                                         {{ $fila->estado->value === 'pendiente' ? __('proveedores.revisar') : __('proveedores.ver') }}
                                     </x-atoms.button>
                                 </x-organisms.row-actions>
