@@ -10,7 +10,7 @@
 | Piloto | Nombres, apellidos, teléfono y foto de perfil; identidad, licencia o habilitación de piloto remoto vigente, certificado de aplicador de agroquímicos si la normativa local lo exige, antecedentes |
 | Dron | Registro o matrícula ante la autoridad aeronáutica, habilitación para uso agrícola, número de serie, marca y modelo, fotos del equipo (frontal, lateral y placa de serie como mínimo), seguro vigente |
 
-La normativa local de cada zona puede añadir requisitos; el catálogo de documentos se ajusta por parámetro.
+La normativa local puede añadir requisitos; el catálogo de documentos se ajusta por parámetro.
 
 ## Proceso
 
