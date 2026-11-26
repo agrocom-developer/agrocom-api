@@ -5,8 +5,8 @@ namespace App\Dominios\Calificaciones\Contratos\Eventos;
 use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 
 /**
- * Hecho de dominio (especificación §7): el cliente calificó al proveedor, al piloto
- * o al auxiliar, o el proveedor calificó al cliente. Solo avisa al proveedor cuando
+ * Hecho de dominio (especificación §7): el cliente calificó al proveedor o al piloto,
+ * o el proveedor calificó al cliente. Solo avisa al proveedor cuando
  * lo califican a él: la calificación al cliente es privada (ADR 0031). DTO de
  * primitivos.
  */

@@ -120,7 +120,7 @@ final class CalificacionesDelProveedorController
     #[OA\Get(
         path: '/api/calificaciones/recibidas',
         operationId: 'listarCalificacionesRecibidas',
-        description: 'Las calificaciones que recibe tu proveedor (él, su piloto y su auxiliar), de la más nueva a la más vieja, sin las que un administrador ocultó. '
+        description: 'Las calificaciones que recibe tu proveedor (él y su piloto), de la más nueva a la más vieja, sin las que un administrador ocultó. '
             .'Incluye el resumen que muestra la app: promedio y conteo (los de tu reputación), distribución por estrellas y etiquetas más frecuentes de las últimas 100.',
         summary: 'Calificaciones que recibo',
         security: [['tokenDispositivo' => []]],
@@ -186,7 +186,7 @@ final class CalificacionesDelProveedorController
     #[OA\Post(
         path: '/api/calificaciones/{id}/reportar',
         operationId: 'reportarCalificacion',
-        description: 'Reporta con motivo una calificación que recibiste y consideras abusiva (insultos, datos personales, factores ajenos como el clima, represalia tras una disputa). '
+        description: 'Reporta con motivo una calificación que recibiste y consideras abusiva (insultos, datos personales, factores ajenos como el clima, represalia tras un reclamo). '
             .'Queda `en_moderacion` y un administrador decide; reportar no la oculta ni la saca del promedio. Reportar dos veces la misma devuelve la misma calificación.',
         summary: 'Reportar una calificación',
         security: [['tokenDispositivo' => []]],

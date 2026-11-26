@@ -37,7 +37,6 @@ final class DocumentosController
     private const RUTA_FICHA = [
         'proveedor' => 'panel.proveedores.show',
         'piloto' => 'panel.pilotos.show',
-        'auxiliar' => 'panel.auxiliares.show',
         'dron' => 'panel.drones-flota.show',
     ];
 

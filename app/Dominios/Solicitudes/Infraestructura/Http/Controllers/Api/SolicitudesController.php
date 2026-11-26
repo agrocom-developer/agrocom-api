@@ -42,7 +42,6 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'precio_acordado', description: 'Verdadero si la solicitud ya se adjudicó y el precio no cambia.', type: 'boolean'),
         new OA\Property(property: 'hectareas', type: 'string', example: '80.0000'),
         new OA\Property(property: 'monto_estimado', type: 'string', nullable: true, example: '10000.00'),
-        new OA\Property(property: 'precio_referencia_ha', description: 'Guía de mercado para el tipo de aplicación; no es un límite.', type: 'string', nullable: true, example: '120.00'),
     ],
     type: 'object',
 )]
@@ -201,7 +200,7 @@ final class SolicitudesController
     #[OA\Get(
         path: '/api/solicitudes/{id}/estimacion',
         operationId: 'estimarSolicitud',
-        description: 'El monto estimado: hectáreas solicitadas por el precio por hectárea vigente (el propuesto, o el acordado una vez adjudicada), con el precio de referencia como guía.',
+        description: 'El monto estimado: hectáreas solicitadas por el precio por hectárea vigente (el propuesto, o el acordado una vez adjudicada).',
         summary: 'Monto estimado de una solicitud',
         security: [['tokenDispositivo' => []]],
         tags: ['Solicitudes'],
@@ -237,7 +236,7 @@ final class SolicitudesController
     #[OA\Post(
         path: '/api/solicitudes/{id}/publicar',
         operationId: 'publicarSolicitud',
-        description: 'Abre la solicitud a los pilotos: `borrador` pasa a `abierta`, con su vigencia (7 días) y visible en el mapa. Exige precio por hectárea propuesto, hectáreas que no superen las del terreno, fecha deseada no pasada y un teléfono en la cuenta. '
+        description: 'Abre la solicitud a los pilotos: `borrador` pasa a `abierta`, con su vigencia (7 días) y visible en el mapa. Exige precio por hectárea propuesto, hectáreas que no superen las del terreno, fecha deseada no pasada, un teléfono en la cuenta y que el terreno tenga departamento y provincia coherentes entre sí; esa ubicación (más municipio y comunidad) se congela en la solicitud. '
             .'Avisa a los pilotos cuyas preferencias coinciden con la zona y las hectáreas. Una solicitud `expirada` se renueva igual, dentro del plazo de renovación.',
         summary: 'Abrir una solicitud al mercado',
         security: [['tokenDispositivo' => []]],
@@ -248,7 +247,7 @@ final class SolicitudesController
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
             new OA\Response(response: 403, description: 'El rol del token no es de cliente.'),
             new OA\Response(response: 404, description: 'No existe o es de otro cliente.'),
-            new OA\Response(response: 422, description: 'Falta el precio o el teléfono, la solicitud no está en un estado que se pueda abrir o la fecha deseada ya pasó.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
+            new OA\Response(response: 422, description: 'Falta el precio o el teléfono, el terreno no tiene departamento o provincia (o no son coherentes), la solicitud no está en un estado que se pueda abrir o la fecha deseada ya pasó.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],
     )]
     public function publicar(Request $request, int $id): JsonResponse
@@ -268,7 +267,7 @@ final class SolicitudesController
         path: '/api/solicitudes/{id}/cancelar',
         operationId: 'cancelarSolicitud',
         description: 'Cancela una solicitud propia con motivo. Es gratuita y sin penalidad en dinero; si ya estaba adjudicada, queda registrada en la tasa de cancelación del cliente y el proveedor queda libre. '
-            .'Una solicitud en ejecución o finalizada no se cancela por este camino: si hay desacuerdo, se abre una disputa.',
+            .'Una solicitud en ejecución o finalizada no se cancela por este camino: si hay desacuerdo, se abre un reclamo.',
         summary: 'Cancelar una solicitud',
         security: [['tokenDispositivo' => []]],
         requestBody: new OA\RequestBody(

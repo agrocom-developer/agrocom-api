@@ -3,7 +3,6 @@
 namespace App\Dominios\Proveedores\Aplicacion;
 
 use App\Dominios\Proveedores\Dominio\TipoSujeto;
-use App\Dominios\Proveedores\Infraestructura\Eloquent\Auxiliar;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Piloto;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Proveedor;
 
@@ -12,11 +11,8 @@ use App\Dominios\Proveedores\Infraestructura\Eloquent\Proveedor;
  * CLAUDE.md aplicado a proveedores: la garantía es de código, el alcance sale
  * siempre de la cuenta autenticada y nunca de un `where` agregado después).
  *
- * - El titular de un proveedor gestiona a su proveedor, sus pilotos y sus
- *   auxiliares.
- * - Un piloto gestiona sus propios documentos y los de los auxiliares que
- *   registró.
- * - Un auxiliar gestiona los suyos.
+ * - El titular de un proveedor gestiona a su proveedor y sus pilotos.
+ * - Un piloto gestiona sus propios documentos.
  *
  * Los drones los resuelve `Flota` con el mismo criterio (dueño u operador).
  */
@@ -38,7 +34,6 @@ final class AlcanceDelSolicitante
         return match ($tipo) {
             TipoSujeto::Proveedor => Proveedor::query()->whereKey($sujetoId)->where('usuario_titular_id', $usuarioId)->exists(),
             TipoSujeto::Piloto => $this->puedeGestionarPiloto($usuarioId, $sujetoId),
-            TipoSujeto::Auxiliar => $this->puedeGestionarAuxiliar($usuarioId, $sujetoId),
             TipoSujeto::Dron => false,
         };
     }
@@ -49,21 +44,5 @@ final class AlcanceDelSolicitante
 
         return $piloto !== null
             && ($piloto->usuario_id === $usuarioId || $piloto->proveedor->usuario_titular_id === $usuarioId);
-    }
-
-    private function puedeGestionarAuxiliar(int $usuarioId, int $auxiliarId): bool
-    {
-        $auxiliar = Auxiliar::query()->with('proveedor')->find($auxiliarId);
-
-        if ($auxiliar === null) {
-            return false;
-        }
-
-        if ($auxiliar->usuario_id === $usuarioId || $auxiliar->proveedor->usuario_titular_id === $usuarioId) {
-            return true;
-        }
-
-        return $auxiliar->registrado_por_piloto_id !== null
-            && Piloto::query()->whereKey($auxiliar->registrado_por_piloto_id)->where('usuario_id', $usuarioId)->exists();
     }
 }

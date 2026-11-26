@@ -41,21 +41,21 @@ test('ofrece las pantallas preferidas del rol, en su orden, y no las que el men�
         ]),
     ];
 
-    // `encargado_operaciones` prefiere documentos → … → solicitudes; sin proveedores ni drones en su menú, no aparecen.
-    expect(rutasDe(AccesosRapidos::para('encargado_operaciones', $menu)))
+    // `operador` prefiere documentos → proveedores → solicitudes…; sin proveedores en su menú, no aparecen.
+    expect(rutasDe(AccesosRapidos::para('operador', $menu)))
         ->toBe(['panel.documentos.index', 'panel.solicitudes.index']);
 });
 
 test('un permiso que el menú no muestra no se ofrece, aunque el rol lo prefiera', function () {
     $menu = [moduloMenu('seguridad', [itemMenu('panel.usuarios.index')])];
 
-    expect(rutasDe(AccesosRapidos::para('admin_plataforma', $menu)))->toBe(['panel.usuarios.index']);
+    expect(rutasDe(AccesosRapidos::para('administrador', $menu)))->toBe(['panel.usuarios.index']);
 });
 
 test('cada acceso lleva ícono, etiqueta y módulo del menú, sin traducir', function () {
     $menu = [moduloMenu('solicitudes', [itemMenu('panel.solicitudes.index', 'menu.solicitudes.items.solicitudes', 'request_quote')])];
 
-    expect(AccesosRapidos::para('dueno', $menu))->toBe([[
+    expect(AccesosRapidos::para('administrador', $menu))->toBe([[
         'ruta' => 'panel.solicitudes.index',
         'icono' => 'request_quote',
         'etiqueta' => 'menu.solicitudes.items.solicitudes',
@@ -64,11 +64,11 @@ test('cada acceso lleva ícono, etiqueta y módulo del menú, sin traducir', fun
 });
 
 test('no pasa de seis accesos', function () {
-    $rutas = ['panel.solicitudes.index', 'panel.proveedores.index', 'panel.documentos.index', 'panel.drones-flota.index', 'panel.disputas.index', 'panel.metricas.index'];
+    $rutas = ['panel.solicitudes.index', 'panel.proveedores.index', 'panel.documentos.index', 'panel.drones-flota.index', 'panel.disputas.index', 'panel.usuarios.index'];
     $menu = [moduloMenu('todo', [...array_map(itemMenu(...), $rutas), itemMenu('panel.clientes.index')])];
 
-    expect(AccesosRapidos::para('dueno', $menu))->toHaveCount(AccesosRapidos::MAXIMO)
-        ->and(rutasDe(AccesosRapidos::para('dueno', $menu)))->toBe($rutas);
+    expect(AccesosRapidos::para('administrador', $menu))->toHaveCount(AccesosRapidos::MAXIMO)
+        ->and(rutasDe(AccesosRapidos::para('administrador', $menu)))->toBe($rutas);
 });
 
 test('un rol sin lista propia cae en las primeras pantallas de su menú, sin repetir el tablero', function () {
@@ -84,7 +84,7 @@ test('un rol sin lista propia cae en las primeras pantallas de su menú, sin rep
 test('un rol con lista propia pero sin ninguna de sus pantallas también cae en el menú', function () {
     $menu = [moduloMenu('recursos', [itemMenu('panel.bases.index')])];
 
-    expect(rutasDe(AccesosRapidos::para('dueno', $menu)))->toBe(['panel.bases.index']);
+    expect(rutasDe(AccesosRapidos::para('administrador', $menu)))->toBe(['panel.bases.index']);
 });
 
 test('encuentra las pantallas anidadas a cualquier profundidad y una pantalla suelta en la raíz', function () {
@@ -92,15 +92,15 @@ test('encuentra las pantallas anidadas a cualquier profundidad y una pantalla su
         new ItemMenu(id: 2, label: 'menu.b.label', icono: 'folder', ruta: null, orden: 1, hijos: [itemMenu('panel.usuarios.index')]),
     ]);
 
-    expect(rutasDe(AccesosRapidos::para('admin_plataforma', [$anidado, itemMenu('panel.roles.index')])))
+    expect(rutasDe(AccesosRapidos::para(null, [$anidado, itemMenu('panel.roles.index')])))
         ->toBe(['panel.usuarios.index', 'panel.roles.index']);
 });
 
 test('una ruta repetida en el menú se ofrece una sola vez, y sin menú no hay accesos', function () {
     $menu = [moduloMenu('a', [itemMenu('panel.solicitudes.index')]), moduloMenu('b', [itemMenu('panel.solicitudes.index')])];
 
-    expect(rutasDe(AccesosRapidos::para('encargado_operaciones', $menu)))->toBe(['panel.solicitudes.index'])
-        ->and(AccesosRapidos::para('dueno', []))->toBe([]);
+    expect(rutasDe(AccesosRapidos::para('operador', $menu)))->toBe(['panel.solicitudes.index'])
+        ->and(AccesosRapidos::para('administrador', []))->toBe([]);
 });
 
 test('cada rol con lista propia usa solo rutas que existen en el panel', function () {

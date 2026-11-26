@@ -2,21 +2,28 @@
 
 namespace App\Dominios\Seguridad\Aplicacion;
 
+use App\Dominios\Seguridad\Contratos\TipoCuenta;
 use App\Dominios\Seguridad\Dominio\Excepciones\PermisoDenegado;
+use App\Dominios\Seguridad\Dominio\Excepciones\RolProtegido;
 use App\Dominios\Seguridad\Dominio\Excepciones\UsuarioDuplicado;
+use App\Dominios\Seguridad\Dominio\PermisosReservados;
 use App\Dominios\Seguridad\Dominio\TipoUsuario;
+use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUserRole;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Caso de uso único para alta y edición de usuarios internos con sus roles
- * (HU-01). Cubre alta y edición con la MISMA guarda de permisos a propósito
- * (diseño `modulos-roles` §3): si solo se protegiera "crear", un encargado de
- * operaciones lograría asignarse el rol `dueno` editando después de la
- * creación — la guarda tiene que estar en un único lugar que ambos caminos
- * atraviesen.
+ * Caso de uso único para alta y edición de cuentas del panel con su rol (HU-01).
+ * Cubre alta y edición con la MISMA guarda de permisos a propósito (diseño
+ * `modulos-roles` §3): si solo se protegiera "crear", un operador lograría
+ * asignarse el rol `administrador` editando después de la creación — la guarda
+ * tiene que estar en un único lugar que ambos caminos atraviesen.
+ *
+ * Una cuenta de panel tiene UN solo rol, `administrador` u `operador` (ADR 0046,
+ * punto 4). Asignar o quitar `administrador` exige además
+ * `seguridad.usuario.asignar_rol_administrador`.
  *
  * No hay controlador ni ruta HTTP en HU-01 (es puro backend, ADR 0008): lo
  * invocan directo los tests y, más adelante, el endpoint/panel de HU-02/HU-03
@@ -28,7 +35,7 @@ final class AsignarRolesUsuario
 
     private const PERMISO_EDITAR = 'seguridad.usuario.editar';
 
-    private const PERMISO_ROL_DUENO = 'seguridad.usuario.asignar_rol_dueno';
+    private const PERMISO_ROL_ADMINISTRADOR = 'seguridad.usuario.asignar_rol_administrador';
 
     /**
      * @param  SecUser  $actor  Quién ejecuta la acción: define tanto el permiso
@@ -43,11 +50,11 @@ final class AsignarRolesUsuario
      * @param  string|null  $email  Correo de la cuenta (tarea 66, ampliación
      *                              ADR 0004 9/9/2026) — de la cuenta, no de
      *                              la persona operativa. `null` = sin correo.
-     * @param  list<int>  $roleIds  Set completo y definitivo de roles deseados,
-     *                              no un delta: los que falten respecto a los
-     *                              actuales se revocan (soft delete) y los
-     *                              nuevos se asignan, así "editar" nunca deja
-     *                              un rol huérfano por omisión.
+     * @param  list<int>  $roleIds  El rol deseado: exactamente uno, de los dos del
+     *                              panel. Set completo y definitivo, no un delta:
+     *                              el que falte respecto a los actuales se revoca
+     *                              (soft delete) y el nuevo se asigna, así
+     *                              "editar" nunca deja un rol huérfano por omisión.
      * @param  int|null  $idRolActivo  Rol activo de la sesión del actor
      *                                 (`session('sec_rol_activo_id')`), sin
      *                                 default: quien invoca desde el panel
@@ -62,9 +69,10 @@ final class AsignarRolesUsuario
      *                                 pidió.
      *
      * @throws PermisoDenegado si al actor le falta el permiso de entrada
-     *                         (`crear`/`editar`) o, cuando algún rol del
-     *                         payload que cambia de estado lleva asignado el
-     *                         permiso `asignar_rol_dueno`, ese mismo permiso.
+     *                         (`crear`/`editar`) o, cuando el rol que cambia
+     *                         de estado es `administrador`, el permiso
+     *                         `asignar_rol_administrador`.
+     * @throws RolProtegido si el payload no trae exactamente un rol del panel.
      * @throws UsuarioDuplicado si el `username`, el `email` o la `persona_id`
      *                          ya pertenecen a otra cuenta viva.
      */
@@ -90,6 +98,7 @@ final class AsignarRolesUsuario
         $roleIds = array_values(array_unique(array_map('intval', $roleIds)));
 
         $this->verificarPermisoDeEntrada($actor, $idRolActivo, $esAlta);
+        $this->verificarUnSoloRolDelPanel($roleIds);
 
         return DB::transaction(function () use (
             $actor,
@@ -108,14 +117,21 @@ final class AsignarRolesUsuario
                 ? new SecUser
                 : SecUser::query()->findOrFail($usuarioId);
 
+            // Esta pantalla es del personal: una cuenta de app (cliente o proveedor) no
+            // cambia de tipo ni de rol desde acá (ADR 0046, punto 1).
+            if ($usuario->exists && $usuario->tipo_cuenta !== TipoCuenta::Panel) {
+                throw RolProtegido::porCuentaDeApp();
+            }
+
             $rolesActuales = $esAlta ? [] : $usuario->idsDeRoles();
 
-            $this->verificarGuardaRolDueno($actor, $idRolActivo, $rolesActuales, $roleIds);
+            $this->verificarGuardaRolAdministrador($actor, $idRolActivo, $rolesActuales, $roleIds);
 
             $usuario->name = $name;
             $usuario->username = $username;
             $usuario->email = $email;
             $usuario->type = $type;
+            $usuario->tipo_cuenta = TipoCuenta::Panel;
             $usuario->persona_id = $personaId;
 
             if ($password !== null) {
@@ -149,30 +165,46 @@ final class AsignarRolesUsuario
     }
 
     /**
-     * Guarda genérica por permiso de rol, no por nombre de rol: cualquier rol
-     * del payload que cambie de estado (se asigna o se quita) y que a su vez
-     * tenga otorgado `asignar_rol_dueno` en el catálogo (`sec_role_permission`)
-     * exige que el actor también tenga ese permiso — evaluado en su rol
-     * activo si lo hay, nunca por el nombre literal `dueno` (el rol que hoy
-     * lo tiene podría renombrarse, o el permiso otorgarse a otro rol nuevo,
-     * sin que esta guarda deje de aplicar).
+     * Una cuenta de panel tiene un solo rol y es uno de los dos del panel.
+     *
+     * @param  list<int>  $roleIds
+     *
+     * @throws RolProtegido
+     */
+    private function verificarUnSoloRolDelPanel(array $roleIds): void
+    {
+        $nombres = $roleIds === [] ? [] : SecRole::query()->whereIn('id', $roleIds)->pluck('name')->all();
+
+        if (count($roleIds) !== 1 || count($nombres) !== 1 || ! PermisosReservados::esRolDelPanel((string) $nombres[0])) {
+            throw RolProtegido::porUnSoloRolDelPanel();
+        }
+    }
+
+    /**
+     * Asignar o quitar el rol `administrador` exige `asignar_rol_administrador`,
+     * evaluado en el rol activo del actor si lo hay.
      *
      * @param  list<int>  $rolesActuales
      * @param  list<int>  $rolesDeseados
      */
-    private function verificarGuardaRolDueno(SecUser $actor, ?int $idRolActivo, array $rolesActuales, array $rolesDeseados): void
+    private function verificarGuardaRolAdministrador(SecUser $actor, ?int $idRolActivo, array $rolesActuales, array $rolesDeseados): void
     {
         $rolesAfectados = array_values(array_unique(array_merge(
             array_diff($rolesDeseados, $rolesActuales),
             array_diff($rolesActuales, $rolesDeseados),
         )));
 
-        if ($rolesAfectados === [] || $this->rolesConPermiso($rolesAfectados, self::PERMISO_ROL_DUENO) === []) {
+        if ($rolesAfectados === []) {
             return;
         }
 
-        if (! $this->actorTienePermiso($actor, $idRolActivo, self::PERMISO_ROL_DUENO)) {
-            throw PermisoDenegado::porFaltaDePermiso(self::PERMISO_ROL_DUENO);
+        $tocaAdministrador = SecRole::query()
+            ->whereIn('id', $rolesAfectados)
+            ->where('name', PermisosReservados::ROL_ADMINISTRADOR)
+            ->exists();
+
+        if ($tocaAdministrador && ! $this->actorTienePermiso($actor, $idRolActivo, self::PERMISO_ROL_ADMINISTRADOR)) {
+            throw PermisoDenegado::porFaltaDePermiso(self::PERMISO_ROL_ADMINISTRADOR);
         }
     }
 
@@ -187,29 +219,6 @@ final class AsignarRolesUsuario
         return $idRolActivo !== null
             ? $actor->tienePermisoEnRol($codigo, $idRolActivo)
             : $actor->tienePermiso($codigo);
-    }
-
-    /**
-     * @param  list<int>  $idsRol
-     * @return list<int> subconjunto de `$idsRol` que tiene otorgado
-     *                   `$codigoPermiso` en el catálogo, vivo en ambos
-     *                   extremos del pivote (`sec_role_permission`,
-     *                   `sec_permission.state`).
-     */
-    private function rolesConPermiso(array $idsRol, string $codigoPermiso): array
-    {
-        return DB::table('sec_role_permission')
-            ->join('sec_permission', 'sec_permission.id', '=', 'sec_role_permission.id_permission')
-            ->whereIn('sec_role_permission.id_role', $idsRol)
-            ->whereNull('sec_role_permission.deleted_at')
-            ->whereNull('sec_permission.deleted_at')
-            ->where('sec_permission.code', $codigoPermiso)
-            ->where('sec_permission.state', true)
-            ->pluck('sec_role_permission.id_role')
-            ->map(static fn (int|string $id): int => (int) $id)
-            ->unique()
-            ->values()
-            ->all();
     }
 
     /**

@@ -14,14 +14,14 @@ use App\Dominios\Notificaciones\Dominio\TipoNotificacion;
 use InvalidArgumentException;
 
 /**
- * Cambió el estado de aprobación de un proveedor, piloto, auxiliar o dron
+ * Cambió el estado de aprobación de un proveedor, piloto o dron
  * (ADR 0032; especificación §12: `ProveedorAprobado`, `ProveedorSuspendido`).
  *
  * - Aprobación, rechazo, suspensión, rehabilitación y baja: le importan a quien
  *   es el sujeto y al titular de su proveedor. Se les avisa a las cuentas que el
  *   emisor declara en `usuariosDestinatarios`.
- * - Reenvío a revisión: le importa a quien aprueba (dueño y encargado de
- *   operaciones), no a quien reenvió.
+ * - Reenvío a revisión: le importa a quien aprueba (el administrador), no a
+ *   quien reenvió.
  *
  * La clave del hecho lleva el id del historial: un mismo sujeto puede pasar por
  * aprobado, suspendido y rehabilitado muchas veces y cada cambio es un aviso.
@@ -49,7 +49,7 @@ final class ReglaEstadoDeAprobacionCambiado implements ReglaNotificacion
         };
 
         $destinatarios = $evento->accion === AccionAprobacion::Reenviar
-            ? [Destinatario::rol(RolDestinatario::Dueno), Destinatario::rol(RolDestinatario::EncargadoOperaciones)]
+            ? [Destinatario::rol(RolDestinatario::Administrador)]
             : array_map(static fn (int $usuarioId): Destinatario => Destinatario::usuario($usuarioId), $evento->usuariosDestinatarios);
 
         return new NotificacionArmada(

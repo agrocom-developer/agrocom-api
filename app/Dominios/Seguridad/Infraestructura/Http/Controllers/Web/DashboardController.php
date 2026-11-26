@@ -34,7 +34,6 @@ final class DashboardController
     private const PENDIENTES = [
         'proveedores' => ['panel.proveedores.index', 'proveedores.proveedor.ver'],
         'pilotos' => ['panel.pilotos.index', 'proveedores.piloto.ver'],
-        'auxiliares' => ['panel.auxiliares.index', 'proveedores.auxiliar.ver'],
         'drones' => ['panel.drones-flota.index', 'flota.dron.ver'],
         'fotos_de_dron' => ['panel.drones-flota.index', 'flota.dron.ver'],
         'documentos' => ['panel.documentos.index', 'proveedores.documento.ver'],

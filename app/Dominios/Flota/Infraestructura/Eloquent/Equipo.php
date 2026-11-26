@@ -9,15 +9,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
 /**
- * Equipo operativo (`flo_equipos`): piloto + dron (+ auxiliar) que ejecuta una
- * solicitud. `piloto_id` y `auxiliar_id` apuntan a `Proveedores` solo por id
- * (sin relación Eloquent entre módulos).
+ * Equipo operativo (`flo_equipos`): piloto + dron que ejecuta una
+ * solicitud. `piloto_id` apunta a `Proveedores` solo por id (sin relación
+ * Eloquent entre módulos). La columna `auxiliar_id` sigue en la tabla pero no
+ * se lee ni se escribe: se retira al reconsolidar las migraciones.
  *
  * @property int $id
  * @property int $proveedor_id
  * @property int $piloto_id
  * @property int $dron_id
- * @property int|null $auxiliar_id
  * @property Carbon $vigente_desde
  * @property Carbon|null $vigente_hasta
  * @property-read Dron $dron
@@ -33,7 +33,6 @@ class Equipo extends ModeloDominio
         'proveedor_id',
         'piloto_id',
         'dron_id',
-        'auxiliar_id',
         'vigente_desde',
         'vigente_hasta',
     ];
@@ -45,7 +44,6 @@ class Equipo extends ModeloDominio
             'proveedor_id' => 'integer',
             'piloto_id' => 'integer',
             'dron_id' => 'integer',
-            'auxiliar_id' => 'integer',
             'vigente_desde' => 'date',
             'vigente_hasta' => 'date',
         ];

@@ -90,7 +90,7 @@ function dspMundo(): void
     {
         public function integrantes(int $equipoId): ?DatosIntegrantesEquipo
         {
-            return new DatosIntegrantesEquipo($equipoId, 7, 71, 701, null, 'externo');
+            return new DatosIntegrantesEquipo($equipoId, 7, 71, 701, 'externo');
         }
     });
 }

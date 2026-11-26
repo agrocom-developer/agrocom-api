@@ -3,11 +3,11 @@
 return [
     /*
     |--------------------------------------------------------------------------
-    | Disputas y reembolsos del marketplace (ADR 0033 y 0039)
+    | Reclamos y reembolsos del marketplace (ADR 0033 y 0039)
     |--------------------------------------------------------------------------
     |
     | El cliente (hasta 72 horas después de `ejecutada`) o el proveedor abren una
-    | disputa por servicio; soporte media; un administrador resuelve; ambas partes
+    | reclamo por servicio; soporte media; un administrador resuelve; ambas partes
     | pueden apelar una vez. Los reembolsos se liquidan entre las partes fuera de la
     | app (ADR 0034). Español neutro, tuteo (CLAUDE.md, «Tuteo estándar»).
     */
@@ -15,7 +15,7 @@ return [
     'campos' => [
         'motivo' => 'motivo',
         'detalle' => 'detalle',
-        'monto_en_disputa' => 'monto en disputa',
+        'monto_en_disputa' => 'monto reclamado',
         'texto' => 'mensaje',
         'pruebas' => 'pruebas',
         'resultado' => 'resultado',
@@ -48,33 +48,33 @@ return [
     'resultado' => [
         'a_favor_cliente' => 'A favor del cliente',
         'a_favor_proveedor' => 'A favor del proveedor',
-        'parcial' => 'Parcial',
+        'parcial' => 'Reembolso parcial',
         'sin_lugar' => 'Sin lugar',
         'retirada' => 'Retirado',
     ],
 
     'historial' => [
-        'retirada' => 'La parte que abrió la disputa la retiró.',
+        'retirada' => 'La parte que abrió el reclamo lo retiró.',
     ],
 
     'errores' => [
         'servicio_ajeno' => 'El servicio no existe.',
-        'disputa_ajena' => 'La disputa no existe.',
+        'disputa_ajena' => 'El reclamo no existe.',
         'sin_proveedor' => 'Tu cuenta no pertenece a ningún proveedor.',
-        'ya_existe' => 'Este servicio ya tiene una disputa. Hay una sola por servicio.',
-        'motivo_invalido' => 'El motivo «:motivo» no corresponde a tu lado de la disputa.',
-        'servicio_no_disputable' => 'Un servicio «:estado» no admite esta disputa.',
-        'plazo_vencido' => 'El plazo para abrir la disputa venció.',
-        'monto_invalido' => 'El monto en disputa debe ser mayor que cero y no pasar de :monto.',
-        'texto_requerido' => 'Escribe el texto.',
+        'ya_existe' => 'Este servicio ya tiene un reclamo. Hay uno solo por servicio.',
+        'motivo_invalido' => 'El motivo «:motivo» no corresponde a tu lado del reclamo.',
+        'servicio_no_disputable' => 'Un servicio «:estado» no admite este reclamo.',
+        'plazo_vencido' => 'El plazo para abrir el reclamo venció.',
+        'monto_invalido' => 'El monto reclamado debe ser mayor que cero y no puede superar :monto.',
+        'texto_requerido' => 'Escribe el mensaje.',
         'motivo_requerido' => 'Indica el motivo de la decisión.',
-        'no_admite_mensajes' => 'La disputa ya no admite mensajes: si fue resuelta, puedes apelar.',
-        'no_se_retira' => 'La disputa ya está resuelta y no se retira.',
-        'solo_quien_la_abrio' => 'Solo quien abrió la disputa puede retirarla.',
-        'no_se_apela' => 'Solo se apela una disputa resuelta, y una sola vez.',
+        'no_admite_mensajes' => 'El reclamo ya no admite mensajes: si fue resuelto, puedes apelar.',
+        'no_se_retira' => 'El reclamo ya está resuelto: no se puede retirar.',
+        'solo_quien_la_abrio' => 'Solo quien abrió el reclamo puede retirarlo.',
+        'no_se_apela' => 'Solo se puede apelar un reclamo resuelto, y una sola vez.',
         'apelacion_vencida' => 'El plazo para apelar venció.',
-        'no_se_resuelve' => 'La disputa ya fue resuelta o retirada.',
-        'transicion_no_permitida' => 'La disputa no puede pasar de «:desde» a «:hacia».',
+        'no_se_resuelve' => 'El reclamo ya fue resuelto o retirado.',
+        'transicion_no_permitida' => 'El reclamo no puede pasar de «:desde» a «:hacia».',
         'reembolso' => [
             'negativo' => 'El reembolso no puede ser negativo.',
             'sin_reembolso' => 'Un resultado a favor del proveedor o sin lugar no lleva reembolso.',
@@ -87,7 +87,7 @@ return [
     // Panel del administrador: cola, ficha y resolución.
     'panel' => [
         'titulo' => 'Reclamos',
-        'subtitulo' => 'Reclamos de clientes y proveedores sobre los servicios. Soporte media y un administrador resuelve con motivo; los reembolsos se liquidan entre las partes fuera de la app.',
+        'subtitulo' => 'Reclamos de clientes y proveedores sobre los servicios. Soporte media y un administrador resuelve indicando el motivo; los reembolsos se liquidan entre las partes fuera de la app.',
         'vacio_titulo' => 'Todavía no hay reclamos',
         'vacio_detalle' => 'Aparecen cuando un cliente o un proveedor abre un reclamo sobre un servicio.',
         'filtro_estado' => 'Estado',
@@ -109,11 +109,11 @@ return [
         'ver_solicitud' => 'Ver la solicitud',
         'detalle_titulo' => 'Reclamo #:id',
         'detalle_subtitulo' => ':cliente · servicio #:solicitud',
-        'tomar' => 'Tomar el reclamo',
+        'tomar' => 'Atender el reclamo',
         'tomada' => 'El reclamo quedó en revisión a tu cargo.',
         'resolver' => 'Resolver',
         'resolver_titulo' => 'Resolver el reclamo #:id',
-        'resolver_mensaje' => 'La decisión queda registrada con tu nombre y el motivo, y avisa a ambas partes. Agrocom ajusta su comisión en la misma proporción que el reembolso. Las partes pueden apelar una vez en 7 días.',
+        'resolver_mensaje' => 'La decisión queda registrada con tu nombre y el motivo, y avisa a ambas partes. Agrocom ajusta su comisión en la misma proporción que el reembolso. Las partes pueden apelar una sola vez, dentro de 7 días.',
         'resultado_etiqueta' => 'Resultado',
         'resultado_placeholder' => 'Elige el resultado',
         'reembolso_etiqueta' => 'Reembolso',
@@ -121,14 +121,14 @@ return [
         'motivo_etiqueta' => 'Motivo de la decisión',
         'motivo_ayuda' => 'Lo ven ambas partes.',
         'seguro_etiqueta' => 'Daño probado: derivar al seguro del proveedor',
-        'mala_fe_etiqueta' => 'Mala fe del cliente (solo si no hay lugar): se registra en su reputación',
+        'mala_fe_etiqueta' => 'Mala fe del cliente (solo si el resultado es «Sin lugar»): queda en su reputación',
         'resuelta' => 'El reclamo quedó resuelto y se avisó a las partes.',
         'kpi_monto' => 'Monto reclamado',
         'kpi_monto_pie' => 'Tope del reembolso',
         'kpi_ronda' => 'Ronda',
         'kpi_ronda_pie' => 'Original',
-        'kpi_responde' => 'La contraparte responde antes de',
-        'kpi_responde_pie' => 'Plazo de 48 horas',
+        'kpi_responde' => 'Fecha límite de respuesta',
+        'kpi_responde_pie' => 'La contraparte tiene 48 horas',
         'seccion_reclamo' => 'El reclamo',
         'campos_contador' => ':cantidad campos',
         'campo_motivo' => 'Motivo',
@@ -139,7 +139,7 @@ return [
         'conversacion_titulo' => 'Conversación',
         'conversacion_vacia' => 'Todavía nadie escribió. Pide información a la contraparte si hace falta.',
         'mensaje_etiqueta' => 'Mensaje de soporte',
-        'pide_informacion' => 'Es una solicitud de información a la contraparte (responde en 48 horas)',
+        'pide_informacion' => 'Es un pedido de información a la contraparte (tiene 48 horas para responder)',
         'enviar' => 'Enviar',
         'mensaje_enviado' => 'El mensaje quedó en la conversación.',
         'resoluciones_titulo' => 'Resoluciones',
@@ -147,11 +147,11 @@ return [
         'autor_cliente' => 'Cliente',
         'autor_proveedor' => 'Proveedor',
         'autor_soporte' => 'Soporte',
-        'tipo_informacion' => 'Pide información',
+        'tipo_informacion' => 'Pedido de información',
         'tipo_apelacion' => 'Apelación',
         'resolucion_titulo' => 'Ronda :ronda: :resultado',
-        'resolucion_reembolso' => 'Reembolso :monto',
-        'resolucion_comision' => 'Ajuste de comisión :monto',
+        'resolucion_reembolso' => 'Reembolso: :monto',
+        'resolucion_comision' => 'Ajuste de comisión: :monto',
         'resolucion_seguro' => 'Derivado al seguro',
         'resolucion_mala_fe' => 'Mala fe del cliente',
     ],

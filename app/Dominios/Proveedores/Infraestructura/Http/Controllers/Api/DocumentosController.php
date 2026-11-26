@@ -17,7 +17,7 @@ use Illuminate\Http\JsonResponse;
 use OpenApi\Attributes as OA;
 
 /**
- * Documentos de verificación de proveedor, piloto y auxiliar (el del dron lo
+ * Documentos de verificación de proveedor y piloto (el del dron lo
  * resuelve `Flota`). Se carga o lista solo lo que la cuenta gestiona (ver
  * {@see AlcanceDelSolicitante}): un sujeto ajeno es 404.
  */
@@ -42,7 +42,7 @@ final class DocumentosController
         security: [['tokenDispositivo' => []]],
         tags: ['Proveedores'],
         parameters: [
-            new OA\Parameter(name: 'sujeto_tipo', in: 'query', required: true, schema: new OA\Schema(type: 'string', enum: ['proveedor', 'piloto', 'auxiliar'])),
+            new OA\Parameter(name: 'sujeto_tipo', in: 'query', required: true, schema: new OA\Schema(type: 'string', enum: ['proveedor', 'piloto'])),
             new OA\Parameter(name: 'sujeto_id', in: 'query', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         responses: [
@@ -74,7 +74,7 @@ final class DocumentosController
     #[OA\Post(
         path: '/api/proveedores/documentos',
         operationId: 'cargarDocumentoProveedor',
-        description: 'Carga un documento (PDF, JPG o PNG, hasta 8 MB) de un proveedor, piloto o auxiliar que la cuenta gestiona. '
+        description: 'Carga un documento (PDF, JPG o PNG, hasta 8 MB) de un proveedor o piloto que la cuenta gestiona. '
             .'Queda `en_revision` hasta que un administrador lo aprueba o lo rechaza con motivo. Licencia, seguro y habilitación '
             .'exigen fecha de vencimiento: el sistema avisa a los 30 y 7 días y suspende al sujeto si vence. Va como '
             .'`multipart/form-data`.',
@@ -87,7 +87,7 @@ final class DocumentosController
                 schema: new OA\Schema(
                     required: ['sujeto_tipo', 'sujeto_id', 'tipo', 'archivo'],
                     properties: [
-                        new OA\Property(property: 'sujeto_tipo', type: 'string', enum: ['proveedor', 'piloto', 'auxiliar']),
+                        new OA\Property(property: 'sujeto_tipo', type: 'string', enum: ['proveedor', 'piloto']),
                         new OA\Property(property: 'sujeto_id', type: 'integer', example: 5),
                         new OA\Property(property: 'tipo', type: 'string', enum: ['identidad', 'licencia_piloto', 'habilitacion_dron', 'seguro_responsabilidad', 'registro_dron', 'certificado_fumigacion', 'antecedentes', 'otro']),
                         new OA\Property(property: 'archivo', type: 'string', format: 'binary'),

@@ -2,6 +2,8 @@
 
 **Estado:** aceptada, revisable · **Fecha:** 2026-11-24 · **Decide:** el dueño
 
+> **Nota de retiro (26/11/2026):** el auxiliar se eliminó del sistema (rol, permisos `proveedores.auxiliar.*`, página del panel, endpoints `/api/proveedores/auxiliares`, documentos y calificación del auxiliar). Donde este ADR lo menciona, ya no aplica; las tablas `prv_auxiliares` y la columna `flo_equipos.auxiliar_id` siguen en el esquema, sin uso, hasta la reconsolidación de migraciones. Un reemplazo (integrantes del equipo del servicio) se define aparte.
+
 ## Contexto
 
 Tras adjudicar, cliente y piloto se ven en el lote y acuerdan cómo trabajar; eso queda fuera de la plataforma. Lo que el cliente necesita de la plataforma es confirmar que el servicio avanza: ver fotos, conversar y saber dónde está el piloto. El lote no tiene señal, y la ubicación y los datos de contacto son datos personales.
@@ -11,7 +13,7 @@ Tras adjudicar, cliente y piloto se ven en el lote y acuerdan cómo trabajar; es
 1. **Avance (`seg_avances`).** El piloto del equipo adjudicado registra `inicio`, `avance` (hectáreas acumuladas o porcentaje) y `cierre` (hectáreas ejecutadas). Son registros del lote: nacen en el dispositivo con `uuid_cliente`, `secuencia` y outbox, y se aplican por `POST /sync` de forma idempotente.
 2. **Fotos (`seg_evidencias`).** Piloto y auxiliar suben fotos de avance comprimidas a menos de 300 KB, en una cola separada de los registros livianos. El cierre exige al menos las fotos mínimas del parámetro ya subidas para pasar a `finalizada`.
 3. **Precio final.** Al finalizar se congela `monto_final = hectareas_ejecutadas × precio_ha_acordado` y se muestra a ambos (ADR 0034).
-4. **Mensajes (`seg_mensajes`).** Chat de texto entre el cliente y el proveedor adjudicado, desde `adjudicada` hasta el cierre del plazo de calificación o de la disputa. El cliente escribe en línea; el piloto escribe por el outbox y la entrega ocurre al recuperar red. La entrega es por consulta con cursor y aviso push; si el producto exige un canal en tiempo real, se cambia el transporte sin cambiar los recursos.
+4. **Mensajes (`seg_mensajes`).** Chat de texto entre el cliente y el proveedor adjudicado, desde `adjudicada` hasta el cierre del plazo de calificación o del reclamo. El cliente escribe en línea; el piloto escribe por el outbox y la entrega ocurre al recuperar red. La entrega es por consulta con cursor y aviso push; si el producto exige un canal en tiempo real, se cambia el transporte sin cambiar los recursos.
 5. **Ubicación (`seg_ubicaciones`).** Solo la última posición de la app del piloto, enviada en línea (sin outbox) durante `en_ejecucion` cada 30 segundos. El cliente la consulta como un punto que se refresca; no hay ruta ni tiempo estimado. Al finalizar o cancelar la fila se elimina. No se registra en historial, bitácora, logs ni analíticas. El piloto puede desactivarla; el cliente entonces ve «sin ubicación reciente».
 6. **Datos de contacto.** Nombre, teléfono, documento y referencia de dirección del cliente se entregan al proveedor adjudicado, y el teléfono del piloto al cliente, solo al adjudicar. Antes de adjudicar el piloto ve lotes, hectáreas, cultivo, accesos, observaciones y fotos del terreno para decidir su precio, no quién es el cliente.
 7. **Un solo rol escritor por registro.** El avance y la ubicación los escribe el piloto; los mensajes, cada autor los suyos; la calificación, su autor.
@@ -27,3 +29,11 @@ Tras adjudicar, cliente y piloto se ven en el lote y acuerdan cómo trabajar; es
 ## Consecuencias
 
 Nuevo módulo `Seguimiento` (`seg_`) con sus contratos hacia `Solicitudes`. Los registros `inicio`, `avance`, `cierre` y `mensaje` entran en el protocolo de sincronización y en la prueba de replay. Política en `docs/politicas/seguimiento_y_privacidad.md`.
+
+## Revisión (27/11/2026) — mensajes con reportar y bloquear, y ubicación de emergencia
+
+El dueño decidió ajustarse a lo que exigen las tiendas (ADR 0047). Cambia respecto de la primera versión de este ADR:
+
+1. **Mensajes (punto 4).** El chat tiene «Reportar» (un mensaje, la conversación o una foto de avance) y «Bloquear». Reportar crea un reclamo de tipo `conducta` y abre a soporte la lectura acotada de lo reportado (el mensaje y 10 antes y después, o los últimos 50 de la conversación); sin reclamo no hay lectura. Bloquear cierra el chat de esa solicitud para las dos partes y no rompe un servicio adjudicado. Los mensajes y las fotos se conservan 12 meses después de que cierra el plazo de reclamo y de calificación, y luego se eliminan.
+2. **Ubicación (punto 5).** La regla de que no hay historial ni ubicación guardada se formula con exactitud: la ubicación del piloto durante la ejecución se guarda solo como última posición y se elimina al finalizar; la única otra ubicación que se guarda es la de una emergencia o una incidencia (`seg_incidencias.ubicacion`), solo si la persona pulsa el SOS o reporta, con finalidad de seguridad, y se elimina 90 días después de cerrar la incidencia. Motivo: la especificación ya prevé guardar esa posición (SOS e incidencias) y la regla absoluta lo contradecía; las tiendas piden declararlo y fijar su retención.
+3. **Datos de una cuenta eliminada (punto 7).** Cada autor es el único escritor de lo suyo; al eliminar su cuenta se borra el texto de sus mensajes y el autor pasa a «Cuenta eliminada» (ADR 0047).

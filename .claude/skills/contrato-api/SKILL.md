@@ -38,7 +38,7 @@ Ejecuta `php artisan l5-swagger:generate` y copia `storage/api-docs/api-docs.yam
 
 Las apps de campo quedan instaladas durante semanas sin actualizar. Por eso:
 - Cambio compatible (campo opcional nuevo, endpoint nuevo): se publica sin más.
-- Cambio incompatible (renombrar, cambiar tipo, retirar): primero se agrega lo nuevo y se mantiene lo viejo, luego se sube la versión mínima de `GET /api/version` y recién después se retira lo viejo (patrón expandir y contraer, coordinado con `migracion-esquema` si hay cambio de tablas).
+- Cambio incompatible (renombrar, cambiar tipo, retirar): primero se agrega lo nuevo y se mantiene lo viejo, luego se espera a que la app nueva esté publicada en las tiendas y recién después se retira lo viejo (el servidor no puede forzar una versión mínima) (patrón expandir y contraer, coordinado con `migracion-esquema` si hay cambio de tablas).
 - El PR avisa que cambió el contrato; `agrocom-field` adopta el cambio en su propio PR, siguiendo su skill `contrato-api`.
 
 ## Qué nunca

@@ -6,6 +6,7 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
 use App\Dominios\Seguridad\Aplicacion\AsignarRolesUsuario;
 use App\Dominios\Seguridad\Aplicacion\EmitirTokenDispositivo;
+use App\Dominios\Seguridad\Contratos\TipoCuenta;
 use App\Dominios\Seguridad\Dominio\Excepciones\EmisionDirectaDeTokenNoPermitida;
 use App\Dominios\Seguridad\Dominio\TipoUsuario;
 use App\Dominios\Seguridad\Infraestructura\Http\IdentidadOperarioTokenSanctum;
@@ -56,7 +57,8 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string $username
  * @property string|null $email
  * @property string $password
- * @property TipoUsuario $type
+ * @property TipoUsuario $type Heredado (`interno` | `cliente`): sin uso desde `tipo_cuenta`; se elimina en la reconsolidación.
+ * @property TipoCuenta $tipo_cuenta `panel`, `cliente` o `proveedor` (ADR 0046): una cuenta tiene un solo tipo para siempre.
  * @property int|null $persona_id
  * @property string|null $foto_perfil_ref
  * @property bool $state
@@ -67,16 +69,13 @@ class SecUser extends ModeloDominio implements AuthenticatableContract, CanReset
 
     /**
      * Reset de contraseña por correo (tarea 66, ADR 0004 ampliación
-     * 9/9/2026): `getEmailForPasswordReset()` (default del trait) ya lee
-     * `$this->email`, que es exactamente la columna de este modelo — sin
-     * override. `sendPasswordResetNotification()` SÍ se sobrescribe, pero
-     * en cada subtipo (`SecUsuarioInterno`/`SecUsuarioCliente`, no acá):
-     * el link de restablecimiento apunta a una URL distinta por guard
-     * (`/restablecer` vs `/portal/restablecer`), y `Password::broker($guard)`
-     * resuelve el usuario siempre a través del subtipo correspondiente
-     * (`usuarios_internos`/`usuarios_cliente`, `config/auth.php`), así que
-     * cada subtipo conoce su propia URL sin que este padre tenga que
-     * bifurcar por `type`.
+     * 9/9/2026), solo para el panel: `getEmailForPasswordReset()` (default del
+     * trait) ya lee `$this->email`, que es exactamente la columna de este
+     * modelo — sin override. `sendPasswordResetNotification()` SÍ se
+     * sobrescribe, pero en `SecUsuarioInterno` (la cuenta de panel), no acá:
+     * `Password::broker('interno')` resuelve el usuario a través de ese
+     * subtipo, así que solo una cuenta de panel puede pedir el enlace. Las
+     * cuentas de app recuperan su acceso desde la app (fase A10).
      */
     use CanResetPassword;
 
@@ -119,6 +118,7 @@ class SecUser extends ModeloDominio implements AuthenticatableContract, CanReset
         'email',
         'password',
         'type',
+        'tipo_cuenta',
         'persona_id',
         'state',
     ];
@@ -134,6 +134,7 @@ class SecUser extends ModeloDominio implements AuthenticatableContract, CanReset
     {
         return [
             'type' => TipoUsuario::class,
+            'tipo_cuenta' => TipoCuenta::class,
             'persona_id' => 'integer',
             'state' => 'boolean',
             'password' => 'hashed',

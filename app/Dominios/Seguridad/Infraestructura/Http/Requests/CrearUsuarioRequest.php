@@ -50,10 +50,13 @@ final class CrearUsuarioRequest extends FormRequest
                 'integer',
                 Rule::exists('per_personas', 'id')->whereNull('deleted_at'),
             ],
+            // Una cuenta de panel tiene un solo rol (ADR 0046, punto 4); el catálogo de roles
+            // del panel es fijo y `AsignarRolesUsuario` revalida que sea administrador u operador.
             'roles' => [
                 'present_if:type,interno',
                 'prohibited_if:type,cliente',
                 'array',
+                'size:1',
             ],
             'roles.*' => ['integer', Rule::exists('sec_role', 'id')->whereNull('deleted_at')],
         ];
@@ -72,6 +75,7 @@ final class CrearUsuarioRequest extends FormRequest
             'persona_id.exists' => __('seguridad.validacion.usuario_persona_invalida'),
             'persona_id.prohibited_if' => __('seguridad.validacion.usuario_persona_prohibida_portal'),
             'roles.present_if' => __('seguridad.validacion.usuario_roles_requerido'),
+            'roles.size' => __('seguridad.validacion.usuario_roles_un_solo_rol'),
             'roles.prohibited_if' => __('seguridad.validacion.usuario_roles_prohibido_portal'),
             'roles.*.exists' => __('seguridad.validacion.usuario_rol_invalido'),
         ];

@@ -18,7 +18,6 @@ final class CrearEquipoRequest extends FormRequest
         return [
             'piloto_id' => ['required', 'integer', 'min:1'],
             'dron_id' => ['required', 'integer', 'min:1'],
-            'auxiliar_id' => ['nullable', 'integer', 'min:1'],
             'vigente_desde' => ['required', 'date_format:Y-m-d'],
             'vigente_hasta' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:vigente_desde'],
         ];

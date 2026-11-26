@@ -31,13 +31,11 @@ use App\Dominios\Solicitudes\Aplicacion\CambiarPrecioPropuesto;
 use App\Dominios\Solicitudes\Aplicacion\CancelarSolicitud;
 use App\Dominios\Solicitudes\Aplicacion\CrearSolicitud;
 use App\Dominios\Solicitudes\Aplicacion\GestionarFotosDeTerreno;
-use App\Dominios\Solicitudes\Aplicacion\PrecioDeReferencia;
 use App\Dominios\Solicitudes\Aplicacion\PublicarSolicitud;
 use App\Dominios\Solicitudes\Contratos\Eventos\PrecioPropuestoCambiado;
 use App\Dominios\Solicitudes\Contratos\Eventos\SolicitudAbierta;
 use App\Dominios\Solicitudes\Contratos\Eventos\SolicitudCancelada;
 use App\Dominios\Solicitudes\Dominio\Excepciones\SolicitudInvalida;
-use Database\Seeders\Catalogo\PreciosReferenciaSeeder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -46,6 +44,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\Soporte\Esquema;
 use Tests\Soporte\ProveedoresFalsos;
+use Tests\Soporte\Ubicaciones;
 use Tests\TestCase;
 
 /*
@@ -85,6 +84,7 @@ function negMundo(): void
         'create_sol_terreno_fotos_table',
         'create_sol_precios_referencia_table',
     ]);
+    Ubicaciones::sembrar();
 
     foreach (['neg_precios_finales_confirmados', 'neg_pagos_confirmados', 'sol_terreno_fotos', 'sol_precios_referencia', 'neg_preferencias', 'neg_ubicaciones', 'neg_evidencias', 'neg_avances', 'neg_mensajes', 'neg_cancelaciones', 'neg_ofertas', 'sol_solicitud_historial', 'sol_solicitudes_servicio', 'sol_terrenos', 'sol_clientes', 'sol_zonas'] as $tabla) {
         DB::table($tabla)->delete();
@@ -101,7 +101,7 @@ function negMundo(): void
     }
 
     DB::table('sol_terrenos')->insert([
-        'id' => 1, 'cliente_id' => 1, 'nombre' => 'Lote Norte', 'hectareas' => '100.0000', 'cultivo' => 'Soya', 'zona_id' => 1, 'acceso_dificil' => false,
+        'id' => 1, 'cliente_id' => 1, 'nombre' => 'Lote Norte', 'hectareas' => '100.0000', 'cultivo' => 'Soya', 'zona_id' => 1, 'acceso_dificil' => false, 'departamento_codigo' => Ubicaciones::DEPARTAMENTO, 'provincia_codigo' => Ubicaciones::PROVINCIA,
         'geometria' => json_encode(['type' => 'Polygon', 'coordinates' => [[[-60.8, -17.8], [-60.7, -17.8], [-60.7, -17.9], [-60.8, -17.9], [-60.8, -17.8]]]]),
         'created_at' => now(), 'updated_at' => now(),
     ]);
@@ -118,7 +118,7 @@ function negMundo(): void
     {
         public function aptosDe(int $proveedorId, ?DateTimeImmutable $hoy = null): array
         {
-            return [new DatosEquipoApto($proveedorId * 10, $proveedorId, $proveedorId * 10 + 1, $proveedorId * 100, null, '40.00', '11.00')];
+            return [new DatosEquipoApto($proveedorId * 10, $proveedorId, $proveedorId * 10 + 1, $proveedorId * 100, '40.00', '11.00')];
         }
 
         public function equiposDeCuenta(int $usuarioId, bool $soloVigentes = true, ?DateTimeImmutable $hoy = null): array
@@ -141,7 +141,7 @@ function negMundo(): void
     {
         public function integrantes(int $equipoId): ?DatosIntegrantesEquipo
         {
-            return new DatosIntegrantesEquipo($equipoId, intdiv($equipoId, 10), $equipoId + 1, intdiv($equipoId, 10) * 100, null, 'externo');
+            return new DatosIntegrantesEquipo($equipoId, intdiv($equipoId, 10), $equipoId + 1, intdiv($equipoId, 10) * 100, 'externo');
         }
     });
 
@@ -314,7 +314,7 @@ test('una contraoferta del proveedor debe tener un precio distinto del propuesto
 test('un proveedor no oferta sobre su propia cuenta de cliente ni sobre una solicitud ya cerrada', function () {
     negMundo();
     DB::table('sol_clientes')->where('id', 2)->update(['usuario_id' => NEG_TITULAR_8]);
-    DB::table('sol_terrenos')->insert(['id' => 2, 'cliente_id' => 2, 'nombre' => 'Lote Sur', 'hectareas' => '50.0000', 'zona_id' => 1, 'acceso_dificil' => false, 'created_at' => now(), 'updated_at' => now()]);
+    DB::table('sol_terrenos')->insert(['id' => 2, 'cliente_id' => 2, 'nombre' => 'Lote Sur', 'hectareas' => '50.0000', 'zona_id' => 1, 'acceso_dificil' => false, 'departamento_codigo' => Ubicaciones::DEPARTAMENTO, 'provincia_codigo' => Ubicaciones::PROVINCIA, 'created_at' => now(), 'updated_at' => now()]);
     $propia = negAbierta('125', '10', NEG_TITULAR_8, 2);
     $cancelada = negAbierta();
     app(CancelarSolicitud::class)->porCliente(NEG_CLIENTE, $cancelada, 'Cambié de idea');
@@ -894,38 +894,4 @@ test('el cliente ve la foto de perfil del piloto del equipo en la tarjeta de la 
     $comparador = app(ConsultarOfertas::class)->delCliente(NEG_CLIENTE, $solicitud);
 
     expect($comparador[0]['proveedor']['foto_url'])->toContain('/api/personas/'.NEG_PILOTO_7.'/foto');
-});
-
-test('el precio de referencia busca de la zona a la macrorregión, el general y el respaldo', function () {
-    negMundo();
-    $referencia = app(PrecioDeReferencia::class);
-    $ahora = now();
-    $fila = fn (array $datos): bool => DB::table('sol_precios_referencia')->insert([...$datos, 'created_at' => $ahora, 'updated_at' => $ahora]);
-
-    expect($referencia->para('herbicida'))->toMatchArray(['precio_ha' => '120.00', 'nivel' => 'respaldo']);
-
-    $fila(['tipo_aplicacion' => 'herbicida', 'zona_id' => null, 'macrorregion' => null, 'precio_ha' => '121.0000']);
-    $fila(['tipo_aplicacion' => 'herbicida', 'zona_id' => null, 'macrorregion' => 'chiquitania', 'precio_ha' => '132.0000']);
-    $fila(['tipo_aplicacion' => 'herbicida', 'zona_id' => 1, 'macrorregion' => null, 'precio_ha' => '140.0000']);
-
-    expect($referencia->para('herbicida'))->toMatchArray(['precio_ha' => '121.0000', 'nivel' => 'general'])
-        ->and($referencia->para('herbicida', null, 'chiquitania'))->toMatchArray(['precio_ha' => '132.0000', 'nivel' => 'macrorregion'])
-        ->and($referencia->para('herbicida', 1))->toMatchArray(['precio_ha' => '140.0000', 'nivel' => 'zona', 'macrorregion' => 'chiquitania', 'zona_id' => 1])
-        ->and($referencia->para('herbicida', null, 'valles'))->toMatchArray(['precio_ha' => '121.0000', 'nivel' => 'general'])
-        ->and($referencia->para('fungicida', 1))->toMatchArray(['precio_ha' => '135.00', 'nivel' => 'respaldo']);
-});
-
-test('el seeder de precios de referencia es idempotente y respeta lo que el administrador ajustó', function () {
-    negMundo();
-    $seeder = new PreciosReferenciaSeeder;
-
-    $seeder->run();
-    $total = DB::table('sol_precios_referencia')->count();
-    DB::table('sol_precios_referencia')->where('tipo_aplicacion', 'herbicida')->where('macrorregion', 'chaco')->update(['precio_ha' => '150.0000']);
-    $seeder->run();
-
-    expect($total)->toBe(6 * 6)
-        ->and(DB::table('sol_precios_referencia')->count())->toBe($total)
-        ->and(app(PrecioDeReferencia::class)->para('herbicida', null, 'chaco')['precio_ha'])->toBe('150.0000')
-        ->and(app(PrecioDeReferencia::class)->para('herbicida', null, 'chiquitania')['precio_ha'])->toBe('132.0000');
 });

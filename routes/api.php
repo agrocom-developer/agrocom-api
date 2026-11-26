@@ -3,7 +3,6 @@
 use App\Dominios\Calificaciones\Infraestructura\Http\Controllers\Api\CalificacionesDelClienteController;
 use App\Dominios\Calificaciones\Infraestructura\Http\Controllers\Api\CalificacionesDelProveedorController;
 use App\Dominios\Disputas\Infraestructura\Http\Controllers\Api\DisputasController;
-use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Api\VersionController;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Api\DronesController;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Api\EquiposController;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Api\FotosDeDronController;
@@ -17,7 +16,6 @@ use App\Dominios\Negociacion\Infraestructura\Http\Controllers\Api\SeguimientoCon
 use App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Api\DispositivosPushController;
 use App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Api\NotificacionesController;
 use App\Dominios\Operaciones\Infraestructura\Http\Controllers\Api\EvidenciaController;
-use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\AuxiliaresController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\DocumentosController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\MiProveedorController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\PilotosController;
@@ -27,9 +25,9 @@ use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\FotoDePerfilCont
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\SesionCampoController;
 use App\Dominios\Sincronizacion\Infraestructura\Http\Controllers\Api\CatalogoController;
 use App\Dominios\Sincronizacion\Infraestructura\Http\Controllers\Api\SyncController;
+use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\CatalogosController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\ClientesController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\ContactosController;
-use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\ReferenciasController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\SolicitudesController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\TerrenosController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\ZonasController;
@@ -61,13 +59,6 @@ Route::post('/auth/token', [SesionCampoController::class, 'store'])
     ->middleware('throttle:login-campo')
     ->name('api.auth.token.emitir');
 
-// HU-20: la app todavía no tiene token cuando consulta esto — es lo primero
-// que hace antes de operar. Mismo throttle que el login: sin límite sería
-// un endpoint de descubrimiento gratis para golpear el bucket de r2.
-Route::get('/version', [VersionController::class, 'show'])
-    ->middleware('throttle:6,1')
-    ->name('api.version.show');
-
 // Marketplace (ADR 0036): registro público de clientes y proveedores. Crean
 // cuentas sin autenticación, así que llevan el límite `registro-publico`
 // (SeguridadServiceProvider): 5 por minuto y 20 por hora por IP.
@@ -84,6 +75,12 @@ Route::post('/proveedores/registro', [RegistroProveedorController::class, 'store
 Route::get('/zonas', [ZonasController::class, 'index'])
     ->middleware('throttle:60,1')
     ->name('api.zonas.index');
+
+// Catálogo oficial de departamentos y provincias de Bolivia (ADR 0045): solo
+// lectura y sin token, lo usan las dos apps para ubicar un terreno.
+Route::get('/catalogos/ubicaciones', [CatalogosController::class, 'ubicaciones'])
+    ->middleware('throttle:60,1')
+    ->name('api.catalogos.ubicaciones');
 
 // Foto del estado de un terreno: la URL es firmada y de corta vida (la entregan el terreno del
 // cliente dueño y el detalle de la solicitud abierta), así que la imagen carga sin token.
@@ -106,7 +103,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // request). Revocar el de otro es cosa del panel, con permiso propio.
     Route::delete('/auth/token', [SesionCampoController::class, 'destroy'])->name('api.auth.token.revocar');
 
-    // Foto de perfil de la propia cuenta (cliente, proveedor, piloto o auxiliar).
+    // Foto de perfil de la propia cuenta (cliente, proveedor o piloto).
     Route::put('/perfil/foto', [FotoDePerfilController::class, 'update'])->name('api.perfil.foto.update');
     Route::delete('/perfil/foto', [FotoDePerfilController::class, 'destroy'])->name('api.perfil.foto.destroy');
 
@@ -150,12 +147,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/proveedores/pilotos/{id}/reenviar', [PilotosController::class, 'reenviar'])
         ->whereNumber('id')
         ->name('api.proveedores.pilotos.reenviar');
-
-    Route::get('/proveedores/auxiliares', [AuxiliaresController::class, 'index'])->name('api.proveedores.auxiliares.index');
-    Route::post('/proveedores/auxiliares', [AuxiliaresController::class, 'store'])->name('api.proveedores.auxiliares.store');
-    Route::post('/proveedores/auxiliares/{id}/reenviar', [AuxiliaresController::class, 'reenviar'])
-        ->whereNumber('id')
-        ->name('api.proveedores.auxiliares.reenviar');
 
     Route::get('/proveedores/documentos', [DocumentosController::class, 'index'])->name('api.proveedores.documentos.index');
     Route::post('/proveedores/documentos', [DocumentosController::class, 'store'])->name('api.proveedores.documentos.store');
@@ -320,9 +311,6 @@ Route::middleware('auth:sanctum')->group(function () {
         ->whereNumber('id')
         ->name('api.terrenos.update');
 
-    // Guía de precio por hectárea (§3.1): la usan el cliente al proponer y el piloto al ofertar.
-    Route::get('/referencias/precio', [ReferenciasController::class, 'precio'])->name('api.referencias.precio');
-
     Route::get('/solicitudes', [SolicitudesController::class, 'index'])->name('api.solicitudes.index');
     Route::post('/solicitudes', [SolicitudesController::class, 'store'])->name('api.solicitudes.store');
     Route::get('/solicitudes/{id}', [SolicitudesController::class, 'show'])
@@ -344,8 +332,8 @@ Route::middleware('auth:sanctum')->group(function () {
         ->whereNumber('id')
         ->name('api.solicitudes.renovar');
 
-    // Calificaciones (ADR 0031 y 0039): el cliente califica al proveedor, al piloto y
-    // al auxiliar de un servicio completado; el proveedor califica al cliente en
+    // Calificaciones (ADR 0031 y 0039): el cliente califica al proveedor y al piloto
+    // de un servicio completado; el proveedor califica al cliente en
     // privado, ve lo que recibe y reporta lo abusivo. Requieren red; el alcance lo
     // hacen los casos de uso (un id ajeno es 404).
     Route::get('/solicitudes/{id}/calificaciones', [CalificacionesDelClienteController::class, 'show'])

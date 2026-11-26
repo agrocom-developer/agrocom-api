@@ -16,11 +16,11 @@ use OpenApi\Attributes as OA;
 #[OA\Schema(
     schema: 'DocumentoProveedor',
     title: 'Documento de verificación',
-    description: 'Documento con vencimiento de un proveedor, piloto, auxiliar o dron. El archivo no se descarga por la API.',
+    description: 'Documento con vencimiento de un proveedor, piloto o dron. El archivo no se descarga por la API.',
     required: ['id', 'sujeto_tipo', 'sujeto_id', 'tipo', 'estado'],
     properties: [
         new OA\Property(property: 'id', type: 'integer', example: 40),
-        new OA\Property(property: 'sujeto_tipo', type: 'string', enum: ['proveedor', 'piloto', 'auxiliar', 'dron'], example: 'piloto'),
+        new OA\Property(property: 'sujeto_tipo', type: 'string', enum: ['proveedor', 'piloto', 'dron'], example: 'piloto'),
         new OA\Property(property: 'sujeto_id', type: 'integer', example: 5),
         new OA\Property(property: 'tipo', type: 'string', enum: ['identidad', 'licencia_piloto', 'habilitacion_dron', 'seguro_responsabilidad', 'registro_dron', 'certificado_fumigacion', 'antecedentes', 'otro'], example: 'licencia_piloto'),
         new OA\Property(property: 'estado', type: 'string', enum: ['en_revision', 'aprobado', 'rechazado', 'vencido'], example: 'en_revision'),

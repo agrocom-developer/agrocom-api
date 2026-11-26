@@ -17,6 +17,7 @@ use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
  * @property int $id
  * @property string $code
  * @property string $description
+ * @property string $ambito `panel` (matriz de roles) o `app` (config/permisos_app.php)
  * @property bool $state
  */
 class SecPermission extends ModeloDominio
@@ -29,6 +30,7 @@ class SecPermission extends ModeloDominio
     protected $fillable = [
         'code',
         'description',
+        'ambito',
         'state',
     ];
 

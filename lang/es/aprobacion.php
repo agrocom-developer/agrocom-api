@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Vocabulario común del ciclo de aprobación de proveedores, pilotos, auxiliares
+ * Vocabulario común del ciclo de aprobación de proveedores, pilotos
  * y drones (ADR 0032). Lo comparten `Proveedores`, `Flota` y las pantallas del
  * panel, por eso vive aparte de los catálogos de cada módulo.
  */
@@ -33,13 +33,12 @@ return [
     'sujeto' => [
         'proveedor' => 'Proveedor',
         'piloto' => 'Piloto',
-        'auxiliar' => 'Auxiliar',
         'dron' => 'Dron',
     ],
     'errores' => [
-        'transicion_invalida' => 'No se puede :accion un registro que está en estado «:estado».',
+        'transicion_invalida' => 'No se puede :accion: el estado actual es «:estado».',
         'motivo_requerido' => 'Indica el motivo para :accion.',
         'sin_permiso' => 'No tienes permiso para esta acción.',
-        'aprobacion_propia' => 'No puedes aprobar un registro que cargaste tú. Pide a otra persona de la oficina que lo revise y lo apruebe.',
+        'aprobacion_propia' => 'No puedes aprobar lo que registraste tú. Pide a otra persona de la oficina que lo revise y lo apruebe.',
     ],
 ];

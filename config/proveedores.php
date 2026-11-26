@@ -7,7 +7,7 @@ use App\Dominios\Proveedores\Dominio\RequisitosDocumentales;
 | Proveedores del marketplace (ADR 0032 y 0036)
 |--------------------------------------------------------------------------
 |
-| Parámetros de la verificación de proveedores, pilotos, auxiliares y drones.
+| Parámetros de la verificación de proveedores, pilotos y drones.
 | «El catálogo de documentos se ajusta por parámetro» (política de verificación):
 | la normativa local de una zona puede pedir, por ejemplo, el certificado de
 | aplicador de agroquímicos al piloto. Los valores de aquí son el piso; no hay
@@ -36,7 +36,6 @@ return [
     'documentos_requeridos' => [
         'proveedor' => array_values(array_filter(explode(',', (string) env('PROVEEDORES_DOCS_PROVEEDOR', implode(',', RequisitosDocumentales::POR_DEFECTO['proveedor']))))),
         'piloto' => array_values(array_filter(explode(',', (string) env('PROVEEDORES_DOCS_PILOTO', implode(',', RequisitosDocumentales::POR_DEFECTO['piloto']))))),
-        'auxiliar' => array_values(array_filter(explode(',', (string) env('PROVEEDORES_DOCS_AUXILIAR', implode(',', RequisitosDocumentales::POR_DEFECTO['auxiliar']))))),
         'dron' => array_values(array_filter(explode(',', (string) env('PROVEEDORES_DOCS_DRON', implode(',', RequisitosDocumentales::POR_DEFECTO['dron']))))),
     ],
 

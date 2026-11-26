@@ -15,18 +15,15 @@
 
     Espera: $candidatos, la forma que devuelve
     `ListarCandidatosVerComo::ejecutar()`:
-    - grupos: list<{clave, nombre, idRol, usuarioIds}> — cuentas internas
+    - grupos: list<{clave, nombre, idRol, usuarioIds}> — cuentas de panel
       agrupadas por rol vivo (una cuenta con varios roles aparece en más de
       un grupo, mismo criterio que "Usuarios activos por rol" del propio
       dashboard). `idRol` viaja a cada fila (data-ag-cambiar-vista-rol-id)
       para que, si la cuenta tiene más de un rol, el modal de confirmación
       ya sepa CUÁL sin volver a preguntarlo — el grupo clickeado ya lo dice
       (punto 4 del pedido del dueño, 23/9/2026).
-    - portalIds: list<int> — cuentas de portal, en su propio grupo.
-    - usuarios: array<id, {nombre, username, esPortal, roles, detalle}> — un
-      registro por cuenta candidata (sin duplicar entre grupos). `detalle` es
-      el nombre del cliente/contrato para una cuenta de portal (`null` en una
-      interna).
+    - usuarios: array<id, {nombre, username, roles}> — un registro por cuenta
+      candidata (sin duplicar entre grupos). Solo cuentas de panel (ADR 0046).
 
     El buscador filtra en el cliente (data-ag-cambiar-vista-texto en cada
     opción, ya en minúsculas): no hay ida al servidor por tipear, el volumen
@@ -85,27 +82,7 @@
                         </section>
                     @endforeach
 
-                    @if ($candidatos['portalIds'] !== [])
-                        <section class="ag-cambiar-vista__grupo" data-ag-cambiar-vista-grupo>
-                            <x-molecules.section-head
-                                :title="__('seguridad.vista_como.selector_grupo_portal')"
-                                :count="count($candidatos['portalIds'])"
-                                accent="info"
-                            />
-                            <ul class="ag-cambiar-vista__opciones">
-                                @foreach ($candidatos['portalIds'] as $idUsuario)
-                                    @include('seguridad::pages.dashboard._modal-cambiar-vista-opcion', [
-                                        'idUsuario' => $idUsuario,
-                                        'candidato' => $candidatos['usuarios'][$idUsuario],
-                                        'rolId' => null,
-                                        'claveRol' => 'portal',
-                                    ])
-                                @endforeach
-                            </ul>
-                        </section>
-                    @endif
-
-                    @if ($candidatos['grupos'] === [] && $candidatos['portalIds'] === [])
+                    @if ($candidatos['grupos'] === [])
                         <x-molecules.empty-state
                             icon="person_search"
                             :title="__('seguridad.vista_como.selector_sin_candidatos_titulo')"
@@ -150,7 +127,7 @@
         :id="$modalIdDash"
         :form-id="$formIdDash"
         :title="__('seguridad.vista_como.modal_titulo', ['nombre' => $candidato['nombre']])"
-        :message="__($candidato['esPortal'] ? 'seguridad.vista_como.modal_mensaje_portal' : 'seguridad.vista_como.modal_mensaje_interno')"
+        :message="__('seguridad.vista_como.modal_mensaje_interno')"
         :confirm-label="__('seguridad.vista_como.modal_confirmar')"
         tone="info"
         modal-icon="visibility"

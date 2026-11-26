@@ -17,7 +17,6 @@ final class RequisitosDocumentales
     public const array POR_DEFECTO = [
         'proveedor' => ['identidad', 'seguro_responsabilidad'],
         'piloto' => ['identidad', 'licencia_piloto', 'antecedentes'],
-        'auxiliar' => ['identidad', 'antecedentes'],
         'dron' => ['registro_dron', 'habilitacion_dron', 'seguro_responsabilidad'],
     ];
 

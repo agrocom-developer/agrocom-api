@@ -11,5 +11,6 @@ final readonly class DatosCuenta
         public string $username,
         public ?string $email,
         public bool $activa,
+        public TipoCuenta $tipoCuenta = TipoCuenta::Panel,
     ) {}
 }

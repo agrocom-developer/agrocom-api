@@ -10,6 +10,7 @@ use App\Dominios\Solicitudes\Contratos\LecturaContextoSolicitudes;
 use App\Dominios\Solicitudes\Contratos\LecturaMercado;
 use App\Dominios\Solicitudes\Contratos\LecturaServicios;
 use App\Dominios\Solicitudes\Contratos\LecturaServiciosAsignados;
+use App\Dominios\Solicitudes\Contratos\LecturaUbicaciones;
 use App\Dominios\Solicitudes\Contratos\LecturaZonas;
 use App\Dominios\Solicitudes\Contratos\PasosDeSolicitud;
 use App\Dominios\Solicitudes\Contratos\ReputacionDeClientes;
@@ -32,6 +33,7 @@ final class SolicitudesServiceProvider extends ServiceProvider
         // El registro del cliente usa el contrato `RegistroCuentas` que
         // Seguridad enlaza; acá solo se ofrece la lectura de zonas.
         $this->app->bind(LecturaZonas::class, LecturaZonasEloquent::class);
+        $this->app->bind(LecturaUbicaciones::class, LecturaUbicacionesEloquent::class);
         $this->app->bind(SolicitudParaTrabajo::class, AvanceDeSolicitud::class);
         $this->app->bind(LecturaServiciosAsignados::class, LecturaServiciosAsignadosEloquent::class);
         $this->app->bind(LecturaContextoSolicitudes::class, LecturaContextoSolicitudesEloquent::class);

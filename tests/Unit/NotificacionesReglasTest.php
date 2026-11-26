@@ -33,7 +33,7 @@ $raizProyecto = dirname(__DIR__, 2);
 
 // ── Las reglas: qué se dice, a quién y a qué recurso ─────────────────────────
 
-test('trabajo cerrado avisa a jefe de campo y a encargado de operaciones, y lleva al trabajo', function () {
+test('trabajo cerrado avisa al administrador y lleva al trabajo', function () {
     $armada = (new ReglaTrabajoCerrado)->armar(new TrabajoCerrado(9, 3, '12.5'));
 
     expect($armada->tipo)->toBe(TipoNotificacion::TrabajoCerrado)
@@ -41,16 +41,7 @@ test('trabajo cerrado avisa a jefe de campo y a encargado de operaciones, y llev
         ->and($armada->recurso)->toBe(RecursoNotificable::Trabajo)
         ->and($armada->recursoId)->toBe(9)
         ->and($armada->parametros)->toBe(['solicitud' => 3, 'hectareas' => '12,50'])
-        ->and($armada->destinatarios)->toEqual([
-            Destinatario::rol(RolDestinatario::JefeCampo),
-            Destinatario::rol(RolDestinatario::EncargadoOperaciones),
-        ]);
-});
-
-test('el dueño no recibe el aviso de trabajo cerrado (ADR 0025, punto 10: es el más frecuente)', function () {
-    $armada = (new ReglaTrabajoCerrado)->armar(new TrabajoCerrado(9, 3, '12'));
-
-    expect($armada->destinatarios)->not->toContainEqual(Destinatario::rol(RolDestinatario::Dueno));
+        ->and($armada->destinatarios)->toEqual([Destinatario::rol(RolDestinatario::Administrador)]);
 });
 
 test('la identidad del hecho es estable: el mismo hecho da la misma clave y hechos distintos, claves distintas', function () {
@@ -186,18 +177,18 @@ function resolvedorConFakes(array $cuentasPorRol, array $cuentaPorPersona, array
 }
 
 test('un destinatario por rol resuelve a todas las cuentas que tienen ese rol asignado', function () {
-    $resolver = resolvedorConFakes(['jefe_campo' => [4, 9], 'encargado_operaciones' => [3]], [], []);
+    $resolver = resolvedorConFakes(['administrador' => [4, 9], 'operador' => [3]], [], []);
 
-    expect($resolver->ejecutar([Destinatario::rol(RolDestinatario::JefeCampo)]))->toBe([4, 9])
-        ->and($resolver->ejecutar([Destinatario::rol(RolDestinatario::Dueno)]))->toBe([]);
+    expect($resolver->ejecutar([Destinatario::rol(RolDestinatario::Administrador)]))->toBe([4, 9]);
 });
 
 test('una cuenta que califica por dos destinatarios recibe un solo aviso y el orden es estable', function () {
-    $resolver = resolvedorConFakes(['jefe_campo' => [9, 4], 'encargado_operaciones' => [4, 3]], [], []);
+    $resolver = resolvedorConFakes(['administrador' => [9, 4]], [10 => ['id' => 3, 'activo' => true], 11 => ['id' => 4, 'activo' => true]], []);
 
     expect($resolver->ejecutar([
-        Destinatario::rol(RolDestinatario::JefeCampo),
-        Destinatario::rol(RolDestinatario::EncargadoOperaciones),
+        Destinatario::rol(RolDestinatario::Administrador),
+        Destinatario::persona(10),
+        Destinatario::persona(11),
     ]))->toBe([3, 4, 9]);
 });
 

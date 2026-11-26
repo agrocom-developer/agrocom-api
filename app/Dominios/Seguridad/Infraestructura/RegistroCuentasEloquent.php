@@ -6,34 +6,42 @@ use App\Dominios\Seguridad\Contratos\CuentaDuplicada;
 use App\Dominios\Seguridad\Contratos\DatosCuenta;
 use App\Dominios\Seguridad\Contratos\LecturaCuentas;
 use App\Dominios\Seguridad\Contratos\RegistroCuentas;
+use App\Dominios\Seguridad\Contratos\TipoCuenta;
 use App\Dominios\Seguridad\Dominio\TipoUsuario;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUserRole;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 use LogicException;
 
 /**
- * Alta y lectura de cuentas del marketplace (ADR 0036). Las cuentas son
- * `sec_user` de tipo `interno`: es el único tipo que autentica por el token de
- * dispositivo de la app (guard `sanctum` sobre `usuarios_internos`); lo que
- * separa a un cliente de un proveedor es el rol, y los roles del marketplace
- * no tienen ningún permiso de panel salvo los suyos.
+ * Alta y lectura de cuentas del marketplace (ADR 0036 y 0046). Las cuentas son
+ * `sec_user` de tipo `cliente` o `proveedor` (`tipo_cuenta`): los únicos que
+ * autentican por el token de dispositivo de la app (guard `sanctum` sobre
+ * `usuarios_app`) y ninguno entra al panel. Los roles de app (`cliente`,
+ * `proveedor`, `piloto`) son transitorios hasta la fase A5 y no tienen ningún
+ * permiso de panel.
  */
 final class RegistroCuentasEloquent implements LecturaCuentas, RegistroCuentas
 {
-    public function crear(string $nombre, string $username, ?string $email, string $password, array $roles): int
+    public function crear(string $nombre, string $username, ?string $email, string $password, TipoCuenta $tipoCuenta, array $roles): int
     {
+        if (! $tipoCuenta->esDeApp()) {
+            throw new InvalidArgumentException('Una cuenta de panel no se crea por el registro de cuentas de app.');
+        }
+
         $idsRol = array_map(fn (string $rol): int => $this->idDeRol($rol), $roles);
 
-        return DB::transaction(function () use ($nombre, $username, $email, $password, $idsRol): int {
+        return DB::transaction(function () use ($nombre, $username, $email, $password, $tipoCuenta, $idsRol): int {
             $cuenta = new SecUser([
                 'name' => $nombre,
                 'username' => $username,
                 'email' => $email,
                 'password' => $password,
                 'type' => TipoUsuario::Interno,
+                'tipo_cuenta' => $tipoCuenta,
                 'persona_id' => null,
                 'state' => true,
             ]);
@@ -80,9 +88,9 @@ final class RegistroCuentasEloquent implements LecturaCuentas, RegistroCuentas
 
         return SecUser::query()
             ->whereIn('id', array_values(array_unique($ids)))
-            ->get(['id', 'name', 'username', 'email', 'state'])
+            ->get(['id', 'name', 'username', 'email', 'state', 'tipo_cuenta'])
             ->mapWithKeys(static fn (SecUser $cuenta): array => [
-                $cuenta->id => new DatosCuenta($cuenta->id, $cuenta->name, $cuenta->username, $cuenta->email, (bool) $cuenta->state),
+                $cuenta->id => new DatosCuenta($cuenta->id, $cuenta->name, $cuenta->username, $cuenta->email, (bool) $cuenta->state, $cuenta->tipo_cuenta),
             ])
             ->all();
     }

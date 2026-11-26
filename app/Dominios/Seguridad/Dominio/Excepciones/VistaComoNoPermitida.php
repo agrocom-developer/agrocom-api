@@ -38,8 +38,9 @@ final class VistaComoNoPermitida extends AuthorizationException
         return new self(Texto::de('seguridad.errores.vista_como_rol_no_disponible'));
     }
 
-    public static function sinContrato(): self
+    /** «Ver como» solo sobre cuentas de panel (ADR 0046, punto 5). */
+    public static function soloCuentasDePanel(): self
     {
-        return new self(Texto::de('seguridad.errores.vista_como_sin_contrato'));
+        return new self(Texto::de('seguridad.errores.vista_como_solo_cuentas_de_panel'));
     }
 }

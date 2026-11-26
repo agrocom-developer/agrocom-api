@@ -2,7 +2,7 @@
 
 **Agrocom SRL · Documento vigente**
 
-Una API local con datos de ejemplo para recorrer las dos apps (`cliente` y `piloto` de `agrocom-field`) de punta a punta: el cliente abre una solicitud con su precio por hectárea, los pilotos la ven en el mapa y ofertan o contraofertan, el cliente compara y elige, el piloto ejecuta y sube fotos de avance, el cliente ve el avance, conversa por el chat y ve la última ubicación del piloto, y al final califica o abre una disputa.
+Una API local con datos de ejemplo para recorrer las dos apps (`cliente` y `piloto` de `agrocom-field`) de punta a punta: el cliente abre una solicitud con su precio por hectárea, los pilotos la ven en el mapa y ofertan o contraofertan, el cliente compara y elige, el piloto ejecuta y sube fotos de avance, el cliente ve el avance, conversa por el chat y ve la última ubicación del piloto, y al final califica o abre un reclamo.
 
 ## Un solo comando
 
@@ -41,7 +41,7 @@ Contraseña de todos: `0000`. El login es por `username` y pide `uuid_dispositiv
 |---|---|---|
 | `agro.sanrafael` | cliente | Una solicitud con cuatro ofertas y contraofertas en curso, una en ejecución con fotos y ubicación, una calificada, una reabierta y un borrador. |
 | `luis.antelo` | cliente | Solicitudes abiertas en la Chiquitania, una con una oferta rechazada, una adjudicada con chat, una finalizada sin calificar y una cancelada. |
-| `coop.valle.grande` | cliente | Abiertas en valles y en la Chiquitania, una adjudicada con chat, una en ejecución, una disputada y una expirada. |
+| `coop.valle.grande` | cliente | Abiertas en valles y en la Chiquitania, una adjudicada con chat, una en ejecución, una en reclamo y una expirada. |
 | `rodrigo.suarez` | piloto (Agrocom) | El mapa de abiertas, su negociación por 100 ha y su servicio en ejecución. |
 | `valeria.montano` | piloto (Agrocom) | Un servicio ya calificado por el cliente. |
 | `carlos.mamani` | piloto y proveedor (independiente) | Ofertas vigentes, un servicio adjudicado y uno finalizado, calificaciones recibidas. |
@@ -66,11 +66,11 @@ Cada solicitud nace con un `uuid_cliente` determinista, así que volver a sembra
 | `en_ejecucion` | `agro.sanrafael` (Rodrigo, 64 %), `coop.valle.grande` (Marcelo, 25 %) | Fotos de avance, chat y la última ubicación del piloto. |
 | `finalizada` | `luis.antelo`, Lote Sur (Carlos) | Hectáreas ejecutadas y monto final a pagar; el cliente aún no califica. |
 | `calificada` | `agro.sanrafael`, Las Palmas (Valeria) | Calificación del cliente y del proveedor. |
-| `disputada` | `coop.valle.grande`, Lote Este (Marcelo) | Una disputa abierta con un mensaje de soporte. |
+| `disputada` | `coop.valle.grande`, Lote Este (Marcelo) | Un reclamo abierto con un mensaje de soporte. |
 | `cancelada` | `luis.antelo`, La Esperanza | Sin penalidad. |
 | `expirada` | `coop.valle.grande`, Parcela Central | Se puede renovar dentro de 30 días. |
 
-Además: nueve terrenos con zona, región y polígono (valles, Chiquitania, norte integrado y Chaco), proveedores en cada estado de aprobación con sus documentos, drones y equipos, calificaciones y reputación, y avisos in-app para cada cuenta (nuevas solicitudes en su zona, ofertas, mensajes, avance). Cada piloto tiene su persona operativa vinculada (`usuario.persona_id` en `GET /api/auth/sesion`).
+Además: nueve terrenos con zona, región, departamento y provincia (todos de Santa Cruz) y polígono (valles, Chiquitania, norte integrado y Chaco), proveedores en cada estado de aprobación con sus documentos, drones y equipos, calificaciones y reputación, y avisos in-app para cada cuenta (nuevas solicitudes en su zona, ofertas, mensajes, avance). Cada piloto tiene su persona operativa vinculada (`usuario.persona_id` en `GET /api/auth/sesion`).
 
 Cada vez que corre `bin/demo up` o `bin/demo seed`, las solicitudes y ofertas abiertas recuperan su vigencia (cinco días y 24 horas).
 
@@ -83,7 +83,7 @@ Cada vez que corre `bin/demo up` o `bin/demo seed`, las solicitudes y ofertas ab
 5. **Chat.** Cliente y proveedor conversan (`GET` y `POST /api/solicitudes/{id}/mensajes`, con `despues` como cursor).
 6. **Ejecución.** El piloto marca el inicio (`POST /api/solicitudes/{id}/inicio`), el avance (`POST /api/solicitudes/{id}/avance`), sube fotos (`POST /api/solicitudes/{id}/evidencias`) y envía su última ubicación (`PUT /api/ubicacion`). El cliente ve el avance (`GET /api/solicitudes/{id}/avance`) y el punto del piloto (`GET /api/solicitudes/{id}/ubicacion-piloto`).
 7. **Cierre.** El piloto cierra con las hectáreas ejecutadas (`POST /api/solicitudes/{id}/cierre`): la solicitud queda `finalizada` con el monto a pagar. El pago se acuerda fuera de la app.
-8. **Calificación.** El cliente califica al proveedor y al piloto (`POST /api/solicitudes/{id}/calificaciones`); el proveedor califica al cliente en privado (`POST /api/solicitudes/{id}/calificar-cliente`) y ve su reputación (`GET /api/reputacion`). Cualquiera de las partes puede abrir una disputa.
+8. **Calificación.** El cliente califica al proveedor y al piloto (`POST /api/solicitudes/{id}/calificaciones`); el proveedor califica al cliente en privado (`POST /api/solicitudes/{id}/calificar-cliente`) y ve su reputación (`GET /api/reputacion`). Cualquiera de las partes puede abrir un reclamo.
 
 Para probar a mano:
 

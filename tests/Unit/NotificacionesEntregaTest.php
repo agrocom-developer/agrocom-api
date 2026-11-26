@@ -85,6 +85,7 @@ function ntfEsquema(): void
     $migraciones = [
         'create_plt_bitacoras_table',
         'create_sec_user_table',
+        'agrega_tipo_cuenta_a_sec_user',
         'create_sec_role_table',
         'create_sec_user_role_table',
         'create_sec_user_preferencia_table',
@@ -184,7 +185,7 @@ function ntfAviso(int $usuarioId, string $clave, array $extra = []): Notificacio
 // ── 1. Idempotencia ─────────────────────────────────────────────────────────
 
 test('el mismo evento repartido dos veces por el listener no genera avisos duplicados', function () {
-    $encargado = ntfCuenta([ntfRol('encargado_operaciones')]);
+    $encargado = ntfCuenta([ntfRol('administrador')]);
     $evento = new TrabajoCerrado(12, 12, '100');
 
     event($evento);
@@ -197,7 +198,7 @@ test('el mismo evento repartido dos veces por el listener no genera avisos dupli
 });
 
 test('correr el caso de uso dos veces con el mismo evento deja las mismas filas: la segunda no crea nada', function () {
-    $rol = ntfRol('jefe_campo');
+    $rol = ntfRol('administrador');
     $a = ntfCuenta([$rol]);
     $b = ntfCuenta([$rol]);
     $entregar = app(EntregarNotificacion::class);
@@ -212,7 +213,7 @@ test('correr el caso de uso dos veces con el mismo evento deja las mismas filas:
 });
 
 test('hechos distintos sí generan avisos distintos para la misma cuenta', function () {
-    $cuenta = ntfCuenta([ntfRol('encargado_operaciones')]);
+    $cuenta = ntfCuenta([ntfRol('administrador')]);
 
     event(new TrabajoCerrado(1, 1, '1'));
     event(new TrabajoCerrado(2, 2, '1'));
@@ -221,7 +222,7 @@ test('hechos distintos sí generan avisos distintos para la misma cuenta', funct
 });
 
 test('un reintento no resucita ni duplica un aviso que la cuenta ya dio de baja', function () {
-    $cuenta = ntfCuenta([ntfRol('encargado_operaciones')]);
+    $cuenta = ntfCuenta([ntfRol('administrador')]);
     $evento = new TrabajoCerrado(12, 12, '100');
 
     event($evento);
@@ -255,7 +256,7 @@ test('la misma clave de hecho para OTRA cuenta sí es un aviso distinto', functi
 });
 
 test('si dos procesos se cruzan y el otro gana la carrera, el reparto lo toma como «ya estaba» y no falla', function () {
-    $cuenta = ntfCuenta([ntfRol('encargado_operaciones')]);
+    $cuenta = ntfCuenta([ntfRol('administrador')]);
     $otroProceso = false;
 
     // Justo después de la búsqueda previa («¿ya existe?») y antes del INSERT, «el otro proceso» confirma
@@ -399,13 +400,13 @@ test('el controlador toma la cuenta de la sesión: el id de aviso de la petició
 
 // ── 3. Por rol asignado, no por rol activo ─────────────────────────────────
 
-test('«por rol» alcanza a la cuenta que tiene el rol asignado aunque también tenga otros (piloto y jefe de campo)', function () {
+test('«por rol» alcanza a la cuenta que tiene el rol asignado aunque también tenga otros (piloto y administrador)', function () {
     $piloto = ntfRol('piloto');
-    $jefe = ntfRol('jefe_campo');
+    $jefe = ntfRol('administrador');
     $abraham = ntfCuenta([$piloto, $jefe]);
     $soloPiloto = ntfCuenta([$piloto]);
 
-    $ids = app(LecturaUsuariosPorRol::class)->idsConRol('jefe_campo');
+    $ids = app(LecturaUsuariosPorRol::class)->idsConRol('administrador');
 
     expect($ids)->toBe([$abraham->id])
         ->and(app(LecturaUsuariosPorRol::class)->idsConRol('piloto'))->toBe([$abraham->id, $soloPiloto->id]);
@@ -417,21 +418,21 @@ test('«por rol» alcanza a la cuenta que tiene el rol asignado aunque también 
         ->and(Notificacion::query()->deUsuario($soloPiloto->id)->count())->toBe(0);
 });
 
-test('quedan fuera del reparto por rol: cuenta bloqueada, de portal, dada de baja, con la asignación revocada o con el rol inactivo', function () {
-    $rol = ntfRol('encargado_operaciones');
+test('quedan fuera del reparto por rol: cuenta bloqueada, de app, dada de baja, con la asignación revocada o con el rol inactivo', function () {
+    $rol = ntfRol('administrador');
     $vigente = ntfCuenta([$rol]);
     ntfCuenta([$rol], ['state' => false]);
-    ntfCuenta([$rol], ['type' => TipoUsuario::Cliente->value]);
+    ntfCuenta([$rol], ['tipo_cuenta' => 'cliente']);
     ntfCuenta([$rol], ['deleted_at' => now()]);
 
     $revocada = ntfCuenta([$rol]);
     DB::table('sec_user_role')->where('id_user', $revocada->id)->update(['deleted_at' => now()]);
 
-    expect(app(LecturaUsuariosPorRol::class)->idsConRol('encargado_operaciones'))->toBe([$vigente->id]);
+    expect(app(LecturaUsuariosPorRol::class)->idsConRol('administrador'))->toBe([$vigente->id]);
 
     DB::table('sec_role')->where('id', $rol)->update(['state' => false]);
 
-    expect(app(LecturaUsuariosPorRol::class)->idsConRol('encargado_operaciones'))->toBe([])
+    expect(app(LecturaUsuariosPorRol::class)->idsConRol('administrador'))->toBe([])
         ->and(app(LecturaUsuariosPorRol::class)->idsConRol('rol_que_no_existe'))->toBe([]);
 });
 
@@ -465,7 +466,7 @@ test('un error al repartir se reporta pero nunca llega a quien anunció el hecho
 });
 
 test('quien dispara el hecho no se avisa a sí mismo, aunque tenga el rol', function () {
-    $rol = ntfRol('encargado_operaciones');
+    $rol = ntfRol('administrador');
     $autor = ntfCuenta([$rol]);
     $colega = ntfCuenta([$rol]);
 
@@ -479,7 +480,7 @@ test('quien dispara el hecho no se avisa a sí mismo, aunque tenga el rol', func
 });
 
 test('sin nadie autenticado (una consola, un job) no se excluye a nadie', function () {
-    $cuenta = ntfCuenta([ntfRol('encargado_operaciones')]);
+    $cuenta = ntfCuenta([ntfRol('administrador')]);
 
     event(new TrabajoCerrado(12, 12, '100'));
 
@@ -524,7 +525,7 @@ test('sin nadie a quien avisar el hecho no crea nada ni falla', function () {
 // ── El aviso sale al confirmar, no antes ni si se revierte ──────────────────
 
 test('dentro de una transacción el aviso NO sale hasta que se confirma', function () {
-    $cuenta = ntfCuenta([ntfRol('encargado_operaciones')]);
+    $cuenta = ntfCuenta([ntfRol('administrador')]);
     $vistoAdentro = null;
 
     DB::transaction(function () use ($cuenta, &$vistoAdentro): void {
@@ -538,7 +539,7 @@ test('dentro de una transacción el aviso NO sale hasta que se confirma', functi
 });
 
 test('si la transacción se revierte, el hecho no se anuncia: ningún aviso de algo que no ocurrió', function () {
-    $cuenta = ntfCuenta([ntfRol('encargado_operaciones')]);
+    $cuenta = ntfCuenta([ntfRol('administrador')]);
 
     try {
         DB::transaction(function (): void {
@@ -554,7 +555,7 @@ test('si la transacción se revierte, el hecho no se anuncia: ningún aviso de a
 });
 
 test('el aviso de una tanda anidada sale recién cuando confirma la transacción de afuera', function () {
-    $cuenta = ntfCuenta([ntfRol('encargado_operaciones')]);
+    $cuenta = ntfCuenta([ntfRol('administrador')]);
     $visto = [];
 
     DB::transaction(function () use ($cuenta, &$visto): void {
@@ -582,7 +583,7 @@ test('si falla la lectura de avisos, la cáscara del panel los reporta y sigue c
         }
     });
 
-    $cuenta = ntfCuenta([ntfRol('encargado_operaciones')]);
+    $cuenta = ntfCuenta([ntfRol('administrador')]);
     $metodo = new ReflectionMethod(CascaraPanel::class, 'notificaciones');
 
     $campana = $metodo->invoke(app(CascaraPanel::class), $cuenta, 1);
@@ -592,7 +593,7 @@ test('si falla la lectura de avisos, la cáscara del panel los reporta y sigue c
 });
 
 test('la cáscara arma la campana con enlace, id y el texto ya traducido', function () {
-    $cuenta = ntfCuenta([ntfRol('encargado_operaciones')]);
+    $cuenta = ntfCuenta([ntfRol('administrador')]);
     $aviso = ntfAviso($cuenta->id, 'trabajo_cerrado:1', ['parametros' => ['solicitud' => '12', 'hectareas' => '10,00']]);
 
     $campana = (new ReflectionMethod(CascaraPanel::class, 'notificaciones'))->invoke(app(CascaraPanel::class), $cuenta, 1);
@@ -616,7 +617,7 @@ test('el borrado físico de un aviso está bloqueado (invariante 8)', function (
 });
 
 test('repartir un aviso y abrirlo dejan huella en la bitácora, sin que ningún caso de uso la llame (invariante 9)', function () {
-    $cuenta = ntfCuenta([ntfRol('encargado_operaciones')]);
+    $cuenta = ntfCuenta([ntfRol('administrador')]);
 
     event(new TrabajoCerrado(12, 12, '100'));
     $aviso = Notificacion::query()->deUsuario($cuenta->id)->firstOrFail();
@@ -640,7 +641,7 @@ test('marcar todas como leídas deja una fila de bitácora por aviso, no un UPDA
 
 test('la autoría queda en la fila: quién disparó el hecho es created_by', function () {
     $autor = ntfCuenta();
-    $destinatario = ntfCuenta([ntfRol('encargado_operaciones')]);
+    $destinatario = ntfCuenta([ntfRol('administrador')]);
     Auth::guard('interno')->setUser($autor);
     Auth::shouldUse('interno');
 

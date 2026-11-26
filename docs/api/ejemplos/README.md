@@ -1,6 +1,6 @@
 # Ejemplos reales del contrato de API
 
-Cada archivo `*.json` de esta carpeta es un intercambio real (petición y respuesta) capturado contra la API con `bin/generar-ejemplos`. Las apps móviles (`cliente`, `piloto` y `auxiliar` de `agrocom-field`) los usan como fixtures de sus pruebas de contrato: es lo que el servidor devuelve, no una maqueta.
+Cada archivo `*.json` de esta carpeta es un intercambio real (petición y respuesta) capturado contra la API con `bin/generar-ejemplos`. Las apps móviles (`cliente` y `piloto` de `agrocom-field`) los usan como fixtures de sus pruebas de contrato: es lo que el servidor devuelve, no una maqueta.
 
 Los archivos son generados: no se editan a mano. Se regeneran con `bin/generar-ejemplos` cada vez que cambia un endpoint, y el cambio entra en el mismo PR que el contrato (`docs/api/openapi.yaml`).
 
@@ -32,11 +32,11 @@ Los archivos son generados: no se editan a mano. Se regeneran con `bin/generar-e
 ## Qué cubren
 
 - Sesión por token de dispositivo: sesión de cliente y de piloto, credenciales inválidas, token ausente, revocado y de un rol equivocado, cierre de sesión y dispositivos.
-- Cliente: zonas, terrenos y solicitudes (crear, reintentar con el mismo `uuid_cliente`, estimar, publicar, cambiar precio, cancelar, recurso ajeno).
-- Proveedor y flota: perfil, pilotos, auxiliares, documentos, drones y equipos.
+- Cliente: zonas, catálogo de ubicaciones (sin token), terrenos y solicitudes (crear, reintentar con el mismo `uuid_cliente`, estimar, publicar, cambiar precio, cancelar, recurso ajeno).
+- Proveedor y flota: perfil, pilotos, documentos, drones y equipos.
 - Mercado y negociación: mapa de solicitudes abiertas con filtros, resumen por zona, detalle previo a ofertar, ofertar (y reintento idempotente), comparar, contraofertar, aceptar y aceptar otra vez.
 - Ejecución: inicio, avance, foto de avance, ubicación del piloto (enviar y ver), cierre, chat y preferencias de aviso.
-- Posventa y avisos: calificaciones, disputas y notificaciones.
+- Posventa y avisos: calificaciones, reclamos y notificaciones.
 - Sincronización del lote offline: catálogo completo e incremental, lote nuevo, replay del mismo lote (todos `duplicado`), rechazo parcial, lote sin registros y sin token; y la subida de evidencia.
 
 ## Cómo se validan

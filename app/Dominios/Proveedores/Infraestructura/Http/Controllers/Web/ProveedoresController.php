@@ -11,7 +11,6 @@ use App\Dominios\Proveedores\Aplicacion\RegistrarProveedor;
 use App\Dominios\Proveedores\Dominio\Excepciones\RegistroDuplicado;
 use App\Dominios\Proveedores\Dominio\TipoProveedor;
 use App\Dominios\Proveedores\Dominio\TipoSujeto;
-use App\Dominios\Proveedores\Infraestructura\Eloquent\Auxiliar;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\HistorialEstado;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Piloto;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Proveedor;
@@ -123,8 +122,7 @@ final class ProveedoresController
         $titular = $proveedor->usuario_titular_id === null ? null : ($cuentas->porIds([$proveedor->usuario_titular_id])[$proveedor->usuario_titular_id] ?? null);
 
         $pilotos = Piloto::query()->where('proveedor_id', $proveedor->id)->orderBy('id')->get();
-        $auxiliares = Auxiliar::query()->where('proveedor_id', $proveedor->id)->orderBy('id')->get();
-        $nombres = $cuentas->porIds([...$pilotos->pluck('usuario_id')->all(), ...$auxiliares->pluck('usuario_id')->all()]);
+        $nombres = $cuentas->porIds($pilotos->pluck('usuario_id')->all());
 
         $historial = HistorialEstado::query()
             ->where('sujeto_tipo', TipoSujeto::Proveedor->value)
@@ -138,7 +136,6 @@ final class ProveedoresController
             'titular' => $titular,
             'zona' => $proveedor->zona_base_id === null ? null : $zonas->nombre($proveedor->zona_base_id),
             'pilotos' => $pilotos,
-            'auxiliares' => $auxiliares,
             'nombres' => $nombres,
             'documentos' => $this->documentosDe(TipoSujeto::Proveedor, $proveedor->id),
             'documentosFaltantes' => $estadoDocumental->faltantesDe(TipoSujeto::Proveedor, $proveedor->id),
@@ -153,7 +150,6 @@ final class ProveedoresController
                 ? ($cuentas->porIds([$proveedor->created_by])[$proveedor->created_by]->nombre ?? null)
                 : null,
             'puedeVerPilotos' => $this->autorizacion->tienePermiso($request, 'proveedores.piloto.ver'),
-            'puedeVerAuxiliares' => $this->autorizacion->tienePermiso($request, 'proveedores.auxiliar.ver'),
             'lineaDeTiempo' => $this->lineaDeTiempo($historial, $cuentas, $cascara['zonaHoraria'] ?? null),
         ]);
     }

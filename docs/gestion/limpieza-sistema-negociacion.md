@@ -15,7 +15,7 @@ Convenciones de las tablas:
 ## 1. Hallazgos que condicionan todo
 
 1. **El panel ya no tiene pantallas del modelo de campo anterior.** `Operaciones`, `Personal`, `Mantenimiento` y `Mezclas` no tienen controladores web, vistas ni menú. Solo viven por `POST /api/sync`, `POST /api/evidencias`, las rutas de actas y reportes, y el catálogo `GET /api/sync/catalogo`. Retirarlos es retirar API y esquema, no pantallas.
-2. **La app todavía llama a `/api/sync` y a `/api/evidencias`** (motor `SyncEngine` y `EvidenciaSyncEngine`, que sirven a `features/sesion_vuelo`). Ese código de la app también es candidato a retiro; hasta que una versión sin él sea la mínima (`GET /api/version`, tabla `dis_versiones_apk`), el servidor debe seguir aceptando esas rutas.
+2. **La app todavía llama a `/api/sync` y a `/api/evidencias`** (motor `SyncEngine` y `EvidenciaSyncEngine`, que sirven a `features/sesion_vuelo`). Ese código de la app también es candidato a retiro; el servidor ya no puede forzar una versión mínima (`GET /api/version` se retiró con el dominio `Distribucion`), así que el retiro de esas rutas se coordina con el lanzamiento de la app en las tiendas.
 3. **Los esquemas `respaldo_*` ya no existen** (`2026_12_04_100100_elimina_esquemas_de_respaldo`). El motor de asignación (`asg_*`, `flo_disponibilidad`), la operación interna (`fin_*`, `inv_*`, `man_*` parciales) y contratos y campañas (`com_*`, `cpn_campanias`, `ope_ordenes_*`) ya salieron de `public` y su respaldo se eliminó con `DROP SCHEMA ... CASCADE`; `down()` solo recrea esquemas vacíos. El código no referencia `asg_` fuera de las migraciones históricas (grep de `app/`, `routes/`, `config/`, `lang/` y `tests/`).
 4. **Las migraciones de retiro anteriores sirven de plantilla** para lo que sigue: `2026_11_23_100000_retira_operacion_interna` (mover a esquema `respaldo_*` con `SET SCHEMA`, `down()` los devuelve), pero el respaldo no debe borrarse en otro PR hasta que el dueño confirme (ver sección 5).
 5. **Las convenciones de documentación (`docs/`, `.claude/`, `prompts/`) siguen hablando de tres apps** y del auxiliar como usuario móvil (sección 7).
@@ -76,8 +76,8 @@ Las tablas se crean en `database/migrations/` con prefijo por módulo (ADR 0011)
 
 | # | Ítem | Evidencia | Riesgo | Forma |
 |---|---|---|---|---|
-| P1 | Rutas `panel.auxiliares.index`, `.show`, `.resolver`; `Proveedores/.../Web/AuxiliaresController`, vistas `pages/auxiliares/index.blade.php` y `show.blade.php`; ítem de menú `auxiliares` en `SecMenuSeeder` (línea 116); claves `proveedores.auxiliares.*` de `lang/es/proveedores.php`, `menu.php`, `aprobacion.php` | El auxiliar no tiene app. Si D1 = retirar, la pantalla queda sin función | Bajo | `borrar` con B12 |
-| P2 | `panel.equipos-flota.index` y `Flota/.../pages/equipos/index.blade.php` columna de auxiliar | Equipo = piloto + dron | Bajo | Editar vista con B13 |
+| P1 | Rutas `panel.auxiliares.index`, `.show`, `.resolver`; `Proveedores/.../Web/AuxiliaresController`, vistas `pages/auxiliares/index.blade.php` y `show.blade.php`; ítem de menú `auxiliares` en `SecMenuSeeder` (línea 116); claves `proveedores.auxiliares.*` de `lang/es/proveedores.php`, `menu.php`, `aprobacion.php` | El auxiliar no tiene app. Si D1 = retirar, la pantalla queda sin función | Bajo | Hecho (sección 11) |
+| P2 | `panel.equipos-flota.index` y `Flota/.../pages/equipos/index.blade.php` | Hecho: la pantalla de administración se retiró; el equipo (piloto + dron) sigue en la API y en la ficha del dron | Bajo | Hecho |
 | P3 | Componente `captura-rc-card` (`resources/views/components/molecules/`, `resources/css/components/captura-rc-card.css`) y reglas de `resources/css/pages/multimedia.css` | Cero usos en vistas (`grep` del nombre fuera de su propio archivo); captura del control remoto de la sesión de vuelo (`ope_sesiones.captura_rc_id`) | Bajo | `borrar` |
 | P4 | Componentes sin ningún `<x-...>` que los use: `tiered-progress-bar`, `distribution-bar` | Búsqueda de la etiqueta y del nombre en `app/`, `resources/`, `tests/`, `lang/`: 0 usos (`distribution-bar` aparece mencionada en `auditoria-calidad.md` como parte del test de tokens; confirmar que `TokensColorTest` no la requiere) | Bajo | `borrar` tras confirmar |
 | P5 | Livewire: `composer.json` exige `livewire/livewire ^3` y `app.blade.php` y `panel-shell.blade.php` cargan `@livewireStyles` y `@livewireScripts`, pero `app/` y `resources/` no tienen ningún componente Livewire | La dependencia y las dos directivas cargan JavaScript sin usarlo | Bajo | `borrar` la dependencia y las directivas (la `docs/diseno` y el ADR 0002 mencionan Livewire: reescribirlos) |
@@ -92,7 +92,7 @@ Las tablas se crean en `database/migrations/` con prefijo por módulo (ADR 0011)
 
 | Estado | Rutas | Nota |
 |---|---|---|
-| C | `POST /auth/token`, `GET /auth/sesion`, `DELETE /auth/token`, `GET /version`, `GET /zonas`, `PUT/DELETE /perfil/foto`, `GET /personas/{usuario}/foto`, `POST /clientes/registro`, `GET /clientes/mi`, `POST /proveedores/registro`, `GET /proveedores/mi`, `GET/POST /proveedores/drones` y `.../fotos`, `GET/POST /terrenos` y `.../fotos`, `GET/POST /solicitudes` y `{id}`, `publicar`, `cancelar`, `precio`, `renovar`, `ofertas`, `avance`, `mensajes`, `mensajes/leidos`, `ubicacion-piloto`, `pago-confirmado` (POST), `calificaciones` (POST), `inicio` y `cierre` (vía `/solicitudes/{id}/{tipo}`), `evidencias`; `GET /solicitudes-abiertas`, `/{id}` y `/resumen-zonas`; `/ofertas` con `aceptar`, `contraofertar`, `rechazar`, `retirar`; `PUT /ubicacion`; `GET /reputacion`; `GET /referencias/precio`; `GET /calificaciones/recibidas`; `GET /notificaciones`, `/{id}/leida`, `/preferencias`; `POST/DELETE /dispositivos`; `GET /sync/catalogo` | Nada que retirar |
+| C | `POST /auth/token`, `GET /auth/sesion`, `DELETE /auth/token`, `GET /zonas`, `PUT/DELETE /perfil/foto`, `GET /personas/{usuario}/foto`, `POST /clientes/registro`, `GET /clientes/mi`, `POST /proveedores/registro`, `GET /proveedores/mi`, `GET/POST /proveedores/drones` y `.../fotos`, `GET/POST /terrenos` y `.../fotos`, `GET/POST /solicitudes` y `{id}`, `publicar`, `cancelar`, `precio`, `renovar`, `ofertas`, `avance`, `mensajes`, `mensajes/leidos`, `ubicacion-piloto`, `pago-confirmado` (POST), `calificaciones` (POST), `inicio` y `cierre` (vía `/solicitudes/{id}/{tipo}`), `evidencias`; `GET /solicitudes-abiertas`, `/{id}` y `/resumen-zonas`; `/ofertas` con `aceptar`, `contraofertar`, `rechazar`, `retirar`; `PUT /ubicacion`; `GET /reputacion`; `GET /referencias/precio`; `GET /calificaciones/recibidas`; `GET /notificaciones`, `/{id}/leida`, `/preferencias`; `POST/DELETE /dispositivos`; `GET /sync/catalogo` | Nada que retirar |
 | V | `GET /solicitudes/{id}/estimacion`, `GET/POST /solicitudes/{id}/calificar-cliente`, `POST /calificaciones/{id}/reportar`, `POST /solicitudes/{id}/cancelar-proveedor`, `GET /solicitudes/{id}/disputa`, `POST /solicitudes/{id}/disputas` (la app llama la ruta en `problema_red`; ver nota), `GET /disputas`, `GET /disputas/{id}`, `POST /disputas/{id}/mensajes`, `/retirar`, `/apelar`, `GET /ofertas/{id}`, `GET /terrenos/{id}`, `PUT /terrenos/{id}`, `GET /solicitudes/{id}/pago-confirmado`, `GET /solicitudes/{id}/ofertas`, `GET /evidencias/{id}/archivo`, `GET /drones/fotos/{foto}/archivo`, `GET/POST/PUT /proveedores/pilotos`, `/proveedores/equipos`, `/proveedores/documentos`, `PUT /proveedores/drones/{id}`, `POST .../reenviar`, `POST .../documentos` | Son del producto (calificación del proveedor al cliente, disputas, alta de flota). La app los traerá; no se retiran |
 | O | `POST /trabajos/{uuid}/acta`, `POST /actas/{uuid}/firmar`, `GET /actas/{uuid}/pdf`, `GET /reportes/lote/{trabajo}` | Sin consumidor ni función (B1, B2) |
 | O (con consumidor legado) | `POST /sync`, `POST /evidencias` | La app los llama por código del modelo anterior (hallazgo 2) |
@@ -100,9 +100,11 @@ Las tablas se crean en `database/migrations/` con prefijo por módulo (ADR 0011)
 | Duplicada | `GET /dispositivos`, `GET /dispositivos/{id}` | B18 |
 | Pendiente de implementar | `POST /incidencias`, `POST /emergencias` (§10 de la especificación) | Ver `estado-api.md`; no son limpieza, pero deciden si `ope_incidencias` se conserva |
 
-Al retirar rutas: regenerar el contrato con `composer openapi`, quitar los ejemplos de `docs/api/ejemplos/` (`operaciones-evidencia.json`, `proveedores-auxiliares.json`, `sync-*.json`) y confirmar que `RutasDelContratoTest` y `EjemplosDeApiTest` quedan verdes. La app debe estar avisada: cada ruta retirada se anuncia en `GET /api/version` y en el repo `agrocom-field` antes de borrarla.
+Al retirar rutas: regenerar el contrato con `composer openapi`, quitar los ejemplos de `docs/api/ejemplos/` (`operaciones-evidencia.json`, `proveedores-auxiliares.json`, `sync-*.json`) y confirmar que `RutasDelContratoTest` y `EjemplosDeApiTest` quedan verdes. La app debe estar avisada: cada ruta retirada se anuncia en el repo `agrocom-field` antes de borrarla (el servidor ya no publica una versión mínima).
 
 ## 6. Roles y permisos del auxiliar
+
+Estado: hecho, ver la sección 11 (el rol, los permisos `proveedores.auxiliar.*` y las referencias de código y lang se eliminaron; el seeder da de baja el rol).
 
 | # | Ítem | Dónde | Forma |
 |---|---|---|---|
@@ -178,15 +180,15 @@ Pantallas actuales (rutas de `routes/web.php`, menú de `SecMenuSeeder`) y lo qu
 |---|---|---|---|
 | Solicitudes (`panel/solicitudes`, ficha con `_negociacion`, `_chat`, `_seguimiento`) | Listado, ficha con ofertas, chat, fotos y ubicación; cancelar con motivo; cerrar la negociación de un proveedor | Línea de tiempo de las **rondas** (número, autor, precio, vigencia, `es_definitiva`) en una sola vista; filtro por estado, zona y vencimiento; indicador de «vence pronto»; exportar | Alto |
 | Ofertas y rondas | Dentro de la ficha de solicitud | Pantalla de ofertas global con las negociaciones abiertas, las que no tienen respuesta y las vencidas | Medio |
-| Disputas (`panel/disputas`) | Listado, ficha, tomar, mensajes, resolver | Cola por antigüedad, plazos de apelación, monto ajustado visible antes de resolver | Medio |
+| Reclamos (`panel/disputas`) | Listado, ficha, tomar, mensajes, resolver | Cola por antigüedad, plazos de apelación, monto ajustado visible antes de resolver | Medio |
 | Calificaciones (`panel/calificaciones`) | Ocultar y restablecer | Cola de calificaciones reportadas primero | Bajo |
 | Métricas (`panel/metricas`) | KPIs de mercado, calidad, oferta, ingreso y tabla de proveedores sobre vistas `vw_metricas_*` | Embudo solicitud, oferta, adjudicación, ejecución y cierre; tiempo hasta la primera oferta; tasa de contraoferta por ronda | Alto |
 | Proveedores, pilotos, drones (`panel/proveedores`, `/pilotos`, `/drones-flota`, `/documentos`) | Listado, ficha, aprobar, rechazar, suspender y dar de baja con motivo; revisión de fotos y documentos | Cola única «pendientes de aprobación» con antigüedad y documentos por vencer; la revisión de fotos obligatorias para aprobar el dron (pendiente en `estado-api.md`) | Alto |
 | Clientes (`panel/clientes`) | Listado, ficha, suspender y reactivar | Alta manual, contactos (sección 8), historial de solicitudes y calificaciones del cliente | Alto |
-| Precios de referencia (`sol_precios_referencia`, `PrecioReferencia`) | Modelo y sembrador `PreciosReferenciaSeeder`; **sin pantalla** | CRUD por zona, macrorregión y tipo de aplicación | Medio |
 | Parámetros de negociación (`config/negociacion.php`, `seguimiento.php`) | Solo por archivo de configuración: los grupos editables de `panel/configuracion` son `mapas`, `correo` e `integraciones` | Pantalla de vigencias, máximo de rondas y tolerancia de hectáreas | Medio |
 | Zonas (`panel/zonas`) | CRUD completo | — | — |
-| Avisos (`panel/avisos`), versiones APK, dispositivos, bitácora, roles, usuarios | Vigentes | — | — |
+| Avisos (`panel/avisos`), bitácora, permisos, usuarios | Vigentes | — | — |
+| Versiones de las apps y Dispositivos | Retirados (las apps salen por las tiendas; el registro y la revocación de dispositivos del login siguen en la API) | — | — |
 
 ### Alta manual por el panel (clientes, pilotos, drones)
 
@@ -226,6 +228,18 @@ Cada PR es independiente y lleva la prueba que lo acota, no la suite completa.
 | 10 | Migración con respaldo y `down()`: tablas de T1 a T9, triggers de T12 y columnas de T11 | sección 3 | **Alto, REVISIÓN HUMANA** (esquema con `DROP`) | `SELECT count(*)` en cada entorno; respaldo `pg_dump` guardado |
 | 11 | Unificar dron, equipo y persona | B8, B13, B15, T10 | **Alto** | PR 10 |
 | 12 | Retirar `GET /dispositivos` duplicado, decidir portal del cliente | B18, B19 | Bajo | D2 |
-| 13 | Refinamiento del panel: rondas, embudo de métricas, cola de aprobaciones, precios de referencia | sección 9 | Bajo | — |
+| 13 | Refinamiento del panel: rondas, embudo de métricas, cola de aprobaciones | sección 9 | Bajo | — |
 
 Zonas de revisión humana de este plan: `Negociar::aceptar`, `Participantes`, `UbicacionDelPiloto` (no se tocan en la limpieza, solo se parten en L7), `EscrituraSincronizacionEloquent` (se retira en el PR 8), el esquema y toda migración con `DROP` (PR 10 y 11), y `PerPersona` con la identidad del token de operario (PR 11).
+
+## 11. Estado de la ejecución
+
+Decisiones del dueño del 26/11/2026: se elimina todo lo que el modelo de negociación no usa, también el código; el esquema no se toca aquí, se reconsolida al final con `bin/consolidar-migraciones` (beta solo tiene datos de prueba).
+
+| Ítem | Estado | Notas |
+|---|---|---|
+| Distribución: dominio `Distribucion`, página «Versiones de las apps» (`panel.versiones-apk.*`), `GET /api/version`, permiso `distribucion.version.autorizar`, siembra demo, ejemplo y contrato | **Hecho** | La tabla `dis_versiones_apk` queda en el esquema sin uso. El servidor ya no puede forzar una actualización: la app deja de consultar la versión mínima (PR en `agrocom-field`). |
+| Dispositivos del panel: `panel.dispositivos.*`, controlador, vista, CSS, lang, permisos `seguridad.dispositivo.*` y tarjeta de dispositivos en la ficha de usuario | **Hecho** | Siguen el token por dispositivo del login y el logout (`uuid_dispositivo`, `RevocarTokenDispositivo`) y `GET /api/dispositivos` (sin consumidor en la app; se decide con B18). |
+| Equipos del panel: `panel.equipos-flota.*`, controlador, vista, lang y permiso `flota.equipo.ver` | **Hecho** | Siguen `flo_equipos`, `/api/proveedores/equipos` y el equipo de la solicitud y las ofertas. |
+| Auxiliar: página `panel.auxiliares.*`, sección «Auxiliares» de la ficha del proveedor, `GET/POST /api/proveedores/auxiliares` (y `reenviar`), modelo `Auxiliar`, `RegistrarAuxiliar`, `TipoSujeto::Auxiliar`, documentos requeridos y su configuración, calificación del auxiliar (la reputación pondera proveedor y piloto; el POST de calificaciones admite 1 o 2), `auxiliar_id` de la API de equipos (`/api/proveedores/equipos`), `AptitudDeEquipo`, rol `auxiliar` y permisos `proveedores.auxiliar.*` (el seeder da de baja el rol y sus asignaciones), pendiente «Auxiliares por aprobar» del tablero, lang, ejemplos | **Hecho** | Queda a propósito, sin uso: la tabla `prv_auxiliares`, `flo_equipos.auxiliar_id`, los CHECK con `auxiliar` de `prv_documentos`, `prv_historial_estados`, `cal_calificaciones` y `ntf_notificaciones`, y el índice sobre `flo_equipos.auxiliar_id`: se reconsolidan al final. El reemplazo («integrantes del equipo del servicio») se define aparte. |
+| Auxiliar en el modelo de campo anterior: `Operaciones` (`AperturaSesion.auxiliarId`, `ope_sesiones.auxiliar_id`), `Personal` (`RolEquipo::Auxiliar`, `RolOperativoPersona::Auxiliar`) y `Sincronizacion` (catálogo con personas de rol `auxiliar`; ejemplos `sync-catalogo-*`) | **Pendiente** | Se va con el retiro de esos módulos (filas 8 y 9 de la sección 10). |

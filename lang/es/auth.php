@@ -6,8 +6,8 @@
 
 return [
 
-    'failed' => 'Las credenciales no coinciden con ningún registro.',
+    'failed' => 'El usuario o la contraseña no son correctos.',
     'password' => 'La contraseña no es correcta.',
-    'throttle' => 'Demasiados intentos de ingreso. Vuelve a intentar en :seconds segundos.',
+    'throttle' => 'Demasiados intentos de ingreso. Vuelve a intentarlo en :seconds segundos.',
 
 ];

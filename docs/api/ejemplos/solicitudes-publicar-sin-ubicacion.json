@@ -1,0 +1,20 @@
+{
+    "operationId": "publicarSolicitud",
+    "descripcion": "Validación: el terreno no tiene departamento ni provincia, así que la solicitud no se abre al mercado.",
+    "peticion": {
+        "metodo": "POST",
+        "ruta": "/api/solicitudes/19/publicar",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 422,
+        "cuerpo": {
+            "message": "El terreno no tiene departamento. Edítalo y elige el departamento y la provincia antes de abrir la solicitud.",
+            "errors": {
+                "departamento_codigo": [
+                    "El terreno no tiene departamento. Edítalo y elige el departamento y la provincia antes de abrir la solicitud."
+                ]
+            }
+        }
+    }
+}

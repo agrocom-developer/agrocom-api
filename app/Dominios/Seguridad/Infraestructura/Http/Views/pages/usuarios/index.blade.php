@@ -1,24 +1,24 @@
 {{--
     Page: usuarios/index (GET /panel/usuarios, panel.usuarios.index)
-    Listado de cuentas internas del panel (HU-45, tarea 39): arquetipo
+    Listado de cuentas del panel, solo personal de Agrocom (HU-45, tarea 39; ADR 0046): arquetipo
     Listado, §6.2 de docs/diseno/guia_pantalla_panel.md — cabecera →
     filtros → tabla → paginación. Mismo molde que clientes/index.blade.php,
     con una columna de roles (chips) y persona asociada, y con el estado de
     acceso de la cuenta (activo/bloqueado).
 
     Datos esperados (ver UsuariosController::index()):
-    - $usuarios (LengthAwarePaginator<SecUser>): nombre ascendente, internas
-      Y de portal (tarea 65, HU-41: ya no filtra por tipo a secas).
+    - $usuarios (LengthAwarePaginator<SecUser>): nombre ascendente, solo
+      cuentas de tipo `panel`. Las cuentas de app (cliente y proveedor) no se
+      administran desde acá.
     - $rolesPorUsuario (array<int, list<string>>): nombres legibles de rol
-      por id de usuario (vacío para una cuenta de portal: nunca tiene rol).
+      por id de usuario.
     - $rolesVerComoPorUsuario (array<int, array<int, string>>): roles vivos de
-      cada cuenta interna (`id de usuario => [id de rol => nombre legible]`),
-      para el selector de «Ver como». Vacío si el rol activo no tiene
+      cada cuenta (`id de usuario => [id de rol => nombre legible]`), para el
+      selector de «Ver como». Vacío si el rol activo no tiene
       `seguridad.usuario.ver_como` (tarea 140).
     - $etiquetasPersona (array<int, string>): nombre de persona por
       persona_id.
-    - $filtros (array{q: string, tipo: string}): búsqueda y tipo aplicados
-      (`tipo` es `''`/`interno`/`cliente`).
+    - $filtros (array{q: string}): búsqueda aplicada.
     - $tonoPorEstado (array<string, string>): estado de acceso → tono, el mismo
       mapa para el badge, el botón de la fila y el modal
       (`UsuariosController::TONO_POR_ESTADO`).
@@ -79,24 +79,6 @@
 
             @if ($hayFiltrosActivos || $usuarios->isNotEmpty())
                 <div class="ag-table-toolbar">
-                    <x-organisms.filter-panel
-                        :action="route('panel.usuarios.index')"
-                        :active-count="$filtros['tipo'] !== '' ? 1 : 0"
-                    >
-                        <input type="hidden" name="q" value="{{ $filtros['q'] }}">
-                        <x-atoms.select
-                            name="tipo"
-                            id="filtro-tipo"
-                            :label="__('seguridad.usuarios.filtro_tipo')"
-                            :options="[
-                                'interno' => __('seguridad.usuarios.tipo_interno'),
-                                'cliente' => __('seguridad.usuarios.tipo_cliente'),
-                            ]"
-                            :value="$filtros['tipo']"
-                            :placeholder="__('seguridad.usuarios.filtro_tipo_todos')"
-                        />
-                    </x-organisms.filter-panel>
-
                     <x-molecules.table-search
                         :action="route('panel.usuarios.index')"
                         :value="$filtros['q']"
@@ -128,12 +110,11 @@
                      (1440 con el menú lateral) ocho columnas no dejan sitio al texto. --}}
                 <x-molecules.index-table
                     class="ag-usuarios__listado"
-                    columns="3rem minmax(0, 1.8fr) 7.5rem minmax(0, 1.5fr) minmax(0, 1.2fr) 6rem var(--ag-row-actions-width)"
+                    columns="3rem minmax(0, 1.8fr) minmax(0, 1.5fr) minmax(0, 1.2fr) 6rem var(--ag-row-actions-width)"
                 >
                     <x-slot:head>
                         <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('seguridad.usuarios.col_nombre_usuario') }}</span>
-                        <span role="columnheader">{{ __('seguridad.usuarios.col_tipo') }}</span>
                         <span role="columnheader">{{ __('seguridad.usuarios.col_roles') }}</span>
                         <span role="columnheader">{{ __('seguridad.usuarios.col_persona') }}</span>
                         <span role="columnheader">{{ __('seguridad.usuarios.col_estado') }}</span>
@@ -149,13 +130,12 @@
                             $modalIdBloqueo = "usuario-bloqueo-modal-{$usuario->id}";
                             $modalIdEliminar = "usuario-eliminar-modal-{$usuario->id}";
 
-                            // «Ver como» (tarea 140): solo cuentas habilitadas y ajenas; una interna
-                            // necesita al menos un rol vivo.
-                            $esCuentaDePortal = $usuario->type->value === 'cliente';
+                            // «Ver como» (tarea 140; ADR 0046): solo cuentas de panel habilitadas y
+                            // ajenas, con al menos un rol vivo.
                             $rolesVerComo = $rolesVerComoPorUsuario[$usuario->id] ?? [];
                             $puedeVerComoEsta = $usuario->state
                                 && $usuario->id !== auth('interno')->id()
-                                && ($esCuentaDePortal || $rolesVerComo !== []);
+                                && $rolesVerComo !== [];
                             $formIdVerComo = "usuario-ver-como-{$usuario->id}";
                             $modalIdVerComo = "usuario-ver-como-modal-{$usuario->id}";
                         @endphp
@@ -167,11 +147,6 @@
                             <span role="cell">
                                 <span class="ag-usuarios__nombre">{{ $usuario->name }}</span>
                                 <span class="ag-usuarios__username">{{ $usuario->username }}</span>
-                            </span>
-                            <span role="cell">
-                                <x-atoms.badge variant="neutral">
-                                    {{ __($usuario->type->value === 'cliente' ? 'seguridad.usuarios.tipo_cliente' : 'seguridad.usuarios.tipo_interno') }}
-                                </x-atoms.badge>
                             </span>
                             <span role="cell" class="ag-usuarios__roles">
                                 @forelse (($rolesPorUsuario[$usuario->id] ?? []) as $nombreRol)
@@ -204,7 +179,7 @@
                                             :id="$modalIdVerComo"
                                             :form-id="$formIdVerComo"
                                             :title="__('seguridad.vista_como.modal_titulo', ['nombre' => $usuario->name])"
-                                            :message="__($esCuentaDePortal ? 'seguridad.vista_como.modal_mensaje_portal' : 'seguridad.vista_como.modal_mensaje_interno')"
+                                            :message="__('seguridad.vista_como.modal_mensaje_interno')"
                                             :confirm-label="__('seguridad.vista_como.modal_confirmar')"
                                             tone="info"
                                             modal-icon="visibility"

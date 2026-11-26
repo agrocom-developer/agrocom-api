@@ -12,7 +12,7 @@ use App\Dominios\Solicitudes\Contratos\ResolucionDeServicio;
 use Illuminate\Support\Facades\DB;
 
 /**
- * El cliente califica al proveedor, al piloto y al auxiliar de un servicio
+ * El cliente califica al proveedor y al piloto de un servicio
  * `finalizada` (que pasa a `calificada`) (`POST /solicitudes/{id}/calificaciones`, especificación §10.1,
  * política de calificación). Parte del servicio del cliente de la cuenta
  * (invariante 5 de CLAUDE.md): el de otro cliente responde 404. Varias

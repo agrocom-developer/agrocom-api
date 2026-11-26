@@ -24,6 +24,7 @@ use App\Dominios\Solicitudes\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\SolicitudServicio;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\Terreno;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\Zona;
+use Database\Seeders\Catalogo\UbicacionesSeeder;
 use Illuminate\Database\Seeder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
@@ -44,6 +45,21 @@ use Ramsey\Uuid\Uuid;
  */
 class NegociacionDemoSeeder extends Seeder
 {
+    /**
+     * Ubicación de cada zona de la demo en el catálogo oficial (ADR 0045, punto 3): departamento y
+     * provincia con su código del INE, y el municipio. Todas son de Santa Cruz (`07`).
+     */
+    private const UBICACIONES = [
+        'Warnes' => ['0702', 'Warnes'],
+        'Santa Cruz de la Sierra' => ['0701', 'Santa Cruz de la Sierra'],
+        'Montero' => ['0710', 'Montero'],
+        'San José de Chiquitos' => ['0705', 'San José de Chiquitos'],
+        'Cuatro Cañadas' => ['0711', 'Cuatro Cañadas'],
+        'San Julián' => ['0711', 'San Julián'],
+        'Vallegrande' => ['0708', 'Vallegrande'],
+        'San Ignacio de Velasco' => ['0703', 'San Ignacio de Velasco'],
+    ];
+
     /** Terrenos de la demo: cliente, nombre, zona, hectáreas, cultivo. */
     private const TERRENOS = [
         ['agro.sanrafael', 'Lote Norte', 'Warnes', '80', 'Soya'],
@@ -114,6 +130,9 @@ class NegociacionDemoSeeder extends Seeder
             return;
         }
 
+        // Los terrenos apuntan al catálogo oficial de ubicaciones (idempotente: no pisa nada).
+        $this->call(UbicacionesSeeder::class);
+
         $this->origen();
         $this->terrenos();
         $this->preferenciasDeLosPilotos();
@@ -154,7 +173,7 @@ class NegociacionDemoSeeder extends Seeder
         $this->solicitud('neg-con-ofertas-palmas', 'agro.sanrafael', 'Las Palmas', 100, '125', hace: 30, observaciones: 'Entrar por el portón de la calle lateral. Maíz de 1,8 m de altura.', despues: function (int $id): void {
             $uuid = fn (string $clave): string => $this->uuid("{$id}:{$clave}");
 
-            $rodrigo = $this->tras(26, fn () => $this->negociar->ofertar($this->usuarios['rodrigo.suarez'], $id, ['uuid_cliente' => $uuid('rodrigo-1'), 'tipo' => 'contraoferta', 'precio_ha' => '135', 'nota' => 'Dron de 30 litros con auxiliar: terminamos en una jornada.']))[0];
+            $rodrigo = $this->tras(26, fn () => $this->negociar->ofertar($this->usuarios['rodrigo.suarez'], $id, ['uuid_cliente' => $uuid('rodrigo-1'), 'tipo' => 'contraoferta', 'precio_ha' => '135', 'nota' => 'Dron de 30 litros: terminamos en una jornada.']))[0];
             $carlos = $this->tras(22, fn () => $this->negociar->ofertar($this->usuarios['carlos.mamani'], $id, ['uuid_cliente' => $uuid('carlos-1'), 'tipo' => 'contraoferta', 'precio_ha' => '118']))[0];
             $this->tras(20, fn () => $this->negociar->ofertar($this->usuarios['marcelo.terrazas'], $id, ['uuid_cliente' => $uuid('marcelo-1'), 'tipo' => 'contraoferta', 'precio_ha' => '110', 'nota' => 'Tenemos disponibilidad esta semana.']));
 
@@ -443,6 +462,7 @@ class NegociacionDemoSeeder extends Seeder
         foreach (self::TERRENOS as $indice => [$username, $nombre, $zonaNombre, $hectareas, $cultivo]) {
             $cliente = $this->clientes[$username];
             $zona = Zona::query()->where('nombre', $zonaNombre)->first();
+            [$provincia, $municipio] = self::UBICACIONES[$zonaNombre] ?? [null, null];
 
             $terreno = Terreno::query()->where('cliente_id', $cliente->id)->where('nombre', $nombre)->first()
                 ?? new Terreno(['cliente_id' => $cliente->id, 'nombre' => $nombre]);
@@ -452,6 +472,10 @@ class NegociacionDemoSeeder extends Seeder
                 'cultivo' => $terreno->cultivo ?? $cultivo,
                 'referencias_acceso' => $terreno->referencias_acceso ?? 'Camino vecinal a 3 km de la ruta principal.',
                 'zona_id' => $zona?->id,
+                'departamento_codigo' => $provincia === null ? null : '07',
+                'provincia_codigo' => $provincia,
+                'municipio' => $terreno->municipio ?? $municipio,
+                'comunidad' => $terreno->comunidad ?? "Comunidad {$nombre}",
                 'geometria' => $zona === null ? null : $this->poligono((float) $zona->centroide_lat, (float) $zona->centroide_lng, $indice),
             ]);
             $terreno->save();

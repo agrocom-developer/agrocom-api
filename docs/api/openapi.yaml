@@ -13,7 +13,7 @@ paths:
       tags:
         - Calificaciones
       summary: 'Estado de la calificación de un servicio'
-      description: 'A quiénes puedes calificar en un servicio tuyo (el proveedor, el piloto y, si el equipo lo llevaba, el auxiliar), a quiénes ya calificaste y hasta cuándo. Solo un servicio `completada` se califica, durante 7 días desde que se completó.'
+      description: 'A quiénes puedes calificar en un servicio tuyo (el proveedor y el piloto), a quiénes ya calificaste y hasta cuándo. Solo un servicio `completada` se califica, durante 7 días desde que se completó.'
       operationId: verCalificacionesDelServicio
       parameters:
         -
@@ -42,7 +42,7 @@ paths:
       tags:
         - Calificaciones
       summary: 'Calificar un servicio completado'
-      description: 'Califica al proveedor, al piloto y al auxiliar de un servicio completado: de 1 a 5 estrellas, etiquetas de un catálogo cerrado y un comentario opcional. Cada calificación lleva su `uuid_cliente` (idempotente: reintentar el mismo devuelve la calificación ya guardada) y se guarda una sola vez por sujeto: no se edita. Las de una misma llamada se guardan juntas o ninguna. Responde 201 si se creó alguna y 200 si todas eran reintentos.'
+      description: 'Califica al proveedor y al piloto de un servicio completado: de 1 a 5 estrellas, etiquetas de un catálogo cerrado y un comentario opcional. Cada calificación lleva su `uuid_cliente` (idempotente: reintentar el mismo devuelve la calificación ya guardada) y se guarda una sola vez por sujeto: no se edita. Las de una misma llamada se guardan juntas o ninguna. Responde 201 si se creó alguna y 200 si todas eran reintentos.'
       operationId: calificarServicio
       parameters:
         -
@@ -75,7 +75,6 @@ paths:
                         enum:
                           - proveedor
                           - piloto
-                          - auxiliar
                       estrellas:
                         type: integer
                         example: 5
@@ -96,7 +95,7 @@ paths:
                         type: string
                         nullable: true
                     type: object
-                  maxItems: 3
+                  maxItems: 2
                   minItems: 1
               type: object
       responses:
@@ -262,7 +261,7 @@ paths:
       tags:
         - Calificaciones
       summary: 'Calificaciones que recibo'
-      description: 'Las calificaciones que recibe tu proveedor (él, su piloto y su auxiliar), de la más nueva a la más vieja, sin las que un administrador ocultó. Incluye el resumen que muestra la app: promedio y conteo (los de tu reputación), distribución por estrellas y etiquetas más frecuentes de las últimas 100.'
+      description: 'Las calificaciones que recibe tu proveedor (él y su piloto), de la más nueva a la más vieja, sin las que un administrador ocultó. Incluye el resumen que muestra la app: promedio y conteo (los de tu reputación), distribución por estrellas y etiquetas más frecuentes de las últimas 100.'
       operationId: listarCalificacionesRecibidas
       parameters:
         -
@@ -337,7 +336,7 @@ paths:
       tags:
         - Calificaciones
       summary: 'Reportar una calificación'
-      description: 'Reporta con motivo una calificación que recibiste y consideras abusiva (insultos, datos personales, factores ajenos como el clima, represalia tras una disputa). Queda `en_moderacion` y un administrador decide; reportar no la oculta ni la saca del promedio. Reportar dos veces la misma devuelve la misma calificación.'
+      description: 'Reporta con motivo una calificación que recibiste y consideras abusiva (insultos, datos personales, factores ajenos como el clima, represalia tras un reclamo). Queda `en_moderacion` y un administrador decide; reportar no la oculta ni la saca del promedio. Reportar dos veces la misma devuelve la misma calificación.'
       operationId: reportarCalificacion
       parameters:
         -
@@ -389,8 +388,8 @@ paths:
     post:
       tags:
         - Disputas
-      summary: 'Abrir una disputa'
-      description: 'Abre la disputa de un servicio (una por solicitud). El cliente puede hacerlo desde `ejecutada` hasta 72 horas después, por: `cobertura_incompleta`, `mala_aplicacion`, `dano_a_cultivos_o_terceros`, `producto_distinto`, `equipo_ausente`, `evidencia_faltante`, `cobro_indebido` o `trato_inadecuado`; la solicitud pasa a `en_disputa`. El proveedor puede abrirla por `cobro_pendiente`, `acceso_negado` o `calificacion_abusiva`. `monto_en_disputa` es opcional (por defecto, todo el monto del servicio) y no puede pasar de él. La contraparte tiene 48 horas para responder (`responde_antes_de`).'
+      summary: 'Abrir un reclamo'
+      description: 'Abre el reclamo de un servicio (uno por solicitud). El cliente puede hacerlo desde `ejecutada` hasta 72 horas después, por: `cobertura_incompleta`, `mala_aplicacion`, `dano_a_cultivos_o_terceros`, `producto_distinto`, `equipo_ausente`, `evidencia_faltante`, `cobro_indebido` o `trato_inadecuado`; la solicitud pasa a `en_disputa`. El proveedor puede abrirlo por `cobro_pendiente`, `acceso_negado` o `calificacion_abusiva`. `monto_en_disputa` es opcional (por defecto, todo el monto del servicio) y no puede pasar de él. La contraparte tiene 48 horas para responder (`responde_antes_de`).'
       operationId: abrirDisputa
       parameters:
         -
@@ -421,7 +420,7 @@ paths:
               type: object
       responses:
         201:
-          description: 'Disputa abierta.'
+          description: 'Reclamo abierto.'
           content:
             application/json:
               schema:
@@ -434,11 +433,11 @@ paths:
         401:
           description: 'Token ausente o revocado.'
         403:
-          description: 'El rol del token no abre disputas.'
+          description: 'El rol del token no abre reclamos.'
         404:
           description: 'El servicio no existe o no es tuyo.'
         409:
-          description: 'El servicio ya tiene una disputa.'
+          description: 'El servicio ya tiene un reclamo.'
         422:
           description: 'El motivo no corresponde a tu lado, el servicio no está en un estado disputable, el plazo venció o el monto es inválido.'
           content:
@@ -452,8 +451,8 @@ paths:
     get:
       tags:
         - Disputas
-      summary: 'La disputa de una solicitud'
-      description: 'La disputa de un servicio tuyo, con su conversación y sus resoluciones. Responde 404 si la solicitud no tiene disputa o no es tuya.'
+      summary: 'El reclamo de una solicitud'
+      description: 'El reclamo de un servicio tuyo, con su conversación y sus resoluciones. Responde 404 si la solicitud no tiene reclamo o no es tuya.'
       operationId: verDisputaDeLaSolicitud
       parameters:
         -
@@ -464,7 +463,7 @@ paths:
             type: integer
       responses:
         200:
-          description: 'La disputa.'
+          description: 'El reclamo.'
           content:
             application/json:
               schema:
@@ -477,9 +476,9 @@ paths:
         401:
           description: 'Token ausente o revocado.'
         403:
-          description: 'El rol del token no ve disputas.'
+          description: 'El rol del token no ve reclamos.'
         404:
-          description: 'No hay disputa en esa solicitud o no es tuya.'
+          description: 'No hay reclamo en esa solicitud o no es tuya.'
       security:
         -
           tokenDispositivo: []
@@ -487,8 +486,8 @@ paths:
     get:
       tags:
         - Disputas
-      summary: 'Mis disputas'
-      description: 'Tus disputas (las de tu cuenta o las de tu proveedor), de la más nueva a la más vieja. `estado` filtra por un estado exacto.'
+      summary: 'Mis reclamos'
+      description: 'Tus reclamos (los de tu cuenta o los de tu proveedor), de la más nueva a la más vieja. `estado` filtra por un estado exacto.'
       operationId: listarDisputas
       parameters:
         -
@@ -511,7 +510,7 @@ paths:
             minimum: 1
       responses:
         200:
-          description: 'Página de disputas.'
+          description: 'Página de reclamos.'
           content:
             application/json:
               schema:
@@ -538,7 +537,7 @@ paths:
         401:
           description: 'Token ausente o revocado.'
         403:
-          description: 'El rol del token no ve disputas.'
+          description: 'El rol del token no ve reclamos.'
         404:
           description: 'La cuenta no pertenece a ningún proveedor.'
       security:
@@ -548,8 +547,8 @@ paths:
     get:
       tags:
         - Disputas
-      summary: 'Detalle de una disputa'
-      description: 'Una disputa tuya con su conversación y sus resoluciones. Una de otra cuenta responde 404.'
+      summary: 'Detalle de un reclamo'
+      description: 'Un reclamo tuyo con su conversación y sus resoluciones. Una de otra cuenta responde 404.'
       operationId: verDisputa
       parameters:
         -
@@ -560,7 +559,7 @@ paths:
             type: integer
       responses:
         200:
-          description: 'La disputa.'
+          description: 'El reclamo.'
           content:
             application/json:
               schema:
@@ -573,7 +572,7 @@ paths:
         401:
           description: 'Token ausente o revocado.'
         403:
-          description: 'El rol del token no ve disputas.'
+          description: 'El rol del token no ve reclamos.'
         404:
           description: 'No existe o no es tuya.'
       security:
@@ -583,8 +582,8 @@ paths:
     post:
       tags:
         - Disputas
-      summary: 'Escribir en una disputa'
-      description: 'Agrega un mensaje a la conversación de una disputa viva (`abierta` o `en_revision`): tu respuesta a la contraparte o a soporte. Una disputa resuelta se reabre apelando, no escribiendo.'
+      summary: 'Escribir en un reclamo'
+      description: 'Agrega un mensaje a la conversación de un reclamo vivo (`abierta` o `en_revision`): tu respuesta a la contraparte o a soporte. Un reclamo resuelto se reabre apelando, no escribiendo.'
       operationId: enviarMensajeDeDisputa
       parameters:
         -
@@ -607,7 +606,7 @@ paths:
               type: object
       responses:
         201:
-          description: 'Mensaje guardado; devuelve la disputa con su conversación.'
+          description: 'Mensaje guardado; devuelve el reclamo con su conversación.'
           content:
             application/json:
               schema:
@@ -620,11 +619,11 @@ paths:
         401:
           description: 'Token ausente o revocado.'
         403:
-          description: 'El rol del token no escribe en disputas.'
+          description: 'El rol del token no escribe en reclamos.'
         404:
           description: 'No existe o no es tuya.'
         409:
-          description: 'La disputa ya no admite mensajes.'
+          description: 'El reclamo ya no admite mensajes.'
         422:
           description: 'Falta el texto.'
           content:
@@ -638,8 +637,8 @@ paths:
     post:
       tags:
         - Disputas
-      summary: 'Retirar una disputa'
-      description: 'Quien abrió la disputa la retira mientras está viva. Si había movido la solicitud a `en_disputa`, la solicitud se completa como si el reclamo no se hubiera hecho. Retirar dos veces devuelve la misma disputa.'
+      summary: 'Retirar un reclamo'
+      description: 'Quien abrió el reclamo lo retira mientras está vivo. Si había movido la solicitud a `en_disputa`, la solicitud se completa como si el reclamo no se hubiera hecho. Retirar dos veces devuelve el mismo reclamo.'
       operationId: retirarDisputa
       parameters:
         -
@@ -650,7 +649,7 @@ paths:
             type: integer
       responses:
         200:
-          description: 'Disputa retirada.'
+          description: 'Reclamo retirado.'
           content:
             application/json:
               schema:
@@ -663,13 +662,13 @@ paths:
         401:
           description: 'Token ausente o revocado.'
         403:
-          description: 'El rol del token no gestiona disputas.'
+          description: 'El rol del token no gestiona reclamos.'
         404:
           description: 'No existe o no es tuya.'
         409:
-          description: 'La disputa ya está resuelta y no se retira.'
+          description: 'El reclamo ya está resuelto y no se retira.'
         422:
-          description: 'Solo quien abrió la disputa puede retirarla.'
+          description: 'Solo quien abrió el reclamo puede retirarlo.'
           content:
             application/json:
               schema:
@@ -682,7 +681,7 @@ paths:
       tags:
         - Disputas
       summary: 'Apelar una resolución'
-      description: 'Apela la resolución con pruebas nuevas: una sola vez y dentro de 7 días desde la resolución (`apelable_hasta`). La disputa vuelve a revisión en su segunda ronda y un administrador la resuelve de nuevo; la primera resolución rige hasta entonces.'
+      description: 'Apela la resolución con pruebas nuevas: una sola vez y dentro de 7 días desde la resolución (`apelable_hasta`). El reclamo vuelve a revisión en su segunda ronda y un administrador lo resuelve de nuevo; la primera resolución rige hasta entonces.'
       operationId: apelarDisputa
       parameters:
         -
@@ -718,11 +717,11 @@ paths:
         401:
           description: 'Token ausente o revocado.'
         403:
-          description: 'El rol del token no gestiona disputas.'
+          description: 'El rol del token no gestiona reclamos.'
         404:
           description: 'No existe o no es tuya.'
         409:
-          description: 'La disputa no está resuelta o ya se apeló.'
+          description: 'El reclamo no está resuelto o ya se apeló.'
         422:
           description: 'Faltan las pruebas o el plazo de 7 días venció.'
           content:
@@ -732,34 +731,6 @@ paths:
       security:
         -
           tokenDispositivo: []
-  /api/version:
-    get:
-      tags:
-        - Distribucion
-      summary: 'Versión mínima y vigente del APK'
-      description: 'Versión mínima aceptada y versión vigente del APK, con la URL de su release en agrocom-field (GitHub Releases) — el binario no se hospeda en este servidor. Sin autenticación: la app todavía no tiene ningún token emitido cuando la consulta. Con la invariante de negocio "una sola versión autorizada a la vez" (HU-20), hoy `minima` y `vigente` son la misma versión — el contrato ya distingue ambas claves para el día que una historia futura las separe.'
-      operationId: obtenerVersionVigente
-      responses:
-        200:
-          description: 'Ambas claves son `null` si el dueño todavía no autorizó ninguna versión.'
-          content:
-            application/json:
-              schema:
-                required:
-                  - minima
-                  - vigente
-                properties:
-                  minima:
-                    nullable: true
-                    allOf:
-                      -
-                        $ref: '#/components/schemas/VersionApk'
-                  vigente:
-                    nullable: true
-                    allOf:
-                      -
-                        $ref: '#/components/schemas/VersionApk'
-                type: object
   /api/proveedores/drones:
     get:
       tags:
@@ -1051,7 +1022,7 @@ paths:
       tags:
         - Flota
       summary: 'Crea un equipo'
-      description: 'El titular arma un equipo con un piloto, un dron y, opcionalmente, un auxiliar de su proveedor. Un piloto y un dron no pueden estar en dos equipos vigentes a la vez; el equipo no recibe ofertas hasta que todos sus integrantes estén aprobados con documentos vigentes.'
+      description: 'El titular arma un equipo con un piloto y un dron de su proveedor. Un piloto y un dron no pueden estar en dos equipos vigentes a la vez; el equipo no recibe ofertas hasta que todos sus integrantes estén aprobados con documentos vigentes.'
       operationId: crearEquipo
       requestBody:
         required: true
@@ -1069,9 +1040,6 @@ paths:
                 dron_id:
                   type: integer
                   example: 9
-                auxiliar_id:
-                  type: integer
-                  nullable: true
                 vigente_desde:
                   type: string
                   format: date
@@ -1110,8 +1078,8 @@ paths:
     put:
       tags:
         - Flota
-      summary: 'Cambia el auxiliar o cierra un equipo'
-      description: 'Cambia el auxiliar del equipo o lo cierra poniéndole fin de vigencia. El piloto y el dron de un equipo no se cambian (otro piloto u otro dron es otro equipo) y una vigencia solo se acorta, nunca se alarga.'
+      summary: 'Cierra un equipo'
+      description: 'Cierra el equipo poniéndole fin de vigencia. El piloto y el dron de un equipo no se cambian (otro piloto u otro dron es otro equipo) y una vigencia solo se acorta, nunca se alarga.'
       operationId: actualizarEquipo
       parameters:
         -
@@ -1126,9 +1094,6 @@ paths:
           application/json:
             schema:
               properties:
-                auxiliar_id:
-                  type: integer
-                  nullable: true
                 vigente_hasta:
                   type: string
                   format: date
@@ -1153,7 +1118,7 @@ paths:
         404:
           description: 'El equipo no existe o no es de esta cuenta.'
         422:
-          description: 'Auxiliar ajeno o no disponible, o vigencia inválida.'
+          description: 'Vigencia inválida.'
           content:
             application/json:
               schema:
@@ -2371,7 +2336,7 @@ paths:
       tags:
         - Seguimiento
       summary: 'Confirmar el precio final'
-      description: 'El cliente de la solicitud confirma el precio final (hectáreas ejecutadas por precio acordado) cuando el piloto ya cerró el servicio: solo con la solicitud `finalizada` o `calificada`. Sin cuerpo: el servidor copia las hectáreas, el precio y el monto del cierre. Idempotente por solicitud (repetirlo responde 200 con el mismo precio final) y lo confirmado no se reescribe. No cambia el estado ni cobra nada: el pago es directo. Si el cliente no está de acuerdo, la salida es abrir una disputa. Avisa al proveedor adjudicado.'
+      description: 'El cliente de la solicitud confirma el precio final (hectáreas ejecutadas por precio acordado) cuando el piloto ya cerró el servicio: solo con la solicitud `finalizada` o `calificada`. Sin cuerpo: el servidor copia las hectáreas, el precio y el monto del cierre. Idempotente por solicitud (repetirlo responde 200 con el mismo precio final) y lo confirmado no se reescribe. No cambia el estado ni cobra nada: el pago es directo. Si el cliente no está de acuerdo, la salida es abrir un reclamo. Avisa al proveedor adjudicado.'
       operationId: confirmarPrecioFinalDeSolicitud
       parameters:
         -
@@ -2410,7 +2375,7 @@ paths:
         404:
           description: 'La solicitud no es de la cuenta.'
         409:
-          description: 'El piloto aún no cerró el servicio, o hay una disputa abierta (`estado_invalido`).'
+          description: 'El piloto aún no cerró el servicio, o hay un reclamo abierto (`estado_invalido`).'
           content:
             application/json:
               schema:
@@ -2804,7 +2769,7 @@ paths:
       tags:
         - Seguimiento
       summary: 'Subir una foto del servicio'
-      description: 'Sube una foto de avance, final o de incidencia (multipart, menos de 300 KB: la app la comprime antes). Cola separada de los registros livianos. Idempotente por `uuid_cliente`. Pueden subir el piloto y el auxiliar del equipo adjudicado. El cierre pendiente se revisa al subirla.'
+      description: 'Sube una foto de avance, final o de incidencia (multipart, menos de 300 KB: la app la comprime antes). Cola separada de los registros livianos. Idempotente por `uuid_cliente`. Puede subir el piloto del equipo adjudicado. El cierre pendiente se revisa al subirla.'
       operationId: subirEvidenciaDeSolicitud
       parameters:
         -
@@ -3349,121 +3314,6 @@ paths:
       security:
         -
           tokenDispositivo: []
-  /api/proveedores/auxiliares:
-    get:
-      tags:
-        - Proveedores
-      summary: 'Auxiliares que gestiono'
-      description: 'Auxiliares que la cuenta gestiona: todos los de su proveedor si es titular; los que registró si es piloto.'
-      operationId: listarAuxiliares
-      responses:
-        200:
-          description: Auxiliares.
-          content:
-            application/json:
-              schema:
-                required:
-                  - data
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Auxiliar'
-                type: object
-        401:
-          description: 'Token ausente o revocado.'
-        403:
-          description: 'El rol del token no registra auxiliares.'
-      security:
-        -
-          tokenDispositivo: []
-    post:
-      tags:
-        - Proveedores
-      summary: 'Registra un auxiliar'
-      description: 'Un piloto aprobado o el titular de un proveedor registra a un auxiliar: crea la cuenta (rol `auxiliar`) y el auxiliar queda `pendiente` hasta que un administrador lo aprueba (ADR 0032, punto 2).'
-      operationId: registrarAuxiliar
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              required:
-                - nombre
-                - username
-                - password
-              properties:
-                nombre:
-                  type: string
-                  example: 'Lucía Flores'
-                username:
-                  type: string
-                  example: lucia.flores
-                email:
-                  type: string
-                  format: email
-                  nullable: true
-                password:
-                  type: string
-                  format: password
-              type: object
-      responses:
-        201:
-          description: 'Auxiliar creado `pendiente`.'
-          content:
-            application/json:
-              schema:
-                required:
-                  - auxiliar
-                properties:
-                  auxiliar:
-                    $ref: '#/components/schemas/Auxiliar'
-                type: object
-        401:
-          description: 'Token ausente o revocado.'
-        403:
-          description: 'El rol del token no registra auxiliares.'
-        422:
-          description: 'Datos inválidos, login o correo ya registrados, o la cuenta no puede registrar auxiliares todavía.'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorValidacion'
-      security:
-        -
-          tokenDispositivo: []
-  '/api/proveedores/auxiliares/{id}/reenviar':
-    post:
-      tags:
-        - Proveedores
-      summary: 'Reenvía un auxiliar rechazado a revisión'
-      description: 'Un auxiliar rechazado, corregido, vuelve a la cola de revisión (`rechazado` → `pendiente`).'
-      operationId: reenviarAuxiliar
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        204:
-          description: 'Auxiliar otra vez `pendiente`.'
-        401:
-          description: 'Token ausente o revocado.'
-        403:
-          description: 'El rol del token no registra auxiliares.'
-        404:
-          description: 'El auxiliar no existe o no es de esta cuenta.'
-        422:
-          description: 'El auxiliar no está rechazado.'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorValidacion'
-      security:
-        -
-          tokenDispositivo: []
   /api/proveedores/documentos:
     get:
       tags:
@@ -3481,7 +3331,6 @@ paths:
             enum:
               - proveedor
               - piloto
-              - auxiliar
         -
           name: sujeto_id
           in: query
@@ -3515,7 +3364,7 @@ paths:
       tags:
         - Proveedores
       summary: 'Carga un documento de verificación'
-      description: 'Carga un documento (PDF, JPG o PNG, hasta 8 MB) de un proveedor, piloto o auxiliar que la cuenta gestiona. Queda `en_revision` hasta que un administrador lo aprueba o lo rechaza con motivo. Licencia, seguro y habilitación exigen fecha de vencimiento: el sistema avisa a los 30 y 7 días y suspende al sujeto si vence. Va como `multipart/form-data`.'
+      description: 'Carga un documento (PDF, JPG o PNG, hasta 8 MB) de un proveedor o piloto que la cuenta gestiona. Queda `en_revision` hasta que un administrador lo aprueba o lo rechaza con motivo. Licencia, seguro y habilitación exigen fecha de vencimiento: el sistema avisa a los 30 y 7 días y suspende al sujeto si vence. Va como `multipart/form-data`.'
       operationId: cargarDocumentoProveedor
       requestBody:
         required: true
@@ -3533,7 +3382,6 @@ paths:
                   enum:
                     - proveedor
                     - piloto
-                    - auxiliar
                 sujeto_id:
                   type: integer
                   example: 5
@@ -3941,7 +3789,7 @@ paths:
       tags:
         - Seguridad
       summary: 'Subir mi foto de perfil'
-      description: 'La cuenta del token sube o reemplaza su foto de perfil (multipart, menos de 300 KB: la app la comprime antes). Sirve a clientes, proveedores, pilotos y auxiliares. El cliente la ve en la tarjeta del proveedor al comparar ofertas. La foto anterior se borra del disco privado.'
+      description: 'La cuenta del token sube o reemplaza su foto de perfil (multipart, menos de 300 KB: la app la comprime antes). Sirve a clientes, proveedores y pilotos. El cliente la ve en la tarjeta del proveedor al comparar ofertas. La foto anterior se borra del disco privado.'
       operationId: subirFotoDePerfil
       requestBody:
         required: true
@@ -4072,6 +3920,15 @@ paths:
                   type: integer
                   example: 1
                   nullable: true
+                app:
+                  description: 'App desde la que se ingresa (ADR 0046): `cliente` o `proveedor`; `piloto` se acepta como alias de `proveedor` (es el nombre del flavor). Si no coincide con el tipo de la cuenta, responde `403 tipo_de_cuenta_incorrecto` y no emite token. TRANSITORIO: si falta, el tipo se deduce de la cuenta.'
+                  type: string
+                  example: proveedor
+                  nullable: true
+                  enum:
+                    - cliente
+                    - proveedor
+                    - piloto
               type: object
       responses:
         201:
@@ -4101,7 +3958,29 @@ paths:
                     $ref: '#/components/schemas/Dispositivo'
                 type: object
         403:
-          description: 'El `role_id` pedido no está entre los roles vivos del usuario.'
+          description: 'Dos casos. Con `codigo: tipo_de_cuenta_incorrecto`: la cuenta es del otro tipo que la app (ADR 0046: «Esta cuenta es de proveedor: ingresa en la app Agrocom Piloto»); no se emite token. Sin `codigo`: el `role_id` pedido no está entre los roles vivos del usuario.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
+                  codigo:
+                    description: 'Presente solo en `tipo_de_cuenta_incorrecto`.'
+                    type: string
+                    example: tipo_de_cuenta_incorrecto
+                    nullable: true
+                  tipo_cuenta:
+                    description: 'Tipo de la cuenta que ingresó, para decirle a qué app ir.'
+                    type: string
+                    example: proveedor
+                    nullable: true
+                    enum:
+                      - cliente
+                      - proveedor
+                type: object
         409:
           description: 'El usuario tiene más de un rol vivo (o ninguno) y no indicó `role_id`: hay que elegir con cuál entra. Mismo contrato que el 409 del panel.'
           content:
@@ -4270,6 +4149,52 @@ paths:
       security:
         -
           tokenDispositivo: []
+  /api/catalogos/ubicaciones:
+    get:
+      tags:
+        - Clientes
+      summary: 'Catálogo de departamentos y provincias'
+      description: 'Catálogo oficial de Bolivia: los 9 departamentos y sus provincias, con el código del INE (dos dígitos el departamento, cuatro la provincia), ordenados por código. De solo lectura y sin token: las apps lo usan para elegir la ubicación de un terreno sin llevar una copia propia. Solo el departamento sirve de filtro de búsqueda; la provincia informa.'
+      operationId: listarUbicaciones
+      responses:
+        200:
+          description: 'Departamentos con sus provincias.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      required:
+                        - codigo
+                        - nombre
+                        - provincias
+                      properties:
+                        codigo:
+                          type: string
+                          example: '07'
+                        nombre:
+                          type: string
+                          example: 'Santa Cruz'
+                        provincias:
+                          type: array
+                          items:
+                            required:
+                              - codigo
+                              - nombre
+                            properties:
+                              codigo:
+                                type: string
+                                example: '0702'
+                              nombre:
+                                type: string
+                                example: Warnes
+                            type: object
+                      type: object
+                type: object
   /api/clientes/registro:
     post:
       tags:
@@ -4524,88 +4449,6 @@ paths:
       security:
         -
           tokenDispositivo: []
-  /api/referencias/precio:
-    get:
-      tags:
-        - Solicitudes
-      summary: 'Precio de referencia por hectárea'
-      description: 'El precio por hectárea de referencia para un tipo de aplicación, de lo más específico a lo más general: la zona, su macrorregión o el precio general del tipo. `nivel` dice de dónde salió (`zona`, `macrorregion`, `general` o `respaldo`). Es una guía, no un límite: el precio máximo de sanidad es otro parámetro. Sin `zona_id` ni `macrorregion` devuelve el precio general. Importe como decimal exacto en string.'
-      operationId: precioDeReferencia
-      parameters:
-        -
-          name: tipo_aplicacion
-          in: query
-          required: true
-          schema:
-            type: string
-            enum:
-              - herbicida
-              - insecticida
-              - fungicida
-              - fertilizante_foliar
-              - desecante
-              - otro
-        -
-          name: zona_id
-          in: query
-          description: 'Ver `GET /api/zonas`.'
-          required: false
-          schema:
-            type: integer
-        -
-          name: macrorregion
-          in: query
-          required: false
-          schema:
-            type: string
-            example: chiquitania
-      responses:
-        200:
-          description: 'El precio de referencia.'
-          content:
-            application/json:
-              schema:
-                required:
-                  - tipo_aplicacion
-                  - precio_ha
-                  - nivel
-                properties:
-                  tipo_aplicacion:
-                    type: string
-                    example: herbicida
-                  zona_id:
-                    type: integer
-                    nullable: true
-                  macrorregion:
-                    type: string
-                    example: chiquitania
-                    nullable: true
-                  precio_ha:
-                    type: string
-                    example: '132.0000'
-                    nullable: true
-                  nivel:
-                    type: string
-                    nullable: true
-                    enum:
-                      - zona
-                      - macrorregion
-                      - general
-                      - respaldo
-                type: object
-        401:
-          description: 'Token ausente o revocado.'
-        403:
-          description: 'El rol del token no es de cliente ni de proveedor.'
-        422:
-          description: 'Tipo de aplicación, zona o macrorregión inválidos.'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorValidacion'
-      security:
-        -
-          tokenDispositivo: []
   /api/solicitudes:
     get:
       tags:
@@ -4823,7 +4666,7 @@ paths:
       tags:
         - Solicitudes
       summary: 'Monto estimado de una solicitud'
-      description: 'El monto estimado: hectáreas solicitadas por el precio por hectárea vigente (el propuesto, o el acordado una vez adjudicada), con el precio de referencia como guía.'
+      description: 'El monto estimado: hectáreas solicitadas por el precio por hectárea vigente (el propuesto, o el acordado una vez adjudicada).'
       operationId: estimarSolicitud
       parameters:
         -
@@ -4858,7 +4701,7 @@ paths:
       tags:
         - Solicitudes
       summary: 'Abrir una solicitud al mercado'
-      description: 'Abre la solicitud a los pilotos: `borrador` pasa a `abierta`, con su vigencia (7 días) y visible en el mapa. Exige precio por hectárea propuesto, hectáreas que no superen las del terreno, fecha deseada no pasada y un teléfono en la cuenta. Avisa a los pilotos cuyas preferencias coinciden con la zona y las hectáreas. Una solicitud `expirada` se renueva igual, dentro del plazo de renovación.'
+      description: 'Abre la solicitud a los pilotos: `borrador` pasa a `abierta`, con su vigencia (7 días) y visible en el mapa. Exige precio por hectárea propuesto, hectáreas que no superen las del terreno, fecha deseada no pasada, un teléfono en la cuenta y que el terreno tenga departamento y provincia coherentes entre sí; esa ubicación (más municipio y comunidad) se congela en la solicitud. Avisa a los pilotos cuyas preferencias coinciden con la zona y las hectáreas. Una solicitud `expirada` se renueva igual, dentro del plazo de renovación.'
       operationId: publicarSolicitud
       parameters:
         -
@@ -4886,7 +4729,7 @@ paths:
         404:
           description: 'No existe o es de otro cliente.'
         422:
-          description: 'Falta el precio o el teléfono, la solicitud no está en un estado que se pueda abrir o la fecha deseada ya pasó.'
+          description: 'Falta el precio o el teléfono, el terreno no tiene departamento o provincia (o no son coherentes), la solicitud no está en un estado que se pueda abrir o la fecha deseada ya pasó.'
           content:
             application/json:
               schema:
@@ -4899,7 +4742,7 @@ paths:
       tags:
         - Solicitudes
       summary: 'Cancelar una solicitud'
-      description: 'Cancela una solicitud propia con motivo. Es gratuita y sin penalidad en dinero; si ya estaba adjudicada, queda registrada en la tasa de cancelación del cliente y el proveedor queda libre. Una solicitud en ejecución o finalizada no se cancela por este camino: si hay desacuerdo, se abre una disputa.'
+      description: 'Cancela una solicitud propia con motivo. Es gratuita y sin penalidad en dinero; si ya estaba adjudicada, queda registrada en la tasa de cancelación del cliente y el proveedor queda libre. Una solicitud en ejecución o finalizada no se cancela por este camino: si hay desacuerdo, se abre un reclamo.'
       operationId: cancelarSolicitud
       parameters:
         -
@@ -5393,7 +5236,6 @@ components:
                 enum:
                   - proveedor
                   - piloto
-                  - auxiliar
                   - cliente
               id:
                 type: integer
@@ -5440,7 +5282,6 @@ components:
           enum:
             - proveedor
             - piloto
-            - auxiliar
             - cliente
         sujeto_id:
           type: integer
@@ -5587,7 +5428,7 @@ components:
       type: object
     Disputa:
       title: Disputa
-      description: 'La disputa de un servicio (especificación §4.8, ADR 0033): una por solicitud. La abre el cliente (hasta 72 horas después de `ejecutada`) o el proveedor (cobro pendiente, acceso negado o calificación abusiva). Los importes son decimales exactos en string. `mensajes` y `resoluciones` solo viajan en el detalle. Los reembolsos se liquidan entre las partes fuera de la app.'
+      description: 'El reclamo de un servicio (especificación §4.8, ADR 0033): uno por solicitud. Lo abre el cliente (hasta 72 horas después de `ejecutada`) o el proveedor (cobro pendiente, acceso negado o calificación abusiva). Los importes son decimales exactos en string. `mensajes` y `resoluciones` solo viajan en el detalle. Los reembolsos se liquidan entre las partes fuera de la app.'
       required:
         - id
         - solicitud_id
@@ -5637,7 +5478,7 @@ components:
             - resuelta
             - retirada
         ronda:
-          description: '1 es la disputa original; 2, la apelación (una sola vez).'
+          description: '1 es el reclamo original; 2, la apelación (una sola vez).'
           type: integer
           enum:
             - 1
@@ -5718,27 +5559,6 @@ components:
                 type: string
                 format: date-time
             type: object
-      type: object
-    VersionApk:
-      title: 'Versión del APK'
-      description: 'Versión autorizada del APK de agrocom-field, con la URL de su release (HU-20).'
-      required:
-        - version
-        - version_code
-        - url_descarga
-      properties:
-        version:
-          description: 'Versión SemVer.'
-          type: string
-          example: 1.4.2
-        version_code:
-          description: 'Código de versión de Android.'
-          type: integer
-          example: 14002
-        url_descarga:
-          description: 'URL del release del `.apk` publicado en agrocom-field (GitHub Releases).'
-          type: string
-          format: uri
       type: object
     FotoDeDron:
       title: 'Foto de un dron'
@@ -5847,7 +5667,7 @@ components:
       type: object
     Equipo:
       title: Equipo
-      description: 'Combinación operativa piloto + dron (+ auxiliar) que ejecuta una solicitud. Un piloto y un dron no pueden estar en dos equipos vigentes a la vez.'
+      description: 'Combinación operativa piloto + dron que ejecuta una solicitud. Un piloto y un dron no pueden estar en dos equipos vigentes a la vez.'
       required:
         - id
         - proveedor_id
@@ -5867,9 +5687,6 @@ components:
         dron_id:
           type: integer
           example: 9
-        auxiliar_id:
-          type: integer
-          nullable: true
         vigente_desde:
           type: string
           format: date
@@ -6337,47 +6154,9 @@ components:
           format: date-time
           nullable: true
       type: object
-    Auxiliar:
-      title: Auxiliar
-      description: 'Quien prepara la mezcla y asiste en el lote. Lo registra un piloto o el proveedor y lo aprueba un administrador (ADR 0032).'
-      required:
-        - id
-        - proveedor_id
-        - usuario_id
-        - nombre
-        - estado
-      properties:
-        id:
-          type: integer
-          example: 8
-        proveedor_id:
-          type: integer
-          example: 12
-        usuario_id:
-          type: integer
-          example: 34
-        nombre:
-          type: string
-          example: 'Lucía Flores'
-        registrado_por_piloto_id:
-          type: integer
-          nullable: true
-        estado:
-          type: string
-          example: pendiente
-          enum:
-            - pendiente
-            - aprobado
-            - suspendido
-            - rechazado
-            - baja
-        motivo_estado:
-          type: string
-          nullable: true
-      type: object
     DocumentoProveedor:
       title: 'Documento de verificación'
-      description: 'Documento con vencimiento de un proveedor, piloto, auxiliar o dron. El archivo no se descarga por la API.'
+      description: 'Documento con vencimiento de un proveedor, piloto o dron. El archivo no se descarga por la API.'
       required:
         - id
         - sujeto_tipo
@@ -6395,7 +6174,6 @@ components:
           enum:
             - proveedor
             - piloto
-            - auxiliar
             - dron
         sujeto_id:
           type: integer
@@ -7198,11 +6976,6 @@ components:
           type: string
           example: '10000.00'
           nullable: true
-        precio_referencia_ha:
-          description: 'Guía de mercado para el tipo de aplicación; no es un límite.'
-          type: string
-          example: '120.00'
-          nullable: true
       type: object
     TerrenoEntrada:
       title: 'Terreno (datos que envía el cliente)'
@@ -7236,6 +7009,24 @@ components:
           nullable: true
         zona_id:
           type: integer
+          nullable: true
+        departamento_codigo:
+          description: 'Código INE del departamento del catálogo (`GET /api/catalogos/ubicaciones`). Si se envía `provincia_codigo`, es obligatorio.'
+          type: string
+          example: '07'
+          nullable: true
+        provincia_codigo:
+          description: 'Código INE de la provincia; debe ser del departamento enviado.'
+          type: string
+          example: '0702'
+          nullable: true
+        municipio:
+          description: 'Texto libre de referencia.'
+          type: string
+          nullable: true
+        comunidad:
+          description: 'Texto libre de referencia.'
+          type: string
           nullable: true
       type: object
     ClienteContacto:
@@ -7454,6 +7245,24 @@ components:
             - proveedor
             - administrador
             - sistema
+        departamento_codigo:
+          description: 'Ubicación congelada al publicar: código INE del departamento. Nulo en `borrador`.'
+          type: string
+          example: '07'
+          nullable: true
+        provincia_codigo:
+          description: 'Ubicación congelada al publicar: código INE de la provincia.'
+          type: string
+          example: '0702'
+          nullable: true
+        municipio:
+          description: 'Texto de referencia copiado del terreno al publicar.'
+          type: string
+          nullable: true
+        comunidad:
+          description: 'Texto de referencia copiado del terreno al publicar.'
+          type: string
+          nullable: true
         contacto:
           nullable: true
           allOf:
@@ -7533,6 +7342,26 @@ components:
           type: integer
           example: 1
           nullable: true
+        departamento_codigo:
+          description: 'Código INE del departamento (`GET /api/catalogos/ubicaciones`). Obligatorio para publicar una solicitud sobre el terreno.'
+          type: string
+          example: '07'
+          nullable: true
+        provincia_codigo:
+          description: 'Código INE de la provincia, del mismo departamento. Obligatorio para publicar una solicitud sobre el terreno.'
+          type: string
+          example: '0702'
+          nullable: true
+        municipio:
+          description: 'Texto libre de referencia.'
+          type: string
+          example: Warnes
+          nullable: true
+        comunidad:
+          description: 'Texto libre de referencia.'
+          type: string
+          example: 'Los Álamos'
+          nullable: true
         fotos:
           description: 'Fotos del estado del terreno (hasta 8). Las URLs son firmadas y de corta vida: se piden de nuevo con el terreno.'
           type: array
@@ -7565,13 +7394,10 @@ components:
 tags:
   -
     name: Calificaciones
-    description: 'El cliente califica al proveedor, al piloto y al auxiliar de un servicio completado, durante 7 días; el proveedor califica al cliente en privado y ve las calificaciones que recibe (ADR 0031).'
+    description: 'El cliente califica al proveedor y al piloto de un servicio completado, durante 7 días; el proveedor califica al cliente en privado y ve las calificaciones que recibe (ADR 0031).'
   -
     name: Disputas
-    description: 'El cliente (hasta 72 horas después de `ejecutada`) o el proveedor (cobro pendiente, acceso negado o calificación abusiva) abren una disputa; soporte media y un administrador resuelve; ambas partes pueden apelar una vez en 7 días (ADR 0033). Los reembolsos se liquidan fuera de la app.'
-  -
-    name: Distribucion
-    description: 'Versionado y distribución del APK de agrocom-field (HU-20).'
+    description: 'El cliente (hasta 72 horas después de `ejecutada`) o el proveedor (cobro pendiente, acceso negado o calificación abusiva) abren un reclamo; soporte media y un administrador resuelve; ambas partes pueden apelar una vez en 7 días (ADR 0033). Los reembolsos se liquidan fuera de la app.'
   -
     name: Mensajes
     description: 'Mensajes entre el cliente y el proveedor adjudicado, desde la adjudicación. Texto de hasta 1000 caracteres, fotos de menos de 300 KB y líneas de sistema que el servidor escribe al cambiar la solicitud.'
@@ -7583,7 +7409,7 @@ tags:
     description: 'El proveedor ofrece su precio por hectárea, cada parte contraoferta a la otra y el cliente elige: aceptar una oferta adjudica la solicitud.'
   -
     name: Preferencias
-    description: 'Qué avisos recibe la cuenta. Las categorías obligatorias (adjudicación, cierre, expiración, cuenta y aprobación, disputas, emergencias) no aparecen y no se pueden desactivar.'
+    description: 'Qué avisos recibe la cuenta. Las categorías obligatorias (adjudicación, cierre, expiración, cuenta y aprobación, reclamos, emergencias) no aparecen y no se pueden desactivar.'
   -
     name: Seguimiento
     description: 'Inicio, avance con fotos, cierre y ubicación del piloto. El piloto solo sube fotos y marca el avance; lo operativo se acuerda en persona.'

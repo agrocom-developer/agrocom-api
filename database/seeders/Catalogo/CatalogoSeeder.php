@@ -27,8 +27,8 @@ class CatalogoSeeder extends Seeder
         // propio (Agrocom). El proveedor propio referencia una zona, así que
         // va después.
         $this->call(ZonasSeeder::class);
+        // ADR 0045: departamentos y provincias oficiales de Bolivia (INE), de solo lectura.
+        $this->call(UbicacionesSeeder::class);
         $this->call(ProveedorPropioSeeder::class);
-        // Guía de precio por hectárea por tipo de aplicación y macrorregión (editable por el administrador).
-        $this->call(PreciosReferenciaSeeder::class);
     }
 }

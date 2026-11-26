@@ -1,24 +1,34 @@
 ---
 name: seguridad-roles
-description: Modelo de seguridad sec_* de agrocom-api — un login por usuario, varios roles asignados, un único rol activo por sesión, permisos efectivos y menú dinámico. Usar antes de tocar autenticación, permisos, roles, menú del panel o cualquier pantalla que dependa de quién está mirando.
+description: Modelo de seguridad sec_* de agrocom-api — cuentas de panel (un rol: administrador u operador) y cuentas de app (cliente o proveedor, cada una con verificación), permisos efectivos y menú dinámico. Usar antes de tocar autenticación, permisos, roles, menú del panel o cualquier pantalla que dependa de quién está mirando.
 ---
 
 # Seguridad y roles — agrocom-api
 
-Modelo `sec_*` del ADR 0004, más su extensión del 27/8/2026 (rol activo por
-sesión). Este skill mapea lo que ya está implementado y las trampas conocidas.
+Modelo `sec_*` del ADR 0004 y, para cuentas y roles, el ADR 0046
+(que sustituye el multi-rol y el rol activo por sesión). Este skill mapea lo que
+ya está implementado y las trampas conocidas; donde diga «rol activo», «guard
+`cliente`» o «ver como» sobre cuentas de app, manda el ADR 0046.
 
 ## La regla que ordena todo
 
-**Un usuario, un login, múltiples roles, un rol activo por sesión.**
+**Un usuario, un login. El panel es del personal; cada app admite un solo tipo de cuenta.**
 
-Nunca se crean cuentas duplicadas por rol. Un usuario puede tener varios roles
-vía `sec_user_role`, pero en cada sesión opera bajo **un único rol activo**, y los
-permisos efectivos son los de ese rol — **jamás la unión de todos sus roles**.
-Cambiar de rol activo no requiere volver a loguearse (invariante 10 de CLAUDE.md).
-
-Corolario del negocio (invariante 4): validador ≠ piloto **a nivel de persona, no
-de rol**. Un jefe de campo que además es piloto no valida sus propias sesiones.
+- Cuenta `panel` (`sec_user.tipo_cuenta`): un solo rol, `administrador` (todo) u
+  `operador` (los permisos que el administrador le asigna en la matriz, salvo los
+  reservados). Los permisos son los de ese rol.
+- Cuenta `cliente` o `proveedor`: sin roles ni conversión entre tipos. El token
+  no lleva rol; el login declara la app de origen y un tipo distinto responde 403
+  `tipo_de_cuenta_incorrecto`. Lo que puede hacer lo decide el caso de uso según
+  el tipo y el estado de aprobación (403 `cuenta_no_aprobada`). Los permisos de
+  app viven en `config/permisos_app.php`, no en `sec_role`.
+- El teléfono (`sec_user.telefono`, único por `tipo_cuenta`) es la referencia de
+  autenticación y el correo es el respaldo para recuperar el acceso desde la app
+  con un código (`sec_codigos_verificacion`); el teléfono no prueba posesión hasta
+  que exista un código por SMS o WhatsApp.
+- Una persona (`sec_personas`, documento único) tiene a lo sumo una cuenta de
+  cada tipo, y cada cuenta sube su propia verificación; nadie aprueba su propia cuenta y el administrador sí aprueba lo que
+  dio de alta. Una persona no ofrece sobre solicitudes suyas (invariantes 10 y 16).
 
 ## Autenticación
 

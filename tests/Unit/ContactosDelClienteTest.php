@@ -1,6 +1,7 @@
 <?php
 
 use App\Dominios\Seguridad\Contratos\RegistroCuentas;
+use App\Dominios\Seguridad\Contratos\TipoCuenta;
 use App\Dominios\Solicitudes\Aplicacion\CrearSolicitud;
 use App\Dominios\Solicitudes\Aplicacion\GestionarContactos;
 use App\Dominios\Solicitudes\Aplicacion\RegistrarCliente;
@@ -275,7 +276,7 @@ test('registrar una empresa crea sus contactos en la misma transacción y la rec
     {
         private int $siguiente = 300;
 
-        public function crear(string $nombre, string $username, ?string $email, string $password, array $roles): int
+        public function crear(string $nombre, string $username, ?string $email, string $password, TipoCuenta $tipoCuenta, array $roles): int
         {
             return ++$this->siguiente;
         }

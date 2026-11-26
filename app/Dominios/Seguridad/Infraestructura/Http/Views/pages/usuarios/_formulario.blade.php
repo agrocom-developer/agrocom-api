@@ -17,7 +17,7 @@
     - $usuario (SecUser|null): null en alta; el modelo en edición.
     - $rolesAsignados (list<int>): ids de rol ya asignados (solo edición).
     - $rolesDisponibles (Collection<int, SecRole>): opciones del selector de
-      roles, ya sin "dueño" si el actor no tiene `asignar_rol_dueno`.
+      roles del panel, ya sin `administrador` si el actor no tiene `asignar_rol_administrador`.
     - $personasDisponibles (Collection<int, string>): id => nombre.
     - $clientesDisponibles (Collection<int, string>): id => razón social —
       SOLO filtra el select de contrato, no viaja como columna propia (mismo
@@ -178,16 +178,18 @@
                 :disabled="$esCliente"
             />
 
-            <x-atoms.checkbox-group
-                name="roles"
+            {{-- Una cuenta de panel tiene un solo rol (ADR 0046): radios, y `roles[]` viaja con un solo valor. --}}
+            <x-atoms.radio-group
+                name="roles[]"
                 id="roles"
                 :label="__('seguridad.usuarios.campo_roles')"
                 :options="$opcionesRoles"
-                :value="$rolesSeleccionados"
+                :value="$rolesSeleccionados[0] ?? null"
                 :help="__('seguridad.usuarios.campo_roles_ayuda')"
-                :error="$errors->first('roles')"
+                :error="$errors->first('roles') ?: $errors->first('roles.0')"
                 class="ag-form-section__field--full"
                 :disabled="$esCliente"
+                required
             />
         </x-molecules.form-section>
 

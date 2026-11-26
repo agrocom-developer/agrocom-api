@@ -4,6 +4,7 @@ namespace App\Dominios\Solicitudes\Aplicacion;
 
 use App\Dominios\Seguridad\Contratos\CuentaDuplicada;
 use App\Dominios\Seguridad\Contratos\RegistroCuentas;
+use App\Dominios\Seguridad\Contratos\TipoCuenta;
 use App\Dominios\Solicitudes\Dominio\EstadoCliente;
 use App\Dominios\Solicitudes\Dominio\Excepciones\ClienteDuplicado;
 use App\Dominios\Solicitudes\Dominio\Excepciones\SolicitudInvalida;
@@ -37,7 +38,7 @@ final class RegistrarCliente
     public function ejecutar(array $datos): Cliente
     {
         $cliente = DB::transaction(function () use ($datos): Cliente {
-            $usuarioId = $this->cuentas->crear($datos['nombre'], $datos['username'], $datos['email'] ?? null, $datos['password'], ['cliente']);
+            $usuarioId = $this->cuentas->crear($datos['nombre'], $datos['username'], $datos['email'] ?? null, $datos['password'], TipoCuenta::Cliente, ['cliente']);
 
             // Quien registra: la propia cuenta (app) o la persona de la oficina que lo carga a mano (panel).
             $autorId = $datos['registrado_por'] ?? $usuarioId;
