@@ -8,7 +8,7 @@ use App\Dominios\Seguridad\Contratos\DatosDePersona;
 use App\Dominios\Seguridad\Contratos\RegistroCuentas;
 use App\Dominios\Seguridad\Contratos\ReglasDeContacto;
 use App\Dominios\Seguridad\Contratos\TipoCuenta;
-use App\Dominios\Solicitudes\Dominio\EstadoCliente;
+use App\Dominios\Solicitudes\Aplicacion\MaquinaEstados\MaquinaEstadosCliente;
 use App\Dominios\Solicitudes\Dominio\Excepciones\ClienteDuplicado;
 use App\Dominios\Solicitudes\Dominio\Excepciones\SolicitudInvalida;
 use App\Dominios\Solicitudes\Dominio\TipoCliente;
@@ -18,9 +18,9 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Registro público de un cliente (especificación §10.1, `POST /clientes/registro`):
- * crea la cuenta con el rol `cliente` y su ficha `sol_clientes`. El cliente no
- * pasa por aprobación de un administrador: puede pedir servicios desde el
- * primer momento; solo los proveedores se verifican (ADR 0032). Una empresa nace
+ * crea la cuenta de tipo `cliente` y su ficha `sol_clientes`. El cliente nace
+ * `pendiente` (ADR 0046): entra, arma sus terrenos y borradores, pero no publica
+ * ni negocia hasta que un administrador lo aprueba. Una empresa nace
  * con al menos un contacto de referencia. El panel lo reutiliza para el alta en la
  * oficina (`registrado_por` es quien lo carga).
  */
@@ -29,6 +29,7 @@ final class RegistrarCliente
     public function __construct(
         private readonly RegistroCuentas $cuentas,
         private readonly GestionarContactos $contactos,
+        private readonly MaquinaEstadosCliente $estados,
     ) {}
 
     /**
@@ -55,16 +56,17 @@ final class RegistrarCliente
             $autorId = $datos['registrado_por'] ?? $usuarioId;
 
             try {
-                $cliente = Cliente::query()->create([
+                // Nace `pendiente` (ADR 0046): puede entrar y armar sus terrenos y borradores, pero no publicar
+                // ni negociar hasta que un administrador lo apruebe.
+                $cliente = $this->estados->registrar([
                     'usuario_id' => $usuarioId,
                     'tipo' => TipoCliente::from($datos['tipo']),
                     'razon_social' => $datos['razon_social'] ?? $datos['nombre'],
                     'documento_fiscal' => $datos['documento_fiscal'] ?? null,
                     'telefono' => $telefono ?? ($datos['telefono'] ?? null),
-                    'estado' => EstadoCliente::Activo,
                     'created_by' => $autorId,
                     'updated_by' => $autorId,
-                ]);
+                ], $autorId);
             } catch (QueryException $excepcion) {
                 if (str_contains($excepcion->getMessage(), 'sol_clientes_documento_unico') || str_contains($excepcion->getMessage(), 'sol_clientes.documento_fiscal')) {
                     throw ClienteDuplicado::porDocumentoFiscal((string) $datos['documento_fiscal']);
