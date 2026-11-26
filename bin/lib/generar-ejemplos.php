@@ -219,8 +219,6 @@ try {
 
     registrar('seguridad-sin-token', 'verSesionCampo', 'Una ruta protegida sin token responde 401.', 'GET', '/api/auth/sesion', null, null, 401);
 
-    registrar('distribucion-version', 'obtenerVersionVigente', 'Versión mínima y vigente del APK; no pide token.', 'GET', '/api/version', null, null, 200);
-
     // ----------------------------------------------------------------- cliente
     [$respuestaEmision, $emision] = (function () use ($clave) {
         [$estado, $cuerpo] = registrar('seguridad-token-cliente', 'emitirTokenDispositivo', 'El cliente ingresa; el token se muestra una sola vez.', 'POST', '/api/auth/token', [
@@ -276,9 +274,6 @@ try {
         registrarFoto('terrenos-foto-subir', 'subirFotoDeTerreno', 'El cliente sube una foto del estado de su terreno (multipart, menos de 300 KB); el piloto la ve antes de ofertar.', 'POST', "/api/terrenos/{$terrenoId}/fotos", ['descripcion' => 'Borde norte con maleza alta'], $tokenCliente, 201);
         registrar('terrenos-ver-con-fotos', 'verTerreno', 'El terreno trae sus fotos con URL firmada de corta vida.', 'GET', "/api/terrenos/{$terrenoId}", null, $tokenCliente, 200);
     }
-
-    registrar('referencias-precio', 'precioDeReferencia', 'Precio por hectárea de referencia para proponer: de la zona, la macrorregión o el general del tipo.', 'GET', '/api/referencias/precio?tipo_aplicacion=herbicida&macrorregion=chiquitania', null, $tokenCliente, 200);
-    registrar('referencias-precio-invalido', 'precioDeReferencia', 'Validación: tipo de aplicación inexistente.', 'GET', '/api/referencias/precio?tipo_aplicacion=riego', null, $tokenCliente, 422);
 
     registrar('solicitudes-lista', 'listarSolicitudes', 'Solicitudes del cliente, la más reciente primero.', 'GET', '/api/solicitudes', null, $tokenCliente, 200);
 

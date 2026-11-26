@@ -31,13 +31,11 @@ use App\Dominios\Solicitudes\Aplicacion\CambiarPrecioPropuesto;
 use App\Dominios\Solicitudes\Aplicacion\CancelarSolicitud;
 use App\Dominios\Solicitudes\Aplicacion\CrearSolicitud;
 use App\Dominios\Solicitudes\Aplicacion\GestionarFotosDeTerreno;
-use App\Dominios\Solicitudes\Aplicacion\PrecioDeReferencia;
 use App\Dominios\Solicitudes\Aplicacion\PublicarSolicitud;
 use App\Dominios\Solicitudes\Contratos\Eventos\PrecioPropuestoCambiado;
 use App\Dominios\Solicitudes\Contratos\Eventos\SolicitudAbierta;
 use App\Dominios\Solicitudes\Contratos\Eventos\SolicitudCancelada;
 use App\Dominios\Solicitudes\Dominio\Excepciones\SolicitudInvalida;
-use Database\Seeders\Catalogo\PreciosReferenciaSeeder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -894,38 +892,4 @@ test('el cliente ve la foto de perfil del piloto del equipo en la tarjeta de la 
     $comparador = app(ConsultarOfertas::class)->delCliente(NEG_CLIENTE, $solicitud);
 
     expect($comparador[0]['proveedor']['foto_url'])->toContain('/api/personas/'.NEG_PILOTO_7.'/foto');
-});
-
-test('el precio de referencia busca de la zona a la macrorregión, el general y el respaldo', function () {
-    negMundo();
-    $referencia = app(PrecioDeReferencia::class);
-    $ahora = now();
-    $fila = fn (array $datos): bool => DB::table('sol_precios_referencia')->insert([...$datos, 'created_at' => $ahora, 'updated_at' => $ahora]);
-
-    expect($referencia->para('herbicida'))->toMatchArray(['precio_ha' => '120.00', 'nivel' => 'respaldo']);
-
-    $fila(['tipo_aplicacion' => 'herbicida', 'zona_id' => null, 'macrorregion' => null, 'precio_ha' => '121.0000']);
-    $fila(['tipo_aplicacion' => 'herbicida', 'zona_id' => null, 'macrorregion' => 'chiquitania', 'precio_ha' => '132.0000']);
-    $fila(['tipo_aplicacion' => 'herbicida', 'zona_id' => 1, 'macrorregion' => null, 'precio_ha' => '140.0000']);
-
-    expect($referencia->para('herbicida'))->toMatchArray(['precio_ha' => '121.0000', 'nivel' => 'general'])
-        ->and($referencia->para('herbicida', null, 'chiquitania'))->toMatchArray(['precio_ha' => '132.0000', 'nivel' => 'macrorregion'])
-        ->and($referencia->para('herbicida', 1))->toMatchArray(['precio_ha' => '140.0000', 'nivel' => 'zona', 'macrorregion' => 'chiquitania', 'zona_id' => 1])
-        ->and($referencia->para('herbicida', null, 'valles'))->toMatchArray(['precio_ha' => '121.0000', 'nivel' => 'general'])
-        ->and($referencia->para('fungicida', 1))->toMatchArray(['precio_ha' => '135.00', 'nivel' => 'respaldo']);
-});
-
-test('el seeder de precios de referencia es idempotente y respeta lo que el administrador ajustó', function () {
-    negMundo();
-    $seeder = new PreciosReferenciaSeeder;
-
-    $seeder->run();
-    $total = DB::table('sol_precios_referencia')->count();
-    DB::table('sol_precios_referencia')->where('tipo_aplicacion', 'herbicida')->where('macrorregion', 'chaco')->update(['precio_ha' => '150.0000']);
-    $seeder->run();
-
-    expect($total)->toBe(6 * 6)
-        ->and(DB::table('sol_precios_referencia')->count())->toBe($total)
-        ->and(app(PrecioDeReferencia::class)->para('herbicida', null, 'chaco')['precio_ha'])->toBe('150.0000')
-        ->and(app(PrecioDeReferencia::class)->para('herbicida', null, 'chiquitania')['precio_ha'])->toBe('132.0000');
 });

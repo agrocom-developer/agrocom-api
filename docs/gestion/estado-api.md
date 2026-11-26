@@ -43,7 +43,7 @@ Corren siempre en CI (son parte del humo del selector de impacto):
 El motor está implementado; lo que sigue pendiente de `negociacion-contrato.md`:
 
 - Aviso push al sistema operativo: `POST /api/dispositivos` y `DELETE /api/dispositivos/{token}` para registrar el token de push (el aviso vive en la lista `GET /api/notificaciones`).
-- `POST /api/solicitudes/{id}/pago-confirmado`, `PUT /api/proveedores/perfil/foto`, `POST /api/terrenos/{id}/fotos` y `GET /api/referencias/precio`.
+- `POST /api/solicitudes/{id}/pago-confirmado`, `PUT /api/proveedores/perfil/foto` y `POST /api/terrenos/{id}/fotos`.
 - Revisión de las fotos del dron desde el panel (`panel/drones-flota`) y la exigencia de las fotos obligatorias para aprobar el dron.
 - Los registros `inicio`, `avance`, `cierre` y `mensaje` viajan hoy por sus rutas REST idempotentes por `uuid_cliente`, no por `POST /api/sync`.
 

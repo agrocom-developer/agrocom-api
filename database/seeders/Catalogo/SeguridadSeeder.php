@@ -66,8 +66,6 @@ class SeguridadSeeder extends Seeder
         'seguridad.bitacora.ver' => 'Ver la bitácora de auditoría (quién hizo qué, cuándo y en qué zona horaria)',
         'seguridad.dispositivo.ver' => 'Ver los dispositivos con sesión abierta en la app de campo',
         'seguridad.dispositivo.revocar' => 'Revocar el acceso de un dispositivo de campo',
-        // Distribución de las apps: autorizar una versión del APK.
-        'distribucion.version.autorizar' => 'Autorizar una versión del APK para distribución',
         // Proveedores y flota en el panel (ADR 0032): aprobar, suspender y dar de baja.
         'proveedores.proveedor.crear' => 'Registrar a mano a un proveedor que llega a la oficina (queda pendiente; quien lo registra no lo aprueba)',
         'proveedores.piloto.crear' => 'Registrar a mano a un piloto de un proveedor tercero (queda pendiente)',
@@ -315,11 +313,14 @@ class SeguridadSeeder extends Seeder
      *   panel ya no administra trabajos, sesiones, pausas, alertas, drones
      *   operativos, bases, personal ni cuadrillas; la negociación y el
      *   seguimiento del servicio los ve el administrador en las solicitudes.
+     * - `distribucion.version.autorizar`: las apps salen por Play Store y App
+     *   Store; el panel ya no sube ni autoriza versiones del APK.
      *
      * @var list<string>
      */
     private const PERMISOS_RETIRADOS = [
         'seguridad.usuario.portal',
+        'distribucion.version.autorizar',
         'operaciones.trabajo.crear',
         'operaciones.trabajo.editar',
         'comercial.cliente.ver',

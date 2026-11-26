@@ -17,6 +17,6 @@ Reglas:
 5. **Idempotente y segura en bases ya migradas**: guardas `hasTable` y `hasColumn`, sin asumir un estado único. La base local, la de CI, staging y producción pueden estar en estados distintos.
 6. **Soft delete y auditoría**: lo que ya tiene `deleted_at` se archiva, no se destruye, salvo decisión explícita.
 7. **Pruebas**: una prueba que arma datos representativos antes de la migración, la corre y verifica que nada se perdió; otra que corre `down` y vuelve al estado anterior. Corré todo con la base del compose (Docker), no con la local del host.
-8. **Coordinación con las apps**: si el cambio altera la forma de lo que viaja por la API, el contrato (`contrato-api`) y el esquema `drift` de `agrocom-field` se coordinan, y `GET /api/version` exige la versión mínima compatible. El servidor tolera la app vieja durante la transición.
+8. **Coordinación con las apps**: si el cambio altera la forma de lo que viaja por la API, el contrato (`contrato-api`) y el esquema `drift` de `agrocom-field` se coordinan, y el servidor tolera la app vieja durante la transición (no hay versión mínima por servidor).
 
 Tu salida es un plan de migración (pasos, respaldo, inversa, pruebas, orden de despliegue) o un veredicto sobre una migración ya escrita, con archivo y línea. La implementación la hace `modelo-datos`.

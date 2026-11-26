@@ -439,8 +439,7 @@ final class EscrituraSincronizacionEloquent implements EscrituraSincronizacion
      * crear una nueva, así que la idempotencia no se apoya en el `UNIQUE` de
      * `abrirTrabajo()` (ese protege la fila de APERTURA, no el evento de
      * cierre). Mecanismo, documentado en runs/13.md: se busca el trabajo por
-     * `uuid_cliente`, se bloquea la fila (`lockForUpdate`, mismo patrón que
-     * `MaquinaEstadosVersionApk::autorizar()`) y:
+     * `uuid_cliente`, se bloquea la fila (`lockForUpdate`) y:
      *
      *   - si ya está `cerrado` con el MISMO `cierre_uuid_cliente` del evento
      *     entrante → `duplicado` (reintento exacto, no se toca nada);

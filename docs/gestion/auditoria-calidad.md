@@ -106,7 +106,7 @@ PostgreSQL no crea índice sobre una clave foránea. Consulta sobre el esquema m
 | Tabla.columna | Se usa en |
 |---|---|
 | `sol_solicitudes_servicio.proveedor_id`, `.terreno_id` | bandeja del proveedor, ficha y mercado |
-| `sol_terrenos.zona_id`, `sol_precios_referencia.zona_id`, `prv_proveedores.zona_base_id` | mercado por zona y precio de referencia |
+| `sol_terrenos.zona_id`, `prv_proveedores.zona_base_id` | mercado por zona |
 | `neg_ofertas.equipo_id`, `.oferta_anterior_id` | cadena de contraofertas |
 | `neg_cancelaciones.solicitud_id`, `neg_avances.usuario_id`, `neg_evidencias.avance_id`, `.usuario_id`, `neg_mensajes.autor_usuario_id` | seguimiento y mensajes |
 | `neg_pagos_confirmados.confirmado_por_usuario_id`, `sol_solicitud_historial.actor_usuario_id` | auditoría de actor |

@@ -2,7 +2,6 @@
 
 use App\Dominios\Calificaciones\Infraestructura\Http\Controllers\Web\CalificacionesController;
 use App\Dominios\Disputas\Infraestructura\Http\Controllers\Web\DisputasController;
-use App\Dominios\Distribucion\Infraestructura\Http\Controllers\Web\VersionesApkController;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Web\DronesController as DronesFlotaController;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Web\EquiposController as EquiposFlotaController;
 use App\Dominios\Metricas\Infraestructura\Http\Controllers\Web\MetricasController;
@@ -293,19 +292,6 @@ Route::middleware('auth:interno')->group(function () {
         Route::post('/panel/configuracion/{grupo}', [ConfiguracionController::class, 'actualizar'])
             ->where('grupo', 'mapas|correo|integraciones')
             ->name('panel.configuracion.actualizar');
-
-        // HU-20: autorizar versiones del APK. Un único permiso
-        // (`distribucion.version.autorizar`) gatea listar, subir y autorizar
-        // — verificado DENTRO del controlador contra el ROL ACTIVO, mismo
-        // criterio que usuarios y dispositivos.
-        Route::get('/panel/versiones-apk', [VersionesApkController::class, 'index'])
-            ->name('panel.versiones-apk.index');
-
-        Route::post('/panel/versiones-apk', [VersionesApkController::class, 'store'])
-            ->name('panel.versiones-apk.subir');
-
-        Route::post('/panel/versiones-apk/{version}/autorizar', [VersionesApkController::class, 'autorizar'])
-            ->name('panel.versiones-apk.autorizar');
 
         // Solicitudes de servicio (ADR 0027): el administrador las consulta y, con
         // el permiso de cancelar, las cancela con motivo. El cliente las crea

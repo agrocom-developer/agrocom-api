@@ -732,34 +732,6 @@ paths:
       security:
         -
           tokenDispositivo: []
-  /api/version:
-    get:
-      tags:
-        - Distribucion
-      summary: 'Versión mínima y vigente del APK'
-      description: 'Versión mínima aceptada y versión vigente del APK, con la URL de su release en agrocom-field (GitHub Releases) — el binario no se hospeda en este servidor. Sin autenticación: la app todavía no tiene ningún token emitido cuando la consulta. Con la invariante de negocio "una sola versión autorizada a la vez" (HU-20), hoy `minima` y `vigente` son la misma versión — el contrato ya distingue ambas claves para el día que una historia futura las separe.'
-      operationId: obtenerVersionVigente
-      responses:
-        200:
-          description: 'Ambas claves son `null` si el dueño todavía no autorizó ninguna versión.'
-          content:
-            application/json:
-              schema:
-                required:
-                  - minima
-                  - vigente
-                properties:
-                  minima:
-                    nullable: true
-                    allOf:
-                      -
-                        $ref: '#/components/schemas/VersionApk'
-                  vigente:
-                    nullable: true
-                    allOf:
-                      -
-                        $ref: '#/components/schemas/VersionApk'
-                type: object
   /api/proveedores/drones:
     get:
       tags:
@@ -4524,88 +4496,6 @@ paths:
       security:
         -
           tokenDispositivo: []
-  /api/referencias/precio:
-    get:
-      tags:
-        - Solicitudes
-      summary: 'Precio de referencia por hectárea'
-      description: 'El precio por hectárea de referencia para un tipo de aplicación, de lo más específico a lo más general: la zona, su macrorregión o el precio general del tipo. `nivel` dice de dónde salió (`zona`, `macrorregion`, `general` o `respaldo`). Es una guía, no un límite: el precio máximo de sanidad es otro parámetro. Sin `zona_id` ni `macrorregion` devuelve el precio general. Importe como decimal exacto en string.'
-      operationId: precioDeReferencia
-      parameters:
-        -
-          name: tipo_aplicacion
-          in: query
-          required: true
-          schema:
-            type: string
-            enum:
-              - herbicida
-              - insecticida
-              - fungicida
-              - fertilizante_foliar
-              - desecante
-              - otro
-        -
-          name: zona_id
-          in: query
-          description: 'Ver `GET /api/zonas`.'
-          required: false
-          schema:
-            type: integer
-        -
-          name: macrorregion
-          in: query
-          required: false
-          schema:
-            type: string
-            example: chiquitania
-      responses:
-        200:
-          description: 'El precio de referencia.'
-          content:
-            application/json:
-              schema:
-                required:
-                  - tipo_aplicacion
-                  - precio_ha
-                  - nivel
-                properties:
-                  tipo_aplicacion:
-                    type: string
-                    example: herbicida
-                  zona_id:
-                    type: integer
-                    nullable: true
-                  macrorregion:
-                    type: string
-                    example: chiquitania
-                    nullable: true
-                  precio_ha:
-                    type: string
-                    example: '132.0000'
-                    nullable: true
-                  nivel:
-                    type: string
-                    nullable: true
-                    enum:
-                      - zona
-                      - macrorregion
-                      - general
-                      - respaldo
-                type: object
-        401:
-          description: 'Token ausente o revocado.'
-        403:
-          description: 'El rol del token no es de cliente ni de proveedor.'
-        422:
-          description: 'Tipo de aplicación, zona o macrorregión inválidos.'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorValidacion'
-      security:
-        -
-          tokenDispositivo: []
   /api/solicitudes:
     get:
       tags:
@@ -4823,7 +4713,7 @@ paths:
       tags:
         - Solicitudes
       summary: 'Monto estimado de una solicitud'
-      description: 'El monto estimado: hectáreas solicitadas por el precio por hectárea vigente (el propuesto, o el acordado una vez adjudicada), con el precio de referencia como guía.'
+      description: 'El monto estimado: hectáreas solicitadas por el precio por hectárea vigente (el propuesto, o el acordado una vez adjudicada).'
       operationId: estimarSolicitud
       parameters:
         -
@@ -5718,27 +5608,6 @@ components:
                 type: string
                 format: date-time
             type: object
-      type: object
-    VersionApk:
-      title: 'Versión del APK'
-      description: 'Versión autorizada del APK de agrocom-field, con la URL de su release (HU-20).'
-      required:
-        - version
-        - version_code
-        - url_descarga
-      properties:
-        version:
-          description: 'Versión SemVer.'
-          type: string
-          example: 1.4.2
-        version_code:
-          description: 'Código de versión de Android.'
-          type: integer
-          example: 14002
-        url_descarga:
-          description: 'URL del release del `.apk` publicado en agrocom-field (GitHub Releases).'
-          type: string
-          format: uri
       type: object
     FotoDeDron:
       title: 'Foto de un dron'
@@ -7198,11 +7067,6 @@ components:
           type: string
           example: '10000.00'
           nullable: true
-        precio_referencia_ha:
-          description: 'Guía de mercado para el tipo de aplicación; no es un límite.'
-          type: string
-          example: '120.00'
-          nullable: true
       type: object
     TerrenoEntrada:
       title: 'Terreno (datos que envía el cliente)'
@@ -7569,9 +7433,6 @@ tags:
   -
     name: Disputas
     description: 'El cliente (hasta 72 horas después de `ejecutada`) o el proveedor (cobro pendiente, acceso negado o calificación abusiva) abren un reclamo; soporte media y un administrador resuelve; ambas partes pueden apelar una vez en 7 días (ADR 0033). Los reembolsos se liquidan fuera de la app.'
-  -
-    name: Distribucion
-    description: 'Versionado y distribución del APK de agrocom-field (HU-20).'
   -
     name: Mensajes
     description: 'Mensajes entre el cliente y el proveedor adjudicado, desde la adjudicación. Texto de hasta 1000 caracteres, fotos de menos de 300 KB y líneas de sistema que el servidor escribe al cambiar la solicitud.'
