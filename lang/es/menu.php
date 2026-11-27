@@ -61,7 +61,7 @@ return [
         'descripcion' => 'Usuarios, permisos y bitácora.',
         'items' => [
             'usuarios' => 'Usuarios',
-            'roles' => 'Permisos',
+            'roles' => 'Roles',
             'bitacora' => 'Bitácora',
         ],
     ],

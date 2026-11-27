@@ -1,0 +1,80 @@
+/*
+ * Tonos de módulo (resources/views/.../roles/permisos.blade.php y roles/show.blade.php).
+ * Cada módulo del menú lleva un color identificativo en la matriz de permisos y en la
+ * ficha del rol: la clase `ag-modulo-tono--<tono>` fija las cinco variables
+ * `--ag-modulo*` desde los tokens semánticos de ese tono, y los estilos de la página las
+ * consumen sin saber de qué módulo se trata. Qué tono tiene cada módulo lo decide
+ * `ColorDeModulo` (PHP), no este archivo. Solo tokens: cambian solos con el tema oscuro.
+ *
+ * - `--ag-modulo`: el color plano (franja, ícono, punto).
+ * - `--ag-modulo-subtle`: fondo tenue del encabezado y de los chips encendidos.
+ * - `--ag-modulo-strong`: texto sobre el fondo tenue.
+ * - `--ag-modulo-border`: borde tenue.
+ * - `--ag-modulo-fill`: relleno sólido (interruptor encendido, ícono del módulo), con blanco encima.
+ *
+ * `neutral` es el módulo de las acciones sin pantalla: gris, sin significado de estado.
+ */
+
+.ag-modulo-tono--success {
+    --ag-modulo: var(--ag-color-success);
+    --ag-modulo-subtle: var(--ag-color-success-subtle);
+    --ag-modulo-strong: var(--ag-color-success-strong);
+    --ag-modulo-border: var(--ag-color-success-border);
+    --ag-modulo-fill: var(--ag-color-success-contrast-fill);
+}
+
+.ag-modulo-tono--info {
+    --ag-modulo: var(--ag-color-info);
+    --ag-modulo-subtle: var(--ag-color-info-subtle);
+    --ag-modulo-strong: var(--ag-color-info-strong);
+    --ag-modulo-border: var(--ag-color-info-border);
+    --ag-modulo-fill: var(--ag-color-info-contrast-fill);
+}
+
+.ag-modulo-tono--warning {
+    --ag-modulo: var(--ag-color-warning);
+    --ag-modulo-subtle: var(--ag-color-warning-subtle);
+    --ag-modulo-strong: var(--ag-color-warning-strong);
+    --ag-modulo-border: var(--ag-color-warning-border);
+    --ag-modulo-fill: var(--ag-color-warning-contrast-fill);
+}
+
+.ag-modulo-tono--distintivo-1 {
+    --ag-modulo: var(--ag-color-distintivo-1);
+    --ag-modulo-subtle: var(--ag-color-distintivo-1-subtle);
+    --ag-modulo-strong: var(--ag-color-distintivo-1-strong);
+    --ag-modulo-border: var(--ag-color-distintivo-1-border);
+    --ag-modulo-fill: var(--ag-color-distintivo-1-contrast-fill);
+}
+
+.ag-modulo-tono--distintivo-2 {
+    --ag-modulo: var(--ag-color-distintivo-2);
+    --ag-modulo-subtle: var(--ag-color-distintivo-2-subtle);
+    --ag-modulo-strong: var(--ag-color-distintivo-2-strong);
+    --ag-modulo-border: var(--ag-color-distintivo-2-border);
+    --ag-modulo-fill: var(--ag-color-distintivo-2-contrast-fill);
+}
+
+.ag-modulo-tono--distintivo-4 {
+    --ag-modulo: var(--ag-color-distintivo-4);
+    --ag-modulo-subtle: var(--ag-color-distintivo-4-subtle);
+    --ag-modulo-strong: var(--ag-color-distintivo-4-strong);
+    --ag-modulo-border: var(--ag-color-distintivo-4-border);
+    --ag-modulo-fill: var(--ag-color-distintivo-4-contrast-fill);
+}
+
+.ag-modulo-tono--distintivo-5 {
+    --ag-modulo: var(--ag-color-distintivo-5);
+    --ag-modulo-subtle: var(--ag-color-distintivo-5-subtle);
+    --ag-modulo-strong: var(--ag-color-distintivo-5-strong);
+    --ag-modulo-border: var(--ag-color-distintivo-5-border);
+    --ag-modulo-fill: var(--ag-color-distintivo-5-contrast-fill);
+}
+
+.ag-modulo-tono--neutral {
+    --ag-modulo: var(--ag-color-text-muted);
+    --ag-modulo-subtle: var(--ag-color-neutral-subtle);
+    --ag-modulo-strong: var(--ag-color-neutral-strong);
+    --ag-modulo-border: var(--ag-color-border-strong);
+    --ag-modulo-fill: var(--ag-color-neutral-strong);
+}

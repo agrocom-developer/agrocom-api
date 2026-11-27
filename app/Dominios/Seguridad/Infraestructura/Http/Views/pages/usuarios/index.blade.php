@@ -9,7 +9,9 @@
     Datos esperados (ver UsuariosController::index()): la cáscara de CascaraPanel, más
     - $usuarios (LengthAwarePaginator<SecUser>): nombre ascendente, solo cuentas de tipo
       `panel`. Las cuentas de app (cliente y proveedor) no se administran desde acá.
-    - $rolesPorUsuario (array<int, list<string>>): nombres legibles de rol por id de usuario.
+    - $rolesPorUsuario (array<int, list<array{id, nombre}>>): roles de cada usuario con su id; cada uno
+      enlaza a «Ver rol» (`panel.roles.show`) cuando $puedeVerRoles.
+    - $puedeVerRoles (bool): si el actor tiene `seguridad.rol.ver`.
     - $filtros (array{q: string, estado: ?string, rol: ?string}): filtros aplicados.
     - $opcionesRol (array<int, string>): id de rol → nombre legible, para el filtro.
     - $tonoPorEstado (array<string, string>): estado de acceso → tono, el mismo mapa para el
@@ -142,8 +144,14 @@
                                 <span class="ag-proveedores__sub">{{ $usuario->username }}</span>
                             </span>
                             <span role="cell">
-                                @forelse (($rolesPorUsuario[$usuario->id] ?? []) as $nombreRol)
-                                    <x-atoms.badge variant="neutral">{{ $nombreRol }}</x-atoms.badge>
+                                @forelse (($rolesPorUsuario[$usuario->id] ?? []) as $rolDeLaCuenta)
+                                    @if ($puedeVerRoles)
+                                        <a href="{{ route('panel.roles.show', $rolDeLaCuenta['id']) }}" class="ag-enlace-insignia" title="{{ __('seguridad.usuarios.ver_rol') }}">
+                                            <x-atoms.badge variant="neutral">{{ $rolDeLaCuenta['nombre'] }}</x-atoms.badge>
+                                        </a>
+                                    @else
+                                        <x-atoms.badge variant="neutral">{{ $rolDeLaCuenta['nombre'] }}</x-atoms.badge>
+                                    @endif
                                 @empty
                                     {{ __('seguridad.usuarios.sin_roles') }}
                                 @endforelse

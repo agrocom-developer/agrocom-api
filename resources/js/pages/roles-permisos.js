@@ -10,7 +10,11 @@
  *    el rol no ve. Es una combinación válida en la base que no hace nada.
  *    Se AVISA, no se bloquea — puede ser deliberado dejarla lista para cuando
  *    se encienda la pantalla; y el servidor tampoco la rechaza.
- * 3. El contador de cambios sin guardar de la barra de acciones.
+ * 3. El contador de cambios sin guardar de la barra de acciones y el estado
+ *    «Guardando…» al enviar.
+ * 4. Por MÓDULO: el contador de permisos activos y el interruptor «Todo el
+ *    módulo» (enciende o apaga de una vez lo que el actor puede tocar; queda a
+ *    medias si solo algunos están encendidos).
  *
  * Mejora progresiva: sin este archivo el formulario sigue guardando bien —
  * son checkboxes nativos dentro de un <form>. Lo que se pierde es saber qué
@@ -80,21 +84,17 @@ function pintarPreview(formulario, activos) {
 }
 
 /**
- * Resumen por módulo del editor y, por pantalla, el conteo de acciones más
- * el aviso de huérfana.
+ * Resumen por módulo del editor (contador de permisos activos e interruptor
+ * «Todo el módulo») y, por pantalla, el conteo de acciones más el aviso de
+ * huérfana.
  */
 function pintarEditor(formulario, activos) {
     formulario.querySelectorAll('[data-ag-modulo]').forEach((modulo) => {
         const pantallas = modulo.querySelectorAll('[data-ag-pantalla]');
-        let encendidas = 0;
 
         pantallas.forEach((pantalla) => {
             const activa = activos.has(pantalla.dataset.agPantalla);
             pantalla.classList.toggle('is-activa', activa);
-
-            if (activa) {
-                encendidas += 1;
-            }
 
             const acciones = pantalla.querySelectorAll('[data-ag-chip-accion]');
             const activasDeLaPantalla = [...acciones].filter((chip) => chip.checked).length;
@@ -127,12 +127,24 @@ function pintarEditor(formulario, activos) {
             }
         });
 
+        const casillas = [...modulo.querySelectorAll('input[type="checkbox"][name="permisos[]"]')];
+        const editables = casillas.filter((casilla) => ! casilla.disabled);
+        const encendidas = casillas.filter((casilla) => casilla.checked).length;
         const resumen = modulo.querySelector('[data-ag-modulo-resumen]');
 
         if (resumen) {
             resumen.textContent = resumen.dataset.agPlantilla
-                .replace(':encendidas', String(encendidas))
-                .replace(':total', String(pantallas.length));
+                .replace(':activos', String(encendidas))
+                .replace(':total', String(casillas.length));
+        }
+
+        const todo = modulo.querySelector('[data-ag-modulo-todo]');
+
+        if (todo) {
+            const editablesEncendidas = editables.filter((casilla) => casilla.checked).length;
+
+            todo.checked = editables.length > 0 && editablesEncendidas === editables.length;
+            todo.indeterminate = editablesEncendidas > 0 && editablesEncendidas < editables.length;
         }
     });
 }
@@ -149,6 +161,9 @@ function pintarBarra(formulario, inicial, activos) {
     if (! estado) {
         return;
     }
+
+    // El estado de guardado se anuncia a lectores de pantalla sin mover el foco.
+    estado.setAttribute('role', 'status');
 
     let cambios = 0;
 
@@ -193,8 +208,51 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     formulario.addEventListener('change', (evento) => {
+        const todo = evento.target.closest('[data-ag-modulo-todo]');
+
+        // «Todo el módulo»: lo que se puede tocar toma el estado del interruptor.
+        // Lo bloqueado o no concedible queda como está (el servidor lo revalida).
+        if (todo) {
+            const modulo = todo.closest('[data-ag-modulo]');
+
+            modulo.querySelectorAll('input[type="checkbox"][name="permisos[]"]:not(:disabled)').forEach((casilla) => {
+                casilla.checked = todo.checked;
+            });
+
+            repintar();
+
+            return;
+        }
+
         if (evento.target.matches('input[type="checkbox"][name="permisos[]"]')) {
             repintar();
+        }
+    });
+
+    // Estado de guardado: al enviar, la barra dice «Guardando…» y el botón se
+    // apaga para que un segundo clic no mande el formulario dos veces.
+    formulario.addEventListener('submit', (evento) => {
+        if (formulario.dataset.agEnviando === '1') {
+            evento.preventDefault();
+
+            return;
+        }
+
+        formulario.dataset.agEnviando = '1';
+
+        const barra = formulario.querySelector('[data-ag-permisos-barra]');
+        const estado = barra?.querySelector('.ag-form-actions-bar__status');
+        const guardar = formulario.querySelector('[data-ag-permisos-guardar]');
+
+        barra?.classList.add('is-guardando');
+
+        if (estado && barra.dataset.agGuardando) {
+            estado.textContent = barra.dataset.agGuardando;
+        }
+
+        if (guardar) {
+            guardar.setAttribute('aria-disabled', 'true');
+            guardar.classList.add('is-guardando');
         }
     });
 

@@ -162,19 +162,34 @@ Route::middleware('auth:interno')->group(function () {
         Route::post('/panel/usuarios/{usuario}/bloqueo', [UsuariosController::class, 'alternarBloqueo'])
             ->name('panel.usuarios.bloqueo');
 
-        // Matriz rol↔permiso de los dos roles del panel (ADR 0046): no se crean
-        // ni se eliminan roles. Los permisos `seguridad.rol.*` son reservados al
-        // administrador, porque quien edita la matriz puede concederse cualquier
-        // permiso del panel. Verificados DENTRO del controlador contra el ROL
-        // ACTIVO, igual que usuarios.
+        // Roles del panel (ADR 0046): el administrador (id 1, del sistema) crea,
+        // ve, edita y elimina roles —salvo el suyo— y les reparte permisos en la
+        // matriz. Los permisos `seguridad.rol.*` son reservados al administrador,
+        // porque quien edita la matriz puede concederse cualquier permiso del
+        // panel. Verificados DENTRO del controlador contra el ROL ACTIVO, igual que
+        // usuarios; las reglas de protección (el rol 1 no se elimina, un rol con
+        // usuarios tampoco) viven en los casos de uso, no en la vista.
         Route::get('/panel/roles', [RolesController::class, 'index'])
             ->name('panel.roles.index');
+
+        Route::get('/panel/roles/crear', [RolesController::class, 'create'])
+            ->name('panel.roles.create');
+
+        Route::post('/panel/roles', [RolesController::class, 'store'])
+            ->name('panel.roles.store');
+
+        Route::get('/panel/roles/{rol}', [RolesController::class, 'show'])
+            ->whereNumber('rol')
+            ->name('panel.roles.show');
 
         Route::get('/panel/roles/{rol}/editar', [RolesController::class, 'edit'])
             ->name('panel.roles.edit');
 
         Route::put('/panel/roles/{rol}', [RolesController::class, 'update'])
             ->name('panel.roles.update');
+
+        Route::delete('/panel/roles/{rol}', [RolesController::class, 'destroy'])
+            ->name('panel.roles.destroy');
 
         // Tarea 63 (invariante 9 de CLAUDE.md): pantalla de bitácora de
         // auditoría, solo lectura — sin POST/PUT/DELETE, es un libro de

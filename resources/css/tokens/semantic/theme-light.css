@@ -99,6 +99,18 @@
     --ag-color-distintivo-2-strong: var(--ag-color-magenta-700);
     --ag-color-distintivo-2-border: color-mix(in srgb, var(--ag-color-magenta-500) 30%, var(--ag-brand-light-surface) 70%);
 
+    /* Tonos de módulo (roles): el 4.º y el 5.º tono propios, para que cada módulo del menú tenga un color distinto en la matriz de permisos y en la ficha del rol (ver ColorDeModulo). Bloque contiguo; el par oscuro vive en theme-dark.css. El relleno `-contrast-fill` lleva texto blanco (AA ≥4,5:1). */
+    --ag-color-distintivo-4: var(--ag-color-teal-500);
+    --ag-color-distintivo-4-subtle: color-mix(in srgb, var(--ag-color-teal-500) 16%, var(--ag-brand-light-surface) 84%);
+    --ag-color-distintivo-4-strong: var(--ag-color-teal-700);
+    --ag-color-distintivo-4-border: color-mix(in srgb, var(--ag-color-teal-500) 30%, var(--ag-brand-light-surface) 70%);
+    --ag-color-distintivo-4-contrast-fill: var(--ag-color-teal-500);
+    --ag-color-distintivo-5: var(--ag-color-orange-500);
+    --ag-color-distintivo-5-subtle: color-mix(in srgb, var(--ag-color-orange-500) 16%, var(--ag-brand-light-surface) 84%);
+    --ag-color-distintivo-5-strong: var(--ag-color-orange-700);
+    --ag-color-distintivo-5-border: color-mix(in srgb, var(--ag-color-orange-500) 30%, var(--ag-brand-light-surface) 70%);
+    --ag-color-distintivo-5-contrast-fill: var(--ag-color-orange-500);
+
     /* Estado alert */
     --ag-color-alert: var(--ag-brand-light-on-error-container);
     --ag-color-alert-subtle: color-mix(in srgb, var(--ag-brand-light-on-error-container) 16%, var(--ag-brand-light-surface) 84%);
