@@ -42,9 +42,21 @@ return [
             'respaldo' => null,
         ],
 
-        // Respaldo en el Mailpit de desarrollo (tarea 66, `config/mail.php` +
-        // `.env.example`): sin fila en la base, el sistema sigue enviando
-        // correo con lo que ya está en `.env`.
+        // Correo saliente (códigos de verificación, recuperar el acceso, restablecer
+        // del panel). Sin fila en la base, el sistema sigue enviando con lo que ya
+        // está en `.env` (Mailpit en desarrollo, `config/mail.php`). Con `correo.host`
+        // en la base, la base manda en todo el grupo (`ConfiguracionDeCorreo`).
+        // `proveedor` y `cifrado` son selectores: `opciones` son los únicos valores
+        // aceptados (la validación sale de acá). El valor de `password` es una
+        // contraseña de aplicación: secreto, cifrado en reposo y nunca se muestra.
+        'correo.proveedor' => [
+            'grupo' => 'correo',
+            'es_secreto' => false,
+            'respaldo' => null,
+            'tipo' => 'select',
+            'opciones' => ['gmail', 'outlook', 'otro'],
+            'predeterminado' => 'gmail',
+        ],
         'correo.host' => [
             'grupo' => 'correo',
             'es_secreto' => false,
@@ -55,6 +67,14 @@ return [
             'es_secreto' => false,
             'respaldo' => 'mail.mailers.smtp.port',
         ],
+        'correo.cifrado' => [
+            'grupo' => 'correo',
+            'es_secreto' => false,
+            'respaldo' => null,
+            'tipo' => 'select',
+            'opciones' => ['tls', 'ssl', 'ninguno'],
+            'predeterminado' => 'tls',
+        ],
         'correo.usuario' => [
             'grupo' => 'correo',
             'es_secreto' => false,
@@ -63,6 +83,7 @@ return [
         'correo.password' => [
             'grupo' => 'correo',
             'es_secreto' => true,
+            'sin_ultimos4' => true,
             'respaldo' => 'mail.mailers.smtp.password',
         ],
         'correo.remitente' => [
@@ -70,6 +91,20 @@ return [
             'es_secreto' => false,
             'respaldo' => 'mail.from.address',
         ],
+        'correo.remitente_nombre' => [
+            'grupo' => 'correo',
+            'es_secreto' => false,
+            'respaldo' => null,
+            'predeterminado' => 'DronAgro',
+        ],
+    ],
+
+    // Presets de proveedor de correo: la pantalla los vuelca en host, puerto y cifrado
+    // al elegir uno (`otro` deja los campos libres). Gmail usa contraseña de aplicación.
+    'proveedores_correo' => [
+        'gmail' => ['host' => 'smtp.gmail.com', 'puerto' => '587', 'cifrado' => 'tls'],
+        'outlook' => ['host' => 'smtp.office365.com', 'puerto' => '587', 'cifrado' => 'tls'],
+        'otro' => ['host' => '', 'puerto' => '', 'cifrado' => 'tls'],
     ],
 
     // Sectores de la pantalla, en el orden en que se pintan. `integraciones`
