@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Negociacion\Infraestructura;
 
+use App\Dominios\Negociacion\Aplicacion\EliminacionDeNegociaciones;
 use App\Dominios\Negociacion\Contratos\Eventos\AvisoDeNegociacion;
 use App\Dominios\Negociacion\Contratos\LecturaNegociacionParaPanel;
 use App\Dominios\Negociacion\Infraestructura\Console\AvisarInactividadCommand;
@@ -27,6 +28,9 @@ final class NegociacionServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // Eliminación de cuenta (ADR 0047): lo que este módulo aporta; Seguridad lo recibe por tag.
+        $this->app->tag(EliminacionDeNegociaciones::class, 'eliminacion.participantes');
+
         $this->app->bind(LecturaNegociacionParaPanel::class, LecturaNegociacionParaPanelEloquent::class);
     }
 

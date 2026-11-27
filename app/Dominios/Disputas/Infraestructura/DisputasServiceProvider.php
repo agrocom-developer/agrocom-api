@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Disputas\Infraestructura;
 
+use App\Dominios\Disputas\Aplicacion\EliminacionDeDisputas;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -13,6 +14,12 @@ use Illuminate\Support\ServiceProvider;
  */
 final class DisputasServiceProvider extends ServiceProvider
 {
+    public function register(): void
+    {
+        // Eliminación de cuenta (ADR 0047): un reclamo abierto la impide; Seguridad lo recibe por tag.
+        $this->app->tag(EliminacionDeDisputas::class, 'eliminacion.participantes');
+    }
+
     public function boot(): void
     {
         View::addNamespace('disputas', app_path('Dominios/Disputas/Infraestructura/Http/Views'));
