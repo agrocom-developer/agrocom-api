@@ -192,6 +192,16 @@ function negMundo(): void
         {
             return [['id' => 1, 'tipo' => 'frontal']];
         }
+
+        public function tieneDron(int $proveedorId): bool
+        {
+            return true;
+        }
+
+        public function tieneDronConFotosSubidas(int $proveedorId): bool
+        {
+            return true;
+        }
     });
 }
 

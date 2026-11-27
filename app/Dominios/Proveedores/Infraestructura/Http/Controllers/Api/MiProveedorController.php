@@ -4,6 +4,7 @@ namespace App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api;
 
 use App\Dominios\Compartido\Dominio\Excepciones\TransicionDeAprobacionInvalida;
 use App\Dominios\Compartido\Infraestructura\Http\RechazoDeDominio;
+use App\Dominios\Flota\Contratos\LecturaDrones;
 use App\Dominios\Flota\Contratos\LecturaEquipos;
 use App\Dominios\Proveedores\Aplicacion\AlcanceDelSolicitante;
 use App\Dominios\Proveedores\Aplicacion\CambiarDisponibilidad;
@@ -12,7 +13,9 @@ use App\Dominios\Proveedores\Aplicacion\ReenviarARevision;
 use App\Dominios\Proveedores\Dominio\Disponibilidad;
 use App\Dominios\Proveedores\Dominio\Excepciones\RegistroInvalido;
 use App\Dominios\Proveedores\Dominio\SiguientePasoDelRegistro;
+use App\Dominios\Proveedores\Dominio\TipoProveedor;
 use App\Dominios\Proveedores\Dominio\TipoSujeto;
+use App\Dominios\Proveedores\Infraestructura\Eloquent\Proveedor;
 use App\Dominios\Proveedores\Infraestructura\Http\Requests\CambiarDisponibilidadRequest;
 use App\Dominios\Proveedores\Infraestructura\Http\Resources\DisponibilidadResource;
 use App\Dominios\Proveedores\Infraestructura\Http\Resources\ProveedorResource;
@@ -43,6 +46,7 @@ final class MiProveedorController
         private readonly AlcanceDelSolicitante $alcance,
         private readonly EstadoDocumentalDeSujeto $estadoDocumental,
         private readonly LecturaEquipos $equipos,
+        private readonly LecturaDrones $drones,
         private readonly ReenviarARevision $reenviar,
         private readonly CambiarDisponibilidad $disponibilidad,
     ) {}
@@ -70,7 +74,7 @@ final class MiProveedorController
                     properties: [
                         new OA\Property(property: 'proveedor', ref: '#/components/schemas/Proveedor'),
                         new OA\Property(property: 'documentos_faltantes', description: 'Tipos de documento obligatorios del proveedor sin uno aprobado y vigente.', type: 'array', items: new OA\Items(type: 'string', example: 'seguro_responsabilidad')),
-                        new OA\Property(property: 'siguiente_paso', description: 'Qué sigue del registro (ADR 0046, punto 26), siempre presente: `subir_documentos` (pendiente con `documentos_faltantes`; se suben con `POST /api/proveedores/documentos`), `en_revision` (pendiente con todo subido), `corregir` (rechazado; se corrige y se reenvía con `POST /api/proveedores/mi/reenviar`), `suspendido`, `baja` o `listo` (aprobado). Quien intenta registrarse con un teléfono o documento que ya tiene cuenta recibe `409 cuenta_ya_registrada`, inicia sesión y la app sigue desde acá, sin crear otra cuenta.', type: 'string', enum: ['listo', 'subir_documentos', 'en_revision', 'corregir', 'suspendido', 'baja'], example: 'subir_documentos'),
+                        new OA\Property(property: 'siguiente_paso', description: 'Qué sigue del registro (ADR 0046, punto 26), siempre presente: `subir_documentos` (pendiente con `documentos_faltantes`; se suben con `POST /api/proveedores/documentos`), `registrar_dron` (pendiente, documentos al día y sin ningún dron; `POST /api/proveedores/drones`), `subir_fotos_dron` (pendiente con un dron al que le faltan las fotos obligatorias; `POST /api/proveedores/drones/{id}/fotos`), `en_revision` (pendiente con todo subido), `corregir` (rechazado; se corrige y se reenvía con `POST /api/proveedores/mi/reenviar`), `suspendido`, `baja` o `listo` (aprobado). Orden de los pasos de un proveedor pendiente: documentos, dron, fotos del dron, revisión; `registrar_dron` y `subir_fotos_dron` solo los pide el titular independiente o tercero (el piloto de una empresa y Agrocom nunca). Quien intenta registrarse con un teléfono o documento que ya tiene cuenta recibe `409 cuenta_ya_registrada`, inicia sesión y la app sigue desde acá, sin crear otra cuenta.', type: 'string', enum: ['listo', 'subir_documentos', 'registrar_dron', 'subir_fotos_dron', 'en_revision', 'corregir', 'suspendido', 'baja'], example: 'subir_documentos'),
                         new OA\Property(property: 'apto_para_ofertas', type: 'boolean', example: false),
                         new OA\Property(property: 'disponibilidad', ref: '#/components/schemas/Disponibilidad'),
                         new OA\Property(property: 'disponibilidad_empresa', ref: '#/components/schemas/Disponibilidad'),
@@ -101,7 +105,7 @@ final class MiProveedorController
         return response()->json([
             'proveedor' => new ProveedorResource($proveedor),
             'documentos_faltantes' => $faltantes,
-            'siguiente_paso' => SiguientePasoDelRegistro::de($proveedor->estado, $faltantes)->value,
+            'siguiente_paso' => $this->siguientePaso($proveedor, $faltantes),
             'apto_para_ofertas' => $this->equipos->tieneEquipoApto($proveedor->id),
             'disponibilidad' => DisponibilidadResource::de($proveedor),
             'disponibilidad_empresa' => DisponibilidadResource::de($proveedor),
@@ -173,6 +177,23 @@ final class MiProveedorController
         }
 
         return response()->json(['proveedor' => new ProveedorResource($proveedor->refresh())]);
+    }
+
+    /**
+     * El titular que opera drones propios (independiente o tercero) agrega al registro el dron y sus fotos; Agrocom (`propio`) los
+     * carga la oficina, y el piloto de una empresa nunca los pide (ver {@see verComoPiloto()}).
+     *
+     * @param  list<string>  $faltantes
+     */
+    private function siguientePaso(Proveedor $proveedor, array $faltantes): string
+    {
+        if ($proveedor->tipo === TipoProveedor::Propio) {
+            return SiguientePasoDelRegistro::de($proveedor->estado, $faltantes)->value;
+        }
+
+        $conDron = $this->drones->tieneDron($proveedor->id);
+
+        return SiguientePasoDelRegistro::de($proveedor->estado, $faltantes, $conDron, $conDron && $this->drones->tieneDronConFotosSubidas($proveedor->id))->value;
     }
 
     /** El piloto ve su proveedor en solo lectura; el alcance sale de su propio registro de piloto. */

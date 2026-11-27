@@ -45,7 +45,7 @@ function dsMundo(): void
 {
     Esquema::migrar([
         'create_sec_user_table', 'create_plt_bitacoras_table', 'create_sol_zonas_table', 'create_prv_proveedores_table', 'create_prv_pilotos_table',
-        'create_prv_documentos_table', 'create_sec_user_preferencia_table', 'agrega_disponibilidad_y_filtros_de_proveedor',
+        'create_prv_documentos_table', 'create_sec_user_preferencia_table', 'agrega_disponibilidad_y_filtros_de_proveedor', 'create_flo_drones_table', 'create_flo_equipos_table', 'create_neg_tablas_de_negociacion',
     ]);
 
     foreach (['prv_documentos', 'prv_pilotos', 'prv_proveedores'] as $tabla) {

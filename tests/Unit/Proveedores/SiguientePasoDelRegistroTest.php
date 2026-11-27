@@ -18,3 +18,15 @@ it('indica el siguiente paso del registro según el estado y los documentos falt
     'suspendido' => [EstadoAprobacion::Suspendido, [], SiguientePasoDelRegistro::Suspendido],
     'baja' => [EstadoAprobacion::Baja, [], SiguientePasoDelRegistro::Baja],
 ]);
+
+it('agrega el dron y sus fotos entre los documentos y la revisión, solo a quien opera drones propios', function (EstadoAprobacion $estado, array $faltantes, ?bool $conDron, bool $fotos, SiguientePasoDelRegistro $esperado) {
+    expect(SiguientePasoDelRegistro::de($estado, $faltantes, $conDron, $fotos))->toBe($esperado);
+})->with([
+    'los documentos van primero aunque falte el dron' => [EstadoAprobacion::Pendiente, ['seguro_responsabilidad'], false, false, SiguientePasoDelRegistro::SubirDocumentos],
+    'documentos al día y sin dron' => [EstadoAprobacion::Pendiente, [], false, false, SiguientePasoDelRegistro::RegistrarDron],
+    'con dron sin las fotos obligatorias' => [EstadoAprobacion::Pendiente, [], true, false, SiguientePasoDelRegistro::SubirFotosDron],
+    'con dron y las fotos subidas' => [EstadoAprobacion::Pendiente, [], true, true, SiguientePasoDelRegistro::EnRevision],
+    'quien no necesita dron pasa a revisión' => [EstadoAprobacion::Pendiente, [], null, false, SiguientePasoDelRegistro::EnRevision],
+    'rechazado corrige aunque falte el dron' => [EstadoAprobacion::Rechazado, [], false, false, SiguientePasoDelRegistro::Corregir],
+    'aprobado sigue listo' => [EstadoAprobacion::Aprobado, [], false, false, SiguientePasoDelRegistro::Listo],
+]);
