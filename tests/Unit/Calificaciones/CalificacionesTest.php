@@ -389,7 +389,7 @@ test('ocultar la calificación de un cliente recalcula la reputación del client
     $id = calCompletada();
     $resultado = app(CalificarComoProveedor::class)->ejecutar(CAL_TITULAR, $id, ['uuid_cliente' => (string) Str::uuid(), 'estrellas' => 1]);
 
-    app(ModerarCalificacion::class)->ocultar(CAL_ADMIN, $resultado['calificacion']->id, CausaModeracion::Represalia, 'Tras una disputa');
+    app(ModerarCalificacion::class)->ocultar(CAL_ADMIN, $resultado['calificacion']->id, CausaModeracion::Represalia, 'Tras un reclamo');
 
     expect(DB::table('sol_clientes')->find(1)->calificaciones_conteo)->toBe(0)
         ->and(DB::table('sol_clientes')->find(1)->calificacion_promedio)->toEqual('0.00');

@@ -19,7 +19,7 @@ use Ramsey\Uuid\Uuid;
  * de texto, fotos (con las reglas de las evidencias: peso máximo y disco privado) y eventos de
  * sistema que el servidor escribe al cambiar la solicitud.
  * Desde `adjudicada`; se escribe hasta el cierre del plazo de calificación (7 días
- * después de `finalizada`) o mientras haya una disputa abierta, y después queda de solo
+ * después de `finalizada`) o mientras haya un reclamo abierto, y después queda de solo
  * lectura. La consulta es incremental por cursor (el id del último mensaje recibido): el
  * cliente sondea cada pocos segundos con el chat abierto; un canal en tiempo real
  * podría reemplazar el sondeo sin cambiar los recursos.
@@ -254,7 +254,7 @@ final class Mensajeria
     private function soloLectura(DatosSolicitudNegociable $solicitud): bool
     {
         return match ($solicitud->estado) {
-            'adjudicada', 'en_ejecucion', 'disputada' => false,
+            'adjudicada', 'en_ejecucion', 'en_reclamo' => false,
             'finalizada', 'calificada' => $solicitud->finalizadaEn === null
                 || Carbon::parse($solicitud->finalizadaEn)->addDays($this->parametros->plazoCalificacionDias())->lt(Carbon::now()),
             default => true,

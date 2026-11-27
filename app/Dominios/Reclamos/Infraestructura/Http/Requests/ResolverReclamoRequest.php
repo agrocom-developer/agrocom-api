@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Dominios\Disputas\Infraestructura\Http\Requests;
+namespace App\Dominios\Reclamos\Infraestructura\Http\Requests;
 
-use App\Dominios\Disputas\Aplicacion\ParametrosDeDisputa;
-use App\Dominios\Disputas\Dominio\ResultadoDisputa;
+use App\Dominios\Reclamos\Aplicacion\ParametrosDeReclamo;
+use App\Dominios\Reclamos\Dominio\ResultadoReclamo;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-/** Formulario del panel para resolver una disputa: resultado, reembolso, motivo y marcas. */
-final class ResolverDisputaRequest extends FormRequest
+/** Formulario del panel para resolver un reclamo: resultado, reembolso, motivo y marcas. */
+final class ResolverReclamoRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -19,9 +19,9 @@ final class ResolverDisputaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'resultado' => ['required', 'string', Rule::enum(ResultadoDisputa::class)],
+            'resultado' => ['required', 'string', Rule::enum(ResultadoReclamo::class)],
             'monto_reembolso' => ['nullable', 'string', 'regex:/^\d{1,12}([.,]\d{1,2})?$/'],
-            'motivo' => ['required', 'string', 'min:3', 'max:'.app(ParametrosDeDisputa::class)->textoMax()],
+            'motivo' => ['required', 'string', 'min:3', 'max:'.app(ParametrosDeReclamo::class)->textoMax()],
             'derivada_a_seguro' => ['nullable', 'boolean'],
             'mala_fe_cliente' => ['nullable', 'boolean'],
         ];
@@ -30,6 +30,6 @@ final class ResolverDisputaRequest extends FormRequest
     /** @return array<string, string> */
     public function attributes(): array
     {
-        return __('disputas.campos');
+        return __('reclamos.campos');
     }
 }

@@ -18,9 +18,9 @@ function transicionesEsperadas(): array
         'con_ofertas' => ['abierta', 'adjudicada', 'cancelada'],
         'adjudicada' => ['en_ejecucion', 'abierta', 'cancelada'],
         'en_ejecucion' => ['finalizada'],
-        'finalizada' => ['calificada', 'disputada'],
-        'calificada' => ['disputada'],
-        'disputada' => ['finalizada', 'calificada', 'cancelada'],
+        'finalizada' => ['calificada', 'en_reclamo'],
+        'calificada' => ['en_reclamo'],
+        'en_reclamo' => ['finalizada', 'calificada', 'cancelada'],
         'cancelada' => [],
     ];
 }
@@ -56,10 +56,10 @@ test('calificada y cancelada son terminales para la lista de activas', function 
         ->and(EstadoSolicitud::EnEjecucion->esTerminal())->toBeFalse();
 });
 
-test('no existe cancelación desde en_ejecucion: lo no ejecutado se cierra y, si hay desacuerdo, se disputa', function () {
+test('no existe cancelación desde en_ejecucion: lo no ejecutado se cierra y, si hay desacuerdo, se reclamo', function () {
     expect(TransicionesSolicitud::permitida(EstadoSolicitud::EnEjecucion, EstadoSolicitud::Cancelada))->toBeFalse()
         ->and(TransicionesSolicitud::destinosDesde(EstadoSolicitud::EnEjecucion))->toBe([EstadoSolicitud::Finalizada])
-        ->and(TransicionesSolicitud::permitida(EstadoSolicitud::Finalizada, EstadoSolicitud::Disputada))->toBeTrue();
+        ->and(TransicionesSolicitud::permitida(EstadoSolicitud::Finalizada, EstadoSolicitud::EnReclamo))->toBeTrue();
 });
 
 test('ningún estado vuelve a borrador y nadie se transiciona a sí mismo', function () {
@@ -85,7 +85,7 @@ test('el cliente cancela mientras la solicitud no esté en ejecución', function
     $cancelables = array_filter(EstadoSolicitud::cases(), fn (EstadoSolicitud $e) => $e->admiteCancelacion());
 
     expect(array_map(fn (EstadoSolicitud $e) => $e->value, array_values($cancelables)))->toBe([
-        'borrador', 'abierta', 'con_ofertas', 'adjudicada', 'disputada',
+        'borrador', 'abierta', 'con_ofertas', 'adjudicada', 'en_reclamo',
     ]);
 });
 

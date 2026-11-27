@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Dominios\Disputas\Dominio;
+namespace App\Dominios\Reclamos\Dominio;
 
 use DateTimeImmutable;
 
 /**
- * Los plazos de la política de disputas: el cliente abre hasta 72 horas después
+ * Los plazos de la política de reclamos: el cliente abre hasta 72 horas después
  * de `ejecutada`, el proveedor dentro de su ventana, la contraparte responde en 48
  * horas y las partes apelan en 7 días desde la resolución. Pura.
  */
-final class PlazosDeDisputa
+final class PlazosDeReclamo
 {
     public static function clientePuedeAbrir(DateTimeImmutable $ejecutadaEn, DateTimeImmutable $ahora, int $horas): bool
     {

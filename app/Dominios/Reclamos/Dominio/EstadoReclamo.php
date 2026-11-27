@@ -1,19 +1,19 @@
 <?php
 
-namespace App\Dominios\Disputas\Dominio;
+namespace App\Dominios\Reclamos\Dominio;
 
 /**
- * Estado de una disputa (especificación §5.5). Solo `MaquinaEstadosDisputa` lo
- * cambia, consultando {@see TransicionesDisputa}.
+ * Estado de un reclamo (especificación §5.5). Solo `MaquinaEstadosReclamo` lo
+ * cambia, consultando {@see TransicionesReclamo}.
  */
-enum EstadoDisputa: string
+enum EstadoReclamo: string
 {
     case Abierta = 'abierta';
     case EnRevision = 'en_revision';
     case Resuelta = 'resuelta';
     case Retirada = 'retirada';
 
-    /** La disputa admite argumentos de las partes y la decisión del administrador. */
+    /** El reclamo admite argumentos de las partes y la decisión del administrador. */
     public function estaViva(): bool
     {
         return $this === self::Abierta || $this === self::EnRevision;

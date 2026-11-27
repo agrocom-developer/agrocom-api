@@ -34,7 +34,7 @@ final class DestinoDeNotificacion
             // La cola de documentos no tiene ficha por documento: lleva a la cola.
             RecursoNotificable::Documento => ['panel.documentos.index', 'proveedores.documento.ver', false],
             RecursoNotificable::Solicitud => ['panel.solicitudes.show', 'solicitudes.solicitud.ver', true],
-            RecursoNotificable::Disputa => ['panel.disputas.show', 'disputas.disputa.ver', true],
+            RecursoNotificable::Reclamo => ['panel.reclamos.show', 'reclamos.reclamo.ver', true],
             RecursoNotificable::Cliente => ['panel.clientes.show', 'solicitudes.cliente.ver', true],
         };
 

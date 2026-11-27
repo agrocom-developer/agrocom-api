@@ -1,17 +1,17 @@
 <?php
 
-namespace App\Dominios\Disputas\Dominio\Excepciones;
+namespace App\Dominios\Reclamos\Dominio\Excepciones;
 
 use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use RuntimeException;
 
 /**
- * Una operación de disputa que las reglas no permiten. `esAjeno`: el registro
+ * Una operación de reclamo que las reglas no permiten. `esAjeno`: el registro
  * existe pero no es de quien pregunta y la API responde 404 (invariante 5 de
- * CLAUDE.md). `esConflicto`: el estado de la disputa no admite el paso y la API
+ * CLAUDE.md). `esConflicto`: el estado del reclamo no admite el paso y la API
  * responde 409.
  */
-final class DisputaInvalida extends RuntimeException
+final class ReclamoInvalido extends RuntimeException
 {
     private function __construct(
         string $mensaje,
@@ -24,94 +24,94 @@ final class DisputaInvalida extends RuntimeException
 
     public static function servicioAjeno(): self
     {
-        return new self(Texto::de('disputas.errores.servicio_ajeno'), true);
+        return new self(Texto::de('reclamos.errores.servicio_ajeno'), true);
     }
 
-    public static function disputaAjena(): self
+    public static function reclamoAjeno(): self
     {
-        return new self(Texto::de('disputas.errores.disputa_ajena'), true);
+        return new self(Texto::de('reclamos.errores.reclamo_ajeno'), true);
     }
 
     public static function sinProveedor(): self
     {
-        return new self(Texto::de('disputas.errores.sin_proveedor'), true);
+        return new self(Texto::de('reclamos.errores.sin_proveedor'), true);
     }
 
     public static function yaExiste(): self
     {
-        return new self(Texto::de('disputas.errores.ya_existe'), false, true);
+        return new self(Texto::de('reclamos.errores.ya_existe'), false, true);
     }
 
     public static function motivoInvalido(string $motivo): self
     {
-        return new self(Texto::de('disputas.errores.motivo_invalido', ['motivo' => $motivo]), false, false, 'motivo');
+        return new self(Texto::de('reclamos.errores.motivo_invalido', ['motivo' => $motivo]), false, false, 'motivo');
     }
 
-    public static function servicioNoDisputable(string $estado): self
+    public static function servicioNoDeclamable(string $estado): self
     {
-        return new self(Texto::de('disputas.errores.servicio_no_disputable', ['estado' => Texto::de('solicitudes.estado.'.$estado)]));
+        return new self(Texto::de('reclamos.errores.servicio_no_declamable', ['estado' => Texto::de('solicitudes.estado.'.$estado)]));
     }
 
     public static function plazoVencido(): self
     {
-        return new self(Texto::de('disputas.errores.plazo_vencido'));
+        return new self(Texto::de('reclamos.errores.plazo_vencido'));
     }
 
     public static function montoInvalido(string $referencia): self
     {
-        return new self(Texto::de('disputas.errores.monto_invalido', ['monto' => $referencia]), false, false, 'monto_en_disputa');
+        return new self(Texto::de('reclamos.errores.monto_invalido', ['monto' => $referencia]), false, false, 'monto_en_reclamo');
     }
 
     public static function textoRequerido(): self
     {
-        return new self(Texto::de('disputas.errores.texto_requerido'), false, false, 'texto');
+        return new self(Texto::de('reclamos.errores.texto_requerido'), false, false, 'texto');
     }
 
     public static function motivoRequerido(): self
     {
-        return new self(Texto::de('disputas.errores.motivo_requerido'), false, false, 'motivo');
+        return new self(Texto::de('reclamos.errores.motivo_requerido'), false, false, 'motivo');
     }
 
     public static function noAdmiteMensajes(): self
     {
-        return new self(Texto::de('disputas.errores.no_admite_mensajes'), false, true);
+        return new self(Texto::de('reclamos.errores.no_admite_mensajes'), false, true);
     }
 
     public static function noSeRetira(): self
     {
-        return new self(Texto::de('disputas.errores.no_se_retira'), false, true);
+        return new self(Texto::de('reclamos.errores.no_se_retira'), false, true);
     }
 
     public static function soloQuienLaAbrio(): self
     {
-        return new self(Texto::de('disputas.errores.solo_quien_la_abrio'), false, false, 'disputa');
+        return new self(Texto::de('reclamos.errores.solo_quien_la_abrio'), false, false, 'reclamo');
     }
 
     public static function noSeApela(): self
     {
-        return new self(Texto::de('disputas.errores.no_se_apela'), false, true);
+        return new self(Texto::de('reclamos.errores.no_se_apela'), false, true);
     }
 
     public static function apelacionVencida(): self
     {
-        return new self(Texto::de('disputas.errores.apelacion_vencida'));
+        return new self(Texto::de('reclamos.errores.apelacion_vencida'));
     }
 
     public static function noSeResuelve(): self
     {
-        return new self(Texto::de('disputas.errores.no_se_resuelve'), false, true);
+        return new self(Texto::de('reclamos.errores.no_se_resuelve'), false, true);
     }
 
     public static function reembolsoInvalido(string $causa): self
     {
-        return new self(Texto::de('disputas.errores.reembolso.'.$causa), false, false, 'monto_reembolso');
+        return new self(Texto::de('reclamos.errores.reembolso.'.$causa), false, false, 'monto_reembolso');
     }
 
     public static function transicionNoPermitida(string $desde, string $hacia): self
     {
-        return new self(Texto::de('disputas.errores.transicion_no_permitida', [
-            'desde' => Texto::de('disputas.estado.'.$desde),
-            'hacia' => Texto::de('disputas.estado.'.$hacia),
+        return new self(Texto::de('reclamos.errores.transicion_no_permitida', [
+            'desde' => Texto::de('reclamos.estado.'.$desde),
+            'hacia' => Texto::de('reclamos.estado.'.$hacia),
         ]), false, true);
     }
 }

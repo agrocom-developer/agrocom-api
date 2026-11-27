@@ -14,7 +14,7 @@ use Illuminate\View\View;
  * `GET /panel/avisos` (`panel.avisos.index`): los avisos que el sistema envió a
  * clientes, proveedores y administradores, del más nuevo al más viejo, con su
  * destinatario y si ya los leyó. Solo lectura: es la forma de comprobar que un
- * evento (una adjudicación, una disputa, una aprobación) avisó a quien debía.
+ * evento (una adjudicación, un reclamo, una aprobación) avisó a quien debía.
  *
  * A diferencia de la campana —que muestra solo los avisos de la cuenta que mira—,
  * esta pantalla ve los de todas las cuentas; por eso exige su propio permiso,

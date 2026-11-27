@@ -1,60 +1,60 @@
 <?php
 
-namespace App\Dominios\Disputas\Aplicacion;
+namespace App\Dominios\Reclamos\Aplicacion;
 
-use App\Dominios\Disputas\Dominio\Excepciones\DisputaInvalida;
-use App\Dominios\Disputas\Dominio\ParteDeDisputa;
-use App\Dominios\Disputas\Infraestructura\Eloquent\Disputa;
-use App\Dominios\Disputas\Infraestructura\Eloquent\MensajeDeDisputa;
+use App\Dominios\Reclamos\Dominio\Excepciones\ReclamoInvalido;
+use App\Dominios\Reclamos\Dominio\ParteDeReclamo;
+use App\Dominios\Reclamos\Infraestructura\Eloquent\MensajeDeReclamo;
+use App\Dominios\Reclamos\Infraestructura\Eloquent\Reclamo;
 
 /**
- * Un mensaje en la conversación de una disputa: de una parte (`POST
- * /disputas/{id}/mensajes`, en la app) o de soporte (en el panel, donde además
- * puede pedir información a la contraparte). Solo mientras la disputa está viva:
+ * Un mensaje en la conversación de un reclamo: de una parte (`POST
+ * /reclamos/{id}/mensajes`, en la app) o de soporte (en el panel, donde además
+ * puede pedir información a la contraparte). Solo mientras el reclamo está viva:
  * una resuelta se reabre apelando, no escribiendo. Solo se inserta; nunca se edita.
  */
-final class AgregarMensajeDeDisputa
+final class AgregarMensajeDeReclamo
 {
     public function __construct(
-        private readonly ParticipanteDeDisputa $participantes,
-        private readonly ParametrosDeDisputa $parametros,
+        private readonly ParticipanteDeReclamo $participantes,
+        private readonly ParametrosDeReclamo $parametros,
     ) {}
 
-    /** @throws DisputaInvalida */
-    public function comoParte(int $usuarioId, ParteDeDisputa $parte, int $disputaId, string $texto): MensajeDeDisputa
+    /** @throws ReclamoInvalido */
+    public function comoParte(int $usuarioId, ParteDeReclamo $parte, int $reclamoId, string $texto): MensajeDeReclamo
     {
-        $disputa = $this->participantes->disputa($usuarioId, $parte, $disputaId);
+        $reclamo = $this->participantes->reclamo($usuarioId, $parte, $reclamoId);
 
-        return $this->agregar($disputa, $usuarioId, $parte->value, 'mensaje', $texto);
+        return $this->agregar($reclamo, $usuarioId, $parte->value, 'mensaje', $texto);
     }
 
     /**
      * Soporte escribe a las partes; con `$pideInformacion` el mensaje queda marcado como
      * solicitud de información a la contraparte (que responde en 48 horas).
      *
-     * @throws DisputaInvalida
+     * @throws ReclamoInvalido
      */
-    public function comoSoporte(int $actorUsuarioId, int $disputaId, string $texto, bool $pideInformacion = false): MensajeDeDisputa
+    public function comoSoporte(int $actorUsuarioId, int $reclamoId, string $texto, bool $pideInformacion = false): MensajeDeReclamo
     {
-        $disputa = Disputa::query()->find($disputaId) ?? throw DisputaInvalida::disputaAjena();
+        $reclamo = Reclamo::query()->find($reclamoId) ?? throw ReclamoInvalido::reclamoAjeno();
 
-        return $this->agregar($disputa, $actorUsuarioId, 'soporte', $pideInformacion ? 'informacion' : 'mensaje', $texto);
+        return $this->agregar($reclamo, $actorUsuarioId, 'soporte', $pideInformacion ? 'informacion' : 'mensaje', $texto);
     }
 
-    private function agregar(Disputa $disputa, int $usuarioId, string $rol, string $tipo, string $texto): MensajeDeDisputa
+    private function agregar(Reclamo $reclamo, int $usuarioId, string $rol, string $tipo, string $texto): MensajeDeReclamo
     {
         $texto = trim($texto);
 
         if ($texto === '') {
-            throw DisputaInvalida::textoRequerido();
+            throw ReclamoInvalido::textoRequerido();
         }
 
-        if (! $disputa->estado->estaViva()) {
-            throw DisputaInvalida::noAdmiteMensajes();
+        if (! $reclamo->estado->estaViva()) {
+            throw ReclamoInvalido::noAdmiteMensajes();
         }
 
-        return MensajeDeDisputa::query()->create([
-            'disputa_id' => $disputa->id,
+        return MensajeDeReclamo::query()->create([
+            'reclamo_id' => $reclamo->id,
             'autor_usuario_id' => $usuarioId,
             'autor_rol' => $rol,
             'tipo' => $tipo,

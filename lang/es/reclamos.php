@@ -15,7 +15,7 @@ return [
     'campos' => [
         'motivo' => 'motivo',
         'detalle' => 'detalle',
-        'monto_en_disputa' => 'monto reclamado',
+        'monto_en_reclamo' => 'monto reclamado',
         'texto' => 'mensaje',
         'pruebas' => 'pruebas',
         'resultado' => 'resultado',
@@ -59,11 +59,11 @@ return [
 
     'errores' => [
         'servicio_ajeno' => 'El servicio no existe.',
-        'disputa_ajena' => 'El reclamo no existe.',
+        'reclamo_ajeno' => 'El reclamo no existe.',
         'sin_proveedor' => 'Tu cuenta no pertenece a ningún proveedor.',
         'ya_existe' => 'Este servicio ya tiene un reclamo. Hay uno solo por servicio.',
         'motivo_invalido' => 'El motivo «:motivo» no corresponde a tu lado del reclamo.',
-        'servicio_no_disputable' => 'Un servicio «:estado» no admite este reclamo.',
+        'servicio_no_declamable' => 'Un servicio «:estado» no admite este reclamo.',
         'plazo_vencido' => 'El plazo para abrir el reclamo venció.',
         'monto_invalido' => 'El monto reclamado debe ser mayor que cero y no puede superar :monto.',
         'texto_requerido' => 'Escribe el mensaje.',
@@ -95,7 +95,7 @@ return [
         'filtro_vacio_titulo' => 'Sin resultados para este filtro',
         'filtro_vacio_detalle' => 'Cambia el estado para ver más reclamos.',
         'paginacion_aria' => 'Paginación de reclamos',
-        'col_disputa' => 'Reclamo',
+        'col_reclamo' => 'Reclamo',
         'col_motivo' => 'Motivo',
         'col_proveedor' => 'Proveedor',
         'col_monto' => 'Monto reclamado',

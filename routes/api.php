@@ -3,7 +3,6 @@
 use App\Dominios\Calificaciones\Infraestructura\Http\Controllers\Api\CalificacionesDelClienteController;
 use App\Dominios\Calificaciones\Infraestructura\Http\Controllers\Api\CalificacionesDelProveedorController;
 use App\Dominios\Compartido\Infraestructura\Http\Controllers\Api\LimitesDeMediosController;
-use App\Dominios\Disputas\Infraestructura\Http\Controllers\Api\DisputasController;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Api\DronesController;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Api\EquiposController;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Api\FotosDeDronController;
@@ -21,6 +20,7 @@ use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\DocumentosCont
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\MiProveedorController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\PilotosController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\RegistroProveedorController;
+use App\Dominios\Reclamos\Infraestructura\Http\Controllers\Api\ReclamosController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\ContrasenaDeCuentaController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\DispositivoController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\EliminacionDeCuentaController;
@@ -273,7 +273,7 @@ Route::middleware(['auth:sanctum', 'cuenta.sin-eliminacion'])->group(function ()
     Route::get('/solicitudes/{id}/pago-confirmado', [PagoController::class, 'show'])
         ->whereNumber('id')
         ->name('api.solicitudes.pago-confirmado.show');
-    // Precio final: el cliente, que paga, lo confirma o abre una disputa; ambas partes lo consultan.
+    // Precio final: el cliente, que paga, lo confirma o abre un reclamo; ambas partes lo consultan.
     Route::get('/solicitudes/{id}/precio-final', [PrecioFinalController::class, 'show'])
         ->whereNumber('id')
         ->name('api.solicitudes.precio-final.show');
@@ -381,29 +381,29 @@ Route::middleware(['auth:sanctum', 'cuenta.sin-eliminacion'])->group(function ()
         ->whereNumber('id')
         ->name('api.calificaciones.reportar');
 
-    // Disputas (ADR 0033 y 0039): el cliente o el proveedor abren una disputa por
+    // Reclamos (ADR 0033 y 0039): el cliente o el proveedor abren un reclamo por
     // servicio, la argumentan, la retiran o apelan la resolución. Ambas apps comparten
     // la superficie; el lado lo decide el permiso del rol del token. Requieren red; el
-    // alcance lo hacen los casos de uso (una disputa ajena es 404).
-    Route::post('/solicitudes/{id}/disputas', [DisputasController::class, 'store'])
+    // alcance lo hacen los casos de uso (un reclamo ajeno es 404).
+    Route::post('/solicitudes/{id}/reclamos', [ReclamosController::class, 'store'])
         ->whereNumber('id')
-        ->name('api.solicitudes.disputas.store');
-    Route::get('/solicitudes/{id}/disputa', [DisputasController::class, 'deLaSolicitud'])
+        ->name('api.solicitudes.reclamos.store');
+    Route::get('/solicitudes/{id}/reclamo', [ReclamosController::class, 'deLaSolicitud'])
         ->whereNumber('id')
-        ->name('api.solicitudes.disputa.show');
-    Route::get('/disputas', [DisputasController::class, 'index'])->name('api.disputas.index');
-    Route::get('/disputas/{id}', [DisputasController::class, 'show'])
+        ->name('api.solicitudes.reclamo.show');
+    Route::get('/reclamos', [ReclamosController::class, 'index'])->name('api.reclamos.index');
+    Route::get('/reclamos/{id}', [ReclamosController::class, 'show'])
         ->whereNumber('id')
-        ->name('api.disputas.show');
-    Route::post('/disputas/{id}/mensajes', [DisputasController::class, 'mensaje'])
+        ->name('api.reclamos.show');
+    Route::post('/reclamos/{id}/mensajes', [ReclamosController::class, 'mensaje'])
         ->whereNumber('id')
-        ->name('api.disputas.mensajes');
-    Route::post('/disputas/{id}/retirar', [DisputasController::class, 'retirar'])
+        ->name('api.reclamos.mensajes');
+    Route::post('/reclamos/{id}/retirar', [ReclamosController::class, 'retirar'])
         ->whereNumber('id')
-        ->name('api.disputas.retirar');
-    Route::post('/disputas/{id}/apelar', [DisputasController::class, 'apelar'])
+        ->name('api.reclamos.retirar');
+    Route::post('/reclamos/{id}/apelar', [ReclamosController::class, 'apelar'])
         ->whereNumber('id')
-        ->name('api.disputas.apelar');
+        ->name('api.reclamos.apelar');
 
     // Avisos in-app de la cuenta (ADR 0025): las apps no tienen campana de panel.
     Route::get('/notificaciones', [NotificacionesController::class, 'index'])->name('api.notificaciones.index');

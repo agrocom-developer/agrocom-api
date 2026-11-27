@@ -1,28 +1,28 @@
 <?php
 
-namespace App\Dominios\Disputas\Infraestructura\Http\Resources;
+namespace App\Dominios\Reclamos\Infraestructura\Http\Resources;
 
-use App\Dominios\Disputas\Infraestructura\Eloquent\Disputa;
-use App\Dominios\Disputas\Infraestructura\Eloquent\MensajeDeDisputa;
-use App\Dominios\Disputas\Infraestructura\Eloquent\ResolucionDeDisputa;
+use App\Dominios\Reclamos\Infraestructura\Eloquent\MensajeDeReclamo;
+use App\Dominios\Reclamos\Infraestructura\Eloquent\Reclamo;
+use App\Dominios\Reclamos\Infraestructura\Eloquent\ResolucionDeReclamo;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use OpenApi\Attributes as OA;
 
-/** @mixin Disputa */
+/** @mixin Reclamo */
 #[OA\Schema(
-    schema: 'Disputa',
-    title: 'Disputa',
+    schema: 'Reclamo',
+    title: 'Reclamo',
     description: 'El reclamo de un servicio (especificación §4.8, ADR 0033): uno por solicitud. Lo abre el cliente (hasta 72 horas después de `ejecutada`) o el proveedor (cobro pendiente, acceso negado o calificación abusiva). '
         .'Los importes son decimales exactos en string. `mensajes` y `resoluciones` solo viajan en el detalle. Los reembolsos se liquidan entre las partes fuera de la app.',
-    required: ['id', 'solicitud_id', 'abierta_por', 'motivo', 'detalle', 'monto_en_disputa', 'estado', 'ronda', 'creada_en'],
+    required: ['id', 'solicitud_id', 'abierta_por', 'motivo', 'detalle', 'monto_en_reclamo', 'estado', 'ronda', 'creada_en'],
     properties: [
         new OA\Property(property: 'id', type: 'integer', example: 9),
         new OA\Property(property: 'solicitud_id', type: 'integer', example: 31),
         new OA\Property(property: 'abierta_por', type: 'string', enum: ['cliente', 'proveedor']),
         new OA\Property(property: 'motivo', type: 'string', enum: ['cobertura_incompleta', 'mala_aplicacion', 'dano_a_cultivos_o_terceros', 'producto_distinto', 'equipo_ausente', 'evidencia_faltante', 'cobro_indebido', 'trato_inadecuado', 'cobro_pendiente', 'acceso_negado', 'calificacion_abusiva']),
         new OA\Property(property: 'detalle', type: 'string'),
-        new OA\Property(property: 'monto_en_disputa', type: 'string', example: '12000.00'),
+        new OA\Property(property: 'monto_en_reclamo', type: 'string', example: '12000.00'),
         new OA\Property(property: 'estado', type: 'string', enum: ['abierta', 'en_revision', 'resuelta', 'retirada']),
         new OA\Property(property: 'ronda', description: '1 es el reclamo original; 2, la apelación (una sola vez).', type: 'integer', enum: [1, 2]),
         new OA\Property(property: 'responde_antes_de', description: 'Hasta cuándo responde la contraparte (48 horas por defecto).', type: 'string', format: 'date-time', nullable: true),
@@ -63,7 +63,7 @@ use OpenApi\Attributes as OA;
     ],
     type: 'object',
 )]
-final class DisputaResource extends JsonResource
+final class ReclamoResource extends JsonResource
 {
     /** @return array<string, mixed> */
     public function toArray(Request $request): array
@@ -74,20 +74,20 @@ final class DisputaResource extends JsonResource
             'abierta_por' => $this->abierta_por_rol->value,
             'motivo' => $this->motivo->value,
             'detalle' => $this->detalle,
-            'monto_en_disputa' => $this->monto_en_disputa,
+            'monto_en_reclamo' => $this->monto_en_reclamo,
             'estado' => $this->estado->value,
             'ronda' => $this->ronda,
             'responde_antes_de' => $this->responde_antes_de?->toIso8601String(),
             'apelable_hasta' => $this->apelable_hasta?->toIso8601String(),
             'creada_en' => $this->created_at?->toIso8601String(),
-            'mensajes' => $this->whenLoaded('mensajes', fn () => $this->mensajes->map(fn (MensajeDeDisputa $mensaje): array => [
+            'mensajes' => $this->whenLoaded('mensajes', fn () => $this->mensajes->map(fn (MensajeDeReclamo $mensaje): array => [
                 'id' => $mensaje->id,
                 'autor_rol' => $mensaje->autor_rol,
                 'tipo' => $mensaje->tipo,
                 'texto' => $mensaje->texto,
                 'creado_en' => $mensaje->created_at->toIso8601String(),
             ])->all()),
-            'resoluciones' => $this->whenLoaded('resoluciones', fn () => $this->resoluciones->map(fn (ResolucionDeDisputa $resolucion): array => [
+            'resoluciones' => $this->whenLoaded('resoluciones', fn () => $this->resoluciones->map(fn (ResolucionDeReclamo $resolucion): array => [
                 'ronda' => $resolucion->ronda,
                 'resultado' => $resolucion->resultado->value,
                 'monto_reembolso' => $resolucion->monto_reembolso,

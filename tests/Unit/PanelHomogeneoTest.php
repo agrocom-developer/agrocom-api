@@ -184,7 +184,7 @@ function panelHomogeneoMaquinasSinFicha(): array
         'TransicionesSolicitud' => 'la crea el cliente desde la app; el panel solo la consulta y la cancela con motivo en un modal',
         'TransicionesOferta' => 'las generan el cliente y el proveedor al negociar; el panel las consulta y cierra la negociación de un proveedor con motivo en un modal',
         'TransicionesCalificacion' => 'las escriben los clientes y los proveedores desde la app; el panel las modera (ocultar o dejar visible) con causa y motivo en un modal',
-        'TransicionesDisputa' => 'las abren las partes desde la app; el panel las toma, media y resuelve con resultado, reembolso y motivo en un modal',
+        'TransicionesReclamo' => 'los abren las partes desde la app; el panel los toma, media y resuelve con resultado, reembolso y motivo en un modal',
     ];
 }
 

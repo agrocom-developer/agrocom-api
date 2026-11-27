@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Dominios\Disputas\Dominio;
+namespace App\Dominios\Reclamos\Dominio;
 
 /**
- * Motivos de una disputa (política de disputas, «Motivos»). El cliente alega sobre
+ * Motivos de un reclamo (política de reclamos, «Motivos»). El cliente alega sobre
  * la ejecución; el proveedor, por un cobro pendiente, por acceso negado al lote o
  * por una calificación abusiva.
  */
-enum MotivoDisputa: string
+enum MotivoReclamo: string
 {
     case CoberturaIncompleta = 'cobertura_incompleta';
     case MalaAplicacion = 'mala_aplicacion';
@@ -46,8 +46,8 @@ enum MotivoDisputa: string
     public function estadosDeSolicitudDelProveedor(): array
     {
         return match ($this) {
-            self::CobroPendiente => ['finalizada', 'calificada', 'disputada'],
-            self::AccesoNegado => ['adjudicada', 'en_ejecucion', 'finalizada', 'calificada', 'disputada', 'cancelada'],
+            self::CobroPendiente => ['finalizada', 'calificada', 'en_reclamo'],
+            self::AccesoNegado => ['adjudicada', 'en_ejecucion', 'finalizada', 'calificada', 'en_reclamo', 'cancelada'],
             self::CalificacionAbusiva => ['finalizada', 'calificada'],
             default => [],
         };

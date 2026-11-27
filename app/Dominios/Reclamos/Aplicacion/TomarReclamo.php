@@ -1,30 +1,30 @@
 <?php
 
-namespace App\Dominios\Disputas\Aplicacion;
+namespace App\Dominios\Reclamos\Aplicacion;
 
-use App\Dominios\Disputas\Aplicacion\MaquinaEstados\MaquinaEstadosDisputa;
-use App\Dominios\Disputas\Dominio\EstadoDisputa;
-use App\Dominios\Disputas\Dominio\Excepciones\DisputaInvalida;
-use App\Dominios\Disputas\Infraestructura\Eloquent\Disputa;
+use App\Dominios\Reclamos\Aplicacion\MaquinaEstados\MaquinaEstadosReclamo;
+use App\Dominios\Reclamos\Dominio\EstadoReclamo;
+use App\Dominios\Reclamos\Dominio\Excepciones\ReclamoInvalido;
+use App\Dominios\Reclamos\Infraestructura\Eloquent\Reclamo;
 
 /**
- * Soporte toma una disputa abierta (política de disputas, «Proceso», punto 2):
- * pasa a `en_revision` con quien la atiende. Idempotente: tomar una disputa ya
+ * Soporte toma un reclamo abierto (política de reclamos, «Proceso», punto 2):
+ * pasa a `en_revision` con quien lo atiende. Idempotente: tomar un reclamo ya
  * en revisión no hace nada.
  */
-final class TomarDisputa
+final class TomarReclamo
 {
-    public function __construct(private readonly MaquinaEstadosDisputa $estados) {}
+    public function __construct(private readonly MaquinaEstadosReclamo $estados) {}
 
-    /** @throws DisputaInvalida */
-    public function ejecutar(int $actorUsuarioId, int $disputaId): Disputa
+    /** @throws ReclamoInvalido */
+    public function ejecutar(int $actorUsuarioId, int $reclamoId): Reclamo
     {
-        $disputa = Disputa::query()->find($disputaId) ?? throw DisputaInvalida::disputaAjena();
+        $reclamo = Reclamo::query()->find($reclamoId) ?? throw ReclamoInvalido::reclamoAjeno();
 
-        if ($disputa->estado === EstadoDisputa::EnRevision) {
-            return $disputa;
+        if ($reclamo->estado === EstadoReclamo::EnRevision) {
+            return $reclamo;
         }
 
-        return $this->estados->transicionar($disputa, EstadoDisputa::EnRevision, $actorUsuarioId, 'administrador', null, ['atendida_por' => $actorUsuarioId]);
+        return $this->estados->transicionar($reclamo, EstadoReclamo::EnRevision, $actorUsuarioId, 'administrador', null, ['atendida_por' => $actorUsuarioId]);
     }
 }

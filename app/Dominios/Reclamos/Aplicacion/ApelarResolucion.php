@@ -1,66 +1,66 @@
 <?php
 
-namespace App\Dominios\Disputas\Aplicacion;
+namespace App\Dominios\Reclamos\Aplicacion;
 
-use App\Dominios\Disputas\Aplicacion\MaquinaEstados\MaquinaEstadosDisputa;
-use App\Dominios\Disputas\Contratos\Eventos\DisputaApelada;
-use App\Dominios\Disputas\Dominio\EstadoDisputa;
-use App\Dominios\Disputas\Dominio\Excepciones\DisputaInvalida;
-use App\Dominios\Disputas\Dominio\ParteDeDisputa;
-use App\Dominios\Disputas\Infraestructura\Eloquent\Disputa;
-use App\Dominios\Disputas\Infraestructura\Eloquent\MensajeDeDisputa;
+use App\Dominios\Reclamos\Aplicacion\MaquinaEstados\MaquinaEstadosReclamo;
+use App\Dominios\Reclamos\Contratos\Eventos\ReclamoApelado;
+use App\Dominios\Reclamos\Dominio\EstadoReclamo;
+use App\Dominios\Reclamos\Dominio\Excepciones\ReclamoInvalido;
+use App\Dominios\Reclamos\Dominio\ParteDeReclamo;
+use App\Dominios\Reclamos\Infraestructura\Eloquent\MensajeDeReclamo;
+use App\Dominios\Reclamos\Infraestructura\Eloquent\Reclamo;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Cualquiera de las partes apela una resolución, una sola vez y dentro de 7 días,
- * con pruebas nuevas (`POST /disputas/{id}/apelar`, política de disputas, «Proceso»,
- * punto 4): la disputa vuelve a `en_revision` en su segunda ronda y la apelación
+ * con pruebas nuevas (`POST /reclamos/{id}/apelar`, política de reclamos, «Proceso»,
+ * punto 4): el reclamo vuelve a `en_revision` en su segunda ronda y la apelación
  * queda como un mensaje con el texto de las pruebas. La primera resolución sigue
  * rigiendo hasta que la segunda la reemplace.
  */
 final class ApelarResolucion
 {
     public function __construct(
-        private readonly ParticipanteDeDisputa $participantes,
-        private readonly MaquinaEstadosDisputa $estados,
-        private readonly ParametrosDeDisputa $parametros,
+        private readonly ParticipanteDeReclamo $participantes,
+        private readonly MaquinaEstadosReclamo $estados,
+        private readonly ParametrosDeReclamo $parametros,
     ) {}
 
-    /** @throws DisputaInvalida */
-    public function ejecutar(int $usuarioId, ParteDeDisputa $parte, int $disputaId, string $pruebas): Disputa
+    /** @throws ReclamoInvalido */
+    public function ejecutar(int $usuarioId, ParteDeReclamo $parte, int $reclamoId, string $pruebas): Reclamo
     {
-        $disputa = $this->participantes->disputa($usuarioId, $parte, $disputaId);
+        $reclamo = $this->participantes->reclamo($usuarioId, $parte, $reclamoId);
         $pruebas = trim($pruebas);
 
         if ($pruebas === '') {
-            throw DisputaInvalida::textoRequerido();
+            throw ReclamoInvalido::textoRequerido();
         }
 
-        if ($disputa->estado !== EstadoDisputa::Resuelta || $disputa->ronda >= 2) {
-            throw DisputaInvalida::noSeApela();
+        if ($reclamo->estado !== EstadoReclamo::Resuelta || $reclamo->ronda >= 2) {
+            throw ReclamoInvalido::noSeApela();
         }
 
-        if ($disputa->apelable_hasta === null || $disputa->apelable_hasta->lessThan(Carbon::now())) {
-            throw DisputaInvalida::apelacionVencida();
+        if ($reclamo->apelable_hasta === null || $reclamo->apelable_hasta->lessThan(Carbon::now())) {
+            throw ReclamoInvalido::apelacionVencida();
         }
 
-        return DB::transaction(function () use ($disputa, $usuarioId, $parte, $pruebas): Disputa {
-            $apelada = $this->estados->transicionar($disputa, EstadoDisputa::EnRevision, $usuarioId, $parte->value, $pruebas, [
+        return DB::transaction(function () use ($reclamo, $usuarioId, $parte, $pruebas): Reclamo {
+            $apelada = $this->estados->transicionar($reclamo, EstadoReclamo::EnRevision, $usuarioId, $parte->value, $pruebas, [
                 'ronda' => 2,
                 'apelable_hasta' => null,
                 'responde_antes_de' => Carbon::now()->addHours($this->parametros->respuestaHoras()),
             ]);
 
-            MensajeDeDisputa::query()->create([
-                'disputa_id' => $apelada->id,
+            MensajeDeReclamo::query()->create([
+                'reclamo_id' => $apelada->id,
                 'autor_usuario_id' => $usuarioId,
                 'autor_rol' => $parte->value,
                 'tipo' => 'apelacion',
                 'texto' => mb_substr($pruebas, 0, $this->parametros->textoMax()),
             ]);
 
-            event(new DisputaApelada($apelada->id, $apelada->solicitud_id, $parte->value, $this->participantes->usuariosDe($apelada, $parte->contraparte())));
+            event(new ReclamoApelado($apelada->id, $apelada->solicitud_id, $parte->value, $this->participantes->usuariosDe($apelada, $parte->contraparte())));
 
             return $apelada;
         });

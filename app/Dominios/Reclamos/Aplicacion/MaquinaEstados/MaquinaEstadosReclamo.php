@@ -1,54 +1,54 @@
 <?php
 
-namespace App\Dominios\Disputas\Aplicacion\MaquinaEstados;
+namespace App\Dominios\Reclamos\Aplicacion\MaquinaEstados;
 
-use App\Dominios\Disputas\Dominio\EstadoDisputa;
-use App\Dominios\Disputas\Dominio\Excepciones\DisputaInvalida;
-use App\Dominios\Disputas\Dominio\TransicionesDisputa;
-use App\Dominios\Disputas\Infraestructura\Eloquent\Disputa;
-use App\Dominios\Disputas\Infraestructura\Eloquent\HistorialDeDisputa;
+use App\Dominios\Reclamos\Dominio\EstadoReclamo;
+use App\Dominios\Reclamos\Dominio\Excepciones\ReclamoInvalido;
+use App\Dominios\Reclamos\Dominio\TransicionesReclamo;
+use App\Dominios\Reclamos\Infraestructura\Eloquent\HistorialDeReclamo;
+use App\Dominios\Reclamos\Infraestructura\Eloquent\Reclamo;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Única clase que crea y cambia el `estado` de una disputa (invariante 7 de
- * CLAUDE.md): consulta {@see TransicionesDisputa} antes de escribir y deja una fila
+ * Única clase que crea y cambia el `estado` de un reclamo (invariante 7 de
+ * CLAUDE.md): consulta {@see TransicionesReclamo} antes de escribir y deja una fila
  * de historial por cada cambio, con autor, rol y motivo. Todo ocurre en una
  * transacción con la fila bloqueada: dos actores decidiendo a la vez no se pisan.
  */
-final class MaquinaEstadosDisputa
+final class MaquinaEstadosReclamo
 {
     /**
-     * Crea la disputa `abierta` con su fila inicial de historial.
+     * Crea el reclamo `abierta` con su fila inicial de historial.
      *
      * @param  array<string, mixed>  $atributos  sin `estado`: lo fija esta clase.
      */
-    public function crear(array $atributos, int $actorUsuarioId, string $actorRol): Disputa
+    public function crear(array $atributos, int $actorUsuarioId, string $actorRol): Reclamo
     {
-        return DB::transaction(function () use ($atributos, $actorUsuarioId, $actorRol): Disputa {
-            $disputa = new Disputa($atributos);
-            $disputa->estado = EstadoDisputa::Abierta;
-            $disputa->save();
+        return DB::transaction(function () use ($atributos, $actorUsuarioId, $actorRol): Reclamo {
+            $reclamo = new Reclamo($atributos);
+            $reclamo->estado = EstadoReclamo::Abierta;
+            $reclamo->save();
 
-            $this->registrar($disputa, null, EstadoDisputa::Abierta, $actorUsuarioId, $actorRol, null);
+            $this->registrar($reclamo, null, EstadoReclamo::Abierta, $actorUsuarioId, $actorRol, null);
 
-            return $disputa;
+            return $reclamo;
         });
     }
 
     /**
      * @param  array<string, mixed>  $cambios  atributos que se fijan junto con el estado (ronda, plazos, atendida_por).
      *
-     * @throws DisputaInvalida si la tabla no admite el paso.
+     * @throws ReclamoInvalido si la tabla no admite el paso.
      */
-    public function transicionar(Disputa $disputa, EstadoDisputa $hacia, ?int $actorUsuarioId, string $actorRol, ?string $motivo = null, array $cambios = []): Disputa
+    public function transicionar(Reclamo $reclamo, EstadoReclamo $hacia, ?int $actorUsuarioId, string $actorRol, ?string $motivo = null, array $cambios = []): Reclamo
     {
-        return DB::transaction(function () use ($disputa, $hacia, $actorUsuarioId, $actorRol, $motivo, $cambios): Disputa {
-            /** @var Disputa $actual */
-            $actual = Disputa::query()->lockForUpdate()->findOrFail($disputa->id);
+        return DB::transaction(function () use ($reclamo, $hacia, $actorUsuarioId, $actorRol, $motivo, $cambios): Reclamo {
+            /** @var Reclamo $actual */
+            $actual = Reclamo::query()->lockForUpdate()->findOrFail($reclamo->id);
             $desde = $actual->estado;
 
-            if (! TransicionesDisputa::permitida($desde, $hacia)) {
-                throw DisputaInvalida::transicionNoPermitida($desde->value, $hacia->value);
+            if (! TransicionesReclamo::permitida($desde, $hacia)) {
+                throw ReclamoInvalido::transicionNoPermitida($desde->value, $hacia->value);
             }
 
             $actual->forceFill([...$cambios, 'estado' => $hacia])->save();
@@ -58,10 +58,10 @@ final class MaquinaEstadosDisputa
         });
     }
 
-    private function registrar(Disputa $disputa, ?EstadoDisputa $desde, EstadoDisputa $hacia, ?int $actorUsuarioId, string $actorRol, ?string $motivo): void
+    private function registrar(Reclamo $reclamo, ?EstadoReclamo $desde, EstadoReclamo $hacia, ?int $actorUsuarioId, string $actorRol, ?string $motivo): void
     {
-        HistorialDeDisputa::query()->create([
-            'disputa_id' => $disputa->id,
+        HistorialDeReclamo::query()->create([
+            'reclamo_id' => $reclamo->id,
             'estado_anterior' => $desde,
             'estado_nuevo' => $hacia,
             'actor_usuario_id' => $actorUsuarioId,

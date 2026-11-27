@@ -1,72 +1,72 @@
 <?php
 
-namespace App\Dominios\Disputas\Aplicacion;
+namespace App\Dominios\Reclamos\Aplicacion;
 
-use App\Dominios\Disputas\Dominio\Excepciones\DisputaInvalida;
-use App\Dominios\Disputas\Dominio\ParteDeDisputa;
-use App\Dominios\Disputas\Infraestructura\Eloquent\Disputa;
 use App\Dominios\Proveedores\Contratos\LecturaProveedores;
+use App\Dominios\Reclamos\Dominio\Excepciones\ReclamoInvalido;
+use App\Dominios\Reclamos\Dominio\ParteDeReclamo;
+use App\Dominios\Reclamos\Infraestructura\Eloquent\Reclamo;
 
 /**
- * Quién es la cuenta dentro de una disputa: el cliente de la solicitud o el
- * proveedor que la prestó (titular o piloto). Todo lo que la API de disputas
- * devuelve parte de acá (invariante 5 de CLAUDE.md): una disputa de otro responde
+ * Quién es la cuenta dentro de un reclamo: el cliente de la solicitud o el
+ * proveedor que la prestó (titular o piloto). Todo lo que la API de reclamos
+ * devuelve parte de acá (invariante 5 de CLAUDE.md): un reclamo de otro responde
  * 404. Resuelve el proveedor por el contrato de `Proveedores`.
  */
-final class ParticipanteDeDisputa
+final class ParticipanteDeReclamo
 {
     public function __construct(private readonly LecturaProveedores $proveedores) {}
 
     /**
      * El proveedor de la cuenta para el lado del proveedor; `null` para el cliente.
      *
-     * @throws DisputaInvalida `sinProveedor` (404) si la cuenta del proveedor no pertenece a ninguno.
+     * @throws ReclamoInvalido `sinProveedor` (404) si la cuenta del proveedor no pertenece a ninguno.
      */
-    public function proveedorDe(int $usuarioId, ParteDeDisputa $parte): ?int
+    public function proveedorDe(int $usuarioId, ParteDeReclamo $parte): ?int
     {
-        if ($parte === ParteDeDisputa::Cliente) {
+        if ($parte === ParteDeReclamo::Cliente) {
             return null;
         }
 
-        return ($this->proveedores->proveedorDeLaCuenta($usuarioId) ?? throw DisputaInvalida::sinProveedor())->id;
+        return ($this->proveedores->proveedorDeLaCuenta($usuarioId) ?? throw ReclamoInvalido::sinProveedor())->id;
     }
 
-    /** Si la disputa es de esta cuenta, del lado indicado. */
-    public function esDeLaCuenta(Disputa $disputa, int $usuarioId, ParteDeDisputa $parte, ?int $proveedorId): bool
+    /** Si el reclamo es de esta cuenta, del lado indicado. */
+    public function esDeLaCuenta(Reclamo $reclamo, int $usuarioId, ParteDeReclamo $parte, ?int $proveedorId): bool
     {
-        return $parte === ParteDeDisputa::Cliente
-            ? $disputa->cliente_usuario_id === $usuarioId
-            : ($proveedorId !== null && $disputa->proveedor_id === $proveedorId);
+        return $parte === ParteDeReclamo::Cliente
+            ? $reclamo->cliente_usuario_id === $usuarioId
+            : ($proveedorId !== null && $reclamo->proveedor_id === $proveedorId);
     }
 
     /**
-     * Cuentas a las que se avisa del lado indicado de la disputa.
+     * Cuentas a las que se avisa del lado indicado del reclamo.
      *
      * @return list<int>
      */
-    public function usuariosDe(Disputa $disputa, ParteDeDisputa $parte): array
+    public function usuariosDe(Reclamo $reclamo, ParteDeReclamo $parte): array
     {
-        if ($parte === ParteDeDisputa::Cliente) {
-            return [$disputa->cliente_usuario_id];
+        if ($parte === ParteDeReclamo::Cliente) {
+            return [$reclamo->cliente_usuario_id];
         }
 
-        return $disputa->proveedor_id === null ? [] : $this->proveedores->usuariosDeAviso($disputa->proveedor_id);
+        return $reclamo->proveedor_id === null ? [] : $this->proveedores->usuariosDeAviso($reclamo->proveedor_id);
     }
 
     /**
-     * La disputa de la cuenta, del lado indicado.
+     * El reclamo de la cuenta, del lado indicado.
      *
-     * @throws DisputaInvalida `disputaAjena` (404) si no es de la cuenta.
+     * @throws ReclamoInvalido `reclamoAjeno` (404) si no es de la cuenta.
      */
-    public function disputa(int $usuarioId, ParteDeDisputa $parte, int $disputaId): Disputa
+    public function reclamo(int $usuarioId, ParteDeReclamo $parte, int $reclamoId): Reclamo
     {
         $proveedorId = $this->proveedorDe($usuarioId, $parte);
-        $disputa = Disputa::query()->find($disputaId);
+        $reclamo = Reclamo::query()->find($reclamoId);
 
-        if ($disputa === null || ! $this->esDeLaCuenta($disputa, $usuarioId, $parte, $proveedorId)) {
-            throw DisputaInvalida::disputaAjena();
+        if ($reclamo === null || ! $this->esDeLaCuenta($reclamo, $usuarioId, $parte, $proveedorId)) {
+            throw ReclamoInvalido::reclamoAjeno();
         }
 
-        return $disputa;
+        return $reclamo;
     }
 }

@@ -15,7 +15,7 @@
 @php
     $porEstado = collect($tablero['por_estado']);
     $enMercado = $porEstado->whereIn('estado', ['abierta', 'con_ofertas'])->sum('cantidad');
-    $enCurso = $porEstado->whereIn('estado', ['adjudicada', 'en_ejecucion', 'disputada'])->sum('cantidad');
+    $enCurso = $porEstado->whereIn('estado', ['adjudicada', 'en_ejecucion', 'en_reclamo'])->sum('cantidad');
     $totalPendientes = (int) collect($pendientes)->sum('cantidad');
     $hectareas = fn (string $valor): string => number_format((float) $valor, 2, ',', '.');
 @endphp

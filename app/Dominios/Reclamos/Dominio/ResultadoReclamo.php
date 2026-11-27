@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Dominios\Disputas\Dominio;
+namespace App\Dominios\Reclamos\Dominio;
 
-/** Resultado que fija un administrador (política de disputas, «Proceso», punto 3). */
-enum ResultadoDisputa: string
+/** Resultado que fija un administrador (política de reclamos, «Proceso», punto 3). */
+enum ResultadoReclamo: string
 {
     case AFavorCliente = 'a_favor_cliente';
     case AFavorProveedor = 'a_favor_proveedor';

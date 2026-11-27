@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Dominios\Disputas\Aplicacion;
+namespace App\Dominios\Reclamos\Aplicacion;
 
-use App\Dominios\Disputas\Aplicacion\MaquinaEstados\MaquinaEstadosDisputa;
-use App\Dominios\Disputas\Contratos\Eventos\DisputaAbierta;
-use App\Dominios\Disputas\Dominio\Excepciones\DisputaInvalida;
-use App\Dominios\Disputas\Dominio\MotivoDisputa;
-use App\Dominios\Disputas\Dominio\ParteDeDisputa;
-use App\Dominios\Disputas\Dominio\PlazosDeDisputa;
-use App\Dominios\Disputas\Infraestructura\Eloquent\Disputa;
+use App\Dominios\Reclamos\Aplicacion\MaquinaEstados\MaquinaEstadosReclamo;
+use App\Dominios\Reclamos\Contratos\Eventos\ReclamoAbierto;
+use App\Dominios\Reclamos\Dominio\Excepciones\ReclamoInvalido;
+use App\Dominios\Reclamos\Dominio\MotivoReclamo;
+use App\Dominios\Reclamos\Dominio\ParteDeReclamo;
+use App\Dominios\Reclamos\Dominio\PlazosDeReclamo;
+use App\Dominios\Reclamos\Infraestructura\Eloquent\Reclamo;
 use App\Dominios\Solicitudes\Contratos\DatosServicio;
 use App\Dominios\Solicitudes\Contratos\LecturaServicios;
 use App\Dominios\Solicitudes\Contratos\ResolucionDeServicio;
@@ -19,135 +19,135 @@ use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Una de las partes abre la disputa de un servicio (`POST /solicitudes/{id}/disputas`,
- * especificación §10.1, política de disputas, «Cuándo se abre»). Una por solicitud.
+ * Una de las partes abre el reclamo de un servicio (`POST /solicitudes/{id}/reclamos`,
+ * especificación §10.1, política de reclamos, «Cuándo se abre»). Una por solicitud.
  *
  * - El cliente, desde `ejecutada` hasta 72 horas después (la conformidad tácita
- *   cierra el plazo); la solicitud pasa a `en_disputa`.
+ *   cierra el plazo); la solicitud pasa a `en_reclamo`.
  * - El proveedor, por un cobro pendiente, por acceso negado al lote o por una
  *   calificación abusiva, mientras el servicio está en un estado que lo admita y
  *   dentro de su ventana. Si el servicio está `ejecutada`, también pasa a
- *   `en_disputa`; en otro estado la disputa convive con la solicitud sin moverla.
+ *   `en_reclamo`; en otro estado el reclamo convive con la solicitud sin moverla.
  *
  * La contraparte tiene 48 horas para responder. Parte del servicio de la cuenta
  * (invariante 5 de CLAUDE.md): uno ajeno responde 404.
  */
-final class AbrirDisputa
+final class AbrirReclamo
 {
     public function __construct(
         private readonly LecturaServicios $servicios,
         private readonly ResolucionDeServicio $resolucion,
-        private readonly MaquinaEstadosDisputa $estados,
-        private readonly ParticipanteDeDisputa $participantes,
-        private readonly ParametrosDeDisputa $parametros,
+        private readonly MaquinaEstadosReclamo $estados,
+        private readonly ParticipanteDeReclamo $participantes,
+        private readonly ParametrosDeReclamo $parametros,
     ) {}
 
-    /** @throws DisputaInvalida */
-    public function ejecutar(int $usuarioId, ParteDeDisputa $parte, int $solicitudId, string $motivo, string $detalle, ?string $montoEnDisputa = null): Disputa
+    /** @throws ReclamoInvalido */
+    public function ejecutar(int $usuarioId, ParteDeReclamo $parte, int $solicitudId, string $motivo, string $detalle, ?string $montoEnReclamo = null): Reclamo
     {
         $proveedorId = $this->participantes->proveedorDe($usuarioId, $parte);
         $servicio = $this->servicios->datos($solicitudId);
 
         if ($servicio === null || ! $this->esDelServicio($servicio, $parte, $usuarioId, $proveedorId)) {
-            throw DisputaInvalida::servicioAjeno();
+            throw ReclamoInvalido::servicioAjeno();
         }
 
-        $motivoDisputa = MotivoDisputa::tryFrom($motivo);
+        $motivoReclamo = MotivoReclamo::tryFrom($motivo);
 
-        if ($motivoDisputa === null || ! in_array($motivoDisputa, $parte->motivos(), true)) {
-            throw DisputaInvalida::motivoInvalido($motivo);
+        if ($motivoReclamo === null || ! in_array($motivoReclamo, $parte->motivos(), true)) {
+            throw ReclamoInvalido::motivoInvalido($motivo);
         }
 
         $detalle = trim($detalle);
 
         if ($detalle === '') {
-            throw DisputaInvalida::textoRequerido();
+            throw ReclamoInvalido::textoRequerido();
         }
 
-        if (Disputa::query()->where('solicitud_id', $servicio->id)->exists()) {
-            throw DisputaInvalida::yaExiste();
+        if (Reclamo::query()->where('solicitud_id', $servicio->id)->exists()) {
+            throw ReclamoInvalido::yaExiste();
         }
 
         $ahora = new DateTimeImmutable;
-        $this->exigirDisputable($servicio, $parte, $motivoDisputa, $ahora);
+        $this->exigirDeclamable($servicio, $parte, $motivoReclamo, $ahora);
 
-        $monto = $this->monto($servicio, $montoEnDisputa);
+        $monto = $this->monto($servicio, $montoEnReclamo);
 
         try {
-            return DB::transaction(function () use ($servicio, $parte, $usuarioId, $motivoDisputa, $detalle, $monto, $ahora): Disputa {
-                $disputa = $this->estados->crear([
+            return DB::transaction(function () use ($servicio, $parte, $usuarioId, $motivoReclamo, $detalle, $monto, $ahora): Reclamo {
+                $reclamo = $this->estados->crear([
                     'solicitud_id' => $servicio->id,
                     'cliente_id' => $servicio->clienteId,
                     'cliente_usuario_id' => $servicio->clienteUsuarioId,
                     'proveedor_id' => $servicio->proveedorId,
                     'abierta_por_rol' => $parte->value,
                     'abierta_por_usuario_id' => $usuarioId,
-                    'motivo' => $motivoDisputa->value,
+                    'motivo' => $motivoReclamo->value,
                     'detalle' => mb_substr($detalle, 0, $this->parametros->textoMax()),
-                    'monto_en_disputa' => $monto,
-                    'responde_antes_de' => PlazosDeDisputa::respondeAntesDe($ahora, $this->parametros->respuestaHoras()),
+                    'monto_en_reclamo' => $monto,
+                    'responde_antes_de' => PlazosDeReclamo::respondeAntesDe($ahora, $this->parametros->respuestaHoras()),
                     'movio_solicitud' => false,
                 ], $usuarioId, $parte->value);
 
-                $movio = $this->resolucion->abrirDisputa($servicio->id, $parte->value, $usuarioId, $motivoDisputa->value);
+                $movio = $this->resolucion->abrirReclamo($servicio->id, $parte->value, $usuarioId, $motivoReclamo->value);
 
                 if ($movio) {
-                    $disputa->forceFill(['movio_solicitud' => true])->save();
-                } elseif ($parte === ParteDeDisputa::Cliente) {
-                    // El cliente solo disputa lo `ejecutada`: si la solicitud ya no lo estaba (la
+                    $reclamo->forceFill(['movio_solicitud' => true])->save();
+                } elseif ($parte === ParteDeReclamo::Cliente) {
+                    // El cliente solo reclamo lo `ejecutada`: si la solicitud ya no lo estaba (la
                     // conformidad tácita corrió entre la lectura y el paso), el plazo se cerró.
-                    throw DisputaInvalida::plazoVencido();
+                    throw ReclamoInvalido::plazoVencido();
                 }
 
-                event(new DisputaAbierta($disputa->id, $servicio->id, $parte->value, $motivoDisputa->value, $this->participantes->usuariosDe($disputa, $parte->contraparte())));
+                event(new ReclamoAbierto($reclamo->id, $servicio->id, $parte->value, $motivoReclamo->value, $this->participantes->usuariosDe($reclamo, $parte->contraparte())));
 
-                return $disputa;
+                return $reclamo;
             });
         } catch (UniqueConstraintViolationException) {
-            throw DisputaInvalida::yaExiste();
+            throw ReclamoInvalido::yaExiste();
         }
     }
 
-    private function esDelServicio(DatosServicio $servicio, ParteDeDisputa $parte, int $usuarioId, ?int $proveedorId): bool
+    private function esDelServicio(DatosServicio $servicio, ParteDeReclamo $parte, int $usuarioId, ?int $proveedorId): bool
     {
-        return $parte === ParteDeDisputa::Cliente
+        return $parte === ParteDeReclamo::Cliente
             ? $servicio->clienteUsuarioId === $usuarioId
             : ($proveedorId !== null && $servicio->proveedorId === $proveedorId);
     }
 
-    /** @throws DisputaInvalida */
-    private function exigirDisputable(DatosServicio $servicio, ParteDeDisputa $parte, MotivoDisputa $motivo, DateTimeImmutable $ahora): void
+    /** @throws ReclamoInvalido */
+    private function exigirDeclamable(DatosServicio $servicio, ParteDeReclamo $parte, MotivoReclamo $motivo, DateTimeImmutable $ahora): void
     {
-        if ($parte === ParteDeDisputa::Cliente) {
+        if ($parte === ParteDeReclamo::Cliente) {
             if (! in_array($servicio->estado, ['finalizada', 'calificada'], true) || $servicio->finalizadaEn === null) {
-                throw DisputaInvalida::servicioNoDisputable($servicio->estado);
+                throw ReclamoInvalido::servicioNoDeclamable($servicio->estado);
             }
 
-            if (! PlazosDeDisputa::clientePuedeAbrir(new DateTimeImmutable($servicio->finalizadaEn), $ahora, $this->parametros->aperturaClienteHoras())) {
-                throw DisputaInvalida::plazoVencido();
+            if (! PlazosDeReclamo::clientePuedeAbrir(new DateTimeImmutable($servicio->finalizadaEn), $ahora, $this->parametros->aperturaClienteHoras())) {
+                throw ReclamoInvalido::plazoVencido();
             }
 
             return;
         }
 
         if (! in_array($servicio->estado, $motivo->estadosDeSolicitudDelProveedor(), true)) {
-            throw DisputaInvalida::servicioNoDisputable($servicio->estado);
+            throw ReclamoInvalido::servicioNoDeclamable($servicio->estado);
         }
 
         $desde = $servicio->finalizadaEn;
 
-        if (! PlazosDeDisputa::proveedorPuedeAbrir($desde === null ? null : new DateTimeImmutable($desde), $ahora, $this->parametros->aperturaProveedorDias())) {
-            throw DisputaInvalida::plazoVencido();
+        if (! PlazosDeReclamo::proveedorPuedeAbrir($desde === null ? null : new DateTimeImmutable($desde), $ahora, $this->parametros->aperturaProveedorDias())) {
+            throw ReclamoInvalido::plazoVencido();
         }
     }
 
-    /** El monto en disputa: lo pedido, que no puede pasar del monto del servicio, o todo el monto. */
+    /** El monto en reclamo: lo pedido, que no puede pasar del monto del servicio, o todo el monto. */
     private function monto(DatosServicio $servicio, ?string $pedido): string
     {
         $referencia = BigDecimal::of($servicio->montoDeReferencia())->toScale(2, RoundingMode::HalfUp);
 
         if ($referencia->isLessThanOrEqualTo(0)) {
-            throw DisputaInvalida::montoInvalido((string) $referencia);
+            throw ReclamoInvalido::montoInvalido((string) $referencia);
         }
 
         if ($pedido === null || trim($pedido) === '') {
@@ -157,7 +157,7 @@ final class AbrirDisputa
         $monto = BigDecimal::of($pedido)->toScale(2, RoundingMode::HalfUp);
 
         if ($monto->isLessThanOrEqualTo(0) || $monto->isGreaterThan($referencia)) {
-            throw DisputaInvalida::montoInvalido((string) $referencia);
+            throw ReclamoInvalido::montoInvalido((string) $referencia);
         }
 
         return (string) $monto;
