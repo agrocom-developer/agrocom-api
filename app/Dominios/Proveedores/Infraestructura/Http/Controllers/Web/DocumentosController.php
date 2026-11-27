@@ -9,6 +9,7 @@ use App\Dominios\Compartido\Dominio\TipoDocumento;
 use App\Dominios\Compartido\Dominio\VarianteDeMedio;
 use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
+use App\Dominios\Proveedores\Aplicacion\EliminarDocumento;
 use App\Dominios\Proveedores\Aplicacion\ItemsDeRevisionDeDocumentos;
 use App\Dominios\Proveedores\Aplicacion\ResolverSujeto;
 use App\Dominios\Proveedores\Aplicacion\RevisarDocumento;
@@ -16,6 +17,7 @@ use App\Dominios\Proveedores\Dominio\EstadoDocumento;
 use App\Dominios\Proveedores\Dominio\Excepciones\RegistroInvalido;
 use App\Dominios\Proveedores\Dominio\TipoSujeto;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Documento;
+use App\Dominios\Proveedores\Infraestructura\Http\Requests\EliminarDocumentoRequest;
 use App\Dominios\Proveedores\Infraestructura\Http\Requests\RevisarDocumentoRequest;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
@@ -37,6 +39,8 @@ final class DocumentosController
     private const PERMISO_VER = 'proveedores.documento.ver';
 
     private const PERMISO_REVISAR = 'proveedores.documento.revisar';
+
+    private const PERMISO_ELIMINAR = 'proveedores.documento.eliminar';
 
     private const PERMISO_DESCARGAR = 'proveedores.documento.descargar';
 
@@ -90,6 +94,7 @@ final class DocumentosController
             'sujetosFiltro' => TipoSujeto::cases(),
             'tiposFiltro' => TipoDocumento::cases(),
             'puedeRevisar' => $this->autorizacion->tienePermiso($request, self::PERMISO_REVISAR),
+            'puedeEliminar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR),
         ]);
     }
 
@@ -183,6 +188,25 @@ final class DocumentosController
         }
 
         return $volver->with('estado', __('proveedores.documentos.revisado.'.$request->validated('decision')));
+    }
+
+    /**
+     * Elimina un documento (borrado lógico + retiro del archivo; ver {@see EliminarDocumento}). Permiso propio
+     * `proveedores.documento.eliminar`, sensible; el motivo es obligatorio.
+     */
+    public function destroy(EliminarDocumentoRequest $request, Documento $documento, EliminarDocumento $eliminar): RedirectResponse
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR), 403);
+
+        $volver = redirect()->back(fallback: route('panel.documentos.index'));
+
+        try {
+            $eliminar->ejecutar($documento->id, (int) Auth::guard('interno')->id(), $request->validated('motivo'));
+        } catch (RegistroInvalido|MotivoRequerido $excepcion) {
+            return $volver->withErrors(['documento' => $excepcion->getMessage()]);
+        }
+
+        return $volver->with('estado', __('proveedores.documentos.eliminar.hecho'));
     }
 
     private function disco(): string

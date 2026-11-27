@@ -53,6 +53,7 @@ return [
         'independiente_sin_pilotos' => 'Un proveedor independiente es su propio piloto y no suma otros pilotos. Si quieres operar con más pilotos, regístrate como proveedor tercero.',
         'sujeto_ajeno' => 'No encontramos ese proveedor, piloto o dron entre los tuyos.',
         'documento_ya_revisado' => 'Este documento ya fue revisado.',
+        'documento_vigente_de_sujeto_aprobado' => 'Este documento está aprobado y vigente, y su titular sigue aprobado: suspéndelo antes de eliminarlo o espera a que venza.',
         'documento_vencido' => 'El documento ya está vencido: sube uno vigente.',
         'archivo_no_disponible' => 'No se pudo guardar o encontrar el archivo del documento.',
         'limite_de_documentos' => 'Ya hay :maximo documentos esperando revisión. Espera a que se revisen para subir otro.',
@@ -102,6 +103,14 @@ return [
             'rechazar_titulo' => 'Rechazar «:documento»',
             'rechazar_mensaje' => 'El solicitante verá el motivo y podrá subir un documento corregido.',
             'motivo_ayuda' => 'Explica qué está mal para que el solicitante pueda corregirlo.',
+        ],
+        'eliminar' => [
+            'accion' => 'Eliminar',
+            'titulo' => 'Eliminar «:documento»',
+            'mensaje' => 'El documento deja de listarse y su archivo se borra del almacén; queda constancia de quién lo eliminó y cuándo. No se puede deshacer.',
+            'motivo_ayuda' => 'Explica por qué se elimina; queda en la bitácora.',
+            'motivo_requerido' => 'Indica el motivo para eliminar el documento.',
+            'hecho' => 'Documento eliminado.',
         ],
         'revisado' => [
             'aprobar' => 'Documento aprobado.',

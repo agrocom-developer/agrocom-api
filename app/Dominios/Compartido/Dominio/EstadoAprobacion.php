@@ -35,7 +35,7 @@ enum EstadoAprobacion: string
         return match ($this) {
             self::Pendiente => 'warning',
             self::Aprobado => 'success',
-            self::Suspendido => 'danger',
+            self::Suspendido => 'neutral',
             self::Rechazado => 'danger',
             self::Baja => 'neutral',
         };

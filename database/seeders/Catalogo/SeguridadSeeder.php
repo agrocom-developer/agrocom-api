@@ -85,6 +85,7 @@ class SeguridadSeeder extends Seeder
         'proveedores.piloto.dar_baja' => 'Eliminar a un piloto, con motivo',
         'proveedores.documento.ver' => 'Ver los documentos por revisar y abrir su archivo en el visor (acceso restringido; cada apertura del original queda en la bitácora)',
         'proveedores.documento.descargar' => 'Descargar el ORIGINAL de un documento (queda en la bitácora: quién, qué y cuándo)',
+        'proveedores.documento.eliminar' => 'Eliminar un documento, con motivo (borrado lógico: se retira el archivo y queda constancia en la bitácora de quién y cuándo, sin el contenido)',
         'proveedores.documento.revisar' => 'Aprobar o rechazar un documento, con motivo en el rechazo',
         'flota.dron.ver' => 'Ver el listado y la ficha de drones del marketplace',
         'flota.dron.aprobar' => 'Aprobar o rechazar un dron y rehabilitar a uno suspendido',

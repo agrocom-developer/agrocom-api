@@ -97,7 +97,7 @@
                         @csrf
                         <div class="ag-modal-medio__acciones" data-medio="acciones">
                             <x-atoms.button type="submit" variant="primary" icon="check" name="decision" value="aprobar" data-medio="aprobar">{{ __('revision_medios.modal.aprobar') }}</x-atoms.button>
-                            <x-atoms.button type="button" variant="danger-outline" icon="close" data-medio="rechazar">{{ __('revision_medios.modal.rechazar') }}</x-atoms.button>
+                            <x-atoms.button type="button" variant="alert-outline" icon="close" data-medio="rechazar">{{ __('revision_medios.modal.rechazar') }}</x-atoms.button>
                         </div>
                         <div class="ag-modal-medio__rechazo" data-medio="rechazo" hidden>
                             <x-atoms.textarea

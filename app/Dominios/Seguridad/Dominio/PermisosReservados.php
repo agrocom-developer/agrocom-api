@@ -56,6 +56,7 @@ final class PermisosReservados
         'seguridad.verificacion.ver',
         'proveedores.documento.ver',
         'proveedores.documento.descargar',
+        'proveedores.documento.eliminar',
         'solicitudes.solicitud.ver_seguimiento',
         'seguridad.bitacora.ver',
     ];

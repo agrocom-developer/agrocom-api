@@ -19,8 +19,9 @@ use App\Dominios\Seguridad\Aplicacion\ItemMenu;
  * primeras pantallas de su menú. Un rol sin lista propia cae en el menú entero,
  * sin repetir el tablero, que ya está en el riel.
  *
- * Cada acceso lleva un tono por dominio ({@see self::TONO_POR_DOMINIO}), el color
- * del cuadro de su ícono; nunca es la única señal (hay ícono y texto).
+ * Cada acceso lleva un tono propio, distinto del de las demás tarjetas mostradas
+ * ({@see self::tonosSinRepetir()}), el color del cuadro de su ícono; nunca es la única
+ * señal (hay ícono y texto).
  */
 final class AccesosRapidos
 {
@@ -49,31 +50,21 @@ final class AccesosRapidos
     private const RUTA_TABLERO = 'panel.dashboard';
 
     /**
-     * Tono (variante de `molecules/link-row`) por dominio, que es el segundo segmento de la
-     * ruta (`panel.<dominio>.…`): mercado, proveedores, clientes, atención y seguridad.
+     * Tonos disponibles (variantes de `molecules/link-row` con relleno sólido y ícono blanco), todos
+     * tokens existentes. Quedan fuera `danger` (significa error) y `neutral` (significa «sin estado»).
+     * Son siete para seis tarjetas como máximo, así que siempre hay uno libre.
      *
-     * @var array<string, string>
+     * @var list<string>
      */
-    private const TONO_POR_DOMINIO = [
-        'solicitudes' => 'info',
-        'metricas' => 'info',
-        'proveedores' => 'distintivo-1',
-        'pilotos' => 'distintivo-1',
-        'documentos' => 'distintivo-1',
-        'drones-flota' => 'distintivo-1',
-        'clientes' => 'distintivo-2',
-        'calificaciones' => 'warning',
-        'disputas' => 'warning',
-        'avisos' => 'warning',
-        'notificaciones' => 'warning',
-        'usuarios' => 'distintivo-3',
-        'roles' => 'distintivo-3',
-        'bitacora' => 'distintivo-3',
-        'organizacion' => 'distintivo-3',
-        'configuracion' => 'distintivo-3',
+    private const TONOS = [
+        'info',
+        'distintivo-1',
+        'distintivo-2',
+        'warning',
+        'distintivo-3',
+        'success',
+        'primary-2',
     ];
-
-    private const TONO_SIN_DOMINIO = 'neutral';
 
     /**
      * @param  list<ItemMenu>  $menu  el menú del rol activo (módulos con sus pantallas)
@@ -95,17 +86,41 @@ final class AccesosRapidos
             $elegidas = [...$elegidas, ...array_values($resto)];
         }
 
+        $elegidas = array_slice($elegidas, 0, self::MAXIMO);
+        $tonos = self::tonosSinRepetir($elegidas);
+
         return array_map(
-            static fn (string $ruta): array => ['ruta' => $ruta, ...$disponibles[$ruta], 'tono' => self::tonoDe($ruta)],
-            array_slice($elegidas, 0, self::MAXIMO),
+            static fn (string $ruta): array => ['ruta' => $ruta, ...$disponibles[$ruta], 'tono' => $tonos[$ruta]],
+            $elegidas,
         );
     }
 
-    private static function tonoDe(string $ruta): string
+    /**
+     * Un tono distinto por tarjeta. Cada ruta tiene un tono de preferencia que sale de la ruta misma
+     * (no de su posición ni de su dominio), así que no cambia de una visita a otra; si ese tono ya lo
+     * tiene una tarjeta anterior, se desplaza al siguiente libre de {@see self::TONOS}, en orden fijo.
+     *
+     * @param  list<string>  $rutas  las rutas elegidas, en el orden en que se muestran
+     * @return array<string, string> tono por ruta
+     */
+    private static function tonosSinRepetir(array $rutas): array
     {
-        $segmentos = explode('.', $ruta);
+        $total = count(self::TONOS);
+        $usados = [];
+        $tonos = [];
 
-        return self::TONO_POR_DOMINIO[$segmentos[1] ?? ''] ?? self::TONO_SIN_DOMINIO;
+        foreach ($rutas as $ruta) {
+            $indice = crc32($ruta) % $total;
+
+            while (isset($usados[$indice])) {
+                $indice = ($indice + 1) % $total;
+            }
+
+            $usados[$indice] = true;
+            $tonos[$ruta] = self::TONOS[$indice];
+        }
+
+        return $tonos;
     }
 
     /**

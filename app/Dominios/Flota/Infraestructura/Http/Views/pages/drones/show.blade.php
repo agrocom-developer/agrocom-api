@@ -41,6 +41,7 @@
                 </x-slot:chip>
                 <x-slot:actions>
                     <x-molecules.boton-volver :href="route('panel.drones-flota.index')" :label="__('flota.drones.volver')" />
+                @include('proveedores::pages._boton-eliminar-aprobacion', ['acciones' => $acciones, 'modalBase' => 'dron'])
                 </x-slot:actions>
             </x-organisms.page-header>
 

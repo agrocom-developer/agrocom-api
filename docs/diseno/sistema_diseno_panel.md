@@ -1975,7 +1975,25 @@ Cada acción es un `<x-molecules.row-action kind="ver|editar|aprobar|transicion|
 - Un objeto con máquina de estados de aprobación (proveedor, piloto, dron) usa `organisms/row-actions-aprobacion`, que arma las acciones y los modales de la ficha (`_modales-aprobacion`) y vuelve al listado tras resolver (`desde=listado`). El «Revisar» aparte desapareció: revisar es abrir la ficha (Ver) y aprobar es una transición. «Dar de baja» se muestra como Eliminar.
 - Clientes, calificaciones, documentos y usuarios exponen sus transiciones con el mismo componente. Las disputas y las solicitudes tienen transiciones con formularios propios (resultado, reembolso, motivo) y siguen en su ficha.
 
-`RowActionsOrdenTest` congela el orden y el color; `PanelHomogeneoTest` exige que ningún listado tenga botones sueltos ni una acción en un slot ajeno.
+#### Tabla acción → variante
+
+El rojo vino (`danger`) es solo de **Eliminar**. Lo que no elimina nada nunca lo lleva.
+
+| Acción | Variante | Dónde |
+| --- | --- | --- |
+| Ver | `info-outline` | fila |
+| Editar | `warning-outline` | fila y encabezado |
+| Aprobar, rehabilitar, restablecer, reactivar | `success-outline` | fila / paso de la máquina |
+| Suspender, bloquear, ocultar (baja temporal, reversible) | `neutral-outline` (gris); el paso «Suspendido» y su badge también son grises | fila / paso de la máquina |
+| Rechazar, cancelar (cierran sin eliminar) | `alert-outline` (token `alert`, no el rojo vino) | fila / encabezado |
+| Eliminar, «Dar de baja» (eliminación definitiva) | `danger-outline` en la fila; `danger` sólido en el encabezado de la ficha | **última** acción de la fila; en la ficha, botón del encabezado |
+
+- `molecules/row-action` traduce una transición de tono `danger` a `alert`: ninguna transición puede heredar el rojo vino por el tono de su estado de llegada.
+- **Eliminar no es un paso de la máquina de estados.** En las fichas de proveedor, piloto y dron «Dar de baja» sale de `step-arrow` (la baja solo se dibuja si ya es el estado actual) y es un botón del encabezado: Volver, Editar y, al final, Eliminar en `danger`, solo con permiso y solo si el servidor ofreció la acción (`_boton-eliminar-aprobacion`); abre el mismo modal con motivo que usaba el paso.
+- **Toda tabla termina en Eliminar cuando su entidad lo admite.** Si la política no lo admite (bitácora de auditoría, métricas, historiales, avisos, solicitudes con negociación, reclamos, calificaciones, roles) la fila queda sin él: no se inventa.
+- **Documentos** (`proveedores.documento.eliminar`, permiso sensible): borrado lógico con motivo obligatorio y archivo retirado del almacén; no se elimina el documento aprobado y vigente de un sujeto aprobado. La cuadrícula y el modal de revisión de medios no llevan Eliminar.
+
+`RowActionsOrdenTest` congela el orden y el color (la última acción es Eliminar y es la única en `danger`; Suspender es gris); `PanelHomogeneoTest` exige que ningún listado tenga botones sueltos ni una acción en un slot ajeno.
 
 ### Imágenes y documentos: cuadrícula y modal de revisión (`organisms/cuadricula-medios` + `organisms/modal-revision-medio`)
 
@@ -1993,7 +2011,7 @@ Todo listado lleva `molecules/table-search` (con `clear-label`) y, si tiene filt
 
 ### Tablero y accesos rápidos por permisos
 
-No hay selector de vista ni «ver como»: el tablero muestra cada bloque solo si la sesión tiene el permiso de lo que contiene (solicitudes con `solicitudes.solicitud.ver`, cada cola pendiente con el permiso de su pantalla). Los accesos rápidos de «Mi perfil» salen del menú del rol y se completan con sus primeras pantallas; el cuadro del ícono toma el tono de su dominio con tokens existentes: mercado `info`, proveedores y flota `distintivo-1`, clientes `distintivo-2`, atención `warning`, seguridad y sistema `distintivo-3`. El color nunca es la única señal: cada tarjeta lleva ícono y texto.
+No hay selector de vista ni «ver como»: el tablero muestra cada bloque solo si la sesión tiene el permiso de lo que contiene (solicitudes con `solicitudes.solicitud.ver`, cada cola pendiente con el permiso de su pantalla). Los accesos rápidos de «Mi perfil» salen del menú del rol y se completan con sus primeras pantallas; cada tarjeta lleva un color distinto dentro de la lista mostrada (hasta 6): el cuadro del ícono toma uno de siete tonos con tokens existentes (`info`, `distintivo-1`, `distintivo-2`, `warning`, `distintivo-3`, `success`, `primary-2`; `danger` y `neutral` quedan fuera porque significan error y «sin estado»). El tono preferido sale de la ruta de destino (`crc32` de la ruta), no del dominio ni de la posición, así no cambia entre visitas; si ya lo tiene una tarjeta anterior se desplaza al siguiente libre, en orden fijo. No hizo falta un token nuevo: los siete usan el relleno sólido `-contrast-fill` con ícono blanco, el mismo par que ya se usa en `link-row`. El color nunca es la única señal: cada tarjeta lleva ícono y texto.
 
 ## 19. Gráficas del panel — `molecules/grafico` (Chart.js)
 

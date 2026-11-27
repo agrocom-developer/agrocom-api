@@ -153,7 +153,7 @@
                                         :title="__('solicitudes.clientes.rechazar_titulo', ['cliente' => $cliente->razon_social])"
                                         :message="__('solicitudes.clientes.rechazar_mensaje')"
                                         :confirm-label="__('solicitudes.clientes.rechazar')"
-                                        tone="danger"
+                                        tone="alert"
                                     >
                                         <x-atoms.textarea
                                             name="motivo"
@@ -178,7 +178,7 @@
                                         :title="__('solicitudes.clientes.suspender_titulo', ['cliente' => $cliente->razon_social])"
                                         :message="__('solicitudes.clientes.suspender_mensaje')"
                                         :confirm-label="__('solicitudes.clientes.suspender')"
-                                        tone="danger"
+                                        tone="neutral"
                                     >
                                         <x-atoms.textarea
                                             name="motivo"
@@ -213,10 +213,10 @@
                                     @if ($conAprobar || $conSuspender || $conReactivar)
                                         <x-slot:transiciones>
                                             @if ($conAprobar)
-                                                <x-molecules.row-action kind="transicion" tone="danger" :modal="'cliente-rechazar-modal-'.$cliente->id" icon="cancel" :label="__('solicitudes.clientes.rechazar')" />
+                                                <x-molecules.row-action kind="transicion" tone="alert" :modal="'cliente-rechazar-modal-'.$cliente->id" icon="cancel" :label="__('solicitudes.clientes.rechazar')" />
                                             @endif
                                             @if ($conSuspender)
-                                                <x-molecules.row-action kind="transicion" tone="danger" :modal="'cliente-suspender-modal-'.$cliente->id" icon="block" :label="__('solicitudes.clientes.suspender')" />
+                                                <x-molecules.row-action kind="transicion" tone="neutral" :modal="'cliente-suspender-modal-'.$cliente->id" icon="block" :label="__('solicitudes.clientes.suspender')" />
                                             @endif
                                             @if ($conReactivar)
                                                 <x-molecules.row-action kind="transicion" tone="success" type="submit" :form="'cliente-reactivar-form-'.$cliente->id" icon="lock_open" :label="__('solicitudes.clientes.reactivar')" />
