@@ -11,6 +11,8 @@ return [
         'intentos' => 5,
         'envios_por_hora' => 3,
         'envios_por_dia' => 10,
+        // Espera mínima entre dos códigos por el mismo canal de la misma cuenta (responde 429 con Retry-After).
+        'intervalo_reenvio_segundos' => (int) env('VERIFICACION_INTERVALO_REENVIO', 30),
     ],
 
     /*

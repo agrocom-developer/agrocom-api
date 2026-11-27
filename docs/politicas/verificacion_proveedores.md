@@ -18,6 +18,17 @@ Cualquiera puede registrarse, entrar y ver las pantallas de su app. Pero **sin l
 
 **Términos y privacidad.** Al registrarse se acepta la versión vigente de los términos y de la política de privacidad; se guarda qué versión y cuándo, por cuenta, y se pide aceptar de nuevo cuando cambian.
 
+## Siguiente paso del registro (proveedor)
+
+Quien se registró y dejó el registro a medias inicia sesión y `GET /api/proveedores/mi` le dice qué sigue en `siguiente_paso`. Para un proveedor `pendiente` es el primer paso sin cumplir de esta lista:
+
+1. `subir_documentos`: le faltan documentos obligatorios del proveedor (`documentos_faltantes`).
+2. `registrar_dron`: los documentos están al día y no tiene ningún dron registrado.
+3. `subir_fotos_dron`: tiene un dron, pero ninguno con las fotos obligatorias (frontal, lateral y placa de serie) subidas; una foto en revisión o aprobada cuenta, una rechazada no.
+4. `en_revision`: todo subido; espera a un administrador.
+
+Los pasos 2 y 3 los pide solo el titular que opera drones propios (proveedor independiente o tercero). El piloto de una empresa nunca los recibe, porque no registra un dron suyo, y Agrocom (proveedor propio) carga sus drones por la oficina. Los demás valores son `corregir` (rechazado), `suspendido`, `baja` y `listo` (aprobado). Los documentos del dron y del piloto los revisa el administrador; no son un paso de la app.
+
 ## Verificación de identidad (cliente y proveedor)
 
 La persona sube, desde la app de su cuenta:

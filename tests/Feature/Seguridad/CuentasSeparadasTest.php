@@ -26,6 +26,7 @@ beforeEach(function () {
 
     Esquema::migrar([
         'create_plt_bitacoras_table',
+        'crea_sec_eliminaciones',
         'create_sec_user_table',
         'agrega_foto_perfil_a_sec_user',
         'agrega_tipo_cuenta_a_sec_user',

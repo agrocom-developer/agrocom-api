@@ -50,7 +50,7 @@ final class RecuperarAccesoController
                 content: new OA\JsonContent(required: ['message'], properties: [new OA\Property(property: 'message', type: 'string', example: 'Si existe una cuenta con esos datos, enviamos un código. Revisa el medio que elegiste.')], type: 'object'),
             ),
             new OA\Response(response: 422, description: 'Datos inválidos.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
-            new OA\Response(response: 429, description: 'Demasiadas solicitudes desde la misma IP; reintentar tras `Retry-After` segundos.'),
+            new OA\Response(response: 429, description: 'Demasiadas solicitudes desde la misma IP o para el mismo usuario (5 por minuto y 30 por hora por IP, 10 cada 15 minutos por usuario); reintentar tras `Retry-After` segundos. El cupo de códigos de la cuenta (3 por hora, 10 por día) y la espera de 30 segundos entre dos códigos por el mismo canal NO responden 429 acá: se callan para no revelar si la cuenta existe, y la app espera 30 segundos antes de ofrecer «Reenviar».', headers: [new OA\Header(header: 'Retry-After', description: 'Segundos para reintentar, según la ventana real del límite (cupo por hora o día, intervalo entre códigos, bloqueo del login o frecuencia por IP).', schema: new OA\Schema(type: 'integer', minimum: 1, example: 30))]),
             new OA\Response(response: 503, description: '`canal_no_disponible`: ese medio no está configurado; la app ofrece otro.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorDeCodigo')),
         ],
     )]
@@ -107,7 +107,7 @@ final class RecuperarAccesoController
                 ),
             ),
             new OA\Response(response: 422, description: '`codigo_invalido` (el mismo cuerpo para cuenta inexistente, código errado, vencido, usado o con los intentos agotados) o datos inválidos (`errors`, por ejemplo una contraseña de menos de 4 caracteres).', content: new OA\JsonContent(ref: '#/components/schemas/ErrorDeCodigo')),
-            new OA\Response(response: 429, description: 'Demasiados intentos desde la misma IP; reintentar tras `Retry-After` segundos.'),
+            new OA\Response(response: 429, description: 'Demasiados intentos desde la misma IP; reintentar tras `Retry-After` segundos.', headers: [new OA\Header(header: 'Retry-After', description: 'Segundos para reintentar, según la ventana real del límite (cupo por hora o día, intervalo entre códigos, bloqueo del login o frecuencia por IP).', schema: new OA\Schema(type: 'integer', minimum: 1, example: 30))]),
         ],
     )]
     public function confirmar(ConfirmarRecuperacionRequest $request): JsonResponse

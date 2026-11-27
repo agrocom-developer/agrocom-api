@@ -71,7 +71,7 @@ final class RegistroProveedorController
             ),
             new OA\Response(response: 409, description: 'Ese teléfono o esa persona (documento) ya tiene una cuenta de proveedor: `codigo: cuenta_ya_registrada`. No crea nada ni dice cuál de los dos datos chocó; la persona inicia sesión o recupera su acceso.', content: new OA\JsonContent(ref: '#/components/schemas/CuentaYaRegistrada')),
             new OA\Response(response: 422, description: 'Datos inválidos o login, correo o documento ya registrados.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
-            new OA\Response(response: 429, description: 'Demasiados registros desde la misma IP, o demasiados `409` seguidos para esa IP, ese teléfono o ese documento; reintentar tras `Retry-After` segundos.'),
+            new OA\Response(response: 429, description: 'Demasiados registros desde la misma IP, o demasiados `409` seguidos para esa IP, ese teléfono o ese documento; reintentar tras `Retry-After` segundos.', headers: [new OA\Header(header: 'Retry-After', description: 'Segundos para reintentar, según la ventana real del límite (cupo por hora o día, intervalo entre códigos, bloqueo del login o frecuencia por IP).', schema: new OA\Schema(type: 'integer', minimum: 1, example: 30))]),
         ],
     )]
     public function store(RegistrarProveedorRequest $request): JsonResponse

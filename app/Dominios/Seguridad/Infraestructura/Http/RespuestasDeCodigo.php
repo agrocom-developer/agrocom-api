@@ -15,7 +15,11 @@ final class RespuestasDeCodigo
         return match (true) {
             $falla instanceof CanalNoDisponible => response()->json($falla->cuerpo(), 503),
             $falla instanceof CodigoInvalido => response()->json($falla->cuerpo(), 422),
-            default => response()->json(['message' => $falla->getMessage(), 'codigo' => 'demasiados_codigos'], 429, ['Retry-After' => (string) $falla->segundos]),
+            default => response()->json(
+                ['message' => $falla->getMessage(), 'codigo' => $falla->motivo === DemasiadosCodigos::INTERVALO ? 'reenvio_demasiado_pronto' : 'demasiados_codigos'],
+                429,
+                ['Retry-After' => (string) max(1, $falla->segundos)],
+            ),
         };
     }
 

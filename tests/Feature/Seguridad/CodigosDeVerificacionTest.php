@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Testing\TestResponse;
 use Tests\Soporte\Esquema;
 
 /*
@@ -47,7 +48,7 @@ beforeEach(function () {
     Event::fake([ProveedorRegistrado::class]);
     Notification::fake();
     EnviadorDePrueba::$enviados = [];
-    config(['verificacion.modo_desarrollo' => false, 'verificacion.canales.whatsapp.adaptador' => null, 'verificacion.canales.sms.adaptador' => null]);
+    config(['verificacion.modo_desarrollo' => false, 'verificacion.codigo.intervalo_reenvio_segundos' => 0, 'verificacion.canales.whatsapp.adaptador' => null, 'verificacion.canales.sms.adaptador' => null]);
 
     Esquema::migrar([
         'create_plt_bitacoras_table',
@@ -361,4 +362,136 @@ it('un login correcto limpia los fallos del identificador', function () {
     }
     $this->postJson('/api/auth/token', ['username' => 'luis.antelo', 'password' => 'abcd', 'uuid_dispositivo' => UUID_UNO])->assertCreated();
     $this->postJson('/api/auth/token', ['username' => 'luis.antelo', 'password' => 'mal', 'uuid_dispositivo' => UUID_UNO])->assertStatus(422);
+});
+
+// --- Retry-After en todo 429 de frecuencia o de cupo ----------------------------------------------------
+
+/** El `Retry-After` de una respuesta 429: un entero positivo en segundos. */
+function segundosDeEspera(TestResponse $respuesta): int
+{
+    $espera = $respuesta->headers->get('Retry-After');
+
+    expect($espera)->not->toBeNull()->and(ctype_digit((string) $espera))->toBeTrue();
+    expect((int) $espera)->toBeGreaterThan(0);
+
+    return (int) $espera;
+}
+
+it('con la sesión iniciada, el cupo agotado de códigos responde 429 con Retry-After de lo que falta de la ventana', function (string $ruta) {
+    registrarCliente();
+    usarWhatsapp();
+    $token = entrarComo('luis.antelo', 'abcd');
+
+    foreach (range(1, 3) as $_) {
+        comoDispositivo($token)->postJson($ruta, ['canal' => 'whatsapp'])->assertStatus(202);
+        $this->travel(1)->minutes();
+    }
+
+    $respuesta = comoDispositivo($token)->postJson($ruta, ['canal' => 'whatsapp'])->assertStatus(429)->assertJsonPath('codigo', 'demasiados_codigos');
+    $espera = segundosDeEspera($respuesta);
+
+    // El primer código se pidió hace 3 minutos: el cupo vuelve a la hora de ese primero.
+    expect($espera)->toBeGreaterThan(3300)->toBeLessThanOrEqual(3420);
+    expect(EnviadorDePrueba::$enviados)->toHaveCount(3);
+
+    $this->travel($espera + 1)->seconds();
+    comoDispositivo($token)->postJson($ruta, ['canal' => 'whatsapp'])->assertStatus(202);
+})->with(['/api/cuenta/contrasena/codigo', '/api/cuenta/eliminacion/codigo']);
+
+it('el cupo por día agota el Retry-After hasta que sale el código más viejo del día', function () {
+    registrarCliente();
+    usarWhatsapp();
+    config(['verificacion.codigo.envios_por_hora' => 100]);
+    $token = entrarComo('luis.antelo', 'abcd');
+
+    foreach (range(1, 10) as $_) {
+        comoDispositivo($token)->postJson('/api/cuenta/contrasena/codigo', ['canal' => 'whatsapp'])->assertStatus(202);
+        $this->travel(1)->hours();
+    }
+
+    $this->travelBack();
+    $respuesta = comoDispositivo($token)->postJson('/api/cuenta/contrasena/codigo', ['canal' => 'whatsapp'])->assertStatus(429);
+
+    expect(segundosDeEspera($respuesta))->toBeLessThanOrEqual(86400);
+});
+
+it('entre dos códigos por el mismo canal pasan 30 segundos: antes responde 429 con Retry-After, y otro canal no se bloquea', function () {
+    registrarCliente();
+    usarWhatsapp();
+    config(['verificacion.codigo.intervalo_reenvio_segundos' => 30]);
+    $token = entrarComo('luis.antelo', 'abcd');
+
+    comoDispositivo($token)->postJson('/api/cuenta/contrasena/codigo', ['canal' => 'whatsapp'])->assertStatus(202);
+    $this->travel(10)->seconds();
+
+    $respuesta = comoDispositivo($token)->postJson('/api/cuenta/contrasena/codigo', ['canal' => 'whatsapp'])
+        ->assertStatus(429)->assertJsonPath('codigo', 'reenvio_demasiado_pronto');
+    expect(segundosDeEspera($respuesta))->toBeGreaterThanOrEqual(19)->toBeLessThanOrEqual(20);
+    expect(EnviadorDePrueba::$enviados)->toHaveCount(1);
+
+    comoDispositivo($token)->postJson('/api/cuenta/contrasena/codigo', ['canal' => 'correo'])->assertStatus(202);
+
+    $this->travel(21)->seconds();
+    comoDispositivo($token)->postJson('/api/cuenta/contrasena/codigo', ['canal' => 'whatsapp'])->assertStatus(202);
+});
+
+it('la verificación del teléfono también responde 429 con Retry-After al reenviar antes de tiempo', function () {
+    registrarCliente();
+    usarWhatsapp();
+    config(['verificacion.codigo.intervalo_reenvio_segundos' => 30]);
+    $token = entrarComo('luis.antelo', 'abcd');
+
+    comoDispositivo($token)->postJson('/api/cuenta/telefono/verificacion', ['canal' => 'whatsapp'])->assertStatus(202);
+    $respuesta = comoDispositivo($token)->postJson('/api/cuenta/telefono/verificacion', ['canal' => 'whatsapp'])->assertStatus(429);
+
+    expect(segundosDeEspera($respuesta))->toBeLessThanOrEqual(30);
+});
+
+it('recuperar el acceso no revela el cupo ni el intervalo de la cuenta: sigue en 202', function () {
+    registrarCliente();
+    usarWhatsapp();
+    config(['verificacion.codigo.intervalo_reenvio_segundos' => 30]);
+
+    foreach (range(1, 3) as $_) {
+        $this->postJson('/api/auth/recuperar', ['identificador' => '70012345', 'app' => 'cliente', 'canal' => 'whatsapp'])->assertStatus(202);
+    }
+
+    expect(EnviadorDePrueba::$enviados)->toHaveCount(1);
+});
+
+it('el límite por IP de los códigos públicos responde 429 con Retry-After en recuperar y en confirmar', function () {
+    RateLimiter::for('codigos-publicos', fn () => Limit::perMinute(1));
+    usarWhatsapp();
+
+    foreach (['/api/auth/recuperar' => ['identificador' => '70012345', 'app' => 'cliente', 'canal' => 'whatsapp'], '/api/auth/recuperar/confirmar' => ['identificador' => '70012345', 'app' => 'cliente', 'codigo' => '123456', 'password_nueva' => 'nueva']] as $ruta => $cuerpo) {
+        RateLimiter::clear('codigos-publicos');
+        Cache::flush();
+        $this->postJson($ruta, $cuerpo);
+        $espera = segundosDeEspera($this->postJson($ruta, $cuerpo)->assertStatus(429));
+
+        expect($espera)->toBeLessThanOrEqual(60);
+    }
+});
+
+it('el bloqueo del login responde 429 con Retry-After dentro de la ventana de 15 minutos', function () {
+    registrarCliente();
+    RateLimiter::for('login-campo', fn () => Limit::none());
+
+    foreach (range(1, 10) as $_) {
+        $this->postJson('/api/auth/token', ['username' => 'luis.antelo', 'password' => 'mal', 'uuid_dispositivo' => UUID_UNO])->assertStatus(422);
+    }
+
+    $espera = segundosDeEspera($this->postJson('/api/auth/token', ['username' => 'luis.antelo', 'password' => 'abcd', 'uuid_dispositivo' => UUID_UNO])->assertStatus(429));
+
+    expect($espera)->toBeLessThanOrEqual(900);
+});
+
+it('el límite por minuto del login responde 429 con Retry-After', function () {
+    registrarCliente();
+
+    foreach (range(1, 6) as $_) {
+        $this->postJson('/api/auth/token', ['username' => 'luis.antelo', 'password' => 'mal', 'uuid_dispositivo' => UUID_UNO]);
+    }
+
+    expect(segundosDeEspera($this->postJson('/api/auth/token', ['username' => 'luis.antelo', 'password' => 'mal', 'uuid_dispositivo' => UUID_UNO])->assertStatus(429)))->toBeLessThanOrEqual(60);
 });

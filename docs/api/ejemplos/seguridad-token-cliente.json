@@ -22,6 +22,7 @@
                 "name": "Rosario Antelo Vaca",
                 "username": "agro.sanrafael",
                 "persona_id": null,
+                "telefono_verificado": false,
                 "foto_url": null
             },
             "rol": {
@@ -39,8 +40,10 @@
                     "description": "Cliente del marketplace: solicita servicios de fumigación y califica al proveedor."
                 },
                 "last_used_at": null,
-                "created_at": "2026-11-26T22:09:42+00:00"
-            }
+                "created_at": "2026-11-27T15:16:37+00:00",
+                "expira_en": "2026-12-27T15:16:37+00:00"
+            },
+            "eliminacion": null
         }
     }
 }

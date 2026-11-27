@@ -17,4 +17,13 @@ interface LecturaDrones
      * @return list<array{id: int, tipo: string}>
      */
     public function fotosAprobadas(int $dronId): array;
+
+    /** Si el proveedor (dueño u operador) tiene al menos un dron vivo: sin dar de baja ni borrado. */
+    public function tieneDron(int $proveedorId): bool;
+
+    /**
+     * Si algún dron vivo del proveedor ya tiene subida (en revisión o aprobada, no rechazada) una foto de cada tipo
+     * obligatorio (`config('flota.fotos_obligatorias')`): es lo que el registro guiado pide antes de esperar la revisión.
+     */
+    public function tieneDronConFotosSubidas(int $proveedorId): bool;
 }

@@ -9,10 +9,10 @@ use App\Dominios\Seguridad\Dominio\Excepciones\CodigoInvalido;
 use App\Dominios\Seguridad\Dominio\Excepciones\ContrasenaActualIncorrecta;
 use App\Dominios\Seguridad\Dominio\Excepciones\DemasiadosCodigos;
 use App\Dominios\Seguridad\Dominio\Excepciones\EliminacionBloqueada;
-use App\Dominios\Seguridad\Infraestructura\Eloquent\SecEliminacion;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use App\Dominios\Seguridad\Infraestructura\Http\Requests\SolicitarCodigoRequest;
 use App\Dominios\Seguridad\Infraestructura\Http\Requests\SolicitarEliminacionDeCuentaRequest;
+use App\Dominios\Seguridad\Infraestructura\Http\Resources\EliminacionResource;
 use App\Dominios\Seguridad\Infraestructura\Http\RespuestasDeCodigo;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -56,7 +56,7 @@ final class EliminacionDeCuentaController
         $vigente = $this->eliminar->vigente($usuario);
 
         return response()->json([
-            'eliminacion' => $vigente === null ? null : $this->cuerpo($vigente),
+            'eliminacion' => EliminacionResource::de($vigente),
             'impedimentos' => $vigente === null ? $this->eliminar->impedimentos($usuario) : [],
         ]);
     }
@@ -92,7 +92,7 @@ final class EliminacionDeCuentaController
             ),
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
             new OA\Response(response: 422, description: '`sin_destino` (la cuenta no tiene teléfono o correo para ese canal) o canal inválido.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorDeCodigo')),
-            new OA\Response(response: 429, description: 'La cuenta ya pidió el máximo de códigos; reintentar tras `Retry-After` segundos.'),
+            new OA\Response(response: 429, description: '`demasiados_codigos` (la cuenta ya pidió el máximo de códigos: 3 por hora y 10 por día) o `reenvio_demasiado_pronto` (pidió otro por el mismo canal hace menos de 30 segundos). Trae `Retry-After` con los segundos que faltan para poder pedir otro.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorDeCodigo'), headers: [new OA\Header(header: 'Retry-After', description: 'Segundos para reintentar, según la ventana real del límite (cupo por hora o día, intervalo entre códigos, bloqueo del login o frecuencia por IP).', schema: new OA\Schema(type: 'integer', minimum: 1, example: 30))]),
             new OA\Response(response: 503, description: '`canal_no_disponible`: ese medio no está configurado; ofrecer otro.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorDeCodigo')),
         ],
     )]
@@ -153,7 +153,7 @@ final class EliminacionDeCuentaController
                 ),
             ),
             new OA\Response(response: 422, description: '`contrasena_incorrecta`, `codigo_invalido` o datos inválidos (sin contraseña ni código).', content: new OA\JsonContent(ref: '#/components/schemas/ErrorDeCodigo')),
-            new OA\Response(response: 429, description: 'Demasiados intentos; reintentar tras `Retry-After` segundos.'),
+            new OA\Response(response: 429, description: 'Demasiados intentos; reintentar tras `Retry-After` segundos.', headers: [new OA\Header(header: 'Retry-After', description: 'Segundos para reintentar, según la ventana real del límite (cupo por hora o día, intervalo entre códigos, bloqueo del login o frecuencia por IP).', schema: new OA\Schema(type: 'integer', minimum: 1, example: 30))]),
         ],
     )]
     public function store(SolicitarEliminacionDeCuentaRequest $request): JsonResponse
@@ -174,7 +174,7 @@ final class EliminacionDeCuentaController
             return RespuestasDeCodigo::de($falla);
         }
 
-        return response()->json(['eliminacion' => $this->cuerpo($eliminacion)], 202);
+        return response()->json(['eliminacion' => EliminacionResource::de($eliminacion)], 202);
     }
 
     #[OA\Post(
@@ -201,19 +201,7 @@ final class EliminacionDeCuentaController
 
         abort_if($eliminacion === null, 404, __('seguridad.eliminacion.sin_solicitud'));
 
-        return response()->json(['eliminacion' => $this->cuerpo($eliminacion)]);
-    }
-
-    /** @return array{estado: string, solicitada_en: string|null, ejecutar_desde: string|null, cancelada_en: string|null, motivo_posposicion: string|null} */
-    private function cuerpo(SecEliminacion $eliminacion): array
-    {
-        return [
-            'estado' => $eliminacion->estado->value,
-            'solicitada_en' => $eliminacion->solicitada_en->toIso8601String(),
-            'ejecutar_desde' => $eliminacion->ejecutar_desde->toIso8601String(),
-            'cancelada_en' => $eliminacion->cancelada_en?->toIso8601String(),
-            'motivo_posposicion' => $eliminacion->motivo_posposicion,
-        ];
+        return response()->json(['eliminacion' => EliminacionResource::de($eliminacion)]);
     }
 
     private function usuario(Request $request): SecUser

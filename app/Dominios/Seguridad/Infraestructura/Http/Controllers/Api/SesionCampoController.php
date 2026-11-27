@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api;
 
+use App\Dominios\Seguridad\Aplicacion\EliminarMiCuenta;
 use App\Dominios\Seguridad\Aplicacion\EmitirTokenDispositivo;
 use App\Dominios\Seguridad\Aplicacion\IniciarSesionPanel;
 use App\Dominios\Seguridad\Aplicacion\RevocarTokenDispositivo;
@@ -12,6 +13,7 @@ use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioApp;
 use App\Dominios\Seguridad\Infraestructura\Http\Requests\EmitirTokenDispositivoRequest;
 use App\Dominios\Seguridad\Infraestructura\Http\Resources\DispositivoResource;
+use App\Dominios\Seguridad\Infraestructura\Http\Resources\EliminacionResource;
 use App\Dominios\Seguridad\Infraestructura\Http\Resources\RolActivoResource;
 use App\Dominios\Seguridad\Infraestructura\Http\Resources\UsuarioCampoResource;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
@@ -52,6 +54,7 @@ final class SesionCampoController
     public function __construct(
         private readonly EmitirTokenDispositivo $emitirToken,
         private readonly RevocarTokenDispositivo $revocarToken,
+        private readonly EliminarMiCuenta $eliminacion,
     ) {}
 
     #[OA\Post(
@@ -92,6 +95,7 @@ final class SesionCampoController
                         new OA\Property(property: 'usuario', ref: '#/components/schemas/UsuarioCampo'),
                         new OA\Property(property: 'rol', ref: '#/components/schemas/RolActivo'),
                         new OA\Property(property: 'dispositivo', ref: '#/components/schemas/Dispositivo'),
+                        new OA\Property(property: 'eliminacion', description: 'La solicitud de eliminar la cuenta si está vigente (`solicitada` o `pospuesta`, en gracia); `null` si no hay (nunca solicitada, cancelada o ejecutada). La API siempre lo envía. Con una solicitud vigente la sesión es restringida: solo `GET /api/auth/sesion`, `POST /api/auth/renovar`, `GET /api/cuenta/eliminacion`, `POST /api/cuenta/eliminacion/cancelar` y `DELETE /api/auth/token` responden; lo demás da `403 cuenta_en_eliminacion`. La app muestra «Conservar mi cuenta» sin una consulta extra.', ref: '#/components/schemas/Eliminacion', nullable: true),
                     ],
                     type: 'object',
                 ),
@@ -129,7 +133,7 @@ final class SesionCampoController
                 description: 'Credenciales incorrectas, cuenta deshabilitada, o payload inválido.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion'),
             ),
-            new OA\Response(response: 429, description: 'Demasiados intentos (límite por minuto) o bloqueo temporal por fallos (10 fallos en 15 minutos por usuario o teléfono, 30 por IP; el mismo mensaje exista o no la cuenta); reintentar tras `Retry-After` segundos.'),
+            new OA\Response(response: 429, description: 'Demasiados intentos (límite por minuto) o bloqueo temporal por fallos (10 fallos en 15 minutos por usuario o teléfono, 30 por IP; el mismo mensaje exista o no la cuenta); reintentar tras `Retry-After` segundos.', headers: [new OA\Header(header: 'Retry-After', description: 'Segundos para reintentar, según la ventana real del límite (cupo por hora o día, intervalo entre códigos, bloqueo del login o frecuencia por IP).', schema: new OA\Schema(type: 'integer', minimum: 1, example: 30))]),
         ],
     )]
     public function store(EmitirTokenDispositivoRequest $request): JsonResponse
@@ -176,6 +180,7 @@ final class SesionCampoController
             'usuario' => new UsuarioCampoResource($usuario),
             'rol' => new RolActivoResource($token->rol),
             'dispositivo' => new DispositivoResource($token),
+            'eliminacion' => EliminacionResource::de($this->eliminacion->vigente($usuario)),
         ], 201);
     }
 
@@ -198,6 +203,7 @@ final class SesionCampoController
                         new OA\Property(property: 'usuario', ref: '#/components/schemas/UsuarioCampo'),
                         new OA\Property(property: 'rol', ref: '#/components/schemas/RolActivo'),
                         new OA\Property(property: 'dispositivo', ref: '#/components/schemas/Dispositivo'),
+                        new OA\Property(property: 'eliminacion', description: 'La solicitud de eliminar la cuenta si está vigente (`solicitada` o `pospuesta`, en gracia); `null` si no hay (nunca solicitada, cancelada o ejecutada). La API siempre lo envía. Con una solicitud vigente la sesión es restringida: solo `GET /api/auth/sesion`, `POST /api/auth/renovar`, `GET /api/cuenta/eliminacion`, `POST /api/cuenta/eliminacion/cancelar` y `DELETE /api/auth/token` responden; lo demás da `403 cuenta_en_eliminacion`. La app muestra «Conservar mi cuenta» sin una consulta extra.', ref: '#/components/schemas/Eliminacion', nullable: true),
                     ],
                     type: 'object',
                 ),
@@ -214,6 +220,7 @@ final class SesionCampoController
             'usuario' => new UsuarioCampoResource($usuario),
             'rol' => new RolActivoResource($token->rol),
             'dispositivo' => new DispositivoResource($token),
+            'eliminacion' => EliminacionResource::de($this->eliminacion->vigente($usuario)),
         ]);
     }
 
@@ -240,11 +247,13 @@ final class SesionCampoController
                         new OA\Property(property: 'usuario', ref: '#/components/schemas/UsuarioCampo'),
                         new OA\Property(property: 'rol', ref: '#/components/schemas/RolActivo'),
                         new OA\Property(property: 'dispositivo', ref: '#/components/schemas/Dispositivo'),
+                        new OA\Property(property: 'eliminacion', description: 'La solicitud de eliminar la cuenta si está vigente (`solicitada` o `pospuesta`, en gracia); `null` si no hay (nunca solicitada, cancelada o ejecutada). La API siempre lo envía. Con una solicitud vigente la sesión es restringida: solo `GET /api/auth/sesion`, `POST /api/auth/renovar`, `GET /api/cuenta/eliminacion`, `POST /api/cuenta/eliminacion/cancelar` y `DELETE /api/auth/token` responden; lo demás da `403 cuenta_en_eliminacion`. La app muestra «Conservar mi cuenta» sin una consulta extra.', ref: '#/components/schemas/Eliminacion', nullable: true),
                     ],
                     type: 'object',
                 ),
             ),
             new OA\Response(response: 401, description: 'Token ausente, caducado o revocado, o la cuenta ya no puede entrar.'),
+            new OA\Response(response: 429, description: 'Más de 10 renovaciones por minuto; reintentar tras `Retry-After` segundos.', headers: [new OA\Header(header: 'Retry-After', description: 'Segundos para reintentar, según la ventana real del límite (cupo por hora o día, intervalo entre códigos, bloqueo del login o frecuencia por IP).', schema: new OA\Schema(type: 'integer', minimum: 1, example: 30))]),
         ],
     )]
     public function renovar(Request $request): JsonResponse
@@ -268,6 +277,7 @@ final class SesionCampoController
             'usuario' => new UsuarioCampoResource($usuario),
             'rol' => new RolActivoResource($token->rol),
             'dispositivo' => new DispositivoResource($token),
+            'eliminacion' => EliminacionResource::de($this->eliminacion->vigente($usuario)),
         ], 201);
     }
 
