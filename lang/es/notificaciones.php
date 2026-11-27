@@ -49,6 +49,9 @@ return [
 
     // «Mis notificaciones»: los avisos de la propia cuenta (la campana muestra los 3 últimos).
     'mias' => [
+        'filtro_vacio_detalle' => 'Prueba con otras palabras o limpia la búsqueda para ver todos tus avisos.',
+        'filtro_vacio_titulo' => 'Ningún aviso coincide con la búsqueda',
+        'filtro_busqueda_placeholder' => 'Buscar por el título del aviso',
         'titulo' => 'Mis notificaciones',
         'subtitulo' => 'Los avisos de tu cuenta, del más nuevo al más viejo.',
         'vacio_titulo' => 'No tienes notificaciones',
@@ -67,6 +70,7 @@ return [
     ],
 
     'panel' => [
+        'filtro_busqueda_placeholder' => 'Buscar por el título del aviso',
         'titulo' => 'Avisos del sistema',
         'subtitulo' => 'Lo que el sistema avisó a clientes, proveedores y administradores, del más reciente al más antiguo.',
         'vacio_titulo' => 'Todavía no hay avisos',

@@ -10,7 +10,8 @@
     CascaraPanel, más $documentos (LengthAwarePaginator<Documento>), $etiquetas
     (array<int, string>: nombre del sujeto por documento), $rutaFicha (array),
     $filtros (array{estado: ?string, sujeto_tipo: ?string, tipo: ?string}),
-    $filtroEstadoExplicito (bool), las listas de filtros y $puedeRevisar.
+    las listas de filtros y $puedeRevisar. El filtro por omisión es «En revisión»;
+    «Limpiar filtros» lleva a `?estado=` (todos), no a la URL a secas.
 
     Gateada por `proveedores.documento.ver`, verificado server-side en el
     controlador; aprobar y rechazar exigen `proveedores.documento.revisar`.
@@ -49,7 +50,7 @@
             @endif
 
             @php
-                $hayFiltrosActivos = $filtroEstadoExplicito || $filtros['sujeto_tipo'] !== null || $filtros['tipo'] !== null;
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
                 $filtrosPanelActivos = collect(['estado', 'sujeto_tipo', 'tipo'])
                     ->filter(fn ($campo) => $filtros[$campo] !== null && $filtros[$campo] !== '')
                     ->count();
@@ -64,7 +65,9 @@
                     <x-organisms.filter-panel
                         :action="route('panel.documentos.index')"
                         :active-count="$filtrosPanelActivos"
+                        :clear-url="route('panel.documentos.index', ['estado' => ''])"
                     >
+                        <input type="hidden" name="q" value="{{ $filtros['q'] }}">
                         <x-atoms.select
                             name="estado"
                             id="filtro-estado"
@@ -90,6 +93,14 @@
                             :placeholder="__('proveedores.filtro_todos')"
                         />
                     </x-organisms.filter-panel>
+
+                    <x-molecules.table-search
+                        :action="route('panel.documentos.index')"
+                        :value="$filtros['q']"
+                        :placeholder="__('proveedores.documentos.filtro_busqueda_placeholder')"
+                        :clear-label="__('ui.tabla.buscador_limpiar')"
+                        :preserve="['estado' => $filtros['estado'] ?? '', 'sujeto_tipo' => $filtros['sujeto_tipo'], 'tipo' => $filtros['tipo']]"
+                    />
                 </div>
             @endif
 

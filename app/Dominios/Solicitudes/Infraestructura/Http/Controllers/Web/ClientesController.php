@@ -71,6 +71,8 @@ final class ClientesController
             'clientes' => $clientes,
             'filtros' => ['q' => $busqueda, 'estado' => $estado?->value],
             'estadosFiltro' => EstadoAprobacion::cases(),
+            'puedeAprobar' => $this->autorizacion->tienePermiso($request, self::PERMISO_APROBAR),
+            'puedeSuspender' => $this->autorizacion->tienePermiso($request, self::PERMISO_SUSPENDER),
             'puedeCrear' => $this->autorizacion->tienePermiso($request, self::PERMISO_CREAR),
         ]);
     }
@@ -104,7 +106,7 @@ final class ClientesController
             return redirect()->back()->withInput($request->except('password'))->withErrors(['estado' => $excepcion->getMessage()]);
         }
 
-        return redirect()->route('panel.clientes.show', $cliente)->with('estado', __('solicitudes.clientes.registrado'));
+        return $this->volver($request, $cliente)->with('estado', __('solicitudes.clientes.registrado'));
     }
 
     public function show(Request $request, Cliente $cliente, LecturaCuentas $cuentas): View
@@ -139,10 +141,10 @@ final class ClientesController
         try {
             $cambiar->suspender($cliente->id, (string) $request->validated('motivo'), (int) Auth::guard('interno')->id());
         } catch (TransicionDeAprobacionInvalida|MotivoRequerido $excepcion) {
-            return redirect()->route('panel.clientes.show', $cliente)->withErrors(['estado' => $excepcion->getMessage()]);
+            return $this->volver($request, $cliente)->withErrors(['estado' => $excepcion->getMessage()]);
         }
 
-        return redirect()->route('panel.clientes.show', $cliente)->with('estado', __('solicitudes.clientes.suspendido'));
+        return $this->volver($request, $cliente)->with('estado', __('solicitudes.clientes.suspendido'));
     }
 
     public function reactivar(Request $request, Cliente $cliente, CambiarEstadoDeCliente $cambiar): RedirectResponse
@@ -152,10 +154,10 @@ final class ClientesController
         try {
             $cambiar->reactivar($cliente->id, (int) Auth::guard('interno')->id());
         } catch (TransicionDeAprobacionInvalida $excepcion) {
-            return redirect()->route('panel.clientes.show', $cliente)->withErrors(['estado' => $excepcion->getMessage()]);
+            return $this->volver($request, $cliente)->withErrors(['estado' => $excepcion->getMessage()]);
         }
 
-        return redirect()->route('panel.clientes.show', $cliente)->with('estado', __('solicitudes.clientes.reactivado'));
+        return $this->volver($request, $cliente)->with('estado', __('solicitudes.clientes.reactivado'));
     }
 
     /** `POST /panel/clientes/{cliente}/aprobar`: el cliente pendiente pasa a aprobado y puede publicar y negociar. */
@@ -166,10 +168,10 @@ final class ClientesController
         try {
             $cambiar->ejecutar($cliente->id, AccionAprobacion::Aprobar, null, (int) Auth::guard('interno')->id());
         } catch (TransicionDeAprobacionInvalida $excepcion) {
-            return redirect()->route('panel.clientes.show', $cliente)->withErrors(['estado' => $excepcion->getMessage()]);
+            return $this->volver($request, $cliente)->withErrors(['estado' => $excepcion->getMessage()]);
         }
 
-        return redirect()->route('panel.clientes.show', $cliente)->with('estado', __('solicitudes.clientes.aprobado'));
+        return $this->volver($request, $cliente)->with('estado', __('solicitudes.clientes.aprobado'));
     }
 
     /** `POST /panel/clientes/{cliente}/rechazar`: con motivo; el cliente lo ve en su app y puede corregir y reenviar. */
@@ -180,9 +182,17 @@ final class ClientesController
         try {
             $cambiar->ejecutar($cliente->id, AccionAprobacion::Rechazar, (string) $request->validated('motivo'), (int) Auth::guard('interno')->id());
         } catch (TransicionDeAprobacionInvalida|MotivoRequerido $excepcion) {
-            return redirect()->route('panel.clientes.show', $cliente)->withErrors(['estado' => $excepcion->getMessage()]);
+            return $this->volver($request, $cliente)->withErrors(['estado' => $excepcion->getMessage()]);
         }
 
-        return redirect()->route('panel.clientes.show', $cliente)->with('estado', __('solicitudes.clientes.rechazado'));
+        return $this->volver($request, $cliente)->with('estado', __('solicitudes.clientes.rechazado'));
+    }
+
+    /** Desde una fila del listado se vuelve al listado, con sus filtros; desde la ficha, a la ficha. */
+    private function volver(Request $request, Cliente $cliente): RedirectResponse
+    {
+        return $request->input('desde') === 'listado'
+            ? redirect()->to(url()->previous(route('panel.clientes.index')))
+            : redirect()->route('panel.clientes.show', $cliente);
     }
 }

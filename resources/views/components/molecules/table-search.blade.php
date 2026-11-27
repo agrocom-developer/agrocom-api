@@ -18,6 +18,9 @@
       activo, se muestra un link "Limpiar" al lado para volver a la tabla
       sin filtrar — sin esta prop no se muestra (algunos llamadores prefieren
       resolver el "limpiar" por otro lado, p. ej. junto a más filtros).
+    - preserve (array<string, string|null>): otros parámetros GET que el envío debe
+      conservar (los filtros del panel), como campos ocultos. Los vacíos se omiten salvo
+      que el valor sea la cadena vacía y la clave exista (un «todos» explícito).
 --}}
 @props([
     'action',
@@ -25,6 +28,7 @@
     'value' => null,
     'placeholder' => null,
     'clearLabel' => null,
+    'preserve' => [],
 ])
 
 <div class="ag-table-search-wrap">
@@ -35,6 +39,11 @@
         {{ $attributes->class(['ag-table-search']) }}
     >
         <x-atoms.icon name="search" size="sm" class="ag-table-search__icon" />
+        @foreach ($preserve as $clave => $valorConservado)
+            @if ($valorConservado !== null)
+                <input type="hidden" name="{{ $clave }}" value="{{ $valorConservado }}">
+            @endif
+        @endforeach
         <input
             type="search"
             name="{{ $name }}"

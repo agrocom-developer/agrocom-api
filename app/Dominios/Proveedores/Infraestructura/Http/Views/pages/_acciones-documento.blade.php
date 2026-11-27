@@ -55,17 +55,17 @@
 
 <x-organisms.row-actions>
     @if ($puedeVer)
-        <x-atoms.button :href="route('panel.documentos.archivo', $docId)" target="_blank" rel="noopener" variant="info-outline" size="sm" icon="visibility">
-            {{ __('proveedores.documentos.ver_archivo') }}
-        </x-atoms.button>
+        <x-slot:ver>
+            <x-molecules.row-action kind="ver" :href="route('panel.documentos.archivo', $docId)" target="_blank" rel="noopener" icon="visibility" :label="__('proveedores.documentos.ver_archivo')" />
+        </x-slot:ver>
     @endif
 
     @if ($revisable)
-        <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#documento-aprobar-modal-{{ $docId }}" variant="success-outline" size="sm" icon="check_circle">
-            {{ __('proveedores.documentos.aprobar') }}
-        </x-atoms.button>
-        <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#documento-rechazar-modal-{{ $docId }}" variant="danger-outline" size="sm" icon="cancel">
-            {{ __('proveedores.documentos.rechazar') }}
-        </x-atoms.button>
+        <x-slot:aprobar>
+            <x-molecules.row-action kind="aprobar" :modal="'documento-aprobar-modal-'.$docId" icon="check_circle" :label="__('proveedores.documentos.aprobar')" />
+        </x-slot:aprobar>
+        <x-slot:transiciones>
+            <x-molecules.row-action kind="transicion" tone="danger" :modal="'documento-rechazar-modal-'.$docId" icon="cancel" :label="__('proveedores.documentos.rechazar')" />
+        </x-slot:transiciones>
     @endif
 </x-organisms.row-actions>

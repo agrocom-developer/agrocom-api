@@ -129,9 +129,9 @@
                             <span role="cell">{{ $solicitud->ventana_desde !== null ? $solicitud->ventana_desde->format('d/m').' – '.$solicitud->ventana_hasta->format('d/m/Y') : __('solicitudes.panel.sin_fecha_deseada') }}</span>
                             <span role="cell" class="ag-index-table__acciones">
                                 <x-organisms.row-actions>
-                                    <x-atoms.button :href="route('panel.solicitudes.show', $solicitud)" variant="info-outline" size="sm" icon="visibility">
-                                        {{ __('solicitudes.panel.ver') }}
-                                    </x-atoms.button>
+                                    <x-slot:ver>
+                                        <x-molecules.row-action kind="ver" :href="route('panel.solicitudes.show', $solicitud)" icon="visibility" :label="__('solicitudes.panel.ver')" />
+                                    </x-slot:ver>
                                 </x-organisms.row-actions>
                             </span>
                         </div>

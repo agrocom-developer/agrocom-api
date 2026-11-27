@@ -22,6 +22,8 @@ use Illuminate\View\View;
  */
 final class AvisosController
 {
+    use BuscaAvisosPorTitulo;
+
     private const PERMISO_VER = 'notificaciones.aviso.ver';
 
     private const LECTURAS = ['sin_leer', 'leida'];
@@ -35,7 +37,10 @@ final class AvisosController
         $lectura = TextoDeFiltro::de($request, 'lectura');
         $lectura = in_array($lectura, self::LECTURAS, true) ? $lectura : null;
 
+        $busqueda = TextoDeFiltro::de($request, 'q');
+
         $avisos = Notificacion::query()
+            ->when($busqueda !== '', fn ($consulta) => $consulta->whereIn('tipo', $this->tiposPorTitulo($busqueda)))
             ->when($lectura === 'sin_leer', fn ($consulta) => $consulta->whereNull('leida_en'))
             ->when($lectura === 'leida', fn ($consulta) => $consulta->whereNotNull('leida_en'))
             ->orderByDesc('created_at')
@@ -59,7 +64,7 @@ final class AvisosController
             ...$cascara,
             'avisos' => $avisos,
             'filas' => $filas,
-            'filtros' => ['lectura' => $lectura],
+            'filtros' => ['q' => $busqueda, 'lectura' => $lectura],
             'lecturas' => self::LECTURAS,
         ]);
     }

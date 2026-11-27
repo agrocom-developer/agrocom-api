@@ -92,7 +92,28 @@ final class DronesController
             'estadosFiltro' => EstadoAprobacion::cases(),
             'origenesFiltro' => OrigenDron::cases(),
             'puedeCrear' => $this->autorizacion->tienePermiso($request, self::PERMISO_CREAR),
+            'accionesPorEstado' => $this->accionesPorEstado($request),
         ]);
+    }
+
+    /**
+     * Las acciones de aprobación que el rol activo ofrece en cada estado, para las filas del listado.
+     *
+     * @return array<string, list<AccionAprobacion>>
+     */
+    private function accionesPorEstado(Request $request): array
+    {
+        $porEstado = [];
+
+        foreach (EstadoAprobacion::cases() as $estado) {
+            $porEstado[$estado->value] = array_values(array_filter(
+                TransicionesAprobacion::accionesDesde($estado),
+                fn (AccionAprobacion $accion): bool => ! $accion->esDelSolicitante()
+                    && $this->autorizacion->tienePermiso($request, 'flota.dron.'.self::permisoDeAccion($accion)),
+            ));
+        }
+
+        return $porEstado;
     }
 
     /** `GET /panel/drones-flota/crear`: el formulario de alta a mano; `?proveedor=` preselecciona al proveedor. */
@@ -184,7 +205,10 @@ final class DronesController
 
         abort_unless($this->autorizacion->tienePermiso($request, 'flota.dron.'.self::permisoDeAccion($accion)), 403);
 
-        $volver = redirect()->route('panel.drones-flota.show', $dron);
+        // Desde una fila del listado se vuelve al listado, con sus filtros; desde la ficha, a la ficha.
+        $volver = $request->input('desde') === 'listado'
+            ? redirect()->to(url()->previous(route('panel.drones-flota.index')))
+            : redirect()->route('panel.drones-flota.show', $dron);
 
         try {
             $resolver->ejecutar($dron->id, $accion, (int) Auth::guard('interno')->id(), $request->validated('motivo'));

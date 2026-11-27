@@ -45,6 +45,12 @@
                 </x-molecules.alert-strip>
             @endif
 
+            @if ($errors->any())
+                <x-molecules.alert-strip variant="danger" icon="error">
+                    {{ $errors->first() }}
+                </x-molecules.alert-strip>
+            @endif
+
             @php
                 $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
                 $filtrosPanelActivos = collect(['estado', 'origen'])
@@ -133,11 +139,15 @@
                                 <x-atoms.badge :variant="$dron->estado->tono()">{{ __('aprobacion.estado.'.$dron->estado->value) }}</x-atoms.badge>
                             </span>
                             <span role="cell" class="ag-index-table__acciones">
-                                <x-organisms.row-actions>
-                                    <x-atoms.button :href="route('panel.drones-flota.show', $dron)" :variant="$dron->estado->value === 'pendiente' ? 'distintivo-1-outline' : 'info-outline'" size="sm" :icon="$dron->estado->value === 'pendiente' ? 'fact_check' : 'visibility'">
-                                        {{ $dron->estado->value === 'pendiente' ? __('proveedores.revisar') : __('proveedores.ver') }}
-                                    </x-atoms.button>
-                                </x-organisms.row-actions>
+                                <x-organisms.row-actions-aprobacion
+                                    :acciones="$accionesPorEstado[$dron->estado->value] ?? []"
+                                    :estado="$dron->estado"
+                                    :nombre="trim($dron->marca.' '.$dron->modelo)"
+                                    :url-resolver="route('panel.drones-flota.resolver', $dron)"
+                                    :modal-base="'dron-'.$dron->id"
+                                    :href-ver="route('panel.drones-flota.show', $dron)"
+                                    :label-ver="__('proveedores.ver')"
+                                />
                             </span>
                         </div>
                     @endforeach

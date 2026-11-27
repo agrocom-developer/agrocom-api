@@ -59,6 +59,7 @@ return [
     ],
 
     'documentos' => [
+        'filtro_busqueda_placeholder' => 'Buscar por nombre del archivo',
         'titulo' => 'Documentos',
         'tipo' => [
             'identidad' => 'Documento de identidad',

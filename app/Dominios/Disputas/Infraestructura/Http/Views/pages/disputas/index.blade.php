@@ -37,7 +37,8 @@
             @endif
 
             @php
-                $hayFiltrosActivos = $filtros['estado'] !== null && $filtros['estado'] !== '';
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+                $filtrosPanelActivos = ($filtros['estado'] ?? null) !== null && $filtros['estado'] !== '' ? 1 : 0;
                 $opcionesEstado = collect($estadosFiltro)->mapWithKeys(fn ($opcion) => [$opcion->value => __('disputas.estado.'.$opcion->value)])->all();
             @endphp
 
@@ -45,8 +46,9 @@
                 <div class="ag-table-toolbar">
                     <x-organisms.filter-panel
                         :action="route('panel.disputas.index')"
-                        :active-count="$hayFiltrosActivos ? 1 : 0"
+                        :active-count="$filtrosPanelActivos"
                     >
+                        <input type="hidden" name="q" value="{{ $filtros['q'] }}">
                         <x-atoms.select
                             name="estado"
                             id="filtro-estado"
@@ -56,6 +58,13 @@
                             :placeholder="__('disputas.panel.filtro_todos')"
                         />
                     </x-organisms.filter-panel>
+
+                    <x-molecules.table-search
+                        :action="route('panel.disputas.index')"
+                        :value="$filtros['q']"
+                        :placeholder="__('disputas.panel.filtro_busqueda_placeholder')"
+                        :clear-label="__('ui.tabla.buscador_limpiar')"
+                    />
                 </div>
             @endif
 
@@ -105,9 +114,9 @@
                             </span>
                             <span role="cell" class="ag-index-table__acciones">
                                 <x-organisms.row-actions>
-                                    <x-atoms.button :href="route('panel.disputas.show', $disputa->id)" variant="info-outline" size="sm" icon="visibility">
-                                        {{ __('disputas.panel.ver') }}
-                                    </x-atoms.button>
+                                    <x-slot:ver>
+                                        <x-molecules.row-action kind="ver" :href="route('panel.disputas.show', $disputa->id)" icon="visibility" :label="__('disputas.panel.ver')" />
+                                    </x-slot:ver>
                                 </x-organisms.row-actions>
                             </span>
                         </div>

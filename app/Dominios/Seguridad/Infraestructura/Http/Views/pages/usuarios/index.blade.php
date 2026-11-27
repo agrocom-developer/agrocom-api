@@ -187,35 +187,27 @@
 
                                 <x-organisms.row-actions>
                                     @puede('seguridad.usuario.editar')
-                                        <x-atoms.button :href="route('panel.usuarios.edit', $usuario)" variant="warning-outline" size="sm" icon="edit">
-                                            {{ __('seguridad.usuarios.editar') }}
-                                        </x-atoms.button>
+                                        <x-slot:editar>
+                                            <x-molecules.row-action kind="editar" :href="route('panel.usuarios.edit', $usuario)" icon="edit" :label="__('seguridad.usuarios.editar')" />
+                                        </x-slot:editar>
                                     @endpuede
 
                                     @puede('seguridad.usuario.bloquear')
-                                        <x-atoms.button
-                                            type="button"
-                                            data-bs-toggle="modal"
-                                            :data-bs-target="'#'.$modalIdBloqueo"
-                                            :variant="$tonoPorEstado[$estadoDestino].'-outline'"
-                                            size="sm"
-                                            :icon="$usuario->state ? 'lock' : 'lock_open'"
-                                        >
-                                            {{ __($usuario->state ? 'seguridad.usuarios.bloquear' : 'seguridad.usuarios.desbloquear') }}
-                                        </x-atoms.button>
+                                        <x-slot:transiciones>
+                                            <x-molecules.row-action
+                                                kind="transicion"
+                                                :tone="$tonoPorEstado[$estadoDestino]"
+                                                :modal="$modalIdBloqueo"
+                                                :icon="$usuario->state ? 'lock' : 'lock_open'"
+                                                :label="__($usuario->state ? 'seguridad.usuarios.bloquear' : 'seguridad.usuarios.desbloquear')"
+                                            />
+                                        </x-slot:transiciones>
                                     @endpuede
 
                                     @puede('seguridad.usuario.eliminar')
-                                        <x-atoms.button
-                                            type="button"
-                                            data-bs-toggle="modal"
-                                            :data-bs-target="'#'.$modalIdEliminar"
-                                            variant="danger-outline"
-                                            size="sm"
-                                            icon="delete"
-                                        >
-                                            {{ __('seguridad.usuarios.eliminar_accion') }}
-                                        </x-atoms.button>
+                                        <x-slot:eliminar>
+                                            <x-molecules.row-action kind="eliminar" :modal="$modalIdEliminar" icon="delete" :label="__('seguridad.usuarios.eliminar_accion')" />
+                                        </x-slot:eliminar>
                                     @endpuede
                                 </x-organisms.row-actions>
                             </span>

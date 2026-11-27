@@ -44,6 +44,12 @@
                 </x-molecules.alert-strip>
             @endif
 
+            @if ($errors->any())
+                <x-molecules.alert-strip variant="danger" icon="error">
+                    {{ $errors->first() }}
+                </x-molecules.alert-strip>
+            @endif
+
             @php
                 $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
                 $filtrosPanelActivos = collect(['estado'])
@@ -121,11 +127,15 @@
                                 <x-atoms.badge :variant="$fila->estado->tono()">{{ __('aprobacion.estado.'.$fila->estado->value) }}</x-atoms.badge>
                             </span>
                             <span role="cell" class="ag-index-table__acciones">
-                                <x-organisms.row-actions>
-                                    <x-atoms.button :href="route('panel.pilotos.show', $fila)" :variant="$fila->estado->value === 'pendiente' ? 'distintivo-1-outline' : 'info-outline'" size="sm" :icon="$fila->estado->value === 'pendiente' ? 'fact_check' : 'visibility'">
-                                        {{ $fila->estado->value === 'pendiente' ? __('proveedores.revisar') : __('proveedores.ver') }}
-                                    </x-atoms.button>
-                                </x-organisms.row-actions>
+                                <x-organisms.row-actions-aprobacion
+                                    :acciones="$accionesPorEstado[$fila->estado->value] ?? []"
+                                    :estado="$fila->estado"
+                                    :nombre="$nombres[$fila->usuario_id]->nombre ?? '#'.$fila->usuario_id"
+                                    :url-resolver="route('panel.pilotos.resolver', $fila->id)"
+                                    :modal-base="'piloto-'.$fila->id"
+                                    :href-ver="route('panel.pilotos.show', $fila)"
+                                    :label-ver="__('proveedores.ver')"
+                                />
                             </span>
                         </div>
                     @endforeach

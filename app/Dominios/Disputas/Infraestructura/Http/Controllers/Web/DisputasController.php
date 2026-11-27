@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Disputas\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Disputas\Aplicacion\AgregarMensajeDeDisputa;
 use App\Dominios\Disputas\Aplicacion\ResolverDisputa;
@@ -53,7 +54,12 @@ final class DisputasController
 
         $estado = EstadoDisputa::tryFrom(TextoDeFiltro::de($request, 'estado'));
 
+        $busqueda = TextoDeFiltro::de($request, 'q');
+
         $disputas = Disputa::query()
+            ->when($busqueda !== '', function ($consulta) use ($busqueda): void {
+                BusquedaTexto::aplicar($consulta, ['detalle'], $busqueda);
+            })
             ->when($estado !== null, fn ($consulta) => $consulta->where('estado', $estado->value))
             ->orderByRaw("CASE estado WHEN 'abierta' THEN 0 WHEN 'en_revision' THEN 1 WHEN 'resuelta' THEN 2 ELSE 3 END")
             ->orderBy('id')
@@ -64,7 +70,7 @@ final class DisputasController
             ...$this->autorizacion->cascara($request),
             'disputas' => $disputas,
             'nombres' => $this->nombresDeProveedores($disputas->getCollection()->all()),
-            'filtros' => ['estado' => $estado?->value],
+            'filtros' => ['q' => $busqueda, 'estado' => $estado?->value],
             'estadosFiltro' => EstadoDisputa::cases(),
         ]);
     }
