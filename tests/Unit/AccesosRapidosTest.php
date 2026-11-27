@@ -64,7 +64,7 @@ test('cada acceso lleva ícono, etiqueta y módulo del menú, sin traducir', fun
 });
 
 test('no pasa de seis accesos', function () {
-    $rutas = ['panel.solicitudes.index', 'panel.proveedores.index', 'panel.documentos.index', 'panel.drones-flota.index', 'panel.disputas.index', 'panel.usuarios.index'];
+    $rutas = ['panel.solicitudes.index', 'panel.proveedores.index', 'panel.documentos.index', 'panel.drones-flota.index', 'panel.reclamos.index', 'panel.usuarios.index'];
     $menu = [moduloMenu('todo', [...array_map(itemMenu(...), $rutas), itemMenu('panel.clientes.index')])];
 
     expect(AccesosRapidos::para('administrador', $menu))->toHaveCount(AccesosRapidos::MAXIMO)

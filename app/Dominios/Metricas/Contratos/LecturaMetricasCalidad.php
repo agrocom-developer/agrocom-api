@@ -4,7 +4,7 @@ namespace App\Dominios\Metricas\Contratos;
 
 use App\Dominios\Metricas\Dominio\PeriodoDeMetricas;
 
-/** Lectura de las cifras de calidad de un período: servicios ejecutados, calificaciones, disputas y reembolsos. */
+/** Lectura de las cifras de calidad de un período: servicios ejecutados, calificaciones, reclamos y reembolsos. */
 interface LecturaMetricasCalidad
 {
     /** @return int solicitudes distintas que llegaron a `finalizada` en el período. */
@@ -19,11 +19,11 @@ interface LecturaMetricasCalidad
     /** @return int calificaciones en moderación (sin acotar por período: es una bandeja). */
     public function calificacionesReportadas(): int;
 
-    /** @return array<string, int> disputas abiertas en el período, por estado. */
-    public function disputasPorEstado(PeriodoDeMetricas $periodo): array;
+    /** @return array<string, int> reclamos abiertos en el período, por estado. */
+    public function reclamosPorEstado(PeriodoDeMetricas $periodo): array;
 
     /**
-     * Solo la última resolución de cada disputa resuelta en el período (la apelación reemplaza a la primera).
+     * Solo la última resolución de cada reclamo resuelto en el período (la apelación reemplaza a la primera).
      *
      * @return array{monto: string, ajuste_comision: string}
      */

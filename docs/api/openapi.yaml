@@ -435,353 +435,6 @@ paths:
       security:
         -
           tokenDispositivo: []
-  '/api/solicitudes/{id}/disputas':
-    post:
-      tags:
-        - Disputas
-      summary: 'Abrir un reclamo'
-      description: 'Abre el reclamo de un servicio (uno por solicitud). El cliente puede hacerlo desde `ejecutada` hasta 72 horas después, por: `cobertura_incompleta`, `mala_aplicacion`, `dano_a_cultivos_o_terceros`, `producto_distinto`, `equipo_ausente`, `evidencia_faltante`, `cobro_indebido` o `trato_inadecuado`; la solicitud pasa a `en_disputa`. El proveedor puede abrirlo por `cobro_pendiente`, `acceso_negado` o `calificacion_abusiva`. `monto_en_disputa` es opcional (por defecto, todo el monto del servicio) y no puede pasar de él. La contraparte tiene 48 horas para responder (`responde_antes_de`).'
-      operationId: abrirDisputa
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              required:
-                - motivo
-                - detalle
-              properties:
-                motivo:
-                  type: string
-                  example: cobertura_incompleta
-                detalle:
-                  type: string
-                  example: 'Quedaron franjas sin cubrir en el lado norte'
-                monto_en_disputa:
-                  type: string
-                  example: '3000.00'
-                  nullable: true
-              type: object
-      responses:
-        201:
-          description: 'Reclamo abierto.'
-          content:
-            application/json:
-              schema:
-                required:
-                  - disputa
-                properties:
-                  disputa:
-                    $ref: '#/components/schemas/Disputa'
-                type: object
-        401:
-          description: 'Token ausente o revocado.'
-        403:
-          description: 'El rol del token no abre reclamos.'
-        404:
-          description: 'El servicio no existe o no es tuyo.'
-        409:
-          description: 'El servicio ya tiene un reclamo.'
-        422:
-          description: 'El motivo no corresponde a tu lado, el servicio no está en un estado disputable, el plazo venció o el monto es inválido.'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorValidacion'
-      security:
-        -
-          tokenDispositivo: []
-  '/api/solicitudes/{id}/disputa':
-    get:
-      tags:
-        - Disputas
-      summary: 'El reclamo de una solicitud'
-      description: 'El reclamo de un servicio tuyo, con su conversación y sus resoluciones. Responde 404 si la solicitud no tiene reclamo o no es tuya.'
-      operationId: verDisputaDeLaSolicitud
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        200:
-          description: 'El reclamo.'
-          content:
-            application/json:
-              schema:
-                required:
-                  - disputa
-                properties:
-                  disputa:
-                    $ref: '#/components/schemas/Disputa'
-                type: object
-        401:
-          description: 'Token ausente o revocado.'
-        403:
-          description: 'El rol del token no ve reclamos.'
-        404:
-          description: 'No hay reclamo en esa solicitud o no es tuya.'
-      security:
-        -
-          tokenDispositivo: []
-  /api/disputas:
-    get:
-      tags:
-        - Disputas
-      summary: 'Mis reclamos'
-      description: 'Tus reclamos (los de tu cuenta o los de tu proveedor), de la más nueva a la más vieja. `estado` filtra por un estado exacto.'
-      operationId: listarDisputas
-      parameters:
-        -
-          name: estado
-          in: query
-          required: false
-          schema:
-            type: string
-            enum:
-              - abierta
-              - en_revision
-              - resuelta
-              - retirada
-        -
-          name: page
-          in: query
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-      responses:
-        200:
-          description: 'Página de reclamos.'
-          content:
-            application/json:
-              schema:
-                required:
-                  - disputas
-                  - pagina
-                  - paginas
-                  - total
-                properties:
-                  disputas:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Disputa'
-                  pagina:
-                    type: integer
-                    example: 1
-                  paginas:
-                    type: integer
-                    example: 1
-                  total:
-                    type: integer
-                    example: 2
-                type: object
-        401:
-          description: 'Token ausente o revocado.'
-        403:
-          description: 'El rol del token no ve reclamos.'
-        404:
-          description: 'La cuenta no pertenece a ningún proveedor.'
-      security:
-        -
-          tokenDispositivo: []
-  '/api/disputas/{id}':
-    get:
-      tags:
-        - Disputas
-      summary: 'Detalle de un reclamo'
-      description: 'Un reclamo tuyo con su conversación y sus resoluciones. Una de otra cuenta responde 404.'
-      operationId: verDisputa
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        200:
-          description: 'El reclamo.'
-          content:
-            application/json:
-              schema:
-                required:
-                  - disputa
-                properties:
-                  disputa:
-                    $ref: '#/components/schemas/Disputa'
-                type: object
-        401:
-          description: 'Token ausente o revocado.'
-        403:
-          description: 'El rol del token no ve reclamos.'
-        404:
-          description: 'No existe o no es tuya.'
-      security:
-        -
-          tokenDispositivo: []
-  '/api/disputas/{id}/mensajes':
-    post:
-      tags:
-        - Disputas
-      summary: 'Escribir en un reclamo'
-      description: 'Agrega un mensaje a la conversación de un reclamo vivo (`abierta` o `en_revision`): tu respuesta a la contraparte o a soporte. Un reclamo resuelto se reabre apelando, no escribiendo.'
-      operationId: enviarMensajeDeDisputa
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              required:
-                - texto
-              properties:
-                texto:
-                  type: string
-                  example: 'Adjunto la hora del vuelo: terminó a las 15:40'
-              type: object
-      responses:
-        201:
-          description: 'Mensaje guardado; devuelve el reclamo con su conversación.'
-          content:
-            application/json:
-              schema:
-                required:
-                  - disputa
-                properties:
-                  disputa:
-                    $ref: '#/components/schemas/Disputa'
-                type: object
-        401:
-          description: 'Token ausente o revocado.'
-        403:
-          description: 'El rol del token no escribe en reclamos.'
-        404:
-          description: 'No existe o no es tuya.'
-        409:
-          description: 'El reclamo ya no admite mensajes.'
-        422:
-          description: 'Falta el texto.'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorValidacion'
-      security:
-        -
-          tokenDispositivo: []
-  '/api/disputas/{id}/retirar':
-    post:
-      tags:
-        - Disputas
-      summary: 'Retirar un reclamo'
-      description: 'Quien abrió el reclamo lo retira mientras está vivo. Si había movido la solicitud a `en_disputa`, la solicitud se completa como si el reclamo no se hubiera hecho. Retirar dos veces devuelve el mismo reclamo.'
-      operationId: retirarDisputa
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        200:
-          description: 'Reclamo retirado.'
-          content:
-            application/json:
-              schema:
-                required:
-                  - disputa
-                properties:
-                  disputa:
-                    $ref: '#/components/schemas/Disputa'
-                type: object
-        401:
-          description: 'Token ausente o revocado.'
-        403:
-          description: 'El rol del token no gestiona reclamos.'
-        404:
-          description: 'No existe o no es tuya.'
-        409:
-          description: 'El reclamo ya está resuelto y no se retira.'
-        422:
-          description: 'Solo quien abrió el reclamo puede retirarlo.'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorValidacion'
-      security:
-        -
-          tokenDispositivo: []
-  '/api/disputas/{id}/apelar':
-    post:
-      tags:
-        - Disputas
-      summary: 'Apelar una resolución'
-      description: 'Apela la resolución con pruebas nuevas: una sola vez y dentro de 7 días desde la resolución (`apelable_hasta`). El reclamo vuelve a revisión en su segunda ronda y un administrador lo resuelve de nuevo; la primera resolución rige hasta entonces.'
-      operationId: apelarDisputa
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              required:
-                - pruebas
-              properties:
-                pruebas:
-                  type: string
-                  example: 'El registro del dron muestra la franja norte sin cubrir'
-              type: object
-      responses:
-        200:
-          description: 'Apelación registrada.'
-          content:
-            application/json:
-              schema:
-                required:
-                  - disputa
-                properties:
-                  disputa:
-                    $ref: '#/components/schemas/Disputa'
-                type: object
-        401:
-          description: 'Token ausente o revocado.'
-        403:
-          description: 'El rol del token no gestiona reclamos.'
-        404:
-          description: 'No existe o no es tuya.'
-        409:
-          description: 'El reclamo no está resuelto o ya se apeló.'
-        422:
-          description: 'Faltan las pruebas o el plazo de 7 días venció.'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorValidacion'
-      security:
-        -
-          tokenDispositivo: []
   /api/proveedores/drones:
     get:
       tags:
@@ -2362,7 +2015,7 @@ paths:
       tags:
         - Seguimiento
       summary: 'Informar que recibí el pago'
-      description: 'El titular del proveedor adjudicado informa que recibió el pago, que ocurre fuera de la aplicación. Solo con la solicitud `finalizada`, `calificada` o `disputada`. El monto lo fija el servidor: es el monto final congelado. Un solo registro por solicitud, idempotente por `uuid_cliente` (repetirlo responde 200 con el mismo registro); una vez confirmado no se reescribe y otro `uuid_cliente` responde 409 `pago_ya_confirmado`. No cambia el estado de la solicitud. Lo escribe solo el proveedor (titular); el cliente lo lee con `GET /api/solicitudes/{id}/pago-confirmado`.'
+      description: 'El titular del proveedor adjudicado informa que recibió el pago, que ocurre fuera de la aplicación. Solo con la solicitud `finalizada`, `calificada` o `en_reclamo`. El monto lo fija el servidor: es el monto final congelado. Un solo registro por solicitud, idempotente por `uuid_cliente` (repetirlo responde 200 con el mismo registro); una vez confirmado no se reescribe y otro `uuid_cliente` responde 409 `pago_ya_confirmado`. No cambia el estado de la solicitud. Lo escribe solo el proveedor (titular); el cliente lo lee con `GET /api/solicitudes/{id}/pago-confirmado`.'
       operationId: confirmarPagoDeSolicitud
       parameters:
         -
@@ -4047,6 +3700,353 @@ paths:
                 type: integer
                 example: 30
                 minimum: 1
+  '/api/solicitudes/{id}/reclamos':
+    post:
+      tags:
+        - Reclamos
+      summary: 'Abrir un reclamo'
+      description: 'Abre el reclamo de un servicio (uno por solicitud). El cliente puede hacerlo desde `ejecutada` hasta 72 horas después, por: `cobertura_incompleta`, `mala_aplicacion`, `dano_a_cultivos_o_terceros`, `producto_distinto`, `equipo_ausente`, `evidencia_faltante`, `cobro_indebido` o `trato_inadecuado`; la solicitud pasa a `en_reclamo`. El proveedor puede abrirlo por `cobro_pendiente`, `acceso_negado` o `calificacion_abusiva`. `monto_en_reclamo` es opcional (por defecto, todo el monto del servicio) y no puede pasar de él. La contraparte tiene 48 horas para responder (`responde_antes_de`).'
+      operationId: abrirReclamo
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - motivo
+                - detalle
+              properties:
+                motivo:
+                  type: string
+                  example: cobertura_incompleta
+                detalle:
+                  type: string
+                  example: 'Quedaron franjas sin cubrir en el lado norte'
+                monto_en_reclamo:
+                  type: string
+                  example: '3000.00'
+                  nullable: true
+              type: object
+      responses:
+        201:
+          description: 'Reclamo abierto.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - reclamo
+                properties:
+                  reclamo:
+                    $ref: '#/components/schemas/Reclamo'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no abre reclamos.'
+        404:
+          description: 'El servicio no existe o no es tuyo.'
+        409:
+          description: 'El servicio ya tiene un reclamo.'
+        422:
+          description: 'El motivo no corresponde a tu lado, el servicio no está en un estado declamable, el plazo venció o el monto es inválido.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/solicitudes/{id}/reclamo':
+    get:
+      tags:
+        - Reclamos
+      summary: 'El reclamo de una solicitud'
+      description: 'El reclamo de un servicio tuyo, con su conversación y sus resoluciones. Responde 404 si la solicitud no tiene reclamo o no es tuya.'
+      operationId: verReclamoDeLaSolicitud
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'El reclamo.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - reclamo
+                properties:
+                  reclamo:
+                    $ref: '#/components/schemas/Reclamo'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no ve reclamos.'
+        404:
+          description: 'No hay reclamo en esa solicitud o no es tuya.'
+      security:
+        -
+          tokenDispositivo: []
+  /api/reclamos:
+    get:
+      tags:
+        - Reclamos
+      summary: 'Mis reclamos'
+      description: 'Tus reclamos (los de tu cuenta o los de tu proveedor), de la más nueva a la más vieja. `estado` filtra por un estado exacto.'
+      operationId: listarReclamos
+      parameters:
+        -
+          name: estado
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - abierta
+              - en_revision
+              - resuelta
+              - retirada
+        -
+          name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        200:
+          description: 'Página de reclamos.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - reclamos
+                  - pagina
+                  - paginas
+                  - total
+                properties:
+                  reclamos:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reclamo'
+                  pagina:
+                    type: integer
+                    example: 1
+                  paginas:
+                    type: integer
+                    example: 1
+                  total:
+                    type: integer
+                    example: 2
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no ve reclamos.'
+        404:
+          description: 'La cuenta no pertenece a ningún proveedor.'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/reclamos/{id}':
+    get:
+      tags:
+        - Reclamos
+      summary: 'Detalle de un reclamo'
+      description: 'Un reclamo tuyo con su conversación y sus resoluciones. Una de otra cuenta responde 404.'
+      operationId: verReclamo
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'El reclamo.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - reclamo
+                properties:
+                  reclamo:
+                    $ref: '#/components/schemas/Reclamo'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no ve reclamos.'
+        404:
+          description: 'No existe o no es tuya.'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/reclamos/{id}/mensajes':
+    post:
+      tags:
+        - Reclamos
+      summary: 'Escribir en un reclamo'
+      description: 'Agrega un mensaje a la conversación de un reclamo vivo (`abierta` o `en_revision`): tu respuesta a la contraparte o a soporte. Un reclamo resuelto se reabre apelando, no escribiendo.'
+      operationId: enviarMensajeDeReclamo
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - texto
+              properties:
+                texto:
+                  type: string
+                  example: 'Adjunto la hora del vuelo: terminó a las 15:40'
+              type: object
+      responses:
+        201:
+          description: 'Mensaje guardado; devuelve el reclamo con su conversación.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - reclamo
+                properties:
+                  reclamo:
+                    $ref: '#/components/schemas/Reclamo'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no escribe en reclamos.'
+        404:
+          description: 'No existe o no es tuya.'
+        409:
+          description: 'El reclamo ya no admite mensajes.'
+        422:
+          description: 'Falta el texto.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/reclamos/{id}/retirar':
+    post:
+      tags:
+        - Reclamos
+      summary: 'Retirar un reclamo'
+      description: 'Quien abrió el reclamo lo retira mientras está vivo. Si había movido la solicitud a `en_reclamo`, la solicitud se completa como si el reclamo no se hubiera hecho. Retirar dos veces devuelve el mismo reclamo.'
+      operationId: retirarReclamo
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: 'Reclamo retirado.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - reclamo
+                properties:
+                  reclamo:
+                    $ref: '#/components/schemas/Reclamo'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no gestiona reclamos.'
+        404:
+          description: 'No existe o no es tuya.'
+        409:
+          description: 'El reclamo ya está resuelto y no se retira.'
+        422:
+          description: 'Solo quien abrió el reclamo puede retirarlo.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
+  '/api/reclamos/{id}/apelar':
+    post:
+      tags:
+        - Reclamos
+      summary: 'Apelar una resolución'
+      description: 'Apela la resolución con pruebas nuevas: una sola vez y dentro de 7 días desde la resolución (`apelable_hasta`). El reclamo vuelve a revisión en su segunda ronda y un administrador lo resuelve de nuevo; la primera resolución rige hasta entonces.'
+      operationId: apelarReclamo
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - pruebas
+              properties:
+                pruebas:
+                  type: string
+                  example: 'El registro del dron muestra la franja norte sin cubrir'
+              type: object
+      responses:
+        200:
+          description: 'Apelación registrada.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - reclamo
+                properties:
+                  reclamo:
+                    $ref: '#/components/schemas/Reclamo'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        403:
+          description: 'El rol del token no gestiona reclamos.'
+        404:
+          description: 'No existe o no es tuya.'
+        409:
+          description: 'El reclamo no está resuelto o ya se apeló.'
+        422:
+          description: 'Faltan las pruebas o el plazo de 7 días venció.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+      security:
+        -
+          tokenDispositivo: []
   /api/cuenta/contrasena/codigo:
     post:
       tags:
@@ -6493,140 +6493,6 @@ components:
           type: string
           nullable: true
       type: object
-    Disputa:
-      title: Disputa
-      description: 'El reclamo de un servicio (especificación §4.8, ADR 0033): uno por solicitud. Lo abre el cliente (hasta 72 horas después de `ejecutada`) o el proveedor (cobro pendiente, acceso negado o calificación abusiva). Los importes son decimales exactos en string. `mensajes` y `resoluciones` solo viajan en el detalle. Los reembolsos se liquidan entre las partes fuera de la app.'
-      required:
-        - id
-        - solicitud_id
-        - abierta_por
-        - motivo
-        - detalle
-        - monto_en_disputa
-        - estado
-        - ronda
-        - creada_en
-      properties:
-        id:
-          type: integer
-          example: 9
-        solicitud_id:
-          type: integer
-          example: 31
-        abierta_por:
-          type: string
-          enum:
-            - cliente
-            - proveedor
-        motivo:
-          type: string
-          enum:
-            - cobertura_incompleta
-            - mala_aplicacion
-            - dano_a_cultivos_o_terceros
-            - producto_distinto
-            - equipo_ausente
-            - evidencia_faltante
-            - cobro_indebido
-            - trato_inadecuado
-            - cobro_pendiente
-            - acceso_negado
-            - calificacion_abusiva
-        detalle:
-          type: string
-        monto_en_disputa:
-          type: string
-          example: '12000.00'
-        estado:
-          type: string
-          enum:
-            - abierta
-            - en_revision
-            - resuelta
-            - retirada
-        ronda:
-          description: '1 es el reclamo original; 2, la apelación (una sola vez).'
-          type: integer
-          enum:
-            - 1
-            - 2
-        responde_antes_de:
-          description: 'Hasta cuándo responde la contraparte (48 horas por defecto).'
-          type: string
-          format: date-time
-          nullable: true
-        apelable_hasta:
-          description: 'Hasta cuándo se puede apelar la resolución (7 días); nulo si no hay resolución apelable.'
-          type: string
-          format: date-time
-          nullable: true
-        creada_en:
-          type: string
-          format: date-time
-        mensajes:
-          type: array
-          items:
-            required:
-              - id
-              - autor_rol
-              - tipo
-              - texto
-              - creado_en
-            properties:
-              id:
-                type: integer
-              autor_rol:
-                type: string
-                enum:
-                  - cliente
-                  - proveedor
-                  - soporte
-              tipo:
-                type: string
-                enum:
-                  - mensaje
-                  - informacion
-                  - apelacion
-              texto:
-                type: string
-              creado_en:
-                type: string
-                format: date-time
-            type: object
-        resoluciones:
-          description: 'La decisión del administrador es un registro nuevo; la apelación agrega una segunda y la última rige.'
-          type: array
-          items:
-            required:
-              - ronda
-              - resultado
-              - monto_reembolso
-              - motivo
-              - derivada_a_seguro
-              - resuelta_en
-            properties:
-              ronda:
-                type: integer
-              resultado:
-                type: string
-                enum:
-                  - a_favor_cliente
-                  - a_favor_proveedor
-                  - parcial
-                  - sin_lugar
-              monto_reembolso:
-                type: string
-                example: '6000.00'
-              motivo:
-                type: string
-              derivada_a_seguro:
-                description: 'El daño probado se deriva al seguro del proveedor; Agrocom facilita el expediente.'
-                type: boolean
-              resuelta_en:
-                type: string
-                format: date-time
-            type: object
-      type: object
     FotoDeDron:
       title: 'Foto de un dron'
       required:
@@ -7105,7 +6971,7 @@ components:
         - confirmado_en
       properties:
         hectareas_ejecutadas:
-          description: "Precio final del servicio: lo calcula el cierre del piloto (hectáreas ejecutadas por precio\nacordado) y el cliente, que es quien paga, tiene la última palabra: lo confirma aquí o abre\nuna disputa. No procesa cobros ni cambia el estado (ADR 0034)."
+          description: "Precio final del servicio: lo calcula el cierre del piloto (hectáreas ejecutadas por precio\nacordado) y el cliente, que es quien paga, tiene la última palabra: lo confirma aquí o abre\nun reclamo. No procesa cobros ni cambia el estado (ADR 0034)."
           type: string
           example: '78.5000'
         precio_ha_acordado:
@@ -7457,6 +7323,140 @@ components:
           example: 17
         disponibilidad:
           $ref: '#/components/schemas/Disponibilidad'
+      type: object
+    Reclamo:
+      title: Reclamo
+      description: 'El reclamo de un servicio (especificación §4.8, ADR 0033): uno por solicitud. Lo abre el cliente (hasta 72 horas después de `ejecutada`) o el proveedor (cobro pendiente, acceso negado o calificación abusiva). Los importes son decimales exactos en string. `mensajes` y `resoluciones` solo viajan en el detalle. Los reembolsos se liquidan entre las partes fuera de la app.'
+      required:
+        - id
+        - solicitud_id
+        - abierta_por
+        - motivo
+        - detalle
+        - monto_en_reclamo
+        - estado
+        - ronda
+        - creada_en
+      properties:
+        id:
+          type: integer
+          example: 9
+        solicitud_id:
+          type: integer
+          example: 31
+        abierta_por:
+          type: string
+          enum:
+            - cliente
+            - proveedor
+        motivo:
+          type: string
+          enum:
+            - cobertura_incompleta
+            - mala_aplicacion
+            - dano_a_cultivos_o_terceros
+            - producto_distinto
+            - equipo_ausente
+            - evidencia_faltante
+            - cobro_indebido
+            - trato_inadecuado
+            - cobro_pendiente
+            - acceso_negado
+            - calificacion_abusiva
+        detalle:
+          type: string
+        monto_en_reclamo:
+          type: string
+          example: '12000.00'
+        estado:
+          type: string
+          enum:
+            - abierta
+            - en_revision
+            - resuelta
+            - retirada
+        ronda:
+          description: '1 es el reclamo original; 2, la apelación (una sola vez).'
+          type: integer
+          enum:
+            - 1
+            - 2
+        responde_antes_de:
+          description: 'Hasta cuándo responde la contraparte (48 horas por defecto).'
+          type: string
+          format: date-time
+          nullable: true
+        apelable_hasta:
+          description: 'Hasta cuándo se puede apelar la resolución (7 días); nulo si no hay resolución apelable.'
+          type: string
+          format: date-time
+          nullable: true
+        creada_en:
+          type: string
+          format: date-time
+        mensajes:
+          type: array
+          items:
+            required:
+              - id
+              - autor_rol
+              - tipo
+              - texto
+              - creado_en
+            properties:
+              id:
+                type: integer
+              autor_rol:
+                type: string
+                enum:
+                  - cliente
+                  - proveedor
+                  - soporte
+              tipo:
+                type: string
+                enum:
+                  - mensaje
+                  - informacion
+                  - apelacion
+              texto:
+                type: string
+              creado_en:
+                type: string
+                format: date-time
+            type: object
+        resoluciones:
+          description: 'La decisión del administrador es un registro nuevo; la apelación agrega una segunda y la última rige.'
+          type: array
+          items:
+            required:
+              - ronda
+              - resultado
+              - monto_reembolso
+              - motivo
+              - derivada_a_seguro
+              - resuelta_en
+            properties:
+              ronda:
+                type: integer
+              resultado:
+                type: string
+                enum:
+                  - a_favor_cliente
+                  - a_favor_proveedor
+                  - parcial
+                  - sin_lugar
+              monto_reembolso:
+                type: string
+                example: '6000.00'
+              motivo:
+                type: string
+              derivada_a_seguro:
+                description: 'El daño probado se deriva al seguro del proveedor; Agrocom facilita el expediente.'
+                type: boolean
+              resuelta_en:
+                type: string
+                format: date-time
+            type: object
       type: object
     Dispositivo:
       title: 'Dispositivo con sesión'
@@ -8365,7 +8365,7 @@ components:
             - finalizada
             - calificada
             - cancelada
-            - disputada
+            - en_reclamo
         oferta_adjudicada_id:
           type: integer
           nullable: true
@@ -8545,9 +8545,6 @@ tags:
     name: Medios
     description: 'Archivos multimedia: límites por subida y por entidad, y los derivados reducidos (`url_miniatura`, `url_media`) que las apps usan por defecto.'
   -
-    name: Disputas
-    description: 'El cliente (hasta 72 horas después de `ejecutada`) o el proveedor (cobro pendiente, acceso negado o calificación abusiva) abren un reclamo; soporte media y un administrador resuelve; ambas partes pueden apelar una vez en 7 días (ADR 0033). Los reembolsos se liquidan fuera de la app.'
-  -
     name: Mensajes
     description: 'Mensajes entre el cliente y el proveedor adjudicado, desde la adjudicación. Texto de hasta 1000 caracteres, fotos de menos de 300 KB y líneas de sistema que el servidor escribe al cambiar la solicitud.'
   -
@@ -8571,6 +8568,9 @@ tags:
   -
     name: Proveedores
     description: 'Registro, personal, documentos y reenvío a revisión de proveedores del marketplace (ADR 0028, 0032).'
+  -
+    name: Reclamos
+    description: 'El cliente (hasta 72 horas después de `ejecutada`) o el proveedor (cobro pendiente, acceso negado o calificación abusiva) abren un reclamo; soporte media y un administrador resuelve; ambas partes pueden apelar una vez en 7 días (ADR 0033). Los reembolsos se liquidan fuera de la app.'
   -
     name: Seguridad
     description: 'Sesión de la app de campo por token de dispositivo (especificación §13).'

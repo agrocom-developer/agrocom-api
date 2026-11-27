@@ -12,7 +12,7 @@ use Illuminate\View\View;
 
 /**
  * Métricas del mercado del panel (`GET /panel/metricas`, especificación §14):
- * solicitudes, adjudicación, rondas de negociación, calificación, disputas, tiempo hasta
+ * solicitudes, adjudicación, rondas de negociación, calificación, reclamos, tiempo hasta
  * la aceptación e ingreso, de los últimos 7, 30 o 90 días. Solo lectura.
  *
  * Gateada por `metricas.panel.ver`, verificado DENTRO del controlador contra el

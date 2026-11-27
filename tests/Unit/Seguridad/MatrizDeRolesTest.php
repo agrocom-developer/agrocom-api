@@ -123,7 +123,7 @@ test('sembrar de nuevo no pisa lo que el administrador marcó en la matriz del o
     (new SeguridadSeeder)->run();
 
     $operadorId = DB::table('sec_role')->where('name', 'operador')->value('id');
-    $permisoQuitado = DB::table('sec_permission')->where('code', 'disputas.disputa.ver')->value('id');
+    $permisoQuitado = DB::table('sec_permission')->where('code', 'reclamos.reclamo.ver')->value('id');
     DB::table('sec_role_permission')->where('id_role', $operadorId)->where('id_permission', $permisoQuitado)->update(['deleted_at' => now()]);
 
     $adminId = DB::table('sec_role')->where('name', 'administrador')->value('id');
@@ -131,8 +131,8 @@ test('sembrar de nuevo no pisa lo que el administrador marcó en la matriz del o
 
     (new SeguridadSeeder)->run();
 
-    expect(matrizPermisosDe('operador'))->not->toContain('disputas.disputa.ver')
-        ->and(matrizPermisosDe('administrador'))->toContain('disputas.disputa.ver');
+    expect(matrizPermisosDe('operador'))->not->toContain('reclamos.reclamo.ver')
+        ->and(matrizPermisosDe('administrador'))->toContain('reclamos.reclamo.ver');
 });
 
 test('los roles retirados se dan de baja con sus cuentas, que pasan a administrador', function () {
@@ -174,7 +174,7 @@ test('la migración pasa las cuentas de panel a administrador, da de baja lógic
 
     DB::table('sec_permission')->insert([
         ['code' => 'solicitudes.solicitud.ver', 'description' => 'x', 'state' => true, 'created_at' => $ahora, 'updated_at' => $ahora],
-        ['code' => 'disputas.disputa.ver', 'description' => 'x', 'state' => true, 'created_at' => $ahora, 'updated_at' => $ahora],
+        ['code' => 'calificaciones.calificacion.ver', 'description' => 'x', 'state' => true, 'created_at' => $ahora, 'updated_at' => $ahora],
         ['code' => 'negociacion.oferta.cliente', 'description' => 'x', 'state' => true, 'created_at' => $ahora, 'updated_at' => $ahora],
     ]);
 
@@ -196,8 +196,8 @@ test('la migración pasa las cuentas de panel a administrador, da de baja lógic
         ->and(DB::table('sec_permission')->where('code', 'negociacion.oferta.cliente')->value('ambito'))->toBe('app')
         ->and(DB::table('sec_role')->whereIn('name', ['dueno', 'encargado_operaciones'])->whereNull('deleted_at')->count())->toBe(0)
         ->and(DB::table('sec_role')->whereIn('name', ['dueno', 'encargado_operaciones'])->count())->toBe(2)
-        ->and(matrizPermisosDe('administrador'))->toBe(['disputas.disputa.ver', 'solicitudes.solicitud.ver'])
-        ->and(matrizPermisosDe('operador'))->toBe(['disputas.disputa.ver', 'solicitudes.solicitud.ver']);
+        ->and(matrizPermisosDe('administrador'))->toBe(['calificaciones.calificacion.ver', 'solicitudes.solicitud.ver'])
+        ->and(matrizPermisosDe('operador'))->toBe(['calificaciones.calificacion.ver', 'solicitudes.solicitud.ver']);
 
     $migracion->down();
 

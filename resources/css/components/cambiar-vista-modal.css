@@ -111,7 +111,7 @@
  *
  * Memoria del proyecto (`color-estado-seleccion-vs-etiquetas`,
  * `tonos-de-estado-no-se-reeligen`): acá NO hay eje de "seleccionado" en
- * disputa (el hover/foco de `.ag-cambiar-vista__opcion` usa
+ * reclamo (el hover/foco de `.ag-cambiar-vista__opcion` usa
  * `--ag-color-bg-row-hover`, neutro, no verde) — el ámbar de
  * `encargado_operaciones` no compite con ninguna señal de selección de
  * este modal, a diferencia del caso ya descartado en `role-card__perm`. */

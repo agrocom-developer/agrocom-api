@@ -105,7 +105,7 @@ final class CascaraPanel
     /**
      * Campana del header: los avisos de flujo de negocio del módulo
      * `Notificaciones`, repartidos por cuenta (ofertas, adjudicaciones,
-     * disputas, aprobaciones). Solo los de quien mira (su id sale de la
+     * reclamos, aprobaciones). Solo los de quien mira (su id sale de la
      * sesión, nunca de la petición). Cada uno lleva a
      * `panel.notificaciones.abrir`, que lo marca leído y resuelve el destino
      * contra el rol activo.

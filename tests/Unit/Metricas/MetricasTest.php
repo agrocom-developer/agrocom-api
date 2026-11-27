@@ -14,7 +14,7 @@ use Tests\TestCase;
 
 /*
  * Métricas del mercado (especificación §14): solicitudes, adjudicación, tasa de aceptación,
- * calificación, disputas, tiempo hasta la adjudicación y volumen, en decimal exacto y con
+ * calificación, reclamos, tiempo hasta la adjudicación y volumen, en decimal exacto y con
  * «sin datos» (`null`) donde no hay divisor. Sin comisión: el cobro no pasa por la app. Contra
  * el ESQUEMA REAL de las tablas que lee (las migraciones, en SQLite en memoria).
  */
@@ -42,9 +42,10 @@ function metricasEsquema(): void
         'create_dsp_resoluciones_table',
         'crea_vistas_de_metricas',
         'retira_zonas',
+        'renombra_el_modulo_de_reclamos',
     ]);
 
-    foreach (['dsp_resoluciones', 'dsp_disputas', 'cal_calificaciones', 'neg_cancelaciones', 'neg_ofertas', 'sol_solicitud_historial', 'sol_solicitudes_servicio', 'flo_drones', 'prv_proveedores'] as $tabla) {
+    foreach (['rcl_resoluciones', 'rcl_reclamos', 'cal_calificaciones', 'neg_cancelaciones', 'neg_ofertas', 'sol_solicitud_historial', 'sol_solicitudes_servicio', 'flo_drones', 'prv_proveedores'] as $tabla) {
         DB::table($tabla)->delete();
     }
 
@@ -123,7 +124,7 @@ test('sin datos las tasas son null y las sumas cero', function () {
         ->and($m['mercado']['tasa_adjudicacion'])->toBeNull()
         ->and($m['mercado']['tiempo_aceptacion_promedio_min'])->toBeNull()
         ->and($m['calidad']['calificacion_promedio'])->toBeNull()
-        ->and($m['calidad']['tasa_disputas'])->toBeNull()
+        ->and($m['calidad']['tasa_reclamos'])->toBeNull()
         ->and($m['oferta']['tasa_aceptacion'])->toBeNull()
         ->and($m['ingreso']['volumen_bruto'])->toBe('0.00')
         ->and($m['ingreso']['ingreso_por_hectarea'])->toBeNull()

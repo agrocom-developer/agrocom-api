@@ -4,9 +4,6 @@ namespace Database\Seeders\Demo;
 
 use App\Dominios\Calificaciones\Aplicacion\CalificarComoCliente;
 use App\Dominios\Calificaciones\Aplicacion\CalificarComoProveedor;
-use App\Dominios\Disputas\Aplicacion\AbrirDisputa;
-use App\Dominios\Disputas\Aplicacion\AgregarMensajeDeDisputa;
-use App\Dominios\Disputas\Dominio\ParteDeDisputa;
 use App\Dominios\Negociacion\Aplicacion\CancelarComoProveedor;
 use App\Dominios\Negociacion\Aplicacion\Mensajeria;
 use App\Dominios\Negociacion\Aplicacion\Negociar;
@@ -15,6 +12,9 @@ use App\Dominios\Negociacion\Aplicacion\Seguimiento;
 use App\Dominios\Negociacion\Aplicacion\UbicacionDelPiloto;
 use App\Dominios\Negociacion\Infraestructura\Eloquent\Oferta;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Proveedor;
+use App\Dominios\Reclamos\Aplicacion\AbrirReclamo;
+use App\Dominios\Reclamos\Aplicacion\AgregarMensajeDeReclamo;
+use App\Dominios\Reclamos\Dominio\ParteDeReclamo;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use App\Dominios\Solicitudes\Aplicacion\CancelarSolicitud;
 use App\Dominios\Solicitudes\Aplicacion\CrearSolicitud;
@@ -245,7 +245,7 @@ class NegociacionDemoSeeder extends Seeder
         }, ventana: [-1, 1]);
     }
 
-    /** Finalizadas y calificadas, una con su disputa abierta. */
+    /** Finalizadas y calificadas, una con su reclamo abierto. */
     private function finalizadas(): void
     {
         // Finalizada hace un par de días, sin calificar todavía: el cliente ve el monto a pagar.
@@ -269,14 +269,14 @@ class NegociacionDemoSeeder extends Seeder
             });
         }, ventana: [-8, -7]);
 
-        // Finalizada con una disputa del cliente en curso.
-        $this->solicitud('neg-disputada-este', 'coop.valle.grande', 'Lote Este', 140, '108', hace: 120, despues: function (int $id): void {
+        // Finalizada con un reclamo del cliente en curso.
+        $this->solicitud('neg-reclamo-este', 'coop.valle.grande', 'Lote Este', 140, '108', hace: 120, despues: function (int $id): void {
             $this->recorridoCompleto($id, 'coop.valle.grande', 'marcelo.terrazas', 'acepta_propuesta', null, '128');
 
             $this->tras(0, function () use ($id): void {
-                $disputa = app(AbrirDisputa::class)->ejecutar($this->usuarios['coop.valle.grande'], ParteDeDisputa::Cliente, $id, 'cobertura_incompleta', 'Quedaron franjas sin cubrir en el borde norte del lote.');
+                $reclamo = app(AbrirReclamo::class)->ejecutar($this->usuarios['coop.valle.grande'], ParteDeReclamo::Cliente, $id, 'cobertura_incompleta', 'Quedaron franjas sin cubrir en el borde norte del lote.');
                 $admin = (int) (auth('interno')->id() ?? 1);
-                app(AgregarMensajeDeDisputa::class)->comoSoporte($admin, $disputa->id, 'Pedimos las fotos del avance a ambas partes. Respondan antes del plazo.', true);
+                app(AgregarMensajeDeReclamo::class)->comoSoporte($admin, $reclamo->id, 'Pedimos las fotos del avance a ambas partes. Respondan antes del plazo.', true);
             });
         }, ventana: [-6, -5]);
     }

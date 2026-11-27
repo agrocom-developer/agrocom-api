@@ -29,7 +29,7 @@ final class AccesosRapidos
             'panel.proveedores.index',
             'panel.documentos.index',
             'panel.drones-flota.index',
-            'panel.disputas.index',
+            'panel.reclamos.index',
             'panel.usuarios.index',
         ],
         'operador' => [
@@ -38,7 +38,7 @@ final class AccesosRapidos
             'panel.solicitudes.index',
             'panel.clientes.index',
             'panel.calificaciones.index',
-            'panel.disputas.index',
+            'panel.reclamos.index',
         ],
     ];
 

@@ -345,7 +345,7 @@ try {
         registrar('calificaciones-servicio', 'verCalificacionesDelServicio', 'Calificaciones de un servicio calificado.', 'GET', "/api/solicitudes/{$calificada['id']}/calificaciones", null, $tokenCliente, 200);
     }
 
-    registrar('disputas-lista', 'listarDisputas', 'Reclamos del cliente.', 'GET', '/api/disputas', null, $tokenCliente, 200);
+    registrar('reclamos-lista', 'listarReclamos', 'Reclamos del cliente.', 'GET', '/api/reclamos', null, $tokenCliente, 200);
     registrar('notificaciones-lista', 'listarNotificaciones', 'Bandeja de notificaciones.', 'GET', '/api/notificaciones', null, $tokenCliente, 200);
 
     // ------------------------------------------------------------------ piloto

@@ -44,6 +44,7 @@ function zonasRetiradas(): void
         'create_dsp_resoluciones_table',
         'crea_vistas_de_metricas',
         'retira_zonas',
+        'renombra_el_modulo_de_reclamos',
     ]);
 }
 

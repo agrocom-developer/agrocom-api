@@ -1,7 +1,6 @@
 <?php
 
 use App\Dominios\Calificaciones\Infraestructura\Http\Controllers\Web\CalificacionesController;
-use App\Dominios\Disputas\Infraestructura\Http\Controllers\Web\DisputasController;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Web\DronesController as DronesFlotaController;
 use App\Dominios\Metricas\Infraestructura\Http\Controllers\Web\MetricasController;
 use App\Dominios\Negociacion\Infraestructura\Http\Controllers\Web\IntervencionController;
@@ -11,6 +10,7 @@ use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web\AprobacionCont
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web\DocumentosController as DocumentosPanelController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web\PilotosController as PilotosPanelController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web\ProveedoresController;
+use App\Dominios\Reclamos\Infraestructura\Http\Controllers\Web\ReclamosController;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\BitacoraController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\BusquedaController;
@@ -335,29 +335,29 @@ Route::middleware('auth:interno')->group(function () {
             ->whereNumber('calificacion')
             ->name('panel.calificaciones.restablecer');
 
-        // Disputas (ADR 0033 y 0039): la cola, la ficha con la conversación, la
+        // Reclamos (ADR 0033 y 0039): la cola, la ficha con la conversación, la
         // mediación de soporte y la resolución con resultado, reembolso y motivo.
-        Route::get('/panel/disputas', [DisputasController::class, 'index'])
-            ->name('panel.disputas.index');
+        Route::get('/panel/reclamos', [ReclamosController::class, 'index'])
+            ->name('panel.reclamos.index');
 
-        Route::get('/panel/disputas/{disputa}', [DisputasController::class, 'show'])
-            ->whereNumber('disputa')
-            ->name('panel.disputas.show');
+        Route::get('/panel/reclamos/{reclamo}', [ReclamosController::class, 'show'])
+            ->whereNumber('reclamo')
+            ->name('panel.reclamos.show');
 
-        Route::post('/panel/disputas/{disputa}/tomar', [DisputasController::class, 'tomar'])
-            ->whereNumber('disputa')
-            ->name('panel.disputas.tomar');
+        Route::post('/panel/reclamos/{reclamo}/tomar', [ReclamosController::class, 'tomar'])
+            ->whereNumber('reclamo')
+            ->name('panel.reclamos.tomar');
 
-        Route::post('/panel/disputas/{disputa}/mensajes', [DisputasController::class, 'mensaje'])
-            ->whereNumber('disputa')
-            ->name('panel.disputas.mensaje');
+        Route::post('/panel/reclamos/{reclamo}/mensajes', [ReclamosController::class, 'mensaje'])
+            ->whereNumber('reclamo')
+            ->name('panel.reclamos.mensaje');
 
-        Route::post('/panel/disputas/{disputa}/resolver', [DisputasController::class, 'resolver'])
-            ->whereNumber('disputa')
-            ->name('panel.disputas.resolver');
+        Route::post('/panel/reclamos/{reclamo}/resolver', [ReclamosController::class, 'resolver'])
+            ->whereNumber('reclamo')
+            ->name('panel.reclamos.resolver');
 
         // Métricas del mercado (especificación §14): solicitudes, asignación, aceptación,
-        // calificación, disputas, tiempos e ingreso. Solo lectura.
+        // calificación, reclamos, tiempos e ingreso. Solo lectura.
         Route::get('/panel/metricas', [MetricasController::class, 'index'])
             ->name('panel.metricas.index');
 

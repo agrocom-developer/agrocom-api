@@ -44,7 +44,7 @@ final class PagoController
     #[OA\Post(
         path: '/api/solicitudes/{id}/pago-confirmado',
         operationId: 'confirmarPagoDeSolicitud',
-        description: 'El titular del proveedor adjudicado informa que recibió el pago, que ocurre fuera de la aplicación. Solo con la solicitud `finalizada`, `calificada` o `disputada`. '
+        description: 'El titular del proveedor adjudicado informa que recibió el pago, que ocurre fuera de la aplicación. Solo con la solicitud `finalizada`, `calificada` o `en_reclamo`. '
             .'El monto lo fija el servidor: es el monto final congelado. Un solo registro por solicitud, idempotente por `uuid_cliente` (repetirlo responde 200 con el mismo registro); '
             .'una vez confirmado no se reescribe y otro `uuid_cliente` responde 409 `pago_ya_confirmado`. No cambia el estado de la solicitud. '
             .'Lo escribe solo el proveedor (titular); el cliente lo lee con `GET /api/solicitudes/{id}/pago-confirmado`.',

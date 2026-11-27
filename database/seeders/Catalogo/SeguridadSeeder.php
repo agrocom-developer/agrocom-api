@@ -128,12 +128,12 @@ class SeguridadSeeder extends Seeder
         'calificaciones.calificacion.reportar' => 'Reportar desde la app una calificación recibida que considera abusiva',
         'calificaciones.calificacion.ver' => 'Ver las calificaciones y las que esperan moderación',
         'calificaciones.calificacion.moderar' => 'Ocultar o restablecer una calificación, con causa y motivo',
-        // Disputas (ADR 0033 y 0039): lado app, cola y resolución en el panel.
-        'disputas.disputa.gestionar_cliente' => 'Abrir, argumentar, retirar y apelar un reclamo de su servicio desde la app del cliente',
-        'disputas.disputa.gestionar_proveedor' => 'Abrir, argumentar, retirar y apelar un reclamo de su proveedor desde la app',
-        'disputas.disputa.ver' => 'Ver los reclamos, sus mensajes y su resolución',
-        'disputas.disputa.atender' => 'Atender un reclamo, pedir información a las partes y escribirles como soporte',
-        'disputas.disputa.resolver' => 'Resolver un reclamo o su apelación, con resultado, reembolso y motivo',
+        // Reclamos (ADR 0033 y 0039): lado app, cola y resolución en el panel.
+        'reclamos.reclamo.gestionar_cliente' => 'Abrir, argumentar, retirar y apelar un reclamo de su servicio desde la app del cliente',
+        'reclamos.reclamo.gestionar_proveedor' => 'Abrir, argumentar, retirar y apelar un reclamo de su proveedor desde la app',
+        'reclamos.reclamo.ver' => 'Ver los reclamos, sus mensajes y su resolución',
+        'reclamos.reclamo.atender' => 'Atender un reclamo, pedir información a las partes y escribirles como soporte',
+        'reclamos.reclamo.resolver' => 'Resolver un reclamo o su apelación, con resultado, reembolso y motivo',
         // Métricas del mercado en el panel (especificación §14).
         'metricas.panel.ver' => 'Ver las métricas del mercado: solicitudes, aceptación, calificación, tiempos de adjudicación e ingresos',
     ];

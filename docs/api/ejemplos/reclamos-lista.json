@@ -1,0 +1,18 @@
+{
+    "operationId": "listarReclamos",
+    "descripcion": "Reclamos del cliente.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/reclamos",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "reclamos": [],
+            "pagina": 1,
+            "paginas": 1,
+            "total": 0
+        }
+    }
+}

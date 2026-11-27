@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * El cliente paga, así que tiene la última palabra sobre el precio final (hectáreas
- * ejecutadas por precio acordado, ADR 0034): lo confirma aquí o abre una disputa. Un solo
+ * ejecutadas por precio acordado, ADR 0034): lo confirma aquí o abre un reclamo. Un solo
  * rol escritor (el cliente de la solicitud); solo con el servicio cerrado por el piloto
  * (`finalizada` o `calificada`, con monto final congelado). Idempotente por solicitud:
  * repetir devuelve la misma confirmación y lo confirmado no se reescribe. No cambia el

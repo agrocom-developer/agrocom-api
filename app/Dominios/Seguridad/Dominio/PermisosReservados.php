@@ -75,7 +75,7 @@ final class PermisosReservados
         'proveedores.piloto.ver',
         'flota.dron.ver',
         'calificaciones.calificacion.ver',
-        'disputas.disputa.ver',
+        'reclamos.reclamo.ver',
     ];
 
     public static function esReservado(string $codigoPermiso): bool

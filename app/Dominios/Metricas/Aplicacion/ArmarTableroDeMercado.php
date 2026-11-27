@@ -17,11 +17,11 @@ use Illuminate\Support\Facades\DB;
 final class ArmarTableroDeMercado implements LecturaTableroDeMercado
 {
     /** Orden del ciclo de una solicitud, para que el tablero se lea de izquierda a derecha. */
-    private const ESTADOS = ['borrador', 'abierta', 'con_ofertas', 'adjudicada', 'en_ejecucion', 'finalizada', 'calificada', 'disputada', 'cancelada'];
+    private const ESTADOS = ['borrador', 'abierta', 'con_ofertas', 'adjudicada', 'en_ejecucion', 'finalizada', 'calificada', 'en_reclamo', 'cancelada'];
 
     private const EN_MERCADO = ['abierta', 'con_ofertas'];
 
-    private const EN_CURSO = ['adjudicada', 'en_ejecucion', 'disputada'];
+    private const EN_CURSO = ['adjudicada', 'en_ejecucion', 'en_reclamo'];
 
     private const CERRADAS = ['finalizada', 'calificada'];
 
@@ -110,7 +110,7 @@ final class ArmarTableroDeMercado implements LecturaTableroDeMercado
             'fotos_de_dron' => $vivos('flo_dron_fotos')->where('estado', 'en_revision')->count(),
             'documentos' => $vivos('prv_documentos')->where('estado', 'en_revision')->count(),
             'calificaciones' => $vivos('cal_calificaciones')->where('estado', 'en_moderacion')->count(),
-            'disputas' => $vivos('dsp_disputas')->whereIn('estado', ['abierta', 'en_revision'])->count(),
+            'reclamos' => $vivos('rcl_reclamos')->whereIn('estado', ['abierta', 'en_revision'])->count(),
         ];
     }
 }

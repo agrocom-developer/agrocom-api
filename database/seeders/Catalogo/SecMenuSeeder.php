@@ -116,7 +116,7 @@ class SecMenuSeeder extends Seeder
         // bitácora intactos). El tablero vivía dentro de Mercado y de
         // «Operación»: su fila vieja se da de baja y Inicio ocupa su lugar.
         $this->mover('menu.solicitudes.items.clientes', 'menu.atencion.items.clientes', $atencion, 1);
-        $this->mover('menu.solicitudes.items.disputas', 'menu.atencion.items.reclamos', $atencion, 2);
+        $this->mover('menu.solicitudes.items.reclamos', 'menu.atencion.items.reclamos', $atencion, 2);
         // Calificaciones vivió en Atención; opinar de un servicio es parte del
         // mercado y va en Mercado. Conserva su fila (id, permiso y bitácora).
         $this->mover('menu.atencion.items.calificaciones', 'menu.solicitudes.items.calificaciones', $mercado, 3);
@@ -148,7 +148,7 @@ class SecMenuSeeder extends Seeder
         // que reclaman (reclamos). Reclamos va último: es lo que se atiende
         // cuando llega.
         $this->item($atencion, 'atencion', 'clientes', 'agriculture', 1, ruta: 'panel.clientes.index', codigoPermiso: 'solicitudes.cliente.ver');
-        $this->item($atencion, 'atencion', 'reclamos', 'report', 2, ruta: 'panel.disputas.index', codigoPermiso: 'disputas.disputa.ver');
+        $this->item($atencion, 'atencion', 'reclamos', 'report', 2, ruta: 'panel.reclamos.index', codigoPermiso: 'reclamos.reclamo.ver');
 
         // Seguridad: quién es (usuarios), qué puede (permisos) y qué hizo (bitácora).
         $this->item($seguridad, 'seguridad', 'usuarios', 'group', 1, ruta: 'panel.usuarios.index', codigoPermiso: 'seguridad.usuario.ver');

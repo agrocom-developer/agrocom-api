@@ -12,7 +12,7 @@ use App\Dominios\Proveedores\Contratos\LecturaProveedores;
 
 /**
  * El proveedor reporta una calificación que recibió y considera abusiva (`POST
- * /calificaciones/{id}/reportar`, política de calificación y de disputas): queda
+ * /calificaciones/{id}/reportar`, política de calificación y de reclamos): queda
  * `en_moderacion` con el motivo y un administrador decide. Reportar no la oculta
  * ni la saca del promedio. Solo reporta las calificaciones de su proveedor (una
  * ajena responde 404, invariante 5 de CLAUDE.md) y solo las del cliente.

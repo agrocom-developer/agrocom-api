@@ -21,7 +21,7 @@ final class ConfirmarPago
     public const array METODOS = ['efectivo', 'transferencia', 'qr', 'otro'];
 
     /** Estados con monto final congelado en los que se puede informar el pago. */
-    private const array ESTADOS = ['finalizada', 'calificada', 'disputada'];
+    private const array ESTADOS = ['finalizada', 'calificada', 'en_reclamo'];
 
     public function __construct(
         private readonly Participantes $participantes,

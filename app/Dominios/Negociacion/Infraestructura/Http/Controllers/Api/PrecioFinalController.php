@@ -14,7 +14,7 @@ use OpenApi\Attributes as OA;
 /**
  * Precio final del servicio: lo calcula el cierre del piloto (hectáreas ejecutadas por precio
  * acordado) y el cliente, que es quien paga, tiene la última palabra: lo confirma aquí o abre
- * una disputa. No procesa cobros ni cambia el estado (ADR 0034).
+ * un reclamo. No procesa cobros ni cambia el estado (ADR 0034).
  */
 #[OA\Schema(
     schema: 'PrecioFinal',
