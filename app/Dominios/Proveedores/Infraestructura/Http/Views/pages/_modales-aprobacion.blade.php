@@ -16,8 +16,8 @@
     $tonoPorAccion = [
         'aprobar' => 'success',
         'rehabilitar' => 'success',
-        'rechazar' => 'danger',
-        'suspender' => 'warning',
+        'rechazar' => 'alert',
+        'suspender' => 'neutral',
         'dar_de_baja' => 'danger',
     ];
 @endphp

@@ -633,6 +633,12 @@ function panelHomogeneoViolacionesListado(string $raiz, array $pantalla): array
                 if (! in_array($kind, $permitidos, true)) {
                     $violaciones[] = sprintf('[row-actions] <x-molecules.row-action kind="%s"> está en el slot «%s»: ese slot solo admite kind="%s".', $kind ?? '?', $slot, implode('|', $permitidos));
                 }
+
+                // El rojo vino (`danger`) es solo de Eliminar: una transición (suspender, bloquear, ocultar) va
+                // en gris y rechazar en `alert`; nunca `tone="danger"`.
+                if ($kind === 'transicion' && panelHomogeneoAtributo($accion['atributos'], 'tone') === 'danger') {
+                    $violaciones[] = '[row-actions] una transición con tone="danger": el rojo vino es solo de Eliminar (suspender va en neutral, rechazar en alert).';
+                }
             }
         }
     }
@@ -1224,4 +1230,41 @@ test('el lector de etiquetas no se corta en un -> ni confunde componentes con el
         ->and($bloques[1]['cuerpo'])->toBeNull()
         ->and(panelHomogeneoAtributo($bloques[1]['atributos'], 'variant'))->toBe('outline')
         ->and(panelHomogeneoAtributo('modal-icon="x" :icon="y"', 'icon'))->toBeNull();
+});
+
+test('ninguna transición de fila usa el rojo vino: es solo de Eliminar', function () {
+    $transicion = '<x-slot:transiciones><x-molecules.row-action kind="transicion" tone="danger" modal="m" icon="block" label="Suspender" /></x-slot:transiciones>';
+    $listado = str_replace(
+        '<x-slot:eliminar><x-molecules.row-action kind="eliminar" modal="cosa-eliminar-modal" icon="delete" label="Eliminar" /></x-slot:eliminar>',
+        '<x-slot:eliminar><x-molecules.row-action kind="eliminar" modal="cosa-eliminar-modal" icon="delete" label="Eliminar" /></x-slot:eliminar>'.$transicion,
+        PANEL_HOMOGENEO_LISTADO_CONFORME,
+    );
+
+    expect($listado)->not->toBe(PANEL_HOMOGENEO_LISTADO_CONFORME)
+        ->and(panelHomogeneoReglasSinteticas('listado', $listado))->toBe(['row-actions']);
+});
+
+test('en el panel real, solo Eliminar usa variant danger-outline y ninguna transición usa tone danger', function () use ($raizProyecto) {
+    $archivos = array_merge(
+        glob($raizProyecto.'/app/Dominios/*/Infraestructura/Http/Views/pages/**/*.blade.php') ?: [],
+        glob($raizProyecto.'/app/Dominios/*/Infraestructura/Http/Views/pages/*.blade.php') ?: [],
+        glob($raizProyecto.'/resources/views/components/organisms/*.blade.php') ?: [],
+    );
+    $infractores = [];
+
+    foreach ($archivos as $archivo) {
+        $contenido = (string) file_get_contents($archivo);
+        $sinComentarios = preg_replace('/\{\{--.*?--\}\}/s', '', $contenido) ?? $contenido;
+
+        // Única excepción: «Vaciar» las propias notificaciones, que sí es una eliminación (botón del encabezado).
+        if (preg_match('/variant="danger-outline"/', $sinComentarios) === 1 && ! str_contains($archivo, 'pages/notificaciones/index.blade.php')) {
+            $infractores[] = basename($archivo).': danger-outline';
+        }
+
+        if (preg_match('/kind="transicion"[^>]*\btone="danger"/s', $sinComentarios) === 1) {
+            $infractores[] = basename($archivo).': transicion danger';
+        }
+    }
+
+    expect($infractores)->toBe([]);
 });

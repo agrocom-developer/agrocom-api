@@ -1975,7 +1975,25 @@ Cada acción es un `<x-molecules.row-action kind="ver|editar|aprobar|transicion|
 - Un objeto con máquina de estados de aprobación (proveedor, piloto, dron) usa `organisms/row-actions-aprobacion`, que arma las acciones y los modales de la ficha (`_modales-aprobacion`) y vuelve al listado tras resolver (`desde=listado`). El «Revisar» aparte desapareció: revisar es abrir la ficha (Ver) y aprobar es una transición. «Dar de baja» se muestra como Eliminar.
 - Clientes, calificaciones, documentos y usuarios exponen sus transiciones con el mismo componente. Las disputas y las solicitudes tienen transiciones con formularios propios (resultado, reembolso, motivo) y siguen en su ficha.
 
-`RowActionsOrdenTest` congela el orden y el color; `PanelHomogeneoTest` exige que ningún listado tenga botones sueltos ni una acción en un slot ajeno.
+#### Tabla acción → variante
+
+El rojo vino (`danger`) es solo de **Eliminar**. Lo que no elimina nada nunca lo lleva.
+
+| Acción | Variante | Dónde |
+| --- | --- | --- |
+| Ver | `info-outline` | fila |
+| Editar | `warning-outline` | fila y encabezado |
+| Aprobar, rehabilitar, restablecer, reactivar | `success-outline` | fila / paso de la máquina |
+| Suspender, bloquear, ocultar (baja temporal, reversible) | `neutral-outline` (gris); el paso «Suspendido» y su badge también son grises | fila / paso de la máquina |
+| Rechazar, cancelar (cierran sin eliminar) | `alert-outline` (token `alert`, no el rojo vino) | fila / encabezado |
+| Eliminar, «Dar de baja» (eliminación definitiva) | `danger-outline` en la fila; `danger` sólido en el encabezado de la ficha | **última** acción de la fila; en la ficha, botón del encabezado |
+
+- `molecules/row-action` traduce una transición de tono `danger` a `alert`: ninguna transición puede heredar el rojo vino por el tono de su estado de llegada.
+- **Eliminar no es un paso de la máquina de estados.** En las fichas de proveedor, piloto y dron «Dar de baja» sale de `step-arrow` (la baja solo se dibuja si ya es el estado actual) y es un botón del encabezado: Volver, Editar y, al final, Eliminar en `danger`, solo con permiso y solo si el servidor ofreció la acción (`_boton-eliminar-aprobacion`); abre el mismo modal con motivo que usaba el paso.
+- **Toda tabla termina en Eliminar cuando su entidad lo admite.** Si la política no lo admite (bitácora de auditoría, métricas, historiales, avisos, solicitudes con negociación, reclamos, calificaciones, roles) la fila queda sin él: no se inventa.
+- **Documentos** (`proveedores.documento.eliminar`, permiso sensible): borrado lógico con motivo obligatorio y archivo retirado del almacén; no se elimina el documento aprobado y vigente de un sujeto aprobado. La cuadrícula y el modal de revisión de medios no llevan Eliminar.
+
+`RowActionsOrdenTest` congela el orden y el color (la última acción es Eliminar y es la única en `danger`; Suspender es gris); `PanelHomogeneoTest` exige que ningún listado tenga botones sueltos ni una acción en un slot ajeno.
 
 ### Imágenes y documentos: cuadrícula y modal de revisión (`organisms/cuadricula-medios` + `organisms/modal-revision-medio`)
 

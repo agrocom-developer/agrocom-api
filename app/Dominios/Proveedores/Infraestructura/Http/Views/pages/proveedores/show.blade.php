@@ -44,6 +44,7 @@
                     @if ($puedeRegistrarDron)
                         <x-atoms.button :href="route('panel.drones-flota.create', ['proveedor' => $proveedor->id])" variant="outline" icon="add">{{ __('flota.alta_manual.registrar') }}</x-atoms.button>
                     @endif
+                @include('proveedores::pages._boton-eliminar-aprobacion', ['acciones' => $acciones, 'modalBase' => 'proveedor'])
                 </x-slot:actions>
             </x-organisms.page-header>
 

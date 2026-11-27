@@ -60,7 +60,7 @@ final class UsuariosController
      */
     public const TONO_POR_ESTADO = [
         'activo' => 'success',
-        'bloqueado' => 'danger',
+        'bloqueado' => 'neutral',
     ];
 
     private const PERMISO_VER = 'seguridad.usuario.ver';

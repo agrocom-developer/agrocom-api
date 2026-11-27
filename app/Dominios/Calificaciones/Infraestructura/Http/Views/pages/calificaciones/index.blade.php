@@ -157,7 +157,7 @@
                                             :title="__('calificaciones.panel.ocultar_titulo')"
                                             :message="__('calificaciones.panel.ocultar_mensaje')"
                                             :confirm-label="__('calificaciones.panel.ocultar')"
-                                            tone="danger"
+                                            tone="neutral"
                                         >
                                             <x-atoms.select
                                                 name="causa"
@@ -204,7 +204,7 @@
                                     <x-organisms.row-actions>
                                         <x-slot:transiciones>
                                             @if ($calificacion->estado->value !== 'oculta')
-                                                <x-molecules.row-action kind="transicion" tone="danger" :modal="'calificacion-ocultar-modal-'.$calificacion->id" icon="visibility_off" :label="__('calificaciones.panel.ocultar')" />
+                                                <x-molecules.row-action kind="transicion" tone="neutral" :modal="'calificacion-ocultar-modal-'.$calificacion->id" icon="visibility_off" :label="__('calificaciones.panel.ocultar')" />
                                             @endif
                                             @if ($calificacion->estado->value !== 'visible')
                                                 <x-molecules.row-action kind="transicion" tone="success" :modal="'calificacion-restablecer-modal-'.$calificacion->id" icon="check_circle" :label="__('calificaciones.panel.restablecer')" />

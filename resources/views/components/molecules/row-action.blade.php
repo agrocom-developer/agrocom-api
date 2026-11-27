@@ -7,7 +7,9 @@
 
     El `kind` fija el color, para que nadie lo elija a mano:
     - ver → info-outline · editar → warning-outline · aprobar → success-outline
-    - transicion → `<tono>-outline` del estado de llegada (prop `tone`)
+    - transicion → `<tono>-outline` del estado de llegada (prop `tone`); `danger` se
+      traduce a `alert` (el rojo vino es solo de Eliminar) y suspender, bloquear u
+      ocultar usan `neutral` (gris)
     - eliminar → danger-outline (token de peligro, rojo vino)
 
     El texto va siempre (`label`): como `title` y `aria-label` del botón de ícono, y
@@ -38,7 +40,9 @@
         'editar' => 'warning-outline',
         'aprobar' => 'success-outline',
         'eliminar' => 'danger-outline',
-        default => $tone.'-outline',
+        // El rojo vino (`danger`) es solo de Eliminar: una transición cuyo estado de llegada
+        // es de peligro (rechazar) se pinta `alert`, y suspender/bloquear/ocultar van en gris.
+        default => ($tone === 'danger' ? 'alert' : $tone).'-outline',
     };
 @endphp
 

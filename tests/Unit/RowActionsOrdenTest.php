@@ -1,5 +1,6 @@
 <?php
 
+use App\Dominios\Compartido\Dominio\EstadoAprobacion;
 use Illuminate\Support\Facades\Blade;
 use Tests\TestCase;
 
@@ -93,4 +94,53 @@ test('una acción puede abrir un modal o enlazar, y Eliminar nunca queda fuera d
 
     expect($modal)->toContain('data-bs-target="#m-eliminar"')->toContain('ag-button--danger-outline');
     expect(filaConAcciones(SLOT_VER))->toContain('href="/ver"');
+});
+
+test('la última acción de la fila es Eliminar y lleva el rojo vino; ninguna otra lo lleva', function () {
+    $todas = SLOT_ELIMINAR.SLOT_TRANSICIONES.SLOT_APROBAR.SLOT_EDITAR.SLOT_VER;
+    $html = filaConAcciones($todas);
+    $orden = ordenDeAcciones($html);
+
+    expect(end($orden))->toBe('eliminar')
+        ->and(substr_count($html, 'ag-button--danger-outline'))->toBe(1);
+
+    // Aun si el llamador pasa una transición con tono de peligro (rechazar), no hereda el rojo vino.
+    $rechazar = '<x-slot:transiciones><x-molecules.row-action kind="transicion" tone="danger" modal="m" icon="cancel" label="Rechazar" /></x-slot:transiciones>';
+    $conRechazo = filaConAcciones($rechazar.SLOT_ELIMINAR);
+
+    expect(substr_count($conRechazo, 'ag-button--danger-outline'))->toBe(1)
+        ->and($conRechazo)->toContain('ag-button--alert-outline');
+});
+
+test('Suspender, bloquear y ocultar van en gris (neutral), no en rojo', function () {
+    $suspender = '<x-slot:transiciones><x-molecules.row-action kind="transicion" tone="neutral" modal="m" icon="pause_circle" label="Suspender" /></x-slot:transiciones>';
+    $html = filaConAcciones($suspender);
+
+    expect($html)->toContain('ag-button--neutral-outline')
+        ->not->toContain('danger');
+
+    // El estado de llegada de «suspender» es gris: así lo toman la fila, el paso de la máquina y el badge.
+    expect(EstadoAprobacion::Suspendido->tono())->toBe('neutral')
+        ->and(EstadoAprobacion::Rechazado->tono())->toBe('danger');
+});
+
+test('la máquina de estados de una ficha no ofrece la baja como paso y el encabezado trae Eliminar', function () {
+    $raiz = dirname(__DIR__, 2).'/app/Dominios';
+    $maquina = (string) file_get_contents($raiz.'/Proveedores/Infraestructura/Http/Views/pages/_maquina-estado-aprobacion.blade.php');
+
+    expect($maquina)->toContain('! in_array($hacia, [EstadoAprobacion::Pendiente, EstadoAprobacion::Baja], true)');
+
+    foreach (['Proveedores/Infraestructura/Http/Views/pages/proveedores/show', 'Proveedores/Infraestructura/Http/Views/pages/pilotos/show', 'Flota/Infraestructura/Http/Views/pages/drones/show'] as $ficha) {
+        $contenido = (string) file_get_contents($raiz.'/'.$ficha.'.blade.php');
+        $volver = strpos($contenido, 'boton-volver');
+        $eliminar = strpos($contenido, '_boton-eliminar-aprobacion');
+
+        expect($volver)->not->toBeFalse()
+            ->and($eliminar)->not->toBeFalse()
+            ->and($eliminar)->toBeGreaterThan($volver)
+            ->and($eliminar)->toBeLessThan((int) strpos($contenido, '</x-slot:actions>'));
+    }
+
+    $boton = (string) file_get_contents($raiz.'/Proveedores/Infraestructura/Http/Views/pages/_boton-eliminar-aprobacion.blade.php');
+    expect($boton)->toContain('variant="danger"')->toContain('AccionAprobacion::DarDeBaja');
 });
