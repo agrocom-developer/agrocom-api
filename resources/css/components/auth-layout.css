@@ -301,6 +301,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: var(--ag-space-2) var(--ag-space-4);
     font-family: var(--ag-font-family-mono);
     font-size: 10.5px;
     letter-spacing: 0.12em;
@@ -311,6 +313,25 @@
 
 .ag-auth-layout__version {
     color: var(--ag-color-text-muted-auth);
+}
+
+/* Enlaces «Términos» y «Privacidad» del pie (documentos legales públicos). */
+.ag-auth-layout__legal {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--ag-space-2) var(--ag-space-4);
+}
+
+.ag-auth-layout__legal-link {
+    color: var(--ag-color-text-muted-auth);
+    text-decoration: underline;
+    text-underline-offset: var(--ag-space-1);
+}
+
+.ag-auth-layout__legal-link:hover,
+.ag-auth-layout__legal-link:focus-visible {
+    color: var(--ag-color-text);
 }
 
 @keyframes ag-auth-content-in {

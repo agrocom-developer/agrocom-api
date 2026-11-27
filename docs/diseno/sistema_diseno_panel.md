@@ -160,6 +160,8 @@ Los componentes que necesitan un tono nuevo lo piden como token semántico en am
 | Organism | `topbar` | `resources/views/components/organisms/topbar.blade.php` | Implementado |
 | Template | `panel-layout` | `resources/views/components/templates/panel-layout.blade.php` | Implementado |
 | Template | `auth-layout` | `resources/views/components/templates/auth-layout.blade.php` | Implementado |
+| Template | `legal-layout` | `resources/views/components/templates/legal-layout.blade.php` | Implementado. Cáscara pública de texto largo (términos y privacidad): aviso de borrador (`alert-strip`), cabecera, columna de lectura (`--ag-size-lectura`) y pie. Estilos en `resources/css/components/legal-layout.css`. Ver `docs/politicas/legal.md` |
+| Atom | `texto-legal` | `resources/views/components/atoms/texto-legal.blade.php` | Implementado. Pinta un texto de `lang/es/legal.php` y resalta `[POR DEFINIR]` con un `<mark>` (sin HTML crudo) |
 | Atom | `badge` | `resources/views/components/atoms/badge.blade.php` | Implementado (2026-08-28) |
 | Atom | `switch` | `resources/views/components/atoms/switch.blade.php` | Implementado (2026-08-28) |
 | Molecule | `stat-card` | `resources/views/components/molecules/stat-card.blade.php` | Implementado (2026-08-28) |
