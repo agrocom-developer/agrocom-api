@@ -21,7 +21,10 @@ function filaConAcciones(string $slots): string
 /** @return list<string> los `kind` de las acciones, en el orden en que salen en el HTML */
 function ordenDeAcciones(string $html): array
 {
-    preg_match_all('/data-ag-row-action="(\w+)"/', $html, $coincidencias);
+    // El contenido se pinta dos veces (visibles + menú «⋮»): se cuenta una sola mitad.
+    $corte = strpos($html, 'ag-row-actions__more');
+    $mitad = $corte === false ? $html : substr($html, 0, $corte);
+    preg_match_all('/data-ag-row-action="(\w+)"/', $mitad, $coincidencias);
 
     return $coincidencias[1];
 }
@@ -43,15 +46,13 @@ test('el orden es Ver, Editar, Aprobar, transiciones y Eliminar, sin importar c�
 test('Permisos va después de Editar y antes de Eliminar, con su tono propio y sin el rojo vino', function () {
     $html = filaConAcciones(SLOT_ELIMINAR.SLOT_PERMISOS.SLOT_EDITAR.SLOT_VER);
 
+    $menu = substr($html, (int) strpos($html, 'ag-row-actions__menu'));
+
     expect(ordenDeAcciones($html))->toBe(['ver', 'editar', 'permisos', 'eliminar'])
+        ->and(ordenDeAcciones($menu))->toBe(['ver', 'editar', 'permisos', 'eliminar'])
         ->and($html)->toContain('ag-button--distintivo-1-outline')
         ->and($html)->toContain('title="Permisos"')
-        ->and(substr_count($html, 'ag-button--danger-outline'))->toBe(1);
-
-    // Ver, Editar, Permisos y Eliminar son cuatro: pasan al menú de la fila, en el mismo orden.
-    $menu = substr($html, (int) strpos($html, 'ag-row-actions__menu'));
-    expect($html)->toContain('ag-row-actions--menu')
-        ->and(ordenDeAcciones($menu))->toBe(['ver', 'editar', 'permisos', 'eliminar']);
+        ->and(substr_count($html, 'ag-button--danger-outline'))->toBe(2);
 });
 
 test('Eliminar va siempre al final, también con varias transiciones', function () {
@@ -78,26 +79,25 @@ test('cada tipo de acción lleva su color fijo y Eliminar el de peligro', functi
     expect(filaConAcciones(SLOT_TRANSICIONES))->toContain('ag-button--warning-outline');
 });
 
-test('hasta tres acciones son botones de ícono con título y etiqueta accesible', function () {
+test('las acciones llevan ícono y texto visibles, nunca solo ícono', function () {
     $html = filaConAcciones(SLOT_VER.SLOT_EDITAR.SLOT_ELIMINAR);
 
     expect($html)
-        ->toContain('ag-row-actions--iconos')
-        ->not->toContain('ag-row-actions__more')
+        ->toContain('ag-row-actions__visible')
+        ->toContain('ag-row-actions__menu')
         ->toContain('title="Eliminar"')
-        ->toContain('aria-label="Eliminar"');
+        ->toContain('aria-label="Eliminar"')
+        ->not->toContain('ag-row-actions--iconos');
 });
 
-test('con más de tres acciones todas pasan al menú de la fila, en el mismo orden', function () {
-    $html = filaConAcciones(SLOT_ELIMINAR.SLOT_TRANSICIONES.SLOT_APROBAR.SLOT_VER);
-
-    expect($html)
-        ->toContain('ag-row-actions--menu')
-        ->toContain('ag-row-actions__more');
+test('el contenido va en las dos mitades, visibles y menú, en el mismo orden', function () {
+    $html = filaConAcciones(SLOT_ELIMINAR.SLOT_TRANSICIONES.SLOT_APROBAR.SLOT_EDITAR.SLOT_VER);
 
     $menu = substr($html, strpos($html, 'ag-row-actions__menu'));
+    preg_match_all('/data-ag-row-action="(\w+)"/', $menu, $enMenu);
 
-    expect(ordenDeAcciones($menu))->toBe(['ver', 'aprobar', 'transicion', 'eliminar']);
+    expect(ordenDeAcciones($html))->toBe(['ver', 'editar', 'aprobar', 'transicion', 'eliminar'])
+        ->and($enMenu[1])->toBe(['ver', 'editar', 'aprobar', 'transicion', 'eliminar']);
 });
 
 test('sin acciones no se pinta nada', function () {
@@ -117,13 +117,13 @@ test('la última acción de la fila es Eliminar y lleva el rojo vino; ninguna ot
     $orden = ordenDeAcciones($html);
 
     expect(end($orden))->toBe('eliminar')
-        ->and(substr_count($html, 'ag-button--danger-outline'))->toBe(1);
+        ->and(substr_count($html, 'ag-button--danger-outline'))->toBe(2);
 
     // Aun si el llamador pasa una transición con tono de peligro (rechazar), no hereda el rojo vino.
     $rechazar = '<x-slot:transiciones><x-molecules.row-action kind="transicion" tone="danger" modal="m" icon="cancel" label="Rechazar" /></x-slot:transiciones>';
     $conRechazo = filaConAcciones($rechazar.SLOT_ELIMINAR);
 
-    expect(substr_count($conRechazo, 'ag-button--danger-outline'))->toBe(1)
+    expect(substr_count($conRechazo, 'ag-button--danger-outline'))->toBe(2)
         ->and($conRechazo)->toContain('ag-button--alert-outline');
 });
 
@@ -158,4 +158,15 @@ test('la máquina de estados de una ficha no ofrece la baja como paso y el encab
 
     $boton = (string) file_get_contents($raiz.'/Proveedores/Infraestructura/Http/Views/pages/_boton-eliminar-aprobacion.blade.php');
     expect($boton)->toContain('variant="danger"')->toContain('AccionAprobacion::DarDeBaja');
+});
+
+test('el CSS conserva el cupo de dos acciones sueltas y el «⋮» en móvil', function () {
+    $css = (string) file_get_contents(dirname(__DIR__, 2).'/resources/css/components/row-actions.css');
+
+    expect($css)
+        ->toContain('.ag-row-actions__visible')
+        ->toContain('min-width: 768px')
+        ->toContain('nth-child(n + 3)')
+        ->not->toContain('ag-row-actions--iconos')
+        ->not->toContain('ag-row-action-size');
 });
