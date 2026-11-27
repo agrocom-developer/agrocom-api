@@ -2,11 +2,13 @@
 
 namespace App\Dominios\Solicitudes\Aplicacion;
 
+use App\Dominios\Compartido\Aplicacion\Medios\AlmacenDeMedios;
+use App\Dominios\Compartido\Aplicacion\Medios\LimiteDeMedios;
+use App\Dominios\Compartido\Dominio\VarianteDeMedio;
 use App\Dominios\Solicitudes\Dominio\Excepciones\SolicitudInvalida;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\TerrenoFoto;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 
 /**
@@ -14,13 +16,15 @@ use Illuminate\Support\Facades\URL;
  * cliente dueño y las ve el piloto en el detalle de la solicitud antes de ofertar. Todo parte
  * del cliente de la cuenta (invariante 5): la foto o el terreno de otro cliente responde como
  * si no existiera. El archivo vive en el disco privado y se entrega por una URL firmada de
- * corta vida, nunca por una pública.
+ * corta vida, nunca por una pública. Un terreno admite como máximo `medios.limites.por_entidad.terreno_fotos` fotos.
  */
 final class GestionarFotosDeTerreno
 {
     public function __construct(
         private readonly GestionarTerrenos $terrenos,
         private readonly ClienteDeLaCuenta $clientes,
+        private readonly AlmacenDeMedios $almacen,
+        private readonly LimiteDeMedios $limites,
     ) {}
 
     /** @throws SolicitudInvalida */
@@ -29,17 +33,15 @@ final class GestionarFotosDeTerreno
         $this->clientes->activo($usuarioId);
         $terreno = $this->terrenos->obtener($usuarioId, $terrenoId);
 
-        $maximo = (int) config('solicitudes.fotos_terreno.maximo_por_terreno', 8);
-
-        if (TerrenoFoto::query()->where('terreno_id', $terreno->id)->count() >= $maximo) {
-            throw SolicitudInvalida::fotosDeTerrenoLlenas($maximo);
+        if ($this->limites->excede('terreno_fotos', TerrenoFoto::query()->where('terreno_id', $terreno->id)->count())) {
+            throw SolicitudInvalida::fotosDeTerrenoLlenas($this->limites->porEntidad('terreno_fotos'));
         }
 
-        $ruta = $archivo->store("terrenos/{$terreno->id}/fotos", 'local');
+        $ruta = $this->almacen->guardar($archivo, "terrenos/{$terreno->id}/fotos");
 
         return TerrenoFoto::query()->create([
             'terreno_id' => $terreno->id,
-            'archivo' => (string) $ruta,
+            'archivo' => $ruta,
             'hash' => (string) hash_file('sha256', $archivo->getRealPath()),
             'bytes' => (int) $archivo->getSize(),
             'descripcion' => $descripcion === null || trim($descripcion) === '' ? null : trim($descripcion),
@@ -68,26 +70,36 @@ final class GestionarFotosDeTerreno
         $foto->delete();
     }
 
-    /** La ruta absoluta del archivo, o `null` si ya no está en el disco. */
-    public function ruta(int $fotoId): ?string
+    /** La ruta absoluta del archivo (el derivado pedido si ya existe), o `null` si ya no está en el disco. */
+    public function ruta(int $fotoId, VarianteDeMedio $variante = VarianteDeMedio::Original): ?string
     {
         $foto = TerrenoFoto::query()->find($fotoId);
 
-        if ($foto === null || ! Storage::disk('local')->exists($foto->archivo)) {
-            return null;
-        }
-
-        return Storage::disk('local')->path($foto->archivo);
+        return $foto === null ? null : $this->almacen->rutaAbsoluta($foto->archivo, $variante);
     }
 
-    /** URL firmada de corta vida (relativa: la app la une a su base) para una foto. */
-    public static function url(int $fotoId): string
+    /** URL firmada de corta vida (relativa: la app la une a su base) para una foto; sin variante, el original. */
+    public static function url(int $fotoId, VarianteDeMedio $variante = VarianteDeMedio::Original): string
     {
         return URL::temporarySignedRoute(
             'api.terrenos.fotos.archivo',
             Carbon::now()->addMinutes((int) config('solicitudes.fotos_terreno.url_minutos', 15)),
-            ['foto' => $fotoId],
+            $variante === VarianteDeMedio::Original ? ['foto' => $fotoId] : ['foto' => $fotoId, 'variante' => $variante->value],
             absolute: false,
         );
+    }
+
+    /**
+     * Las tres URL firmadas de una foto: `url` (original, como siempre) y los derivados para listas y vistas previas.
+     *
+     * @return array{url: string, url_miniatura: string, url_media: string}
+     */
+    public static function urls(int $fotoId): array
+    {
+        return [
+            'url' => self::url($fotoId),
+            'url_miniatura' => self::url($fotoId, VarianteDeMedio::Miniatura),
+            'url_media' => self::url($fotoId, VarianteDeMedio::Media),
+        ];
     }
 }

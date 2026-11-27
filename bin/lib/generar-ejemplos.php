@@ -250,6 +250,7 @@ try {
         'nombre' => 'Otra persona', 'telefono' => '+591 70011225',
     ], $tokenCliente, 404);
     registrar('catalogos-ubicaciones', 'listarUbicaciones', 'Catálogo oficial de departamentos y provincias de Bolivia con su código del INE; sin token, de solo lectura.', 'GET', '/api/catalogos/ubicaciones', null, null, 200);
+    registrar('medios-limites', 'verLimitesDeMedios', 'Cuántos archivos multimedia admite cada entidad (config/medios.php): la app avisa antes de subir; el servidor responde 422 al pasarse.', 'GET', '/api/medios/limites', null, $tokenCliente, 200);
     registrar('terrenos-lista', 'listarTerrenos', 'Terrenos del cliente.', 'GET', '/api/terrenos', null, $tokenCliente, 200);
 
     [, $terreno] = registrar('terrenos-crear', 'crearTerreno', 'Alta de un terreno; las hectáreas viajan como decimal exacto en string.', 'POST', '/api/terrenos', [

@@ -56,6 +56,7 @@ final class PermisosReservados
     public const SENSIBLES = [
         'seguridad.verificacion.ver',
         'proveedores.documento.ver',
+        'proveedores.documento.descargar',
         'solicitudes.solicitud.ver_seguimiento',
         'seguridad.bitacora.ver',
     ];

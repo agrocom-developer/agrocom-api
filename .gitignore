@@ -41,4 +41,8 @@ runs/
 /docs/diseno/canvas/*.html
 !/docs/diseno/canvas/*.dc.html
 phpunit.afectadas.xml
-/storage/demo
+
+# Archivos de personas (documentos, fotos del dron, del terreno, de avance, del chat y de perfil): viven en
+# storage/app/private (y r2 en local) y NUNCA se versionan; esas carpetas se ignoran en storage/app/.gitignore.
+# `storage/demo/` queda LIBRE (sin ignorar) mientras dure el desarrollo: es para las
+# imágenes y PDF de EJEMPLO que el equipo quiera versionar. Solo medios ficticios, nunca de una persona real.

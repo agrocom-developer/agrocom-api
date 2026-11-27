@@ -22,4 +22,7 @@ enum AccionBitacora: string
     case Creado = 'creado';
     case Actualizado = 'actualizado';
     case Eliminado = 'eliminado';
+
+    /** Alguien abrió o descargó el original de un archivo sensible (documentos de identidad); no cambia el registro. */
+    case Descargado = 'descargado';
 }

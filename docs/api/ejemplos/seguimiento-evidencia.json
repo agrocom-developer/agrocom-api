@@ -22,7 +22,9 @@
                 "tipo": "foto_avance",
                 "avance_id": null,
                 "url": "/api/evidencias/10/archivo",
-                "subida_en": "2026-11-26T22:09:45+00:00"
+                "url_miniatura": "/api/evidencias/10/archivo?variante=miniatura",
+                "url_media": "/api/evidencias/10/archivo?variante=media",
+                "subida_en": "2026-11-27T17:12:29+00:00"
             }
         }
     }

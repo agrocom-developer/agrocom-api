@@ -699,7 +699,7 @@ test('el chat admite fotos con las reglas de las evidencias: peso máximo, disco
     expect($creada)->toBeTrue()->and($reintento)->toBeFalse()->and($mismo->id)->toBe($foto->id)
         ->and($foto->tipo)->toBe('foto')->and($foto->texto)->toBe('Así está el lote')->and($foto->bytes)->toBeGreaterThan(0)
         ->and($foto->hash)->toHaveLength(64)
-        ->and($foto->archivo)->toStartWith("mensajes/{$solicitud}/");
+        ->and($foto->archivo)->toStartWith("servicios/{$solicitud}/chat/");
     Storage::disk('local')->assertExists($foto->archivo);
 
     $presentado = Presentacion::mensaje($foto, NEG_CLIENTE);
@@ -938,13 +938,43 @@ test('el cliente sube fotos de su terreno, el piloto las ve con URL firmada y un
 
 test('un terreno admite un máximo de fotos', function () {
     negMundo();
-    config(['solicitudes.fotos_terreno.maximo_por_terreno' => 2]);
+    config(['medios.limites.por_entidad.terreno_fotos' => 2]);
     $fotos = app(GestionarFotosDeTerreno::class);
 
     $fotos->subir(NEG_CLIENTE, 1, UploadedFile::fake()->image('a.jpg')->size(40), null);
     $fotos->subir(NEG_CLIENTE, 1, UploadedFile::fake()->image('b.jpg')->size(40), null);
 
     expect(fn () => $fotos->subir(NEG_CLIENTE, 1, UploadedFile::fake()->image('c.jpg')->size(40), null))->toThrow(SolicitudInvalida::class);
+});
+
+test('el chat de un servicio admite como máximo el límite de fotos y avisa con 422 en español', function () {
+    negMundo();
+    [$solicitud] = negAdjudicada();
+    config(['medios.limites.por_entidad.servicio_chat' => 2]);
+    $chat = app(Mensajeria::class);
+
+    $chat->enviarFoto(NEG_CLIENTE, $solicitud, (string) Str::uuid(), UploadedFile::fake()->image('a.jpg')->size(40), null);
+    $chat->enviarFoto(NEG_CLIENTE, $solicitud, (string) Str::uuid(), UploadedFile::fake()->image('b.jpg')->size(40), null);
+
+    expect(negCodigo(fn () => $chat->enviarFoto(NEG_CLIENTE, $solicitud, (string) Str::uuid(), UploadedFile::fake()->image('c.jpg')->size(40), null)))->toBe('limite_fotos_del_chat:422');
+});
+
+test('un servicio admite como máximo el límite de fotos de avance y reintentar una foto ya subida no cuenta', function () {
+    negMundo();
+    [$solicitud] = negAdjudicada();
+    config(['medios.limites.por_entidad.servicio_avance' => 2]);
+    $seguimiento = app(Seguimiento::class);
+    $seguimiento->iniciar(NEG_PILOTO_7, $solicitud, ['uuid_cliente' => (string) Str::uuid()]);
+
+    $primera = (string) Str::uuid();
+    [$evidencia] = $seguimiento->subirEvidencia(NEG_PILOTO_7, $solicitud, ['uuid_cliente' => $primera, 'tipo' => 'foto_avance'], UploadedFile::fake()->image('a.jpg')->size(40));
+    $seguimiento->subirEvidencia(NEG_PILOTO_7, $solicitud, ['uuid_cliente' => (string) Str::uuid(), 'tipo' => 'foto_avance'], UploadedFile::fake()->image('b.jpg')->size(40));
+
+    [, $creada] = $seguimiento->subirEvidencia(NEG_PILOTO_7, $solicitud, ['uuid_cliente' => $primera, 'tipo' => 'foto_avance'], UploadedFile::fake()->image('a.jpg')->size(40));
+
+    expect($evidencia->archivo)->toStartWith("servicios/{$solicitud}/avance/{$primera}.")
+        ->and($creada)->toBeFalse()
+        ->and(negCodigo(fn () => $seguimiento->subirEvidencia(NEG_PILOTO_7, $solicitud, ['uuid_cliente' => (string) Str::uuid(), 'tipo' => 'foto_avance'], UploadedFile::fake()->image('c.jpg')->size(40))))->toBe('limite_fotos_de_avance:422');
 });
 
 test('el cliente ve la foto de perfil del piloto del equipo en la tarjeta de la oferta', function () {

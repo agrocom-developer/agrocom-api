@@ -54,6 +54,8 @@ return [
         'avance_invalido' => 'El avance no puede ser negativo.',
         'hectareas_exceden_tolerancia' => 'Las hectáreas ejecutadas superan lo solicitado más la tolerancia de :tolerancia %.',
         'correccion_sin_motivo' => 'El avance es menor al último registrado: indica el motivo de la corrección.',
+        'limite_fotos_de_avance' => 'Un servicio admite hasta :maximo fotos de avance. Ya subiste el máximo.',
+        'limite_fotos_del_chat' => 'El chat de un servicio admite hasta :maximo fotos. Ya se envió el máximo.',
         'evidencia_muy_grande' => 'La foto debe pesar menos de :maximo KB: comprímela antes de subirla.',
         'ubicacion_no_permitida' => 'La ubicación solo se envía mientras el servicio está en ejecución.',
         'mensaje_invalido' => 'Escribe un mensaje de hasta :maximo caracteres.',

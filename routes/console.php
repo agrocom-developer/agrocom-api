@@ -50,3 +50,13 @@ Schedule::command('cuentas:ejecutar-eliminaciones')
     ->dailyAt('02:30')
     ->withoutOverlapping()
     ->onOneServer();
+
+/*
+ * Archivos multimedia: la miniatura y el tamaño medio de cada imagen subida se generan en la cola `medios`
+ * para no frenar la subida. No hay un worker permanente en el despliegue, así que cada minuto se vacía esa
+ * cola y se sale. Si algo se pierde, `php artisan medios:regenerar` completa lo que falte.
+ */
+Schedule::command('queue:work --queue=medios --stop-when-empty --max-time=50 --tries=2')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->onOneServer();

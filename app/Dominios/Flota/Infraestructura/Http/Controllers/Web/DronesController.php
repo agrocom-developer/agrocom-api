@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Flota\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Compartido\Aplicacion\Medios\AlmacenDeMedios;
 use App\Dominios\Compartido\Dominio\AccionAprobacion;
 use App\Dominios\Compartido\Dominio\EstadoAprobacion;
 use App\Dominios\Compartido\Dominio\Excepciones\AprobacionPropia;
@@ -10,6 +11,7 @@ use App\Dominios\Compartido\Dominio\Excepciones\MotivoRequerido;
 use App\Dominios\Compartido\Dominio\Excepciones\TransicionDeAprobacionInvalida;
 use App\Dominios\Compartido\Dominio\TipoDocumento;
 use App\Dominios\Compartido\Dominio\TransicionesAprobacion;
+use App\Dominios\Compartido\Dominio\VarianteDeMedio;
 use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Flota\Aplicacion\FotosObligatorias;
@@ -35,9 +37,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * `GET /panel/drones-flota` y su ficha: los drones del marketplace de todos los
@@ -60,6 +61,7 @@ final class DronesController
         private readonly AutorizacionPanelWeb $autorizacion,
         private readonly LecturaProveedores $proveedores,
         private readonly LecturaDocumentos $documentos,
+        private readonly AlmacenDeMedios $almacen,
     ) {}
 
     public function index(Request $request): View
@@ -195,16 +197,21 @@ final class DronesController
         return $volver->with('estado', __('proveedores.aprobacion.resuelta.'.$accion->value));
     }
 
-    /** `GET /panel/drones-flota/fotos/{foto}/archivo`: la foto, desde el disco privado (nunca una URL pública). */
-    public function foto(Request $request, int $foto): BinaryFileResponse
+    /**
+     * `GET /panel/drones-flota/fotos/{foto}/archivo`: la foto, desde el disco privado (nunca una URL pública).
+     * `?variante=miniatura|media` entrega el derivado reducido; sin variante, el original.
+     */
+    public function foto(Request $request, int $foto): StreamedResponse
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
         $fila = DB::table('flo_dron_fotos')->whereNull('deleted_at')->where('id', $foto)->first();
 
-        abort_unless($fila !== null && Storage::disk('local')->exists($fila->archivo), 404);
+        $respuesta = $fila === null ? null : $this->almacen->respuesta($fila->archivo, VarianteDeMedio::desde($request->query('variante')));
 
-        return response()->file(Storage::disk('local')->path($fila->archivo), ['Cache-Control' => 'private, no-store']);
+        abort_if($respuesta === null, 404);
+
+        return $respuesta;
     }
 
     /** `POST /panel/drones-flota/fotos/{foto}/revisar`: aprueba o rechaza una foto (el rechazo lleva motivo). */

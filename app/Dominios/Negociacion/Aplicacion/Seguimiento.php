@@ -2,7 +2,10 @@
 
 namespace App\Dominios\Negociacion\Aplicacion;
 
+use App\Dominios\Compartido\Aplicacion\Medios\AlmacenDeMedios;
+use App\Dominios\Compartido\Aplicacion\Medios\LimiteDeMedios;
 use App\Dominios\Compartido\Dominio\MontoDelServicio;
+use App\Dominios\Compartido\Dominio\VarianteDeMedio;
 use App\Dominios\Negociacion\Dominio\Excepciones\NegociacionInvalida;
 use App\Dominios\Negociacion\Infraestructura\Eloquent\Avance;
 use App\Dominios\Negociacion\Infraestructura\Eloquent\Evidencia;
@@ -14,7 +17,6 @@ use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * La ejecución del servicio (`negociacion-contrato.md` §4): el piloto marca el inicio,
@@ -35,6 +37,8 @@ final class Seguimiento
         private readonly PasosDeSolicitud $solicitudes,
         private readonly ParametrosDeNegociacion $parametros,
         private readonly Avisador $avisos,
+        private readonly AlmacenDeMedios $almacen,
+        private readonly LimiteDeMedios $limites,
     ) {}
 
     /**
@@ -138,7 +142,12 @@ final class Seguimiento
             ? null
             : Avance::query()->where('solicitud_id', $solicitudId)->where('uuid_cliente', $datos['avance_uuid_cliente'])->value('id');
 
-        $ruta = $archivo->storeAs("evidencias/{$solicitudId}", $datos['uuid_cliente'].'.'.($archivo->guessExtension() ?: 'jpg'), 'local');
+        if ($this->limites->excede('servicio_avance', Evidencia::query()->where('solicitud_id', $solicitudId)->count())) {
+            throw NegociacionInvalida::dato('limite_fotos_de_avance', 'archivo', ['maximo' => $this->limites->porEntidad('servicio_avance')]);
+        }
+
+        // `servicios/{id}/avance/{uuid_cliente}`: el uuid lo generó el dispositivo, así que reintentar la misma subida cae en el mismo archivo.
+        $ruta = $this->almacen->guardar($archivo, "servicios/{$solicitudId}/avance", $datos['uuid_cliente']);
 
         try {
             $evidencia = DB::transaction(function () use ($datos, $solicitudId, $usuarioId, $archivo, $ruta, $avanceId): Evidencia {
@@ -147,7 +156,7 @@ final class Seguimiento
                     'solicitud_id' => $solicitudId,
                     'avance_id' => $avanceId,
                     'tipo' => $datos['tipo'],
-                    'archivo' => (string) $ruta,
+                    'archivo' => $ruta,
                     'hash' => hash_file('sha256', $archivo->getRealPath()) ?: '',
                     'bytes' => (int) $archivo->getSize(),
                     'usuario_id' => $usuarioId,
@@ -198,22 +207,24 @@ final class Seguimiento
     }
 
     /**
-     * El archivo de una foto, para las dos partes del servicio.
+     * El archivo de una foto (el derivado pedido si ya existe), para las dos partes del servicio.
      *
      * @return array{0: Evidencia, 1: string} la evidencia y la ruta en el disco.
      *
      * @throws NegociacionInvalida
      */
-    public function archivoDeEvidencia(int $usuarioId, int $evidenciaId): array
+    public function archivoDeEvidencia(int $usuarioId, int $evidenciaId, VarianteDeMedio $variante = VarianteDeMedio::Original): array
     {
         $evidencia = Evidencia::query()->find($evidenciaId) ?? throw NegociacionInvalida::ajeno('evidencia_ajena');
         $this->participantes->lado($usuarioId, $evidencia->solicitud_id);
 
-        if (! Storage::disk('local')->exists($evidencia->archivo)) {
+        $ruta = $this->almacen->rutaAbsoluta($evidencia->archivo, $variante);
+
+        if ($ruta === null) {
             throw NegociacionInvalida::ajeno('evidencia_ajena');
         }
 
-        return [$evidencia, Storage::disk('local')->path($evidencia->archivo)];
+        return [$evidencia, $ruta];
     }
 
     /**

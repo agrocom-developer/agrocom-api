@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Negociacion\Infraestructura\Http\Controllers\Api;
 
+use App\Dominios\Compartido\Dominio\VarianteDeMedio;
 use App\Dominios\Negociacion\Aplicacion\Mensajeria;
 use App\Dominios\Negociacion\Aplicacion\Presentacion;
 use App\Dominios\Negociacion\Dominio\Excepciones\NegociacionInvalida;
@@ -36,7 +37,9 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
         new OA\Property(property: 'tipo', type: 'string', enum: ['texto', 'foto', 'sistema']),
         new OA\Property(property: 'evento', description: 'Solo en los mensajes de sistema.', type: 'string', enum: ['solicitud_adjudicada', 'servicio_iniciado', 'servicio_finalizado', 'precio_final_confirmado'], nullable: true),
         new OA\Property(property: 'texto', description: 'El texto, el pie de la foto (puede ir vacío) o la línea del evento, ya en español.', type: 'string', example: 'Llego el lunes temprano.'),
-        new OA\Property(property: 'url', description: 'Solo en las fotos: ruta autenticada del archivo.', type: 'string', example: '/api/mensajes/121/archivo', nullable: true),
+        new OA\Property(property: 'url', description: 'Solo en las fotos: ruta autenticada del archivo original.', type: 'string', example: '/api/mensajes/121/archivo', nullable: true),
+        new OA\Property(property: 'url_miniatura', description: 'Solo en las fotos: derivado chico para la lista del chat; pide `url` solo en el visor.', type: 'string', example: '/api/mensajes/121/archivo?variante=miniatura', nullable: true),
+        new OA\Property(property: 'url_media', description: 'Solo en las fotos: derivado medio para la vista previa.', type: 'string', example: '/api/mensajes/121/archivo?variante=media', nullable: true),
         new OA\Property(property: 'bytes', description: 'Peso de la foto.', type: 'integer', nullable: true),
         new OA\Property(property: 'leido_en', type: 'string', format: 'date-time', nullable: true),
         new OA\Property(property: 'creado_en', type: 'string', format: 'date-time'),
@@ -148,7 +151,7 @@ final class MensajesController
             new OA\Response(response: 403, description: 'El rol del token no usa el chat.'),
             new OA\Response(response: 404, description: 'La solicitud no es de la cuenta.'),
             new OA\Response(response: 409, description: '`chat_cerrado`.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorConflicto')),
-            new OA\Response(response: 422, description: 'Archivo inválido o de 300 KB o más, o pie de más de 280 caracteres.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
+            new OA\Response(response: 422, description: 'Archivo inválido o de 300 KB o más, pie de más de 280 caracteres, o el chat ya tiene el máximo de fotos (`GET /api/medios/limites`).', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],
     )]
     public function foto(EnviarFotoDeMensajeRequest $request, int $id): JsonResponse
@@ -172,7 +175,10 @@ final class MensajesController
         summary: 'Descargar una foto del chat',
         security: [['tokenDispositivo' => []]],
         tags: ['Mensajes'],
-        parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'variante', in: 'query', required: false, description: 'Tamaño: `miniatura` o `media` (derivados reducidos, para listas y vistas previas) u `original` (por omisión). Si el derivado aún no se generó, se entrega el original.', schema: new OA\Schema(type: 'string', enum: ['miniatura', 'media', 'original'])),
+        ],
         responses: [
             new OA\Response(response: 200, description: 'La imagen.', content: new OA\MediaType(mediaType: 'image/jpeg', schema: new OA\Schema(type: 'string', format: 'binary'))),
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
@@ -185,7 +191,7 @@ final class MensajesController
         $this->exigirPermiso($request, 'negociacion.mensaje.usar');
 
         try {
-            [, $ruta] = $this->mensajeria->archivoDeFoto($this->usuarioId(), $id);
+            [, $ruta] = $this->mensajeria->archivoDeFoto($this->usuarioId(), $id, VarianteDeMedio::desde($request->query('variante')));
         } catch (NegociacionInvalida $excepcion) {
             return RespuestaDeNegociacion::de($excepcion);
         }

@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Negociacion\Infraestructura\Http\Controllers\Api;
 
+use App\Dominios\Compartido\Dominio\VarianteDeMedio;
 use App\Dominios\Negociacion\Aplicacion\CancelarComoProveedor;
 use App\Dominios\Negociacion\Aplicacion\Presentacion;
 use App\Dominios\Negociacion\Aplicacion\ReputacionDelProveedor;
@@ -198,7 +199,7 @@ final class SeguimientoController
             new OA\Response(response: 403, description: 'El rol del token no sube evidencias.'),
             new OA\Response(response: 404, description: 'La solicitud no es del equipo de la cuenta.'),
             new OA\Response(response: 409, description: 'La solicitud no está en ejecución.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorConflicto')),
-            new OA\Response(response: 422, description: 'Archivo inválido o de 300 KB o más.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
+            new OA\Response(response: 422, description: 'Archivo inválido, de 300 KB o más, o el servicio ya tiene el máximo de fotos de avance (`GET /api/medios/limites`).', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],
     )]
     public function subirEvidencia(SubirEvidenciaRequest $request, int $id): JsonResponse
@@ -222,7 +223,10 @@ final class SeguimientoController
         summary: 'Descargar una foto del servicio',
         security: [['tokenDispositivo' => []]],
         tags: ['Seguimiento'],
-        parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'variante', in: 'query', required: false, description: 'Tamaño: `miniatura` o `media` (derivados reducidos, para listas y vistas previas) u `original` (por omisión). Si el derivado aún no se generó, se entrega el original.', schema: new OA\Schema(type: 'string', enum: ['miniatura', 'media', 'original'])),
+        ],
         responses: [
             new OA\Response(response: 200, description: 'La imagen.', content: new OA\MediaType(mediaType: 'image/jpeg', schema: new OA\Schema(type: 'string', format: 'binary'))),
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
@@ -235,7 +239,7 @@ final class SeguimientoController
         $this->exigirPermiso($request, 'negociacion.seguimiento.ver');
 
         try {
-            [, $ruta] = $this->seguimiento->archivoDeEvidencia($this->usuarioId(), $id);
+            [, $ruta] = $this->seguimiento->archivoDeEvidencia($this->usuarioId(), $id, VarianteDeMedio::desde($request->query('variante')));
         } catch (NegociacionInvalida $excepcion) {
             return RespuestaDeNegociacion::de($excepcion);
         }

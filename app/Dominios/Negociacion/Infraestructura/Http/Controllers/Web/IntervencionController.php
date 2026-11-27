@@ -2,6 +2,8 @@
 
 namespace App\Dominios\Negociacion\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Compartido\Aplicacion\Medios\AlmacenDeMedios;
+use App\Dominios\Compartido\Dominio\VarianteDeMedio;
 use App\Dominios\Negociacion\Aplicacion\IntervenirNegociacion;
 use App\Dominios\Negociacion\Dominio\Excepciones\NegociacionInvalida;
 use App\Dominios\Negociacion\Infraestructura\Eloquent\Evidencia;
@@ -9,8 +11,7 @@ use App\Dominios\Negociacion\Infraestructura\Http\Requests\CerrarNegociacionRequ
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Lo que el panel hace sobre la negociación de una solicitud (adaptador delgado,
@@ -39,15 +40,17 @@ final class IntervencionController
         return $volver->with('estado', __('negociacion.panel.negociacion_cerrada'));
     }
 
-    /** `GET /panel/evidencias/{evidencia}/archivo`: la foto, desde el disco privado (nunca una URL pública). */
-    public function evidencia(Request $request, int $evidencia): BinaryFileResponse
+    /** `GET /panel/evidencias/{evidencia}/archivo`: la foto, desde el disco privado (nunca una URL pública); `?variante=miniatura|media` entrega el derivado. */
+    public function evidencia(Request $request, int $evidencia, AlmacenDeMedios $almacen): StreamedResponse
     {
         abort_unless($this->autorizacion->tienePermiso($request, 'solicitudes.solicitud.ver_seguimiento'), 403);
 
         $foto = Evidencia::query()->findOrFail($evidencia);
 
-        abort_unless(Storage::disk('local')->exists($foto->archivo), 404);
+        $respuesta = $almacen->respuesta($foto->archivo, VarianteDeMedio::desde($request->query('variante')));
 
-        return response()->file(Storage::disk('local')->path($foto->archivo), ['Cache-Control' => 'private, no-store']);
+        abort_if($respuesta === null, 404);
+
+        return $respuesta;
     }
 }

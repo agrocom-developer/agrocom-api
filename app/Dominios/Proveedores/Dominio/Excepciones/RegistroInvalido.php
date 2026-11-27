@@ -49,6 +49,11 @@ final class RegistroInvalido extends RuntimeException
         return new self(Texto::de('proveedores.errores.independiente_sin_pilotos'));
     }
 
+    public static function limiteDeDocumentos(int $maximo): self
+    {
+        return new self(Texto::de('proveedores.errores.limite_de_documentos', ['maximo' => $maximo]));
+    }
+
     public static function archivoNoDisponible(): self
     {
         return new self(Texto::de('proveedores.errores.archivo_no_disponible'));
