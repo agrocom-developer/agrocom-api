@@ -141,18 +141,18 @@
                                 <span class="ag-proveedores__sub">{{ $rol->description }}</span>
                             </span>
                             <span role="cell">
-                                {{ $fila['pantallas'] }}
+                                <span class="ag-index-table__mono">{{ $fila['pantallas'] }}</span>
                                 <span class="ag-proveedores__sub">{{ __('seguridad.roles.de_total', ['total' => $totales['pantallas']]) }}</span>
                             </span>
                             <span role="cell">
-                                {{ $fila['acciones'] }}
+                                <span class="ag-index-table__mono">{{ $fila['acciones'] }}</span>
                                 <span class="ag-proveedores__sub">{{ __('seguridad.roles.de_total', ['total' => $totales['acciones']]) }}</span>
                             </span>
                             <span role="cell">
                                 @if ($fila['usuarios'] === 0)
                                     <span class="ag-proveedores__sub">{{ __('seguridad.roles.sin_usuarios') }}</span>
                                 @else
-                                    {{ $fila['usuarios'] }}
+                                    <span class="ag-index-table__mono">{{ $fila['usuarios'] }}</span>
                                 @endif
                             </span>
                             <span role="cell">
