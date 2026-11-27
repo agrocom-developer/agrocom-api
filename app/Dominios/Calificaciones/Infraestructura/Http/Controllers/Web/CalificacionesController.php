@@ -49,13 +49,15 @@ final class CalificacionesController
         $estado = EstadoCalificacion::tryFrom(TextoDeFiltro::de($request, 'estado'));
         $sujeto = SujetoCalificacion::tryFrom(TextoDeFiltro::de($request, 'sujeto'));
 
-        $calificaciones = $listar->ejecutar($estado?->value, $sujeto?->value);
+        $busqueda = TextoDeFiltro::de($request, 'q');
+
+        $calificaciones = $listar->ejecutar($estado?->value, $sujeto?->value, busqueda: $busqueda);
 
         return view('calificaciones::pages.calificaciones.index', [
             ...$this->autorizacion->cascara($request),
             'calificaciones' => $calificaciones,
             'nombres' => $this->nombres($calificaciones->getCollection()->all()),
-            'filtros' => ['estado' => $estado?->value, 'sujeto' => $sujeto?->value],
+            'filtros' => ['q' => $busqueda, 'estado' => $estado?->value, 'sujeto' => $sujeto?->value],
             'estadosFiltro' => EstadoCalificacion::cases(),
             'sujetosFiltro' => SujetoCalificacion::cases(),
             'causas' => CausaModeracion::cases(),

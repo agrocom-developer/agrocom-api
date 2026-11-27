@@ -36,6 +36,10 @@
       arma la página ya calcula `$hayFiltrosActivos`, este es el mismo
       cálculo pero contando cuántos, no si hay alguno. El badge y el link
       "Limpiar" solo se pintan si es mayor a 0.
+    - clearUrl (string|null): a dónde lleva «Limpiar filtros». Por omisión, `action`. Un
+      listado con un filtro por omisión (p. ej. documentos, que abre en «En revisión»)
+      pasa acá la URL que significa «sin filtros» de verdad (`?estado=`), porque `action`
+      a secas volvería a aplicar el filtro por omisión.
     - triggerLabel/applyLabel/clearLabel (nullable): textos ya traducidos.
       Sin pasarlos, caen en las claves genéricas de `ui.tabla.*` (mismo
       chrome en toda pantalla — no hace falta redefinirlas por dominio).
@@ -51,6 +55,7 @@
 @props([
     'action',
     'activeCount' => 0,
+    'clearUrl' => null,
     'triggerLabel' => null,
     'applyLabel' => null,
     'clearLabel' => null,
@@ -86,6 +91,6 @@
     </div>
 
     @if ($activeCount > 0)
-        <a href="{{ $action }}" class="ag-table-search__clear">{{ $clearLabel ?? __('ui.tabla.filtros_limpiar') }}</a>
+        <a href="{{ $clearUrl ?? $action }}" class="ag-table-search__clear">{{ $clearLabel ?? __('ui.tabla.filtros_limpiar') }}</a>
     @endif
 </div>

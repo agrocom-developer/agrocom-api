@@ -179,6 +179,8 @@ return [
         'col_estado' => 'Estado',
         'buscador_limpiar' => 'Limpiar búsqueda',
         'mas_acciones' => 'Más acciones',
+        'acciones_fila' => 'Acciones de la fila',
+        'ver' => 'Ver',
         'filtros_boton' => 'Filtros',
         'filtros_aplicar' => 'Aplicar',
         'filtros_limpiar' => 'Limpiar filtros',

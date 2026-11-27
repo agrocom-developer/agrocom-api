@@ -75,7 +75,7 @@ final class PerfilController
      * Salen del menú de ese rol (ver {@see AccesosRapidos}): no hay otra lista de permisos.
      *
      * @param  list<ItemMenu>  $menu
-     * @return list<array{href: string, icono: string, titulo: string, meta: string}>
+     * @return list<array{href: string, icono: string, titulo: string, meta: string, tono: string}>
      */
     private function accesosDelRol(int $idRolActivo, array $menu): array
     {
@@ -86,6 +86,7 @@ final class PerfilController
             'icono' => $acceso['icono'],
             'titulo' => __($acceso['etiqueta']),
             'meta' => __($acceso['modulo']),
+            'tono' => $acceso['tono'],
         ], AccesosRapidos::para(is_string($rolClave) ? $rolClave : null, $menu));
     }
 

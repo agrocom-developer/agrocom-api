@@ -232,7 +232,8 @@ return [
     'dashboard' => [
         'titulo' => 'Tablero del mercado',
         'bajada' => ':fecha · cómo está el mercado hoy y lo que espera tu decisión.',
-        'viendo_como' => 'Viendo como :rol',
+        'sin_bloques_titulo' => 'Aún no hay nada para mostrar',
+        'sin_bloques_detalle' => 'El tablero muestra lo que permite tu rol. Pide al administrador que te asigne permisos para ver el mercado o las colas de revisión.',
         'kpi_solicitudes' => 'Solicitudes',
         'kpi_en_mercado' => 'Ofertas abiertas',
         'kpi_en_curso' => 'Solicitudes en curso',
@@ -534,41 +535,6 @@ return [
         'persona_baja_detalle' => 'Avisa a un administrador para que revise el vínculo.',
     ],
 
-    // Tarea 140: el administrador de la plataforma mira el panel o el portal
-    // COMO otra cuenta, en solo lectura. `banner_*` es la franja persistente que
-    // acompaña toda la vista; `accion`/`modal_*`/`campo_*` son el disparador del
-    // listado de usuarios.
-    'vista_como' => [
-        'banner_viendo_como' => 'Viendo como',
-        'banner_solo_lectura' => 'Solo lectura',
-        'banner_sesion_de' => 'Sesión de :admin',
-        'tipo_cliente' => 'Cliente',
-        'volver' => 'Volver a mi vista',
-        'volviste' => 'Volviste a tu vista.',
-        'invalidada' => 'La vista como otra persona terminó porque dejó de ser válida: la cuenta cambió o dejaste de tener el permiso.',
-
-        'accion' => 'Ver como',
-        'modal_titulo' => 'Ver como :nombre',
-        'modal_mensaje_interno' => 'Verás el panel tal como lo ve esta cuenta. Es solo lectura: no podrás crear, editar ni eliminar nada, y la entrada y la salida quedan en la bitácora.',
-        'modal_mensaje_portal' => 'Verás el portal tal como lo ve esta cuenta, solo con su contrato. Es solo lectura, y la entrada y la salida quedan en la bitácora.',
-        'modal_confirmar' => 'Ver como esta cuenta',
-        'campo_rol' => 'Rol con el que verla',
-        'campo_rol_placeholder' => 'Elige un rol',
-        'sin_contrato' => 'Esta cuenta de portal no tiene un contrato asignado, así que no hay nada que ver.',
-
-        // Selector desde el dashboard: acceso directo al mismo flujo de
-        // arriba, sin pasar por Seguridad → Usuarios.
-        'selector_boton' => 'Cambiar vista',
-        'selector_titulo' => 'Elige una cuenta',
-        'selector_subtitulo' => 'Busca por nombre o usuario, o elige de la lista agrupada por rol.',
-        'selector_buscador_placeholder' => 'Busca por nombre o usuario',
-        'selector_grupo_portal' => 'Portal de clientes',
-        'selector_sin_resultados_titulo' => 'Sin resultados para esa búsqueda',
-        'selector_sin_resultados_detalle' => 'Ninguna cuenta coincide con lo que escribiste. Prueba con otro nombre o usuario.',
-        'selector_sin_candidatos_titulo' => 'No hay otra cuenta para ver',
-        'selector_sin_candidatos_detalle' => 'Ninguna otra cuenta está habilitada para ver en este momento.',
-    ],
-
     // Tarea 63 (invariante 9 de CLAUDE.md): pantalla `/panel/bitacora`.
     // `entidades` mapea nombre FÍSICO de tabla → nombre legible: es el
     // catálogo que consultan `ListarBitacora`/`BitacoraController` para el
@@ -697,12 +663,6 @@ return [
         'rol_protegido_tiene_usuarios_uno' => "El rol ':rol' tiene :cantidad usuario asignado. Reasígnalos antes de eliminarlo.",
         'rol_protegido_tiene_usuarios_varios' => "El rol ':rol' tiene :cantidad usuarios asignados. Reasígnalos antes de eliminarlo.",
         'rol_protegido_es_rol_activo' => "No puedes eliminar ni desactivar ':rol': es el rol con el que estás operando.",
-        'vista_como_solo_lectura' => 'Estás viendo el sistema como otra persona, en modo de solo lectura: no se puede crear, editar ni eliminar nada. Vuelve a tu vista para hacerlo.',
-        'vista_como_ya_abierta' => 'Ya estás viendo el sistema como otra persona. Vuelve a tu vista antes de mirar como alguien más.',
-        'vista_como_cuenta_no_disponible' => 'No puedes ver el sistema como esa cuenta: está bloqueada, eliminada o es la tuya.',
-        'vista_como_rol_requerido' => 'Elige el rol con el que quieres ver el sistema: esa cuenta tiene más de uno.',
-        'vista_como_rol_no_disponible' => 'Esa cuenta no tiene ese rol activo, así que no se puede ver con él.',
-        'vista_como_solo_cuentas_de_panel' => 'Solo puedes ver como una cuenta del panel. Las cuentas de la app (cliente y proveedor) no se pueden ver como.',
         'usuario_duplicado_username' => "Ya existe una cuenta activa con el usuario ':username'.",
         'usuario_duplicado_persona' => 'La persona #:persona_id ya tiene una cuenta activa: cada persona tiene una sola cuenta.',
         'usuario_duplicado_email' => "Ya existe una cuenta activa con el correo ':email'.",

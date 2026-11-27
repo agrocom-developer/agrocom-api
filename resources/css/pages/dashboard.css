@@ -10,34 +10,6 @@
     gap: var(--ag-space-4);
 }
 
-/* Auditoría visual externa, obs. #3: la ventana volable dejó de ser un
-   segundo alert-strip de igual peso que el aviso de RC — ahora es una tira
-   compacta junto al subtítulo, mismo tono warning sin la anatomía completa
-   de franja/banner. Vive dentro del slot `chip` de organisms/page-header
-   (ver pages/dashboard/_encabezado.blade.php) — el título/subtítulo en sí
-   ya son ese componente compartido, sin CSS propio acá. */
-.ag-dash__ventana-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--ag-space-2);
-    padding: var(--ag-space-1) var(--ag-space-3);
-    border-radius: var(--ag-radius-pill);
-    background: var(--ag-color-warning-subtle);
-    border: 1px solid var(--ag-color-warning-border);
-    color: var(--ag-color-warning-strong);
-    font-size: var(--ag-font-size-xs);
-    white-space: nowrap;
-}
-
-.ag-dash__ventana-chip .ag-icon {
-    color: var(--ag-color-warning-strong);
-}
-
-.ag-dash__ventana-chip .ag-dash__link {
-    color: var(--ag-color-warning-strong);
-    text-decoration: underline;
-}
-
 /* ---------- Tarjeta genérica de esta página ---------- */
 
 .ag-card {

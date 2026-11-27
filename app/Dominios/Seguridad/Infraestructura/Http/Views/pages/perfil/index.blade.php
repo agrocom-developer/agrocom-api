@@ -18,7 +18,7 @@
     con `old()` — igual criterio que el resto del panel con contraseñas.
 
     Además de la cuenta, la página muestra (solo lectura):
-    - $accesos (list<{href, icono, titulo, meta}>): los accesos rápidos del
+    - $accesos (list<{href, icono, titulo, meta, tono}>): los accesos rápidos del
       rol activo, sacados de su menú (`Presentacion/AccesosRapidos`). Vacío =
       no hay sección.
 --}}
@@ -71,6 +71,7 @@
                                     :icon="$acceso['icono']"
                                     :title="$acceso['titulo']"
                                     :meta="$acceso['meta']"
+                                    :tone="$acceso['tono']"
                                 />
                             </div>
                         @endforeach

@@ -15,8 +15,12 @@ use App\Dominios\Seguridad\Aplicacion\ItemMenu;
  * un acceso tampoco es autorizar: cada pantalla revalida en su controlador.
  *
  * Cada rol tiene un orden de preferencia (rutas del panel); se toman las que el
- * menú tiene, hasta {@see self::MAXIMO}. Un rol sin lista propia cae en las primeras pantallas de su menú, sin
- * repetir el tablero, que ya está en el riel.
+ * menú tiene y, si sobran lugares hasta {@see self::MAXIMO}, se completan con las
+ * primeras pantallas de su menú. Un rol sin lista propia cae en el menú entero,
+ * sin repetir el tablero, que ya está en el riel.
+ *
+ * Cada acceso lleva un tono por dominio ({@see self::TONO_POR_DOMINIO}), el color
+ * del cuadro de su ícono; nunca es la única señal (hay ícono y texto).
  */
 final class AccesosRapidos
 {
@@ -45,9 +49,36 @@ final class AccesosRapidos
     private const RUTA_TABLERO = 'panel.dashboard';
 
     /**
+     * Tono (variante de `molecules/link-row`) por dominio, que es el segundo segmento de la
+     * ruta (`panel.<dominio>.…`): mercado, proveedores, clientes, atención y seguridad.
+     *
+     * @var array<string, string>
+     */
+    private const TONO_POR_DOMINIO = [
+        'solicitudes' => 'info',
+        'metricas' => 'info',
+        'proveedores' => 'distintivo-1',
+        'pilotos' => 'distintivo-1',
+        'documentos' => 'distintivo-1',
+        'drones-flota' => 'distintivo-1',
+        'clientes' => 'distintivo-2',
+        'calificaciones' => 'warning',
+        'disputas' => 'warning',
+        'avisos' => 'warning',
+        'notificaciones' => 'warning',
+        'usuarios' => 'distintivo-3',
+        'roles' => 'distintivo-3',
+        'bitacora' => 'distintivo-3',
+        'organizacion' => 'distintivo-3',
+        'configuracion' => 'distintivo-3',
+    ];
+
+    private const TONO_SIN_DOMINIO = 'neutral';
+
+    /**
      * @param  list<ItemMenu>  $menu  el menú del rol activo (módulos con sus pantallas)
-     * @return list<array{ruta: string, icono: string, etiqueta: string, modulo: string}> `etiqueta` y
-     *                                                                                    `modulo` son claves de idioma del menú, sin traducir.
+     * @return list<array{ruta: string, icono: string, etiqueta: string, modulo: string, tono: string}> `etiqueta` y
+     *                                                                                                  `modulo` son claves de idioma del menú, sin traducir.
      */
     public static function para(?string $rolClave, array $menu): array
     {
@@ -56,17 +87,25 @@ final class AccesosRapidos
         $rutas = self::POR_ROL[$rolClave ?? ''] ?? [];
         $elegidas = array_values(array_filter($rutas, static fn (string $ruta): bool => isset($disponibles[$ruta])));
 
-        if ($elegidas === []) {
-            $elegidas = array_values(array_filter(
+        if (count($elegidas) < self::MAXIMO) {
+            $resto = array_filter(
                 array_keys($disponibles),
-                static fn (string $ruta): bool => $ruta !== self::RUTA_TABLERO,
-            ));
+                static fn (string $ruta): bool => $ruta !== self::RUTA_TABLERO && ! in_array($ruta, $elegidas, true),
+            );
+            $elegidas = [...$elegidas, ...array_values($resto)];
         }
 
         return array_map(
-            static fn (string $ruta): array => ['ruta' => $ruta, ...$disponibles[$ruta]],
+            static fn (string $ruta): array => ['ruta' => $ruta, ...$disponibles[$ruta], 'tono' => self::tonoDe($ruta)],
             array_slice($elegidas, 0, self::MAXIMO),
         );
+    }
+
+    private static function tonoDe(string $ruta): string
+    {
+        $segmentos = explode('.', $ruta);
+
+        return self::TONO_POR_DOMINIO[$segmentos[1] ?? ''] ?? self::TONO_SIN_DOMINIO;
     }
 
     /**

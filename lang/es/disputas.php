@@ -86,6 +86,7 @@ return [
 
     // Panel del administrador: cola, ficha y resolución.
     'panel' => [
+        'filtro_busqueda_placeholder' => 'Buscar en el detalle del reclamo',
         'titulo' => 'Reclamos',
         'subtitulo' => 'Reclamos de clientes y proveedores sobre los servicios. Soporte media y un administrador resuelve indicando el motivo; los reembolsos se liquidan entre las partes fuera de la app.',
         'vacio_titulo' => 'Todavía no hay reclamos',

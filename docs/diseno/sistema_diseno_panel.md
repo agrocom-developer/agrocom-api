@@ -1952,6 +1952,37 @@ Qué entra en la lista lo decide `Seguridad\...\Presentacion\CampanaDeAvisos`
 leídos más recientes. Así el badge —que cuenta lo no leído de la lista que
 recibe— sigue siendo exacto hasta «9+».
 
+## Acciones de fila, buscador y tablero por permisos
+
+### Acciones de fila (`organisms/row-actions` + `molecules/row-action`)
+
+Toda tabla del panel pinta sus acciones con un único componente, `organisms/row-actions`, que fija el orden sin importar cómo las declare quien lo usa:
+
+1. **Ver** (`info-outline`)
+2. **Editar** (`warning-outline`)
+3. **Aprobar** (`success-outline`)
+4. **Transiciones de la máquina de estados** (`<tono del estado de llegada>-outline`): rechazar, suspender, rehabilitar, bloquear, ocultar, etc.
+5. **Eliminar** (`danger-outline`, token de peligro `--ag-color-danger`), siempre al final.
+
+Cada acción es un `<x-molecules.row-action kind="ver|editar|aprobar|transicion|eliminar">` dentro del slot con nombre que le corresponde (`ver`, `editar`, `aprobar`, `transiciones`, `eliminar`). El `kind` fija el color; nadie lo elige a mano. No existe slot por defecto ni se admiten botones sueltos.
+
+- Hasta tres acciones: botones de ícono cuadrados, con `title` y `aria-label` (el texto existe siempre y se oculta solo a la vista).
+- Más de tres: todas pasan al menú «⋮» de la fila, con ícono y texto, en el mismo orden.
+- Solo se ofrecen las acciones válidas para el estado actual y permitidas al rol; el llamador las filtra con `@puede`/`@if`, igual que en la ficha.
+- Los `<form>` y los modales de confirmación van fuera del componente, en la celda.
+- Un objeto con máquina de estados de aprobación (proveedor, piloto, dron) usa `organisms/row-actions-aprobacion`, que arma las acciones y los modales de la ficha (`_modales-aprobacion`) y vuelve al listado tras resolver (`desde=listado`). El «Revisar» aparte desapareció: revisar es abrir la ficha (Ver) y aprobar es una transición. «Dar de baja» se muestra como Eliminar.
+- Clientes, calificaciones, documentos y usuarios exponen sus transiciones con el mismo componente. Las disputas y las solicitudes tienen transiciones con formularios propios (resultado, reembolso, motivo) y siguen en su ficha.
+
+`RowActionsOrdenTest` congela el orden y el color; `PanelHomogeneoTest` exige que ningún listado tenga botones sueltos ni una acción en un slot ajeno.
+
+### Buscador y «Limpiar filtros»
+
+Todo listado lleva `molecules/table-search` (con `clear-label`) y, si tiene filtros, `organisms/filter-panel` con `active-count`, que pinta «Limpiar filtros» cuando hay alguno activo. Si un listado abre con un filtro por omisión (documentos, en «En revisión»), `filter-panel` recibe `clear-url` hacia la URL que significa «todos» (`?estado=`); si no, limpiar volvería a aplicar el filtro. `table-search` acepta `preserve` para no perder los demás filtros al buscar. Única excepción documentada en `PanelHomogeneoTest`: el ranking de métricas, de solo lectura.
+
+### Tablero y accesos rápidos por permisos
+
+No hay selector de vista ni «ver como»: el tablero muestra cada bloque solo si la sesión tiene el permiso de lo que contiene (solicitudes con `solicitudes.solicitud.ver`, cada cola pendiente con el permiso de su pantalla). Los accesos rápidos de «Mi perfil» salen del menú del rol y se completan con sus primeras pantallas; el cuadro del ícono toma el tono de su dominio con tokens existentes: mercado `info`, proveedores y flota `distintivo-1`, clientes `distintivo-2`, atención `warning`, seguridad y sistema `distintivo-3`. El color nunca es la única señal: cada tarjeta lleva ícono y texto.
+
 ## 19. Gráficas del panel — `molecules/grafico` (Chart.js)
 
 El tablero y las métricas del mercado muestran gráficas en vez de tablas con números: se leen de un vistazo y la tabla queda como alternativa. Se usa **Chart.js 4 (MIT)**, instalado con npm y empaquetado por Vite; no se usa `spatie/laravel-dashboard` ni sus tiles (exigen Livewire, que el panel no tiene, y traen su propio estilo fuera de los tokens). Motivo de la dependencia: es el motor de gráficas más usado y mantenido con licencia MIT, se carga por módulos (solo entran los controladores de barras y líneas) y dibuja en un `<canvas>` que se estila por completo desde JavaScript, lo que permite leer los tokens.

@@ -11,8 +11,10 @@
     Datos esperados: la cáscara de CascaraPanel (menu/roles/…/tema/version), más
     `tablero` (forma de LecturaTableroDeMercado::tablero()), `pendientes`
     (list<array{clave, cantidad, ruta, permiso}> ya filtrada por permiso del
-    rol activo), `puedeVerSolicitudes` (bool), y `puedeVerComo` (bool) y
-    `candidatosVerComo` (array|null) para el botón «Cambiar vista».
+    rol activo) y `puedeVerSolicitudes` (bool). El tablero es dinámico: cada bloque
+    se pinta solo si la sesión tiene el permiso de lo que muestra (solicitudes por
+    estado y departamento con `solicitudes.solicitud.ver`; cada pendiente con el
+    permiso de su pantalla). No hay selector de vista.
 --}}
 @php
     $porEstado = collect($tablero['por_estado']);
@@ -43,24 +45,31 @@
         :vista-actual="__('seguridad.dashboard.titulo')"
     >
         <div class="ag-dash">
-            @include('seguridad::pages.dashboard._encabezado', [
-                'rol' => $activeRoleLabel,
-                'puedeVerComo' => $puedeVerComo,
-            ])
+            @include('seguridad::pages.dashboard._encabezado')
 
-            @if ($puedeVerComo && $candidatosVerComo !== null)
-                @include('seguridad::pages.dashboard._modal-cambiar-vista', ['candidatos' => $candidatosVerComo])
+            @if (! $puedeVerSolicitudes && $pendientes === [])
+                <x-molecules.empty-state
+                    icon="dashboard"
+                    :title="__('seguridad.dashboard.sin_bloques_titulo')"
+                    :detail="__('seguridad.dashboard.sin_bloques_detalle')"
+                />
             @endif
 
             <div class="ag-tablero__kpis">
+                @if ($puedeVerSolicitudes)
                 <x-molecules.stat-card :label="__('seguridad.dashboard.kpi_solicitudes')" icon="request_quote" :value="number_format($tablero['total_solicitudes'], 0, ',', '.')" state="info" />
                 <x-molecules.stat-card :label="__('seguridad.dashboard.kpi_en_mercado')" icon="storefront" :value="number_format($enMercado, 0, ',', '.')" state="success" />
                 <x-molecules.stat-card :label="__('seguridad.dashboard.kpi_en_curso')" icon="flight" :value="number_format($enCurso, 0, ',', '.')" state="primary-2" />
                 <x-molecules.stat-card :label="__('seguridad.dashboard.kpi_hectareas')" icon="landscape" :value="$hectareas($tablero['hectareas_en_mercado'])" value-suffix="ha" state="distintivo-1" />
+                @endif
+                @if ($pendientes !== [])
                 <x-molecules.stat-card :label="__('seguridad.dashboard.kpi_pendientes')" icon="pending_actions" :value="number_format($totalPendientes, 0, ',', '.')" :state="$totalPendientes > 0 ? 'warning' : null" />
+                @endif
             </div>
 
-            @if ($tablero['total_solicitudes'] === 0)
+            @if (! $puedeVerSolicitudes)
+                {{-- Sin permiso de solicitudes no hay bloque de mercado. --}}
+            @elseif ($tablero['total_solicitudes'] === 0)
                 <x-molecules.empty-state
                     icon="request_quote"
                     :title="__('seguridad.dashboard.vacio_titulo')"
