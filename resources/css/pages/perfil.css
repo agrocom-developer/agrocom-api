@@ -3,7 +3,7 @@
  * — «Mi perfil» del panel y del portal. CSS propio de ESTAS páginas (ver
  * convención en resources/css/pages/index.css).
  *
- * El wrapper `.ag-perfil-form` sigue el mismo patrón que `.ag-usuarios-form`:
+ * El wrapper `.ag-perfil-form` sigue el mismo patrón que `.ag-proveedores`:
  * flex en columna con un único `gap` en vez de `margin-top` repetido en cada
  * hijo. Sin él la cabecera, el aviso y las tarjetas quedaban pegados. Todo
  * color y medida por token (CLAUDE.md invariante 11).

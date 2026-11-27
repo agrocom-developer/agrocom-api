@@ -812,6 +812,9 @@ test('el descubrimiento encuentra las pantallas de referencia y deja afuera las 
         ->toContain('Proveedores/proveedores/index.blade.php')
         ->toContain('Proveedores/proveedores/_formulario.blade.php')
         ->toContain('Solicitudes/clientes/show.blade.php')
+        ->toContain('Seguridad/usuarios/index.blade.php')
+        ->toContain('Seguridad/usuarios/_formulario.blade.php')
+        ->toContain('Seguridad/usuarios/show.blade.php')
         ->not->toContain('Seguridad/roles/index.blade.php')
         ->not->toContain('Seguridad/usuarios/create.blade.php')
         ->not->toContain('Portal/actas/index.blade.php');
@@ -1267,4 +1270,46 @@ test('en el panel real, solo Eliminar usa variant danger-outline y ninguna trans
     }
 
     expect($infractores)->toBe([]);
+});
+
+test('Usuarios sigue la plantilla de las demás páginas, sin exenciones', function () use ($raizProyecto) {
+    $carpeta = $raizProyecto.'/app/Dominios/Seguridad/Infraestructura/Http/Views/pages/usuarios';
+    $propias = array_values(array_filter(
+        panelHomogeneoPantallas($raizProyecto),
+        fn (array $pantalla): bool => $pantalla['modulo'] === 'Seguridad' && $pantalla['directorio'] === 'usuarios',
+    ));
+
+    // Listado, formulario y ficha se evalúan con las mismas reglas que Proveedores, Pilotos o Clientes.
+    expect(array_column($propias, 'tipo'))->toEqualCanonicalizing(['listado', 'formulario', 'ficha'])
+        ->and(panelHomogeneoPendientes($raizProyecto))->not->toContain('Seguridad/usuarios/index.blade.php')
+        ->and(array_keys(panelHomogeneoListadosSinBuscador()))->not->toContain('Seguridad/usuarios/index.blade.php');
+
+    foreach ($propias as $pantalla) {
+        expect(panelHomogeneoViolaciones($raizProyecto, $pantalla))->toBe([], $pantalla['ruta']);
+    }
+
+    $indice = panelHomogeneoSinComentarios((string) file_get_contents($carpeta.'/index.blade.php'));
+    $ficha = panelHomogeneoSinComentarios((string) file_get_contents($carpeta.'/show.blade.php'));
+
+    // Filtros por estado y rol con el componente común, y Ver en la fila hacia la ficha.
+    expect($indice)
+        ->toContain('x-organisms.filter-panel')
+        ->toContain('name="estado"')
+        ->toContain('name="rol"')
+        ->toContain('<x-slot:ver>')
+        ->toContain("route('panel.usuarios.show'")
+        ->not->toContain('ag-usuarios');
+
+    // Ficha: Eliminar es lo último del encabezado, en peligro, y fuera de la transición de acceso.
+    expect($ficha)->toContain('variant="danger"')
+        ->and(strrpos($ficha, 'usuario-eliminar-modal'))->toBeGreaterThan(strrpos($ficha, 'usuario-bloqueo-modal'))
+        ->and(strpos($ficha, 'variant="danger"'))->toBeGreaterThan(strpos($ficha, 'usuario-bloqueo-modal'))
+        ->and(strpos($ficha, 'variant="danger"'))->toBeLessThan(strpos($ficha, '</x-slot:actions>'));
+
+    // «Ver como» y su permiso están retirados y no vuelven a Usuarios.
+    foreach (glob($carpeta.'/*.blade.php') ?: [] as $archivo) {
+        expect(file_get_contents($archivo))->not->toContain('ver_como');
+    }
+
+    expect(file_exists($raizProyecto.'/resources/css/pages/usuarios.css'))->toBeFalse();
 });
