@@ -22,7 +22,7 @@ use Throwable;
  *
  * El código tiene 6 dígitos, se guarda con HMAC (nunca en claro), vence a los 10 minutos, se usa una vez y admite 5
  * intentos. Hay un solo código vigente por cuenta y propósito: pedir otro anula el anterior. Cada cuenta puede pedir 3 por
- * hora y 10 por día. El código no se escribe en logs ni en respuestas.
+ * hora y 10 por día, y entre dos por el mismo canal pasan al menos 30 segundos (429 con `Retry-After` en ambos casos). El código no se escribe en logs ni en respuestas.
  */
 final class CodigosDeVerificacion
 {
@@ -70,6 +70,7 @@ final class CodigosDeVerificacion
         }
 
         $this->exigirCupo($usuario);
+        $this->exigirIntervalo($usuario, $canal);
 
         $codigo = $this->modoDeDesarrollo()
             ? self::CODIGO_DE_DESARROLLO
@@ -157,6 +158,32 @@ final class CodigosDeVerificacion
 
         if ($porDia >= (int) config('verificacion.codigo.envios_por_dia', 10)) {
             throw new DemasiadosCodigos($this->segundosHasta($usuario, now()->subDay(), 86400));
+        }
+    }
+
+    /**
+     * Espera mínima entre dos códigos por el mismo canal de la misma cuenta (`verificacion.codigo.intervalo_reenvio_segundos`).
+     *
+     * @throws DemasiadosCodigos
+     */
+    private function exigirIntervalo(SecUser $usuario, CanalDeCodigo $canal): void
+    {
+        $intervalo = (int) config('verificacion.codigo.intervalo_reenvio_segundos', 30);
+
+        if ($intervalo <= 0) {
+            return;
+        }
+
+        $ultimo = SecCodigoVerificacion::query()->where('usuario_id', $usuario->id)->where('canal', $canal->value)->max('created_at');
+
+        if ($ultimo === null) {
+            return;
+        }
+
+        $faltan = (int) ceil(now()->diffInSeconds(Carbon::parse($ultimo)->addSeconds($intervalo), false));
+
+        if ($faltan > 0) {
+            throw new DemasiadosCodigos($faltan, DemasiadosCodigos::INTERVALO);
         }
     }
 

@@ -54,7 +54,7 @@ final class VerificacionDeTelefonoController
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
             new OA\Response(response: 409, description: '`telefono_ya_verificado`: la cuenta ya tiene su teléfono verificado.'),
             new OA\Response(response: 422, description: '`sin_destino` (la cuenta no tiene teléfono) o canal inválido.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorDeCodigo')),
-            new OA\Response(response: 429, description: 'La cuenta ya pidió el máximo de códigos; reintentar tras `Retry-After` segundos.'),
+            new OA\Response(response: 429, description: '`demasiados_codigos` (la cuenta ya pidió el máximo de códigos: 3 por hora y 10 por día) o `reenvio_demasiado_pronto` (pidió otro por el mismo canal hace menos de 30 segundos). Trae `Retry-After` con los segundos que faltan para poder pedir otro.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorDeCodigo'), headers: [new OA\Header(header: 'Retry-After', description: 'Segundos para reintentar, según la ventana real del límite (cupo por hora o día, intervalo entre códigos, bloqueo del login o frecuencia por IP).', schema: new OA\Schema(type: 'integer', minimum: 1, example: 30))]),
             new OA\Response(response: 503, description: '`canal_no_disponible`: ese medio no está configurado; ofrecer el otro.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorDeCodigo')),
         ],
     )]

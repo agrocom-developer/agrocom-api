@@ -723,6 +723,7 @@ return [
         'canal_no_disponible' => 'Ese medio no está disponible por ahora. Elige otro para recibir tu código.',
         'codigo_invalido' => 'El código no es válido o venció. Pide uno nuevo.',
         'demasiados' => 'Pediste demasiados códigos. Espera un rato e inténtalo de nuevo.',
+        'reenvio_pronto' => 'Acabas de pedir un código por ese medio. Espera unos segundos para pedir otro.',
         'solicitud_recibida' => 'Si existe una cuenta con esos datos, enviamos un código. Revisa el medio que elegiste.',
         'codigo_enviado' => 'Te enviamos un código. Revisa el medio que elegiste.',
         'sin_destino' => 'Tu cuenta no tiene un :medio registrado. Elige otro medio para recibir el código.',

@@ -119,11 +119,11 @@ use OpenApi\Attributes as OA;
 #[OA\Schema(
     schema: 'ErrorDeCodigo',
     title: 'Error de código de un solo uso',
-    description: 'Respuesta de los códigos de verificación (ADR 0046, puntos 27 a 30). `codigo_invalido` (422) cubre cuenta inexistente, código errado, vencido, usado o con los intentos agotados, sin distinguirlos. `canal_no_disponible` (503) dice que el medio no tiene adaptador o no está configurado; la app ofrece otro.',
+    description: 'Respuesta de los códigos de verificación (ADR 0046, puntos 27 a 30). `codigo_invalido` (422) cubre cuenta inexistente, código errado, vencido, usado o con los intentos agotados, sin distinguirlos. `canal_no_disponible` (503) dice que el medio no tiene adaptador o no está configurado; la app ofrece otro. `demasiados_codigos` y `reenvio_demasiado_pronto` (429, con `Retry-After`) dicen que la cuenta agotó su cupo de códigos o pidió otro por el mismo canal hace menos de 30 segundos.',
     required: ['message', 'codigo'],
     properties: [
         new OA\Property(property: 'message', type: 'string', example: 'El código no es válido o venció. Pide uno nuevo.'),
-        new OA\Property(property: 'codigo', type: 'string', enum: ['codigo_invalido', 'canal_no_disponible', 'sin_destino'], example: 'codigo_invalido'),
+        new OA\Property(property: 'codigo', type: 'string', enum: ['codigo_invalido', 'canal_no_disponible', 'sin_destino', 'demasiados_codigos', 'reenvio_demasiado_pronto'], example: 'codigo_invalido'),
         new OA\Property(property: 'canal', description: 'Solo en `canal_no_disponible`: el canal que falló.', type: 'string', enum: ['whatsapp', 'sms', 'correo'], nullable: true, example: 'whatsapp'),
     ],
     type: 'object',
