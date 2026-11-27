@@ -251,6 +251,31 @@
                         @endif
                     </div>
                 </x-molecules.form-section>
+                <x-slot:aside>
+                    <x-molecules.form-section accent="info" :title="__('solicitudes.clientes.seccion_relacionado')">
+                        <div class="ag-form-section__field--full">
+                            @if ($puedeVerSolicitudes)
+                                <x-molecules.link-row
+                                    :href="route('panel.solicitudes.index')"
+                                    icon="request_quote"
+                                    :title="__('solicitudes.clientes.seccion_solicitudes')"
+                                    :meta="(string) $totalSolicitudes"
+                                    tone="info"
+                                />
+                            @endif
+                        </div>
+                    </x-molecules.form-section>
+
+                    <x-molecules.form-section accent="distintivo-2" :title="__('solicitudes.clientes.historial_titulo')" :count="(string) count($lineaDeTiempo)">
+                        <div class="ag-form-section__field--full">
+                            @if ($lineaDeTiempo === [])
+                                <p class="ag-detalle__campo-valor">{{ __('solicitudes.clientes.historial_vacio') }}</p>
+                            @else
+                                <x-molecules.timeline :items="$lineaDeTiempo" />
+                            @endif
+                        </div>
+                    </x-molecules.form-section>
+                </x-slot:aside>
             </x-molecules.form-layout>
         </div>
     </x-templates.panel-layout>

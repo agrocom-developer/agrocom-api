@@ -196,25 +196,49 @@
                                     @endif
                                 </div>
                             @endforeach
-                            @if ($puedeVerRoles)
-                                <x-atoms.button :href="route('panel.roles.show', $rolesCuenta[0]['id'])" variant="outline" icon="shield_person">{{ __('seguridad.usuarios.ver_rol') }}</x-atoms.button>
-                            @endif
                         @endif
                     </div>
                 </x-molecules.form-section>
 
-                @if ($puedeVerBitacora)
-                    <x-molecules.form-section accent="success" :title="__('seguridad.usuarios.seccion_actividad')" :count="(string) count($lineaDeTiempo)">
-                        <div class="ag-form-section__field--full">
-                            @if ($lineaDeTiempo === [])
-                                <x-molecules.empty-state icon="history" :title="__('seguridad.usuarios.aside_bitacora_vacio_titulo')" :detail="__('seguridad.usuarios.aside_bitacora_vacio_detalle')" />
-                            @else
-                                <x-molecules.timeline :items="$lineaDeTiempo" />
-                                <x-atoms.button :href="route('panel.bitacora.index', ['tabla' => 'sec_user', 'registro_id' => $usuario->id])" variant="outline" icon="history">{{ __('seguridad.usuarios.aside_bitacora_accion') }}</x-atoms.button>
-                            @endif
-                        </div>
-                    </x-molecules.form-section>
-                @endif
+                <x-slot:aside>
+                    @if ($puedeVerRoles || $puedeVerBitacora)
+                        <x-molecules.form-section accent="info" :title="__('seguridad.usuarios.seccion_relacionado')">
+                            <div class="ag-form-section__field--full">
+                                @if ($puedeVerRoles)
+                                    @foreach ($rolesCuenta as $rol)
+                                        <x-molecules.link-row
+                                            :href="route('panel.roles.show', $rol['id'])"
+                                            icon="shield_person"
+                                            :title="$rol['nombre']"
+                                            :meta="__('seguridad.usuarios.ver_rol')"
+                                            tone="distintivo-1"
+                                        />
+                                    @endforeach
+                                @endif
+                                @if ($puedeVerBitacora)
+                                    <x-molecules.link-row
+                                        :href="route('panel.bitacora.index', ['tabla' => 'sec_user', 'registro_id' => $usuario->id])"
+                                        icon="history"
+                                        :title="__('seguridad.usuarios.aside_bitacora_accion')"
+                                        tone="success"
+                                    />
+                                @endif
+                            </div>
+                        </x-molecules.form-section>
+                    @endif
+
+                    @if ($puedeVerBitacora)
+                        <x-molecules.form-section accent="distintivo-2" :title="__('seguridad.usuarios.seccion_actividad')" :count="(string) count($lineaDeTiempo)">
+                            <div class="ag-form-section__field--full">
+                                @if ($lineaDeTiempo === [])
+                                    <x-molecules.empty-state icon="history" :title="__('seguridad.usuarios.aside_bitacora_vacio_titulo')" :detail="__('seguridad.usuarios.aside_bitacora_vacio_detalle')" />
+                                @else
+                                    <x-molecules.timeline :items="$lineaDeTiempo" />
+                                @endif
+                            </div>
+                        </x-molecules.form-section>
+                    @endif
+                </x-slot:aside>
             </x-molecules.form-layout>
         </div>
     </x-templates.panel-layout>

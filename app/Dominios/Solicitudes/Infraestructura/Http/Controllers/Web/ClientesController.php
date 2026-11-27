@@ -18,12 +18,14 @@ use App\Dominios\Solicitudes\Dominio\Excepciones\ClienteDuplicado;
 use App\Dominios\Solicitudes\Dominio\Excepciones\SolicitudInvalida;
 use App\Dominios\Solicitudes\Dominio\TipoCliente;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\Cliente;
+use App\Dominios\Solicitudes\Infraestructura\Eloquent\ClienteHistorialEstado;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\SolicitudServicio;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\Terreno;
 use App\Dominios\Solicitudes\Infraestructura\Http\Requests\RegistrarClienteDesdePanelRequest;
 use App\Dominios\Solicitudes\Infraestructura\Http\Requests\SuspenderClienteRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -120,14 +122,17 @@ final class ClientesController
             ->limit(15)
             ->get();
 
+        $cascara = $this->autorizacion->cascara($request);
+
         return view('solicitudes::pages.clientes.show', [
-            ...$this->autorizacion->cascara($request),
+            ...$cascara,
             'cliente' => $cliente,
             'cuenta' => $cuentas->porIds([$cliente->usuario_id])[$cliente->usuario_id] ?? null,
             'solicitudes' => $solicitudes,
             'totalSolicitudes' => SolicitudServicio::query()->where('cliente_id', $cliente->id)->count(),
             'totalTerrenos' => Terreno::query()->where('cliente_id', $cliente->id)->count(),
             'contactos' => $cliente->contactos()->get(),
+            'lineaDeTiempo' => $this->lineaDeTiempo($cliente, $cuentas, $cascara['zonaHoraria'] ?? null),
             'puedeSuspender' => $this->autorizacion->tienePermiso($request, self::PERMISO_SUSPENDER),
             'puedeAprobar' => $this->autorizacion->tienePermiso($request, self::PERMISO_APROBAR),
             'puedeVerSolicitudes' => $this->autorizacion->tienePermiso($request, 'solicitudes.solicitud.ver'),
@@ -194,5 +199,40 @@ final class ClientesController
         return $request->input('desde') === 'listado'
             ? redirect()->to(url()->previous(route('panel.clientes.index')))
             : redirect()->route('panel.clientes.show', $cliente);
+    }
+
+    /**
+     * Cambios de estado del cliente (alta, aprobación, suspensión…), del más nuevo al más antiguo,
+     * con quién los hizo y el motivo si lo hubo: solo eventos reales de `sol_cliente_historial_estados`.
+     *
+     * @return list<array{title: string, meta: string, tone: string}>
+     */
+    private function lineaDeTiempo(Cliente $cliente, LecturaCuentas $cuentas, ?string $zonaHoraria): array
+    {
+        $filas = ClienteHistorialEstado::query()->where('cliente_id', $cliente->id)->orderByDesc('id')->get();
+        $actores = $cuentas->porIds($filas->pluck('actor_usuario_id')->filter()->unique()->values()->all());
+
+        return $filas->map(function (ClienteHistorialEstado $fila) use ($actores, $zonaHoraria): array {
+            $actor = $fila->actor_usuario_id === null ? null : ($actores[$fila->actor_usuario_id]->nombre ?? "#{$fila->actor_usuario_id}");
+            $partes = [
+                Carbon::instance($fila->created_at)->timezone($zonaHoraria ?: config('app.timezone'))->format('d/m/Y H:i'),
+                $fila->origen->value === 'sistema' ? __('solicitudes.clientes.historial_sistema') : ($actor ?? __('solicitudes.clientes.historial_sin_autor')),
+            ];
+
+            if ($fila->motivo !== null && $fila->motivo !== '') {
+                $partes[] = $fila->motivo;
+            }
+
+            return [
+                'title' => $fila->estado_anterior === null
+                    ? __('solicitudes.clientes.historial_alta')
+                    : __('solicitudes.clientes.historial_cambio', [
+                        'de' => __('aprobacion.estado.'.$fila->estado_anterior->value),
+                        'a' => __('aprobacion.estado.'.$fila->estado_nuevo->value),
+                    ]),
+                'meta' => implode(' · ', $partes),
+                'tone' => $fila->estado_nuevo->tono(),
+            ];
+        })->values()->all();
     }
 }

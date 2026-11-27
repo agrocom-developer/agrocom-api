@@ -207,25 +207,55 @@
                                 </section>
                             @endforeach
                         </div>
-
-                        @if ($puedeAsignar)
-                            <x-atoms.button :href="route('panel.roles.permisos.edit', $rol)" variant="outline" icon="key">{{ __('seguridad.roles.permisos_administrar') }}</x-atoms.button>
-                        @endif
                     </div>
                 </x-molecules.form-section>
 
-                @if ($puedeVerBitacora)
-                    <x-molecules.form-section accent="success" :title="__('seguridad.usuarios.seccion_actividad')" :count="(string) count($lineaDeTiempo)">
-                        <div class="ag-form-section__field--full">
-                            @if ($lineaDeTiempo === [])
-                                <x-molecules.empty-state icon="history" :title="__('seguridad.usuarios.aside_bitacora_vacio_titulo')" :detail="__('seguridad.usuarios.aside_bitacora_vacio_detalle')" />
-                            @else
-                                <x-molecules.timeline :items="$lineaDeTiempo" />
-                                <x-atoms.button :href="route('panel.bitacora.index', ['tabla' => 'sec_role', 'registro_id' => $rol->id])" variant="outline" icon="history">{{ __('seguridad.usuarios.aside_bitacora_accion') }}</x-atoms.button>
-                            @endif
-                        </div>
-                    </x-molecules.form-section>
-                @endif
+                <x-slot:aside>
+                    @if ($puedeAsignar || $puedeVerUsuarios || $puedeVerBitacora)
+                        <x-molecules.form-section accent="info" :title="__('seguridad.usuarios.seccion_relacionado')">
+                            <div class="ag-form-section__field--full">
+                                @if ($puedeAsignar)
+                                    <x-molecules.link-row
+                                        :href="route('panel.roles.permisos.edit', $rol)"
+                                        icon="key"
+                                        :title="__('seguridad.roles.permisos')"
+                                        :meta="$permisosActivos.' / '.$permisosTotal"
+                                        tone="distintivo-1"
+                                    />
+                                @endif
+                                @if ($puedeVerUsuarios)
+                                    <x-molecules.link-row
+                                        :href="route('panel.usuarios.index')"
+                                        icon="group"
+                                        :title="__('seguridad.roles.seccion_usuarios')"
+                                        :meta="(string) count($usuariosDelRol)"
+                                        tone="info"
+                                    />
+                                @endif
+                                @if ($puedeVerBitacora)
+                                    <x-molecules.link-row
+                                        :href="route('panel.bitacora.index', ['tabla' => 'sec_role', 'registro_id' => $rol->id])"
+                                        icon="history"
+                                        :title="__('seguridad.usuarios.aside_bitacora_accion')"
+                                        tone="success"
+                                    />
+                                @endif
+                            </div>
+                        </x-molecules.form-section>
+                    @endif
+
+                    @if ($puedeVerBitacora)
+                        <x-molecules.form-section accent="distintivo-2" :title="__('seguridad.usuarios.seccion_actividad')" :count="(string) count($lineaDeTiempo)">
+                            <div class="ag-form-section__field--full">
+                                @if ($lineaDeTiempo === [])
+                                    <x-molecules.empty-state icon="history" :title="__('seguridad.usuarios.aside_bitacora_vacio_titulo')" :detail="__('seguridad.usuarios.aside_bitacora_vacio_detalle')" />
+                                @else
+                                    <x-molecules.timeline :items="$lineaDeTiempo" />
+                                @endif
+                            </div>
+                        </x-molecules.form-section>
+                    @endif
+                </x-slot:aside>
             </x-molecules.form-layout>
         </div>
     </x-templates.panel-layout>
