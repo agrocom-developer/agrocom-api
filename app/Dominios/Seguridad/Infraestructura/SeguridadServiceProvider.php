@@ -2,8 +2,13 @@
 
 namespace App\Dominios\Seguridad\Infraestructura;
 
+use App\Dominios\Seguridad\Aplicacion\AnonimizarCuentaDeSeguridad;
 use App\Dominios\Seguridad\Aplicacion\BuscarEnElPanel;
+use App\Dominios\Seguridad\Aplicacion\CodigosDeVerificacion;
+use App\Dominios\Seguridad\Aplicacion\EjecutarEliminacionesDeCuenta;
+use App\Dominios\Seguridad\Aplicacion\EliminarMiCuenta;
 use App\Dominios\Seguridad\Aplicacion\GestionarFotoDePerfil;
+use App\Dominios\Seguridad\Aplicacion\RevocarTokensDeCuenta;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Contratos\EnviadorDeCodigo;
 use App\Dominios\Seguridad\Contratos\FotosDePerfil;
@@ -13,6 +18,7 @@ use App\Dominios\Seguridad\Contratos\LecturaUsuariosPorRol;
 use App\Dominios\Seguridad\Contratos\RegistroCuentas;
 use App\Dominios\Seguridad\Dominio\NumeroDeTelefono;
 use App\Dominios\Seguridad\Infraestructura\Codigos\EnviadorEnrutado;
+use App\Dominios\Seguridad\Infraestructura\Console\EjecutarEliminacionesDeCuentaCommand;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecTokenDispositivo;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioApp;
 use App\Dominios\Seguridad\Infraestructura\Http\AutorizacionPanelWebSesion;
@@ -81,6 +87,18 @@ final class SeguridadServiceProvider extends ServiceProvider
         // WhatsApp y SMS por el adaptador de `config/verificacion.php`.
         $this->app->bind(EnviadorDeCodigo::class, EnviadorEnrutado::class);
 
+        // Eliminar mi cuenta (ADR 0047): cada módulo aporta impedimentos, efectos y anonimización etiquetando su
+        // `ParticipanteDeEliminacion` con `eliminacion.participantes`; Seguridad no los conoce.
+        $this->app->bind(EliminarMiCuenta::class, static fn ($app): EliminarMiCuenta => new EliminarMiCuenta(
+            $app->make(CodigosDeVerificacion::class),
+            $app->make(RevocarTokensDeCuenta::class),
+            $app->tagged('eliminacion.participantes'),
+        ));
+        $this->app->bind(EjecutarEliminacionesDeCuenta::class, static fn ($app): EjecutarEliminacionesDeCuenta => new EjecutarEliminacionesDeCuenta(
+            $app->tagged('eliminacion.participantes'),
+            $app->make(AnonimizarCuentaDeSeguridad::class),
+        ));
+
         // Foto de perfil de la cuenta: otros módulos piden solo su URL firmada.
         $this->app->bind(FotosDePerfil::class, GestionarFotoDePerfil::class);
 
@@ -103,6 +121,10 @@ final class SeguridadServiceProvider extends ServiceProvider
         // activo de la sesión, nunca contra la unión de roles del usuario
         // (CLAUDE.md invariante 10).
         Blade::if('puede', fn (string $codigo): bool => PermisoVista::puede($codigo));
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([EjecutarEliminacionesDeCuentaCommand::class]);
+        }
 
         $this->configurarTokensDeDispositivo();
         $this->configurarLimitesDeLogin();

@@ -41,3 +41,12 @@ Schedule::command('solicitudes:evaluar-clientes')
     ->dailyAt('04:30')
     ->withoutOverlapping()
     ->onOneServer();
+
+/*
+ * Eliminación de cuentas (ADR 0047, punto 5): una vez al día ejecuta las solicitudes cuya gracia de 7 días venció.
+ * Idempotente; sin solaparse consigo mismo.
+ */
+Schedule::command('cuentas:ejecutar-eliminaciones')
+    ->dailyAt('02:30')
+    ->withoutOverlapping()
+    ->onOneServer();
