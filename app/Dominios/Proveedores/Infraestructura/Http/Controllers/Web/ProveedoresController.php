@@ -7,6 +7,7 @@ use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Flota\Contratos\LecturaEquipos;
 use App\Dominios\Proveedores\Aplicacion\EstadoDocumentalDeSujeto;
+use App\Dominios\Proveedores\Aplicacion\ItemsDeRevisionDeDocumentos;
 use App\Dominios\Proveedores\Aplicacion\RegistrarProveedor;
 use App\Dominios\Proveedores\Dominio\Excepciones\RegistroDuplicado;
 use App\Dominios\Proveedores\Dominio\TipoProveedor;
@@ -129,17 +130,21 @@ final class ProveedoresController
             ->orderByDesc('id')
             ->get();
 
+        $documentos = $this->documentosDe(TipoSujeto::Proveedor, $proveedor->id);
+        $puedeRevisarDocumentos = $this->autorizacion->tienePermiso($request, 'proveedores.documento.revisar');
+
         return view('proveedores::pages.proveedores.show', [
             ...$cascara,
             'proveedor' => $proveedor,
             'titular' => $titular,
             'pilotos' => $pilotos,
             'nombres' => $nombres,
-            'documentos' => $this->documentosDe(TipoSujeto::Proveedor, $proveedor->id),
+            'documentos' => $documentos,
+            'itemsDocumentos' => ItemsDeRevisionDeDocumentos::deFicha($documentos, $puedeRevisarDocumentos, $this->autorizacion->tienePermiso($request, 'proveedores.documento.descargar')),
             'documentosFaltantes' => $estadoDocumental->faltantesDe(TipoSujeto::Proveedor, $proveedor->id),
             'aptoParaOfertas' => $equipos->tieneEquipoApto($proveedor->id),
             'acciones' => $this->accionesOfrecidas($request, $this->autorizacion, 'proveedores.proveedor', $proveedor->estado),
-            'puedeRevisarDocumentos' => $this->autorizacion->tienePermiso($request, 'proveedores.documento.revisar'),
+            'puedeRevisarDocumentos' => $puedeRevisarDocumentos,
             'puedeVerDocumentos' => $this->autorizacion->tienePermiso($request, 'proveedores.documento.ver'),
             'puedeRegistrarPiloto' => $proveedor->tipo === TipoProveedor::Tercero && $this->autorizacion->tienePermiso($request, 'proveedores.piloto.crear'),
             'puedeRegistrarDron' => $this->autorizacion->tienePermiso($request, 'flota.dron.crear'),

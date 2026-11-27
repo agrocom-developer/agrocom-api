@@ -16,6 +16,7 @@ use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Flota\Aplicacion\FotosObligatorias;
 use App\Dominios\Flota\Aplicacion\GestionarFotosDeDron;
+use App\Dominios\Flota\Aplicacion\ItemsDeRevisionDeFotos;
 use App\Dominios\Flota\Aplicacion\RegistrarDron;
 use App\Dominios\Flota\Aplicacion\ResolverAprobacionDron;
 use App\Dominios\Flota\Dominio\Excepciones\OperacionDeFlotaInvalida;
@@ -25,6 +26,7 @@ use App\Dominios\Flota\Infraestructura\Eloquent\Equipo;
 use App\Dominios\Flota\Infraestructura\Eloquent\HistorialEstadoDron;
 use App\Dominios\Flota\Infraestructura\Http\Requests\RegistrarDronDesdePanelRequest;
 use App\Dominios\Flota\Infraestructura\Http\Requests\ResolverAprobacionDronRequest;
+use App\Dominios\Proveedores\Aplicacion\ItemsDeRevisionDeDocumentos;
 use App\Dominios\Proveedores\Contratos\DatosDocumento;
 use App\Dominios\Proveedores\Contratos\LecturaDocumentos;
 use App\Dominios\Proveedores\Contratos\LecturaProveedores;
@@ -167,21 +169,31 @@ final class DronesController
             $pilotos[$equipo->piloto_id] = $this->proveedores->piloto($equipo->piloto_id)->nombre ?? "#{$equipo->piloto_id}";
         }
 
+        $puedeRevisarFotos = $this->autorizacion->tienePermiso($request, 'flota.dron.revisar_foto');
+        $puedeRevisarDocumentos = $this->autorizacion->tienePermiso($request, 'proveedores.documento.revisar');
+        $puedeDescargarDocumentos = $this->autorizacion->tienePermiso($request, 'proveedores.documento.descargar');
+        $documentosDelDron = $this->documentosDe($dron->id);
+
         return view('flota::pages.drones.show', [
             ...$cascara,
             'dron' => $dron,
             'dueno' => $this->proveedores->proveedor($dron->dueno_proveedor_id),
             'operador' => $this->proveedores->proveedor($dron->operador_proveedor_id),
-            'documentos' => $this->documentosDe($dron->id),
+            'documentos' => $documentosDelDron,
             'documentosFaltantes' => array_map(static fn (string $tipo): TipoDocumento => TipoDocumento::from($tipo), $documentos->faltantes('dron', $dron->id)),
             'equipos' => $equipos,
             'pilotos' => $pilotos,
             'acciones' => $acciones,
-            'fotos' => DB::table('flo_dron_fotos')->where('dron_id', $dron->id)->whereNull('deleted_at')->orderBy('id')->get(['id', 'tipo', 'estado', 'motivo'])->all(),
+            'itemsFotos' => ItemsDeRevisionDeFotos::de(
+                DB::table('flo_dron_fotos')->where('dron_id', $dron->id)->whereNull('deleted_at')->orderBy('id')->get(['id', 'tipo', 'estado', 'motivo', 'archivo', 'created_at'])->all(),
+                $obligatorias->tipos(),
+                $puedeRevisarFotos,
+            ),
+            'itemsDocumentos' => ItemsDeRevisionDeDocumentos::deFicha($documentosDelDron, $puedeRevisarDocumentos, $puedeDescargarDocumentos),
             'fotosObligatorias' => $obligatorias->tipos(),
             'fotosFaltantes' => $obligatorias->faltantes($dron->id),
-            'puedeRevisarFotos' => $this->autorizacion->tienePermiso($request, 'flota.dron.revisar_foto'),
-            'puedeRevisarDocumentos' => $this->autorizacion->tienePermiso($request, 'proveedores.documento.revisar'),
+            'puedeRevisarFotos' => $puedeRevisarFotos,
+            'puedeRevisarDocumentos' => $puedeRevisarDocumentos,
             'puedeVerDocumentos' => $this->autorizacion->tienePermiso($request, 'proveedores.documento.ver'),
             'puedeVerProveedor' => $this->autorizacion->tienePermiso($request, 'proveedores.proveedor.ver'),
             'lineaDeTiempo' => $historial->map(fn (HistorialEstadoDron $fila): array => [

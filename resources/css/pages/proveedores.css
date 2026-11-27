@@ -33,43 +33,17 @@
 
 /* ---------- Ficha de dron: revisión de fotos (ADR 0042) ---------- */
 
-.ag-flota__fotos {
+.ag-lista-estados {
     list-style: none;
-    margin: var(--ag-space-3) 0 0;
+    margin: 0;
     padding: 0;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: var(--ag-space-4);
-}
-
-.ag-flota__foto {
-    display: flex;
-    flex-direction: column;
     gap: var(--ag-space-2);
 }
 
-.ag-flota__foto img {
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    object-fit: cover;
-    border-radius: var(--ag-radius-md);
-    border: 1px solid var(--ag-color-border-card);
-}
-
-.ag-flota__foto-pie {
+.ag-lista-estados li {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--ag-space-2);
-}
-
-.ag-flota__foto-tipo {
-    font-size: var(--ag-font-size-sm);
-    font-weight: var(--ag-font-weight-bold);
-}
-
-.ag-flota__foto-acciones {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--ag-space-2);
+    gap: var(--ag-space-3);
 }

@@ -14,6 +14,7 @@ import './molecules/view-toggle.js';
 import './organisms/login-form.js';
 import './organisms/topbar.js';
 import './organisms/role-selection.js';
+import './organisms/modal-revision-medio.js';
 import './organisms/module-sidebar.js';
 import './templates/auth-layout.js';
 import './pages/login.js';

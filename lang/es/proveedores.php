@@ -94,6 +94,7 @@ return [
         'subido_el' => 'Subido el :fecha',
         'aprobar' => 'Aprobar',
         'rechazar' => 'Rechazar',
+        'revisar_archivo' => 'Revisar el archivo',
         'ver_archivo' => 'Ver',
         'modal' => [
             'aprobar_titulo' => 'Aprobar «:documento»',

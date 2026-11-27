@@ -9,8 +9,7 @@
     Datos esperados (ver DronesController::show()): la cáscara de CascaraPanel,
     más $dron, $dueno / $operador (?DatosProveedor), $documentos
     (list<DatosDocumento>), $documentosFaltantes, $equipos (Collection<Equipo>),
-    $pilotos (array<int, string>), $acciones, $fotos (list<object{id, tipo,
-    estado, motivo}>), $fotosObligatorias y $fotosFaltantes (list<string>), los
+    $pilotos (array<int, string>), $acciones, $itemsFotos (list<array>, ItemsDeRevisionDeFotos), $fotosObligatorias y $fotosFaltantes (list<string>), los
     permisos `$puede*` y $lineaDeTiempo.
 
     Gateada por `flota.dron.ver`, verificado server-side en el controlador;
@@ -141,7 +140,7 @@
                     </div>
                 </x-molecules.form-section>
 
-                <x-molecules.form-section accent="success" :title="__('flota.fotos.seccion')" :count="(string) count($fotos)">
+                <x-molecules.form-section accent="success" :title="__('flota.fotos.seccion')" :count="(string) count($itemsFotos)">
                     <div class="ag-form-section__field--full">
                         <p class="ag-detalle__campo-label">{{ __('flota.fotos.ayuda') }}</p>
                         <p class="ag-detalle__campo-valor">
@@ -155,81 +154,18 @@
                             </x-molecules.alert-strip>
                         @endif
 
-                        @if ($fotos === [])
+                        @if ($itemsFotos === [])
                             <x-molecules.empty-state icon="photo_camera" :title="__('flota.fotos.vacio_titulo')" :detail="__('flota.fotos.vacio_detalle')" />
                         @else
-                            <ul class="ag-flota__fotos">
-                                @foreach ($fotos as $foto)
-                                    <li class="ag-flota__foto">
-                                        <a href="{{ route('panel.drones-flota.foto', $foto->id) }}" target="_blank" rel="noopener">
-                                            <img
-                                                src="{{ route('panel.drones-flota.foto', $foto->id) }}"
-                                                alt="{{ __('flota.fotos.alt', ['tipo' => mb_strtolower(__('flota.fotos.tipo.'.$foto->tipo))]) }}"
-                                                loading="lazy"
-                                            >
-                                        </a>
-                                        <div class="ag-flota__foto-pie">
-                                            <span class="ag-flota__foto-tipo">{{ __('flota.fotos.tipo.'.$foto->tipo) }}</span>
-                                            <x-atoms.badge :variant="match ($foto->estado) { 'aprobada' => 'success', 'rechazada' => 'danger', default => 'warning' }">{{ __('flota.fotos.estado.'.$foto->estado) }}</x-atoms.badge>
-                                        </div>
-                                        @if ($foto->estado === 'rechazada' && $foto->motivo)
-                                            <span class="ag-detalle__campo-label">{{ __('flota.fotos.motivo_rechazo', ['motivo' => $foto->motivo]) }}</span>
-                                        @endif
-                                        @if ($puedeRevisarFotos && $foto->estado !== 'aprobada')
-                                            <form id="foto-aprobar-{{ $foto->id }}" method="POST" action="{{ route('panel.drones-flota.foto-revisar', $foto->id) }}" hidden>
-                                                @csrf
-                                                <input type="hidden" name="decision" value="aprobar">
-                                            </form>
-                                            <form id="foto-rechazar-{{ $foto->id }}" method="POST" action="{{ route('panel.drones-flota.foto-revisar', $foto->id) }}" hidden>
-                                                @csrf
-                                                <input type="hidden" name="decision" value="rechazar">
-                                            </form>
-                                            <div class="ag-flota__foto-acciones">
-                                                <x-atoms.button type="submit" form="foto-aprobar-{{ $foto->id }}" size="sm" variant="outline" icon="check">{{ __('flota.fotos.aprobar') }}</x-atoms.button>
-                                                @if ($foto->estado === 'en_revision')
-                                                    <x-atoms.button
-                                                        type="button"
-                                                        size="sm"
-                                                        variant="danger-outline"
-                                                        icon="close"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#foto-rechazar-modal-{{ $foto->id }}"
-                                                    >{{ __('flota.fotos.rechazar') }}</x-atoms.button>
-                                                @endif
-                                            </div>
-                                        @endif
-                                    </li>
-                                @endforeach
-                            </ul>
-
-                            @if ($puedeRevisarFotos)
-                                @foreach ($fotos as $foto)
-                                    @continue($foto->estado !== 'en_revision')
-                                    <x-molecules.confirm-modal
-                                        :id="'foto-rechazar-modal-'.$foto->id"
-                                        :form-id="'foto-rechazar-'.$foto->id"
-                                        :title="__('flota.fotos.rechazar_titulo', ['tipo' => mb_strtolower(__('flota.fotos.tipo.'.$foto->tipo))])"
-                                        :message="__('flota.fotos.rechazar_mensaje')"
-                                        :confirm-label="__('flota.fotos.rechazar')"
-                                        tone="danger"
-                                    >
-                                        <x-atoms.textarea
-                                            name="motivo"
-                                            :id="'foto-rechazar-motivo-'.$foto->id"
-                                            :form="'foto-rechazar-'.$foto->id"
-                                            :label="__('flota.fotos.motivo_etiqueta')"
-                                            :rows="3"
-                                            required
-                                        />
-                                    </x-molecules.confirm-modal>
-                                @endforeach
-                            @endif
+                            <x-organisms.cuadricula-medios id="fotos-dron" :items="$itemsFotos" :label="__('flota.fotos.seccion')" />
                         @endif
                     </div>
                 </x-molecules.form-section>
 
                 @include('proveedores::pages._documentos-sujeto', [
                     'documentos' => $documentos,
+                    'itemsDocumentos' => $itemsDocumentos,
+                    'idCuadricula' => 'documentos-dron',
                     'documentosFaltantes' => $documentosFaltantes,
                     'puedeVerDocumentos' => $puedeVerDocumentos,
                     'puedeRevisarDocumentos' => $puedeRevisarDocumentos,

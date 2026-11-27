@@ -59,6 +59,8 @@
 @import './topbar.css';
 @import './filter-panel.css';
 @import './row-actions.css';
+@import './cuadricula-medios.css';
+@import './modal-revision-medio.css';
 @import './tabs.css';
 
 /* Organisms (tarea 31 — arquetipo formulario) */

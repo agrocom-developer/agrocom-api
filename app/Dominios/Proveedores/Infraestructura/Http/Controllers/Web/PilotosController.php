@@ -5,6 +5,7 @@ namespace App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web;
 use App\Dominios\Compartido\Dominio\EstadoAprobacion;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Proveedores\Aplicacion\EstadoDocumentalDeSujeto;
+use App\Dominios\Proveedores\Aplicacion\ItemsDeRevisionDeDocumentos;
 use App\Dominios\Proveedores\Aplicacion\RegistrarPiloto;
 use App\Dominios\Proveedores\Dominio\Excepciones\RegistroInvalido;
 use App\Dominios\Proveedores\Dominio\TipoProveedor;
@@ -115,14 +116,18 @@ final class PilotosController
             ->orderByDesc('id')
             ->get();
 
+        $documentos = $this->documentosDe(TipoSujeto::Piloto, $piloto->id);
+        $puedeRevisarDocumentos = $this->autorizacion->tienePermiso($request, 'proveedores.documento.revisar');
+
         return view('proveedores::pages.pilotos.show', [
             ...$cascara,
             'piloto' => $piloto->load('proveedor'),
             'cuenta' => $cuentas->porIds([$piloto->usuario_id])[$piloto->usuario_id] ?? null,
-            'documentos' => $this->documentosDe(TipoSujeto::Piloto, $piloto->id),
+            'documentos' => $documentos,
+            'itemsDocumentos' => ItemsDeRevisionDeDocumentos::deFicha($documentos, $puedeRevisarDocumentos, $this->autorizacion->tienePermiso($request, 'proveedores.documento.descargar')),
             'documentosFaltantes' => $estadoDocumental->faltantesDe(TipoSujeto::Piloto, $piloto->id),
             'acciones' => $this->accionesOfrecidas($request, $this->autorizacion, 'proveedores.piloto', $piloto->estado),
-            'puedeRevisarDocumentos' => $this->autorizacion->tienePermiso($request, 'proveedores.documento.revisar'),
+            'puedeRevisarDocumentos' => $puedeRevisarDocumentos,
             'puedeVerDocumentos' => $this->autorizacion->tienePermiso($request, 'proveedores.documento.ver'),
             'puedeVerProveedor' => $this->autorizacion->tienePermiso($request, 'proveedores.proveedor.ver'),
             'lineaDeTiempo' => $this->lineaDeTiempo($historial, $cuentas, $cascara['zonaHoraria'] ?? null),

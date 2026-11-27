@@ -148,6 +148,7 @@
                     'documentos' => $documentos,
                     'documentosFaltantes' => $documentosFaltantes,
                     'puedeVerDocumentos' => $puedeVerDocumentos,
+                    'itemsDocumentos' => $itemsDocumentos,
                     'puedeRevisarDocumentos' => $puedeRevisarDocumentos,
                 ])
 

@@ -9,6 +9,7 @@ use App\Dominios\Compartido\Dominio\TipoDocumento;
 use App\Dominios\Compartido\Dominio\VarianteDeMedio;
 use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
+use App\Dominios\Proveedores\Aplicacion\ItemsDeRevisionDeDocumentos;
 use App\Dominios\Proveedores\Aplicacion\ResolverSujeto;
 use App\Dominios\Proveedores\Aplicacion\RevisarDocumento;
 use App\Dominios\Proveedores\Dominio\EstadoDocumento;
@@ -83,12 +84,38 @@ final class DocumentosController
             'documentos' => $documentos,
             'etiquetas' => $etiquetas,
             'rutaFicha' => self::RUTA_FICHA,
+            'itemsDocumentos' => $this->itemsDeLaCola(Documento::query()->whereIn('id', array_keys($etiquetas))->orderBy('created_at')->orderBy('id')->get()->all(), $etiquetas, $request),
             'filtros' => ['q' => $busqueda, 'estado' => $estado?->value, 'sujeto_tipo' => $sujetoTipo?->value, 'tipo' => $tipo?->value],
             'estadosFiltro' => EstadoDocumento::cases(),
             'sujetosFiltro' => TipoSujeto::cases(),
             'tiposFiltro' => TipoDocumento::cases(),
             'puedeRevisar' => $this->autorizacion->tienePermiso($request, self::PERMISO_REVISAR),
         ]);
+    }
+
+    /**
+     * Los documentos de la página como ítems del modal de revisión: el título es el tipo, el subtítulo a quién
+     * pertenece y el enlace lleva a su ficha (solo si quien mira puede abrirla).
+     *
+     * @param  list<Documento>  $documentos
+     * @param  array<int, string>  $etiquetas
+     * @return list<array<string, mixed>>
+     */
+    private function itemsDeLaCola(array $documentos, array $etiquetas, Request $request): array
+    {
+        $items = ItemsDeRevisionDeDocumentos::deModelos(
+            $documentos,
+            $this->autorizacion->tienePermiso($request, self::PERMISO_REVISAR),
+            $this->autorizacion->tienePermiso($request, self::PERMISO_DESCARGAR),
+            $etiquetas,
+        );
+
+        $fichas = [];
+        foreach ($documentos as $documento) {
+            $fichas['d'.$documento->id] = route(self::RUTA_FICHA[$documento->sujeto_tipo->value], $documento->sujeto_id, false);
+        }
+
+        return array_map(static fn (array $item): array => [...$item, 'url_ficha' => $fichas[$item['clave']] ?? null], $items);
     }
 
     /**

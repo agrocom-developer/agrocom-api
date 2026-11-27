@@ -146,17 +146,23 @@
                             </span>
                             <span role="cell">{{ $documento->created_at->format('d/m/Y') }}</span>
                             <span role="cell" class="ag-index-table__acciones">
-                                @include('proveedores::pages._acciones-documento', [
-                                    'docId' => $documento->id,
-                                    'docEstado' => $documento->estado->value,
-                                    'docEtiqueta' => __('proveedores.documentos.tipo.'.$documento->tipo->value),
-                                    'puedeVer' => true,
-                                    'puedeRevisar' => $puedeRevisar,
-                                ])
+                                <x-organisms.row-actions>
+                                    <x-slot:ver>
+                                        <x-molecules.row-action
+                                            kind="ver"
+                                            icon="visibility"
+                                            :label="__('proveedores.documentos.revisar_archivo')"
+                                            data-medio-modal="documentos-cola-modal"
+                                            data-medio-clave="d{{ $documento->id }}"
+                                        />
+                                    </x-slot:ver>
+                                </x-organisms.row-actions>
                             </span>
                         </div>
                     @endforeach
                 </x-molecules.index-table>
+
+                <x-organisms.modal-revision-medio id="documentos-cola-modal" :items="$itemsDocumentos" />
 
                 <x-molecules.pagination :paginator="$documentos" :aria-label="__('proveedores.documentos.paginacion_aria')" />
             @endif
