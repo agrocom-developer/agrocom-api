@@ -96,4 +96,28 @@ final class Razones
 
         return (string) $total->toScale(2, RoundingMode::HalfUp);
     }
+
+    /**
+     * Cuántos valores caen en cada tramo. `$limites` son los extremos superiores, exclusivos y
+     * ascendentes, de todos los tramos menos el último, que no tiene tope: con `[60, 360]` los tramos
+     * son «menos de 60», «de 60 a menos de 360» y «360 o más». Devuelve un conteo por tramo.
+     *
+     * @param  list<int|float>  $valores
+     * @param  list<int|float>  $limites
+     * @return list<int>
+     */
+    public static function distribuir(array $valores, array $limites): array
+    {
+        $conteos = array_fill(0, count($limites) + 1, 0);
+
+        foreach ($valores as $valor) {
+            $tramo = 0;
+            while ($tramo < count($limites) && $valor >= $limites[$tramo]) {
+                $tramo++;
+            }
+            $conteos[$tramo]++;
+        }
+
+        return $conteos;
+    }
 }
