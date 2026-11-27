@@ -74,6 +74,16 @@
     color: var(--ag-color-gray-0);
 }
 
+.ag-link-row__icon--distintivo-4 {
+    background: var(--ag-color-distintivo-4-contrast-fill);
+    color: var(--ag-color-gray-0);
+}
+
+.ag-link-row__icon--distintivo-5 {
+    background: var(--ag-color-distintivo-5-contrast-fill);
+    color: var(--ag-color-gray-0);
+}
+
 .ag-link-row__icon--primary-2 {
     background: var(--ag-color-primary-2-contrast-fill);
     color: var(--ag-color-gray-0);

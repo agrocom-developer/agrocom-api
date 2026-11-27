@@ -50,20 +50,23 @@ final class AccesosRapidos
     private const RUTA_TABLERO = 'panel.dashboard';
 
     /**
-     * Tonos disponibles (variantes de `molecules/link-row` con relleno sólido y ícono blanco), todos
-     * tokens existentes. Quedan fuera `danger` (significa error) y `neutral` (significa «sin estado»).
-     * Son siete para seis tarjetas como máximo, así que siempre hay uno libre.
+     * Tonos disponibles (variantes de `molecules/link-row` con relleno sólido y ícono blanco). Cada
+     * uno es un COLOR distinto: `distintivo-3` y `primary-2` quedan fuera porque pintan exactamente el
+     * mismo azul que `info` (mismo valor en `tokens/semantic/theme-*.css`), así que no cuentan como
+     * tonos aparte. Tampoco `danger` (significa error) ni `neutral` (significa «sin estado»). Son siete
+     * para seis tarjetas como máximo, así que siempre hay uno libre; la prueba `AccesosRapidosTest`
+     * comprueba que ninguno repite el valor de otro.
      *
      * @var list<string>
      */
-    private const TONOS = [
+    public const TONOS = [
         'info',
         'distintivo-1',
         'distintivo-2',
         'warning',
-        'distintivo-3',
         'success',
-        'primary-2',
+        'distintivo-4',
+        'distintivo-5',
     ];
 
     /**

@@ -18,7 +18,7 @@
     - title (requerido): ya traducido.
     - meta (nullable): texto corto a la derecha, ya formateado.
     - tone (success|warning|danger|info|distintivo-1|distintivo-2|
-      distintivo-3|primary-2|neutral, default "neutral"): color del círculo
+      distintivo-3|distintivo-4|distintivo-5|primary-2|neutral, default "neutral"): color del círculo
       del ícono. Relleno SÓLIDO (`-contrast-fill`) + ícono blanco (18/9/2026,
       pedido explícito del usuario — mismo criterio que `atoms/badge`/
       `molecules/stat-card`), salvo `neutral`, que se queda con el gris
