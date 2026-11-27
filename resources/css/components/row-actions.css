@@ -1,9 +1,10 @@
 /*
  * Organism: row-actions (resources/views/components/organisms/row-actions.blade.php)
  *
- * Cada acción se pinta UNA sola vez: como botones sueltos (`--iconos`, hasta
- * `maxIconos` acciones) o dentro del menú «⋮» (`--menu`, con más). Ver el docblock
- * del Blade; no hay una copia visible y otra en el menú.
+ * El slot llega renderizado DOS VECES desde el Blade (ver su docblock):
+ * `.ag-row-actions__visible` y `.ag-row-actions__menu` tienen exactamente
+ * los mismos hijos, en el mismo orden. Acá se decide, por breakpoint, cuáles
+ * hijos se ven en cada mitad — nunca los dos a la vez para el mismo botón.
  *
  * Las acciones visibles conservan ícono + texto (nunca solo-ícono — pedido
  * explícito del usuario, 15/9/2026): la celda de acciones de cada tabla fija
@@ -66,6 +67,12 @@
    CONTEO; no arregla eso. */
 .ag-row-actions__item {
     display: contents;
+}
+
+.ag-row-actions__visible {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
 }
 
 .ag-row-actions__more-btn {
@@ -158,16 +165,41 @@
     display: block;
 }
 
-/* Con más acciones que `maxIconos` el organism las pinta dentro del menú «⋮»
-   (`.ag-row-actions--menu`, ver su Blade): el botón se ve siempre, en cualquier
-   ancho, y el menú lista TODAS las acciones en su orden. Las reglas anteriores
-   (`__visible`, cupo de dos por breakpoint) ya no tienen marcado que las use: el
-   organism decide una sola vez, por cuántas acciones hay, y por eso no hay
-   `:nth-child` que oculte ítems del menú. */
-.ag-row-actions--menu .ag-row-actions__more {
-    display: block;
+/* ≥768px ("pantallas normales", pedido explícito del usuario 16/9/2026):
+   hasta 2 acciones sueltas en la celda, SIEMPRE — antes eran 3 desde
+   1200px y 2 en el tramo tablet, un cupo que variaba con el breakpoint Y
+   con cuántos estados tuviera cada página (usuarios/contratos con 24rem
+   fijo para 3, clientes/campanias con 14rem para 2 — la celda no calzaba
+   igual de una página a otra). Un cupo único da un ancho de columna único
+   en `resources/css/pages/*.css`, sin importar cuántas acciones tenga la
+   fila más cargada de cada pantalla. */
+@media (min-width: 768px) {
+    .ag-row-actions__visible > :nth-child(n + 3) {
+        display: none;
+    }
+
+    .ag-row-actions__menu > :nth-child(-n + 2) {
+        display: none;
+    }
+
+    .ag-row-actions:has(.ag-row-actions__visible > :nth-child(3)) .ag-row-actions__more {
+        display: block;
+    }
 }
 
-.ag-row-actions__menu .ag-row-action {
-    display: block;
+/* Mobile: ninguna suelta — todas al menú. */
+@media (max-width: 767.98px) {
+    .ag-row-actions__visible {
+        display: none;
+    }
+
+    .ag-row-actions:has(.ag-row-actions__visible > :nth-child(1)) .ag-row-actions__more {
+        display: block;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ag-row-actions__menu {
+        transition-duration: 0.01ms !important;
+    }
 }
