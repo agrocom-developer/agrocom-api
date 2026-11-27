@@ -106,6 +106,9 @@ Route::get('/personas/{usuario}/foto', [FotoDePerfilController::class, 'archivo'
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/auth/sesion', [SesionCampoController::class, 'show'])->name('api.auth.sesion');
 
+    // Renueva el token de ESTE dispositivo antes de que caduque (sesión por biometría: el desbloqueo es local, ADR 0046, punto 32).
+    Route::post('/auth/renovar', [SesionCampoController::class, 'renovar'])->middleware('throttle:10,1')->name('api.auth.renovar');
+
     // Cierra la sesión de ESTE dispositivo (el del token que firma el
     // request). Revocar el de otro es cosa del panel, con permiso propio.
     Route::delete('/auth/token', [SesionCampoController::class, 'destroy'])->name('api.auth.token.revocar');

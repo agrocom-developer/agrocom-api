@@ -33,6 +33,7 @@ use OpenApi\Attributes as OA;
         ),
         new OA\Property(property: 'last_used_at', description: 'Último request autenticado con este token.', type: 'string', format: 'date-time', nullable: true),
         new OA\Property(property: 'created_at', description: 'Cuándo se emitió el token.', type: 'string', format: 'date-time'),
+        new OA\Property(property: 'expira_en', description: 'Cuándo caduca el token; `null` si no caduca por tiempo. La app lo renueva con `POST /api/auth/renovar` antes de esa fecha. Siempre presente.', type: 'string', format: 'date-time', nullable: true),
     ],
     type: 'object',
 )]
@@ -48,6 +49,7 @@ final class DispositivoResource extends JsonResource
             'rol' => new RolActivoResource($this->rol),
             'last_used_at' => $this->last_used_at?->toIso8601String(),
             'created_at' => $this->created_at?->toIso8601String(),
+            'expira_en' => $this->expires_at?->toIso8601String(),
         ];
     }
 }
