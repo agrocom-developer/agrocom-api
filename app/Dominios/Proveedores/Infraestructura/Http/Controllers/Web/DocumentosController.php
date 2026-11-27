@@ -7,6 +7,7 @@ use App\Dominios\Compartido\Aplicacion\Medios\RegistrarAccesoAMedio;
 use App\Dominios\Compartido\Dominio\Excepciones\MotivoRequerido;
 use App\Dominios\Compartido\Dominio\TipoDocumento;
 use App\Dominios\Compartido\Dominio\VarianteDeMedio;
+use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Proveedores\Aplicacion\ResolverSujeto;
 use App\Dominios\Proveedores\Aplicacion\RevisarDocumento;
@@ -61,7 +62,10 @@ final class DocumentosController
         $sujetoTipo = TipoSujeto::tryFrom(TextoDeFiltro::de($request, 'sujeto_tipo'));
         $tipo = TipoDocumento::tryFrom(TextoDeFiltro::de($request, 'tipo'));
 
+        $busqueda = TextoDeFiltro::de($request, 'q');
+
         $documentos = Documento::query()
+            ->when($busqueda !== '', fn ($consulta) => BusquedaTexto::aplicar($consulta, ['nombre_original'], $busqueda))
             ->when($estado !== null, fn ($consulta) => $consulta->where('estado', $estado->value))
             ->when($sujetoTipo !== null, fn ($consulta) => $consulta->where('sujeto_tipo', $sujetoTipo->value))
             ->when($tipo !== null, fn ($consulta) => $consulta->where('tipo', $tipo->value))
@@ -79,8 +83,7 @@ final class DocumentosController
             'documentos' => $documentos,
             'etiquetas' => $etiquetas,
             'rutaFicha' => self::RUTA_FICHA,
-            'filtros' => ['estado' => $estado?->value, 'sujeto_tipo' => $sujetoTipo?->value, 'tipo' => $tipo?->value],
-            'filtroEstadoExplicito' => $request->has('estado'),
+            'filtros' => ['q' => $busqueda, 'estado' => $estado?->value, 'sujeto_tipo' => $sujetoTipo?->value, 'tipo' => $tipo?->value],
             'estadosFiltro' => EstadoDocumento::cases(),
             'sujetosFiltro' => TipoSujeto::cases(),
             'tiposFiltro' => TipoDocumento::cases(),

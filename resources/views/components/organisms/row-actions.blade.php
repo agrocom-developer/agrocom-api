@@ -1,46 +1,75 @@
 {{--
-    Organism: row-actions (`.ag-row-actions`)
-    Envuelve las acciones de una fila de tabla (los `<x-atoms.button>` que
-    cada página ya arma detrás de `@puede`/`@if` de permiso) y colapsa las
-    que no entran a un menú "⋮" — nunca más de 2 acciones sueltas en una
-    celda (pedido explícito del usuario, 16/9/2026: simetría de ancho de
-    columna entre páginas, sin importar cuántos estados tenga cada una), y
-    en mobile están TODAS en el menú.
+    Organism: row-actions (`.ag-row-actions`) — el ÚNICO componente de acciones de
+    fila del panel.
 
-    Es organism (no molecule) por el mismo criterio que `topbar`: orquesta
-    botones y tiene JS propio (dropdown de Bootstrap + el title automático
-    de resources/js/organisms/row-actions.js).
+    Fuerza el orden en todas las tablas, sin importar en qué orden las declare el
+    llamador: Ver, Editar, Aprobar, transiciones de la máquina de estados, Eliminar
+    (Eliminar siempre al final y siempre en peligro). Cada acción es un
+    `<x-molecules.row-action>` dentro del slot con nombre que le corresponde:
 
-    El slot se renderiza DOS VECES a propósito — una vez en `.ag-row-actions__visible`
-    (CSS oculta según breakpoint cuáles se ven, siempre con ícono + texto,
-    nunca solo-ícono), otra dentro del menú `.ag-row-actions__menu` (los que
-    no entraron). Es la única forma de no duplicar en el Blade de cada
-    página los `@puede`/`@if` de permiso de cada acción: el llamador arma
-    sus botones UNA vez, en el slot, y este componente decide qué se ve
-    dónde por CSS, no por PHP.
+        <x-organisms.row-actions>
+            <x-slot:ver><x-molecules.row-action kind="ver" … /></x-slot:ver>
+            <x-slot:editar>…</x-slot:editar>
+            <x-slot:aprobar>…</x-slot:aprobar>
+            <x-slot:transiciones>…varias, ya filtradas por estado y permiso…</x-slot:transiciones>
+            <x-slot:eliminar>…</x-slot:eliminar>
+        </x-organisms.row-actions>
 
-    No recibe props: no necesita saber CUÁNTAS acciones tiene ni de qué tipo
-    son — eso es exactamente lo que el llamador ya resuelve con sus propios
-    `@puede`. El componente no conoce rutas, modelos ni permisos (DIP).
+    Hasta tres acciones se ven como botones de ícono (con `title` y `aria-label`); con
+    más de tres, todas pasan al menú «⋮» de la fila, con ícono y texto. El slot por
+    defecto no existe: una acción suelta no tiene lugar en el orden.
+
+    Los `<form>` y los `confirm-modal` van FUERA de este componente, en la celda: aquí
+    cada acción se pinta una sola vez, pero un form dentro del menú queda oculto con él.
+
+    Props:
+    - maxIconos (int, default 3): cuántas acciones caben como botones de ícono.
+    - label (string|null): nombre accesible del grupo; por omisión `ui.tabla.acciones_fila`.
 --}}
-<div class="ag-row-actions">
-    <div class="ag-row-actions__visible">
-        {{ $slot }}
-    </div>
+@props([
+    'maxIconos' => 3,
+    'label' => null,
+])
 
-    <div class="dropdown ag-row-actions__more">
-        <button
-            type="button"
-            class="ag-button ag-button--outline ag-button--sm ag-row-actions__more-btn"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
-            aria-label="{{ __('ui.tabla.mas_acciones') }}"
-        >
-            <x-atoms.icon name="more_vert" size="sm" />
-        </button>
+@php
+    // El orden vive acá y solo acá (la prueba RowActionsOrdenTest lo congela).
+    $porOrden = [
+        'ver' => isset($ver) ? trim((string) $ver) : '',
+        'editar' => isset($editar) ? trim((string) $editar) : '',
+        'aprobar' => isset($aprobar) ? trim((string) $aprobar) : '',
+        'transiciones' => isset($transiciones) ? trim((string) $transiciones) : '',
+        'eliminar' => isset($eliminar) ? trim((string) $eliminar) : '',
+    ];
+    $contenido = implode("\n", array_filter($porOrden, fn (string $html): bool => $html !== ''));
+    $cantidad = substr_count($contenido, 'data-ag-row-action=');
+    $enMenu = $cantidad > $maxIconos;
+@endphp
 
-        <div class="dropdown-menu dropdown-menu-end ag-row-actions__menu">
-            {{ $slot }}
-        </div>
+@if ($cantidad > 0)
+    <div
+        {{ $attributes->class(['ag-row-actions', $enMenu ? 'ag-row-actions--menu' : 'ag-row-actions--iconos']) }}
+        role="group"
+        aria-label="{{ $label ?? __('ui.tabla.acciones_fila') }}"
+    >
+        @if ($enMenu)
+            <div class="dropdown ag-row-actions__more">
+                <button
+                    type="button"
+                    class="ag-button ag-button--outline ag-button--sm ag-row-actions__more-btn"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    aria-label="{{ __('ui.tabla.mas_acciones') }}"
+                    title="{{ __('ui.tabla.mas_acciones') }}"
+                >
+                    <x-atoms.icon name="more_vert" size="sm" />
+                </button>
+
+                <div class="dropdown-menu dropdown-menu-end ag-row-actions__menu">
+                    {!! $contenido !!}
+                </div>
+            </div>
+        @else
+            {!! $contenido !!}
+        @endif
     </div>
-</div>
+@endif

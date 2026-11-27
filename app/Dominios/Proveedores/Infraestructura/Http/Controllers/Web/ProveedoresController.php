@@ -73,6 +73,7 @@ final class ProveedoresController
             'estadosFiltro' => EstadoAprobacion::cases(),
             'tiposFiltro' => TipoProveedor::cases(),
             'puedeCrear' => $this->autorizacion->tienePermiso($request, self::PERMISO_CREAR),
+            'accionesPorEstado' => $this->accionesPorEstado($request, $this->autorizacion, 'proveedores.proveedor'),
         ]);
     }
 

@@ -6,9 +6,7 @@
     superior de la pantalla y orquesta las acciones (`atoms/button`) que le
     pasa el llamador — por eso organism y no molecule, mismo criterio que
     `topbar`. Es el mismo markup que hoy usan ~40 pantallas del panel;
-    dashboard (`pages/dashboard/_encabezado`) lo consume vía el slot `chip`
-    para su indicador de rol activo — ninguna pantalla nueva debe volver a
-    armar este markup a mano.
+    ninguna pantalla nueva debe volver a armar este markup a mano.
 
     Props:
     - title (requerido): título de la pantalla, ya traducido. Se renderiza
@@ -19,7 +17,7 @@
     - actions: botones de la cabecera (`atoms/button`), un único sólido
       (`variant="primary"`) y el resto `outline` (regla fija, §5).
     - chip (opcional): indicador corto en línea junto al subtítulo (p. ej.
-      "Viendo como X rol") — arma su propia pastilla/tono, este componente
+      "Borrador") — arma su propia pastilla/tono, este componente
       solo le da un lugar al lado del subtítulo. Sin `chip`, el subtítulo
       se ve exactamente igual que antes (compatible con las ~40 pantallas
       que no lo usan).

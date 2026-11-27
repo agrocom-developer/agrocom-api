@@ -66,6 +66,7 @@ final class PilotosController
             'filtros' => ['q' => $busqueda, 'estado' => $estado?->value],
             'estadosFiltro' => EstadoAprobacion::cases(),
             'puedeCrear' => $this->autorizacion->tienePermiso($request, self::PERMISO_CREAR),
+            'accionesPorEstado' => $this->accionesPorEstado($request, $this->autorizacion, 'proveedores.piloto'),
         ]);
     }
 

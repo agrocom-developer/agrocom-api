@@ -27,6 +27,7 @@
 @import './timezone-badge.css';
 @import './menu-item.css';
 @import './stat-card.css';
+@import './grafico.css';
 @import './plan-card.css';
 @import './form-section.css';
 @import './alert-strip.css';
@@ -58,8 +59,6 @@
 @import './topbar.css';
 @import './filter-panel.css';
 @import './row-actions.css';
-@import './vista-como-banner.css';
-@import './cambiar-vista-modal.css';
 @import './tabs.css';
 
 /* Organisms (tarea 31 — arquetipo formulario) */

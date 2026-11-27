@@ -3,7 +3,6 @@
 namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Metricas\Contratos\LecturaTableroDeMercado;
-use App\Dominios\Seguridad\Aplicacion\ListarCandidatosVerComo;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use App\Dominios\Seguridad\Infraestructura\Http\Middleware\ResolverRolActivo;
@@ -28,8 +27,6 @@ final class DashboardController
 {
     private const PERMISO_VER = 'seguridad.dashboard.ver';
 
-    private const PERMISO_VER_COMO = 'seguridad.usuario.ver_como';
-
     /** Cada tipo de pendiente, su pantalla y el permiso que la abre. */
     private const PENDIENTES = [
         'proveedores' => ['panel.proveedores.index', 'proveedores.proveedor.ver'],
@@ -46,7 +43,6 @@ final class DashboardController
         AutorizacionPanelWeb $autorizacion,
         CascaraPanel $cascara,
         LecturaTableroDeMercado $mercado,
-        ListarCandidatosVerComo $listarCandidatosVerComo,
     ): View {
         abort_unless($autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
@@ -63,19 +59,11 @@ final class DashboardController
             }
         }
 
-        // Acceso directo a «ver como» (botón junto al chip de rol activo del
-        // encabezado): mismo permiso reservado que ya gatea el flujo desde
-        // Seguridad → Usuarios, revalidado acá porque el chip es otra
-        // pantalla — nunca se confía en el estado de una vista anterior.
-        $puedeVerComo = $autorizacion->tienePermiso($request, self::PERMISO_VER_COMO);
-
         return view('seguridad::pages.dashboard', [
             ...$cascara->para($usuario, $idRolActivo),
             'tablero' => $tablero,
             'pendientes' => $pendientes,
             'puedeVerSolicitudes' => $autorizacion->tienePermiso($request, 'solicitudes.solicitud.ver'),
-            'puedeVerComo' => $puedeVerComo,
-            'candidatosVerComo' => $puedeVerComo ? $listarCandidatosVerComo->ejecutar($usuario) : null,
         ]);
     }
 }

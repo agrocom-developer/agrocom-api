@@ -3,11 +3,9 @@
 use App\Dominios\Compartido\Dominio\Excepciones\CuentaNoAprobada;
 use App\Dominios\Compartido\Infraestructura\Http\ErroresHttpEnEspanol;
 use App\Dominios\Compartido\Infraestructura\Http\Middleware\RecordarOrigenNavegacion;
-use App\Dominios\Seguridad\Infraestructura\Http\Middleware\AplicarVistaComo;
 use App\Dominios\Seguridad\Infraestructura\Http\Middleware\ExigirCuentaSinEliminacion;
 use App\Dominios\Seguridad\Infraestructura\Http\Middleware\LimitarSondeoDeCuentas;
 use App\Dominios\Seguridad\Infraestructura\Http\Middleware\ResolverRolActivo;
-use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -41,19 +39,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'sondeo.cuentas' => LimitarSondeoDeCuentas::class,
             'cuenta.sin-eliminacion' => ExigirCuentaSinEliminacion::class,
         ]);
-
-        // Tarea 140: "ver como otro usuario". Va en el grupo `web` (todo el
-        // panel) y, en la lista de prioridad, JUSTO ANTES de la autenticación:
-        // `auth:interno` tiene que preguntar "¿quién está autenticado?" cuando
-        // la cuenta observada ya está puesta en el guard — si corriera después,
-        // el administrador rebotaría a `/login`.
-        // Sin lista de prioridad, el orden depende de dónde caiga en el
-        // arreglo del grupo respecto de `SubstituteBindings`.
-        $middleware->web(append: [AplicarVistaComo::class]);
-        $middleware->prependToPriorityList(
-            before: AuthenticatesRequests::class,
-            prepend: AplicarVistaComo::class,
-        );
 
         // Sin sesión, el panel va al formulario de ingreso.
         $middleware->redirectGuestsTo(fn (): string => route('login.form'));

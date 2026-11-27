@@ -39,7 +39,6 @@ final class PermisosReservados
         'seguridad.usuario.editar',
         'seguridad.usuario.bloquear',
         'seguridad.usuario.eliminar',
-        'seguridad.usuario.ver_como',
         'seguridad.usuario.asignar_rol_administrador',
         'seguridad.rol.ver',
         'seguridad.rol.crear',

@@ -15,8 +15,6 @@ import './organisms/login-form.js';
 import './organisms/topbar.js';
 import './organisms/role-selection.js';
 import './organisms/module-sidebar.js';
-import './organisms/vista-como-banner.js';
-import './organisms/cambiar-vista-modal.js';
 import './templates/auth-layout.js';
 import './pages/login.js';
 import './pages/roles-permisos.js';
@@ -96,5 +94,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // organisms/mapa-marcador (Leaflet): solo en las páginas con un mapa de punto.
     if (document.querySelector('[data-ag-mapa-marcador]')) {
         import('./organisms/mapa-marcador.js');
+    }
+
+    // molecules/grafico (Chart.js): solo en las páginas con una gráfica.
+    if (document.querySelector('[data-ag-grafico]')) {
+        import('./molecules/grafico.js');
     }
 });

@@ -38,12 +38,35 @@
                 @endif
             </x-organisms.page-header>
 
+            @php
+                $hayFiltrosActivos = ($filtros['q'] ?? '') !== '';
+            @endphp
+
+            @if ($hayFiltrosActivos || $avisos->isNotEmpty())
+                <div class="ag-table-toolbar">
+                    <x-molecules.table-search
+                        :action="route('panel.notificaciones.index')"
+                        :value="$filtros['q']"
+                        :placeholder="__('notificaciones.mias.filtro_busqueda_placeholder')"
+                        :clear-label="__('ui.tabla.filtros_limpiar')"
+                    />
+                </div>
+            @endif
+
             @if ($avisos->isEmpty())
-                <x-molecules.empty-state
-                    icon="notifications"
-                    :title="__('notificaciones.mias.vacio_titulo')"
-                    :detail="__('notificaciones.mias.vacio_detalle')"
-                />
+                @if ($hayFiltrosActivos)
+                    <x-molecules.empty-state
+                        icon="search_off"
+                        :title="__('notificaciones.mias.filtro_vacio_titulo')"
+                        :detail="__('notificaciones.mias.filtro_vacio_detalle')"
+                    />
+                @else
+                    <x-molecules.empty-state
+                        icon="notifications"
+                        :title="__('notificaciones.mias.vacio_titulo')"
+                        :detail="__('notificaciones.mias.vacio_detalle')"
+                    />
+                @endif
             @else
                 <form id="notificaciones-marcar-todas" method="POST" action="{{ route('panel.notificaciones.marcar-todas') }}">
                     @csrf
@@ -86,9 +109,9 @@
                             <span role="cell">{{ $fila['creado_en'] }}</span>
                             <span role="cell" class="ag-index-table__acciones">
                                 <x-organisms.row-actions>
-                                    <x-atoms.button :href="route('panel.notificaciones.abrir', $fila['id'])" variant="info-outline" size="sm" icon="visibility">
-                                        {{ __('notificaciones.mias.ver') }}
-                                    </x-atoms.button>
+                                    <x-slot:ver>
+                                        <x-molecules.row-action kind="ver" :href="route('panel.notificaciones.abrir', $fila['id'])" icon="visibility" :label="__('notificaciones.mias.ver')" />
+                                    </x-slot:ver>
                                 </x-organisms.row-actions>
                             </span>
                         </div>
