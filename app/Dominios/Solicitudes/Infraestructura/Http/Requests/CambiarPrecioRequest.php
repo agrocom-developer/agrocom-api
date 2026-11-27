@@ -17,6 +17,7 @@ final class CambiarPrecioRequest extends FormRequest
     {
         return [
             'precio_ha_propuesto' => ['required', 'numeric', 'gt:0', 'max:99999999', 'decimal:0,4'],
+            'justificacion_precio' => ['nullable', 'string', 'max:500'],
         ];
     }
 

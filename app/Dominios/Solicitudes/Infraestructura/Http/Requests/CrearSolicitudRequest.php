@@ -32,6 +32,7 @@ final class CrearSolicitudRequest extends FormRequest
             'urgente' => ['nullable', 'boolean'],
             'observaciones' => ['nullable', 'string', 'max:1000'],
             'precio_ha_propuesto' => ['nullable', 'numeric', 'gt:0', 'max:99999999', 'decimal:0,4'],
+            'justificacion_precio' => ['nullable', 'string', 'max:500'],
         ];
     }
 

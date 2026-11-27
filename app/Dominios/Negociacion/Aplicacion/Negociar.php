@@ -5,6 +5,7 @@ namespace App\Dominios\Negociacion\Aplicacion;
 use App\Dominios\Compartido\Aplicacion\ExigirCuentaAprobada;
 use App\Dominios\Compartido\Dominio\EstadoAprobacion;
 use App\Dominios\Compartido\Dominio\Excepciones\CuentaNoAprobada;
+use App\Dominios\Compartido\Dominio\TextoLibre;
 use App\Dominios\Flota\Contratos\DatosEquipoApto;
 use App\Dominios\Flota\Contratos\LecturaEquipos;
 use App\Dominios\Negociacion\Aplicacion\MaquinaEstados\MaquinaEstadosOferta;
@@ -57,7 +58,7 @@ final class Negociar
     /**
      * La primera oferta de una negociación (`POST /solicitudes/{id}/ofertas`).
      *
-     * @param  array{uuid_cliente: string, tipo: string, precio_ha?: string|int|float|null, equipo_id?: int|null, nota?: string|null}  $datos
+     * @param  array{uuid_cliente: string, tipo: string, precio_ha?: string|int|float|null, equipo_id?: int|null, nota?: string|null, justificacion_precio?: string|null}  $datos
      * @return array{0: Oferta, 1: bool} la oferta y si se creó ahora (`false` = reintento del mismo uuid).
      *
      * @throws NegociacionInvalida
@@ -99,6 +100,7 @@ final class Negociar
                     'monto_estimado' => $this->monto($solicitud, $precio),
                     'es_definitiva' => $numero >= $this->parametros->maxOfertas(),
                     'nota' => $this->nota($datos['nota'] ?? null),
+                    ...$this->justificacion($datos['justificacion_precio'] ?? null),
                     'vence_en' => $this->venceEn(),
                 ]);
 
@@ -130,7 +132,7 @@ final class Negociar
      *
      * @throws NegociacionInvalida
      */
-    public function contraofertar(string $lado, int $usuarioId, int $ofertaId, string $precioHa, ?string $nota, ?string $uuidCliente): array
+    public function contraofertar(string $lado, int $usuarioId, int $ofertaId, string $precioHa, ?string $nota, ?string $uuidCliente, ?string $justificacionPrecio = null): array
     {
         $uuidCliente ??= (string) Str::uuid();
 
@@ -141,7 +143,7 @@ final class Negociar
             return [$previa, false];
         }
 
-        return [DB::transaction(function () use ($lado, $usuarioId, $ofertaId, $precioHa, $nota, $uuidCliente): Oferta {
+        return [DB::transaction(function () use ($lado, $usuarioId, $ofertaId, $precioHa, $nota, $uuidCliente, $justificacionPrecio): Oferta {
             [$solicitud, $actual] = $this->bloquearConOferta($lado, $usuarioId, $ofertaId);
 
             // Contraofertar es de la cuenta aprobada (ADR 0046, punto 12).
@@ -173,6 +175,7 @@ final class Negociar
                 'monto_estimado' => $this->monto($solicitud, $precio),
                 'es_definitiva' => $actual->numero + 1 >= $this->parametros->maxOfertas(),
                 'nota' => $this->nota($nota),
+                ...$this->justificacion($justificacionPrecio),
                 'oferta_anterior_id' => $actual->id,
                 'vence_en' => $this->venceEn(),
                 'distancia_km' => $actual->distancia_km,
@@ -495,6 +498,18 @@ final class Negociar
     private function venceEn(): Carbon
     {
         return Carbon::now()->addHours($this->parametros->vigenciaOfertaHoras());
+    }
+
+    /**
+     * La justificación del precio de esta oferta (ADR 0049), saneada; solo viaja si el autor la escribió.
+     *
+     * @return array<string, string>
+     */
+    private function justificacion(?string $texto): array
+    {
+        $limpio = TextoLibre::sanear($texto);
+
+        return $limpio === null ? [] : ['justificacion_precio' => $limpio];
     }
 
     private function nota(?string $nota): ?string

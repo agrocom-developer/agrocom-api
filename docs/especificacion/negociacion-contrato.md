@@ -68,6 +68,8 @@ Reglas:
 - `monto_estimado = hectareas_solicitadas × precio_ha_acordado`; `monto_final = hectareas_ejecutadas × precio_ha_acordado`, congelado en `finalizada` (redondeo a 2 decimales).
 - `hectareas_ejecutadas <= hectareas_solicitadas × (1 + seguimiento.tolerancia_hectareas_pct / 100)`; la tolerancia por defecto es 5 %. Pasarse responde 422.
 - No hay precio de referencia: lo ponen el cliente y el proveedor.
+- **Total de solo lectura.** `monto_estimado` (hectáreas × precio por hectárea, decimal exacto, 2 decimales) lo calcula el servidor en cada oferta y en la solicitud y viaja en sus respuestas; ninguna petición lo recibe (si llega, se ignora). Es lo que la app presenta como «Total estimado».
+- **Justificación del precio** (ADR 0049). `justificacion_precio`, texto opcional de hasta 500 caracteres, saneado (sin etiquetas, sin caracteres de control, espacios colapsados; vacío es nulo) y visible para la contraparte. El cliente la escribe en la solicitud (`POST /solicitudes`, `POST /solicitudes/{id}/precio`); el proveedor y el cliente, en cada oferta o contraoferta (`POST /solicitudes/{id}/ofertas`, `POST /ofertas/{id}/contraofertar`). Cada parte escribe solo su fila: la oferta no se edita. Más de 500 caracteres responde 422.
 - El cliente puede cambiar `precio_ha_propuesto` con `POST /solicitudes/{id}/precio` mientras la solicitud no está adjudicada (`abierta`, `con_ofertas` o `en_acuerdo`). Las ofertas vigentes, también las de la cola, no cambian; se notifica a los proveedores con negociación vigente.
 - Un equipo que no cumple un requisito del cliente (§3.7) puede ofertar.
 
@@ -148,7 +150,9 @@ Idempotencia: correr `LiberarCola` una, dos o diez veces, o recibir los eventos 
 **Aviso de solicitud sin respuesta.** Cada `negociacion.pendiente.recordatorio_dias` (7), y solo mientras ningún proveedor aceptó, se avisa al cliente cuánto lleva sin respuesta («tu solicitud lleva N días sin respuesta: modifícala, búscala también en otros departamentos o retírala»; sin la segunda opción si ya está ampliada); no se avisa a los pilotos y nada se cancela ni vence solo. Si pasa `ventana_hasta` sin trato se le avisa y no se relanza sola hasta que actualice la fecha; la solicitud no se cancela. En una solicitud urgente vigente esto lo reemplaza la fecha límite (§3.10).
 
 ### 3.9 Orden de las ofertas
-`GET /solicitudes/{id}/ofertas?orden=` acepta `recomendado` (por defecto: proveedores `propio` primero; luego mayor calificación, con quien tiene menos de `negociacion.oleadas.calificaciones_minimas_para_contar` calificaciones al final de su grupo; luego menor `precio_ha`; luego la más antigua), `precio`, `calificacion` y `reciente`. No hay orden por distancia: no se calcula.
+Las ofertas vigentes van siempre primero y, dentro de cada grupo, rige el orden pedido. `GET /solicitudes/{id}/ofertas?orden=` acepta `recomendado` (por defecto: proveedores `propio` primero; luego mayor calificación, con quien tiene menos de `negociacion.oleadas.calificaciones_minimas_para_contar` calificaciones al final de su grupo; luego menor `precio_ha`; luego la más antigua), `precio`, `calificacion` y `reciente`. No hay orden por distancia: no se calcula.
+
+**Filtros del comparador** (ADR 0049), todos opcionales y combinables: `precio_ha_min`, `precio_ha_max`, `monto_max` (total estimado), `calificacion_min` (0 a 5), `tipo_proveedor` (`propio`, `independiente`, `tercero`) y `capacidad_tanque_min` (litros del dron de la oferta). Un valor inválido responde 422. Solo reducen la lista: no cambian lo que se ve de cada oferta ni agregan datos de contacto. La disponibilidad del proveedor no es un filtro del cliente (ADR 0045, punto 30).
 
 ### 3.10 Solicitudes urgentes
 Decisión en el ADR 0045, punto K. Primer modelo; todo lo fino es revisable.

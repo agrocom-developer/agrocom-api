@@ -39,6 +39,12 @@ return [
     /** Plazo para disputar desde `finalizada`, en horas. */
     'plazo_disputa_horas' => (int) env('NEGOCIACION_PLAZO_DISPUTA_HORAS', 72),
 
+    /** Oleadas de aviso y comparador (ADR 0045). */
+    'oleadas' => [
+        /** Cuántas calificaciones necesita un proveedor para que su promedio cuente en el orden recomendado; con menos va al final de su grupo. */
+        'calificaciones_minimas_para_contar' => (int) env('NEGOCIACION_CALIFICACIONES_MINIMAS_PARA_CONTAR', 3),
+    ],
+
     /** Plazo para calificar y para el chat tras `finalizada`, en días. */
     'plazo_calificacion_dias' => (int) env('NEGOCIACION_PLAZO_CALIFICACION_DIAS', 7),
 ];

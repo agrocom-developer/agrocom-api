@@ -72,6 +72,8 @@ final class LecturaMercadoEloquent implements LecturaMercado
             urgente: $solicitud->urgente,
             observaciones: $solicitud->observaciones,
             publicadaEn: $solicitud->publicada_en?->toIso8601String(),
+            montoEstimado: $solicitud->monto_estimado,
+            justificacionPrecio: $solicitud->justificacion_precio,
             terreno: $conTerreno ? [
                 'nombre' => $terreno->nombre,
                 'hectareas' => $terreno->hectareas,

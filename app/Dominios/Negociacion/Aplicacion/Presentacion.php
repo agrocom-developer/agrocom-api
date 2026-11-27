@@ -29,6 +29,7 @@ final class Presentacion
             'estado' => $oferta->estado->value,
             'es_definitiva' => $oferta->es_definitiva,
             'nota' => $oferta->nota,
+            'justificacion_precio' => $oferta->justificacion_precio,
             'oferta_anterior_id' => $oferta->oferta_anterior_id,
             'distancia_km' => $oferta->distancia_km,
             'vence_en' => $oferta->vence_en->toIso8601String(),

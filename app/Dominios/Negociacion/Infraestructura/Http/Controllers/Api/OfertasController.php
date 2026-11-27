@@ -6,6 +6,7 @@ use App\Dominios\Negociacion\Aplicacion\ConsultarOfertas;
 use App\Dominios\Negociacion\Aplicacion\Negociar;
 use App\Dominios\Negociacion\Aplicacion\Presentacion;
 use App\Dominios\Negociacion\Dominio\Excepciones\NegociacionInvalida;
+use App\Dominios\Negociacion\Infraestructura\Http\Requests\CompararOfertasRequest;
 use App\Dominios\Negociacion\Infraestructura\Http\Requests\ContraofertarRequest;
 use App\Dominios\Negociacion\Infraestructura\Http\Requests\OfertarRequest;
 use App\Dominios\Negociacion\Infraestructura\Http\RespuestaDeNegociacion;
@@ -36,10 +37,11 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'autor', type: 'string', enum: ['proveedor', 'cliente']),
         new OA\Property(property: 'tipo', type: 'string', enum: ['acepta_propuesta', 'contraoferta']),
         new OA\Property(property: 'precio_ha', type: 'string', example: '118.0000'),
-        new OA\Property(property: 'monto_estimado', description: 'Hectáreas solicitadas por este precio.', type: 'string', example: '9440.00'),
+        new OA\Property(property: 'monto_estimado', description: 'Total estimado: hectáreas solicitadas por `precio_ha`. Lo calcula el servidor (decimal exacto) y es de solo lectura; si una app lo envía, se ignora.', type: 'string', example: '9440.00'),
         new OA\Property(property: 'estado', type: 'string', enum: ['vigente', 'aceptada', 'reemplazada', 'rechazada', 'retirada', 'vencida', 'cerrada']),
         new OA\Property(property: 'es_definitiva', description: 'La última de la negociación: solo se acepta o se rechaza.', type: 'boolean'),
         new OA\Property(property: 'nota', type: 'string', nullable: true),
+        new OA\Property(property: 'justificacion_precio', description: 'Texto opcional (hasta 500 caracteres, sin HTML) con que el autor de esta oferta explica su precio; lo ve la contraparte. Lo escribe solo el autor y no se edita: una contraoferta es otra fila.', type: 'string', nullable: true, example: 'Incluye el traslado del dron y dos pasadas.'),
         new OA\Property(property: 'oferta_anterior_id', type: 'integer', nullable: true),
         new OA\Property(property: 'distancia_km', type: 'string', nullable: true, example: '42.50'),
         new OA\Property(property: 'vence_en', type: 'string', format: 'date-time'),
@@ -47,7 +49,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'creada_en', type: 'string', format: 'date-time', nullable: true),
         new OA\Property(property: 'departamento_codigo', description: 'Solo para el proveedor: código INE del departamento de la solicitud (`GET /api/catalogos/ubicaciones`).', type: 'string', nullable: true, example: '07'),
         new OA\Property(property: 'lote', description: 'Solo para el proveedor: nombre del lote del cliente. Viene solo cuando la solicitud quedó adjudicada a ese proveedor; antes es `null`.', type: 'string', nullable: true, example: 'Lote Norte'),
-        new OA\Property(property: 'proveedor', description: 'Solo para el cliente: `nombre`, `foto_url` (foto de perfil del piloto del equipo o del titular, URL firmada de corta vida que se pide sin token; `null` si no hay), calificación, tasa de cancelación y dron con fotos aprobadas.', type: 'object', nullable: true),
+        new OA\Property(property: 'proveedor', description: 'Solo para el cliente: `nombre`, `tipo` (`propio`, `independiente` o `tercero`), `foto_url` (foto de perfil del piloto del equipo o del titular, URL firmada de corta vida que se pide sin token; `null` si no hay), calificación, tasa de cancelación y dron con fotos aprobadas.', type: 'object', nullable: true),
         new OA\Property(property: 'historial', description: 'Solo en el comparador del cliente: las ofertas de esa negociación.', type: 'array', items: new OA\Items(type: 'object'), nullable: true),
     ],
     type: 'object',
@@ -79,6 +81,7 @@ final class OfertasController
                     new OA\Property(property: 'precio_ha', description: 'Obligatorio en `contraoferta`.', type: 'string', nullable: true, example: '118'),
                     new OA\Property(property: 'equipo_id', type: 'integer', nullable: true),
                     new OA\Property(property: 'nota', type: 'string', nullable: true, example: 'Puedo ir la primera semana.'),
+                    new OA\Property(property: 'justificacion_precio', description: 'Opcional, hasta 500 caracteres: por qué ofreces ese precio. Lo ve el cliente.', type: 'string', nullable: true, example: 'Incluye el traslado del dron.'),
                 ],
                 type: 'object',
             ),
@@ -111,24 +114,34 @@ final class OfertasController
     #[OA\Get(
         path: '/api/solicitudes/{id}/ofertas',
         operationId: 'compararOfertas',
-        description: 'El comparador del cliente: una fila por proveedor con su oferta más reciente, el historial de esa negociación y los datos del proveedor para decidir (calificación, tasa de cancelación, distancia, modelo del dron y fotos aprobadas). Solo el cliente de la solicitud; la de otro cliente responde 404.',
+        description: 'El comparador del cliente: una fila por proveedor con su oferta más reciente, el historial de esa negociación y los datos del proveedor para decidir (tipo, calificación, tasa de cancelación, modelo del dron y fotos aprobadas), con el total estimado y la justificación del precio de cada oferta. Las vigentes van primero. `orden` (por defecto `recomendado`: proveedores propios de Agrocom primero, luego mayor calificación, luego menor precio, luego la más antigua) y los filtros opcionales solo ordenan o reducen la lista, nunca agregan datos de contacto (que llegan tras adjudicar). La disponibilidad del proveedor no es un filtro del cliente. Solo el cliente de la solicitud; la de otro cliente responde 404.',
         summary: 'Comparar las ofertas recibidas',
         security: [['tokenDispositivo' => []]],
         tags: ['Ofertas'],
-        parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'orden', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['recomendado', 'precio', 'calificacion', 'reciente'], default: 'recomendado')),
+            new OA\Parameter(name: 'precio_ha_min', in: 'query', required: false, description: 'Precio por hectárea mínimo (decimal, hasta 4 decimales).', schema: new OA\Schema(type: 'string', example: '100')),
+            new OA\Parameter(name: 'precio_ha_max', in: 'query', required: false, description: 'Precio por hectárea máximo (decimal, hasta 4 decimales; no menor que el mínimo).', schema: new OA\Schema(type: 'string', example: '130')),
+            new OA\Parameter(name: 'monto_max', in: 'query', required: false, description: 'Total estimado máximo (decimal, hasta 2 decimales).', schema: new OA\Schema(type: 'string', example: '10000')),
+            new OA\Parameter(name: 'calificacion_min', in: 'query', required: false, description: 'Calificación promedio mínima del proveedor (0 a 5).', schema: new OA\Schema(type: 'string', example: '4.5')),
+            new OA\Parameter(name: 'tipo_proveedor', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['propio', 'independiente', 'tercero'])),
+            new OA\Parameter(name: 'capacidad_tanque_min', in: 'query', required: false, description: 'Capacidad mínima del tanque del dron de la oferta, en litros; deja fuera las ofertas sin dron.', schema: new OA\Schema(type: 'string', example: '30')),
+        ],
         responses: [
             new OA\Response(response: 200, description: 'Ofertas.', content: new OA\JsonContent(required: ['ofertas'], properties: [new OA\Property(property: 'ofertas', type: 'array', items: new OA\Items(ref: '#/components/schemas/Oferta'))], type: 'object')),
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
             new OA\Response(response: 403, description: 'El rol del token no es de cliente.'),
             new OA\Response(response: 404, description: 'No existe o es de otro cliente.'),
+            new OA\Response(response: 422, description: 'Orden o filtro inválido.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],
     )]
-    public function deLaSolicitud(Request $request, int $id): JsonResponse
+    public function deLaSolicitud(CompararOfertasRequest $request, int $id): JsonResponse
     {
         $this->exigirPermiso($request, 'negociacion.oferta.cliente');
 
         try {
-            return response()->json(['ofertas' => $this->consultar->delCliente($this->usuarioId(), $id)]);
+            return response()->json(['ofertas' => $this->consultar->delCliente($this->usuarioId(), $id, $request->validated())]);
         } catch (NegociacionInvalida $excepcion) {
             return RespuestaDeNegociacion::de($excepcion);
         }
@@ -161,7 +174,7 @@ final class OfertasController
         try {
             $ofertas = $lado === Negociar::LADO_PROVEEDOR
                 ? $this->consultar->delProveedor($this->usuarioId(), $estado, $solicitudId)
-                : $this->consultar->delCliente($this->usuarioId(), $solicitudId ?? 0);
+                : $this->consultar->delCliente($this->usuarioId(), $solicitudId ?? 0, $request->validate(CompararOfertasRequest::reglas()));
         } catch (NegociacionInvalida $excepcion) {
             return RespuestaDeNegociacion::de($excepcion);
         }
@@ -208,6 +221,7 @@ final class OfertasController
                 properties: [
                     new OA\Property(property: 'precio_ha', type: 'string', example: '122'),
                     new OA\Property(property: 'nota', type: 'string', nullable: true),
+                    new OA\Property(property: 'justificacion_precio', description: 'Opcional, hasta 500 caracteres: por qué propones ese precio. Lo ve la contraparte.', type: 'string', nullable: true),
                     new OA\Property(property: 'uuid_cliente', type: 'string', format: 'uuid', nullable: true),
                 ],
                 type: 'object',
@@ -230,7 +244,7 @@ final class OfertasController
         $lado = $this->lado($request);
 
         try {
-            [$oferta, $creada] = $this->negociar->contraofertar($lado, $this->usuarioId(), $id, (string) $request->validated('precio_ha'), $request->validated('nota'), $request->validated('uuid_cliente'));
+            [$oferta, $creada] = $this->negociar->contraofertar($lado, $this->usuarioId(), $id, (string) $request->validated('precio_ha'), $request->validated('nota'), $request->validated('uuid_cliente'), $request->validated('justificacion_precio'));
         } catch (NegociacionInvalida $excepcion) {
             return RespuestaDeNegociacion::de($excepcion);
         }

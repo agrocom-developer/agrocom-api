@@ -80,6 +80,7 @@ final class MercadoDeSolicitudes
             'aporta_producto' => $solicitud->aportaProducto,
             'urgente' => $solicitud->urgente,
             'observaciones' => $solicitud->observaciones,
+            'justificacion_precio' => $solicitud->justificacionPrecio,
             'terreno' => $solicitud->terreno,
         ];
     }
@@ -208,6 +209,7 @@ final class MercadoDeSolicitudes
             'centro' => $s->centro,
             'hectareas_solicitadas' => $s->hectareasSolicitadas,
             'precio_ha_propuesto' => $s->precioHaPropuesto,
+            'monto_estimado' => $s->montoEstimado,
             'departamento_codigo' => $s->departamentoCodigo,
             'provincia_codigo' => $s->provinciaCodigo,
             'cultivo' => $s->cultivo,

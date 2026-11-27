@@ -36,6 +36,7 @@ return [
         'ventana_hasta' => 'fecha deseada hasta',
         'urgente' => 'urgencia',
         'observaciones' => 'observaciones',
+        'justificacion_precio' => 'justificación del precio',
         'motivo' => 'motivo',
         'contacto_id' => 'contacto de referencia',
         'contactos.0.nombre' => 'nombre del contacto 1',

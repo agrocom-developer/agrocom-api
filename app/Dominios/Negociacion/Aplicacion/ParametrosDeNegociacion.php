@@ -10,6 +10,11 @@ final class ParametrosDeNegociacion
         return max(1, (int) config('negociacion.vigencia_oferta_horas', 24));
     }
 
+    public function calificacionesMinimasParaContar(): int
+    {
+        return max(0, (int) config('negociacion.oleadas.calificaciones_minimas_para_contar', 3));
+    }
+
     public function maxOfertas(): int
     {
         return max(1, (int) config('negociacion.max_ofertas_por_negociacion', 5));

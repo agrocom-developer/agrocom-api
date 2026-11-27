@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Solicitudes\Aplicacion;
 
+use App\Dominios\Compartido\Dominio\TextoLibre;
 use App\Dominios\Solicitudes\Aplicacion\MaquinaEstados\MaquinaEstadosSolicitud;
 use App\Dominios\Solicitudes\Dominio\AportaProducto;
 use App\Dominios\Solicitudes\Dominio\Excepciones\SolicitudInvalida;
@@ -29,7 +30,7 @@ final class CrearSolicitud
     ) {}
 
     /**
-     * @param  array{uuid_cliente: string, terreno_id: int, contacto_id?: ?int, tipo_aplicacion: string, hectareas_solicitadas: string|int|float, cultivo?: ?string, producto_indicado: string, aporta_producto?: ?string, ventana_desde?: ?string, ventana_hasta?: ?string, urgente?: ?bool, observaciones?: ?string, precio_ha_propuesto?: string|int|float|null}  $datos
+     * @param  array{uuid_cliente: string, terreno_id: int, contacto_id?: ?int, tipo_aplicacion: string, hectareas_solicitadas: string|int|float, cultivo?: ?string, producto_indicado: string, aporta_producto?: ?string, ventana_desde?: ?string, ventana_hasta?: ?string, urgente?: ?bool, observaciones?: ?string, precio_ha_propuesto?: string|int|float|null, justificacion_precio?: ?string}  $datos
      * @return array{0: SolicitudServicio, 1: bool} la solicitud y si se creó ahora (`false` = reintento).
      *
      * @throws SolicitudInvalida
@@ -79,6 +80,12 @@ final class CrearSolicitud
             'observaciones' => $datos['observaciones'] ?? null,
             'precio_ha_propuesto' => $precio,
         ];
+
+        // Solo se escribe si el cliente la dio (ADR 0049).
+        $justificacion = TextoLibre::sanear($datos['justificacion_precio'] ?? null);
+        if ($justificacion !== null) {
+            $atributos['justificacion_precio'] = $justificacion;
+        }
 
         try {
             $solicitud = $this->estados->crear($atributos, $usuarioId);

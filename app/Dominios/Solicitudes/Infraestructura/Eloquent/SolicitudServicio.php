@@ -36,6 +36,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $monto_estimado
  * @property string|null $monto_final
  * @property string|null $precio_ha_propuesto
+ * @property string|null $justificacion_precio
  * @property string|null $precio_ha_acordado
  * @property int|null $oferta_adjudicada_id
  * @property string|null $hectareas_ejecutadas
@@ -87,6 +88,7 @@ class SolicitudServicio extends ModeloDominio
         'urgente',
         'observaciones',
         'precio_ha_propuesto',
+        'justificacion_precio',
     ];
 
     /** @return array<string, string> */

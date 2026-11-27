@@ -71,6 +71,9 @@ Referencia rápida de vocabulario, de negocio y técnico, para que cualquier per
 | **Disponibilidad** | Interruptor manual de cada cuenta de proveedor (`disponible`, `ocupado`, `en_trabajo`); un piloto de una empresa tiene el suyo y el encargado puede marcarlo; los dos últimos estados no reciben avisos | ADR 0045 |
 | **Oferta que no cumple** | Oferta de un equipo que no cumple un requisito del cliente (p. ej. la capacidad del dron); se marca y el cliente decide | ADR 0045 |
 | **Oferta** | Precio por hectárea que una parte propone en una negociación, con vencimiento; se acepta, se contraoferta o se rechaza | especificación §4.5, §5.3 |
+| **Total estimado** | Hectáreas por precio por hectárea (`monto_estimado`); lo calcula el servidor con decimal exacto y ninguna parte lo edita | ADR 0049 |
+| **Justificación del precio** | Texto opcional de hasta 500 caracteres con que una parte explica su precio (`justificacion_precio`); cada parte escribe el suyo y la contraparte lo ve | ADR 0049 |
+| **Comparador** | Lista que el servidor arma al cliente con las ofertas encontradas para su solicitud, ordenable (`orden`) y filtrable por precio, total, calificación, tipo de proveedor y capacidad del dron; no es un directorio de pilotos | ADR 0045, 0049 |
 | **Negociación** | Conjunto de ofertas entre el cliente y un proveedor sobre una solicitud; hay una sola oferta vigente y un máximo de ofertas; es asíncrona (cada quien responde cuando puede) y pasa por `en_cola`, `en_bandeja` y `en_conversacion` | ADR 0030, 0045 |
 | **Adjudicación** | Aceptar la oferta vigente de la contraparte: fija el precio acordado, el proveedor y el equipo y cierra las demás negociaciones | ADR 0030 |
 | **Precio por hectárea** | Precio que el cliente propone y que se negocia; se congela al adjudicar como precio acordado. No hay precio de referencia | ADR 0030, 0034, 0045 |

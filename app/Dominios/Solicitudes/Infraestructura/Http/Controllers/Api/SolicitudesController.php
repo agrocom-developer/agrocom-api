@@ -85,6 +85,7 @@ final class SolicitudesController
                     new OA\Property(property: 'urgente', type: 'boolean', nullable: true),
                     new OA\Property(property: 'observaciones', type: 'string', nullable: true),
                     new OA\Property(property: 'precio_ha_propuesto', type: 'string', nullable: true, example: '125'),
+                    new OA\Property(property: 'justificacion_precio', description: 'Opcional, hasta 500 caracteres: por qué propones ese precio. Lo ve el proveedor.', type: 'string', nullable: true),
                 ],
                 type: 'object',
             ),
@@ -305,7 +306,7 @@ final class SolicitudesController
         security: [['tokenDispositivo' => []]],
         requestBody: new OA\RequestBody(
             required: true,
-            content: new OA\JsonContent(required: ['precio_ha_propuesto'], properties: [new OA\Property(property: 'precio_ha_propuesto', type: 'string', example: '130')], type: 'object'),
+            content: new OA\JsonContent(required: ['precio_ha_propuesto'], properties: [new OA\Property(property: 'precio_ha_propuesto', type: 'string', example: '130'), new OA\Property(property: 'justificacion_precio', description: 'Opcional, hasta 500 caracteres. Si se envía (incluso nulo) reemplaza la anterior; si se omite, se conserva.', type: 'string', nullable: true)], type: 'object'),
         ),
         tags: ['Solicitudes'],
         parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
@@ -322,7 +323,7 @@ final class SolicitudesController
         $this->exigirPermiso($request);
 
         try {
-            $solicitud = $this->cambiarPrecio->ejecutar($this->usuarioId(), $id, (string) $request->validated('precio_ha_propuesto'));
+            $solicitud = $this->cambiarPrecio->ejecutar($this->usuarioId(), $id, (string) $request->validated('precio_ha_propuesto'), $request->validated('justificacion_precio'), $request->has('justificacion_precio'));
         } catch (SolicitudInvalida $excepcion) {
             return RechazoDeDominio::respuesta($excepcion);
         }
