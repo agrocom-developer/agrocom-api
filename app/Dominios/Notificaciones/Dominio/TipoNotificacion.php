@@ -34,9 +34,9 @@ enum TipoNotificacion: string
     case SolicitudCompletada = 'solicitud_completada';
     case CalificacionRegistrada = 'calificacion_registrada';
     case CalificacionReportada = 'calificacion_reportada';
-    case DisputaAbierta = 'disputa_abierta';
-    case DisputaResuelta = 'disputa_resuelta';
-    case DisputaApelada = 'disputa_apelada';
+    case ReclamoAbierto = 'reclamo_abierto';
+    case ReclamoResuelto = 'reclamo_resuelto';
+    case ReclamoApelado = 'reclamo_apelado';
     case ClienteConAviso = 'cliente_con_aviso';
     case PublicacionLimitada = 'publicacion_limitada';
     case EquipoEnCamino = 'equipo_en_camino';
@@ -72,9 +72,9 @@ enum TipoNotificacion: string
             self::SolicitudCompletada => 'task_alt',
             self::CalificacionRegistrada => 'star',
             self::CalificacionReportada => 'flag',
-            self::DisputaAbierta => 'report',
-            self::DisputaResuelta => 'balance',
-            self::DisputaApelada => 'undo',
+            self::ReclamoAbierto => 'report',
+            self::ReclamoResuelto => 'balance',
+            self::ReclamoApelado => 'undo',
             self::ClienteConAviso, self::PublicacionLimitada => 'person_alert',
             self::EquipoEnCamino => 'local_shipping',
             self::SolicitudEjecutada => 'fact_check',

@@ -6,7 +6,7 @@ use App\Dominios\Solicitudes\Contratos\DatosServicio;
 use App\Dominios\Solicitudes\Contratos\LecturaServicios;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\SolicitudServicio;
 
-/** Lectura de solicitudes para calificaciones, disputas y métricas (ver {@see LecturaServicios}). */
+/** Lectura de solicitudes para calificaciones, reclamos y métricas (ver {@see LecturaServicios}). */
 final class LecturaServiciosEloquent implements LecturaServicios
 {
     public function datos(int $solicitudId): ?DatosServicio

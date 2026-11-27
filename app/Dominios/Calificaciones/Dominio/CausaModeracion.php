@@ -5,7 +5,7 @@ namespace App\Dominios\Calificaciones\Dominio;
 /**
  * Por qué un administrador oculta una calificación (política de calificación,
  * «Moderación»): insultos o datos personales, un factor ajeno al proveedor (clima
- * o demora del cliente), una represalia tras una disputa o una cuenta sin servicio
+ * o demora del cliente), una represalia tras un reclamo o una cuenta sin servicio
  * real.
  */
 enum CausaModeracion: string

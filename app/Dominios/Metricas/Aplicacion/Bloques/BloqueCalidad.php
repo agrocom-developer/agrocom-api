@@ -8,7 +8,7 @@ use App\Dominios\Metricas\Dominio\Razones;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 
-/** Bloque «calidad»: calificación, disputas y reembolsos. */
+/** Bloque «calidad»: calificación, reclamos y reembolsos. */
 final class BloqueCalidad
 {
     public function __construct(private readonly LecturaMetricasCalidad $lectura) {}
@@ -18,8 +18,8 @@ final class BloqueCalidad
     {
         $ejecutados = $this->lectura->serviciosEjecutados($periodo);
         $calificaciones = $this->lectura->calificaciones($periodo);
-        $disputas = $this->lectura->disputasPorEstado($periodo);
-        $abiertas = array_sum($disputas);
+        $reclamos = $this->lectura->reclamosPorEstado($periodo);
+        $abiertas = array_sum($reclamos);
         $reembolsado = $this->lectura->reembolsos($periodo);
 
         return [
@@ -27,9 +27,9 @@ final class BloqueCalidad
             'calificaciones_conteo' => $calificaciones['conteo'],
             'calificaciones_reportadas' => $this->lectura->calificacionesReportadas(),
             'servicios_ejecutados' => $ejecutados,
-            'disputas_abiertas' => $abiertas,
-            'disputas_por_estado' => $disputas,
-            'tasa_disputas' => Razones::tasa($abiertas, $ejecutados),
+            'reclamos_abiertos' => $abiertas,
+            'reclamos_por_estado' => $reclamos,
+            'tasa_reclamos' => Razones::tasa($abiertas, $ejecutados),
             'monto_reembolsado' => $reembolsado['monto'],
             'tasa_reembolso' => Razones::tasaDeImportes($reembolsado['monto'], $this->lectura->montoDeServiciosEjecutados($periodo)),
         ];

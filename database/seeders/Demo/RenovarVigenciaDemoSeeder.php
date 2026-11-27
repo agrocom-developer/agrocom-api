@@ -14,7 +14,7 @@ use Illuminate\Support\Carbon;
  * así que no hay nada que renovar en ella. Todo es relativo a `now()`, así que correr `bin/demo seed` días
  * después deja el mismo recorrido que el primer día.
  *
- * Lo ya terminado (finalizado, calificado, cancelado, disputado) no se toca.
+ * Lo ya terminado (finalizado, calificado, cancelado, en reclamo) no se toca.
  */
 class RenovarVigenciaDemoSeeder extends Seeder
 {

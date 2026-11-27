@@ -4,7 +4,7 @@ namespace App\Dominios\Solicitudes\Contratos;
 
 /**
  * Foto de una solicitud para los módulos que actúan después de la ejecución
- * (calificaciones, disputas, métricas): quién la pidió, quién la prestó, cuánto
+ * (calificaciones, reclamos, métricas): quién la pidió, quién la prestó, cuánto
  * vale y en qué momento se ejecutó y se completó. Primitivos puros: ningún
  * módulo importa `SolicitudServicio` (ADR 0003). Importes en decimal exacto.
  */

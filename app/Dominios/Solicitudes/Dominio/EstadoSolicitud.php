@@ -18,9 +18,9 @@ enum EstadoSolicitud: string
     case Finalizada = 'finalizada';
     case Calificada = 'calificada';
     case Cancelada = 'cancelada';
-    case Disputada = 'disputada';
+    case EnReclamo = 'en_reclamo';
 
-    /** Sin más pasos posibles (salvo la disputa, que sale de `finalizada` y `calificada`). */
+    /** Sin más pasos posibles (salvo el reclamo, que sale de `finalizada` y `calificada`). */
     public function esTerminal(): bool
     {
         return in_array($this, [self::Calificada, self::Cancelada], true);
@@ -60,7 +60,7 @@ enum EstadoSolicitud: string
         return match ($this) {
             self::Borrador => 'neutral',
             self::Abierta, self::ConOfertas => 'info',
-            self::Disputada => 'warning',
+            self::EnReclamo => 'warning',
             self::Adjudicada, self::EnEjecucion, self::Finalizada => 'primary-2',
             self::Calificada => 'success',
             self::Cancelada => 'danger',

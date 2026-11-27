@@ -42,7 +42,7 @@ El género y el número siguen al sustantivo del contexto, no al del estado en e
 | Pedido del cliente | solicitud | pedido, orden, trabajo |
 | Propuesta de precio | oferta (contraoferta) | cotización, propuesta |
 | Quien presta el servicio | proveedor; piloto; dron | operador, prestador, vehículo |
-| Queja sobre un servicio | reclamo | disputa, caso |
+| Queja sobre un servicio | reclamo | caso |
 | Valoración | calificación | puntuación, reseña |
 | Quien pide el servicio | cliente | usuario, comprador |
 | Decidir un alta | aprobar / rechazar / suspender / rehabilitar | validar, habilitar, bloquear |

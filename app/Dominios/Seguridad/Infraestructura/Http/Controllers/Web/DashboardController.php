@@ -35,7 +35,7 @@ final class DashboardController
         'fotos_de_dron' => ['panel.drones-flota.index', 'flota.dron.ver'],
         'documentos' => ['panel.documentos.index', 'proveedores.documento.ver'],
         'calificaciones' => ['panel.calificaciones.index', 'calificaciones.calificacion.ver'],
-        'disputas' => ['panel.disputas.index', 'disputas.disputa.ver'],
+        'reclamos' => ['panel.reclamos.index', 'reclamos.reclamo.ver'],
     ];
 
     public function index(

@@ -59,7 +59,7 @@ Los documentos se van actualizando versión a versión.
 | Cancelaciones | `cancelacion.md` |
 | Calificaciones y moderación | `calificacion.md` |
 | Conducta, fotos, mensajes | `seguimiento_y_privacidad.md`, `negociacion.md` |
-| Reclamos: plazos, proceso, resultados, apelación, seguro | `disputas.md` |
+| Reclamos: plazos, proceso, resultados, apelación, seguro | `reclamos.md` |
 | Suspensión, baja, apelación, alertas sin restricción automática | `verificacion_proveedores.md`, `calificacion.md`, `cancelacion.md`, ADR 0046 §4 punto 12 |
 | Datos que se recogen | ADR 0042, ADR 0043, ADR 0046, `seguimiento_y_privacidad.md`, `verificacion_proveedores.md` |
 | Quién ve qué y cuándo | `seguimiento_y_privacidad.md` (tabla «Quién ve qué»), ADR 0040 punto 6, ADR 0042 punto 4, ADR 0046 §4 |
@@ -76,7 +76,7 @@ Los documentos se van actualizando versión a versión.
 | Contraseñas y códigos con hash, token revocable de 30 días, límites de intentos, HTTPS | `docs/seguridad/autenticacion.md` |
 | Proveedores de infraestructura (correo SMTP, WhatsApp Business y SMS, almacenamiento S3, mapas) | `docs/seguridad/autenticacion.md`, ADR 0009, `tiendas-y-privacidad.md` (1.3, 1.12) |
 | Derechos del usuario y canal de contacto | `tiendas-y-privacidad.md` (2.3, T15) y la decisión del dueño del 27/11/2026 |
-| Responsabilidades entre las partes | `seguridad.md`, `disputas.md`, `tiendas-y-privacidad.md` (1.4 y 1.9) |
+| Responsabilidades entre las partes | `seguridad.md`, `reclamos.md`, `tiendas-y-privacidad.md` (1.4 y 1.9) |
 
 Los textos de responsabilidad, derechos y plazos de respuesta (30 días) salen de la decisión del dueño del 27/11/2026 y de los requisitos de las tiendas descritos en `tiendas-y-privacidad.md`; los ajustes de código que esos textos suponen están en la tabla «términos → ajuste de código» de ese documento.
 

@@ -159,13 +159,13 @@ test('cada tipo de aviso tiene su texto en lang/es/notificaciones.php y usa solo
         'solicitud_reasignada' => ['solicitud'],
         'solicitud_sin_proveedor' => ['solicitud'],
         'proveedor_sancionado' => ['proveedor', 'sancion', 'causa'],
-        // Calificaciones, disputas y cierre del servicio (ADR 0031, 0033 y 0039).
+        // Calificaciones, reclamos y cierre del servicio (ADR 0031, 0033 y 0039).
         'solicitud_completada' => ['solicitud'],
         'calificacion_registrada' => ['solicitud', 'estrellas'],
         'calificacion_reportada' => ['solicitud', 'proveedor'],
-        'disputa_abierta' => ['solicitud', 'motivo'],
-        'disputa_resuelta' => ['solicitud', 'resultado', 'monto'],
-        'disputa_apelada' => ['solicitud'],
+        'reclamo_abierto' => ['solicitud', 'motivo'],
+        'reclamo_resuelto' => ['solicitud', 'resultado', 'monto'],
+        'reclamo_apelado' => ['solicitud'],
         'cliente_con_aviso' => ['promedio'],
         'publicacion_limitada' => ['cliente', 'promedio'],
         'equipo_en_camino' => ['solicitud'],
@@ -204,9 +204,10 @@ test('cada rol al que una regla puede dirigirse existe en el catálogo de roles 
 });
 
 test('cada recurso de un aviso tiene su valor permitido por el CHECK de la migración', function () use ($raizProyecto) {
-    // El `create` consolidado más las migraciones que ampliaron los catálogos cerrados.
+    // El `create` consolidado, las migraciones que ampliaron los catálogos cerrados y la que renombró los valores del reclamo.
     $migracion = '';
-    foreach (glob($raizProyecto.'/database/migrations/*ntf_notificaciones*.php') ?: [] as $archivo) {
+    $archivos = [...(glob($raizProyecto.'/database/migrations/*ntf_notificaciones*.php') ?: []), ...(glob($raizProyecto.'/database/migrations/*renombra_el_modulo_de_reclamos.php') ?: [])];
+    foreach ($archivos as $archivo) {
         $migracion .= (string) file_get_contents($archivo);
     }
 

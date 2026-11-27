@@ -36,7 +36,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'hectareas_ejecutadas', type: 'string', nullable: true, example: '78.5000'),
         new OA\Property(property: 'porcentaje_avance', type: 'string', example: '65.00'),
         new OA\Property(property: 'monto_final', description: 'Se congela al finalizar: hectáreas ejecutadas por el precio acordado.', type: 'string', nullable: true),
-        new OA\Property(property: 'estado', type: 'string', enum: ['borrador', 'abierta', 'con_ofertas', 'adjudicada', 'en_ejecucion', 'finalizada', 'calificada', 'cancelada', 'disputada']),
+        new OA\Property(property: 'estado', type: 'string', enum: ['borrador', 'abierta', 'con_ofertas', 'adjudicada', 'en_ejecucion', 'finalizada', 'calificada', 'cancelada', 'en_reclamo']),
         new OA\Property(property: 'oferta_adjudicada_id', type: 'integer', nullable: true),
         new OA\Property(property: 'proveedor_id', type: 'integer', nullable: true),
         new OA\Property(property: 'publicada_en', type: 'string', format: 'date-time', nullable: true),

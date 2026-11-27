@@ -29,7 +29,7 @@ return [
         'negociacion.mensaje.usar',
         'negociacion.preferencias.gestionar',
         'calificaciones.calificacion.calificar_proveedor',
-        'disputas.disputa.gestionar_cliente',
+        'reclamos.reclamo.gestionar_cliente',
     ],
 
     'proveedor' => [
@@ -47,7 +47,7 @@ return [
         'calificaciones.calificacion.calificar_cliente',
         'calificaciones.calificacion.ver_recibidas',
         'calificaciones.calificacion.reportar',
-        'disputas.disputa.gestionar_proveedor',
+        'reclamos.reclamo.gestionar_proveedor',
     ],
 
     // Piloto con cuenta propia de un tercero: lo que hace desde `agrocom-field`.
@@ -66,6 +66,6 @@ return [
         'calificaciones.calificacion.calificar_cliente',
         'calificaciones.calificacion.ver_recibidas',
         'calificaciones.calificacion.reportar',
-        'disputas.disputa.gestionar_proveedor',
+        'reclamos.reclamo.gestionar_proveedor',
     ],
 ];
