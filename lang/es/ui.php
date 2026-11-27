@@ -160,6 +160,16 @@ return [
     // índice numérico de fila y el link de "Limpiar" de molecules/table-search
     // son idénticos en cualquier pantalla, no hace falta redefinirlos en cada
     // lang/es/<dominio>.php.
+    // Gráficas del panel (molecules/grafico).
+    'grafico' => [
+        'cargando' => 'Cargando la gráfica…',
+        'error' => 'No se pudo dibujar la gráfica. Abre «Ver datos» para ver las cifras en una tabla.',
+        'vacio' => 'Todavía no hay datos para graficar.',
+        'ver_datos' => 'Ver datos en una tabla',
+        'sin_dato' => 'sin datos',
+        'alternativa' => 'Gráfica sin soporte en este navegador; las cifras están en la tabla «Ver datos».',
+    ],
+
     'tabla' => [
         'col_indice' => '#',
         'col_acciones' => 'Acciones',
