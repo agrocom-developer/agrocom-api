@@ -39,6 +39,11 @@ final class RegistroInvalido extends RuntimeException
         return new self(Texto::de('proveedores.errores.documento_ya_revisado'));
     }
 
+    public static function documentoVigenteDeSujetoAprobado(): self
+    {
+        return new self(Texto::de('proveedores.errores.documento_vigente_de_sujeto_aprobado'));
+    }
+
     public static function documentoVencido(): self
     {
         return new self(Texto::de('proveedores.errores.documento_vencido'));

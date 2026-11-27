@@ -14,7 +14,8 @@
     «Limpiar filtros» lleva a `?estado=` (todos), no a la URL a secas.
 
     Gateada por `proveedores.documento.ver`, verificado server-side en el
-    controlador; aprobar y rechazar exigen `proveedores.documento.revisar`.
+    controlador; aprobar y rechazar exigen `proveedores.documento.revisar`; eliminar (última acción
+    de la fila, borrado lógico con motivo) exige `proveedores.documento.eliminar`.
     Estilos en resources/css/pages/proveedores.css — cero color hardcodeado
     (CLAUDE.md invariante 11).
 --}}
@@ -156,7 +157,36 @@
                                             data-medio-clave="d{{ $documento->id }}"
                                         />
                                     </x-slot:ver>
+                                    @if ($puedeEliminar)
+                                        <x-slot:eliminar>
+                                            <x-molecules.row-action kind="eliminar" :modal="'documento-eliminar-modal-'.$documento->id" icon="delete" :label="__('proveedores.documentos.eliminar.accion')" />
+                                        </x-slot:eliminar>
+                                    @endif
                                 </x-organisms.row-actions>
+                                @if ($puedeEliminar)
+                                    <form id="documento-eliminar-form-{{ $documento->id }}" method="POST" action="{{ route('panel.documentos.destroy', $documento) }}" hidden>
+                                        @csrf
+                                        @method('DELETE')
+                                    </form>
+                                    <x-molecules.confirm-modal
+                                        :id="'documento-eliminar-modal-'.$documento->id"
+                                        :form-id="'documento-eliminar-form-'.$documento->id"
+                                        :title="__('proveedores.documentos.eliminar.titulo', ['documento' => __('proveedores.documentos.tipo.'.$documento->tipo->value)])"
+                                        :message="__('proveedores.documentos.eliminar.mensaje')"
+                                        :confirm-label="__('proveedores.documentos.eliminar.accion')"
+                                        tone="danger"
+                                    >
+                                        <x-atoms.textarea
+                                            name="motivo"
+                                            :id="'documento-eliminar-motivo-'.$documento->id"
+                                            :form="'documento-eliminar-form-'.$documento->id"
+                                            :label="__('proveedores.aprobacion.motivo_etiqueta')"
+                                            :help="__('proveedores.documentos.eliminar.motivo_ayuda')"
+                                            :rows="3"
+                                            required
+                                        />
+                                    </x-molecules.confirm-modal>
+                                @endif
                             </span>
                         </div>
                     @endforeach

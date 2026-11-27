@@ -420,6 +420,10 @@ Route::middleware('auth:interno')->group(function () {
             ->middleware('throttle:30,1')
             ->name('panel.documentos.descargar');
 
+        Route::delete('/panel/documentos/{documento}', [DocumentosPanelController::class, 'destroy'])
+            ->whereNumber('documento')
+            ->name('panel.documentos.destroy');
+
         Route::post('/panel/documentos/{documento}/revisar', [DocumentosPanelController::class, 'revisar'])
             ->whereNumber('documento')
             ->name('panel.documentos.revisar');
