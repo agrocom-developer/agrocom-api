@@ -42,7 +42,7 @@ final class LecturaMetricasCalidadVistas implements LecturaMetricasCalidad
     public function reclamosPorEstado(PeriodoDeMetricas $periodo): array
     {
         return DB::table('vw_metricas_reclamos')
-            ->whereBetween('abierta_en', VentanaSql::de($periodo))
+            ->whereBetween('abierto_en',VentanaSql::de($periodo))
             ->selectRaw('estado, COUNT(*) as cantidad')
             ->groupBy('estado')
             ->pluck('cantidad', 'estado')
