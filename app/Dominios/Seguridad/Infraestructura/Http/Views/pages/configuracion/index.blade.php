@@ -36,6 +36,12 @@
                 :subtitle="__('configuracion.subtitulo')"
             />
 
+            @if (session('correo_prueba'))
+                <x-molecules.alert-strip :variant="session('correo_prueba')['ok'] ? 'success' : 'danger'" :icon="session('correo_prueba')['ok'] ? 'mark_email_read' : 'error'" role="status">
+                    {{ session('correo_prueba')['mensaje'] }}
+                </x-molecules.alert-strip>
+            @endif
+
             @if (session('estado'))
                 <x-molecules.alert-strip variant="success" icon="check_circle">
                     {{ session('estado') }}
@@ -52,7 +58,9 @@
                     @php $filas = $filasPorGrupo[$grupo['clave']]; @endphp
 
                     <div class="tab-pane fade {{ $grupo['active'] ? 'show active' : '' }}" id="ag-tab-{{ $grupo['clave'] }}" role="tabpanel" tabindex="0">
-                        @if (count($filas) === 0)
+                        @if ($grupo['clave'] === 'correo')
+                            @include('seguridad::pages.configuracion._correo', ['filas' => $filas])
+                        @elseif (count($filas) === 0)
                             <p class="ag-configuracion__vacio">{{ __('configuracion.vacio_integraciones') }}</p>
                         @else
                             <form

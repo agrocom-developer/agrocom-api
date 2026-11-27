@@ -256,6 +256,11 @@ Route::middleware('auth:interno')->group(function () {
         Route::get('/panel/configuracion', [ConfiguracionController::class, 'index'])
             ->name('panel.configuracion.index');
 
+        // Correo de prueba (solo con permiso de editar; 5 por minuto por cuenta).
+        Route::post('/panel/configuracion/correo/prueba', [ConfiguracionController::class, 'probarCorreo'])
+            ->middleware('throttle:5,1')
+            ->name('panel.configuracion.correo.prueba');
+
         Route::post('/panel/configuracion/{grupo}', [ConfiguracionController::class, 'actualizar'])
             ->where('grupo', 'mapas|correo|integraciones')
             ->name('panel.configuracion.actualizar');
