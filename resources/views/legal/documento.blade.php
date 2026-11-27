@@ -24,7 +24,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ config('app.name', 'Agrocom') }} — {{ __("legal.{$documento}.titulo_pestana") }}</title>
+    <title>{{ config('app.name', 'DronAgro') }} — {{ __("legal.{$documento}.titulo_pestana") }}</title>
 
     <x-atoms.tema-inicial />
 

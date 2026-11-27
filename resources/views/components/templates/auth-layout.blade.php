@@ -7,8 +7,8 @@
     con foto real en vez de la tarjeta centrada sobre fondo liso — es
     explícitamente lo que HU-02 pidió para dejar de verse "plano".
     Refinamiento editorial (tercera vuelta, rediseño visual a partir de
-    mockup de referencia aprobado): wordmark arriba en dos tonos (AGRO
-    blanco + COM ámbar) con chip verde a la derecha, headline grande en
+    mockup de referencia aprobado): wordmark arriba en dos tonos (Dron
+    blanco + Agro ámbar) con chip verde a la derecha, headline grande en
     serif abajo, ambos montados sobre la foto con un scrim degradado para
     legibilidad y una regla de gradiente que marca la transición visual. Sin
     blobs/gradientes decorativos de color: la profundidad la da la foto, el
@@ -41,10 +41,10 @@
     El wordmark NO usa el átomo `logo` (aunque `public/logo.png` ya es
     transparente — la limitación de fondo horneado que forzaba esto antes
     está resuelta, ver logo.css): sobre la foto el mockup pide el tratamiento
-    tipográfico bicromía "AGRO"/"COM" en `--ag-font-family-display`, no el
+    tipográfico bicromía "Dron"/"Agro" en `--ag-font-family-display`, no el
     isotipo cuadrado del logo — es una decisión de diseño, no una limitación
     técnica. Se resuelve como texto tipográfico con `--ag-font-family-display`,
-    partiendo "AGRO" (blanco) de "COM" (ámbar) para marcar el branding de
+    partiendo "Dron" (blanco) de "Agro" (ámbar) para marcar el branding de
     marca. El color del wordmark, el scrim y el headline son tokens CONSTANTES
     entre temas (`--ag-color-text-on-scrim`, `--ag-color-scrim*`,
     `--ag-color-wordmark-accent`, `--ag-color-chip-icon`) — la foto no
@@ -118,11 +118,11 @@
         {{-- Wordmark/chip: fijos, no cambian por slide. --}}
         <div class="ag-auth-layout__top">
             <div class="ag-auth-layout__wordmark">
-                <span class="ag-auth-layout__wordmark-agro">AGRO</span><span class="ag-auth-layout__wordmark-com">COM</span>
+                <span class="ag-auth-layout__wordmark-dron">Dron</span><span class="ag-auth-layout__wordmark-agro">Agro</span>
             </div>
 
             <div class="ag-auth-layout__chip">
-                <x-atoms.icon name="flight_takeoff" size="sm" />
+                <x-atoms.icon name="handshake" size="sm" />
                 <span class="ag-auth-layout__chip-text">{{ __('seguridad.auth.tagline') }}</span>
             </div>
         </div>
