@@ -103,7 +103,7 @@ final class DocumentosController
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
             new OA\Response(response: 403, description: 'El rol del token no carga documentos.'),
             new OA\Response(response: 404, description: 'El sujeto no existe o no es de esta cuenta.'),
-            new OA\Response(response: 422, description: 'Archivo o datos inválidos.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
+            new OA\Response(response: 422, description: 'Archivo o datos inválidos, o el sujeto ya tiene el máximo de documentos en revisión (`GET /api/medios/limites`).', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],
     )]
     public function store(CargarDocumentoDeSujetoRequest $request): JsonResponse

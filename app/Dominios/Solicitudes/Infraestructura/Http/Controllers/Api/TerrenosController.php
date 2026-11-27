@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api;
 
+use App\Dominios\Compartido\Dominio\VarianteDeMedio;
 use App\Dominios\Compartido\Infraestructura\Http\RechazoDeDominio;
 use App\Dominios\Seguridad\Contratos\IdentidadOperarioToken;
 use App\Dominios\Solicitudes\Aplicacion\GestionarFotosDeTerreno;
@@ -199,7 +200,7 @@ final class TerrenosController
             return RechazoDeDominio::respuesta($excepcion);
         }
 
-        return response()->json(['foto' => ['id' => $foto->id, 'descripcion' => $foto->descripcion, 'url' => GestionarFotosDeTerreno::url($foto->id)]], 201);
+        return response()->json(['foto' => ['id' => $foto->id, 'descripcion' => $foto->descripcion, ...GestionarFotosDeTerreno::urls($foto->id)]], 201);
     }
 
     #[OA\Delete(
@@ -242,6 +243,7 @@ final class TerrenosController
         tags: ['Terrenos'],
         parameters: [
             new OA\Parameter(name: 'foto', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'variante', in: 'query', required: false, description: 'Tamaño: `miniatura` o `media` (derivados reducidos) u `original` (por omisión). Va dentro de la firma: usa la URL tal como la entrega el servidor. Si el derivado aún no se generó, se entrega el original.', schema: new OA\Schema(type: 'string', enum: ['miniatura', 'media', 'original'])),
             new OA\Parameter(name: 'expires', in: 'query', required: true, schema: new OA\Schema(type: 'integer')),
             new OA\Parameter(name: 'signature', in: 'query', required: true, schema: new OA\Schema(type: 'string')),
         ],
@@ -251,9 +253,9 @@ final class TerrenosController
             new OA\Response(response: 404, description: 'La foto ya no existe.'),
         ],
     )]
-    public function archivoDeFoto(int $foto): BinaryFileResponse|JsonResponse
+    public function archivoDeFoto(Request $request, int $foto): BinaryFileResponse|JsonResponse
     {
-        $ruta = $this->fotos->ruta($foto);
+        $ruta = $this->fotos->ruta($foto, VarianteDeMedio::desde($request->query('variante')));
 
         return $ruta === null
             ? response()->json(['message' => __('solicitudes.errores.foto_de_terreno_ajena')], 404)

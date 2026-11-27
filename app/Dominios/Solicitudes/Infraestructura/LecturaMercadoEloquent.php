@@ -85,7 +85,7 @@ final class LecturaMercadoEloquent implements LecturaMercado
                 'fotos' => $terreno->fotos->map(fn (TerrenoFoto $foto): array => [
                     'id' => $foto->id,
                     'descripcion' => $foto->descripcion,
-                    'url' => GestionarFotosDeTerreno::url($foto->id),
+                    ...GestionarFotosDeTerreno::urls($foto->id),
                 ])->all(),
             ] : null,
         );

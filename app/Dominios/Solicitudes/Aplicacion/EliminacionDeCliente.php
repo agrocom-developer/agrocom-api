@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Solicitudes\Aplicacion;
 
+use App\Dominios\Compartido\Aplicacion\Medios\AlmacenDeMedios;
 use App\Dominios\Seguridad\Contratos\ParticipanteDeEliminacion;
 use App\Dominios\Solicitudes\Dominio\EstadoSolicitud;
 use App\Dominios\Solicitudes\Dominio\Excepciones\SolicitudInvalida;
@@ -9,7 +10,6 @@ use App\Dominios\Solicitudes\Dominio\Excepciones\TransicionSolicitudNoPermitida;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\Cliente;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\SolicitudServicio;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * Lo que Solicitudes aporta a la eliminación de una cuenta de cliente (ADR 0047, puntos 3, 4 y 6): un servicio adjudicado o en
@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Storage;
  */
 final class EliminacionDeCliente implements ParticipanteDeEliminacion
 {
-    public function __construct(private readonly CancelarSolicitud $cancelar) {}
+    public function __construct(private readonly CancelarSolicitud $cancelar, private readonly AlmacenDeMedios $almacen) {}
 
     public function impedimentos(int $usuarioId): array
     {
@@ -64,7 +64,7 @@ final class EliminacionDeCliente implements ParticipanteDeEliminacion
         DB::table('sol_cliente_contactos')->whereIn('id', $contactos)->delete();
 
         foreach (DB::table('sol_terreno_fotos')->whereIn('terreno_id', $terrenos)->get(['id', 'archivo']) as $foto) {
-            Storage::disk('local')->delete($foto->archivo);
+            $this->almacen->borrar($foto->archivo);
             DB::table('sol_terreno_fotos')->where('id', $foto->id)->delete();
         }
 

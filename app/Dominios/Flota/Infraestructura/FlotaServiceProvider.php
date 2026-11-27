@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Flota\Infraestructura;
 
+use App\Dominios\Flota\Aplicacion\EliminacionDeFlota;
 use App\Dominios\Flota\Aplicacion\IncrementarCiclosBateriaDron;
 use App\Dominios\Flota\Aplicacion\ReaccionarADocumentosDeDron;
 use App\Dominios\Flota\Contratos\LecturaDrones;
@@ -32,6 +33,9 @@ final class FlotaServiceProvider extends ServiceProvider
         $this->app->bind(LecturaDrones::class, LecturaDronesEloquent::class);
         $this->app->bind(LecturaEquipos::class, LecturaEquiposEloquent::class);
         $this->app->bind(LecturaIntegrantesDeEquipo::class, LecturaIntegrantesDeEquipoEloquent::class);
+
+        // Eliminación de cuenta (ADR 0047): las fotos de los drones del proveedor se borran con sus derivados.
+        $this->app->tag(EliminacionDeFlota::class, 'eliminacion.participantes');
 
         // Buscador global (`busqueda.proveedores`): el agregador de Seguridad
         // no conoce estas clases, las recibe por tag.

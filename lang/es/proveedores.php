@@ -55,6 +55,7 @@ return [
         'documento_ya_revisado' => 'Este documento ya fue revisado.',
         'documento_vencido' => 'El documento ya está vencido: sube uno vigente.',
         'archivo_no_disponible' => 'No se pudo guardar o encontrar el archivo del documento.',
+        'limite_de_documentos' => 'Ya hay :maximo documentos esperando revisión. Espera a que se revisen para subir otro.',
         'documento_fiscal_duplicado' => 'El documento fiscal :documento ya pertenece a otro proveedor.',
     ],
 

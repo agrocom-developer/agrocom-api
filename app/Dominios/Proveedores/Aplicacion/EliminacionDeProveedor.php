@@ -2,12 +2,12 @@
 
 namespace App\Dominios\Proveedores\Aplicacion;
 
+use App\Dominios\Compartido\Aplicacion\Medios\AlmacenDeMedios;
 use App\Dominios\Proveedores\Dominio\TipoSujeto;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Piloto;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Proveedor;
 use App\Dominios\Seguridad\Contratos\ParticipanteDeEliminacion;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * Lo que Proveedores aporta a la eliminación de una cuenta de proveedor o piloto (ADR 0047, puntos 3 y 6): los pilotos
@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Storage;
  */
 final class EliminacionDeProveedor implements ParticipanteDeEliminacion
 {
+    public function __construct(private readonly AlmacenDeMedios $almacen) {}
+
     public function impedimentos(int $usuarioId): array
     {
         $vinculados = Piloto::query()
@@ -35,10 +37,9 @@ final class EliminacionDeProveedor implements ParticipanteDeEliminacion
         $proveedores = $this->proveedores($usuarioId);
         $pilotos = Piloto::query()->where('usuario_id', $usuarioId)->pluck('id')->map(static fn ($id): int => (int) $id)->all();
         $disco = (string) config('proveedores.disco_documentos', 'local');
-
         foreach ([[TipoSujeto::Proveedor->value, $proveedores], [TipoSujeto::Piloto->value, $pilotos]] as [$tipo, $ids]) {
             foreach (DB::table('prv_documentos')->where('sujeto_tipo', $tipo)->whereIn('sujeto_id', $ids)->get(['id', 'archivo_ref']) as $documento) {
-                Storage::disk($disco)->delete($documento->archivo_ref);
+                $this->almacen->borrar($documento->archivo_ref, $disco);
                 DB::table('prv_documentos')->where('id', $documento->id)->delete();
             }
         }

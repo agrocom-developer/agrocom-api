@@ -2,6 +2,7 @@
 
 use App\Dominios\Calificaciones\Infraestructura\Http\Controllers\Api\CalificacionesDelClienteController;
 use App\Dominios\Calificaciones\Infraestructura\Http\Controllers\Api\CalificacionesDelProveedorController;
+use App\Dominios\Compartido\Infraestructura\Http\Controllers\Api\LimitesDeMediosController;
 use App\Dominios\Disputas\Infraestructura\Http\Controllers\Api\DisputasController;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Api\DronesController;
 use App\Dominios\Flota\Infraestructura\Http\Controllers\Api\EquiposController;
@@ -107,6 +108,9 @@ Route::get('/personas/{usuario}/foto', [FotoDePerfilController::class, 'archivo'
 // Una cuenta con la eliminación pedida solo ve su estado, la cancela y cierra sesión (`cuenta.sin-eliminacion`, ADR 0047).
 Route::middleware(['auth:sanctum', 'cuenta.sin-eliminacion'])->group(function () {
     Route::get('/auth/sesion', [SesionCampoController::class, 'show'])->name('api.auth.sesion');
+
+    // Cuántos archivos multimedia admite cada entidad (config/medios.php): las apps avisan antes de subir.
+    Route::get('/medios/limites', [LimitesDeMediosController::class, 'index'])->name('api.medios.limites');
 
     // Renueva el token de ESTE dispositivo antes de que caduque (sesión por biometría: el desbloqueo es local, ADR 0046, punto 32).
     Route::post('/auth/renovar', [SesionCampoController::class, 'renovar'])->middleware('throttle:10,1')->name('api.auth.renovar');
