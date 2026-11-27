@@ -2,34 +2,17 @@
 
 namespace App\Dominios\Seguridad\Infraestructura\Http\Requests;
 
-use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * `PUT /panel/usuarios/{usuario}` (HU-45, tarea 39; tarea 65 le agrega el
- * camino portal). Mismas reglas que `CrearUsuarioRequest`, salvo `password`
- * (vacío = conserva el hash vigente) y el `unique` de `username`, que
- * ignora la propia cuenta.
- *
- * `type` NO se acepta en la edición a propósito (CLAUDE.md, tarea 65: "una
- * cuenta no muta de interna a cliente ni al revés — es otra cuenta"):
- * `prepareForValidation()` PISA cualquier `type` que venga en el payload con
- * el del usuario ya persistido (route binding) — un `PUT` armado a mano con
- * otro `type` no tiene ningún efecto, ni siquiera sobre las reglas
- * condicionales de abajo (`present_if`/`prohibited_if`/`required_if` leen
- * ese mismo campo ya pisado).
+ * `PUT /panel/usuarios/{usuario}` (HU-45, tarea 39). Mismas reglas que
+ * `CrearUsuarioRequest`, salvo `password` (vacío = conserva el hash vigente) y el
+ * `unique` de `username`/`email`, que ignoran la propia cuenta. El tipo de cuenta no
+ * se acepta: una cuenta de panel no cambia de tipo (ADR 0046).
  */
 final class ActualizarUsuarioRequest extends FormRequest
 {
-    protected function prepareForValidation(): void
-    {
-        /** @var SecUser $usuario */
-        $usuario = $this->route('usuario');
-
-        $this->merge(['type' => $usuario->type->value]);
-    }
-
     /** @return array<string, mixed> */
     public function rules(): array
     {
@@ -52,8 +35,7 @@ final class ActualizarUsuarioRequest extends FormRequest
             // Una cuenta de panel tiene un solo rol (ADR 0046, punto 4); el catálogo de roles
             // del panel es fijo y `AsignarRolesUsuario` revalida que sea administrador u operador.
             'roles' => [
-                'present_if:type,interno',
-                'prohibited_if:type,cliente',
+                'required',
                 'array',
                 'size:1',
             ],
@@ -69,9 +51,8 @@ final class ActualizarUsuarioRequest extends FormRequest
             'username.required' => __('seguridad.usuarios.error_username_requerido'),
             'username.unique' => __('seguridad.validacion.usuario_username_unico'),
             'email.unique' => __('seguridad.validacion.usuario_email_unico'),
-            'roles.present_if' => __('seguridad.validacion.usuario_roles_requerido'),
+            'roles.required' => __('seguridad.validacion.usuario_roles_requerido'),
             'roles.size' => __('seguridad.validacion.usuario_roles_un_solo_rol'),
-            'roles.prohibited_if' => __('seguridad.validacion.usuario_roles_prohibido_portal'),
             'roles.*.exists' => __('seguridad.validacion.usuario_rol_invalido'),
         ];
     }
