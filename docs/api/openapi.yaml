@@ -3417,6 +3417,17 @@ paths:
                     items:
                       type: string
                       example: seguro_responsabilidad
+                  siguiente_paso:
+                    description: 'Qué sigue del registro (ADR 0046, punto 26), siempre presente: `subir_documentos` (pendiente con `documentos_faltantes`; se suben con `POST /api/proveedores/documentos`), `en_revision` (pendiente con todo subido), `corregir` (rechazado; se corrige y se reenvía con `POST /api/proveedores/mi/reenviar`), `suspendido`, `baja` o `listo` (aprobado). Quien intenta registrarse con un teléfono o documento que ya tiene cuenta recibe `409 cuenta_ya_registrada`, inicia sesión y la app sigue desde acá, sin crear otra cuenta.'
+                    type: string
+                    example: subir_documentos
+                    enum:
+                      - listo
+                      - subir_documentos
+                      - en_revision
+                      - corregir
+                      - suspendido
+                      - baja
                   apto_para_ofertas:
                     type: boolean
                     example: false
@@ -4399,6 +4410,45 @@ paths:
                 type: object
         401:
           description: 'Token ausente, revocado o ya sin rol válido.'
+      security:
+        -
+          tokenDispositivo: []
+  /api/auth/renovar:
+    post:
+      tags:
+        - Seguridad
+      summary: 'Renueva el token del dispositivo actual'
+      description: 'Emite un token nuevo, con la vigencia completa, para el MISMO dispositivo y revoca el token con el que se hizo el request. La app lo usa para que la sesión por biometría no pida la contraseña cada 30 días: tras el desbloqueo local (la biometría nunca llega al servidor) reutiliza el token guardado y, cuando le quedan pocos días (`dispositivo.expira_en`), lo renueva. Un token ya caducado o revocado no se renueva (`401`): la persona vuelve a entrar con su contraseña o con el código de recuperación. La cuenta debe seguir habilitada. El valor en claro se devuelve UNA sola vez.'
+      operationId: renovarTokenDispositivo
+      responses:
+        201:
+          description: 'Token nuevo; el anterior dejó de valer.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - token
+                  - token_type
+                  - usuario
+                  - rol
+                  - dispositivo
+                properties:
+                  token:
+                    description: 'Credencial completa, para el header `Authorization: Bearer`.'
+                    type: string
+                    example: 13|aB3cD4...
+                  token_type:
+                    type: string
+                    example: Bearer
+                  usuario:
+                    $ref: '#/components/schemas/UsuarioCampo'
+                  rol:
+                    $ref: '#/components/schemas/RolActivo'
+                  dispositivo:
+                    $ref: '#/components/schemas/Dispositivo'
+                type: object
+        401:
+          description: 'Token ausente, caducado o revocado, o la cuenta ya no puede entrar.'
       security:
         -
           tokenDispositivo: []
@@ -6892,6 +6942,11 @@ components:
           description: 'Cuándo se emitió el token.'
           type: string
           format: date-time
+        expira_en:
+          description: 'Cuándo caduca el token; `null` si no caduca por tiempo. La app lo renueva con `POST /api/auth/renovar` antes de esa fecha. Siempre presente.'
+          type: string
+          format: date-time
+          nullable: true
       type: object
     RolActivo:
       title: Rol

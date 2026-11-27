@@ -217,6 +217,60 @@ final class SesionCampoController
         ]);
     }
 
+    #[OA\Post(
+        path: '/api/auth/renovar',
+        operationId: 'renovarTokenDispositivo',
+        description: 'Emite un token nuevo, con la vigencia completa, para el MISMO dispositivo y revoca el token con el que se hizo el '
+            .'request. La app lo usa para que la sesión por biometría no pida la contraseña cada 30 días: tras el desbloqueo local '
+            .'(la biometría nunca llega al servidor) reutiliza el token guardado y, cuando le quedan pocos días (`dispositivo.expira_en`), '
+            .'lo renueva. Un token ya caducado o revocado no se renueva (`401`): la persona vuelve a entrar con su contraseña o con el código '
+            .'de recuperación. La cuenta debe seguir habilitada. El valor en claro se devuelve UNA sola vez.',
+        summary: 'Renueva el token del dispositivo actual',
+        security: [['tokenDispositivo' => []]],
+        tags: ['Seguridad'],
+        responses: [
+            new OA\Response(
+                response: 201,
+                description: 'Token nuevo; el anterior dejó de valer.',
+                content: new OA\JsonContent(
+                    required: ['token', 'token_type', 'usuario', 'rol', 'dispositivo'],
+                    properties: [
+                        new OA\Property(property: 'token', description: 'Credencial completa, para el header `Authorization: Bearer`.', type: 'string', example: '13|aB3cD4...'),
+                        new OA\Property(property: 'token_type', type: 'string', example: 'Bearer'),
+                        new OA\Property(property: 'usuario', ref: '#/components/schemas/UsuarioCampo'),
+                        new OA\Property(property: 'rol', ref: '#/components/schemas/RolActivo'),
+                        new OA\Property(property: 'dispositivo', ref: '#/components/schemas/Dispositivo'),
+                    ],
+                    type: 'object',
+                ),
+            ),
+            new OA\Response(response: 401, description: 'Token ausente, caducado o revocado, o la cuenta ya no puede entrar.'),
+        ],
+    )]
+    public function renovar(Request $request): JsonResponse
+    {
+        $usuario = $this->usuarioAutenticado($request);
+        $actual = $this->tokenActual($usuario);
+
+        $resultado = $this->emitirToken->ejecutar(
+            usuario: $usuario,
+            uuidDispositivo: $actual->uuid_dispositivo,
+            nombreDispositivo: $actual->nombre_dispositivo,
+            idRolDeseado: $actual->role_id,
+        );
+
+        /** @var SecTokenDispositivo $token */
+        $token = $resultado->token;
+
+        return response()->json([
+            'token' => $resultado->tokenPlano,
+            'token_type' => 'Bearer',
+            'usuario' => new UsuarioCampoResource($usuario),
+            'rol' => new RolActivoResource($token->rol),
+            'dispositivo' => new DispositivoResource($token),
+        ], 201);
+    }
+
     #[OA\Delete(
         path: '/api/auth/token',
         operationId: 'cerrarSesionCampo',
