@@ -23,9 +23,11 @@
                 "evento": null,
                 "texto": "Hola, ¿qué día pueden venir?",
                 "url": null,
+                "url_miniatura": null,
+                "url_media": null,
                 "bytes": null,
                 "leido_en": null,
-                "creado_en": "2026-11-26T22:09:45+00:00"
+                "creado_en": "2026-11-27T17:12:29+00:00"
             }
         }
     }

@@ -584,6 +584,7 @@ return [
             'creado' => 'Creado',
             'actualizado' => 'Actualizado',
             'eliminado' => 'Eliminado',
+            'descargado' => 'Archivo abierto o descargado',
         ],
 
         'entidades' => [

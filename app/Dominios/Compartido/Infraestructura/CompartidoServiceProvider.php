@@ -4,6 +4,7 @@ namespace App\Dominios\Compartido\Infraestructura;
 
 use App\Dominios\Compartido\Aplicacion\ConfiguracionDeCorreo;
 use App\Dominios\Compartido\Contratos\LecturaConfiguracion;
+use App\Dominios\Compartido\Infraestructura\Console\RegenerarDerivadosDeMediosCommand;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -23,6 +24,10 @@ final class CompartidoServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        if ($this->app->runningInConsole()) {
+            $this->commands([RegenerarDerivadosDeMediosCommand::class]);
+        }
+
         // El correo de la base manda sobre el `.env` en cuanto el sistema pide el
         // gestor de correo (una vez por proceso, antes de armar cualquier mailer).
         // Sin configuración en la base no cambia nada: desarrollo y pruebas siguen

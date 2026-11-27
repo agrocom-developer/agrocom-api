@@ -415,6 +415,11 @@ Route::middleware('auth:interno')->group(function () {
             ->whereNumber('documento')
             ->name('panel.documentos.archivo');
 
+        Route::get('/panel/documentos/{documento}/descargar', [DocumentosPanelController::class, 'descargar'])
+            ->whereNumber('documento')
+            ->middleware('throttle:30,1')
+            ->name('panel.documentos.descargar');
+
         Route::post('/panel/documentos/{documento}/revisar', [DocumentosPanelController::class, 'revisar'])
             ->whereNumber('documento')
             ->name('panel.documentos.revisar');

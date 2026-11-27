@@ -384,6 +384,57 @@ paths:
       security:
         -
           tokenDispositivo: []
+  /api/medios/limites:
+    get:
+      tags:
+        - Medios
+      summary: 'Límites de archivos multimedia'
+      description: 'Cuántos archivos multimedia admite la aplicación. `por_subida` es el máximo de archivos que trae una sola petición; `por_entidad` es el máximo de archivos activos de cada entidad dueña: `dron_fotos` (fotos de un dron), `terreno_fotos` (fotos de un terreno), `documentos` (documentos en revisión de un proveedor, piloto o dron), `servicio_avance` (fotos de avance de un servicio) y `servicio_chat` (fotos del chat de un servicio). Pasarse responde 422 con un mensaje en español. Los valores se parametrizan en el servidor (`config/medios.php`); la app no debe fijarlos.'
+      operationId: verLimitesDeMedios
+      responses:
+        200:
+          description: 'Los límites vigentes.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - por_subida
+                  - por_entidad
+                  - peso_maximo_kb
+                  - formatos_imagen
+                properties:
+                  por_subida:
+                    type: integer
+                    example: 10
+                  por_entidad:
+                    type: object
+                    example:
+                      dron_fotos: 10
+                      terreno_fotos: 10
+                      documentos: 10
+                      servicio_avance: 10
+                      servicio_chat: 10
+                    additionalProperties:
+                      type: integer
+                  peso_maximo_kb:
+                    description: 'Peso máximo de una foto: la app la comprime antes de subirla.'
+                    type: integer
+                    example: 300
+                  formatos_imagen:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                      - jpg
+                      - jpeg
+                      - png
+                      - webp
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+      security:
+        -
+          tokenDispositivo: []
   '/api/solicitudes/{id}/disputas':
     post:
       tags:
@@ -1215,7 +1266,7 @@ paths:
         404:
           description: 'El dron no existe o es de otro proveedor.'
         422:
-          description: 'Archivo inválido o de 300 KB o más.'
+          description: 'Archivo inválido, de 300 KB o más, o el dron ya tiene el máximo de fotos (`GET /api/medios/limites`).'
           content:
             application/json:
               schema:
@@ -1275,6 +1326,17 @@ paths:
           required: true
           schema:
             type: integer
+        -
+          name: variante
+          in: query
+          description: 'Tamaño: `miniatura` o `media` (derivados reducidos, para listas y vistas previas) u `original` (por omisión). Si el derivado aún no se generó, se entrega el original.'
+          required: false
+          schema:
+            type: string
+            enum:
+              - miniatura
+              - media
+              - original
       responses:
         200:
           description: 'La imagen.'
@@ -1490,7 +1552,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorConflicto'
         422:
-          description: 'Archivo inválido o de 300 KB o más, o pie de más de 280 caracteres.'
+          description: 'Archivo inválido o de 300 KB o más, pie de más de 280 caracteres, o el chat ya tiene el máximo de fotos (`GET /api/medios/limites`).'
           content:
             application/json:
               schema:
@@ -1512,6 +1574,17 @@ paths:
           required: true
           schema:
             type: integer
+        -
+          name: variante
+          in: query
+          description: 'Tamaño: `miniatura` o `media` (derivados reducidos, para listas y vistas previas) u `original` (por omisión). Si el derivado aún no se generó, se entrega el original.'
+          required: false
+          schema:
+            type: string
+            enum:
+              - miniatura
+              - media
+              - original
       responses:
         200:
           description: 'La imagen.'
@@ -2876,7 +2949,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorConflicto'
         422:
-          description: 'Archivo inválido o de 300 KB o más.'
+          description: 'Archivo inválido, de 300 KB o más, o el servicio ya tiene el máximo de fotos de avance (`GET /api/medios/limites`).'
           content:
             application/json:
               schema:
@@ -2898,6 +2971,17 @@ paths:
           required: true
           schema:
             type: integer
+        -
+          name: variante
+          in: query
+          description: 'Tamaño: `miniatura` o `media` (derivados reducidos, para listas y vistas previas) u `original` (por omisión). Si el derivado aún no se generó, se entrega el original.'
+          required: false
+          schema:
+            type: string
+            enum:
+              - miniatura
+              - media
+              - original
       responses:
         200:
           description: 'La imagen.'
@@ -3458,7 +3542,7 @@ paths:
         404:
           description: 'El sujeto no existe o no es de esta cuenta.'
         422:
-          description: 'Archivo o datos inválidos.'
+          description: 'Archivo o datos inválidos, o el sujeto ya tiene el máximo de documentos en revisión (`GET /api/medios/limites`).'
           content:
             application/json:
               schema:
@@ -6031,6 +6115,17 @@ paths:
           schema:
             type: integer
         -
+          name: variante
+          in: query
+          description: 'Tamaño: `miniatura` o `media` (derivados reducidos) u `original` (por omisión). Va dentro de la firma: usa la URL tal como la entrega el servidor. Si el derivado aún no se generó, se entrega el original.'
+          required: false
+          schema:
+            type: string
+            enum:
+              - miniatura
+              - media
+              - original
+        -
           name: expires
           in: query
           required: true
@@ -6564,9 +6659,17 @@ components:
           type: string
           nullable: true
         url:
-          description: 'Se pide con el mismo token.'
+          description: 'El original; se pide con el mismo token.'
           type: string
           example: /api/drones/fotos/5/archivo
+        url_miniatura:
+          description: 'Derivado chico para listas; úsalo por defecto y pide el original solo en el visor.'
+          type: string
+          example: '/api/drones/fotos/5/archivo?variante=miniatura'
+        url_media:
+          description: 'Derivado medio para la vista previa.'
+          type: string
+          example: '/api/drones/fotos/5/archivo?variante=media'
       type: object
     Dron:
       title: Dron
@@ -6720,9 +6823,19 @@ components:
           type: string
           example: 'Llego el lunes temprano.'
         url:
-          description: 'Solo en las fotos: ruta autenticada del archivo.'
+          description: 'Solo en las fotos: ruta autenticada del archivo original.'
           type: string
           example: /api/mensajes/121/archivo
+          nullable: true
+        url_miniatura:
+          description: 'Solo en las fotos: derivado chico para la lista del chat; pide `url` solo en el visor.'
+          type: string
+          example: '/api/mensajes/121/archivo?variante=miniatura'
+          nullable: true
+        url_media:
+          description: 'Solo en las fotos: derivado medio para la vista previa.'
+          type: string
+          example: '/api/mensajes/121/archivo?variante=media'
           nullable: true
         bytes:
           description: 'Peso de la foto.'
@@ -8388,7 +8501,7 @@ components:
           example: 'Los Álamos'
           nullable: true
         fotos:
-          description: 'Fotos del estado del terreno (hasta 8). Las URLs son firmadas y de corta vida: se piden de nuevo con el terreno.'
+          description: 'Fotos del estado del terreno (hasta 10, `medios.limites.por_entidad.terreno_fotos`). Las URLs son firmadas y de corta vida: se piden de nuevo con el terreno.'
           type: array
           items:
             $ref: '#/components/schemas/FotoDeTerreno'
@@ -8407,9 +8520,17 @@ components:
           example: 'Borde norte con maleza alta'
           nullable: true
         url:
-          description: 'URL firmada y de corta vida (relativa a la base de la API); se pide sin token.'
+          description: 'El original: URL firmada y de corta vida (relativa a la base de la API); se pide sin token.'
           type: string
           example: '/api/terrenos/fotos/5/archivo?expires=1764000000&signature=ab12'
+        url_miniatura:
+          description: 'Derivado chico, también firmado; úsalo por defecto en listas y cuadrículas y pide `url` solo en el visor.'
+          type: string
+          example: '/api/terrenos/fotos/5/archivo?variante=miniatura&expires=1764000000&signature=cd34'
+        url_media:
+          description: 'Derivado medio, también firmado, para la vista previa.'
+          type: string
+          example: '/api/terrenos/fotos/5/archivo?variante=media&expires=1764000000&signature=ef56'
       type: object
   securitySchemes:
     tokenDispositivo:
@@ -8420,6 +8541,9 @@ tags:
   -
     name: Calificaciones
     description: 'El cliente califica al proveedor y al piloto de un servicio completado, durante 7 días; el proveedor califica al cliente en privado y ve las calificaciones que recibe (ADR 0031).'
+  -
+    name: Medios
+    description: 'Archivos multimedia: límites por subida y por entidad, y los derivados reducidos (`url_miniatura`, `url_media`) que las apps usan por defecto.'
   -
     name: Disputas
     description: 'El cliente (hasta 72 horas después de `ejecutada`) o el proveedor (cobro pendiente, acceso negado o calificación abusiva) abren un reclamo; soporte media y un administrador resuelve; ambas partes pueden apelar una vez en 7 días (ADR 0033). Los reembolsos se liquidan fuera de la app.'

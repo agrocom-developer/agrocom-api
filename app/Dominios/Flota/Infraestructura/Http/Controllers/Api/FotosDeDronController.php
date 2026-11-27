@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Flota\Infraestructura\Http\Controllers\Api;
 
+use App\Dominios\Compartido\Dominio\VarianteDeMedio;
 use App\Dominios\Compartido\Infraestructura\Http\RechazoDeDominio;
 use App\Dominios\Flota\Aplicacion\GestionarFotosDeDron;
 use App\Dominios\Flota\Dominio\Excepciones\OperacionDeFlotaInvalida;
@@ -27,7 +28,9 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
         new OA\Property(property: 'tipo', type: 'string', enum: ['frontal', 'lateral', 'placa_serie', 'otra']),
         new OA\Property(property: 'estado', type: 'string', enum: ['en_revision', 'aprobada', 'rechazada']),
         new OA\Property(property: 'motivo', description: 'Motivo del rechazo.', type: 'string', nullable: true),
-        new OA\Property(property: 'url', description: 'Se pide con el mismo token.', type: 'string', example: '/api/drones/fotos/5/archivo'),
+        new OA\Property(property: 'url', description: 'El original; se pide con el mismo token.', type: 'string', example: '/api/drones/fotos/5/archivo'),
+        new OA\Property(property: 'url_miniatura', description: 'Derivado chico para listas; úsalo por defecto y pide el original solo en el visor.', type: 'string', example: '/api/drones/fotos/5/archivo?variante=miniatura'),
+        new OA\Property(property: 'url_media', description: 'Derivado medio para la vista previa.', type: 'string', example: '/api/drones/fotos/5/archivo?variante=media'),
     ],
     type: 'object',
 )]
@@ -57,7 +60,7 @@ final class FotosDeDronController
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
             new OA\Response(response: 403, description: 'El rol del token no gestiona drones.'),
             new OA\Response(response: 404, description: 'El dron no existe o es de otro proveedor.'),
-            new OA\Response(response: 422, description: 'Archivo inválido o de 300 KB o más.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
+            new OA\Response(response: 422, description: 'Archivo inválido, de 300 KB o más, o el dron ya tiene el máximo de fotos (`GET /api/medios/limites`).', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],
     )]
     public function store(SubirFotoDeDronRequest $request, int $id): JsonResponse
@@ -137,16 +140,19 @@ final class FotosDeDronController
         summary: 'Descargar una foto del dron',
         security: [['tokenDispositivo' => []]],
         tags: ['Flota'],
-        parameters: [new OA\Parameter(name: 'foto', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
+        parameters: [
+            new OA\Parameter(name: 'foto', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'variante', in: 'query', required: false, description: 'Tamaño: `miniatura` o `media` (derivados reducidos, para listas y vistas previas) u `original` (por omisión). Si el derivado aún no se generó, se entrega el original.', schema: new OA\Schema(type: 'string', enum: ['miniatura', 'media', 'original'])),
+        ],
         responses: [
             new OA\Response(response: 200, description: 'La imagen.', content: new OA\MediaType(mediaType: 'image/jpeg', schema: new OA\Schema(type: 'string', format: 'binary'))),
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
             new OA\Response(response: 404, description: 'No existe o no es visible para la cuenta.'),
         ],
     )]
-    public function archivo(int $foto): BinaryFileResponse|JsonResponse
+    public function archivo(Request $request, int $foto): BinaryFileResponse|JsonResponse
     {
-        $ruta = $this->fotos->rutaVisible($this->usuarioId(), $foto);
+        $ruta = $this->fotos->rutaVisible($this->usuarioId(), $foto, VarianteDeMedio::desde($request->query('variante')));
 
         return $ruta === null ? response()->json(['message' => __('flota.errores.dron_ajeno')], 404) : response()->file($ruta, ['Cache-Control' => 'private, max-age=3600']);
     }

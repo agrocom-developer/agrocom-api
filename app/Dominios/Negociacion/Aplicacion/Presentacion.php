@@ -51,6 +51,8 @@ final class Presentacion
             'evento' => $mensaje->evento,
             'texto' => $mensaje->texto,
             'url' => $mensaje->tipo === 'foto' ? "/api/mensajes/{$mensaje->id}/archivo" : null,
+            'url_miniatura' => $mensaje->tipo === 'foto' ? "/api/mensajes/{$mensaje->id}/archivo?variante=miniatura" : null,
+            'url_media' => $mensaje->tipo === 'foto' ? "/api/mensajes/{$mensaje->id}/archivo?variante=media" : null,
             'bytes' => $mensaje->bytes,
             'leido_en' => $mensaje->leido_en?->toIso8601String(),
             'creado_en' => $mensaje->created_at->toIso8601String(),
@@ -80,6 +82,8 @@ final class Presentacion
             'tipo' => $evidencia->tipo,
             'avance_id' => $evidencia->avance_id,
             'url' => "/api/evidencias/{$evidencia->id}/archivo",
+            'url_miniatura' => "/api/evidencias/{$evidencia->id}/archivo?variante=miniatura",
+            'url_media' => "/api/evidencias/{$evidencia->id}/archivo?variante=media",
             'subida_en' => $evidencia->created_at->toIso8601String(),
         ];
     }

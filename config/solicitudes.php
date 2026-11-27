@@ -19,7 +19,6 @@ return [
 
     /** Fotos del estado de un terreno que el piloto ve antes de ofertar. */
     'fotos_terreno' => [
-        'maximo_por_terreno' => (int) env('SOLICITUDES_FOTOS_TERRENO_MAXIMO', 8),
         'url_minutos' => (int) env('SOLICITUDES_FOTOS_TERRENO_URL_MINUTOS', 15),
     ],
 ];

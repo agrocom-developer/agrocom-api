@@ -2,22 +2,28 @@
 
 namespace App\Dominios\Proveedores\Aplicacion;
 
+use App\Dominios\Compartido\Aplicacion\Medios\AlmacenDeMedios;
+use App\Dominios\Compartido\Aplicacion\Medios\LimiteDeMedios;
+use App\Dominios\Compartido\Dominio\Excepciones\MedioNoGuardado;
 use App\Dominios\Compartido\Dominio\TipoDocumento;
 use App\Dominios\Proveedores\Aplicacion\MaquinaEstados\MaquinaEstadosDocumento;
 use App\Dominios\Proveedores\Contratos\CargaDocumentos;
 use App\Dominios\Proveedores\Contratos\DocumentoInvalido;
+use App\Dominios\Proveedores\Dominio\EstadoDocumento;
 use App\Dominios\Proveedores\Dominio\Excepciones\RegistroInvalido;
 use App\Dominios\Proveedores\Dominio\TipoSujeto;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Documento;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * Carga un documento de un sujeto y lo deja `en_revision` (ADR 0032, punto 3).
  * El archivo va al disco privado bajo la ruta por objeto del ADR 0026:
- * `{objeto}/{id}/documentos/{tipo}-{timestamp}.{ext}`, con nombre generado por
- * el servidor, nunca el que subió el usuario. Un documento nuevo no reemplaza
- * al anterior: el aprobado más reciente y vigente es el que cuenta.
+ * `{objeto}/{id}/documentos/{nombre-aleatorio}.{ext}`, con nombre generado por
+ * el servidor (no se adivina, no lleva datos personales), nunca el que subió el
+ * usuario; la base guarda solo esa ruta relativa. Un documento nuevo no reemplaza
+ * al anterior: el aprobado más reciente y vigente es el que cuenta. Un sujeto no
+ * puede tener más de `medios.limites.por_entidad.documentos` documentos en
+ * revisión a la vez.
  *
  * Que quien carga pueda gestionar a este sujeto lo verifica
  * {@see AlcanceDelSolicitante} (API) o el módulo que llama (el dron, en Flota).
@@ -30,7 +36,11 @@ final class CargarDocumento implements CargaDocumentos
         'dron' => 'drones',
     ];
 
-    public function __construct(private readonly MaquinaEstadosDocumento $estados) {}
+    public function __construct(
+        private readonly MaquinaEstadosDocumento $estados,
+        private readonly AlmacenDeMedios $almacen,
+        private readonly LimiteDeMedios $limites,
+    ) {}
 
     public function cargar(string $sujetoTipo, int $sujetoId, string $tipo, UploadedFile $archivo, ?string $venceEn, int $usuarioId): int
     {
@@ -42,7 +52,7 @@ final class CargarDocumento implements CargaDocumentos
     }
 
     /**
-     * @throws RegistroInvalido si el documento ya vence en el pasado.
+     * @throws RegistroInvalido si el documento ya vence en el pasado o el sujeto ya tiene el máximo en revisión.
      */
     public function ejecutar(
         TipoSujeto $sujeto,
@@ -56,14 +66,21 @@ final class CargarDocumento implements CargaDocumentos
             throw RegistroInvalido::documentoVencido();
         }
 
+        $enRevision = Documento::query()
+            ->where('sujeto_tipo', $sujeto->value)
+            ->where('sujeto_id', $sujetoId)
+            ->where('estado', EstadoDocumento::EnRevision->value)
+            ->count();
+
+        if ($this->limites->excede('documentos', $enRevision)) {
+            throw RegistroInvalido::limiteDeDocumentos($this->limites->porEntidad('documentos'));
+        }
+
         $disco = (string) config('proveedores.disco_documentos', 'local');
-        $extension = strtolower($archivo->getClientOriginalExtension() ?: ($archivo->guessExtension() ?? 'bin'));
-        $carpeta = self::RAIZ_POR_SUJETO[$sujeto->value]."/{$sujetoId}/documentos";
-        $nombre = $tipo->value.'-'.now()->format('YmdHisv').'.'.$extension;
 
-        $ruta = Storage::disk($disco)->putFileAs($carpeta, $archivo, $nombre);
-
-        if ($ruta === false) {
+        try {
+            $ruta = $this->almacen->guardar($archivo, self::RAIZ_POR_SUJETO[$sujeto->value]."/{$sujetoId}/documentos", null, $disco);
+        } catch (MedioNoGuardado) {
             throw RegistroInvalido::archivoNoDisponible();
         }
 

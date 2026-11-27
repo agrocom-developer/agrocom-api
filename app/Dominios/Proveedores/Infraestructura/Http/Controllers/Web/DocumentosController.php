@@ -2,9 +2,12 @@
 
 namespace App\Dominios\Proveedores\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Compartido\Aplicacion\Medios\AlmacenDeMedios;
+use App\Dominios\Compartido\Aplicacion\Medios\RegistrarAccesoAMedio;
 use App\Dominios\Compartido\Dominio\Excepciones\MotivoRequerido;
 use App\Dominios\Compartido\Dominio\TipoDocumento;
 use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
+use App\Dominios\Compartido\Dominio\VarianteDeMedio;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Proveedores\Aplicacion\ResolverSujeto;
 use App\Dominios\Proveedores\Aplicacion\RevisarDocumento;
@@ -17,7 +20,6 @@ use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -35,13 +37,19 @@ final class DocumentosController
 
     private const PERMISO_REVISAR = 'proveedores.documento.revisar';
 
+    private const PERMISO_DESCARGAR = 'proveedores.documento.descargar';
+
     private const RUTA_FICHA = [
         'proveedor' => 'panel.proveedores.show',
         'piloto' => 'panel.pilotos.show',
         'dron' => 'panel.drones-flota.show',
     ];
 
-    public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
+    public function __construct(
+        private readonly AutorizacionPanelWeb $autorizacion,
+        private readonly AlmacenDeMedios $almacen,
+        private readonly RegistrarAccesoAMedio $accesos,
+    ) {}
 
     public function index(Request $request, ResolverSujeto $sujetos): View
     {
@@ -83,19 +91,51 @@ final class DocumentosController
         ]);
     }
 
+    /**
+     * El archivo en el visor del panel. `?variante=miniatura|media` entrega el derivado reducido (cuadrículas y
+     * vistas previas); sin variante, el original, y solo ese acceso queda en la bitácora (quién y cuándo).
+     */
     public function archivo(Request $request, Documento $documento): StreamedResponse
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
-        $disco = Storage::disk((string) config('proveedores.disco_documentos', 'local'));
+        $variante = VarianteDeMedio::desde($request->query('variante'));
 
-        abort_unless($disco->exists($documento->archivo_ref), 404, __('proveedores.errores.archivo_no_disponible'));
+        $respuesta = $this->almacen->respuesta(
+            $documento->archivo_ref,
+            $variante,
+            $this->disco(),
+            mime: $documento->mime,
+        );
 
-        return $disco->response($documento->archivo_ref, $documento->nombre_original, [
-            'Content-Type' => $documento->mime,
-            'X-Content-Type-Options' => 'nosniff',
-            'Cache-Control' => 'private, no-store',
-        ]);
+        abort_if($respuesta === null, 404, __('proveedores.errores.archivo_no_disponible'));
+
+        if ($variante === VarianteDeMedio::Original) {
+            $this->accesos->ejecutar($this->actor(), $documento->getTable(), $documento->id, 'visto');
+        }
+
+        return $respuesta;
+    }
+
+    /**
+     * Descarga del ORIGINAL con un permiso propio (`proveedores.documento.descargar`): los documentos de
+     * identidad y licencia son sensibles. Cada descarga queda en la bitácora (quién, qué y cuándo). El nombre
+     * del archivo lo arma el servidor (`{tipo}-{id}.{ext}`): no repite el que subió la persona.
+     */
+    public function descargar(Request $request, Documento $documento): StreamedResponse
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_DESCARGAR), 403);
+
+        $extension = pathinfo($documento->archivo_ref, PATHINFO_EXTENSION);
+        $nombre = $documento->tipo->value.'-'.$documento->id.($extension === '' ? '' : '.'.$extension);
+
+        $respuesta = $this->almacen->respuesta($documento->archivo_ref, VarianteDeMedio::Original, $this->disco(), $nombre, true, $documento->mime);
+
+        abort_if($respuesta === null, 404, __('proveedores.errores.archivo_no_disponible'));
+
+        $this->accesos->ejecutar($this->actor(), $documento->getTable(), $documento->id, 'descargado');
+
+        return $respuesta;
     }
 
     public function revisar(RevisarDocumentoRequest $request, Documento $documento, RevisarDocumento $revisar): RedirectResponse
@@ -116,5 +156,17 @@ final class DocumentosController
         }
 
         return $volver->with('estado', __('proveedores.documentos.revisado.'.$request->validated('decision')));
+    }
+
+    private function disco(): string
+    {
+        return (string) config('proveedores.disco_documentos', 'local');
+    }
+
+    private function actor(): ?int
+    {
+        $id = Auth::guard('interno')->id();
+
+        return $id === null ? null : (int) $id;
     }
 }

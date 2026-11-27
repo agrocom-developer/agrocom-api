@@ -2,11 +2,12 @@
 
 namespace App\Dominios\Seguridad\Aplicacion;
 
+use App\Dominios\Compartido\Aplicacion\Medios\AlmacenDeMedios;
+use App\Dominios\Compartido\Dominio\VarianteDeMedio;
 use App\Dominios\Seguridad\Contratos\FotosDePerfil;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 
 /**
@@ -20,12 +21,14 @@ final class GestionarFotoDePerfil implements FotosDePerfil
     /** Vida de la URL firmada de la foto. */
     private const int URL_MINUTOS = 15;
 
+    public function __construct(private readonly AlmacenDeMedios $almacen) {}
+
     public function subir(int $usuarioId, UploadedFile $archivo): string
     {
         $usuario = SecUser::query()->findOrFail($usuarioId);
         $anterior = $usuario->foto_perfil_ref;
 
-        $ruta = (string) $archivo->store("perfiles/{$usuario->id}", 'local');
+        $ruta = $this->almacen->guardar($archivo, "perfiles/{$usuario->id}", derivados: false);
 
         $usuario->forceFill(['foto_perfil_ref' => $ruta])->save();
 
@@ -51,16 +54,10 @@ final class GestionarFotoDePerfil implements FotosDePerfil
         return $tiene ? self::firmar($usuarioId) : null;
     }
 
-    /** La ruta absoluta del archivo, o `null` si la cuenta no tiene foto o ya no está en el disco. */
-    public function ruta(int $usuarioId): ?string
+    /** La ruta absoluta del archivo (el derivado pedido si ya existe), o `null` si la cuenta no tiene foto o ya no está en el disco. */
+    public function ruta(int $usuarioId, VarianteDeMedio $variante = VarianteDeMedio::Original): ?string
     {
-        $ref = SecUser::query()->whereKey($usuarioId)->value('foto_perfil_ref');
-
-        if ($ref === null || ! Storage::disk('local')->exists($ref)) {
-            return null;
-        }
-
-        return Storage::disk('local')->path($ref);
+        return $this->almacen->rutaAbsoluta(SecUser::query()->whereKey($usuarioId)->value('foto_perfil_ref'), $variante);
     }
 
     private static function firmar(int $usuarioId): string
@@ -75,8 +72,6 @@ final class GestionarFotoDePerfil implements FotosDePerfil
 
     private function borrarArchivo(?string $ref): void
     {
-        if ($ref !== null && Storage::disk('local')->exists($ref)) {
-            Storage::disk('local')->delete($ref);
-        }
+        $this->almacen->borrar($ref);
     }
 }

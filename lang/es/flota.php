@@ -33,6 +33,7 @@ return [
         'sin_proveedor' => 'Tu cuenta no es titular de ningún proveedor.',
         'sin_equipos' => 'No tienes equipos vigentes para declarar disponibilidad.',
         'proveedor_no_admite_altas' => 'Tu proveedor está rechazado, suspendido o eliminado: ya no puedes hacer nuevos registros.',
+        'fotos_de_dron_llenas' => 'Un dron admite hasta :maximo fotos. Elimina una para subir otra.',
         'dron_ajeno' => 'No encontramos ese dron entre los tuyos.',
         'motivo_requerido' => 'Indica el motivo del rechazo.',
         'fotos_incompletas' => 'Aprueba primero las fotos que faltan: :fotos.',

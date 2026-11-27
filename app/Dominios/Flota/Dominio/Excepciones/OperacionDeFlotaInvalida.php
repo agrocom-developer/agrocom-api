@@ -55,6 +55,11 @@ final class OperacionDeFlotaInvalida extends RuntimeException
         return new self(Texto::de('flota.errores.equipo_ajeno'), null, true);
     }
 
+    public static function fotosDeDronLlenas(int $maximo): self
+    {
+        return new self(Texto::de('flota.errores.fotos_de_dron_llenas', ['maximo' => $maximo]), 'archivo');
+    }
+
     public static function dronNoEditable(): self
     {
         return new self(Texto::de('flota.errores.dron_no_editable'));

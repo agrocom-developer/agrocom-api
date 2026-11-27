@@ -2,6 +2,9 @@
 
 namespace App\Dominios\Negociacion\Aplicacion;
 
+use App\Dominios\Compartido\Aplicacion\Medios\AlmacenDeMedios;
+use App\Dominios\Compartido\Aplicacion\Medios\LimiteDeMedios;
+use App\Dominios\Compartido\Dominio\VarianteDeMedio;
 use App\Dominios\Compartido\Infraestructura\Idioma\Texto;
 use App\Dominios\Negociacion\Dominio\Excepciones\NegociacionInvalida;
 use App\Dominios\Negociacion\Infraestructura\Eloquent\Mensaje;
@@ -9,7 +12,6 @@ use App\Dominios\Solicitudes\Contratos\DatosSolicitudNegociable;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Storage;
 use Ramsey\Uuid\Uuid;
 
 /**
@@ -43,6 +45,8 @@ final class Mensajeria
         private readonly Participantes $participantes,
         private readonly ParametrosDeNegociacion $parametros,
         private readonly Avisador $avisos,
+        private readonly AlmacenDeMedios $almacen,
+        private readonly LimiteDeMedios $limites,
     ) {}
 
     /**
@@ -121,7 +125,11 @@ final class Mensajeria
             throw NegociacionInvalida::dato('evidencia_muy_grande', 'archivo', ['maximo' => $this->parametros->evidenciaMaxKb()]);
         }
 
-        $ruta = (string) $archivo->storeAs("mensajes/{$solicitudId}", $uuidCliente.'.'.($archivo->guessExtension() ?: 'jpg'), 'local');
+        if ($this->limites->excede('servicio_chat', Mensaje::query()->where('solicitud_id', $solicitudId)->where('tipo', 'foto')->count())) {
+            throw NegociacionInvalida::dato('limite_fotos_del_chat', 'archivo', ['maximo' => $this->limites->porEntidad('servicio_chat')]);
+        }
+
+        $ruta = $this->almacen->guardar($archivo, "servicios/{$solicitudId}/chat", $uuidCliente);
 
         try {
             $mensaje = Mensaje::query()->create([
@@ -152,16 +160,18 @@ final class Mensajeria
      *
      * @throws NegociacionInvalida `evidencia_ajena` (404)
      */
-    public function archivoDeFoto(int $usuarioId, int $mensajeId): array
+    public function archivoDeFoto(int $usuarioId, int $mensajeId, VarianteDeMedio $variante = VarianteDeMedio::Original): array
     {
         $mensaje = Mensaje::query()->where('tipo', 'foto')->find($mensajeId) ?? throw NegociacionInvalida::ajeno('evidencia_ajena');
         $this->participantes->lado($usuarioId, $mensaje->solicitud_id);
 
-        if ($mensaje->archivo === null || ! Storage::disk('local')->exists($mensaje->archivo)) {
+        $ruta = $this->almacen->rutaAbsoluta($mensaje->archivo, $variante);
+
+        if ($ruta === null) {
             throw NegociacionInvalida::ajeno('evidencia_ajena');
         }
 
-        return [$mensaje, Storage::disk('local')->path($mensaje->archivo)];
+        return [$mensaje, $ruta];
     }
 
     /**
