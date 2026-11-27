@@ -44,6 +44,7 @@
                     @if ($puedeRegistrarDron)
                         <x-atoms.button :href="route('panel.drones-flota.create', ['proveedor' => $proveedor->id])" variant="outline" icon="add">{{ __('flota.alta_manual.registrar') }}</x-atoms.button>
                     @endif
+                @include('proveedores::pages._boton-eliminar-aprobacion', ['acciones' => $acciones, 'modalBase' => 'proveedor'])
                 </x-slot:actions>
             </x-organisms.page-header>
 
@@ -148,6 +149,7 @@
                     'documentos' => $documentos,
                     'documentosFaltantes' => $documentosFaltantes,
                     'puedeVerDocumentos' => $puedeVerDocumentos,
+                    'itemsDocumentos' => $itemsDocumentos,
                     'puedeRevisarDocumentos' => $puedeRevisarDocumentos,
                 ])
 
@@ -173,7 +175,9 @@
                                         <span role="cell" class="ag-index-table__acciones">
                                             @if ($puedeVerPilotos)
                                                 <x-organisms.row-actions>
-                                                    <x-atoms.button :href="route('panel.pilotos.show', $piloto)" variant="info-outline" size="sm" icon="visibility">{{ __('proveedores.ver') }}</x-atoms.button>
+                                                    <x-slot:ver>
+                                                        <x-molecules.row-action kind="ver" :href="route('panel.pilotos.show', $piloto)" icon="visibility" :label="__('proveedores.ver')" />
+                                                    </x-slot:ver>
                                                 </x-organisms.row-actions>
                                             @endif
                                         </span>

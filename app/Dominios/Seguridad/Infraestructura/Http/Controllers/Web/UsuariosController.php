@@ -5,7 +5,6 @@ namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Seguridad\Aplicacion\AlternarBloqueoUsuario;
 use App\Dominios\Seguridad\Aplicacion\AsignarRolesUsuario;
-use App\Dominios\Seguridad\Aplicacion\ConsultarRolesDeUsuarios;
 use App\Dominios\Seguridad\Aplicacion\EliminarUsuario;
 use App\Dominios\Seguridad\Aplicacion\ListarBitacora;
 use App\Dominios\Seguridad\Aplicacion\ListarUsuarios;
@@ -18,7 +17,6 @@ use App\Dominios\Seguridad\Dominio\PermisosReservados;
 use App\Dominios\Seguridad\Dominio\TipoUsuario;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
-use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\NombreLegibleRol;
 use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\TarjetasDeUsuario;
 use App\Dominios\Seguridad\Infraestructura\Http\Requests\ActualizarUsuarioRequest;
 use App\Dominios\Seguridad\Infraestructura\Http\Requests\CrearUsuarioRequest;
@@ -62,7 +60,7 @@ final class UsuariosController
      */
     public const TONO_POR_ESTADO = [
         'activo' => 'success',
-        'bloqueado' => 'danger',
+        'bloqueado' => 'neutral',
     ];
 
     private const PERMISO_VER = 'seguridad.usuario.ver';
@@ -77,11 +75,8 @@ final class UsuariosController
 
     private const PERMISO_ROL_ADMINISTRADOR = 'seguridad.usuario.asignar_rol_administrador';
 
-    private const PERMISO_VER_COMO = 'seguridad.usuario.ver_como';
-
     public function __construct(
         private readonly AutorizacionPanelWeb $autorizacion,
-        private readonly ConsultarRolesDeUsuarios $roles,
         private readonly TarjetasDeUsuario $tarjetas,
     ) {}
 
@@ -98,9 +93,6 @@ final class UsuariosController
             ...$this->autorizacion->cascara($request),
             'usuarios' => $usuarios,
             'rolesPorUsuario' => $this->tarjetas->rolesPorUsuario($idsUsuario),
-            'rolesVerComoPorUsuario' => $this->autorizacion->tienePermiso($request, self::PERMISO_VER_COMO)
-                ? $this->rolesVivosPorUsuario($idsUsuario)
-                : [],
             'filtros' => ['q' => $busqueda],
             'tonoPorEstado' => self::TONO_POR_ESTADO,
         ]);
@@ -349,20 +341,5 @@ final class UsuariosController
     private function abortarSiNoEsDePanel(SecUser $usuario): void
     {
         abort_unless($usuario->tipo_cuenta === TipoCuenta::Panel, 404);
-    }
-
-    /**
-     * Roles vivos y habilitados de cada cuenta con su id, para el selector de
-     * «Ver como» (tarea 140), con nombre legible.
-     *
-     * @param  list<int>  $idsUsuario
-     * @return array<int, array<int, string>> `id de usuario => [id de rol => nombre legible]`
-     */
-    private function rolesVivosPorUsuario(array $idsUsuario): array
-    {
-        return array_map(
-            fn (array $roles): array => array_map(NombreLegibleRol::de(...), $roles),
-            $this->roles->slugsVivosPorUsuario($idsUsuario),
-        );
     }
 }

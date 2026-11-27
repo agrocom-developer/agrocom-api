@@ -7,13 +7,17 @@ use App\Dominios\Compartido\Aplicacion\Medios\RegistrarAccesoAMedio;
 use App\Dominios\Compartido\Dominio\Excepciones\MotivoRequerido;
 use App\Dominios\Compartido\Dominio\TipoDocumento;
 use App\Dominios\Compartido\Dominio\VarianteDeMedio;
+use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
+use App\Dominios\Proveedores\Aplicacion\EliminarDocumento;
+use App\Dominios\Proveedores\Aplicacion\ItemsDeRevisionDeDocumentos;
 use App\Dominios\Proveedores\Aplicacion\ResolverSujeto;
 use App\Dominios\Proveedores\Aplicacion\RevisarDocumento;
 use App\Dominios\Proveedores\Dominio\EstadoDocumento;
 use App\Dominios\Proveedores\Dominio\Excepciones\RegistroInvalido;
 use App\Dominios\Proveedores\Dominio\TipoSujeto;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Documento;
+use App\Dominios\Proveedores\Infraestructura\Http\Requests\EliminarDocumentoRequest;
 use App\Dominios\Proveedores\Infraestructura\Http\Requests\RevisarDocumentoRequest;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use Illuminate\Http\RedirectResponse;
@@ -35,6 +39,8 @@ final class DocumentosController
     private const PERMISO_VER = 'proveedores.documento.ver';
 
     private const PERMISO_REVISAR = 'proveedores.documento.revisar';
+
+    private const PERMISO_ELIMINAR = 'proveedores.documento.eliminar';
 
     private const PERMISO_DESCARGAR = 'proveedores.documento.descargar';
 
@@ -61,7 +67,10 @@ final class DocumentosController
         $sujetoTipo = TipoSujeto::tryFrom(TextoDeFiltro::de($request, 'sujeto_tipo'));
         $tipo = TipoDocumento::tryFrom(TextoDeFiltro::de($request, 'tipo'));
 
+        $busqueda = TextoDeFiltro::de($request, 'q');
+
         $documentos = Documento::query()
+            ->when($busqueda !== '', fn ($consulta) => BusquedaTexto::aplicar($consulta, ['nombre_original'], $busqueda))
             ->when($estado !== null, fn ($consulta) => $consulta->where('estado', $estado->value))
             ->when($sujetoTipo !== null, fn ($consulta) => $consulta->where('sujeto_tipo', $sujetoTipo->value))
             ->when($tipo !== null, fn ($consulta) => $consulta->where('tipo', $tipo->value))
@@ -79,13 +88,39 @@ final class DocumentosController
             'documentos' => $documentos,
             'etiquetas' => $etiquetas,
             'rutaFicha' => self::RUTA_FICHA,
-            'filtros' => ['estado' => $estado?->value, 'sujeto_tipo' => $sujetoTipo?->value, 'tipo' => $tipo?->value],
-            'filtroEstadoExplicito' => $request->has('estado'),
+            'itemsDocumentos' => $this->itemsDeLaCola(Documento::query()->whereIn('id', array_keys($etiquetas))->orderBy('created_at')->orderBy('id')->get()->all(), $etiquetas, $request),
+            'filtros' => ['q' => $busqueda, 'estado' => $estado?->value, 'sujeto_tipo' => $sujetoTipo?->value, 'tipo' => $tipo?->value],
             'estadosFiltro' => EstadoDocumento::cases(),
             'sujetosFiltro' => TipoSujeto::cases(),
             'tiposFiltro' => TipoDocumento::cases(),
             'puedeRevisar' => $this->autorizacion->tienePermiso($request, self::PERMISO_REVISAR),
+            'puedeEliminar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR),
         ]);
+    }
+
+    /**
+     * Los documentos de la página como ítems del modal de revisión: el título es el tipo, el subtítulo a quién
+     * pertenece y el enlace lleva a su ficha (solo si quien mira puede abrirla).
+     *
+     * @param  list<Documento>  $documentos
+     * @param  array<int, string>  $etiquetas
+     * @return list<array<string, mixed>>
+     */
+    private function itemsDeLaCola(array $documentos, array $etiquetas, Request $request): array
+    {
+        $items = ItemsDeRevisionDeDocumentos::deModelos(
+            $documentos,
+            $this->autorizacion->tienePermiso($request, self::PERMISO_REVISAR),
+            $this->autorizacion->tienePermiso($request, self::PERMISO_DESCARGAR),
+            $etiquetas,
+        );
+
+        $fichas = [];
+        foreach ($documentos as $documento) {
+            $fichas['d'.$documento->id] = route(self::RUTA_FICHA[$documento->sujeto_tipo->value], $documento->sujeto_id, false);
+        }
+
+        return array_map(static fn (array $item): array => [...$item, 'url_ficha' => $fichas[$item['clave']] ?? null], $items);
     }
 
     /**
@@ -153,6 +188,25 @@ final class DocumentosController
         }
 
         return $volver->with('estado', __('proveedores.documentos.revisado.'.$request->validated('decision')));
+    }
+
+    /**
+     * Elimina un documento (borrado lógico + retiro del archivo; ver {@see EliminarDocumento}). Permiso propio
+     * `proveedores.documento.eliminar`, sensible; el motivo es obligatorio.
+     */
+    public function destroy(EliminarDocumentoRequest $request, Documento $documento, EliminarDocumento $eliminar): RedirectResponse
+    {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR), 403);
+
+        $volver = redirect()->back(fallback: route('panel.documentos.index'));
+
+        try {
+            $eliminar->ejecutar($documento->id, (int) Auth::guard('interno')->id(), $request->validated('motivo'));
+        } catch (RegistroInvalido|MotivoRequerido $excepcion) {
+            return $volver->withErrors(['documento' => $excepcion->getMessage()]);
+        }
+
+        return $volver->with('estado', __('proveedores.documentos.eliminar.hecho'));
     }
 
     private function disco(): string

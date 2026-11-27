@@ -3,8 +3,10 @@
 namespace App\Dominios\Metricas\Aplicacion;
 
 use App\Dominios\Metricas\Contratos\LecturaTableroDeMercado;
+use App\Dominios\Metricas\Dominio\GruposDeSolicitud;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -19,13 +21,8 @@ final class ArmarTableroDeMercado implements LecturaTableroDeMercado
     /** Orden del ciclo de una solicitud, para que el tablero se lea de izquierda a derecha. */
     private const ESTADOS = ['borrador', 'abierta', 'con_ofertas', 'adjudicada', 'en_ejecucion', 'finalizada', 'calificada', 'en_reclamo', 'cancelada'];
 
-    private const EN_MERCADO = ['abierta', 'con_ofertas'];
-
-    private const EN_CURSO = ['adjudicada', 'en_ejecucion', 'en_reclamo'];
-
-    private const CERRADAS = ['finalizada', 'calificada'];
-
-    private const CANCELADAS = ['cancelada'];
+    /** Semanas de la serie de actividad del tablero, la actual incluida. */
+    public const SEMANAS = 12;
 
     /** Departamento de una solicitud sin departamento (un borrador cuyo terreno aún no lo tiene). */
     public const SIN_DEPARTAMENTO = 'sin_departamento';
@@ -53,19 +50,13 @@ final class ArmarTableroDeMercado implements LecturaTableroDeMercado
             $estados[$estado] = ['cantidad' => $actual['cantidad'] + (int) $fila->cantidad, 'hectareas' => $actual['hectareas']->plus($hectareas)];
 
             $departamentos[$codigo] ??= ['nombre' => $fila->departamento === null ? null : (string) $fila->departamento, 'abiertas' => 0, 'en_curso' => 0, 'cerradas' => 0, 'canceladas' => 0, 'total' => 0, 'hectareas' => BigDecimal::zero()];
-            $grupo = match (true) {
-                in_array($estado, self::EN_MERCADO, true) => 'abiertas',
-                in_array($estado, self::EN_CURSO, true) => 'en_curso',
-                in_array($estado, self::CERRADAS, true) => 'cerradas',
-                in_array($estado, self::CANCELADAS, true) => 'canceladas',
-                default => null,
-            };
+            $grupo = GruposDeSolicitud::de($estado);
             if ($grupo !== null) {
                 $departamentos[$codigo][$grupo] += (int) $fila->cantidad;
             }
             $departamentos[$codigo]['total'] += (int) $fila->cantidad;
 
-            if (in_array($estado, self::EN_MERCADO, true)) {
+            if ($grupo === GruposDeSolicitud::ABIERTAS) {
                 $departamentos[$codigo]['hectareas'] = $departamentos[$codigo]['hectareas']->plus($hectareas);
                 $enMercado = $enMercado->plus($hectareas);
             }
@@ -94,8 +85,57 @@ final class ArmarTableroDeMercado implements LecturaTableroDeMercado
                 array_keys($departamentos),
                 array_values($departamentos),
             ),
+            'por_semana' => $this->porSemana(),
             'pendientes' => $this->pendientes(),
         ];
+    }
+
+    /**
+     * La actividad de las últimas {@see self::SEMANAS} semanas (de lunes a domingo, la actual incluida):
+     * solicitudes publicadas, solicitudes adjudicadas y el precio por hectárea acordado, promedio
+     * ponderado por hectáreas de lo adjudicado esa semana (`null` si no se adjudicó nada con precio).
+     * Todas las semanas aparecen, también las vacías, para que la línea de tiempo no se salte ninguna.
+     *
+     * @return list<array{semana: string, publicadas: int, adjudicadas: int, precio_ha_medio: ?string}>
+     */
+    private function porSemana(): array
+    {
+        $primera = Carbon::now()->startOfWeek()->subWeeks(self::SEMANAS - 1);
+
+        $semanas = [];
+        for ($i = 0; $i < self::SEMANAS; $i++) {
+            $semanas[$primera->copy()->addWeeks($i)->toDateString()] = ['publicadas' => 0, 'adjudicadas' => 0, 'monto' => BigDecimal::zero(), 'hectareas' => BigDecimal::zero()];
+        }
+        $semanaDe = static fn (string $dia): string => Carbon::parse($dia)->startOfWeek()->toDateString();
+
+        $publicadas = DB::table('sol_solicitudes_servicio')
+            ->whereNull('deleted_at')->where('publicada_en', '>=', $primera)
+            ->selectRaw('DATE(publicada_en) as dia, COUNT(*) as cantidad')->groupByRaw('DATE(publicada_en)')->get();
+        foreach ($publicadas as $fila) {
+            $semanas[$semanaDe((string) $fila->dia)]['publicadas'] += (int) $fila->cantidad;
+        }
+
+        $adjudicadas = DB::table('sol_solicitudes_servicio')
+            ->whereNull('deleted_at')->where('adjudicada_en', '>=', $primera)
+            ->selectRaw('DATE(adjudicada_en) as dia, COUNT(*) as cantidad, COALESCE(SUM(precio_ha_acordado * hectareas_solicitadas), 0) as monto, COALESCE(SUM(CASE WHEN precio_ha_acordado IS NULL THEN 0 ELSE hectareas_solicitadas END), 0) as hectareas')
+            ->groupByRaw('DATE(adjudicada_en)')->get();
+        foreach ($adjudicadas as $fila) {
+            $semana = $semanaDe((string) $fila->dia);
+            $semanas[$semana]['adjudicadas'] += (int) $fila->cantidad;
+            $semanas[$semana]['monto'] = $semanas[$semana]['monto']->plus(BigDecimal::of((string) $fila->monto));
+            $semanas[$semana]['hectareas'] = $semanas[$semana]['hectareas']->plus(BigDecimal::of((string) $fila->hectareas));
+        }
+
+        return array_map(
+            static fn (string $semana, array $datos): array => [
+                'semana' => $semana,
+                'publicadas' => $datos['publicadas'],
+                'adjudicadas' => $datos['adjudicadas'],
+                'precio_ha_medio' => $datos['hectareas']->isZero() ? null : (string) $datos['monto']->dividedBy($datos['hectareas'], 2, RoundingMode::HalfUp),
+            ],
+            array_keys($semanas),
+            array_values($semanas),
+        );
     }
 
     /** @return array<string, int> lo que espera una decisión del administrador, por tipo. */

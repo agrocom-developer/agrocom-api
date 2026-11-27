@@ -31,7 +31,8 @@
             />
 
             @php
-                $hayFiltrosActivos = $filtros['lectura'] !== null;
+                $hayFiltrosActivos = ($filtros['lectura'] ?? null) !== null || ($filtros['q'] ?? '') !== '';
+                $filtrosPanelActivos = $filtros['lectura'] !== null ? 1 : 0;
                 $opcionesLectura = collect($lecturas)->mapWithKeys(fn ($clave) => [$clave => __('notificaciones.panel.lectura.'.$clave)])->all();
             @endphp
 
@@ -39,8 +40,9 @@
                 <div class="ag-table-toolbar">
                     <x-organisms.filter-panel
                         :action="route('panel.avisos.index')"
-                        :active-count="$hayFiltrosActivos ? 1 : 0"
+                        :active-count="$filtrosPanelActivos"
                     >
+                        <input type="hidden" name="q" value="{{ $filtros['q'] }}">
                         <x-atoms.select
                             name="lectura"
                             id="filtro-lectura"
@@ -50,6 +52,13 @@
                             :placeholder="__('notificaciones.panel.filtro_todos')"
                         />
                     </x-organisms.filter-panel>
+
+                    <x-molecules.table-search
+                        :action="route('panel.avisos.index')"
+                        :value="$filtros['q']"
+                        :placeholder="__('notificaciones.panel.filtro_busqueda_placeholder')"
+                        :clear-label="__('ui.tabla.buscador_limpiar')"
+                    />
                 </div>
             @endif
 

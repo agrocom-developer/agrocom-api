@@ -83,21 +83,16 @@
                     </a>
                 </li>
             @endif
-            {{-- Tarea 140: en una vista "como otro usuario" el cierre de sesión
-                 no se ofrece — la sesión es del administrador y se sale con
-                 «Volver a mi vista» del banner. --}}
-            @unless (isset($vistaComo))
-                <li>
-                    <button
-                        type="button"
-                        class="dropdown-item ag-user-menu__item ag-user-menu__logout"
-                        data-ag-logout
-                    >
-                        <x-atoms.icon name="logout" size="sm" class="ag-user-menu__icon" />
-                        {{ __('ui.topbar.logout') }}
-                    </button>
-                </li>
-            @endunless
+            <li>
+                <button
+                    type="button"
+                    class="dropdown-item ag-user-menu__item ag-user-menu__logout"
+                    data-ag-logout
+                >
+                    <x-atoms.icon name="logout" size="sm" class="ag-user-menu__icon" />
+                    {{ __('ui.topbar.logout') }}
+                </button>
+            </li>
         </ul>
     </div>
 @endif

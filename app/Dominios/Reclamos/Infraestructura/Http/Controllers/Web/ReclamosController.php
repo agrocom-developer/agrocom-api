@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Reclamos\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Proveedores\Contratos\LecturaProveedores;
 use App\Dominios\Reclamos\Aplicacion\AgregarMensajeDeReclamo;
@@ -53,7 +54,12 @@ final class ReclamosController
 
         $estado = EstadoReclamo::tryFrom(TextoDeFiltro::de($request, 'estado'));
 
+        $busqueda = TextoDeFiltro::de($request, 'q');
+
         $reclamos = Reclamo::query()
+            ->when($busqueda !== '', function ($consulta) use ($busqueda): void {
+                BusquedaTexto::aplicar($consulta, ['detalle'], $busqueda);
+            })
             ->when($estado !== null, fn ($consulta) => $consulta->where('estado', $estado->value))
             ->orderByRaw("CASE estado WHEN 'abierta' THEN 0 WHEN 'en_revision' THEN 1 WHEN 'resuelta' THEN 2 ELSE 3 END")
             ->orderBy('id')
@@ -64,7 +70,7 @@ final class ReclamosController
             ...$this->autorizacion->cascara($request),
             'reclamos' => $reclamos,
             'nombres' => $this->nombresDeProveedores($reclamos->getCollection()->all()),
-            'filtros' => ['estado' => $estado?->value],
+            'filtros' => ['q' => $busqueda, 'estado' => $estado?->value],
             'estadosFiltro' => EstadoReclamo::cases(),
         ]);
     }

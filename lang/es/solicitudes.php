@@ -209,7 +209,7 @@ return [
         'seg_foto_tipo' => ['foto_avance' => 'Foto de avance', 'foto_final' => 'Foto final', 'foto_incidencia' => 'Foto de incidencia'],
         'seg_foto_alt' => ':tipo del :cuando',
         'chat_vacio' => 'Todavía no hay mensajes entre el cliente y el proveedor.',
-        'chat_autor' => ['cliente' => 'Cliente', 'proveedor' => 'Proveedor'],
+        'chat_autor' => ['cliente' => 'Cliente', 'proveedor' => 'Proveedor', 'sistema' => 'Sistema'],
         'historial_titulo' => 'Historial',
         'historial_creada' => 'Solicitud creada',
         'historial_cambio' => 'De «:de» a «:a»',

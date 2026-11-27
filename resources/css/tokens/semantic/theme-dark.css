@@ -12,6 +12,7 @@
     --ag-color-bg-elevated: var(--ag-brand-dark-surface);
     --ag-color-bg-chrome: var(--ag-brand-dark-surface);
     --ag-color-overlay: rgba(0, 0, 0, 0.7);
+    --ag-color-bg-lienzo: color-mix(in srgb, var(--ag-brand-dark-bg) 70%, var(--ag-brand-dark-border) 30%);
 
     /* Texto y bordes */
     --ag-color-text: var(--ag-brand-dark-text);

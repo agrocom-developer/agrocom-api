@@ -52,7 +52,7 @@
                             type="button"
                             data-bs-toggle="modal"
                             data-bs-target="#solicitud-cancelar-modal"
-                            variant="danger-outline"
+                            variant="alert-outline"
                             icon="cancel"
                         >
                             {{ __('solicitudes.panel.cancelar_accion') }}
@@ -72,7 +72,7 @@
                     :title="__('solicitudes.panel.cancelar_titulo', ['id' => $solicitud->id])"
                     :message="__('solicitudes.panel.cancelar_mensaje')"
                     :confirm-label="__('solicitudes.panel.cancelar_accion')"
-                    tone="danger"
+                    tone="alert"
                 >
                     <x-atoms.textarea
                         name="motivo"

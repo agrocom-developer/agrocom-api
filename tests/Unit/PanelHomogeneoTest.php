@@ -109,6 +109,19 @@ function panelHomogeneoFichasSinNombreShow(): array
 }
 
 /**
+ * Listados que no llevan buscador: informes de solo lectura, sin filtros ni paginación,
+ * donde buscar no tiene sentido. Una lista explícita con el motivo, no una adivinanza.
+ *
+ * @return array<string, string> ruta → motivo
+ */
+function panelHomogeneoListadosSinBuscador(): array
+{
+    return [
+        'Metricas/metricas/index.blade.php' => 'ranking de solo lectura: se lee entero, no se filtra',
+    ];
+}
+
+/**
  * Las pantallas que este test evalúa: cada `index` es un listado; el formulario
  * de un directorio es su `_formulario`, o —si no hay partial— su `create` y su
  * `edit` por separado; cada `show` (o lo que liste
@@ -580,42 +593,75 @@ function panelHomogeneoViolacionesListado(string $raiz, array $pantalla): array
         }
     }
 
-    $variantePorIcono = ['edit' => 'warning-outline', 'visibility' => 'info-outline', 'delete' => 'danger-outline'];
-
+    // Las acciones de fila van en `<x-organisms.row-actions>`, que fija el orden y el color:
+    // cada acción es un `<x-molecules.row-action>` dentro del slot con nombre que le toca.
     foreach (panelHomogeneoBloques($blade, 'x-organisms.row-actions') as $acciones) {
         $cuerpo = $acciones['cuerpo'] ?? '';
 
         if (preg_match('/<form\b/', $cuerpo) === 1) {
-            $violaciones[] = '[row-actions] hay un <form> dentro de <x-organisms.row-actions>: el organism repite su slot y el id se duplica; el form va fuera, en la celda.';
+            $violaciones[] = '[row-actions] hay un <form> dentro de <x-organisms.row-actions>: el form va fuera, en la celda.';
         }
 
         if (str_contains($cuerpo, 'x-molecules.confirm-modal')) {
             $violaciones[] = '[row-actions] hay un <x-molecules.confirm-modal> dentro de <x-organisms.row-actions>: el modal va fuera, en la celda.';
         }
 
-        foreach (['x-atoms.button' => 'primary', 'x-molecules.confirm-button' => 'outline'] as $componente => $variantePorOmision) {
-            foreach (panelHomogeneoBloques($cuerpo, $componente) as $boton) {
-                $icono = panelHomogeneoAtributo($boton['atributos'], 'icon');
-                $variante = panelHomogeneoAtributo($boton['atributos'], 'variant');
-                $esperada = $variantePorIcono[$icono] ?? null;
+        if (panelHomogeneoUsa($cuerpo, 'x-atoms.button') || panelHomogeneoUsa($cuerpo, 'x-molecules.confirm-button') || preg_match('/<button\b/', $cuerpo) === 1) {
+            $violaciones[] = '[row-actions] hay un botón suelto dentro de <x-organisms.row-actions>: cada acción es un <x-molecules.row-action kind="…"> en su slot.';
+        }
 
-                if ($esperada !== null && $variante !== $esperada) {
-                    $violaciones[] = sprintf(
-                        '[color-accion] el botón icon="%s" de la fila es variant="%s" (tiene %s): Ver = info-outline, Editar = warning-outline, Eliminar = danger-outline.',
-                        $icono,
-                        $esperada,
-                        $variante === null ? (panelHomogeneoAtributoLigado($boton['atributos'], 'variant') ? 'variant ligado' : $variantePorOmision.' por omisión') : 'variant="'.$variante.'"',
-                    );
+        $sinSlots = $cuerpo;
+        foreach (['ver', 'editar', 'aprobar', 'transiciones', 'eliminar'] as $slot) {
+            $sinSlots = preg_replace('~<x-slot:'.$slot.'\b[^>]*>.*?</x-slot:'.$slot.'>~s', '', $sinSlots) ?? $sinSlots;
+        }
+
+        if (trim(preg_replace('/@(?:if|endif|puede|endpuede|else|elseif|can|endcan)\b(?:\s*\((?:[^()]|\((?:[^()]|\([^()]*\))*\))*\))?/', '', $sinSlots) ?? $sinSlots) !== '') {
+            $violaciones[] = '[row-actions] hay contenido fuera de los slots ver, editar, aprobar, transiciones y eliminar: sin slot una acción no tiene lugar en el orden.';
+        }
+
+        // Cada tipo de acción va solo en su slot: Eliminar nunca entre las transiciones, ni una transición como Ver.
+        $kindPorSlot = ['ver' => ['ver'], 'editar' => ['editar'], 'aprobar' => ['aprobar'], 'transiciones' => ['transicion'], 'eliminar' => ['eliminar']];
+
+        foreach ($kindPorSlot as $slot => $permitidos) {
+            if (preg_match('~<x-slot:'.$slot.'\b[^>]*>(.*?)</x-slot:'.$slot.'>~s', $cuerpo, $coincidencia) !== 1) {
+                continue;
+            }
+
+            foreach (panelHomogeneoBloques($coincidencia[1], 'x-molecules.row-action') as $accion) {
+                $kind = panelHomogeneoAtributo($accion['atributos'], 'kind');
+
+                if (! in_array($kind, $permitidos, true)) {
+                    $violaciones[] = sprintf('[row-actions] <x-molecules.row-action kind="%s"> está en el slot «%s»: ese slot solo admite kind="%s".', $kind ?? '?', $slot, implode('|', $permitidos));
                 }
 
-                // Un `:variant` ligado (p. ej. un ternario editar/ver) no se puede
-                // leer acá: solo se juzga el literal o la omisión.
-                $variantePropia = $variante ?? (panelHomogeneoAtributoLigado($boton['atributos'], 'variant') ? null : $variantePorOmision);
-
-                if (panelHomogeneoAtributo($boton['atributos'], 'size') === 'sm' && $variantePropia === 'primary') {
-                    $violaciones[] = '[color-accion] un botón size="sm" de la fila usa variant="primary": una acción de fila es <tono>-outline.';
+                // El rojo vino (`danger`) es solo de Eliminar: una transición (suspender, bloquear, ocultar) va
+                // en gris y rechazar en `alert`; nunca `tone="danger"`.
+                if ($kind === 'transicion' && panelHomogeneoAtributo($accion['atributos'], 'tone') === 'danger') {
+                    $violaciones[] = '[row-actions] una transición con tone="danger": el rojo vino es solo de Eliminar (suspender va en neutral, rechazar en alert).';
                 }
             }
+        }
+    }
+
+    // Todo listado trae el buscador estándar; con filtros, «Limpiar filtros» (que pinta
+    // `filter-panel` cuando recibe `active-count`) y «Limpiar búsqueda» (`clear-label`).
+    if (! in_array($pantalla['ruta'], array_keys(panelHomogeneoListadosSinBuscador()), true)) {
+        $buscadores = panelHomogeneoBloques($blade, 'x-molecules.table-search');
+
+        if ($buscadores === []) {
+            $violaciones[] = '[buscador] falta <x-molecules.table-search>: todo listado tiene el buscador estándar.';
+        }
+
+        foreach ($buscadores as $buscador) {
+            if (! str_contains($buscador['atributos'], 'clear-label')) {
+                $violaciones[] = '[buscador] <x-molecules.table-search> sin :clear-label: con una búsqueda activa tiene que poder limpiarse.';
+            }
+        }
+    }
+
+    foreach (panelHomogeneoBloques($blade, 'x-organisms.filter-panel') as $panel) {
+        if (! str_contains($panel['atributos'], 'active-count')) {
+            $violaciones[] = '[limpiar-filtros] <x-organisms.filter-panel> sin :active-count: sin él no aparece «Limpiar filtros».';
         }
     }
 
@@ -976,6 +1022,8 @@ function panelHomogeneoReglasSinteticas(string $tipo, string $principal, array $
 const PANEL_HOMOGENEO_LISTADO_CONFORME = <<<'BLADE'
 {{-- El `confirm()` de antes se cambió por un modal; ver confirm-button. --}}
 <x-organisms.page-header :title="__('x.titulo')" />
+<x-organisms.filter-panel :action="route('x.index')" :active-count="0"></x-organisms.filter-panel>
+<x-molecules.table-search :action="route('x.index')" :clear-label="__('x.l')" />
 @if ($cosas->isEmpty())
     <x-molecules.empty-state icon="search_off" :title="__('x.a')" :detail="__('x.b')" />
 @else
@@ -984,9 +1032,9 @@ const PANEL_HOMOGENEO_LISTADO_CONFORME = <<<'BLADE'
             <span role="cell" class="ag-index-table__acciones">
                 <form id="cosa-eliminar" method="POST" action="{{ route('x.destroy') }}"></form>
                 <x-organisms.row-actions>
-                    <x-atoms.button :href="route('x.show')" variant="info-outline" size="sm" icon="visibility">Ver</x-atoms.button>
-                    <x-atoms.button :href="route('x.edit')" variant="warning-outline" size="sm" icon="edit">Editar</x-atoms.button>
-                    <x-molecules.confirm-button :form-id="'cosa-eliminar'" :title="__('x.t')" :message="__('x.m')" :confirm-label="__('x.c')" variant="danger-outline" size="sm" icon="delete">Eliminar</x-molecules.confirm-button>
+                    <x-slot:ver><x-molecules.row-action kind="ver" :href="route('x.show')" icon="visibility" label="Ver" /></x-slot:ver>
+                    <x-slot:editar><x-molecules.row-action kind="editar" :href="route('x.edit')" icon="edit" label="Editar" /></x-slot:editar>
+                    <x-slot:eliminar><x-molecules.row-action kind="eliminar" modal="cosa-eliminar-modal" icon="delete" label="Eliminar" /></x-slot:eliminar>
                 </x-organisms.row-actions>
                 <x-molecules.info-modal id="aviso" :title="__('x.t')">
                     <x-atoms.button :href="route('x.otra')" variant="outline">Ir a otra pantalla</x-atoms.button>
@@ -1028,26 +1076,45 @@ test('las reglas de listado detectan cada incumplimiento', function () {
 BLADE;
 
     expect(panelHomogeneoReglasSinteticas('listado', $defectuoso))
-        ->toBe(['color-accion', 'confirm-nativo', 'empty-state', 'filtros-viejos', 'row-actions']);
+        ->toBe(['buscador', 'confirm-nativo', 'empty-state', 'filtros-viejos', 'row-actions']);
 
     $sinTabla = '<div role="table"><div role="row"></div></div>';
 
     expect(panelHomogeneoReglasSinteticas('listado', $sinTabla))->toContain('index-table')->toContain('empty-state');
 });
 
-test('un botón con :variant ligado no se juzga como primary', function () {
-    $ligado = str_replace(
-        '<x-atoms.button :href="route(\'x.edit\')" variant="warning-outline" size="sm" icon="edit">Editar</x-atoms.button>',
-        '<x-atoms.button :href="route(\'x.edit\')" :variant="$enCurso ? \'warning-outline\' : \'info-outline\'" size="sm" :icon="$enCurso ? \'edit\' : \'visibility\'">Editar</x-atoms.button>',
+test('el buscador y «Limpiar filtros» son parte de las reglas de listado', function () {
+    $sinBuscador = str_replace("<x-molecules.table-search :action=\"route('x.index')\" :clear-label=\"__('x.l')\" />\n", '', PANEL_HOMOGENEO_LISTADO_CONFORME);
+    $sinLimpiar = str_replace(' :active-count="0"', '', PANEL_HOMOGENEO_LISTADO_CONFORME);
+    $buscadorSinLimpiar = str_replace(' :clear-label="__(\'x.l\')"', '', PANEL_HOMOGENEO_LISTADO_CONFORME);
+
+    expect($sinBuscador)->not->toBe(PANEL_HOMOGENEO_LISTADO_CONFORME)
+        ->and(panelHomogeneoReglasSinteticas('listado', $sinBuscador))->toBe(['buscador'])
+        ->and(panelHomogeneoReglasSinteticas('listado', $sinLimpiar))->toBe(['limpiar-filtros'])
+        ->and(panelHomogeneoReglasSinteticas('listado', $buscadorSinLimpiar))->toBe(['buscador']);
+});
+
+test('una acción de fila va en el slot de su tipo y sin botones sueltos', function () {
+    $eliminarEntreTransiciones = str_replace(
+        '<x-slot:eliminar><x-molecules.row-action kind="eliminar" modal="cosa-eliminar-modal" icon="delete" label="Eliminar" /></x-slot:eliminar>',
+        '<x-slot:transiciones><x-molecules.row-action kind="eliminar" modal="cosa-eliminar-modal" icon="delete" label="Eliminar" /></x-slot:transiciones>',
+        PANEL_HOMOGENEO_LISTADO_CONFORME,
+    );
+    $sinSlot = str_replace(
+        '<x-slot:ver><x-molecules.row-action kind="ver" :href="route(\'x.show\')" icon="visibility" label="Ver" /></x-slot:ver>',
+        '<x-molecules.row-action kind="ver" :href="route(\'x.show\')" icon="visibility" label="Ver" />',
         PANEL_HOMOGENEO_LISTADO_CONFORME,
     );
 
-    expect($ligado)->not->toBe(PANEL_HOMOGENEO_LISTADO_CONFORME)
-        ->and(panelHomogeneoReglasSinteticas('listado', $ligado))->toBe([]);
+    expect($eliminarEntreTransiciones)->not->toBe(PANEL_HOMOGENEO_LISTADO_CONFORME)
+        ->and(panelHomogeneoReglasSinteticas('listado', $eliminarEntreTransiciones))->toBe(['row-actions'])
+        ->and($sinSlot)->not->toBe(PANEL_HOMOGENEO_LISTADO_CONFORME)
+        ->and(panelHomogeneoReglasSinteticas('listado', $sinSlot))->toBe(['row-actions']);
 });
 
 test('las reglas de listado siguen los parciales que se incluyen', function () {
     $index = <<<'BLADE'
+<x-molecules.table-search :action="route('x.index')" :clear-label="__('x.l')" />
 <x-molecules.empty-state icon="a" :title="__('x.a')" :detail="__('x.b')" />
 <x-molecules.index-table columns="3rem">
     <div role="row">
@@ -1062,7 +1129,7 @@ BLADE;
 </x-organisms.row-actions>
 BLADE;
 
-    expect(panelHomogeneoReglasSinteticas('listado', $index, ['_acciones.blade.php' => $acciones]))->toBe(['color-accion']);
+    expect(panelHomogeneoReglasSinteticas('listado', $index, ['_acciones.blade.php' => $acciones]))->toBe(['row-actions']);
 });
 
 test('el confirm() nativo de un JS de página también cuenta, pero no el comentado', function () {
@@ -1163,4 +1230,41 @@ test('el lector de etiquetas no se corta en un -> ni confunde componentes con el
         ->and($bloques[1]['cuerpo'])->toBeNull()
         ->and(panelHomogeneoAtributo($bloques[1]['atributos'], 'variant'))->toBe('outline')
         ->and(panelHomogeneoAtributo('modal-icon="x" :icon="y"', 'icon'))->toBeNull();
+});
+
+test('ninguna transición de fila usa el rojo vino: es solo de Eliminar', function () {
+    $transicion = '<x-slot:transiciones><x-molecules.row-action kind="transicion" tone="danger" modal="m" icon="block" label="Suspender" /></x-slot:transiciones>';
+    $listado = str_replace(
+        '<x-slot:eliminar><x-molecules.row-action kind="eliminar" modal="cosa-eliminar-modal" icon="delete" label="Eliminar" /></x-slot:eliminar>',
+        '<x-slot:eliminar><x-molecules.row-action kind="eliminar" modal="cosa-eliminar-modal" icon="delete" label="Eliminar" /></x-slot:eliminar>'.$transicion,
+        PANEL_HOMOGENEO_LISTADO_CONFORME,
+    );
+
+    expect($listado)->not->toBe(PANEL_HOMOGENEO_LISTADO_CONFORME)
+        ->and(panelHomogeneoReglasSinteticas('listado', $listado))->toBe(['row-actions']);
+});
+
+test('en el panel real, solo Eliminar usa variant danger-outline y ninguna transición usa tone danger', function () use ($raizProyecto) {
+    $archivos = array_merge(
+        glob($raizProyecto.'/app/Dominios/*/Infraestructura/Http/Views/pages/**/*.blade.php') ?: [],
+        glob($raizProyecto.'/app/Dominios/*/Infraestructura/Http/Views/pages/*.blade.php') ?: [],
+        glob($raizProyecto.'/resources/views/components/organisms/*.blade.php') ?: [],
+    );
+    $infractores = [];
+
+    foreach ($archivos as $archivo) {
+        $contenido = (string) file_get_contents($archivo);
+        $sinComentarios = preg_replace('/\{\{--.*?--\}\}/s', '', $contenido) ?? $contenido;
+
+        // Única excepción: «Vaciar» las propias notificaciones, que sí es una eliminación (botón del encabezado).
+        if (preg_match('/variant="danger-outline"/', $sinComentarios) === 1 && ! str_contains($archivo, 'pages/notificaciones/index.blade.php')) {
+            $infractores[] = basename($archivo).': danger-outline';
+        }
+
+        if (preg_match('/kind="transicion"[^>]*\btone="danger"/s', $sinComentarios) === 1) {
+            $infractores[] = basename($archivo).': transicion danger';
+        }
+    }
+
+    expect($infractores)->toBe([]);
 });

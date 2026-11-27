@@ -25,7 +25,6 @@ use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RolActivoControl
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\RolesController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\SesionController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\UsuariosController;
-use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\VistaComoController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Web\ClientesController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Web\SolicitudesController as SolicitudesPanelController;
 use Illuminate\Http\Request;
@@ -102,16 +101,6 @@ Route::middleware('auth:interno')->group(function () {
     Route::post('/panel/rol-activo', [RolActivoController::class, 'update'])
         ->name('panel.rol-activo.actualizar');
 
-    // Salida de la vista "como otro usuario" (tarea 140). Sin `rol.activo` por
-    // la misma razón que el cambio de rol: mientras hay una vista abierta, la
-    // sesión guarda el rol activo de la cuenta OBSERVADA, que no es un rol del
-    // administrador — con ese middleware la salida rebotaría al selector. Es
-    // además la única escritura que `AplicarVistaComo` deja pasar en ese modo,
-    // y la única ruta donde ese middleware NO sustituye el guard: la bitácora
-    // tiene que firmar el regreso con el administrador real.
-    Route::post('/vista-como/salir', [VistaComoController::class, 'salir'])
-        ->name('vista-como.salir');
-
     // Selector de rol (GET): misma vía de escape que la ruta de arriba,
     // deliberadamente sin `rol.activo` — ver RolActivoController::create().
     Route::get('/panel/seleccionar-rol', [RolActivoController::class, 'create'])
@@ -168,14 +157,6 @@ Route::middleware('auth:interno')->group(function () {
         // bloquear NO es una baja, sigue vivo — ver AlternarBloqueoUsuario.
         Route::post('/panel/usuarios/{usuario}/bloqueo', [UsuariosController::class, 'alternarBloqueo'])
             ->name('panel.usuarios.bloqueo');
-
-        // Tarea 140: mirar el panel o el portal COMO esta cuenta, en solo
-        // lectura. Permiso propio `seguridad.usuario.ver_como` (solo
-        // el administrador), verificado dentro del controlador contra el ROL
-        // ACTIVO. No cambia nada de la cuenta observada: abre una bandera de
-        // sesión y una fila de bitácora — ver IniciarVistaComo.
-        Route::post('/panel/usuarios/{usuario}/ver-como', [VistaComoController::class, 'iniciar'])
-            ->name('panel.usuarios.ver-como');
 
         // Matriz rol↔permiso de los dos roles del panel (ADR 0046): no se crean
         // ni se eliminan roles. Los permisos `seguridad.rol.*` son reservados al
@@ -438,6 +419,10 @@ Route::middleware('auth:interno')->group(function () {
             ->whereNumber('documento')
             ->middleware('throttle:30,1')
             ->name('panel.documentos.descargar');
+
+        Route::delete('/panel/documentos/{documento}', [DocumentosPanelController::class, 'destroy'])
+            ->whereNumber('documento')
+            ->name('panel.documentos.destroy');
 
         Route::post('/panel/documentos/{documento}/revisar', [DocumentosPanelController::class, 'revisar'])
             ->whereNumber('documento')

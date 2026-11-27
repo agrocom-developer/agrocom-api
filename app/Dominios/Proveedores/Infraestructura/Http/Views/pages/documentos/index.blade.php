@@ -10,10 +10,12 @@
     CascaraPanel, más $documentos (LengthAwarePaginator<Documento>), $etiquetas
     (array<int, string>: nombre del sujeto por documento), $rutaFicha (array),
     $filtros (array{estado: ?string, sujeto_tipo: ?string, tipo: ?string}),
-    $filtroEstadoExplicito (bool), las listas de filtros y $puedeRevisar.
+    las listas de filtros y $puedeRevisar. El filtro por omisión es «En revisión»;
+    «Limpiar filtros» lleva a `?estado=` (todos), no a la URL a secas.
 
     Gateada por `proveedores.documento.ver`, verificado server-side en el
-    controlador; aprobar y rechazar exigen `proveedores.documento.revisar`.
+    controlador; aprobar y rechazar exigen `proveedores.documento.revisar`; eliminar (última acción
+    de la fila, borrado lógico con motivo) exige `proveedores.documento.eliminar`.
     Estilos en resources/css/pages/proveedores.css — cero color hardcodeado
     (CLAUDE.md invariante 11).
 --}}
@@ -49,7 +51,7 @@
             @endif
 
             @php
-                $hayFiltrosActivos = $filtroEstadoExplicito || $filtros['sujeto_tipo'] !== null || $filtros['tipo'] !== null;
+                $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
                 $filtrosPanelActivos = collect(['estado', 'sujeto_tipo', 'tipo'])
                     ->filter(fn ($campo) => $filtros[$campo] !== null && $filtros[$campo] !== '')
                     ->count();
@@ -64,7 +66,9 @@
                     <x-organisms.filter-panel
                         :action="route('panel.documentos.index')"
                         :active-count="$filtrosPanelActivos"
+                        :clear-url="route('panel.documentos.index', ['estado' => ''])"
                     >
+                        <input type="hidden" name="q" value="{{ $filtros['q'] }}">
                         <x-atoms.select
                             name="estado"
                             id="filtro-estado"
@@ -90,6 +94,14 @@
                             :placeholder="__('proveedores.filtro_todos')"
                         />
                     </x-organisms.filter-panel>
+
+                    <x-molecules.table-search
+                        :action="route('panel.documentos.index')"
+                        :value="$filtros['q']"
+                        :placeholder="__('proveedores.documentos.filtro_busqueda_placeholder')"
+                        :clear-label="__('ui.tabla.buscador_limpiar')"
+                        :preserve="['estado' => $filtros['estado'] ?? '', 'sujeto_tipo' => $filtros['sujeto_tipo'], 'tipo' => $filtros['tipo']]"
+                    />
                 </div>
             @endif
 
@@ -135,17 +147,52 @@
                             </span>
                             <span role="cell">{{ $documento->created_at->format('d/m/Y') }}</span>
                             <span role="cell" class="ag-index-table__acciones">
-                                @include('proveedores::pages._acciones-documento', [
-                                    'docId' => $documento->id,
-                                    'docEstado' => $documento->estado->value,
-                                    'docEtiqueta' => __('proveedores.documentos.tipo.'.$documento->tipo->value),
-                                    'puedeVer' => true,
-                                    'puedeRevisar' => $puedeRevisar,
-                                ])
+                                <x-organisms.row-actions>
+                                    <x-slot:ver>
+                                        <x-molecules.row-action
+                                            kind="ver"
+                                            icon="visibility"
+                                            :label="__('proveedores.documentos.revisar_archivo')"
+                                            data-medio-modal="documentos-cola-modal"
+                                            data-medio-clave="d{{ $documento->id }}"
+                                        />
+                                    </x-slot:ver>
+                                    @if ($puedeEliminar)
+                                        <x-slot:eliminar>
+                                            <x-molecules.row-action kind="eliminar" :modal="'documento-eliminar-modal-'.$documento->id" icon="delete" :label="__('proveedores.documentos.eliminar.accion')" />
+                                        </x-slot:eliminar>
+                                    @endif
+                                </x-organisms.row-actions>
+                                @if ($puedeEliminar)
+                                    <form id="documento-eliminar-form-{{ $documento->id }}" method="POST" action="{{ route('panel.documentos.destroy', $documento) }}" hidden>
+                                        @csrf
+                                        @method('DELETE')
+                                    </form>
+                                    <x-molecules.confirm-modal
+                                        :id="'documento-eliminar-modal-'.$documento->id"
+                                        :form-id="'documento-eliminar-form-'.$documento->id"
+                                        :title="__('proveedores.documentos.eliminar.titulo', ['documento' => __('proveedores.documentos.tipo.'.$documento->tipo->value)])"
+                                        :message="__('proveedores.documentos.eliminar.mensaje')"
+                                        :confirm-label="__('proveedores.documentos.eliminar.accion')"
+                                        tone="danger"
+                                    >
+                                        <x-atoms.textarea
+                                            name="motivo"
+                                            :id="'documento-eliminar-motivo-'.$documento->id"
+                                            :form="'documento-eliminar-form-'.$documento->id"
+                                            :label="__('proveedores.aprobacion.motivo_etiqueta')"
+                                            :help="__('proveedores.documentos.eliminar.motivo_ayuda')"
+                                            :rows="3"
+                                            required
+                                        />
+                                    </x-molecules.confirm-modal>
+                                @endif
                             </span>
                         </div>
                     @endforeach
                 </x-molecules.index-table>
+
+                <x-organisms.modal-revision-medio id="documentos-cola-modal" :items="$itemsDocumentos" />
 
                 <x-molecules.pagination :paginator="$documentos" :aria-label="__('proveedores.documentos.paginacion_aria')" />
             @endif
