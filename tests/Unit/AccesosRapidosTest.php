@@ -60,6 +60,7 @@ test('cada acceso lleva ícono, etiqueta y módulo del menú, sin traducir', fun
         'icono' => 'request_quote',
         'etiqueta' => 'menu.solicitudes.items.solicitudes',
         'modulo' => 'menu.solicitudes.label',
+        'tono' => 'info',
     ]]);
 });
 
@@ -112,4 +113,30 @@ test('cada rol con lista propia usa solo rutas que existen en el panel', functio
             expect($rutasRegistradas->contains($ruta))->toBeTrue("«{$rol}» prefiere «{$ruta}», que no existe");
         }
     }
+});
+
+test('cada acceso lleva el tono de su dominio y uno neutro si no tiene', function () {
+    $menu = [moduloMenu('todo', [
+        itemMenu('panel.solicitudes.index'),
+        itemMenu('panel.documentos.index'),
+        itemMenu('panel.disputas.index'),
+        itemMenu('panel.usuarios.index'),
+        itemMenu('panel.bases.index'),
+    ])];
+
+    $tonos = array_column(AccesosRapidos::para('administrador', $menu), 'tono', 'ruta');
+
+    expect($tonos)->toBe([
+        'panel.solicitudes.index' => 'info',
+        'panel.documentos.index' => 'distintivo-1',
+        'panel.disputas.index' => 'warning',
+        'panel.usuarios.index' => 'distintivo-3',
+        'panel.bases.index' => 'neutral',
+    ]);
+});
+
+test('completa con las pantallas del menú cuando la lista preferida no llena los lugares', function () {
+    $menu = [moduloMenu('todo', [itemMenu('panel.usuarios.index'), itemMenu('panel.bitacora.index'), itemMenu('panel.dashboard')])];
+
+    expect(rutasDe(AccesosRapidos::para('administrador', $menu)))->toBe(['panel.usuarios.index', 'panel.bitacora.index']);
 });
