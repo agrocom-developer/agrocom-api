@@ -1,6 +1,6 @@
 # Tiendas de aplicaciones y privacidad de datos personales
 
-**Agrocom SRL · Vigente con las decisiones del dueño del 27/11/2026, pendiente de revisión legal** · Consulta de fuentes: **2026-11-26** · Decisión de fondo: ADR 0047 (eliminación de cuenta, retención, reportar y bloquear, ubicación de emergencia), ADR 0046 (cuentas, verificación y retención), ADR 0040 (ubicación y contacto) · Política hermana de `eliminacion_de_cuenta.md`, `seguimiento_y_privacidad.md`, `verificacion_proveedores.md`, `seguridad.md` y de `legal.md` (términos y privacidad públicos; ese documento vive en la rama `feature/paginas-legales` hasta que se integre en `develop`). **Antes de enviar a las tiendas: sección 6.**
+**Agrocom SRL · Vigente con las decisiones del dueño del 27/11/2026, pendiente de revisión legal** · Consulta de fuentes: **2026-11-26** · Decisión de fondo: ADR 0047 (eliminación de cuenta, retención, reportar y bloquear, ubicación de emergencia), ADR 0046 (cuentas, verificación y retención), ADR 0040 (ubicación y contacto) · Política hermana de `eliminacion_de_cuenta.md`, `seguimiento_y_privacidad.md`, `verificacion_proveedores.md`, `seguridad.md` y de `legal.md` (términos y privacidad públicos de DronAgro, versión 2026-2). **Antes de enviar a las tiendas: sección 6.**
 
 > **Esto no es asesoría legal.** Reúne lo que las tiendas piden hoy y lo que las leyes de la región suelen exigir, para que el dueño llegue a la reunión con un abogado boliviano con las preguntas hechas. Las citas de leyes salen de búsquedas y de textos oficiales leídos en la fecha indicada; donde no pude verificar algo, está marcado **[NO VERIFICADO]**. La fuente de verdad de este tema vive en `agrocom-api`; `agrocom-field` solo lo enlaza. El dueño decidió ajustarse a lo que las tiendas exigen («si son restricción de las tiendas, nos tenemos que ajustar a ellas»): lo que este documento marca como decidido rige como política y se implementa por el plan de tareas de la sección 4.
 
@@ -17,7 +17,7 @@ La investigación encontró nueve puntos donde el diseño no cumplía a las tien
 7. **El mapa** con teselas públicas de OpenStreetMap no es base para una app publicada; la alternativa es una decisión del dueño con tres opciones (1.12).
 8. **Sign in with Apple no aplica** (1.11), la edad mínima es de **18 años** y las declaraciones de Data safety y App Privacy están alineadas con lo anterior (1.4 y 1.8).
 9. **Quién ofrece en una empresa** quedó resuelto (el encargado, con delegación opcional) y no es un tema de las tiendas.
-10. **Textos legales** (términos y privacidad), edad mínima, responsable, contacto, terceros y plazos: se completan con estas decisiones cuando se integre el PR de páginas legales (T3 de la sección 4).
+10. **Textos legales** (términos y privacidad), edad mínima, responsable, terceros, plazos, derechos y responsabilidades: publicados sin aviso de borrador en la versión 2026-2 (T3). Los datos de contacto y de la empresa que faltan son configuración (`config/legal.php`). Los ajustes de código que esos textos suponen están en la sección 7.
 
 ## 1. Lo que cada tienda exige y cómo se aplica a Agrocom
 
@@ -302,7 +302,7 @@ Prioridad: **P0** bloquea el envío a las tiendas; **P1** antes de abrir al púb
 |---|---|---|---|---|---|
 | T1 | **Eliminar mi cuenta**: `POST /api/cuenta/eliminacion` con código al correo y contraseña, estados (`solicitada`, `pospuesta`, `cancelada`, `ejecutada`), gracia de 7 días, anonimización en el lugar, cancelación de ofertas y solicitudes, bloqueo con servicio o reclamo, correos y parámetros. Pantalla en las dos apps (Perfil, Privacidad y datos) con los cinco estados y goldens | api + field | P0 | decidido (ADR 0047 y 0025) | `CLAUDE.md` invariantes 8, 9, 13 y 15; ADR 0046 §33; `eliminacion_de_cuenta.md`; `openapi.yaml`; `DESIGN.md` |
 | T2 | **Página web `/eliminar-cuenta`** (sección 1.6) y cola de solicitudes en el panel (estado, plazo, autor, caso sin acceso al correo) | api | P0 | decidido | ADR 0047; `legal.md`; glosario |
-| T3 | **Completar los textos legales**: quitar los `[POR DEFINIR]`, incluir las tablas de 1.3 y 1.5, la eliminación, la retención B, reportar y bloquear, la ubicación de emergencia, la edad mínima de 18 años y el tercero del mapa, y subir la versión. **Depende de que se integre el PR de páginas legales** (`feature/paginas-legales`) | api | P0 | decidido; espera el PR de páginas legales | `legal.md`, `lang/es/legal.php`, `config/legal.php`; revisión de abogado (sección 3) |
+| T3 | **Completar los textos legales**: quitar los `[POR DEFINIR]`, incluir la eliminación, la retención B, reportar y bloquear, la ubicación de emergencia, la edad mínima de 18 años y el tercero del mapa, y subir la versión | api | P0 | hecho en la versión 2026-2; faltan los datos de contacto y de la empresa (configuración) | `legal.md`, `lang/es/legal.php`, `config/legal.php`; revisión de abogado (sección 3) |
 | T4 | **Dominio y HTTPS en producción**, antes de la URL de privacidad y de la eliminación (sección 6) | api (infraestructura del dueño) | P0 | por hacer por el dueño | ADR 0017; `docs/gestion/entornos.md` |
 | T5 | **Textos de propósito y permisos por app**: Info.plist y manifiestos por flavor (retirar la ubicación del cliente), selfie en el texto de cámara, pantallas de explicación previa | field | P0 | decidido | ADR 0024 y 0025; `DESIGN.md`; `docs/diseno/` |
 | T6 | **Enlaces a términos y privacidad** en el registro y dentro de la app (ajustes de cuenta), contacto de soporte visible y declaración «Soy mayor de 18 años» | field | P0 | decidido | ADR 0024 §14 y 0025 |
@@ -353,8 +353,9 @@ Lista de verificación para el dueño. Lo marcado como «dueño» es infraestruc
 
 **Dependencias de código y textos**
 
-- [ ] **PR de páginas legales** integrado en `develop` (`feature/paginas-legales`): sin él no existen `legal.md`, `lang/es/legal.php` ni `config/legal.php`. Después, T3 actualiza sus textos con la eliminación, la retención B, reportar y bloquear, la ubicación de emergencia, la edad mínima y el mapa, y sube la versión.
-- [ ] **Textos legales revisados por un abogado** (T20) y `LEGAL_BORRADOR=false` en producción.
+- [ ] **Datos de contacto y de la empresa** cargados en el entorno de producción (`LEGAL_CONTACTO_CORREO`, `LEGAL_CONTACTO_TELEFONO`, `LEGAL_RAZON_SOCIAL`, `LEGAL_NIT`, `LEGAL_REPRESENTANTE`, `LEGAL_JURISDICCION` y `LEGAL_RED_*`); las páginas legales los muestran solo si existen.
+- [ ] **Textos legales revisados por un abogado** (T20): un ajuste entra como versión nueva.
+- [ ] Los ajustes P0 de la sección 7 implementados, porque los términos y la política los describen en presente.
 - [ ] `GET /api/legal/vigentes` devuelve las direcciones https y las versiones (`legal.terminos_url`, `legal.privacidad_url`).
 - [ ] T1, T2, T7 y T14 implementados y probados en un entorno con HTTPS.
 
@@ -365,3 +366,31 @@ Lista de verificación para el dueño. Lo marcado como «dueño» es infraestruc
 - [ ] Data safety (las dos apps) y App Privacy (las dos apps) cargados con la tabla de 1.4; edad y público objetivo (1.8).
 - [ ] Cuentas de revisión creadas, aprobadas y con datos de demostración (1.10) y notas para el revisor en inglés, con la ruta de eliminar cuenta y de reportar.
 - [ ] `PrivacyInfo.xcprivacy` y manifiestos de permisos por flavor revisados (T5, T10).
+
+## 7. Términos → ajuste de código
+
+Los términos y la política de privacidad (versión 2026-2) describen el sistema que las tiendas exigen. Esta tabla lista lo que el texto afirma y que el código o el proceso todavía no hacen (o no están verificados); cada fila es una tarea para otra rama y no se implementa con los textos. Estado al 2026-11-27, contra `develop`.
+
+Cómo se alinean las responsabilidades con las tiendas: Agrocom es el nexo y el registro (no presta el servicio operativo, no garantiza resultados ni disponibilidad, no procesa pagos: Apple 3.1 y Google tratan los servicios del mundo real pagados fuera de la app como no sujetos a compra dentro de la app); cada parte responde por lo que controla (proveedor: licencias, seguros, producto, operación; cliente: veracidad del terreno y pago); el contenido de usuarios se rige por reglas, reporte con respuesta a tiempo, bloqueo y moderación (Apple 1.2 y la política de contenido generado por usuarios de Google); y la eliminación se ofrece dentro de la app y por un canal web (Apple 5.1.1(v) y la política de eliminación de Google). Fuentes y fechas de consulta: secciones 1.2 a 1.9 de este documento (2026-11-26).
+
+| Lo que dice el texto | Ajuste de código o de proceso | Repo | Prio | Tarea |
+|---|---|---|---|---|
+| Se puede pedir la eliminación sin entrar a la app (dato de contacto) y en una página web | Página pública `GET /eliminar-cuenta` con código al correo, cola de solicitudes en el panel y caso de oficina; después, mencionar la URL en la sección «Cómo eliminar tu cuenta y tus datos» y subir la versión | api | P0 | T2 |
+| «Eliminar mi cuenta» en Perfil, Privacidad y datos, con confirmación y los cinco estados | Pantalla en las dos apps sobre `/api/cuenta/eliminacion` (la API existe) | field | P0 | T1 |
+| Reportar un mensaje, una conversación o una foto; bloquear a la otra parte; respuesta en 24 horas hábiles; filtro de palabras; soporte lee solo lo reportado | Endpoints y casos de uso de reporte (reclamo de conducta con lectura acotada y constancia de acceso), bloqueo (cierre del chat, mapa, avisos y ofertas) y filtro; pantallas en las apps y cola en el panel. Hoy solo existe `POST /api/calificaciones/{id}/reportar` | api + field | P0 | T7 |
+| Se guarda la versión y la fecha de lo aceptado y se pide aceptar de nuevo si el cambio es de fondo | `sec_aceptaciones`, `GET /api/legal/vigentes` (versiones y URL, con `legal.terminos_url` y `legal.privacidad_url`) y `legal_pendiente` en la sesión; la versión 2026-2 obliga a las cuentas existentes a aceptar. No aparecen en las rutas de `develop` | api + field | P1 | T16 |
+| «Soy mayor de 18 años» al registrarse | Casilla en el registro de las dos apps, guardada con la aceptación | api + field | P1 | T17 |
+| Enlaces a términos y privacidad en el registro y en la app, y contacto de soporte visible | Enlaces en registro y ajustes; leer el contacto desde `config/legal.php` (agregarlo a `GET /api/legal/vigentes`) | api + field | P0 | T6 |
+| La ubicación se pide en contexto, con explicación previa; el piloto la puede desactivar; el cliente no pide ubicación del dispositivo | Pantalla previa al permiso, retiro de `ACCESS_COARSE_LOCATION` y `ACCESS_FINE_LOCATION` del flavor cliente y textos de propósito por flavor | field | P0 | T5 |
+| La ubicación de un SOS o una incidencia se elimina 90 días después de cerrar la incidencia | `PurgarUbicacionDeIncidencias` y SOS del cliente con la ubicación del terreno | api + field | P1 | T14 |
+| Selfie y documento: 90 días sin antecedentes, 12 meses con ellos; registro antifraude de 12 o 36 meses; mensajes y fotos de un servicio, 12 meses tras el plazo de reclamo; aceptaciones, 36 meses | Tareas de purga (`PurgarVerificaciones`, `PurgarRetencionDeServicios`) y los parámetros `retencion.*`; no existen en `develop` | api | P1 | T13 |
+| Los respaldos rotan en 30 días y una restauración reaplica las eliminaciones | Rotación de respaldos y `bin/reaplicar-eliminaciones` (descritos en `docs/seguridad/despliegue.md`); verificar que corren en producción | api (infraestructura) | P1 | T13 |
+| Acceso a los datos y copia en un formato de uso común; respuesta en 30 días | Exportación de los datos propios, canal y cola en el panel con seguimiento del plazo | api | P2 | T15 |
+| «Si un incidente de seguridad afecta tus datos, te avisaremos» | Procedimiento de aviso de incidentes y plantilla de mensaje | api (proceso) | P2 | T19 |
+| Los registros técnicos del servidor y la bitácora se conservan un tiempo limitado | Definir y aplicar un plazo para los registros del servidor y para la bitácora, y luego citarlo en la política | api | P2 | T13 |
+| Un proveedor de mapas recibe la IP y la zona que miras (hoy OpenStreetMap) | Elegir proveedor (1.12), con atribución y `User-Agent`; si cambia, actualizar el texto de «Con qué terceros compartimos datos» | field + api | P1 | T11 |
+| WhatsApp Business y SMS para enviar códigos, «cuando se activan» | Adaptadores de `EnviadorDeCodigo` configurados en producción; mientras no existan, el canal responde `503 canal_no_disponible` | api | P1 | T12 |
+| El almacenamiento privado de archivos en producción es Cloudflare R2 | Confirmar el proveedor real del entorno de producción y ajustar el texto si es otro | api (infraestructura) | P0 | T18 |
+| Las apps y la API usan HTTPS | Dominio y certificado en producción, sin excepciones de certificado en release | api (infraestructura) | P0 | T4 |
+| No hay notificaciones push todavía; las notificaciones del texto son las de la campana y el correo | Si se agrega push (FCM o APNs), declararlo en la política y en Data safety antes de lanzarlo | api + field | P1 | T12 |
+| Cuentas de revisión de las tiendas y notas para el revisor | Cuentas aprobadas con datos de demostración y notas en inglés | api | P0 | T8 |
