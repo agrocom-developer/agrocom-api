@@ -50,9 +50,8 @@ final class PasosDeSolicitudPorMaquina implements PasosDeSolicitud
             montoFinal: $solicitud->monto_final,
             hectareasEjecutadas: $solicitud->hectareas_ejecutadas,
             porcentajeAvance: $solicitud->porcentaje_avance,
-            venceEn: $solicitud->vence_en?->toIso8601String(),
-            ventanaDesde: $solicitud->ventana_desde->toDateString(),
-            ventanaHasta: $solicitud->ventana_hasta->toDateString(),
+            ventanaDesde: $solicitud->ventana_desde?->toDateString(),
+            ventanaHasta: $solicitud->ventana_hasta?->toDateString(),
             departamentoCodigo: $solicitud->departamento_codigo,
             finalizadaEn: $solicitud->finalizada_en?->toIso8601String(),
             cierreSolicitadoEn: $solicitud->cierre_solicitado_en?->toIso8601String(),
@@ -92,23 +91,6 @@ final class PasosDeSolicitudPorMaquina implements PasosDeSolicitud
             'monto_estimado' => MontoDelServicio::monto($solicitud->hectareas_solicitadas, $precioHaAcordado),
             'adjudicada_en' => Carbon::now(),
         ]);
-    }
-
-    public function expirar(int $solicitudId): bool
-    {
-        $solicitud = SolicitudServicio::query()->find($solicitudId);
-
-        if ($solicitud === null || ! $solicitud->estado->enMercado()) {
-            return false;
-        }
-
-        try {
-            $this->estados->transicionar($solicitud, EstadoSolicitud::Expirada, ActorSolicitud::Sistema, null, null, ['expirada_en' => Carbon::now()]);
-        } catch (TransicionSolicitudNoPermitida) {
-            return false;
-        }
-
-        return true;
     }
 
     public function iniciarEjecucion(int $solicitudId, ?int $actorUsuarioId, DateTimeInterface $en): void
@@ -157,12 +139,16 @@ final class PasosDeSolicitudPorMaquina implements PasosDeSolicitud
             'oferta_adjudicada_id' => null,
             'precio_ha_acordado' => null,
             'adjudicada_en' => null,
-            'vence_en' => Carbon::now()->addDays((int) config('negociacion.vigencia_solicitud_dias', 7)),
         ]);
     }
 
-    public function equipoOcupado(int $equipoId, string $ventanaDesde, string $ventanaHasta, int $exceptoSolicitudId): bool
+    public function equipoOcupado(int $equipoId, ?string $ventanaDesde, ?string $ventanaHasta, int $exceptoSolicitudId): bool
     {
+        // Sin fecha deseada no hay rango que comparar: el cruce de fechas no aplica.
+        if ($ventanaDesde === null || $ventanaHasta === null) {
+            return false;
+        }
+
         return SolicitudServicio::query()
             ->where('equipo_id', $equipoId)
             ->whereKeyNot($exceptoSolicitudId)

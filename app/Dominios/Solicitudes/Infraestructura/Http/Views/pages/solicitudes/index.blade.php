@@ -126,7 +126,7 @@
                                 <x-atoms.badge :variant="$solicitud->estado->tono()">{{ __('solicitudes.estado.'.$solicitud->estado->value) }}</x-atoms.badge>
                             </span>
                             <span role="cell" class="ag-solicitudes__cifra">{{ number_format((float) $solicitud->hectareas_solicitadas, 2, ',', '.') }} ha</span>
-                            <span role="cell">{{ $solicitud->ventana_desde->format('d/m') }} – {{ $solicitud->ventana_hasta->format('d/m/Y') }}</span>
+                            <span role="cell">{{ $solicitud->ventana_desde !== null ? $solicitud->ventana_desde->format('d/m').' – '.$solicitud->ventana_hasta->format('d/m/Y') : __('solicitudes.panel.sin_fecha_deseada') }}</span>
                             <span role="cell" class="ag-index-table__acciones">
                                 <x-organisms.row-actions>
                                     <x-atoms.button :href="route('panel.solicitudes.show', $solicitud)" variant="info-outline" size="sm" icon="visibility">

@@ -22,7 +22,7 @@
                     "url": null,
                     "bytes": null,
                     "leido_en": null,
-                    "creado_en": "2026-11-25T17:56:12+00:00"
+                    "creado_en": "2026-11-26T22:09:45+00:00"
                 },
                 {
                     "id": 33,
@@ -36,7 +36,7 @@
                     "url": null,
                     "bytes": null,
                     "leido_en": null,
-                    "creado_en": "2026-11-25T17:56:12+00:00"
+                    "creado_en": "2026-11-26T22:09:45+00:00"
                 },
                 {
                     "id": 34,
@@ -50,7 +50,7 @@
                     "url": null,
                     "bytes": null,
                     "leido_en": null,
-                    "creado_en": "2026-11-25T17:56:12+00:00"
+                    "creado_en": "2026-11-26T22:09:45+00:00"
                 },
                 {
                     "id": 35,
@@ -64,7 +64,7 @@
                     "url": "/api/mensajes/35/archivo",
                     "bytes": 1888,
                     "leido_en": null,
-                    "creado_en": "2026-11-25T17:56:12+00:00"
+                    "creado_en": "2026-11-26T22:09:45+00:00"
                 }
             ],
             "cursor": 35,

@@ -11,7 +11,6 @@ use App\Dominios\Negociacion\Aplicacion\CancelarComoProveedor;
 use App\Dominios\Negociacion\Aplicacion\Mensajeria;
 use App\Dominios\Negociacion\Aplicacion\Negociar;
 use App\Dominios\Negociacion\Aplicacion\PreferenciasDeAviso;
-use App\Dominios\Negociacion\Aplicacion\ProcesarNegociacion;
 use App\Dominios\Negociacion\Aplicacion\Seguimiento;
 use App\Dominios\Negociacion\Aplicacion\UbicacionDelPiloto;
 use App\Dominios\Negociacion\Infraestructura\Eloquent\Oferta;
@@ -37,7 +36,7 @@ use Ramsey\Uuid\Uuid;
  * espacian en el tiempo, así que los plazos y las marcas de hora son relativos a `now()`.
  *
  * Idempotente: cada solicitud lleva un `uuid_cliente` determinista; volver a sembrar no duplica
- * nada. {@see RenovarVigenciaDemoSeeder} renueva las vigencias para que la demo siga viva días después.
+ * nada. {@see RenovarVigenciaDemoSeeder} renueva el plazo de las ofertas para que la demo siga viva días después.
  *
  * Los clientes y proveedores salen de {@see ProveedoresDemoSeeder}: cuatro equipos (Agrocom con
  * Rodrigo y Valeria, Mamani con Carlos, Fumigaciones del Oriente con Marcelo).
@@ -86,7 +85,6 @@ class NegociacionDemoSeeder extends Seeder
         private readonly Mensajeria $mensajeria,
         private readonly UbicacionDelPiloto $ubicacion,
         private readonly CancelarComoProveedor $cancelarComoProveedor,
-        private readonly ProcesarNegociacion $procesar,
         private readonly PreferenciasDeAviso $preferencias,
     ) {}
 
@@ -283,7 +281,7 @@ class NegociacionDemoSeeder extends Seeder
         }, ventana: [-6, -5]);
     }
 
-    /** Canceladas y expiradas: sin penalidad en dinero. */
+    /** Cancelada, reabierta y una abierta sin trato: sin penalidad en dinero. */
     private function cerradasSinServicio(): void
     {
         $this->solicitud('neg-cancelada', 'luis.antelo', 'La Esperanza', 50, '119', hace: 70, despues: function (int $id): void {
@@ -297,10 +295,8 @@ class NegociacionDemoSeeder extends Seeder
             $this->tras(12, fn () => $this->cancelarComoProveedor->ejecutar($this->usuarios['carlos.mamani'], $id, 'El dron entró a mantenimiento y no llego a la fecha.'));
         }, ventana: [12, 15]);
 
-        // Expirada: nadie ofertó en la vigencia; el cliente aún puede renovarla.
-        $this->solicitud('neg-expirada', 'coop.valle.grande', 'Parcela Central', 55, '100', hace: 9 * 24, despues: function (): void {
-            $this->tras(0, fn () => $this->procesar->ejecutar(Carbon::now()));
-        });
+        // Sin trato: lleva nueve días abierta, nadie ofertó y no pidió fecha. No vence: sigue en el mercado hasta que se adjudique o el cliente la cancele.
+        $this->solicitud('neg-sin-trato', 'coop.valle.grande', 'Parcela Central', 55, '100', hace: 9 * 24, ventana: null);
     }
 
     // ── Piezas de los escenarios ─────────────────────────────────────────────
@@ -309,7 +305,7 @@ class NegociacionDemoSeeder extends Seeder
      * Crea la solicitud con el reloj simulado `hace` horas atrás, la abre y corre `$despues`.
      *
      * @param  (callable(int): void)|null  $despues
-     * @param  array{0: int, 1: int}  $ventana  fecha deseada: días desde hoy, de inicio y de fin
+     * @param  array{0: int, 1: int}|null  $ventana  fecha deseada (opcional): días desde hoy, de inicio y de fin
      */
     private function solicitud(
         string $clave,
@@ -324,7 +320,7 @@ class NegociacionDemoSeeder extends Seeder
         bool $urgente = false,
         ?string $observaciones = null,
         ?callable $despues = null,
-        array $ventana = [2, 9],
+        ?array $ventana = [2, 9],
     ): ?SolicitudServicio {
         $uuid = $this->uuid($clave);
 
@@ -342,8 +338,8 @@ class NegociacionDemoSeeder extends Seeder
             'hectareas_solicitadas' => (string) $hectareas,
             'producto_indicado' => $producto,
             // Días contados desde la hora real de la siembra: cada equipo ocupa fechas distintas.
-            'ventana_desde' => $this->origen()->copy()->addDays($ventana[0])->toDateString(),
-            'ventana_hasta' => $this->origen()->copy()->addDays($ventana[1])->toDateString(),
+            'ventana_desde' => $ventana === null ? null : $this->origen()->copy()->addDays($ventana[0])->toDateString(),
+            'ventana_hasta' => $ventana === null ? null : $this->origen()->copy()->addDays($ventana[1])->toDateString(),
             'precio_ha_propuesto' => $precio,
             'urgente' => $urgente,
             'observaciones' => $observaciones,

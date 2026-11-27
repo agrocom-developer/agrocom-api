@@ -9,31 +9,21 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 
 /**
- * Mantiene la demo viva al volver a sembrar: las solicitudes que siguen abiertas recuperan su
- * vigencia, las ofertas vigentes recuperan sus horas de plazo y las ventanas de fechas caducadas
- * vuelven a quedar hacia adelante. Todo es relativo a `now()`, así que correr `bin/demo seed` días
+ * Mantiene la demo viva al volver a sembrar: las ofertas vigentes recuperan sus horas de plazo y
+ * las fechas deseadas ya pasadas vuelven a quedar hacia adelante. La solicitud no tiene vigencia,
+ * así que no hay nada que renovar en ella. Todo es relativo a `now()`, así que correr `bin/demo seed` días
  * después deja el mismo recorrido que el primer día.
  *
- * Lo ya terminado (finalizado, calificado, cancelado, expirado, disputado) no se toca.
+ * Lo ya terminado (finalizado, calificado, cancelado, disputado) no se toca.
  */
 class RenovarVigenciaDemoSeeder extends Seeder
 {
     /** Horas de plazo que recupera cada oferta vigente. */
     public const HORAS_DE_OFERTA = 24;
 
-    /** Días de vigencia que recupera cada solicitud abierta. */
-    public const DIAS_DE_SOLICITUD = 5;
-
     public function run(): void
     {
         $ahora = Carbon::now();
-
-        $abiertas = array_map(fn (EstadoSolicitud $e): string => $e->value, [EstadoSolicitud::Abierta, EstadoSolicitud::ConOfertas]);
-
-        SolicitudServicio::query()
-            ->whereIn('estado', $abiertas)
-            ->where('vence_en', '<', $ahora->copy()->addDays(2))
-            ->update(['vence_en' => $ahora->copy()->addDays(self::DIAS_DE_SOLICITUD)]);
 
         Oferta::query()
             ->where('estado', 'vigente')

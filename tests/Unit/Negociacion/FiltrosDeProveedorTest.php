@@ -211,7 +211,7 @@ function fpAvisados(ProveedoresFalsos $lectura, ?string $departamento = null, st
     $avisados = [];
 
     Event::fake([AvisoDeNegociacion::class]);
-    app(AvisarNuevaSolicitud::class)->handle(new SolicitudAbierta(5, 1, FP_CLIENTE, $hectareas, '120.0000', false, $tipo, $departamento));
+    app(AvisarNuevaSolicitud::class)->handle(new SolicitudAbierta(5, 1, FP_CLIENTE, $hectareas, '120.0000', $tipo, $departamento));
     Event::assertDispatched(AvisoDeNegociacion::class, function (AvisoDeNegociacion $aviso) use (&$avisados): bool {
         $avisados = $aviso->usuarios;
 
@@ -231,7 +231,7 @@ test('el aviso de nueva solicitud llega solo a cuentas disponibles que los filtr
     app(PreferenciasDeAviso::class)->guardar(FP_TITULAR, ['nuevas_solicitudes' => ['departamentos_excluidos' => ['09']]]);
     Event::fake([AvisoDeNegociacion::class]);
     app()->instance(LecturaProveedores::class, $lectura);
-    app(AvisarNuevaSolicitud::class)->handle(new SolicitudAbierta(6, 1, FP_CLIENTE, '100', '120.0000', false, 'herbicida', '09'));
+    app(AvisarNuevaSolicitud::class)->handle(new SolicitudAbierta(6, 1, FP_CLIENTE, '100', '120.0000', 'herbicida', '09'));
     Event::assertNotDispatched(AvisoDeNegociacion::class);
 
     // El filtro nunca se relaja: sin oferta y aunque pase el tiempo, quien excluyó Pando no recibe Pando.
@@ -253,7 +253,7 @@ test('un proveedor ocupado o en trabajo no recibe el aviso; el piloto ocupado si
         $empresa = new DatosProveedor(1, FP_TITULAR, 'tercero', 'Empresa', 'aprobado', disponibilidad: $estado);
         Event::fake([AvisoDeNegociacion::class]);
         app()->instance(LecturaProveedores::class, new ProveedoresFalsos([1 => $empresa], [11 => $piloto]));
-        app(AvisarNuevaSolicitud::class)->handle(new SolicitudAbierta(7, 1, FP_CLIENTE, '100', '120.0000', false, 'herbicida'));
+        app(AvisarNuevaSolicitud::class)->handle(new SolicitudAbierta(7, 1, FP_CLIENTE, '100', '120.0000', 'herbicida'));
 
         // Con la empresa no disponible no avisa a ningún piloto suyo, aunque el piloto esté disponible.
         Event::assertNotDispatched(AvisoDeNegociacion::class);

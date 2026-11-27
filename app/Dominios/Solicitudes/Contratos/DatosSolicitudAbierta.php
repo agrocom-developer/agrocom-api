@@ -26,12 +26,11 @@ final readonly class DatosSolicitudAbierta
         public string $tipoAplicacion,
         public string $productoIndicado,
         public string $aportaProducto,
-        public string $ventanaDesde,
-        public string $ventanaHasta,
+        public ?string $ventanaDesde,
+        public ?string $ventanaHasta,
         public bool $urgente,
         public ?string $observaciones,
         public ?string $publicadaEn,
-        public ?string $venceEn,
         public ?array $terreno,
     ) {}
 }

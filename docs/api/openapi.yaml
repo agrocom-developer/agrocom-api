@@ -1619,7 +1619,7 @@ paths:
         -
           name: fecha_hasta
           in: query
-          description: 'Ventana deseada que empieza antes de esa fecha.'
+          description: 'Ventana deseada que empieza antes de esa fecha; las solicitudes sin fecha deseada siempre entran.'
           required: false
           schema:
             type: string
@@ -4604,7 +4604,7 @@ paths:
       tags:
         - Solicitudes
       summary: 'Mis solicitudes e historial'
-      description: 'Las solicitudes del cliente de la cuenta, de la más nueva a la más vieja. `vista=activas` deja las que siguen vivas; `vista=historial`, las que terminaron (`calificada`, `cancelada` o `expirada`). `estado` filtra por un estado exacto.'
+      description: 'Las solicitudes del cliente de la cuenta, de la más nueva a la más vieja. `vista=activas` deja las que siguen vivas; `vista=historial`, las que terminaron (`calificada` o `cancelada`). `estado` filtra por un estado exacto.'
       operationId: listarSolicitudes
       parameters:
         -
@@ -4681,8 +4681,6 @@ paths:
                 - tipo_aplicacion
                 - hectareas_solicitadas
                 - producto_indicado
-                - ventana_desde
-                - ventana_hasta
               properties:
                 uuid_cliente:
                   type: string
@@ -4720,13 +4718,15 @@ paths:
                     - cliente
                     - proveedor
                 ventana_desde:
-                  description: 'Fecha deseada: inicio de la ventana.'
+                  description: 'Fecha deseada (opcional): inicio de la ventana. Va junto con `ventana_hasta`; no vence nada y no puede estar más allá de la anticipación máxima (365 días).'
                   type: string
                   format: date
+                  nullable: true
                 ventana_hasta:
-                  description: 'Fecha deseada: fin de la ventana.'
+                  description: 'Fecha deseada (opcional): fin de la ventana.'
                   type: string
                   format: date
+                  nullable: true
                 urgente:
                   type: boolean
                   nullable: true
@@ -4851,7 +4851,7 @@ paths:
       tags:
         - Solicitudes
       summary: 'Abrir una solicitud al mercado'
-      description: 'Abre la solicitud a los pilotos: `borrador` pasa a `abierta`, con su vigencia (7 días) y visible en el mapa. Exige precio por hectárea propuesto, hectáreas que no superen las del terreno, fecha deseada no pasada, un teléfono en la cuenta y que el terreno tenga departamento y provincia coherentes entre sí; esa ubicación (más municipio y comunidad) se congela en la solicitud. Avisa a los pilotos cuyas preferencias coinciden con las hectáreas. Una solicitud `expirada` se renueva igual, dentro del plazo de renovación.'
+      description: 'Abre la solicitud a los pilotos: `borrador` pasa a `abierta` y queda visible en el mapa hasta que se adjudica o el cliente la cancela: la solicitud no vence sola. Exige precio por hectárea propuesto, hectáreas que no superen las del terreno, un teléfono en la cuenta, que el terreno tenga departamento y provincia coherentes entre sí y, si lleva fecha deseada, que no haya pasado; esa ubicación (más municipio y comunidad) se congela en la solicitud. Avisa a los pilotos cuyas preferencias coinciden con las hectáreas.'
       operationId: publicarSolicitud
       parameters:
         -
@@ -4990,47 +4990,6 @@ paths:
           description: 'No existe o es de otro cliente.'
         422:
           description: 'Precio inválido o la solicitud ya no admite el cambio.'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorValidacion'
-      security:
-        -
-          tokenDispositivo: []
-  '/api/solicitudes/{id}/renovar':
-    post:
-      tags:
-        - Solicitudes
-      summary: 'Renovar una solicitud expirada'
-      description: 'Vuelve a abrir una solicitud `expirada`, dentro del plazo de renovación (30 días). Nueva vigencia; las ofertas anteriores siguen cerradas.'
-      operationId: renovarSolicitud
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        200:
-          description: 'Solicitud abierta de nuevo.'
-          content:
-            application/json:
-              schema:
-                required:
-                  - solicitud
-                properties:
-                  solicitud:
-                    $ref: '#/components/schemas/SolicitudServicio'
-                type: object
-        401:
-          description: 'Token ausente o revocado.'
-        403:
-          description: 'El rol del token no es de cliente.'
-        404:
-          description: 'No existe o es de otro cliente.'
-        422:
-          description: 'No está expirada o pasó el plazo de renovación.'
           content:
             application/json:
               schema:
@@ -5977,11 +5936,14 @@ components:
         tipo_aplicacion:
           type: string
         ventana_desde:
+          description: 'Fecha deseada (opcional; nulo si el cliente no pidió fecha).'
           type: string
           format: date
+          nullable: true
         ventana_hasta:
           type: string
           format: date
+          nullable: true
         ofertas_vigentes:
           description: 'Cuántas ofertas vigentes tiene (sin sus precios).'
           type: integer
@@ -5994,10 +5956,6 @@ components:
           type: string
           nullable: true
         publicada_en:
-          type: string
-          format: date-time
-          nullable: true
-        vence_en:
           type: string
           format: date-time
           nullable: true
@@ -6692,8 +6650,6 @@ components:
         - hectareas_solicitadas
         - producto_indicado
         - aporta_producto
-        - ventana_desde
-        - ventana_hasta
         - urgente
         - terreno
         - updated_at
@@ -6738,13 +6694,16 @@ components:
             - cliente
             - proveedor
         ventana_desde:
+          description: 'Fecha deseada (opcional; nulo si el cliente no pidió fecha).'
           type: string
           format: date
           example: '2026-12-01'
+          nullable: true
         ventana_hasta:
           type: string
           format: date
           example: '2026-12-10'
+          nullable: true
         urgente:
           type: boolean
           example: false
@@ -7322,8 +7281,6 @@ components:
         - hectareas_solicitadas
         - producto_indicado
         - aporta_producto
-        - ventana_desde
-        - ventana_hasta
         - urgente
         - estado
       properties:
@@ -7367,13 +7324,17 @@ components:
             - cliente
             - proveedor
         ventana_desde:
+          description: 'Fecha deseada de fumigación: inicio. Opcional; no vence nada (nulo si el cliente no pidió fecha).'
           type: string
           format: date
           example: '2026-12-01'
+          nullable: true
         ventana_hasta:
+          description: 'Fecha deseada de fumigación: fin. Opcional.'
           type: string
           format: date
           example: '2026-12-10'
+          nullable: true
         urgente:
           type: boolean
           example: false
@@ -7417,14 +7378,9 @@ components:
             - finalizada
             - calificada
             - cancelada
-            - expirada
             - disputada
         oferta_adjudicada_id:
           type: integer
-          nullable: true
-        vence_en:
-          type: string
-          format: date-time
           nullable: true
         proveedor_id:
           type: integer
@@ -7604,7 +7560,7 @@ tags:
     description: 'El proveedor ofrece su precio por hectárea, cada parte contraoferta a la otra y el cliente elige: aceptar una oferta adjudica la solicitud.'
   -
     name: Preferencias
-    description: 'Qué avisos recibe la cuenta. Las categorías obligatorias (adjudicación, cierre, expiración, cuenta y aprobación, reclamos, emergencias) no aparecen y no se pueden desactivar.'
+    description: 'Qué avisos recibe la cuenta. Las categorías obligatorias (adjudicación, cierre, cuenta y aprobación, reclamos, emergencias) no aparecen y no se pueden desactivar.'
   -
     name: Seguimiento
     description: 'Inicio, avance con fotos, cierre y ubicación del piloto. El piloto solo sube fotos y marca el avance; lo operativo se acuerda en persona.'

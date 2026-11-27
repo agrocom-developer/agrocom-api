@@ -12,7 +12,7 @@ use App\Dominios\Solicitudes\Contratos\Eventos\SolicitudAbierta;
 /**
  * Al abrirse una solicitud avisa a cada cuenta de proveedor aprobada y disponible cuyos filtros
  * la dejan pasar (`negociacion-contrato.md` §7; el departamento filtra desde que la solicitud lo trae). Una solicitud avisa
- * a una cuenta una sola vez: la clave del aviso es la solicitud, así que renovarla no repite.
+ * a una cuenta una sola vez: la clave del aviso es la solicitud, así que un nuevo aviso de la misma solicitud no repite.
  * Es el incentivo para que los pilotos reciban ofertas de trabajo sin abrir la app.
  */
 final class AvisarNuevaSolicitud

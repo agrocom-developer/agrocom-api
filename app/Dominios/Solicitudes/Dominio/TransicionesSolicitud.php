@@ -13,14 +13,13 @@ final class TransicionesSolicitud
     /** @var array<string, list<EstadoSolicitud>> */
     private const array PERMITIDAS = [
         'borrador' => [EstadoSolicitud::Abierta, EstadoSolicitud::Cancelada],
-        'abierta' => [EstadoSolicitud::ConOfertas, EstadoSolicitud::Adjudicada, EstadoSolicitud::Expirada, EstadoSolicitud::Cancelada],
-        'con_ofertas' => [EstadoSolicitud::Abierta, EstadoSolicitud::Adjudicada, EstadoSolicitud::Expirada, EstadoSolicitud::Cancelada],
+        'abierta' => [EstadoSolicitud::ConOfertas, EstadoSolicitud::Adjudicada, EstadoSolicitud::Cancelada],
+        'con_ofertas' => [EstadoSolicitud::Abierta, EstadoSolicitud::Adjudicada, EstadoSolicitud::Cancelada],
         'adjudicada' => [EstadoSolicitud::EnEjecucion, EstadoSolicitud::Abierta, EstadoSolicitud::Cancelada],
         'en_ejecucion' => [EstadoSolicitud::Finalizada],
         'finalizada' => [EstadoSolicitud::Calificada, EstadoSolicitud::Disputada],
         'calificada' => [EstadoSolicitud::Disputada],
         'disputada' => [EstadoSolicitud::Finalizada, EstadoSolicitud::Calificada, EstadoSolicitud::Cancelada],
-        'expirada' => [EstadoSolicitud::Abierta],
         'cancelada' => [],
     ];
 

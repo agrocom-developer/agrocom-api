@@ -9,7 +9,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 /**
  * Solicitudes del cliente de la cuenta, de la más nueva a la más vieja
  * (`GET /solicitudes`). `vista` separa lo que sigue vivo (`activas`) del
- * historial: las que terminaron, `completada` o `cancelada`.
+ * historial: las que terminaron, `calificada` o `cancelada`.
  */
 final class ListarSolicitudesDelCliente
 {
@@ -23,7 +23,7 @@ final class ListarSolicitudesDelCliente
     public function ejecutar(int $usuarioId, ?string $vista = null, ?EstadoSolicitud $estado = null, int $porPagina = 20): LengthAwarePaginator
     {
         $cliente = $this->clientes->resolver($usuarioId);
-        $terminales = [EstadoSolicitud::Calificada->value, EstadoSolicitud::Cancelada->value, EstadoSolicitud::Expirada->value];
+        $terminales = [EstadoSolicitud::Calificada->value, EstadoSolicitud::Cancelada->value];
 
         return SolicitudServicio::query()
             ->where('cliente_id', $cliente->id)

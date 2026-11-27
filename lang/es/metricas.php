@@ -19,7 +19,7 @@ return [
 
     'seccion_mercado' => 'Mercado',
     'solicitudes' => 'Solicitudes publicadas',
-    'solicitudes_pie' => ':sin expiradas sin adjudicar',
+    'solicitudes_pie' => ':abiertas siguen abiertas sin adjudicar',
     'tasa_adjudicacion' => 'Tasa de adjudicación',
     'tasa_adjudicacion_pie' => ':adjudicadas adjudicadas',
     'tiempo_aceptacion' => 'Tiempo hasta la adjudicación',

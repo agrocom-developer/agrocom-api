@@ -20,7 +20,7 @@ Schedule::command('proveedores:vencimientos')
 
 /*
  * Negociación (`negociacion-contrato.md` §1): cada minuto vence las ofertas sin respuesta, reevalúa
- * las solicitudes que se quedaron sin ofertas y expira las que pasaron su vigencia. Idempotente;
+ * las solicitudes que se quedaron sin ofertas (la solicitud no vence). Idempotente;
  * sin solaparse consigo mismo. Cada hora avisa a las partes de un servicio en ejecución sin avance.
  */
 Schedule::command('negociacion:procesar')

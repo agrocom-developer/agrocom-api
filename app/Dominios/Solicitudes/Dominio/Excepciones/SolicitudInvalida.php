@@ -62,6 +62,11 @@ final class SolicitudInvalida extends RuntimeException
         return new self(Texto::de('solicitudes.errores.ventana_vencida'), false, 'ventana_hasta');
     }
 
+    public static function ventanaFueraDeRango(int $maximoDias): self
+    {
+        return new self(Texto::de('solicitudes.errores.ventana_fuera_de_rango', ['dias' => $maximoDias]), false, 'ventana_hasta');
+    }
+
     /** El terreno de la solicitud no tiene departamento: no se puede publicar sin ubicación (ADR 0045). */
     public static function terrenoSinDepartamento(): self
     {
@@ -112,11 +117,6 @@ final class SolicitudInvalida extends RuntimeException
     public static function precioNoEditable(): self
     {
         return new self(Texto::de('solicitudes.errores.precio_no_editable'));
-    }
-
-    public static function noRenovable(): self
-    {
-        return new self(Texto::de('solicitudes.errores.no_renovable'));
     }
 
     public static function fotosDeTerrenoLlenas(int $maximo): self

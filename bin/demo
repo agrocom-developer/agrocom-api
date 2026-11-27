@@ -6,7 +6,7 @@
 # simulador o en un teléfono. Ver docs/gestion/demo-local.md.
 #
 #   bin/demo up      # postgres en docker + migra + siembra + sirve la API
-#   bin/demo seed    # (re)siembra catálogo y demo; renueva la vigencia de lo abierto
+#   bin/demo seed    # (re)siembra catálogo y demo; renueva el plazo de las ofertas abiertas
 #   bin/demo reset   # borra la base, migra y siembra de cero
 #   bin/demo down    # detiene la API y el postgres (conserva los datos)
 #   bin/demo down --borrar   # además elimina el contenedor y sus datos

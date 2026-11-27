@@ -11,13 +11,13 @@
         "cuerpo": {
             "data": [
                 {
-                    "id": 184,
+                    "id": 183,
                     "tipo": "nueva_solicitud_abierta",
                     "titulo": "Nueva solicitud #18 de 100.0000 ha, a 125.0000 por hectárea. Revísala en el mapa y ofrece tu precio.",
                     "recurso_tipo": "solicitud",
                     "recurso_id": 18,
                     "leida": false,
-                    "creada_en": "2026-11-26T21:55:58+00:00"
+                    "creada_en": "2026-11-26T22:09:43+00:00"
                 },
                 {
                     "id": 5,
@@ -26,7 +26,7 @@
                     "recurso_tipo": "dron",
                     "recurso_id": 4,
                     "leida": false,
-                    "creada_en": "2026-11-26T21:55:46+00:00"
+                    "creada_en": "2026-11-26T22:09:34+00:00"
                 },
                 {
                     "id": 4,
@@ -35,7 +35,7 @@
                     "recurso_tipo": "piloto",
                     "recurso_id": 3,
                     "leida": false,
-                    "creada_en": "2026-11-26T21:55:45+00:00"
+                    "creada_en": "2026-11-26T22:09:33+00:00"
                 },
                 {
                     "id": 3,
@@ -44,7 +44,7 @@
                     "recurso_tipo": "proveedor",
                     "recurso_id": 2,
                     "leida": false,
-                    "creada_en": "2026-11-26T21:55:45+00:00"
+                    "creada_en": "2026-11-26T22:09:33+00:00"
                 },
                 {
                     "id": 34,
@@ -53,7 +53,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 5,
                     "leida": false,
-                    "creada_en": "2026-11-26T20:55:51+00:00"
+                    "creada_en": "2026-11-26T21:09:37+00:00"
                 },
                 {
                     "id": 29,
@@ -62,7 +62,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 4,
                     "leida": false,
-                    "creada_en": "2026-11-26T19:55:50+00:00"
+                    "creada_en": "2026-11-26T20:09:37+00:00"
                 },
                 {
                     "id": 19,
@@ -71,7 +71,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 2,
                     "leida": false,
-                    "creada_en": "2026-11-26T16:55:50+00:00"
+                    "creada_en": "2026-11-26T17:09:37+00:00"
                 },
                 {
                     "id": 48,
@@ -80,7 +80,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 6,
                     "leida": false,
-                    "creada_en": "2026-11-26T13:55:50+00:00"
+                    "creada_en": "2026-11-26T14:09:37+00:00"
                 },
                 {
                     "id": 24,
@@ -89,7 +89,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 3,
                     "leida": false,
-                    "creada_en": "2026-11-26T12:55:50+00:00"
+                    "creada_en": "2026-11-26T13:09:37+00:00"
                 },
                 {
                     "id": 80,
@@ -98,7 +98,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 9,
                     "leida": false,
-                    "creada_en": "2026-11-26T05:55:50+00:00"
+                    "creada_en": "2026-11-26T06:09:37+00:00"
                 },
                 {
                     "id": 51,
@@ -107,7 +107,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 7,
                     "leida": false,
-                    "creada_en": "2026-11-26T01:55:51+00:00"
+                    "creada_en": "2026-11-26T02:09:38+00:00"
                 },
                 {
                     "id": 77,
@@ -116,7 +116,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 9,
                     "leida": false,
-                    "creada_en": "2026-11-26T01:55:50+00:00"
+                    "creada_en": "2026-11-26T02:09:37+00:00"
                 },
                 {
                     "id": 73,
@@ -125,7 +125,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 9,
                     "leida": false,
-                    "creada_en": "2026-11-25T19:55:52+00:00"
+                    "creada_en": "2026-11-25T20:09:38+00:00"
                 },
                 {
                     "id": 118,
@@ -134,7 +134,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 12,
                     "leida": false,
-                    "creada_en": "2026-11-25T16:55:50+00:00"
+                    "creada_en": "2026-11-25T17:09:37+00:00"
                 },
                 {
                     "id": 99,
@@ -143,16 +143,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 11,
                     "leida": false,
-                    "creada_en": "2026-11-25T15:55:53+00:00"
-                },
-                {
-                    "id": 39,
-                    "tipo": "nueva_solicitud_abierta",
-                    "titulo": "Nueva solicitud #6 de 100.0000 ha, a 125.0000 por hectárea. Revísala en el mapa y ofrece tu precio.",
-                    "recurso_tipo": "solicitud",
-                    "recurso_id": 6,
-                    "leida": false,
-                    "creada_en": "2026-11-25T15:55:51+00:00"
+                    "creada_en": "2026-11-25T16:09:39+00:00"
                 },
                 {
                     "id": 172,
@@ -161,7 +152,16 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 16,
                     "leida": false,
-                    "creada_en": "2026-11-25T15:55:50+00:00"
+                    "creada_en": "2026-11-25T16:09:37+00:00"
+                },
+                {
+                    "id": 39,
+                    "tipo": "nueva_solicitud_abierta",
+                    "titulo": "Nueva solicitud #6 de 100.0000 ha, a 125.0000 por hectárea. Revísala en el mapa y ofrece tu precio.",
+                    "recurso_tipo": "solicitud",
+                    "recurso_id": 6,
+                    "leida": false,
+                    "creada_en": "2026-11-25T16:09:37+00:00"
                 },
                 {
                     "id": 169,
@@ -170,7 +170,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 16,
                     "leida": false,
-                    "creada_en": "2026-11-25T09:55:56+00:00"
+                    "creada_en": "2026-11-25T10:09:41+00:00"
                 },
                 {
                     "id": 58,
@@ -179,7 +179,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 8,
                     "leida": false,
-                    "creada_en": "2026-11-25T05:55:52+00:00"
+                    "creada_en": "2026-11-25T06:09:38+00:00"
                 },
                 {
                     "id": 83,
@@ -188,7 +188,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 10,
                     "leida": false,
-                    "creada_en": "2026-11-24T09:55:53+00:00"
+                    "creada_en": "2026-11-24T10:09:39+00:00"
                 },
                 {
                     "id": 120,
@@ -197,7 +197,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 12,
                     "leida": false,
-                    "creada_en": "2026-11-24T02:55:50+00:00"
+                    "creada_en": "2026-11-24T03:09:37+00:00"
                 },
                 {
                     "id": 164,
@@ -206,7 +206,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 15,
                     "leida": false,
-                    "creada_en": "2026-11-23T23:55:56+00:00"
+                    "creada_en": "2026-11-24T00:09:41+00:00"
                 },
                 {
                     "id": 114,
@@ -215,7 +215,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 12,
                     "leida": false,
-                    "creada_en": "2026-11-23T07:55:50+00:00"
+                    "creada_en": "2026-11-23T08:09:37+00:00"
                 },
                 {
                     "id": 110,
@@ -224,7 +224,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 12,
                     "leida": false,
-                    "creada_en": "2026-11-22T21:55:54+00:00"
+                    "creada_en": "2026-11-22T22:09:40+00:00"
                 },
                 {
                     "id": 145,
@@ -233,7 +233,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 14,
                     "leida": false,
-                    "creada_en": "2026-11-21T21:55:55+00:00"
+                    "creada_en": "2026-11-21T22:09:41+00:00"
                 },
                 {
                     "id": 124,
@@ -242,7 +242,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 13,
                     "leida": false,
-                    "creada_en": "2026-11-18T13:55:54+00:00"
+                    "creada_en": "2026-11-18T14:09:40+00:00"
                 },
                 {
                     "id": 177,
@@ -251,7 +251,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 17,
                     "leida": false,
-                    "creada_en": "2026-11-17T21:55:56+00:00"
+                    "creada_en": "2026-11-17T22:09:42+00:00"
                 }
             ],
             "no_leidas": 27

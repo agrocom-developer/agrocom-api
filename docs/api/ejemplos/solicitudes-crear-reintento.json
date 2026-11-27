@@ -45,7 +45,6 @@
                 "monto_final": null,
                 "estado": "borrador",
                 "oferta_adjudicada_id": null,
-                "vence_en": null,
                 "proveedor_id": null,
                 "publicada_en": null,
                 "motivo_cancelacion": null,
@@ -81,7 +80,7 @@
                         "estado_nuevo": "borrador",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-26T21:55:58+00:00"
+                        "creado_en": "2026-11-26T22:09:43+00:00"
                     }
                 ]
             }
