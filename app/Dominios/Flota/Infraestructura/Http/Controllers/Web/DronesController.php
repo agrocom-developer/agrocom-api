@@ -26,8 +26,8 @@ use App\Dominios\Flota\Infraestructura\Eloquent\Equipo;
 use App\Dominios\Flota\Infraestructura\Eloquent\HistorialEstadoDron;
 use App\Dominios\Flota\Infraestructura\Http\Requests\RegistrarDronDesdePanelRequest;
 use App\Dominios\Flota\Infraestructura\Http\Requests\ResolverAprobacionDronRequest;
-use App\Dominios\Proveedores\Aplicacion\ItemsDeRevisionDeDocumentos;
 use App\Dominios\Proveedores\Contratos\DatosDocumento;
+use App\Dominios\Proveedores\Contratos\ItemsDeRevisionDeDocumentosDeSujeto;
 use App\Dominios\Proveedores\Contratos\LecturaDocumentos;
 use App\Dominios\Proveedores\Contratos\LecturaProveedores;
 use App\Dominios\Proveedores\Contratos\VerificacionDocumental;
@@ -63,6 +63,7 @@ final class DronesController
         private readonly AutorizacionPanelWeb $autorizacion,
         private readonly LecturaProveedores $proveedores,
         private readonly LecturaDocumentos $documentos,
+        private readonly ItemsDeRevisionDeDocumentosDeSujeto $itemsDocumentos,
         private readonly AlmacenDeMedios $almacen,
     ) {}
 
@@ -189,7 +190,7 @@ final class DronesController
                 $obligatorias->tipos(),
                 $puedeRevisarFotos,
             ),
-            'itemsDocumentos' => ItemsDeRevisionDeDocumentos::deFicha($documentosDelDron, $puedeRevisarDocumentos, $puedeDescargarDocumentos),
+            'itemsDocumentos' => $this->itemsDocumentos->deFicha($documentosDelDron, $puedeRevisarDocumentos, $puedeDescargarDocumentos),
             'fotosObligatorias' => $obligatorias->tipos(),
             'fotosFaltantes' => $obligatorias->faltantes($dron->id),
             'puedeRevisarFotos' => $puedeRevisarFotos,
