@@ -188,9 +188,11 @@ return [
         'error_descripcion_requerida' => 'Ingresa una descripción para el rol.',
         'error_descripcion_larga' => 'La descripción admite hasta 150 caracteres.',
 
-        'kpi_estado' => 'Estado',
         'kpi_usuarios' => 'Cuentas con este rol',
         'kpi_permisos' => 'Permisos activos',
+        'permiso_suelto' => [
+            'seguridad_dashboard_ver' => 'Ver el tablero de inicio',
+        ],
         'seccion_usuarios' => 'Cuentas con este rol',
         'usuarios_vacio_titulo' => 'Ninguna cuenta tiene este rol',
         'usuarios_vacio_detalle' => 'Asígnalo a una cuenta desde Usuarios. Mientras nadie lo tenga, el rol se puede eliminar.',
@@ -364,9 +366,9 @@ return [
 
         // Ficha
         'detalle_subtitulo' => 'Cuenta del panel · :usuario',
-        'kpi_estado' => 'Acceso',
-        'kpi_rol' => 'Rol',
-        'kpi_alta' => 'Alta',
+        'campo_alta' => 'Alta',
+        'kpi_roles' => 'Roles asignados',
+        'kpi_movimientos' => 'Movimientos registrados',
         'seccion_acceso' => 'Datos de acceso',
         'seccion_personal' => 'Datos personales',
         'seccion_roles' => 'Rol y permisos',

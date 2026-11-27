@@ -75,12 +75,6 @@
 
             <div class="ag-detalle__kpis">
                 <x-molecules.stat-card
-                    :label="__('proveedores.proveedores.kpi_estado')"
-                    icon="verified_user"
-                    :value="__('aprobacion.estado.'.$dron->estado->value)"
-                    :state="$dron->estado->value === 'aprobado' ? 'success' : ($dron->estado->value === 'pendiente' ? 'warning' : 'danger')"
-                />
-                <x-molecules.stat-card
                     :label="__('flota.drones.kpi_capacidad')"
                     icon="water_drop"
                     :value="$dron->capacidad_tanque_l"

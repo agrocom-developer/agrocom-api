@@ -134,9 +134,10 @@ final class UsuariosController
             ->all();
 
         $puedeVerBitacora = $this->autorizacion->tienePermiso($request, 'seguridad.bitacora.ver');
-        $movimientos = $puedeVerBitacora
-            ? $listarBitacora->ejecutar(zonaQueVe: $zona, tabla: 'sec_user', registroId: (int) $usuario->id, porPagina: 10)->items()
-            : [];
+        $paginaDeMovimientos = $puedeVerBitacora
+            ? $listarBitacora->ejecutar(zonaQueVe: $zona, tabla: 'sec_user', registroId: (int) $usuario->id, porPagina: 10)
+            : null;
+        $movimientos = $paginaDeMovimientos?->items() ?? [];
 
         return view('seguridad::pages.usuarios.show', [
             ...$cascara,
@@ -148,6 +149,7 @@ final class UsuariosController
             'puedeEliminar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR),
             'puedeVerRoles' => $this->autorizacion->tienePermiso($request, 'seguridad.rol.ver'),
             'puedeVerBitacora' => $puedeVerBitacora,
+            'totalMovimientos' => $paginaDeMovimientos?->total() ?? 0,
             'lineaDeTiempo' => array_map(fn ($fila): array => [
                 'title' => __('seguridad.bitacora.acciones.'.$fila->accion->value),
                 'meta' => implode(' · ', [

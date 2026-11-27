@@ -128,7 +128,7 @@ return [
         'kpi_monto_pie' => 'Tope del reembolso',
         'kpi_ronda' => 'Ronda',
         'kpi_ronda_pie' => 'Original',
-        'kpi_responde' => 'Fecha límite de respuesta',
+        'campo_responde' => 'Fecha límite de respuesta',
         'kpi_responde_pie' => 'La contraparte tiene 48 horas',
         'seccion_reclamo' => 'El reclamo',
         'campos_contador' => ':cantidad campos',

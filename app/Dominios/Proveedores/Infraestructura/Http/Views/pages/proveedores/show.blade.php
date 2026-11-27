@@ -84,19 +84,6 @@
 
             <div class="ag-detalle__kpis">
                 <x-molecules.stat-card
-                    :label="__('proveedores.proveedores.kpi_estado')"
-                    icon="verified_user"
-                    :value="__('aprobacion.estado.'.$proveedor->estado->value)"
-                    :state="$proveedor->estado->value === 'aprobado' ? 'success' : ($proveedor->estado->value === 'pendiente' ? 'warning' : 'danger')"
-                />
-                <x-molecules.stat-card
-                    :label="__('proveedores.proveedores.kpi_ofertas')"
-                    icon="notifications_active"
-                    :value="$aptoParaOfertas ? __('proveedores.proveedores.apto_si') : __('proveedores.proveedores.apto_no')"
-                    :foot="$aptoParaOfertas ? __('proveedores.proveedores.apto_si_pie') : __('proveedores.proveedores.apto_no_pie')"
-                    :state="$aptoParaOfertas ? 'success' : null"
-                />
-                <x-molecules.stat-card
                     :label="__('proveedores.proveedores.kpi_personal')"
                     icon="groups"
                     :value="(string) $pilotos->count()"
@@ -113,7 +100,7 @@
             </div>
 
             <x-molecules.form-layout>
-                <x-molecules.form-section accent="primary-2" :title="__('proveedores.proveedores.seccion_datos')" :count="__('proveedores.campos_contador', ['cantidad' => 7])">
+                <x-molecules.form-section accent="primary-2" :title="__('proveedores.proveedores.seccion_datos')" :count="__('proveedores.campos_contador', ['cantidad' => 8])">
                     <div class="ag-detalle__campo">
                         <p class="ag-detalle__campo-label">{{ __('proveedores.proveedores.campo_razon_social') }}</p>
                         <p class="ag-detalle__campo-valor">{{ $proveedor->razon_social }}</p>
@@ -143,7 +130,12 @@
                         <p class="ag-detalle__campo-label">{{ __('proveedores.proveedores.campo_aprobado') }}</p>
                         <p class="ag-detalle__campo-valor">{{ $proveedor->aprobado_en?->format('d/m/Y H:i') ?? __('proveedores.sin_dato') }}</p>
                     </div>
-                </x-molecules.form-section>
+                                    <div class="ag-detalle__campo">
+                        <p class="ag-detalle__campo-label">{{ __('proveedores.proveedores.campo_ofertas') }}</p>
+                        <p class="ag-detalle__campo-valor"><x-atoms.badge :variant="$aptoParaOfertas ? 'success' : 'neutral'">{{ $aptoParaOfertas ? __('proveedores.proveedores.apto_si') : __('proveedores.proveedores.apto_no') }}</x-atoms.badge>
+                        <span class="ag-proveedores__sub">{{ $aptoParaOfertas ? __('proveedores.proveedores.apto_si_pie') : __('proveedores.proveedores.apto_no_pie') }}</span></p>
+                    </div>
+</x-molecules.form-section>
 
                 @include('proveedores::pages._documentos-sujeto', [
                     'documentos' => $documentos,

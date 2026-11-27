@@ -151,7 +151,7 @@ return [
         'kpi_monto' => 'Monto estimado',
         'kpi_tarifa_pie' => 'Precio por hectárea: :tarifa',
         'kpi_sin_publicar' => 'Todavía sin abrir',
-        'kpi_ventana' => 'Fecha deseada',
+        'campo_ventana' => 'Fecha deseada',
         'sin_fecha_deseada' => 'Sin fecha',
         'seccion_servicio' => 'Servicio solicitado',
         'seccion_terreno' => 'Terreno',

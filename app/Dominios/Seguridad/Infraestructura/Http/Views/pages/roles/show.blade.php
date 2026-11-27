@@ -101,12 +101,6 @@
 
             <div class="ag-detalle__kpis">
                 <x-molecules.stat-card
-                    :label="__('seguridad.roles.kpi_estado')"
-                    icon="toggle_on"
-                    :value="__('seguridad.roles.estado_'.$estadoValor)"
-                    :state="$rol->state ? 'success' : null"
-                />
-                <x-molecules.stat-card
                     :label="__('seguridad.roles.kpi_usuarios')"
                     icon="group"
                     :value="(string) count($usuariosDelRol)"
@@ -200,7 +194,7 @@
                                         @foreach ($modulo['sueltos'] as $codigo)
                                             <li class="ag-modulo__item is-activo">
                                                 <x-atoms.icon name="check_circle" size="sm" />
-                                                <span>{{ $codigo }}</span>
+                                                <span>{{ \Illuminate\Support\Facades\Lang::has($claveSuelto = 'seguridad.roles.permiso_suelto.'.str_replace('.', '_', $codigo)) ? __($claveSuelto) : $codigo }}</span>
                                             </li>
                                         @endforeach
                                     </ul>

@@ -118,27 +118,23 @@
 
             <div class="ag-detalle__kpis">
                 <x-molecules.stat-card
-                    :label="__('seguridad.usuarios.kpi_estado')"
-                    icon="lock_person"
-                    :value="__('seguridad.usuarios.estado_'.$estadoValor)"
-                    :state="$usuario->state ? 'success' : null"
-                />
-                <x-molecules.stat-card
-                    :label="__('seguridad.usuarios.kpi_rol')"
+                    :label="__('seguridad.usuarios.kpi_roles')"
                     icon="shield_person"
-                    :value="$rolesCuenta === [] ? '—' : implode(', ', array_column($rolesCuenta, 'nombre'))"
+                    :value="(string) count($rolesCuenta)"
                     state="info"
                 />
-                <x-molecules.stat-card
-                    :label="__('seguridad.usuarios.kpi_alta')"
-                    icon="calendar_month"
-                    :value="$usuario->created_at?->copy()->timezone($zona)->format('d/m/Y') ?? '—'"
-                    state="distintivo-1"
-                />
+                @if ($puedeVerBitacora)
+                    <x-molecules.stat-card
+                        :label="__('seguridad.usuarios.kpi_movimientos')"
+                        icon="history"
+                        :value="(string) $totalMovimientos"
+                        state="success"
+                    />
+                @endif
             </div>
 
             <x-molecules.form-layout>
-                <x-molecules.form-section accent="primary-2" :title="__('seguridad.usuarios.seccion_acceso')" :count="__('seguridad.usuarios.campos_contador', ['cantidad' => 3])">
+                <x-molecules.form-section accent="primary-2" :title="__('seguridad.usuarios.seccion_acceso')" :count="__('seguridad.usuarios.campos_contador', ['cantidad' => 4])">
                     <div class="ag-detalle__campo">
                         <p class="ag-detalle__campo-label">{{ __('seguridad.usuarios.campo_username') }}</p>
                         <p class="ag-detalle__campo-valor">{{ $usuario->username }}</p>
@@ -152,6 +148,10 @@
                         <p class="ag-detalle__campo-valor">
                             <x-atoms.badge :variant="$tonoPorEstado[$estadoValor]">{{ __('seguridad.usuarios.estado_'.$estadoValor) }}</x-atoms.badge>
                         </p>
+                    </div>
+                    <div class="ag-detalle__campo">
+                        <p class="ag-detalle__campo-label">{{ __('seguridad.usuarios.campo_alta') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ $usuario->created_at?->copy()->timezone($zona)->format('d/m/Y') ?? '—' }}</p>
                     </div>
                 </x-molecules.form-section>
 

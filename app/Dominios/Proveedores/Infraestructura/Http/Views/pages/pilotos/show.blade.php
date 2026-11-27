@@ -76,20 +76,6 @@
             @endphp
             <div class="ag-detalle__kpis">
                 <x-molecules.stat-card
-                    :label="__('proveedores.proveedores.kpi_estado')"
-                    icon="verified_user"
-                    :value="__('aprobacion.estado.'.$piloto->estado->value)"
-                    :state="$piloto->estado->value === 'aprobado' ? 'success' : ($piloto->estado->value === 'pendiente' ? 'warning' : 'danger')"
-                />
-                <x-molecules.stat-card
-                    :label="__('proveedores.pilotos.kpi_licencia')"
-                    icon="badge"
-                    :value="$piloto->licencia_numero"
-                    :foot="$licenciaVencida ? __('proveedores.pilotos.licencia_vencida') : __('proveedores.pilotos.licencia_vence', ['fecha' => $piloto->licencia_vence->format('d/m/Y')])"
-                    :foot-tone="$licenciaVencida ? 'warning' : 'muted'"
-                    state="info"
-                />
-                <x-molecules.stat-card
                     :label="__('proveedores.pilotos.kpi_documentos')"
                     icon="folder_open"
                     :value="(string) count($documentos)"
@@ -126,7 +112,11 @@
                     </div>
                     <div class="ag-detalle__campo">
                         <p class="ag-detalle__campo-label">{{ __('proveedores.pilotos.campo_licencia') }}</p>
-                        <p class="ag-detalle__campo-valor">{{ $piloto->licencia_numero }} · {{ $piloto->licencia_vence->format('d/m/Y') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ $piloto->licencia_numero }} · {{ $piloto->licencia_vence->format('d/m/Y') }}
+                            @if ($licenciaVencida)
+                                <x-atoms.badge variant="warning">{{ __('proveedores.pilotos.licencia_vencida') }}</x-atoms.badge>
+                            @endif
+                        </p>
                     </div>
                     <div class="ag-detalle__campo">
                         <p class="ag-detalle__campo-label">{{ __('proveedores.pilotos.campo_categoria') }}</p>

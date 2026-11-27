@@ -1959,6 +1959,7 @@ recibe— sigue siendo exacto hasta «9+».
 ### Columnas numéricas y fichas de detalle
 
 - **Cifras en mono.** Toda columna numérica de un listado (conteos, hectáreas, montos, calificaciones, ciclos, capacidad) usa la fuente mono con cifras de ancho fijo: `ag-index-table__mono` (o `ag-index-table__cifra` si va a la derecha). Es la misma fuente de «Capacidad» y «Ciclos» en Drones.
+- **Tarjetas de cifra solo para cifras.** `stat-card` muestra números (conteos, montos, hectáreas, calificaciones, fracciones como `52 / 52`), nunca un texto ni una fecha. Un dato de texto o de fecha (estado, rol, «Sí/No», fecha de alta, fecha límite) no va en una tarjeta de cifra: el estado va en el badge de la cabecera y el resto en la tarjeta de datos de la ficha. `TarjetasDeCifraTest` lo hace cumplir.
 - **Ficha de detalle con columna lateral.** Toda ficha (`show`) lleva `form-layout` con las tarjetas de datos en la columna principal y una columna lateral derecha (`<x-slot:aside>`) con «Relacionado» (`link-row` a las pantallas vinculadas) y, siempre al final, «Historial» o «Actividad» (`timeline` con eventos reales). Una tarjeta no cierra con un botón en el fondo: el acceso va como `link-row` en «Relacionado».
 - **Bitácora.** La columna «Elemento» muestra la etiqueta de `seguridad.bitacora.entidades.<tabla>`; una tabla sin etiqueta se ve como frase legible, nunca con su nombre técnico.
 

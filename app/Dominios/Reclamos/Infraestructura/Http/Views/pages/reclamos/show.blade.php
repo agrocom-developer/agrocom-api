@@ -150,17 +150,10 @@
                     :foot="$reclamo->ronda === 2 ? __('reclamos.panel.apelada') : __('reclamos.panel.kpi_ronda_pie')"
                     state="info"
                 />
-                <x-molecules.stat-card
-                    :label="__('reclamos.panel.kpi_responde')"
-                    icon="schedule"
-                    :value="$respondeAntesDe"
-                    :foot="__('reclamos.panel.kpi_responde_pie')"
-                    state="distintivo-1"
-                />
             </div>
 
             <x-molecules.form-layout>
-                <x-molecules.form-section accent="primary-2" :title="__('reclamos.panel.seccion_reclamo')" :count="__('reclamos.panel.campos_contador', ['cantidad' => 5])">
+                <x-molecules.form-section accent="primary-2" :title="__('reclamos.panel.seccion_reclamo')" :count="__('reclamos.panel.campos_contador', ['cantidad' => 6])">
                     <div class="ag-detalle__campo">
                         <p class="ag-detalle__campo-label">{{ __('reclamos.panel.campo_motivo') }}</p>
                         <p class="ag-detalle__campo-valor">{{ __('reclamos.motivo.'.$reclamo->motivo->value) }}</p>
@@ -187,7 +180,12 @@
                         <p class="ag-detalle__campo-label">{{ __('reclamos.panel.campo_detalle') }}</p>
                         <p class="ag-detalle__campo-valor">{{ $reclamo->detalle }}</p>
                     </div>
-                </x-molecules.form-section>
+                                    <div class="ag-detalle__campo">
+                        <p class="ag-detalle__campo-label">{{ __('reclamos.panel.campo_responde') }}</p>
+                        <p class="ag-detalle__campo-valor">{{ $respondeAntesDe }}
+                        <span class="ag-proveedores__sub">{{ __('reclamos.panel.kpi_responde_pie') }}</span></p>
+                    </div>
+</x-molecules.form-section>
 
                 <x-slot:aside>
                     <x-molecules.form-section accent="distintivo-2" :title="__('reclamos.panel.conversacion_titulo')" :count="(string) count($conversacion)">
