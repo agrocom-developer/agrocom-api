@@ -37,7 +37,7 @@ final class CrearUsuarioRequest extends FormRequest
             ],
             'password' => ['required', 'string', 'min:8'],
             // Una cuenta de panel tiene un solo rol (ADR 0046, punto 4); el catálogo de roles
-            // del panel es fijo y `AsignarRolesUsuario` revalida que sea administrador u operador.
+            // del panel es fijo y `AsignarRolesUsuario` revalida que sea un rol del panel.
             'roles' => [
                 'required',
                 'array',

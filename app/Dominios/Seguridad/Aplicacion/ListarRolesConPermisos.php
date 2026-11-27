@@ -2,8 +2,9 @@
 
 namespace App\Dominios\Seguridad\Aplicacion;
 
+use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
-use Illuminate\Support\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -26,14 +27,29 @@ use Illuminate\Support\Facades\DB;
 final class ListarRolesConPermisos
 {
     /**
-     * @return Collection<int, array{
+     * Roles del panel, de a `$porPagina`, con búsqueda por nombre o descripción y
+     * filtro por estado (`activo` | `inactivo`). Los de ámbito `app` (transitorios
+     * hasta A5) no se administran acá. El administrador del sistema va primero.
+     *
+     * @return LengthAwarePaginator<int, array{
      *     rol: SecRole, pantallas: int, acciones: int, usuarios: int
      * }>
      */
-    public function ejecutar(): Collection
+    public function ejecutar(?string $busqueda = null, ?string $estado = null, int $porPagina = 15): LengthAwarePaginator
     {
-        // Solo los roles del panel: los de ámbito `app` (transitorios hasta A5) no se administran acá.
-        $roles = SecRole::query()->where('ambito', 'panel')->orderBy('name')->get();
+        $pagina = SecRole::query()
+            ->delPanel()
+            ->when(in_array($estado, ['activo', 'inactivo'], true), fn ($consulta) => $consulta->where('state', $estado === 'activo'))
+            ->when(
+                $busqueda !== null && $busqueda !== '',
+                fn ($consulta) => BusquedaTexto::aplicar($consulta, ['name', 'description'], $busqueda),
+            )
+            ->orderBy('id')
+            ->paginate($porPagina)
+            ->withQueryString();
+
+        $roles = $pagina->getCollection();
+        $idsRol = $roles->pluck('id')->map(static fn (int|string $id): int => (int) $id)->all();
 
         $idsPantalla = DB::table('sec_menu')
             ->whereNull('deleted_at')
@@ -45,6 +61,7 @@ final class ListarRolesConPermisos
 
         $porRol = DB::table('sec_role_permission as rp')
             ->join('sec_permission as p', 'p.id', '=', 'rp.id_permission')
+            ->whereIn('rp.id_role', $idsRol)
             ->whereNull('rp.deleted_at')
             ->whereNull('p.deleted_at')
             ->where('p.state', true)
@@ -57,13 +74,14 @@ final class ListarRolesConPermisos
         // literalmente `count(*)`, que no es un identificador válido.
         $usuariosPorRol = DB::table('sec_user_role as ur')
             ->join('sec_user as u', 'u.id', '=', 'ur.id_user')
+            ->whereIn('ur.id_role', $idsRol)
             ->whereNull('ur.deleted_at')
             ->whereNull('u.deleted_at')
             ->groupBy('ur.id_role')
             ->selectRaw('ur.id_role, count(*) as total')
             ->pluck('total', 'id_role');
 
-        return $roles->map(function (SecRole $rol) use ($porRol, $usuariosPorRol, $idsPantalla): array {
+        return $pagina->through(function (SecRole $rol) use ($porRol, $usuariosPorRol, $idsPantalla): array {
             $suyos = $porRol->get($rol->id, collect())
                 ->map(static fn (object $fila): int => (int) $fila->id_permission);
 

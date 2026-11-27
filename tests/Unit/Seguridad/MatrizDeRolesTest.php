@@ -207,13 +207,15 @@ test('la migración pasa las cuentas de panel a administrador, da de baja lógic
         ->and(DB::table('sec_role')->whereIn('name', ['dueno', 'encargado_operaciones'])->whereNull('deleted_at')->count())->toBe(2);
 });
 
-test('la pantalla de roles lista solo los dos roles del panel y no cuenta permisos de app', function () {
+test('la pantalla de roles lista solo los roles del panel, el administrador primero, y no cuenta permisos de app', function () {
     matrizMundo();
     (new SeguridadSeeder)->run();
 
     $filas = app(ListarRolesConPermisos::class)->ejecutar();
 
-    expect($filas->map(fn (array $fila): string => $fila['rol']->name)->all())->toBe(['administrador', 'operador']);
+    expect(array_map(fn (array $fila): string => $fila['rol']->name, $filas->items()))->toBe(['administrador', 'operador'])
+        ->and(array_map(fn (array $fila): string => $fila['rol']->name, app(ListarRolesConPermisos::class)->ejecutar('oper')->items()))->toBe(['operador'])
+        ->and(app(ListarRolesConPermisos::class)->ejecutar(null, 'inactivo')->total())->toBe(0);
 });
 
 test('una cuenta de panel tiene un solo rol, de los dos del panel', function () {
@@ -251,21 +253,21 @@ test('asignar el rol administrador exige asignar_rol_administrador', function ()
         ->toBeInstanceOf(SecUser::class);
 });
 
-test('los roles del panel son fijos: no se crean, no se renombran, no se desactivan el administrador ni se eliminan', function () {
+test('el administrador es el rol del sistema: solo se edita su descripción y no se elimina', function () {
     matrizMundo();
     (new SeguridadSeeder)->run();
     $actor = SecUser::query()->findOrFail(matrizCuenta('admin', ['administrador']));
     $administrador = SecRole::query()->where('name', 'administrador')->firstOrFail();
-    $operador = SecRole::query()->where('name', 'operador')->firstOrFail();
     $guardar = app(GuardarRol::class);
 
-    expect(fn () => $guardar->ejecutar($actor, null, 'supervisor', 'Otro', true, null))->toThrow(RolProtegido::class)
-        ->and(fn () => $guardar->ejecutar($actor, $operador, 'otro_nombre', 'Otro', true, null))->toThrow(RolProtegido::class)
+    expect($administrador->id)->toBe(PermisosReservados::ID_ROL_ADMINISTRADOR)
+        ->and($administrador->esDelSistema())->toBeTrue()
+        ->and(fn () => $guardar->ejecutar($actor, $administrador, 'jefe', 'Otro', true, null))->toThrow(RolProtegido::class)
         ->and(fn () => $guardar->ejecutar($actor, $administrador, 'administrador', 'Otro', false, null))->toThrow(RolProtegido::class)
-        ->and(fn () => app(EliminarRol::class)->ejecutar($actor, $operador, null))->toThrow(RolProtegido::class)
         ->and(fn () => app(EliminarRol::class)->ejecutar($actor, $administrador, null))->toThrow(RolProtegido::class);
 
-    $editado = $guardar->ejecutar($actor, $operador, 'operador', 'Atiende la operación diaria.', true, null);
+    $editado = $guardar->ejecutar($actor, $administrador, 'administrador', 'Quien administra todo.', true, null);
 
-    expect($editado->description)->toBe('Atiende la operación diaria.');
+    expect($editado->description)->toBe('Quien administra todo.')
+        ->and(SecRole::query()->whereKey($administrador->id)->exists())->toBeTrue();
 });
