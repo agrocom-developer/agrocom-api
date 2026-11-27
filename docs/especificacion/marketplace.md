@@ -47,7 +47,7 @@ Hay tres tipos de cuenta (ADR 0046). La **cuenta de panel** es del personal de A
 
 ## 4. Modelo de datos
 
-Convenciones: dominio en español, prefijo de tabla por módulo (ADR 0011), borrado lógico (ADR 0007), importes y hectáreas en `DECIMAL`. Cada módulo escribe solo sus tablas y se comunica con los demás por contratos y eventos (ADR 0003). Prefijos: `sol_` (clientes, propiedades y solicitudes), `prv_` (proveedores), `flo_` (flota), `neg_` (negociación), `seg_` (seguimiento: avance, mensajes y ubicación), `cal_` (calificaciones), `dsp_` (reclamos).
+Convenciones: dominio en español, prefijo de tabla por módulo (ADR 0011), borrado lógico (ADR 0007), importes y hectáreas en `DECIMAL`. Cada módulo escribe solo sus tablas y se comunica con los demás por contratos y eventos (ADR 0003). Prefijos: `sol_` (clientes, propiedades y solicitudes), `prv_` (proveedores), `flo_` (flota), `neg_` (negociación), `seg_` (seguimiento: avance, mensajes y ubicación), `cal_` (calificaciones), `rcl_` (reclamos).
 
 ### 4.1 Clientes y propiedades
 
@@ -128,8 +128,8 @@ Las tablas de ejecución que el piloto escribe en el lote llevan `uuid_cliente`,
 
 ### 4.8 Reclamos
 
-- **`dsp_disputas`**: `id`, `solicitud_id`, `tipo` (`servicio` | `conducta`; el de conducta nace al reportar un mensaje, la conversación o una foto, sin monto, ADR 0047), `objeto_tipo` y `objeto_id` (el mensaje, la conversación o la foto reportada; solo en `conducta`), `consentimiento_en` (el reportante acepta que soporte lea lo reportado), `abierta_por_rol` (`cliente` | `proveedor`), `motivo` (§8.3; en `conducta`: `acoso_o_insultos`, `amenazas`, `contenido_sexual_o_violento`, `datos_de_terceros`, `estafa_o_pago_fuera`, `suplantacion`, `otro`), `detalle`, `monto_en_disputa`, `estado` (§5.5), `resolucion` (`a_favor_cliente` | `a_favor_proveedor` | `parcial` | `sin_lugar`; en `conducta`: `sin_lugar` | `advertencia` | `contenido_ocultado` | `cuenta_suspendida`), `monto_ajustado` (nuevo precio final tras la resolución), `resuelta_por`, `resuelta_en`.
-- **`dsp_mensajes`**: `disputa_id`, `autor_usuario_id`, `texto`, `creado_en`.
+- **`rcl_reclamos`**: `id`, `solicitud_id`, `tipo` (`servicio` | `conducta`; el de conducta nace al reportar un mensaje, la conversación o una foto, sin monto, ADR 0047), `objeto_tipo` y `objeto_id` (el mensaje, la conversación o la foto reportada; solo en `conducta`), `consentimiento_en` (el reportante acepta que soporte lea lo reportado), `abierta_por_rol` (`cliente` | `proveedor`), `motivo` (§8.3; en `conducta`: `acoso_o_insultos`, `amenazas`, `contenido_sexual_o_violento`, `datos_de_terceros`, `estafa_o_pago_fuera`, `suplantacion`, `otro`), `detalle`, `monto_en_reclamo`, `estado` (§5.5), `resolucion` (`a_favor_cliente` | `a_favor_proveedor` | `parcial` | `sin_lugar`; en `conducta`: `sin_lugar` | `advertencia` | `contenido_ocultado` | `cuenta_suspendida`), `monto_ajustado` (nuevo precio final tras la resolución), `resuelta_por`, `resuelta_en`.
+- **`rcl_mensajes`**: `reclamo_id`, `autor_usuario_id`, `texto`, `creado_en`.
 
 ### 4.9 Transversales
 
@@ -157,7 +157,7 @@ Las tablas de ejecución que el piloto escribe en el lote llevan `uuid_cliente`,
 
 ### 5.1 Solicitud de servicio
 
-`borrador` → `abierta` → `con_ofertas` → `adjudicada` → `en_ejecucion` → `finalizada` → `calificada`. Más `cancelada` y `disputada`. Una solicitud sin adjudicar no vence sola.
+`borrador` → `abierta` → `con_ofertas` → `adjudicada` → `en_ejecucion` → `finalizada` → `calificada`. Más `cancelada` y `en_reclamo`. Una solicitud sin adjudicar no vence sola.
 
 | Estado | Significado | Transiciones (actor) |
 |---|---|---|
@@ -167,9 +167,9 @@ Las tablas de ejecución que el piloto escribe en el lote llevan `uuid_cliente`,
 | `en_acuerdo` | El cliente la marcó firme: ya no se avisa a más pilotos y la cola está congelada. Sigue conversando con quienes ya tiene (§6.11). | `abierta` o `con_ofertas` (cliente, «Volver a buscar», o sistema si cae la última conversación), `adjudicada`, `cancelada` (cliente) |
 | `adjudicada` | Hay precio acordado y un equipo. Se abren contacto y chat. | `en_ejecucion` (piloto), `abierta` (proveedor cancela), `cancelada` (cliente) |
 | `en_ejecucion` | El piloto marcó el inicio. Hay fotos y avance. | `finalizada` (piloto, al cerrar con evidencia subida) |
-| `finalizada` | Terminada; muestra el precio final a pagar. Se puede calificar y reclamar. | `calificada` (sistema, al calificar el cliente), `disputada` (cliente o proveedor) |
-| `calificada` | El cliente calificó al proveedor. | `disputada` (dentro del plazo) |
-| `disputada` | Hay un reclamo abierto. | `finalizada` o `calificada` (la que tenía), `cancelada` (reembolso total) |
+| `finalizada` | Terminada; muestra el precio final a pagar. Se puede calificar y reclamar. | `calificada` (sistema, al calificar el cliente), `en_reclamo` (cliente o proveedor) |
+| `calificada` | El cliente calificó al proveedor. | `en_reclamo` (dentro del plazo) |
+| `en_reclamo` | Hay un reclamo abierto. | `finalizada` o `calificada` (la que tenía), `cancelada` (reembolso total) |
 | `cancelada` | Terminal; guarda quién y por qué. | — |
 
 La **etapa** que ve el cliente («Buscando piloto», «Con aceptaciones», «Esperando piloto» o «En acuerdo») se deduce del estado y de la oleada: `en_acuerdo` es un estado, y «Esperando piloto» es una `abierta` cuya oleada espera su relanzamiento (§6.10 y §6.11). El detalle de reglas y guardas de cada transición está en `negociacion-contrato.md`.
@@ -245,7 +245,7 @@ Detalle de la decisión en ADR 0030 y reglas exactas en `negociacion-contrato.md
 
 ## 7. Eventos de dominio
 
-`SolicitudAbierta`, `AlcanceAmpliado`, `AlcanceRestringido`, `UrgenciaDeclarada`, `FechaLimitePasada`, `AvisoForzadoPorAdministrador`, `OfertaRecibida`, `AceptacionLiberada`, `SolicitudEnAcuerdo`, `ContraofertaRecibida`, `OfertaRechazada`, `OfertaRetirada`, `OfertaVencida`, `SolicitudAdjudicada`, `OfertaCerrada`, `EjecucionIniciada`, `AvanceRegistrado`, `EvidenciaSubida`, `SolicitudFinalizada`, `SolicitudCancelada`, `MensajeEnviado`, `ProveedorAprobado`, `ProveedorSuspendido`, `DocumentoPorVencer`, `DocumentoVencido`, `CalificacionRegistrada`, `CalificacionModerada`, `DisputaAbierta`, `DisputaResuelta`, `IncidenciaReportada`, `EmergenciaActivada`, `EliminacionSolicitada`, `CuentaEliminada`, `ReporteDeConductaAbierto`, `CuentaBloqueada`. Cada evento lo emite el módulo dueño del hecho; los demás reaccionan por oyentes (notificaciones, métricas, reputación).
+`SolicitudAbierta`, `AlcanceAmpliado`, `AlcanceRestringido`, `UrgenciaDeclarada`, `FechaLimitePasada`, `AvisoForzadoPorAdministrador`, `OfertaRecibida`, `AceptacionLiberada`, `SolicitudEnAcuerdo`, `ContraofertaRecibida`, `OfertaRechazada`, `OfertaRetirada`, `OfertaVencida`, `SolicitudAdjudicada`, `OfertaCerrada`, `EjecucionIniciada`, `AvanceRegistrado`, `EvidenciaSubida`, `SolicitudFinalizada`, `SolicitudCancelada`, `MensajeEnviado`, `ProveedorAprobado`, `ProveedorSuspendido`, `DocumentoPorVencer`, `DocumentoVencido`, `CalificacionRegistrada`, `CalificacionModerada`, `ReclamoAbierto`, `ReclamoResuelto`, `IncidenciaReportada`, `EmergenciaActivada`, `EliminacionSolicitada`, `CuentaEliminada`, `ReporteDeConductaAbierto`, `CuentaBloqueada`. Cada evento lo emite el módulo dueño del hecho; los demás reaccionan por oyentes (notificaciones, métricas, reputación).
 
 ## 8. Políticas de servicio (resumen)
 
@@ -261,7 +261,7 @@ El precio por hectárea se negocia y queda congelado al adjudicar. El precio fin
 
 ### 8.3 Calificación y reclamos
 
-El cliente califica al proveedor y al piloto de 1 a 5 estrellas con etiquetas; el proveedor califica al cliente en privado y el administrador modera. Motivos de reclamo: cobertura incompleta, mala aplicación, daño a cultivos o terceros, producto distinto al pactado, no se presentó el equipo, hectáreas ejecutadas discutidas, precio final discutido, cobro pendiente, acceso negado. Ver `calificacion.md` y `disputas.md`.
+El cliente califica al proveedor y al piloto de 1 a 5 estrellas con etiquetas; el proveedor califica al cliente en privado y el administrador modera. Motivos de reclamo: cobertura incompleta, mala aplicación, daño a cultivos o terceros, producto distinto al pactado, no se presentó el equipo, hectáreas ejecutadas discutidas, precio final discutido, cobro pendiente, acceso negado. Ver `calificacion.md` y `reclamos.md`.
 
 ## 9. Seguridad y confianza
 
@@ -336,7 +336,7 @@ Cada flavor usa estos endpoints con su tipo de cuenta (ADR 0046).
 | `GET/POST /solicitudes/{id}/mensajes` | Chat con el piloto adjudicado |
 | `GET /solicitudes/{id}/precio-final`, `POST /solicitudes/{id}/precio-final/confirmar` | Ver y confirmar el precio final del servicio cerrado |
 | `GET/POST /solicitudes/{id}/calificaciones` | A quién calificar y calificar al proveedor o al piloto (7 días) |
-| `POST /solicitudes/{id}/disputas`, `GET /solicitudes/{id}/disputa`, `GET /disputas`, `GET /disputas/{id}`, `POST /disputas/{id}/mensajes`, `/retirar`, `/apelar` | Reclamo |
+| `POST /solicitudes/{id}/reclamos`, `GET /solicitudes/{id}/reclamo`, `GET /reclamos`, `GET /reclamos/{id}`, `POST /reclamos/{id}/mensajes`, `/retirar`, `/apelar` | Reclamo |
 | `POST /incidencias`, `POST /emergencias` | Reporte y SOS |
 | `POST /solicitudes/{id}/mensajes/{mensaje}/reportar`, `POST /solicitudes/{id}/chat/reportar`, `POST /solicitudes/{id}/evidencias/{foto}/reportar` | Reportar un mensaje, la conversación o una foto de avance; crea un reclamo de conducta (en línea, sin outbox) |
 
@@ -401,7 +401,7 @@ En una página que no pertenece a ningún ítem (búsqueda, perfil, Mis notifica
 | Atención | `panel/clientes` | Ficha del cliente con su reputación, sus contactos y sus solicitudes; suspende y reactiva con motivo (`solicitudes.cliente.suspender`); alta a mano de persona o empresa con contactos (`solicitudes.cliente.crear`) |
 | Proveedores | `panel/proveedores/crear`, `panel/pilotos/crear`, `panel/drones-flota/crear` | Alta a mano de proveedor (independiente con su piloto, o tercero), de un piloto de un tercero y del dron de un proveedor, con `proveedores.proveedor.crear`, `proveedores.piloto.crear` y `flota.dron.crear`; quedan `pendientes` y quien los cargó no los aprueba (ADR 0044) |
 | Mercado | `panel/calificaciones` | Oculta o deja visible una calificación con causa y motivo |
-| Atención | `panel/disputas` | Reclamos: lo que un cliente o un proveedor reclama sobre un servicio ya prestado; se toma, se media y se resuelve. Va en Atención porque atender a quien usa la plataforma no es operar el mercado |
+| Atención | `panel/reclamos` | Reclamos: lo que un cliente o un proveedor reclama sobre un servicio ya prestado; se toma, se media y se resuelve. Va en Atención porque atender a quien usa la plataforma no es operar el mercado |
 | Mercado | `panel/metricas` | Adjudicación, ofertas por solicitud, rondas por negociación, tiempos, calidad y volumen |
 | Sistema | `panel/avisos` | Auditoría: lo que el sistema avisó a cada cuenta y si lo leyó; solo lectura (`notificaciones.aviso.ver`). Los avisos de la propia cuenta están en la campana |
 | Proveedores | `panel/proveedores`, `panel/pilotos` | Aprobar, rechazar, suspender y dar de baja, con motivo |
@@ -420,7 +420,7 @@ El administrador lee el chat y la ubicación solo para atender un reclamo o una 
 
 ## 11. Parámetros configurables
 
-Anticipación máxima de la fecha deseada y recordatorio de solicitud sin trato; parámetros de urgencia (`negociacion.urgencia.*`: tope de días de la fecha límite, umbral de sugerencia, intervalo y escalera acelerados, horario de relanzamiento, umbral de alerta del administrador, ciclos antes de sugerir ajustes, motivos) y separación mínima entre avisos manuales; vigencia de la oferta; cupo de negociaciones simultáneas del cliente (`cupo_negociaciones`, 3); intervalo (T), escalera, calificaciones mínimas y horario de relanzamiento por defecto de las oleadas; máximo de ofertas por negociación, precio máximo de sanidad por hectárea, moneda, tolerancia de hectáreas ejecutadas sobre las solicitadas, evidencias mínimas de cierre, fotos obligatorias del dron, intervalo y caducidad de la ubicación, plazos de disputa y de calificación, umbral de calificación y de tasa de cancelación para alertar, anticipo de vencimiento de documentos, eliminación de cuenta (`eliminacion.gracia_dias`, 7; `eliminacion.plazo_dias`, 30), retención (`verificacion.retencion_meses_tras_baja`, 12; `verificacion.retencion_eliminacion_dias`, 90; `verificacion.retencion_rechazadas_dias`, 90; `antifraude.registro_meses_sin_antecedentes`, 12; `antifraude.registro_meses_con_antecedentes`, 36; `retencion.servicio_meses`, 12; `retencion.aceptaciones_meses`, 36; `incidencias.ubicacion_retencion_dias`, 90; `respaldos.retencion_dias`, 30) y moderación del chat (`moderacion.contexto_mensajes`, 10; `moderacion.mensajes_conversacion`, 50; `moderacion.bloqueos_alerta`, 3; lista del filtro de mensajes).
+Anticipación máxima de la fecha deseada y recordatorio de solicitud sin trato; parámetros de urgencia (`negociacion.urgencia.*`: tope de días de la fecha límite, umbral de sugerencia, intervalo y escalera acelerados, horario de relanzamiento, umbral de alerta del administrador, ciclos antes de sugerir ajustes, motivos) y separación mínima entre avisos manuales; vigencia de la oferta; cupo de negociaciones simultáneas del cliente (`cupo_negociaciones`, 3); intervalo (T), escalera, calificaciones mínimas y horario de relanzamiento por defecto de las oleadas; máximo de ofertas por negociación, precio máximo de sanidad por hectárea, moneda, tolerancia de hectáreas ejecutadas sobre las solicitadas, evidencias mínimas de cierre, fotos obligatorias del dron, intervalo y caducidad de la ubicación, plazos de reclamo y de calificación, umbral de calificación y de tasa de cancelación para alertar, anticipo de vencimiento de documentos, eliminación de cuenta (`eliminacion.gracia_dias`, 7; `eliminacion.plazo_dias`, 30), retención (`verificacion.retencion_meses_tras_baja`, 12; `verificacion.retencion_eliminacion_dias`, 90; `verificacion.retencion_rechazadas_dias`, 90; `antifraude.registro_meses_sin_antecedentes`, 12; `antifraude.registro_meses_con_antecedentes`, 36; `retencion.servicio_meses`, 12; `retencion.aceptaciones_meses`, 36; `incidencias.ubicacion_retencion_dias`, 90; `respaldos.retencion_dias`, 30) y moderación del chat (`moderacion.contexto_mensajes`, 10; `moderacion.mensajes_conversacion`, 50; `moderacion.bloqueos_alerta`, 3; lista del filtro de mensajes).
 
 ## 12. Notificaciones
 
@@ -443,7 +443,7 @@ Mecanismo del ADR 0025 con preferencias del ADR 0041: un aviso por cuenta destin
 | `EstadoDeAprobacionCambiado` de un cliente (aprobado, rechazado, suspendido) | Cliente | No |
 | `VerificacionEnviada` (selfie y documento en revisión) | Administradores | No |
 | `CalificacionRegistrada` | Proveedor | Sí (`calificaciones`) |
-| `DisputaAbierta`, `DisputaResuelta` | Partes y soporte | No |
+| `ReclamoAbierto`, `ReclamoResuelto` | Partes y soporte | No |
 | `EmergenciaActivada` | Soporte (prioridad máxima) | No |
 
 ## 13. Superficies móviles y offline
@@ -458,7 +458,7 @@ En el lote: todo registro nace con su `uuid_cliente` en el dispositivo, escribir
 ## 14. Métricas
 
 - **Mercado**: solicitudes abiertas por día, tasa de adjudicación, tiempo hasta la primera oferta, tiempo hasta la adjudicación, ofertas por solicitud, tiempo de espera en la cola y aceptaciones que esperan, diferencia entre precio propuesto y acordado, hectáreas servidas, solicitudes esperando piloto y relanzamientos, demanda abierta por departamento, solicitudes ampliadas a otros departamentos y aceptaciones que llegaron de otro departamento, avisos por paso de oleada, tiempo hasta la primera oferta por paso, y solicitudes urgentes sin aceptación y tiempo hasta la primera aceptación de las urgentes frente a las normales.
-- **Calidad**: calificación promedio, tasa de disputas, incidencias por 1.000 hectáreas.
+- **Calidad**: calificación promedio, tasa de reclamos, incidencias por 1.000 hectáreas.
 - **Oferta**: proveedores activos, drones aprobados, tasa de cancelación del proveedor, tiempo de aprobación de un proveedor.
 - **Volumen**: monto final acumulado de los servicios finalizados e ingreso por hectárea acordado.
 - **Sincronización**: antigüedad de la cola del outbox, tasa de reintentos, evidencias pendientes.

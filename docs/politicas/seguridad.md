@@ -33,7 +33,7 @@ Es la única ubicación, además de la última posición del piloto durante la e
 
 ## Conducta en el chat
 
-Reportar un mensaje, una conversación o una foto, y bloquear a la otra parte, se explican en `seguimiento_y_privacidad.md`; el reporte llega a soporte como un reclamo de conducta (`disputas.md`). Una amenaza o un riesgo físico se atiende como incidencia grave y, ante peligro para la vida, se llama primero a los servicios de emergencia.
+Reportar un mensaje, una conversación o una foto, y bloquear a la otra parte, se explican en `seguimiento_y_privacidad.md`; el reporte llega a soporte como un reclamo de conducta (`reclamos.md`). Una amenaza o un riesgo físico se atiende como incidencia grave y, ante peligro para la vida, se llama primero a los servicios de emergencia.
 
 ## Consecuencias
 

@@ -52,7 +52,7 @@ Zona de revisión línea por línea (CLAUDE.md): este lote toca el motor de sync
 |---|---|---|---|
 | `Seguridad/Infraestructura/Http/Controllers/Web/UsuariosController.php` | 607 | SRP: 21 métodos privados que arman tarjetas, resuelven roles y personas, consultan con `DB::table` y deciden permisos del rol dueño. Lee `per_personas` de otro módulo | Constructores de vista (`TarjetaRoles`, `TarjetaPersona`...), las consultas a casos de uso y `LecturaPersonas` del contrato de `Personal` |
 | `Negociacion/Infraestructura/Http/Controllers/Api/SeguimientoController.php` | 395 | Valida con `$request->validate()` dentro de cada acción y envuelve las respuestas con un `registro(callable)` propio | `FormRequest` por acción y un manejador de excepciones de dominio común |
-| `Solicitudes/.../Api/SolicitudesController.php`, `.../TerrenosController.php`, `Negociacion/.../OfertasController.php`, `Disputas/.../DisputasController.php`, `Flota/.../Api/DronesController.php` | 363, 271, 326, 316, 269 | Controladores gruesos; 16 controladores validan inline (`validate`/`Validator::make`) en vez de `FormRequest` | `FormRequest` por acción; extraer el armado de respuesta a `Resource` |
+| `Solicitudes/.../Api/SolicitudesController.php`, `.../TerrenosController.php`, `Negociacion/.../OfertasController.php`, `Reclamos/.../ReclamosController.php`, `Flota/.../Api/DronesController.php` | 363, 271, 326, 316, 269 | Controladores gruesos; 16 controladores validan inline (`validate`/`Validator::make`) en vez de `FormRequest` | `FormRequest` por acción; extraer el armado de respuesta a `Resource` |
 | `Seguridad/Infraestructura/Eloquent/SecUser.php` | 330 | El modelo resuelve permisos efectivos (`tienePermiso`, `tienePermisoEnRol`, `idsDeRolesActivos`) | Un servicio `PermisosEfectivos` en `Aplicacion/` y el modelo solo expone relaciones |
 | `Operaciones/Infraestructura/Eloquent/Trabajo.php` | 273 | El modelo calcula `cuadreCaldo()` y `estadoTablero()`, y define el scope de tablero | Regla pura en `Dominio/` y vista SQL para el estado agregado |
 | `Seguridad/Infraestructura/SeguridadServiceProvider.php` | 232 | Registra bindings, rutas, composers y middleware de varias capas | Un proveedor por responsabilidad (rutas, bindings, vistas) |
@@ -78,7 +78,7 @@ El invariante de módulos dice que se viaja por contratos. Lecturas directas de 
 | `Seguridad` | `per_` | `Seguridad/Infraestructura/Http/Controllers/Web/UsuariosController.php` |
 | `Negociacion` | `sol_` | `Negociacion/Aplicacion/ProcesarNegociacion.php` |
 | `Compartido` | `sec_` | `Compartido/Infraestructura/Eloquent/BitacoraObserver.php` |
-| `Metricas` | `sol_`, `neg_`, `prv_`, `cal_`, `dsp_`, `flo_` | `Metricas/Aplicacion/CalcularMetricas.php`, `ArmarTableroDeMercado.php` |
+| `Metricas` | `sol_`, `neg_`, `prv_`, `cal_`, `rcl_`, `flo_` | `Metricas/Aplicacion/CalcularMetricas.php`, `ArmarTableroDeMercado.php` |
 
 Propuesta: contratos de lectura (`Lectura*`) para los tres primeros; para `Metricas`, vistas SQL de solo lectura (ADR 0012), que son la forma sancionada de cruzar módulos en lecturas.
 
@@ -110,7 +110,7 @@ PostgreSQL no crea índice sobre una clave foránea. Consulta sobre el esquema m
 | `neg_pagos_confirmados.confirmado_por_usuario_id`, `sol_solicitud_historial.actor_usuario_id` | auditoría de actor |
 | `ope_sesiones.dron_id`, `.auxiliar_id`, `.captura_rc_id`, `.validado_por`, `ope_alertas.sesion_id`, `ope_evidencias.subido_por` | sync y reporte técnico |
 | `flo_equipos.auxiliar_id`, `flo_drones.aprobado_por`, `prv_documentos.subido_por`, `.revisado_por`, `prv_*.aprobado_por` | flota y aprobación |
-| `cal_calificaciones.autor_usuario_id`, `dsp_disputas.abierta_por_usuario_id`, `dsp_mensajes.autor_usuario_id` | calificaciones y reclamos |
+| `cal_calificaciones.autor_usuario_id`, `rcl_reclamos.abierta_por_usuario_id`, `rcl_mensajes.autor_usuario_id` | calificaciones y reclamos |
 | `sec_token_dispositivo.role_id`, `sec_user_preferencia.rol_preferido_id`, `.ultimo_rol_id`, `sec_vistas_como.rol_id` | sesión y vista como |
 
 Faltan además índices de consulta:

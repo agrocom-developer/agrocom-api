@@ -48,7 +48,7 @@ Lo que el sistema ya tiene y condiciona el diseño: cuentas separadas por app co
 - Un proveedor que paga y no recibe trabajos se va y habla mal del servicio: hay que medir antes de cobrar y tener un criterio de «dejar de cobrar» si no hay demanda.
 - Una cuota fija es la misma para quien hace un trabajo al mes que para quien hace veinte: el pequeño se siente castigado, el grande se siente bien tratado. Se compensa con planes por uso o por tramos.
 - Es un cobro dentro de lo que las tiendas llaman «funcionalidad de la app» (sección 4): el diseño del cobro tiene la parte más delicada.
-- Cobro manual en la fase inicial: trabajo operativo, riesgo de olvidos y de disputas sobre quién pagó.
+- Cobro manual en la fase inicial: trabajo operativo, riesgo de olvidos y de reclamos sobre quién pagó.
 - Una empresa puede repartir sus pilotos en cuentas independientes para pagar menos; el vínculo del ADR 0046 (punto 35) y el límite por plan lo vigilan.
 
 **Cuándo conviene.** Cuando haya suficientes solicitudes abiertas por proveedor activo como para que la cuota se justifique y los proveedores ya tengan trabajos adjudicados (ver «gratuidad hasta masa crítica», 3.5). Es la opción que más se parece a lo que el dueño describe.
@@ -108,7 +108,7 @@ Las tres formas se pueden combinar. Todas se expresan como **parámetros** (secc
 
 **Riesgos.**
 - **Se parece a la comisión que ya se descartó**, solo que de monto fijo: el proveedor paga por cada adjudicación, así que tiene incentivo de cerrar por fuera antes de adjudicar (pasar un teléfono por el chat) o de pedir al cliente que no adjudique en la app. El filtro del chat (T7 del documento de tiendas) y la regla de contacto solo tras adjudicar ayudan, pero no eliminan la elusión.
-- Introduce un cobro **por evento** en un momento delicado (el acuerdo ya está hecho): si el proveedor no puede pagar en ese instante, o hay disputa, el sistema tendría que decidir si retiene el contacto de un trato ya acordado. Rompe la regla de atomicidad de la adjudicación o la complica.
+- Introduce un cobro **por evento** en un momento delicado (el acuerdo ya está hecho): si el proveedor no puede pagar en ese instante, o hay reclamo, el sistema tendría que decidir si retiene el contacto de un trato ya acordado. Rompe la regla de atomicidad de la adjudicación o la complica.
 - Convierte la adjudicación, que hoy es una sola operación atómica entre dos partes (ADR 0038), en una operación que además depende de un pago.
 - Para las tiendas, vender paquetes o créditos de contactos es una compra de funcionalidad digital (sección 4), con IAP casi segura.
 
@@ -324,7 +324,7 @@ La distinción que habría que escribir: **lo que no se cobra en la app es el se
 - `docs/especificacion/marketplace.md`: principio 9 («Sin cobro en la aplicación», línea 19), §8.2 Precio y pago (línea 240) y el alcance de la primera versión (línea 420).
 - `docs/politicas/precio_y_pago.md`: sección «Pago» («La aplicación no procesa cobros») y sección «Comisión» («El modelo de ingresos… se decide en un ADR nuevo», que apunta a este).
 - `docs/decisiones/0034-precio-acordado-y-pago-fuera-de-la-app.md`: puntos 1 y 5 («la aplicación no cobra», «no hay bloqueo por deuda en el sistema»: la suspensión por falta de pago del acceso lo cambiaría); la alternativa descartada «Retención automática con pasarela».
-- `docs/decisiones/0033-cancelacion-sin-penalidad-automatica-y-disputas.md` y `docs/politicas/cancelacion.md` (línea 8: «La plataforma no cobra»): se refieren al servicio y seguirían valiendo con la aclaración.
+- `docs/decisiones/0033-cancelacion-sin-penalidad-automatica-y-reclamos.md` y `docs/politicas/cancelacion.md` (línea 8: «La plataforma no cobra»): se refieren al servicio y seguirían valiendo con la aclaración.
 - `docs/especificacion/negociacion-contrato.md`, línea 270 («sin comisión»).
 - `docs/politicas/tiendas-y-privacidad.md`: la fila «Cuenta y datos sin compra» (línea 208), la nota para el revisor («no hay cobro dentro de ella», línea 195), las declaraciones de datos de las tiendas («Lo que Agrocom no recoge: pagos», sección 1.3) y la sección 4.
 - `docs/glosario.md`: no tiene entradas de pago ni comisión; habría que agregar «suscripción» y «periodo de gratuidad» al decidir.
@@ -341,7 +341,7 @@ La distinción que habría que escribir: **lo que no se cobra en la app es el se
 **Ya existe** (`panel/metricas` y las vistas `vw_metricas_*`, ADR 0039; solo lectura, 7, 30 o 90 días):
 - Mercado: solicitudes publicadas y por estado, adjudicadas y tasa de adjudicación, expiradas, hectáreas solicitadas y servidas, **ofertas por solicitud**, rondas promedio, **tiempo hasta la aceptación** (promedio y mediana), diferencia entre precio propuesto y acordado.
 - Oferta: proveedores aprobados y pendientes, drones aprobados, ofertas respondidas, tasa de aceptación, cancelaciones del proveedor y su tasa.
-- Calidad: calificación promedio, calificaciones por moderar, disputas y su tasa, reembolsos.
+- Calidad: calificación promedio, calificaciones por moderar, reclamos y su tasa, reembolsos.
 - Ingreso: servicios completados, volumen bruto y ingreso por hectárea.
 - Tabla de proveedores con más servicios, su calificación, tasa de aceptación y tiempo de respuesta.
 

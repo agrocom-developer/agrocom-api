@@ -13,14 +13,14 @@ Agrocom es un marketplace de servicio de fumigación con drones. El cliente publ
 |---|---|---|
 | Cliente (cuenta de la app `cliente`) | Publica la solicitud con su precio, compara y elige ofertas, ve fotos, chat y ubicación del piloto, califica; debe estar aprobado | App `cliente` |
 | Proveedor (cuenta de la app `piloto`: independiente, dueño de drones, Agrocom propio o piloto de un tercero) | Se registra con datos de la persona y del dron con fotos; ve el mapa, ofrece, ejecuta y chatea tras la aprobación | App `piloto` |
-| Administrador | Personal de Agrocom: verifica y aprueba clientes y proveedores, modera calificaciones, resuelve disputas, administra usuarios y roles | Panel web |
+| Administrador | Personal de Agrocom: verifica y aprueba clientes y proveedores, modera calificaciones, resuelve reclamos, administra usuarios y roles | Panel web |
 | Operador | Personal de Agrocom con acceso a las partes del panel que el administrador le asigna | Panel web |
 
 Cada app admite un solo tipo de cuenta, con su propio usuario, verificación (selfie con cámara y documento de identidad) y aprobación; no hay conversión entre tipos. El teléfono es la referencia para entrar y es único por tipo de cuenta (el mismo teléfono puede estar en una cuenta de cliente y una de proveedor), con un correo de respaldo para recuperar el acceso desde la app con un código; el teléfono no prueba posesión hasta que haya código por SMS o WhatsApp. Una persona (por su documento) tiene a lo sumo una cuenta de cliente y una de proveedor, y cada cuenta sube su propia verificación sin reutilizar la otra. Al registrarse se aceptan los términos y la privacidad vigentes. Un proveedor no pide servicios y nadie ofrece sobre una solicitud propia (ADR 0046).
 
 ## Ciclo de una solicitud
 
-`borrador` → `abierta` → `con_ofertas` → `adjudicada` → `en_ejecucion` → `finalizada` → `calificada`; además `cancelada`, `expirada` y `disputada`. Todo es solicitud por solicitud: no hay contratos ni campañas. Cada transición pasa por el servicio de estado de su máquina, nunca por un `estado = ...` suelto.
+`borrador` → `abierta` → `con_ofertas` → `adjudicada` → `en_ejecucion` → `finalizada` → `calificada`; además `cancelada`, `expirada` y `en_reclamo`. Todo es solicitud por solicitud: no hay contratos ni campañas. Cada transición pasa por el servicio de estado de su máquina, nunca por un `estado = ...` suelto.
 
 ## Negociación
 

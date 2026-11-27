@@ -23,4 +23,4 @@ El precio y las condiciones se acuerdan entre cliente y piloto, y el cobro ocurr
 
 ## Consecuencias
 
-Documentación operativa en `docs/politicas/cancelacion.md`, `disputas.md` y `seguridad.md`.
+Documentación operativa en `docs/politicas/cancelacion.md`, `reclamos.md` y `seguridad.md`.

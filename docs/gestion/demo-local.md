@@ -66,7 +66,7 @@ Cada solicitud nace con un `uuid_cliente` determinista, así que volver a sembra
 | `en_ejecucion` | `agro.sanrafael` (Rodrigo, 64 %), `coop.valle.grande` (Marcelo, 25 %) | Fotos de avance, chat y la última ubicación del piloto. |
 | `finalizada` | `luis.antelo`, Lote Sur (Carlos) | Hectáreas ejecutadas y monto final a pagar; el cliente aún no califica. |
 | `calificada` | `agro.sanrafael`, Las Palmas (Valeria) | Calificación del cliente y del proveedor. |
-| `disputada` | `coop.valle.grande`, Lote Este (Marcelo) | Un reclamo abierto con un mensaje de soporte. |
+| `en_reclamo` | `coop.valle.grande`, Lote Este (Marcelo) | Un reclamo abierto con un mensaje de soporte. |
 | `cancelada` | `luis.antelo`, La Esperanza | Sin penalidad. |
 | `abierta`, sin trato | `coop.valle.grande`, Parcela Central | Lleva nueve días abierta, sin ofertas y sin fecha deseada: la solicitud no vence y sigue en el mercado hasta que se adjudique o el cliente la cancele. |
 

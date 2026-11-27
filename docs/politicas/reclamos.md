@@ -22,7 +22,7 @@ La plataforma conserva las fotos de avance con su fecha, los registros de avance
 
 ## Proceso
 
-1. Apertura con motivo y monto reclamado. La solicitud pasa a `disputada`.
+1. Apertura con motivo y monto reclamado. La solicitud pasa a `en_reclamo`.
 2. Soporte pide información a la contraparte, que responde en 48 horas.
 3. Un administrador resuelve: `a_favor_cliente`, `a_favor_proveedor`, `parcial` o `sin_lugar`.
 4. La decisión es un registro con autor y motivo; ambas partes pueden apelar una vez en 7 días con pruebas nuevas.
