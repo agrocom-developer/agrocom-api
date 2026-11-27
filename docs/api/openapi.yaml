@@ -4020,6 +4020,206 @@ paths:
       security:
         -
           tokenDispositivo: []
+  /api/cuenta/eliminacion:
+    get:
+      tags:
+        - Seguridad
+      summary: 'Estado de la eliminación de mi cuenta'
+      description: 'Estado de la eliminación de la cuenta del token y lo que la impediría hoy. Responde también con la cuenta ya en eliminación (es una de las pocas rutas que esa sesión puede usar). `eliminacion` es `null` si no hay una solicitud vigente; `impedimentos` lista los motivos por los que pedirla respondería `409 eliminacion_bloqueada`: `servicio_en_curso` (un servicio adjudicado o en ejecución), `reclamo_abierto` y `pilotos_vinculados`.'
+      operationId: verEliminacionDeMiCuenta
+      responses:
+        200:
+          description: Estado.
+          content:
+            application/json:
+              schema:
+                required:
+                  - eliminacion
+                  - impedimentos
+                properties:
+                  eliminacion:
+                    oneOf:
+                      -
+                        $ref: '#/components/schemas/Eliminacion'
+                    nullable: true
+                  impedimentos:
+                    type: array
+                    items:
+                      type: string
+                      enum:
+                        - servicio_en_curso
+                        - reclamo_abierto
+                        - pilotos_vinculados
+                    example: []
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+      security:
+        -
+          tokenDispositivo: []
+    post:
+      tags:
+        - Seguridad
+      summary: 'Eliminar mi cuenta'
+      description: 'Pide eliminar la cuenta del token (ADR 0047). Se confirma con la `password` o con un `codigo` (basta uno). Si algo la impide responde `409 eliminacion_bloqueada` con los `motivos`. Si no: cierra todas las sesiones y revoca los tokens de dispositivo (también el de este request), cancela las solicitudes abiertas y retira las ofertas vigentes (no se restauran), y deja la cuenta `solicitada` durante 7 días (`ejecutar_desde`): puede iniciar sesión, pero la sesión solo ve el estado, cancela y cierra sesión (lo demás responde `403 cuenta_en_eliminacion`). Vencida la gracia, una tarea diaria anonimiza los datos personales. Es idempotente: si ya hay una vigente, la devuelve.'
+      operationId: eliminarMiCuenta
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                password:
+                  description: 'La contraseña de la cuenta. Obligatoria si no se envía `codigo`.'
+                  type: string
+                  format: password
+                  nullable: true
+                codigo:
+                  description: 'El código de `POST /api/cuenta/eliminacion/codigo`. Obligatorio si no se envía `password`.'
+                  type: string
+                  example: '482913'
+                  nullable: true
+              type: object
+      responses:
+        202:
+          description: 'Eliminación solicitada; el token usado deja de valer.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - eliminacion
+                properties:
+                  eliminacion:
+                    $ref: '#/components/schemas/Eliminacion'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        409:
+          description: '`eliminacion_bloqueada`: algo la impide; la app explica cada motivo y su salida.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - message
+                  - codigo
+                  - motivos
+                properties:
+                  message:
+                    type: string
+                    example: 'No puedes eliminar tu cuenta todavía. Resuelve lo pendiente y vuelve a intentarlo.'
+                  codigo:
+                    type: string
+                    example: eliminacion_bloqueada
+                    enum:
+                      - eliminacion_bloqueada
+                  motivos:
+                    type: array
+                    items:
+                      type: string
+                      enum:
+                        - servicio_en_curso
+                        - reclamo_abierto
+                        - pilotos_vinculados
+                    example:
+                      - servicio_en_curso
+                type: object
+        422:
+          description: '`contrasena_incorrecta`, `codigo_invalido` o datos inválidos (sin contraseña ni código).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDeCodigo'
+        429:
+          description: 'Demasiados intentos; reintentar tras `Retry-After` segundos.'
+      security:
+        -
+          tokenDispositivo: []
+  /api/cuenta/eliminacion/codigo:
+    post:
+      tags:
+        - Seguridad
+      summary: 'Pedir un código para eliminar mi cuenta'
+      description: 'Para quien olvidó su contraseña: envía un código de 6 dígitos por el canal que la persona elige (`whatsapp`, `sms` o `correo`). Con ese código, en lugar de la contraseña, se pide la eliminación. Mismos límites que la recuperación del acceso.'
+      operationId: pedirCodigoParaEliminarMiCuenta
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - canal
+              properties:
+                canal:
+                  type: string
+                  example: whatsapp
+                  enum:
+                    - whatsapp
+                    - sms
+                    - correo
+              type: object
+      responses:
+        202:
+          description: 'Código enviado.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - message
+                  - destino
+                properties:
+                  message:
+                    type: string
+                    example: 'Te enviamos un código. Revisa el medio que elegiste.'
+                  destino:
+                    description: 'Adónde fue, enmascarado.'
+                    type: string
+                    example: '+591 ••••• 45'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        422:
+          description: '`sin_destino` (la cuenta no tiene teléfono o correo para ese canal) o canal inválido.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDeCodigo'
+        429:
+          description: 'La cuenta ya pidió el máximo de códigos; reintentar tras `Retry-After` segundos.'
+        503:
+          description: '`canal_no_disponible`: ese medio no está configurado; ofrecer otro.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDeCodigo'
+      security:
+        -
+          tokenDispositivo: []
+  /api/cuenta/eliminacion/cancelar:
+    post:
+      tags:
+        - Seguridad
+      summary: 'Conservar mi cuenta (cancelar la eliminación)'
+      description: 'Dentro de los 7 días de gracia, la persona se arrepiente («Conservar mi cuenta»): la cuenta vuelve a operar. Lo que se canceló al pedir la eliminación (solicitudes abiertas, ofertas vigentes) no se restaura. Disponible para la sesión de una cuenta en eliminación.'
+      operationId: cancelarEliminacionDeMiCuenta
+      responses:
+        200:
+          description: 'Eliminación cancelada.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - eliminacion
+                properties:
+                  eliminacion:
+                    $ref: '#/components/schemas/Eliminacion'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        404:
+          description: 'No hay una eliminación vigente que cancelar.'
+      security:
+        -
+          tokenDispositivo: []
   /api/perfil/foto:
     put:
       tags:
@@ -5973,6 +6173,40 @@ components:
             - sms
             - correo
       type: object
+    Eliminacion:
+      title: 'Eliminación de cuenta'
+      description: 'Solicitud de eliminar la cuenta (ADR 0047). `solicitada`: dentro de la gracia se puede cancelar; `pospuesta`: vencida la gracia algo la impide todavía y se reintenta cada día (`motivo_posposicion`); `cancelada`: la persona conservó su cuenta; `ejecutada`: los datos personales ya se anonimizaron.'
+      required:
+        - estado
+        - solicitada_en
+        - ejecutar_desde
+        - cancelada_en
+        - motivo_posposicion
+      properties:
+        estado:
+          type: string
+          example: solicitada
+          enum:
+            - solicitada
+            - pospuesta
+            - cancelada
+            - ejecutada
+        solicitada_en:
+          type: string
+          format: date-time
+        ejecutar_desde:
+          description: 'Hasta esta fecha la persona puede arrepentirse; después la tarea diaria la ejecuta.'
+          type: string
+          format: date-time
+        cancelada_en:
+          type: string
+          format: date-time
+          nullable: true
+        motivo_posposicion:
+          description: 'Solo si está `pospuesta`: los motivos que la impiden, separados por coma.'
+          type: string
+          nullable: true
+      type: object
     Disputa:
       title: Disputa
       description: 'El reclamo de un servicio (especificación §4.8, ADR 0033): uno por solicitud. Lo abre el cliente (hasta 72 horas después de `ejecutada`) o el proveedor (cobro pendiente, acceso negado o calificación abusiva). Los importes son decimales exactos en string. `mensajes` y `resoluciones` solo viajan en el detalle. Los reembolsos se liquidan entre las partes fuera de la app.'
@@ -6996,6 +7230,10 @@ components:
           type: integer
           example: 3
           nullable: true
+        telefono_verificado:
+          description: 'Si ya se probó la posesión del teléfono con un código (ADR 0046, punto 29). La app ofrece verificarlo (`POST /api/cuenta/telefono/verificacion`) mientras sea `false`. Siempre presente.'
+          type: boolean
+          example: false
         foto_url:
           description: 'Foto de perfil de la cuenta: URL firmada y de corta vida (se pide sin token); `null` si no tiene.'
           type: string

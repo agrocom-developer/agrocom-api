@@ -27,7 +27,7 @@ beforeEach(function () {
         'create_sol_terrenos_table', 'create_sol_solicitudes_servicio_table', 'agrega_reputacion_a_sol_clientes',
         'lleva_sol_clientes_al_ciclo_de_aprobacion', 'agrega_motivo_estado_a_sol_clientes', 'crea_sol_cliente_contactos',
         'create_prv_proveedores_table', 'create_prv_pilotos_table', 'agrega_negociacion_a_sol_solicitudes_servicio',
-        'agrega_ubicacion_a_sol_terrenos', 'agrega_ubicacion_a_sol_solicitudes_servicio', 'retira_zonas', 'create_sec_user_preferencia_table',
+        'agrega_ubicacion_a_sol_terrenos', 'agrega_ubicacion_a_sol_solicitudes_servicio', 'retira_zonas', 'create_sec_user_preferencia_table', 'crea_sec_eliminaciones',
     ]);
 
     foreach (['sec_user_preferencia', 'sec_token_dispositivo', 'sol_cliente_contactos', 'sol_clientes', 'sec_user_role', 'sec_user', 'sec_personas', 'sec_role'] as $tabla) {
