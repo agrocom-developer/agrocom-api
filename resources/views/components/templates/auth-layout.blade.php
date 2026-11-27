@@ -157,6 +157,10 @@
 
         <div class="ag-auth-layout__footer">
             <span>{{ __('ui.footer.copyright', ['year' => date('Y')]) }}</span>
+            <nav class="ag-auth-layout__legal" aria-label="{{ __('legal.enlaces.aria_label') }}">
+                <a href="{{ route('legal.terminos') }}" class="ag-auth-layout__legal-link">{{ __('legal.enlaces.terminos') }}</a>
+                <a href="{{ route('legal.privacidad') }}" class="ag-auth-layout__legal-link">{{ __('legal.enlaces.privacidad') }}</a>
+            </nav>
             <span class="ag-auth-layout__version">v1.0</span>
         </div>
     </div>

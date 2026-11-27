@@ -100,6 +100,10 @@
        como una sola tira de controles. */
     --ag-size-control-height: 48px;
 
+    /* Ancho máximo de la columna de lectura de los documentos legales
+       públicos (templates/legal-layout): unos 75 caracteres por línea. */
+    --ag-size-lectura: 75ch;
+
     /* Radios — Material favorece esquinas más redondeadas que el default de Bootstrap */
     --ag-radius-sm: 0.25rem;
     --ag-radius-md: 0.5rem;

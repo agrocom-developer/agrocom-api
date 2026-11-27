@@ -68,6 +68,12 @@ Route::get('/login', function () {
 
 Route::post('/login', [SesionController::class, 'store'])->name('login');
 
+// Documentos legales públicos (docs/politicas/legal.md): sin sesión, porque los
+// enlazan las fichas de las tiendas y las apps. Quien ya inició sesión también
+// puede abrirlos. Versión, vigencia y aviso de borrador salen de config/legal.php.
+Route::view('/terminos', 'legal.documento', ['documento' => 'terminos'])->name('legal.terminos');
+Route::view('/privacidad', 'legal.documento', ['documento' => 'privacidad'])->name('legal.privacidad');
+
 // Recuperación de contraseña por correo (tarea 66; ADR 0004, ampliación
 // 9/9/2026) — públicas, sin guard: quien las usa todavía no tiene sesión.
 // Solo para el personal del panel: las cuentas de app recuperan su acceso desde la app.
