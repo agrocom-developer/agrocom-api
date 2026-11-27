@@ -6,6 +6,8 @@
 
 - El precio lo acuerdan el cliente y el piloto; Agrocom es el nexo y el registro.
 - El cliente decide con información: precio, calificación y dron. La distancia no se calcula: se acuerda en la negociación.
+- El **total** (hectáreas por precio por hectárea) lo calcula el servidor y nadie lo edita. Cada parte puede explicar su precio con una **justificación** corta (hasta 500 caracteres) que la contraparte ve: el cliente en su solicitud, cada autor en su oferta o contraoferta.
+- El cliente ordena y filtra las ofertas que le llegan por precio, total, calificación, tipo de proveedor y capacidad del dron; no hay un directorio de pilotos que recorrer.
 - El piloto decide con información: ve el estado de la propiedad y los lotes antes de ofertar.
 - Nadie queda obligado por una oferta que no aceptó.
 
