@@ -4,7 +4,7 @@
  * Claves de idioma armadas en tiempo de ejecución (ADR 0013). `ClavesDeIdiomaTest` solo ve las
  * claves escritas como literal; acá se cubren las familias `__('a.b.'.$valor)` cuyo conjunto de
  * valores se puede enumerar con certeza (casos de un enum, constantes del controlador, tipos de
- * aviso). Una clave sin valor no da error: se vería cruda en pantalla (`seguridad.dashboard.pendiente.disputas`).
+ * aviso). Una clave sin valor no da error: se vería cruda en pantalla (`seguridad.dashboard.pendiente.reclamos`).
  *
  * Cada familia es `prefijo => valores`. Si un enum gana un caso y la etiqueta no se escribe,
  * esta prueba falla con la clave exacta.
@@ -19,10 +19,6 @@ use App\Dominios\Compartido\Dominio\AccionAprobacion;
 use App\Dominios\Compartido\Dominio\AccionBitacora;
 use App\Dominios\Compartido\Dominio\EstadoAprobacion;
 use App\Dominios\Compartido\Dominio\TipoDocumento;
-use App\Dominios\Disputas\Dominio\EstadoDisputa;
-use App\Dominios\Disputas\Dominio\MotivoDisputa;
-use App\Dominios\Disputas\Dominio\ParteDeDisputa;
-use App\Dominios\Disputas\Dominio\ResultadoDisputa;
 use App\Dominios\Flota\Aplicacion\GestionarFotosDeDron;
 use App\Dominios\Flota\Dominio\OrigenDron;
 use App\Dominios\Mantenimiento\Dominio\EstadoBateria;
@@ -33,6 +29,10 @@ use App\Dominios\Personal\Dominio\RecursoTipoEquipo;
 use App\Dominios\Proveedores\Dominio\EstadoDocumento;
 use App\Dominios\Proveedores\Dominio\TipoProveedor;
 use App\Dominios\Proveedores\Dominio\TipoSujeto;
+use App\Dominios\Reclamos\Dominio\EstadoReclamo;
+use App\Dominios\Reclamos\Dominio\MotivoReclamo;
+use App\Dominios\Reclamos\Dominio\ParteDeReclamo;
+use App\Dominios\Reclamos\Dominio\ResultadoReclamo;
 use App\Dominios\Seguridad\Contratos\PropositoDeCodigo;
 use App\Dominios\Seguridad\Contratos\TipoCuenta;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web\DashboardController;
@@ -150,10 +150,10 @@ function familiasDinamicasIdioma(): array
         'solicitudes.panel.neg_estado.' => valoresDeEnumIdioma(EstadoOferta::class),
         'flota.origen.' => valoresDeEnumIdioma(OrigenDron::class),
         'personal.recurso_tipo.' => valoresDeEnumIdioma(RecursoTipoEquipo::class),
-        'disputas.estado.' => valoresDeEnumIdioma(EstadoDisputa::class),
-        'disputas.motivo.' => valoresDeEnumIdioma(MotivoDisputa::class),
-        'disputas.resultado.' => valoresDeEnumIdioma(ResultadoDisputa::class),
-        'disputas.panel.abierta_por_' => valoresDeEnumIdioma(ParteDeDisputa::class),
+        'reclamos.estado.' => valoresDeEnumIdioma(EstadoReclamo::class),
+        'reclamos.motivo.' => valoresDeEnumIdioma(MotivoReclamo::class),
+        'reclamos.resultado.' => valoresDeEnumIdioma(ResultadoReclamo::class),
+        'reclamos.panel.abierta_por_' => valoresDeEnumIdioma(ParteDeReclamo::class),
         'calificaciones.estado.' => valoresDeEnumIdioma(EstadoCalificacion::class),
         'calificaciones.sujeto.' => valoresDeEnumIdioma(SujetoCalificacion::class),
         'calificaciones.autor.' => valoresDeEnumIdioma(AutorCalificacion::class),
@@ -173,16 +173,16 @@ function familiasDinamicasIdioma(): array
         ),
         'flota.fotos.tipo.' => GestionarFotosDeDron::TIPOS,
         // Valores de columnas de texto (no son enum): estados de la foto de dron, tipos de avance y de foto
-        // del seguimiento, autores del chat y de la disputa, categorías del correo de prueba y causas del reembolso.
+        // del seguimiento, autores del chat y del reclamo, categorías del correo de prueba y causas del reembolso.
         'flota.fotos.estado.' => ['en_revision', 'aprobada', 'rechazada'],
         'flota.equipos.rol.' => ['piloto', 'dron'],
         'solicitudes.panel.seg_tipo.' => ['inicio', 'avance', 'cierre'],
         'solicitudes.panel.seg_foto_tipo.' => ['foto_avance', 'foto_final', 'foto_incidencia'],
         'solicitudes.panel.neg_autor.' => ['cliente', 'proveedor'],
         'solicitudes.panel.chat_autor.' => ['cliente', 'proveedor', 'sistema'],
-        'disputas.panel.autor_' => ['cliente', 'proveedor', 'soporte'],
-        'disputas.panel.tipo_' => ['informacion', 'apelacion'],
-        'disputas.errores.reembolso.' => ['negativo', 'sin_reembolso', 'requiere_reembolso', 'excede_monto', 'parcial_no_total'],
+        'reclamos.panel.autor_' => ['cliente', 'proveedor', 'soporte'],
+        'reclamos.panel.tipo_' => ['informacion', 'apelacion'],
+        'reclamos.errores.reembolso.' => ['negativo', 'sin_reembolso', 'requiere_reembolso', 'excede_monto', 'parcial_no_total'],
         'calificaciones.panel.autor_' => ['administrador', 'proveedor'],
         'configuracion.correo_prueba.error.' => ['sin_configurar', 'sin_destino', 'autenticacion', 'conexion', 'tiempo', 'cifrado', 'desconocido'],
         'busqueda.bloques.' => ['clientes', 'proveedores', 'drones'],

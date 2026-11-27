@@ -25,7 +25,7 @@ final class GruposDeSolicitud
     {
         return match ($estado) {
             'abierta', 'con_ofertas' => self::ABIERTAS,
-            'adjudicada', 'en_ejecucion', 'disputada' => self::EN_CURSO,
+            'adjudicada', 'en_ejecucion', 'en_reclamo' => self::EN_CURSO,
             'finalizada', 'calificada' => self::CERRADAS,
             'cancelada', 'expirada' => self::CANCELADAS,
             default => null,
