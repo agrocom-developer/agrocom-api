@@ -20,9 +20,12 @@ use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\DocumentosCont
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\MiProveedorController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\PilotosController;
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\RegistroProveedorController;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\ContrasenaDeCuentaController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\DispositivoController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\FotoDePerfilController;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\RecuperarAccesoController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\SesionCampoController;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\VerificacionDeTelefonoController;
 use App\Dominios\Sincronizacion\Infraestructura\Http\Controllers\Api\CatalogoController;
 use App\Dominios\Sincronizacion\Infraestructura\Http\Controllers\Api\SyncController;
 use App\Dominios\Solicitudes\Infraestructura\Http\Controllers\Api\CatalogosController;
@@ -57,6 +60,15 @@ use Illuminate\Support\Facades\Route;
 Route::post('/auth/token', [SesionCampoController::class, 'store'])
     ->middleware('throttle:login-campo')
     ->name('api.auth.token.emitir');
+
+// Recuperar el acceso desde la app (ADR 0046, punto 27): sin token, con un código por WhatsApp, SMS o correo. El limitador
+// `codigos-publicos` cuenta por IP y por identificador, exista o no la cuenta, y la respuesta es siempre igual.
+Route::post('/auth/recuperar', [RecuperarAccesoController::class, 'solicitar'])
+    ->middleware('throttle:codigos-publicos')
+    ->name('api.auth.recuperar');
+Route::post('/auth/recuperar/confirmar', [RecuperarAccesoController::class, 'confirmar'])
+    ->middleware('throttle:codigos-publicos')
+    ->name('api.auth.recuperar.confirmar');
 
 // Marketplace (ADR 0036): registro público de clientes y proveedores. Crean
 // cuentas sin autenticación, así que llevan el límite `registro-publico`
@@ -97,6 +109,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // Cierra la sesión de ESTE dispositivo (el del token que firma el
     // request). Revocar el de otro es cosa del panel, con permiso propio.
     Route::delete('/auth/token', [SesionCampoController::class, 'destroy'])->name('api.auth.token.revocar');
+
+    // Códigos de un solo uso con la sesión iniciada (ADR 0046, puntos 27 y 29): cambiar la contraseña y verificar el teléfono.
+    Route::post('/cuenta/contrasena/codigo', [ContrasenaDeCuentaController::class, 'codigo'])->name('api.cuenta.contrasena.codigo');
+    Route::put('/cuenta/contrasena', [ContrasenaDeCuentaController::class, 'update'])->name('api.cuenta.contrasena.update');
+    Route::post('/cuenta/telefono/verificacion', [VerificacionDeTelefonoController::class, 'solicitar'])->name('api.cuenta.telefono.verificacion');
+    Route::post('/cuenta/telefono/verificacion/confirmar', [VerificacionDeTelefonoController::class, 'confirmar'])->name('api.cuenta.telefono.verificacion.confirmar');
 
     // Foto de perfil de la propia cuenta (cliente, proveedor o piloto).
     Route::put('/perfil/foto', [FotoDePerfilController::class, 'update'])->name('api.perfil.foto.update');

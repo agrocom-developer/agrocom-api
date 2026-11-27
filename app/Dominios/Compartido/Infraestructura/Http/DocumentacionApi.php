@@ -116,6 +116,18 @@ use OpenApi\Attributes as OA;
     ],
     type: 'object',
 )]
+#[OA\Schema(
+    schema: 'ErrorDeCodigo',
+    title: 'Error de código de un solo uso',
+    description: 'Respuesta de los códigos de verificación (ADR 0046, puntos 27 a 30). `codigo_invalido` (422) cubre cuenta inexistente, código errado, vencido, usado o con los intentos agotados, sin distinguirlos. `canal_no_disponible` (503) dice que el medio no tiene adaptador o no está configurado; la app ofrece otro.',
+    required: ['message', 'codigo'],
+    properties: [
+        new OA\Property(property: 'message', type: 'string', example: 'El código no es válido o venció. Pide uno nuevo.'),
+        new OA\Property(property: 'codigo', type: 'string', enum: ['codigo_invalido', 'canal_no_disponible', 'sin_destino'], example: 'codigo_invalido'),
+        new OA\Property(property: 'canal', description: 'Solo en `canal_no_disponible`: el canal que falló.', type: 'string', enum: ['whatsapp', 'sms', 'correo'], nullable: true, example: 'whatsapp'),
+    ],
+    type: 'object',
+)]
 final class DocumentacionApi
 {
     // Intencionalmente vacía: existe solo como ancla de los atributos OpenAPI.

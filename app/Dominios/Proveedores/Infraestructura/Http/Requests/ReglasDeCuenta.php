@@ -5,7 +5,6 @@ namespace App\Dominios\Proveedores\Infraestructura\Http\Requests;
 use App\Dominios\Seguridad\Contratos\ReglasDeContacto;
 use App\Dominios\Seguridad\Contratos\TipoCuenta;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 
 /**
  * Reglas de los datos de una cuenta nueva (nombre, login, correo y contraseña),
@@ -29,7 +28,7 @@ final class ReglasDeCuenta
                 Rule::unique('sec_user', 'username')->whereNull('deleted_at'),
             ],
             'email' => ['nullable', 'email:rfc', 'max:150', ReglasDeContacto::correoUnico($tipo)],
-            'password' => ['required', 'string', Password::min(8)->letters()->numbers(), 'max:100'],
+            'password' => ReglasDeContacto::reglasDeContrasena(),
         ];
     }
 }

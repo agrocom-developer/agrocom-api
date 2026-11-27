@@ -7,7 +7,6 @@ use App\Dominios\Seguridad\Contratos\TipoCuenta;
 use App\Dominios\Solicitudes\Dominio\TipoCliente;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 
 /** Cuerpo de `POST /api/clientes/registro` (registro público, especificación §10.1). */
 final class RegistrarClienteRequest extends FormRequest
@@ -38,7 +37,7 @@ final class RegistrarClienteRequest extends FormRequest
                 Rule::unique('sec_user', 'username')->whereNull('deleted_at'),
             ],
             'email' => ['nullable', 'email:rfc', 'max:150', ReglasDeContacto::correoUnico(TipoCuenta::Cliente)],
-            'password' => ['required', 'string', Password::min(8)->letters()->numbers(), 'max:100'],
+            'password' => ReglasDeContacto::reglasDeContrasena(),
             // E.164 con Bolivia por defecto (ADR 0046): único entre las cuentas de cliente.
             'telefono' => ['required', 'string', 'max:30', ReglasDeContacto::reglaTelefono()],
             // La persona de la cuenta (ADR 0046): una persona real tiene a lo sumo una cuenta de cliente. TRANSITORIO:

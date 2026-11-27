@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
 use Laravel\Sanctum\HasApiTokens;
 
 /**
@@ -60,6 +61,8 @@ use Laravel\Sanctum\HasApiTokens;
  * @property TipoUsuario $type Heredado (`interno` | `cliente`): sin uso desde `tipo_cuenta`; se elimina en la reconsolidación.
  * @property TipoCuenta $tipo_cuenta `panel`, `cliente` o `proveedor` (ADR 0046): una cuenta tiene un solo tipo para siempre.
  * @property string|null $telefono Teléfono de la cuenta en E.164: único por tipo de cuenta (ADR 0046). No prueba posesión mientras `telefono_verificado_en` sea nulo.
+ * @property Carbon|null $telefono_verificado_en Cuándo se probó la posesión del teléfono (código por WhatsApp o SMS, o el administrador); nulo mientras no.
+ * @property Carbon|null $email_verificado_en Cuándo se probó la posesión del correo de respaldo.
  * @property int|null $persona_legada_id Vínculo con `per_personas` (personal anterior), sin FK, hasta su retiro.
  * @property int|null $persona_id `sec_personas.id` en las cuentas de app; nulo en las de panel.
  * @property bool $persona_datos_difieren Los datos de persona enviados al registrarse no coinciden con los que ya estaban: lo revisa el administrador.

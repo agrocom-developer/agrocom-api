@@ -8,8 +8,8 @@ Cualquier persona puede eliminar su cuenta de cliente o de proveedor, desde la a
 
 | Vía | Quién | Cómo se confirma |
 |---|---|---|
-| En la app (Perfil, Privacidad y datos, «Eliminar mi cuenta») | Quien puede entrar | Contraseña y un código de 6 dígitos que llega al correo de respaldo |
-| Web `/eliminar-cuenta` | Quien no puede entrar a la app | Teléfono, usuario o correo y la app (cliente o piloto), más el código al correo de respaldo; la respuesta es siempre la misma exista o no la cuenta |
+| En la app (Perfil, Privacidad y datos, «Eliminar mi cuenta») | Quien puede entrar | La contraseña o un código de 6 dígitos que llega por WhatsApp, SMS o correo (el que la persona elija) |
+| Web `/eliminar-cuenta` | Quien no puede entrar a la app | Teléfono, usuario o correo y la app (cliente o piloto), más el código por el canal que elija; la respuesta es siempre la misma exista o no la cuenta |
 | Oficina | Quien perdió el acceso a su correo | Un administrador compara la selfie y el documento y registra la solicitud con su nombre y motivo |
 
 Cada cuenta se elimina por separado: eliminar la de cliente no elimina la de proveedor de la misma persona.

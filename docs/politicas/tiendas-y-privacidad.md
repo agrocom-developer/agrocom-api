@@ -129,7 +129,7 @@ La selfie y el documento que **solo ve quien revisa** siguen siendo datos «reco
 2. **Eliminación pedida por la persona:** anonimiza los datos personales **en el lugar**; no es un congelamiento. Es lo que las tiendas exigen.
 3. **Conservación mínima:** lo único que sobrevive a la eliminación, declarado y con plazo.
 
-**Cómo funciona** (ADR 0047, puntos 1 a 6, y `eliminacion_de_cuenta.md`): se pide en la app con contraseña y un código al correo de respaldo, o en la web con el código; no se puede con un servicio adjudicado o en ejecución, un reclamo abierto, una incidencia grave abierta o pilotos vinculados (la app explica el motivo y la salida: son pasos previos que las dos tiendas admiten); al pedirla se cancelan las solicitudes abiertas y se retiran las ofertas; hay 7 días de arrepentimiento (la persona cancela entrando a la app); a los 30 días como máximo está ejecutada, y se avisa por correo al pedirla y al terminar. Los plazos son parámetros.
+**Cómo funciona** (ADR 0047, puntos 1 a 6, y `eliminacion_de_cuenta.md`): se pide en la app con la contraseña o un código (WhatsApp, SMS o correo), o en la web con el código; no se puede con un servicio adjudicado o en ejecución, un reclamo abierto, una incidencia grave abierta o pilotos vinculados (la app explica el motivo y la salida: son pasos previos que las dos tiendas admiten); al pedirla se cancelan las solicitudes abiertas y se retiran las ofertas; hay 7 días de arrepentimiento (la persona cancela entrando a la app); a los 30 días como máximo está ejecutada, y se avisa por correo al pedirla y al terminar. Los plazos son parámetros.
 
 **Qué se conserva y por qué** (debe estar escrito en la política y en la pantalla de eliminación):
 

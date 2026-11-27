@@ -191,7 +191,7 @@ return [
         'campo_usuario_ayuda' => 'Letras, números, punto o guion. Con él ingresa a la app.',
         'campo_correo' => 'Correo',
         'campo_password' => 'Contraseña inicial',
-        'campo_password_ayuda' => 'Mínimo 8 caracteres con letras y números. Entrégasela a la persona en la oficina.',
+        'campo_password_ayuda' => 'Mínimo 4 caracteres. Entrégasela a la persona en la oficina.',
         'campo_razon_social' => 'Razón social o nombre comercial',
         'campo_documento_fiscal' => 'NIT o documento fiscal',
         'campo_telefono' => 'Teléfono',

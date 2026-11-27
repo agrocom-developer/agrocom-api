@@ -14,9 +14,11 @@ use App\Dominios\Seguridad\Infraestructura\Http\Requests\EmitirTokenDispositivoR
 use App\Dominios\Seguridad\Infraestructura\Http\Resources\DispositivoResource;
 use App\Dominios\Seguridad\Infraestructura\Http\Resources\RolActivoResource;
 use App\Dominios\Seguridad\Infraestructura\Http\Resources\UsuarioCampoResource;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use OpenApi\Attributes as OA;
 
@@ -68,7 +70,7 @@ final class SesionCampoController
                 required: ['username', 'password', 'uuid_dispositivo'],
                 properties: [
                     new OA\Property(property: 'username', description: 'Usuario de la cuenta (nunca un correo) o su teléfono, en cualquier formato (`70012345`, `+591 700-12345`). El teléfono es único por tipo de cuenta: sin `app`, un teléfono que sirve a dos cuentas (cliente y proveedor) no entra.', type: 'string', example: 'camila.rojas'),
-                    new OA\Property(property: 'password', type: 'string', format: 'password', example: 'password'),
+                    new OA\Property(property: 'password', description: 'Mínimo 4 caracteres, sin otras reglas de composición.', type: 'string', format: 'password', example: 'password'),
                     new OA\Property(property: 'uuid_dispositivo', description: 'UUID generado en el dispositivo.', type: 'string', format: 'uuid', example: '6f1d0a2e-1f34-4c9f-9a8b-2b7c1d5e0f31'),
                     new OA\Property(property: 'nombre_dispositivo', description: 'Nombre legible del equipo, para que el panel sepa cuál revoca.', type: 'string', example: 'Moto G84 — piloto 2', nullable: true),
                     new OA\Property(property: 'role_id', description: 'Rol con el que se quiere operar. Opcional si el usuario tiene un único rol vivo.', type: 'integer', example: 1, nullable: true),
@@ -127,7 +129,7 @@ final class SesionCampoController
                 description: 'Credenciales incorrectas, cuenta deshabilitada, o payload inválido.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion'),
             ),
-            new OA\Response(response: 429, description: 'Demasiados intentos; reintentar tras `Retry-After` segundos.'),
+            new OA\Response(response: 429, description: 'Demasiados intentos (límite por minuto) o bloqueo temporal por fallos (10 fallos en 15 minutos por usuario o teléfono, 30 por IP; el mismo mensaje exista o no la cuenta); reintentar tras `Retry-After` segundos.'),
         ],
     )]
     public function store(EmitirTokenDispositivoRequest $request): JsonResponse
@@ -138,7 +140,7 @@ final class SesionCampoController
         // tipo se deduce de la propia cuenta y el login no falla.
         $tipoDeApp = isset($datos['app']) ? TipoCuenta::dePedidoDeApp((string) $datos['app']) : null;
 
-        $usuario = $this->autenticar((string) $datos['username'], (string) $datos['password'], $tipoDeApp);
+        $usuario = $this->autenticar((string) $datos['username'], (string) $datos['password'], $tipoDeApp, (string) $request->ip());
 
         if ($tipoDeApp !== null && $usuario->tipo_cuenta !== $tipoDeApp) {
             return response()->json([
@@ -250,8 +252,10 @@ final class SesionCampoController
      * igual), y distinguir los dos casos le confirmaría a un atacante que ese
      * usuario existe.
      */
-    private function autenticar(string $identificador, string $password, ?TipoCuenta $tipoDeApp): SecUser
+    private function autenticar(string $identificador, string $password, ?TipoCuenta $tipoDeApp, string $ip): SecUser
     {
+        $this->exigirSinBloqueo($identificador, $ip);
+
         $proveedor = Auth::createUserProvider('usuarios_app');
         $usuario = $proveedor?->retrieveByCredentials(['username' => $identificador]) ?? $this->cuentaPorTelefono($identificador, $tipoDeApp);
 
@@ -260,12 +264,52 @@ final class SesionCampoController
             || ! $proveedor->validateCredentials($usuario, ['password' => $password])
             || ! $usuario->state
         ) {
+            $this->registrarFallo($identificador, $ip);
+
             throw ValidationException::withMessages([
                 'username' => [__('seguridad.login.error_credenciales')],
             ]);
         }
 
+        RateLimiter::clear($this->claveDeBloqueo($identificador));
+
         return $usuario;
+    }
+
+    /**
+     * Bloqueo temporal por fallos (ADR 0046, punto 31): la contraseña pide solo 4 caracteres, así que los intentos fallidos
+     * cuentan por identificador (usuario o teléfono normalizado, exista o no la cuenta) y por IP. Al pasar de 10 fallos en 15
+     * minutos por identificador o de 30 por IP, el login responde `429` con `Retry-After` y el mismo mensaje para cualquier cuenta.
+     */
+    private function exigirSinBloqueo(string $identificador, string $ip): void
+    {
+        $claveIdentificador = $this->claveDeBloqueo($identificador);
+        $claveIp = 'login-bloqueo|ip|'.$ip;
+
+        $bloqueada = match (true) {
+            RateLimiter::tooManyAttempts($claveIdentificador, (int) config('verificacion.login.fallos_por_identificador', 10)) => $claveIdentificador,
+            RateLimiter::tooManyAttempts($claveIp, (int) config('verificacion.login.fallos_por_ip', 30)) => $claveIp,
+            default => null,
+        };
+
+        if ($bloqueada !== null) {
+            throw new ThrottleRequestsException(__('seguridad.codigos.login_bloqueado'), null, ['Retry-After' => (string) RateLimiter::availableIn($bloqueada)]);
+        }
+    }
+
+    private function registrarFallo(string $identificador, string $ip): void
+    {
+        $segundos = (int) config('verificacion.login.ventana_minutos', 15) * 60;
+
+        RateLimiter::hit($this->claveDeBloqueo($identificador), $segundos);
+        RateLimiter::hit('login-bloqueo|ip|'.$ip, $segundos);
+    }
+
+    private function claveDeBloqueo(string $identificador): string
+    {
+        $crudo = trim($identificador);
+
+        return 'login-bloqueo|id|'.sha1(NumeroDeTelefono::normalizar($crudo) ?? mb_strtolower($crudo));
     }
 
     /**

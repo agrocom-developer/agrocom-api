@@ -718,6 +718,33 @@ return [
         'perfil_password_confirmacion' => 'La confirmación no coincide con la contraseña nueva.',
     ],
 
+    // Códigos de un solo uso (ADR 0046, puntos 27 a 30).
+    'codigos' => [
+        'canal_no_disponible' => 'Ese medio no está disponible por ahora. Elige otro para recibir tu código.',
+        'codigo_invalido' => 'El código no es válido o venció. Pide uno nuevo.',
+        'demasiados' => 'Pediste demasiados códigos. Espera un rato e inténtalo de nuevo.',
+        'solicitud_recibida' => 'Si existe una cuenta con esos datos, enviamos un código. Revisa el medio que elegiste.',
+        'codigo_enviado' => 'Te enviamos un código. Revisa el medio que elegiste.',
+        'sin_destino' => 'Tu cuenta no tiene un :medio registrado. Elige otro medio para recibir el código.',
+        'contrasena_cambiada' => 'Tu contraseña se cambió. Tus otros dispositivos deberán iniciar sesión de nuevo.',
+        'acceso_recuperado' => 'Tu contraseña se cambió. Ya puedes iniciar sesión con tu usuario.',
+        'telefono_verificado' => 'Tu teléfono quedó verificado.',
+        'login_bloqueado' => 'Hiciste demasiados intentos. Espera unos minutos e inténtalo de nuevo.',
+        'correo_asunto' => 'Tu código de Agrocom',
+        'correo_saludo' => 'Hola, :nombre.',
+        'correo_motivo' => [
+            'verificar_telefono' => 'Usa este código para verificar tu teléfono.',
+            'recuperar_acceso' => 'Usa este código para recuperar el acceso a tu cuenta.',
+            'cambiar_contrasena' => 'Usa este código para cambiar tu contraseña.',
+            'cambiar_telefono' => 'Usa este código para confirmar el cambio de teléfono.',
+            'eliminar_cuenta' => 'Usa este código para confirmar que quieres eliminar tu cuenta.',
+        ],
+        'correo_codigo' => 'Tu código es :codigo',
+        'correo_vigencia' => 'Vence en :minutos minutos y sirve una sola vez.',
+        'correo_ignorar' => 'Si no lo pediste tú, ignora este correo: tu cuenta sigue segura.',
+        'correo_despedida' => 'Saludos, Agrocom.',
+    ],
+
     // Tipo de cuenta (ADR 0046), tal como se le nombra a quien ingresó en la app equivocada.
     'tipos_de_cuenta' => [
         'panel' => 'panel',

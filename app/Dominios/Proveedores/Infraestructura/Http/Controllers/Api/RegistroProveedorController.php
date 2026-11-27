@@ -41,7 +41,7 @@ final class RegistroProveedorController
                     new OA\Property(property: 'nombre', description: 'Nombre del titular.', type: 'string', example: 'Carlos Mamani Quispe'),
                     new OA\Property(property: 'username', description: 'Login (nunca un correo): letras, números, punto, guion.', type: 'string', example: 'carlos.mamani'),
                     new OA\Property(property: 'email', type: 'string', format: 'email', nullable: true),
-                    new OA\Property(property: 'password', description: 'Mínimo 8 caracteres con letras y números.', type: 'string', format: 'password'),
+                    new OA\Property(property: 'password', description: 'Mínimo 4 caracteres, sin otras reglas.', type: 'string', format: 'password'),
                     new OA\Property(property: 'telefono', description: 'Teléfono de la cuenta: un celular de Bolivia de 8 dígitos o un número con su código de país. Se guarda en E.164 y es único entre las cuentas de proveedor.', type: 'string', example: '+591 70012345'),
                     new OA\Property(property: 'razon_social', type: 'string', example: 'Mamani Agroservicios'),
                     new OA\Property(property: 'nombres', description: 'Datos de la persona (piloto o titular); el administrador los revisa al aprobar.', type: 'string', example: 'Carlos'),

@@ -17,7 +17,7 @@ Referencia rápida de vocabulario, de negocio y técnico, para que cualquier per
 | **Persona** (`sec_personas`) | Persona real dueña de una o dos cuentas de app, identificada por su documento (único): nombres, apellidos y documento. Tiene a lo sumo una cuenta de cliente y una de proveedor | ADR 0046 |
 | **Teléfono de la cuenta** | Dato de referencia para entrar a una cuenta de app; único por tipo de cuenta (el mismo teléfono puede estar en una cuenta de cliente y una de proveedor); no prueba posesión hasta que exista un código por SMS o WhatsApp | ADR 0046 |
 | **Correo de respaldo** | Correo de la cuenta de app al que llegan los códigos para recuperar el acceso y cambiar el teléfono | ADR 0046 |
-| **Recuperar mi acceso** | Pantalla de la app que, con un código enviado al correo de respaldo, permite fijar una contraseña nueva y ver el usuario; no hay página web de restablecimiento | ADR 0046 |
+| **Recuperar mi acceso** | Pantalla de la app que, con un código enviado por WhatsApp, SMS o al correo de respaldo (el que la persona elige), permite fijar una contraseña nueva y ver el usuario; no hay página web de restablecimiento | ADR 0046 |
 | **Aceptación de términos y privacidad** | Registro por cuenta de la versión y la fecha de los términos y de la privacidad que aceptó al registrarse | ADR 0046 |
 | **Contador de solicitudes abiertas** | Número que ve el proveedor no aprobado en lugar del mapa, filtrable por departamento, para saber cuántos trabajos no puede ver todavía | ADR 0045, 0046 |
 | **Encargado de la empresa** | Titular de un proveedor tercero, con su propia cuenta; gestiona el vínculo de los pilotos de la empresa y puede liberarlos | ADR 0046 |
