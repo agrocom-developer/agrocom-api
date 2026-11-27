@@ -17,7 +17,7 @@ return [
     // Copy del panel editorial de templates/auth-layout (galería de fotos +
     // wordmark + headline) — compartido por login y selección de rol, ambos
     // armados sobre ese mismo template. El wordmark reutiliza `ui.logo.alt`
-    // ("Agrocom"), no hace falta una clave nueva para eso.
+    // ("DronAgro"), no hace falta una clave nueva para eso.
     'auth' => [
         // Galería de 3 imágenes (rediseño de login, cuarta vuelta): un
         // headline/subheadline por slide, en el mismo orden que
@@ -44,7 +44,7 @@ return [
         ],
         'galeria_aria_label' => 'Elige qué imagen mostrar',
         'galeria_dot' => 'Mostrar imagen :numero de :total',
-        'tagline' => 'Fumigación con drones',
+        'tagline' => 'Conectamos tu campo con pilotos de drones',
         'sin_alta_publica' => '¿No tienes cuenta? Las cuentas las crea el administrador de tu operación.',
     ],
 

@@ -66,7 +66,7 @@
          del panel/portal — timezone-badge.js postea acá cuando la zona que informa
          el navegador no es la que tiene guardada el usuario. --}}
     <meta name="ag-preferencias-zona-horaria-url" content="{{ $zonaHorariaUrl ?? route('panel.preferencias.zona-horaria') }}">
-    <title>{{ config('app.name', 'Agrocom') }}{{ $title ? ' — '.$title : '' }}</title>
+    <title>{{ config('app.name', 'DronAgro') }}{{ $title ? ' — '.$title : '' }}</title>
 
     {{-- Antes de `@vite`: fija `data-bs-theme` desde el navegador sin esperar
          al primer pintado (ver el componente). --}}
