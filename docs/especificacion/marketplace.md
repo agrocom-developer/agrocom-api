@@ -302,7 +302,7 @@ Cada flavor usa estos endpoints con su tipo de cuenta (ADR 0046).
 | `POST /cuenta/telefono/verificacion`, `POST /cuenta/telefono/verificacion/confirmar` | Verificación del teléfono con un código por WhatsApp (o SMS) |
 | `POST /auth/renovar` | Renueva el token del dispositivo antes de que caduque (la sesión por biometría es local; el servidor no recibe biometría) |
 | `POST /cuenta/telefono`, `POST /cuenta/telefono/confirmar` | Cambio de teléfono con un código al teléfono nuevo (o al correo de respaldo); el teléfono nuevo cumple la unicidad por tipo |
-| `GET /cuenta/eliminacion`, `POST /cuenta/eliminacion`, `POST /cuenta/eliminacion/codigo`, `POST /cuenta/eliminacion/cancelar` | Estado y motivos que la impiden, código por el canal elegido, solicitud (contraseña o código) y cancelación durante la gracia; `409 eliminacion_bloqueada` con los `motivos`; mientras está solicitada, la sesión responde `403 cuenta_en_eliminacion` salvo estas rutas y el cierre de sesión (ADR 0047) |
+| `GET /cuenta/eliminacion`, `POST /cuenta/eliminacion`, `POST /cuenta/eliminacion/codigo`, `POST /cuenta/eliminacion/cancelar` | Estado y motivos que la impiden, código por el canal elegido, solicitud (contraseña o código) y cancelación durante la gracia; `409 eliminacion_bloqueada` con los `motivos`; mientras está solicitada, la sesión responde `403 cuenta_en_eliminacion` salvo estas rutas, `GET /auth/sesion`, `POST /auth/renovar` y el cierre de sesión; `/auth/token`, `/auth/sesion` y `/auth/renovar` traen `eliminacion` (el objeto de `GET /cuenta/eliminacion` o `null`) (ADR 0047) |
 | `GET /bloqueos`, `POST /bloqueos`, `DELETE /bloqueos/{id}` | Cuentas bloqueadas, bloquear a la otra parte de un chat o negociación y deshacerlo |
 | `GET /legal/vigentes`, `POST /cuenta/aceptaciones` | Versiones y direcciones vigentes de términos y privacidad (público); registro de la aceptación |
 | `GET /proveedores/mi/pilotos`, `POST /proveedores/mi/pilotos/invitaciones`, `POST /proveedores/mi/pilotos/{id}/liberar` | El encargado de la empresa gestiona el vínculo de sus pilotos |
@@ -359,7 +359,7 @@ Cada flavor usa estos endpoints con su tipo de cuenta (ADR 0046).
 | `GET/POST /solicitudes/{id}/mensajes` | Chat con el cliente adjudicado |
 | `POST /solicitudes/{id}/pago-confirmado`, `GET /solicitudes/{id}/pago-confirmado` | El titular informa que recibió el pago; ambas partes lo consultan |
 | `PUT/DELETE /perfil/foto` | Foto de perfil de la cuenta |
-| `GET /proveedores/mi`, `GET /proveedores/drones` | El titular gestiona su proveedor y sus drones; el piloto los ve en solo lectura (el proveedor al que pertenece y los drones de sus equipos) |
+| `GET /proveedores/mi`, `GET /proveedores/drones` | El titular gestiona su proveedor y sus drones (`siguiente_paso` guía el registro: documentos, dron, fotos del dron, revisión); el piloto los ve en solo lectura (el proveedor al que pertenece y los drones de sus equipos) |
 | `GET/PUT /notificaciones/preferencias`, `POST/DELETE /dispositivos` | Preferencias de aviso, filtros de aviso del proveedor y token de push |
 | `GET /reputacion`, `GET /calificaciones/recibidas`, `POST /calificaciones/{id}/reportar` | Reputación y calificaciones recibidas |
 | `GET/POST /solicitudes/{id}/calificar-cliente` | Califica al cliente en privado (7 días) |
