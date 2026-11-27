@@ -2,8 +2,8 @@
     Page: metricas/index (GET /panel/metricas, panel.metricas.index)
     Métricas del mercado (especificación §14): arquetipo Detalle de solo lectura,
     §6.4 de docs/diseno/guia_pantalla_panel.md — cabecera con el selector de período,
-    KPIs agrupados en mercado, calidad, oferta e ingreso, y la tabla de proveedores
-    con más servicios. Una tasa sin divisor se muestra como «sin datos», nunca como 0.
+    KPIs agrupados en mercado, calidad, oferta e ingreso, las gráficas del período (embudo,
+    departamentos, tiempo hasta adjudicar y rondas) y la tabla de proveedores con más servicios. Una tasa sin divisor se muestra como «sin datos», nunca como 0.
 
     Datos esperados (ver MetricasController::index()): la cáscara de CascaraPanel,
     más $metricas (el arreglo de CalcularMetricas) y $diasValidos (list<int>).
@@ -18,6 +18,8 @@
     $min = fn (?string $minutos): string => $minutos === null ? $sinDatos : number_format((float) $minutos, 1, ',', '.').' min';
     $dinero = fn (?string $monto): string => $monto === null ? $sinDatos : number_format((float) $monto, 2, ',', '.');
     $entero = fn (int|string|null $n): string => number_format((int) $n, 0, ',', '.');
+    $embudo = $m['mercado']['embudo'];
+    $departamentos = collect($m['mercado']['departamentos']);
 @endphp
 <x-templates.panel-shell :title="$titulo" :tema="$tema">
     <x-templates.panel-layout
@@ -57,6 +59,53 @@
                 <x-molecules.stat-card :label="__('metricas.tiempo_aceptacion')" icon="timer" :value="$min($m['mercado']['tiempo_aceptacion_promedio_min'])" :foot="__('metricas.tiempo_aceptacion_pie', ['mediana' => $min($m['mercado']['tiempo_aceptacion_mediana_min']), 'cantidad' => $m['mercado']['aceptaciones']])" state="distintivo-1" />
                 <x-molecules.stat-card :label="__('metricas.ofertas_por_solicitud')" icon="forum" :value="$m['mercado']['ofertas_por_solicitud'] ?? $sinDatos" :foot="__('metricas.rondas_pie', ['rondas' => $m['mercado']['rondas_promedio'] ?? $sinDatos, 'cantidad' => $m['mercado']['negociaciones']])" state="primary-2" />
                 <x-molecules.stat-card :label="__('metricas.hectareas')" icon="landscape" :value="number_format((float) $m['mercado']['hectareas_servidas'], 2, ',', '.')" value-suffix="ha" :foot="__('metricas.hectareas_pie', ['solicitadas' => number_format((float) $m['mercado']['hectareas_solicitadas'], 2, ',', '.')])" state="success" />
+            </div>
+
+            <h2 class="ag-detalle__campo-label">{{ __('metricas.seccion_graficas') }}</h2>
+            <div class="ag-grafico-grilla">
+                <x-molecules.grafico
+                    :titulo="__('metricas.embudo_titulo')"
+                    :ayuda="__('metricas.embudo_ayuda')"
+                    :horizontal="true"
+                    :categoria="__('metricas.col_paso')"
+                    :etiquetas="[__('metricas.embudo.publicadas'), __('metricas.embudo.con_ofertas'), __('metricas.embudo.adjudicadas'), __('metricas.embudo.finalizadas')]"
+                    :series="[['nombre' => __('metricas.solicitudes'), 'valores' => [$embudo['publicadas'], $embudo['con_ofertas'], $embudo['adjudicadas'], $embudo['finalizadas']], 'color' => 'info']]"
+                    :vacio="__('metricas.graficas_vacio')"
+                />
+
+                <x-molecules.grafico
+                    :titulo="__('metricas.departamentos_titulo')"
+                    :ayuda="__('metricas.departamentos_ayuda')"
+                    :horizontal="true"
+                    :apilado="true"
+                    :categoria="__('metricas.col_departamento')"
+                    :etiquetas="$departamentos->map(fn (array $fila): string => $fila['nombre'] ?? __('metricas.departamento_sin_dato'))->all()"
+                    :series="[
+                        ['nombre' => __('metricas.grupo.abiertas'), 'valores' => $departamentos->pluck('abiertas')->all(), 'color' => 'info'],
+                        ['nombre' => __('metricas.grupo.en_curso'), 'valores' => $departamentos->pluck('en_curso')->all(), 'color' => 'warning'],
+                        ['nombre' => __('metricas.grupo.cerradas'), 'valores' => $departamentos->pluck('cerradas')->all(), 'color' => 'success'],
+                        ['nombre' => __('metricas.grupo.canceladas'), 'valores' => $departamentos->pluck('canceladas')->all(), 'color' => 'danger'],
+                    ]"
+                    :vacio="__('metricas.graficas_vacio')"
+                />
+
+                <x-molecules.grafico
+                    :titulo="__('metricas.tiempo_titulo')"
+                    :ayuda="__('metricas.tiempo_ayuda', ['cantidad' => $m['mercado']['aceptaciones']])"
+                    :categoria="__('metricas.col_tiempo')"
+                    :etiquetas="[__('metricas.tiempo.hasta_1h'), __('metricas.tiempo.de_1_a_6h'), __('metricas.tiempo.de_6_a_24h'), __('metricas.tiempo.de_1_a_3d'), __('metricas.tiempo.mas_de_3d')]"
+                    :series="[['nombre' => __('metricas.adjudicaciones'), 'valores' => $m['mercado']['distribucion_tiempo'], 'color' => 'distintivo-1']]"
+                    :vacio="__('metricas.graficas_vacio')"
+                />
+
+                <x-molecules.grafico
+                    :titulo="__('metricas.rondas_titulo')"
+                    :ayuda="__('metricas.rondas_ayuda', ['cantidad' => $m['mercado']['negociaciones']])"
+                    :categoria="__('metricas.col_rondas')"
+                    :etiquetas="[__('metricas.rondas.una'), __('metricas.rondas.dos'), __('metricas.rondas.tres'), __('metricas.rondas.cuatro_o_mas')]"
+                    :series="[['nombre' => __('metricas.negociaciones'), 'valores' => $m['mercado']['distribucion_rondas'], 'color' => 'distintivo-2']]"
+                    :vacio="__('metricas.graficas_vacio')"
+                />
             </div>
 
             <h2 class="ag-detalle__campo-label">{{ __('metricas.seccion_calidad') }}</h2>

@@ -1,7 +1,7 @@
 /*
  * Page: tablero del panel
  * (app/Dominios/Seguridad/Infraestructura/Http/Views/pages/dashboard.blade.php)
- * KPIs, solicitudes por estado y por región y cola de pendientes. Cero color ni
+ * KPIs, la tabla de datos que acompaña a cada gráfica (molecules/grafico) y la cola de pendientes. Cero color ni
  * tamaño hardcodeado: todo por token (CLAUDE.md invariante 11).
  */
 
@@ -9,13 +9,6 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
     gap: var(--ag-space-4);
-}
-
-.ag-tablero__columnas {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
-    gap: var(--ag-space-4);
-    align-items: start;
 }
 
 .ag-tablero__scroll {
