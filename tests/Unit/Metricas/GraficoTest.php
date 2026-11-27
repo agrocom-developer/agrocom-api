@@ -26,7 +26,7 @@ test('con datos dibuja el lienzo accesible y la tabla con los mismos valores', f
         ->and($html)->toContain('role="img"')
         ->and($html)->toContain('aria-describedby=')
         ->and($html)->toContain('1.234,50 ha')
-        ->and($html)->toContain('ui.grafico.sin_dato')
+        ->and($html)->toContain(e(__('ui.grafico.sin_dato')))
         ->and($html)->toContain('&quot;color&quot;:&quot;success&quot;')
         ->and($html)->toContain('Ventas &lt;b&gt;')
         ->and($html)->not->toContain('Ventas <b>');
