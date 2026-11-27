@@ -58,6 +58,17 @@ interface LecturaProveedores
      */
     public function usuariosDeAviso(int $proveedorId): array;
 
+    /**
+     * Cuentas a las que se avisa de una NUEVA solicitud (ADR 0045, punto 8): solo las que tienen su
+     * interruptor en `disponible` y, si son pilotos de una empresa, también el de su empresa. Con la
+     * empresa en `ocupado` o `en_trabajo` no recibe ningún piloto suyo; con un piloto en ese estado
+     * se silencia solo a él. A diferencia de {@see usuariosDeAviso()} (ofertas y asuntos del
+     * proveedor, que llegan siempre), no incluye a quien no puede tomar trabajo nuevo.
+     *
+     * @return list<int>
+     */
+    public function usuariosParaAvisoDeNuevasSolicitudes(int $proveedorId): array;
+
     /** El proveedor al que pertenece la cuenta: el que titula o el de su registro de piloto. */
     public function proveedorDeLaCuenta(int $usuarioId): ?DatosProveedor;
 }

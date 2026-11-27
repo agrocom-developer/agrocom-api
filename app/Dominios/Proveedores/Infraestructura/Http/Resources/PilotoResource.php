@@ -10,7 +10,7 @@ use OpenApi\Attributes as OA;
     schema: 'Piloto',
     title: 'Piloto',
     description: 'Quien opera el dron dentro de un proveedor. Comparte el ciclo de aprobación (ADR 0032).',
-    required: ['id', 'proveedor_id', 'usuario_id', 'nombre', 'licencia_numero', 'licencia_vence', 'categoria_habilitacion', 'estado'],
+    required: ['id', 'proveedor_id', 'usuario_id', 'nombre', 'licencia_numero', 'licencia_vence', 'categoria_habilitacion', 'estado', 'disponibilidad'],
     properties: [
         new OA\Property(property: 'id', type: 'integer', example: 5),
         new OA\Property(property: 'proveedor_id', type: 'integer', example: 12),
@@ -21,6 +21,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'categoria_habilitacion', type: 'string', example: 'RPAS agrícola'),
         new OA\Property(property: 'estado', type: 'string', enum: ['pendiente', 'aprobado', 'suspendido', 'rechazado', 'baja'], example: 'aprobado'),
         new OA\Property(property: 'motivo_estado', type: 'string', nullable: true),
+        new OA\Property(property: 'disponibilidad', ref: '#/components/schemas/Disponibilidad'),
     ],
     type: 'object',
 )]
@@ -42,6 +43,7 @@ final class PilotoResource
             'categoria_habilitacion' => $piloto->categoria_habilitacion,
             'estado' => $piloto->estado->value,
             'motivo_estado' => $piloto->motivo_estado,
+            'disponibilidad' => DisponibilidadResource::de($piloto),
         ];
     }
 }

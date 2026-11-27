@@ -486,11 +486,11 @@ class NegociacionDemoSeeder extends Seeder
         ];
     }
 
-    /** Los pilotos reciben avisos de nuevas solicitudes: Marcelo solo de las de 50 hectáreas o más, el resto de todas. */
+    /** Los pilotos reciben avisos de nuevas solicitudes: Marcelo no quiere menos de 50 ha ni desecantes, el resto de todo. */
     private function preferenciasDeLosPilotos(): void
     {
         $this->preferencias->guardar($this->usuarios['marcelo.terrazas'], [
-            'nuevas_solicitudes' => ['activo' => true, 'hectareas_minimas' => '50'],
+            'nuevas_solicitudes' => ['activo' => true, 'hectareas_minimas' => '50', 'tipos_aplicacion_excluidos' => ['desecante']],
         ]);
     }
 

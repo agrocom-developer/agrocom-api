@@ -11,5 +11,6 @@ final readonly class DatosPiloto
         public int $usuarioId,
         public string $nombre,
         public string $estado,
+        public string $disponibilidad = 'disponible',
     ) {}
 }

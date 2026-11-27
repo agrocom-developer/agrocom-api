@@ -81,6 +81,7 @@ final class PublicarSolicitud
             $cliente->usuario_id,
             $abierta->hectareas_solicitadas,
             (string) $abierta->precio_ha_propuesto,
+            $abierta->tipo_aplicacion->value,
         ));
 
         return $abierta->load(['terreno', 'historial']);

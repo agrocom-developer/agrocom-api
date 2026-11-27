@@ -5,6 +5,7 @@ namespace App\Dominios\Proveedores\Infraestructura\Eloquent;
 use App\Dominios\Compartido\Dominio\EstadoAprobacion;
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModeloDominio;
 use App\Dominios\Compartido\Infraestructura\Eloquent\RegistraBitacora;
+use App\Dominios\Proveedores\Dominio\Disponibilidad;
 use App\Dominios\Proveedores\Dominio\TipoProveedor;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
@@ -28,6 +29,9 @@ use Illuminate\Support\Carbon;
  * @property int|null $aprobado_por
  * @property Carbon|null $aprobado_en
  * @property Carbon $created_at
+ * @property Disponibilidad|null $disponibilidad
+ * @property Carbon|null $disponibilidad_cambiada_en
+ * @property int|null $disponibilidad_cambiada_por
  */
 class Proveedor extends ModeloDominio
 {
@@ -50,6 +54,9 @@ class Proveedor extends ModeloDominio
         'motivo_estado',
         'aprobado_por',
         'aprobado_en',
+        'disponibilidad',
+        'disponibilidad_cambiada_en',
+        'disponibilidad_cambiada_por',
     ];
 
     /** @return array<string, string> */
@@ -61,6 +68,9 @@ class Proveedor extends ModeloDominio
             'usuario_titular_id' => 'integer',
             'aprobado_por' => 'integer',
             'aprobado_en' => 'datetime',
+            'disponibilidad' => Disponibilidad::class,
+            'disponibilidad_cambiada_en' => 'datetime',
+            'disponibilidad_cambiada_por' => 'integer',
             'calificaciones_conteo' => 'integer',
         ];
     }

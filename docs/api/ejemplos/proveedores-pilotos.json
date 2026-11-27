@@ -19,7 +19,13 @@
                     "licencia_vence": "2028-05-26",
                     "categoria_habilitacion": "RPAS agrícola",
                     "estado": "aprobado",
-                    "motivo_estado": null
+                    "motivo_estado": null,
+                    "disponibilidad": {
+                        "valor": "disponible",
+                        "cambiada_en": null,
+                        "cambiada_por_usuario_id": null,
+                        "cambiada_por_propia": null
+                    }
                 }
             ]
         }

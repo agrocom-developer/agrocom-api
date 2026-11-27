@@ -17,12 +17,30 @@
                 "telefono": "+59170012345",
                 "estado": "aprobado",
                 "motivo_estado": null,
-                "aprobado_en": "2026-11-26T22:09:33+00:00",
+                "aprobado_en": "2026-11-26T22:09:44+00:00",
                 "calificacion_promedio": "0.00",
-                "calificaciones_conteo": 0
+                "calificaciones_conteo": 0,
+                "disponibilidad": {
+                    "valor": "disponible",
+                    "cambiada_en": null,
+                    "cambiada_por_usuario_id": null,
+                    "cambiada_por_propia": null
+                }
             },
             "documentos_faltantes": [],
-            "apto_para_ofertas": true
+            "apto_para_ofertas": true,
+            "disponibilidad": {
+                "valor": "disponible",
+                "cambiada_en": null,
+                "cambiada_por_usuario_id": null,
+                "cambiada_por_propia": null
+            },
+            "disponibilidad_empresa": {
+                "valor": "disponible",
+                "cambiada_en": null,
+                "cambiada_por_usuario_id": null,
+                "cambiada_por_propia": null
+            }
         }
     }
 }

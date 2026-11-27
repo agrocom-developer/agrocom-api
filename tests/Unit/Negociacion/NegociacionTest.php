@@ -17,6 +17,7 @@ use App\Dominios\Negociacion\Aplicacion\CancelarComoProveedor;
 use App\Dominios\Negociacion\Aplicacion\ConfirmarPago;
 use App\Dominios\Negociacion\Aplicacion\ConfirmarPrecioFinal;
 use App\Dominios\Negociacion\Aplicacion\ConsultarOfertas;
+use App\Dominios\Negociacion\Aplicacion\FiltrosDeProveedor\SolicitudParaAviso;
 use App\Dominios\Negociacion\Aplicacion\Mensajeria;
 use App\Dominios\Negociacion\Aplicacion\MercadoDeSolicitudes;
 use App\Dominios\Negociacion\Aplicacion\Negociar;
@@ -92,6 +93,7 @@ function negMundo(): void
         'agrega_negociacion_a_sol_solicitudes_servicio',
         'crea_sol_cliente_contactos',
         'create_neg_tablas_de_negociacion',
+        'agrega_disponibilidad_y_filtros_de_proveedor',
         'agrega_adjuntos_y_eventos_a_neg_mensajes',
         'create_neg_pagos_confirmados_table',
         'create_neg_precios_finales_confirmados_table',
@@ -759,19 +761,22 @@ test('el proveedor adjudicado devuelve la solicitud con motivo y no vuelve a ofe
 test('las preferencias activan, filtran por hectáreas y apagan los avisos de nuevas solicitudes', function () {
     negMundo();
     $preferencias = app(PreferenciasDeAviso::class);
+    $solicitud = fn (string $hectareas, ?string $departamento = null, ?string $tipo = null) => new SolicitudParaAviso($hectareas, $departamento, $tipo);
 
     expect($preferencias->de(NEG_TITULAR_7)['nuevas_solicitudes']['activo'])->toBeTrue()
-        ->and($preferencias->de(NEG_TITULAR_7)['nuevas_solicitudes'])->toBe(['activo' => true, 'hectareas_minimas' => null])
-        ->and($preferencias->coincide(NEG_TITULAR_7, '10'))->toBeTrue();
+        ->and($preferencias->coincide(NEG_TITULAR_7, $solicitud('10')))->toBeTrue();
 
-    $preferencias->guardar(NEG_TITULAR_7, ['nuevas_solicitudes' => ['hectareas_minimas' => '50']]);
+    $preferencias->guardar(NEG_TITULAR_7, ['nuevas_solicitudes' => ['hectareas_minimas' => '50', 'departamentos_excluidos' => ['09']]]);
 
-    expect($preferencias->coincide(NEG_TITULAR_7, '49'))->toBeFalse()
-        ->and($preferencias->coincide(NEG_TITULAR_7, '50'))->toBeTrue();
+    expect($preferencias->coincide(NEG_TITULAR_7, $solicitud('49')))->toBeFalse()
+        ->and($preferencias->coincide(NEG_TITULAR_7, $solicitud('50', '07')))->toBeTrue()
+        ->and($preferencias->coincide(NEG_TITULAR_7, $solicitud('500', '09')))->toBeFalse()
+        ->and($preferencias->de(NEG_TITULAR_7)['nuevas_solicitudes']['hectareas_minimas'])->toBe('50.0000')
+        ->and(negCodigo(fn () => $preferencias->guardar(NEG_TITULAR_7, ['nuevas_solicitudes' => ['macrorregiones' => ['valles']]])))->toBe('filtro_desconocido:422');
 
     $preferencias->guardar(NEG_TITULAR_7, ['nuevas_solicitudes' => ['activo' => false], 'mensajes' => false]);
 
-    expect($preferencias->coincide(NEG_TITULAR_7, '500'))->toBeFalse()
+    expect($preferencias->coincide(NEG_TITULAR_7, $solicitud('500')))->toBeFalse()
         ->and($preferencias->permite(NEG_TITULAR_7, 'mensajes'))->toBeFalse()
         ->and($preferencias->permite(NEG_TITULAR_7, 'ofertas'))->toBeTrue();
 });

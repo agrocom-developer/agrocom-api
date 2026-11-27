@@ -9,12 +9,14 @@ use App\Dominios\Flota\Aplicacion\RegistrarDron;
 use App\Dominios\Flota\Aplicacion\ResolverAprobacionDron;
 use App\Dominios\Flota\Infraestructura\Eloquent\Dron as DronMarketplace;
 use App\Dominios\Operaciones\Infraestructura\Eloquent\Dron as DronOperativo;
+use App\Dominios\Proveedores\Aplicacion\CambiarDisponibilidad;
 use App\Dominios\Proveedores\Aplicacion\CargarDocumento;
 use App\Dominios\Proveedores\Aplicacion\ProcesarVencimientos;
 use App\Dominios\Proveedores\Aplicacion\RegistrarPiloto;
 use App\Dominios\Proveedores\Aplicacion\RegistrarProveedor;
 use App\Dominios\Proveedores\Aplicacion\ResolverAprobacion;
 use App\Dominios\Proveedores\Aplicacion\RevisarDocumento;
+use App\Dominios\Proveedores\Dominio\Disponibilidad;
 use App\Dominios\Proveedores\Dominio\RequisitosDocumentales;
 use App\Dominios\Proveedores\Dominio\TipoProveedor;
 use App\Dominios\Proveedores\Dominio\TipoSujeto;
@@ -70,6 +72,7 @@ class ProveedoresDemoSeeder extends Seeder
         private readonly ResolverAprobacion $resolverAprobacion,
         private readonly ResolverAprobacionDron $resolverAprobacionDron,
         private readonly ProcesarVencimientos $procesarVencimientos,
+        private readonly CambiarDisponibilidad $cambiarDisponibilidad,
     ) {}
 
     public function run(): void
@@ -128,6 +131,9 @@ class ProveedoresDemoSeeder extends Seeder
         foreach ([$rodrigo, $valeria] as $piloto) {
             $this->documentosYAprobacion(TipoSujeto::Piloto, $piloto->id);
         }
+
+        // Valeria se marca ocupada: no recibe avisos de nuevas solicitudes, pero sigue viendo el mapa.
+        $this->cambiarDisponibilidad->propia($valeria->usuario_id, Disponibilidad::Ocupado);
 
         // Los tres drones de la flota operativa de Agrocom entran al marketplace
         // enlazados a su fila de `ope_drones` (la ejecución en el lote los usa).
@@ -221,6 +227,9 @@ class ProveedoresDemoSeeder extends Seeder
         $this->subirDocumentos(TipoSujeto::Dron, $tres->id, RequisitosDocumentales::POR_DEFECTO['dron']);
 
         $this->crearEquipo->ejecutar($titular, $marcelo->id, $uno->id, now()->subWeeks(5)->toDateString());
+
+        // El encargado marca a Marcelo «en trabajo» (está fumigando): la app del piloto lo muestra como cambio de su empresa.
+        $this->cambiarDisponibilidad->deUnPiloto($titular, $marcelo->id, Disponibilidad::EnTrabajo);
     }
 
     private function independientePendiente(): void

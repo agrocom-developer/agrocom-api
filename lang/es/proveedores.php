@@ -34,6 +34,7 @@ return [
         'fecha_nacimiento' => 'fecha de nacimiento',
         'documento_fiscal' => 'documento fiscal',
         'proveedor_id' => 'proveedor',
+        'disponibilidad' => 'disponibilidad',
         'licencia_numero' => 'número de licencia',
         'licencia_vence' => 'vencimiento de la licencia',
         'categoria_habilitacion' => 'categoría de habilitación',

@@ -6,6 +6,7 @@ use App\Dominios\Compartido\Dominio\EstadoAprobacion;
 use App\Dominios\Proveedores\Contratos\DatosPiloto;
 use App\Dominios\Proveedores\Contratos\DatosProveedor;
 use App\Dominios\Proveedores\Contratos\LecturaProveedores;
+use App\Dominios\Proveedores\Dominio\Disponibilidad;
 use App\Dominios\Proveedores\Dominio\TipoProveedor;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Piloto;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Proveedor;
@@ -104,6 +105,35 @@ final class LecturaProveedoresEloquent implements LecturaProveedores
         return array_values(array_unique(array_map('intval', $cuentas)));
     }
 
+    public function usuariosParaAvisoDeNuevasSolicitudes(int $proveedorId): array
+    {
+        $proveedor = Proveedor::query()->find($proveedorId);
+
+        if ($proveedor === null || ! ($proveedor->disponibilidad ?? Disponibilidad::Disponible)->recibeAvisos()) {
+            return [];
+        }
+
+        $cuentas = [];
+
+        if ($proveedor->usuario_titular_id !== null) {
+            $cuentas[] = $proveedor->usuario_titular_id;
+        }
+
+        $pilotos = Piloto::query()
+            ->where('proveedor_id', $proveedorId)
+            ->where('estado', EstadoAprobacion::Aprobado->value)
+            ->get();
+
+        foreach ($pilotos as $piloto) {
+            // El titular que también es piloto (el independiente) se rige por el interruptor del proveedor.
+            if ($piloto->usuario_id !== $proveedor->usuario_titular_id && ($piloto->disponibilidad ?? Disponibilidad::Disponible)->recibeAvisos()) {
+                $cuentas[] = $piloto->usuario_id;
+            }
+        }
+
+        return array_values(array_unique(array_map('intval', $cuentas)));
+    }
+
     public function proveedorDeLaCuenta(int $usuarioId): ?DatosProveedor
     {
         $titular = $this->proveedorDelTitular($usuarioId);
@@ -129,13 +159,14 @@ final class LecturaProveedoresEloquent implements LecturaProveedores
             $proveedor->calificaciones_conteo,
             (string) $proveedor->tasa_aceptacion,
             (string) $proveedor->tasa_cancelacion,
+            ($proveedor->disponibilidad ?? Disponibilidad::Disponible)->value,
         );
     }
 
     /** @param  array<int, string>  $nombres */
     private function datosPiloto(Piloto $piloto, array $nombres): DatosPiloto
     {
-        return new DatosPiloto($piloto->id, $piloto->proveedor_id, $piloto->usuario_id, $nombres[$piloto->usuario_id] ?? "#{$piloto->usuario_id}", $piloto->estado->value);
+        return new DatosPiloto($piloto->id, $piloto->proveedor_id, $piloto->usuario_id, $nombres[$piloto->usuario_id] ?? "#{$piloto->usuario_id}", $piloto->estado->value, ($piloto->disponibilidad ?? Disponibilidad::Disponible)->value);
     }
 
     /**

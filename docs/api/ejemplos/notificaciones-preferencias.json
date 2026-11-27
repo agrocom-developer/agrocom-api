@@ -1,6 +1,6 @@
 {
     "operationId": "verPreferenciasDeAviso",
-    "descripcion": "Qué avisos recibe el piloto: nuevas solicitudes y hectáreas mínimas.",
+    "descripcion": "Qué avisos recibe el proveedor: nuevas solicitudes con sus filtros (hectáreas mínimas, departamentos y tipos de aplicación que no acepta) y los filtros que el servidor conoce.",
     "peticion": {
         "metodo": "GET",
         "ruta": "/api/notificaciones/preferencias",
@@ -12,12 +12,28 @@
             "preferencias": {
                 "nuevas_solicitudes": {
                     "activo": true,
-                    "hectareas_minimas": null
+                    "hectareas_minimas": null,
+                    "departamentos_excluidos": [],
+                    "tipos_aplicacion_excluidos": []
                 },
                 "ofertas": true,
                 "mensajes": true,
                 "avance": true,
-                "calificaciones": true
+                "calificaciones": true,
+                "filtros_disponibles": [
+                    {
+                        "clave": "hectareas_minimas",
+                        "tipo": "decimal"
+                    },
+                    {
+                        "clave": "departamentos_excluidos",
+                        "tipo": "departamentos"
+                    },
+                    {
+                        "clave": "tipos_aplicacion_excluidos",
+                        "tipo": "tipos_aplicacion"
+                    }
+                ]
             }
         }
     }

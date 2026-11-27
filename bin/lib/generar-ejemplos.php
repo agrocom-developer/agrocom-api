@@ -459,13 +459,20 @@ try {
     registrar('proveedores-documentos', 'listarDocumentosProveedor', 'Documentos del proveedor: se consultan por sujeto.', 'GET', '/api/proveedores/documentos?sujeto_tipo=proveedor&sujeto_id='.($mi['proveedor']['id'] ?? 0), null, $tokenProveedor, 200);
     [, $drones] = registrar('flota-drones', 'listarDrones', 'Drones del proveedor, con su modelo.', 'GET', '/api/proveedores/drones', null, $tokenProveedor, 200);
     registrar('flota-equipos', 'listarEquipos', 'Equipos del proveedor.', 'GET', '/api/proveedores/equipos', null, $tokenProveedor, 200);
-    registrar('proveedores-pilotos', 'listarPilotos', 'Pilotos del proveedor.', 'GET', '/api/proveedores/pilotos', null, $tokenProveedor, 200);
+    [, $pilotosDelProveedor] = registrar('proveedores-pilotos', 'listarPilotos', 'Pilotos del proveedor.', 'GET', '/api/proveedores/pilotos', null, $tokenProveedor, 200);
+    // Disponibilidad (ADR 0045, punto 8): el encargado marca a un piloto, la propia cuenta se marca, y se vuelve a `disponible`.
+    $pilotoDelProveedorId = (int) ($pilotosDelProveedor['data'][0]['id'] ?? 0);
+    registrar('proveedores-piloto-disponibilidad', 'cambiarDisponibilidadDePiloto', 'El encargado marca a un piloto de su proveedor como ocupado: a ese piloto no se le avisa de nuevas solicitudes.', 'PUT', "/api/proveedores/pilotos/{$pilotoDelProveedorId}/disponibilidad", ['disponibilidad' => 'ocupado'], $tokenProveedor, 200);
+    registrar('proveedores-piloto-disponibilidad-volver', 'cambiarDisponibilidadDePiloto', 'El encargado vuelve a marcar al piloto como disponible; no llegan avisos atrasados.', 'PUT', "/api/proveedores/pilotos/{$pilotoDelProveedorId}/disponibilidad", ['disponibilidad' => 'disponible'], $tokenProveedor, 200);
+    registrar('proveedores-mi-disponibilidad', 'cambiarMiDisponibilidad', 'El titular se marca «en trabajo»: ni él ni sus pilotos reciben avisos de nuevas solicitudes, pero ve el mapa y puede ofertar.', 'PUT', '/api/proveedores/mi/disponibilidad', ['disponibilidad' => 'en_trabajo'], $tokenProveedor, 200);
+    registrar('proveedores-mi-disponibilidad-invalida', 'cambiarMiDisponibilidad', 'Un valor que no es disponible, ocupado ni en_trabajo se rechaza con 422.', 'PUT', '/api/proveedores/mi/disponibilidad', ['disponibilidad' => 'vacaciones'], $tokenProveedor, 422);
+    registrar('proveedores-mi-disponibilidad-volver', 'cambiarMiDisponibilidad', 'El titular vuelve a «disponible».', 'PUT', '/api/proveedores/mi/disponibilidad', ['disponibilidad' => 'disponible'], $tokenProveedor, 200);
     registrar('ofertas-reputacion', 'verReputacion', 'Calificación, tasa de cancelación y alertas propias; sin sanciones automáticas.', 'GET', '/api/reputacion', null, $tokenProveedor, 200);
     registrar('calificaciones-recibidas', 'listarCalificacionesRecibidas', 'Calificaciones que recibe el proveedor.', 'GET', '/api/calificaciones/recibidas', null, $tokenProveedor, 200);
     registrar('notificaciones-proveedor', 'listarNotificaciones', 'Bandeja del proveedor: nuevas solicitudes, ofertas y mensajes.', 'GET', '/api/notificaciones', null, $tokenProveedor, 200);
-    registrar('notificaciones-preferencias', 'verPreferenciasDeAviso', 'Qué avisos recibe el piloto: nuevas solicitudes y hectáreas mínimas.', 'GET', '/api/notificaciones/preferencias', null, $tokenProveedor, 200);
-    registrar('notificaciones-preferencias-guardar', 'guardarPreferenciasDeAviso', 'Activa o apaga los avisos de nuevas solicitudes y fija las hectáreas mínimas.', 'PUT', '/api/notificaciones/preferencias', [
-        'nuevas_solicitudes' => ['activo' => true, 'hectareas_minimas' => '50.0000'], 'ofertas' => true, 'mensajes' => true, 'avance' => true, 'calificaciones' => true,
+    registrar('notificaciones-preferencias', 'verPreferenciasDeAviso', 'Qué avisos recibe el proveedor: nuevas solicitudes con sus filtros (hectáreas mínimas, departamentos y tipos de aplicación que no acepta) y los filtros que el servidor conoce.', 'GET', '/api/notificaciones/preferencias', null, $tokenProveedor, 200);
+    registrar('notificaciones-preferencias-guardar', 'guardarPreferenciasDeAviso', 'Activa o apaga los avisos de nuevas solicitudes y los filtra: hectáreas mínimas, departamentos y tipos de aplicación excluidos.', 'PUT', '/api/notificaciones/preferencias', [
+        'nuevas_solicitudes' => ['activo' => true, 'hectareas_minimas' => '50.0000', 'departamentos_excluidos' => ['09'], 'tipos_aplicacion_excluidos' => ['desecante']], 'ofertas' => true, 'mensajes' => true, 'avance' => true, 'calificaciones' => true,
     ], $tokenProveedor, 200);
 
     // Mapa de solicitudes abiertas: sin datos privados del cliente.

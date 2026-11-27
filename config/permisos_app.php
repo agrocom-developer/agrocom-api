@@ -34,6 +34,7 @@ return [
 
     'proveedor' => [
         'proveedores.cuenta.gestionar',
+        'proveedores.disponibilidad.gestionar',
         'proveedores.documento.cargar',
         'negociacion.mercado.ver',
         'negociacion.oferta.proveedor',
@@ -52,6 +53,7 @@ return [
     // Piloto con cuenta propia de un tercero: lo que hace desde `agrocom-field`.
     'piloto' => [
         'proveedores.cuenta.ver',
+        'proveedores.disponibilidad.gestionar',
         'proveedores.documento.cargar',
         'negociacion.mercado.ver',
         'negociacion.oferta.proveedor',

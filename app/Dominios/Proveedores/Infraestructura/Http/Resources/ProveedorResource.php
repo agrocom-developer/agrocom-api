@@ -12,7 +12,7 @@ use OpenApi\Attributes as OA;
     schema: 'Proveedor',
     title: 'Proveedor',
     description: 'Entidad que presta el servicio y recibe ofertas (ADR 0028). Nace `pendiente`; solo un administrador la aprueba.',
-    required: ['id', 'tipo', 'razon_social', 'estado'],
+    required: ['id', 'tipo', 'razon_social', 'estado', 'disponibilidad'],
     properties: [
         new OA\Property(property: 'id', type: 'integer', example: 12),
         new OA\Property(property: 'tipo', description: '`propio` (Agrocom), `independiente` o `tercero`.', type: 'string', enum: ['propio', 'independiente', 'tercero'], example: 'tercero'),
@@ -24,6 +24,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'aprobado_en', type: 'string', format: 'date-time', nullable: true),
         new OA\Property(property: 'calificacion_promedio', description: 'Decimal exacto en string (0 a 5).', type: 'string', example: '4.80'),
         new OA\Property(property: 'calificaciones_conteo', type: 'integer', example: 17),
+        new OA\Property(property: 'disponibilidad', ref: '#/components/schemas/Disponibilidad'),
     ],
     type: 'object',
 )]
@@ -43,6 +44,7 @@ final class ProveedorResource extends JsonResource
             'aprobado_en' => $this->aprobado_en?->toIso8601String(),
             'calificacion_promedio' => $this->calificacion_promedio,
             'calificaciones_conteo' => $this->calificaciones_conteo,
+            'disponibilidad' => DisponibilidadResource::de($this->resource),
         ];
     }
 }

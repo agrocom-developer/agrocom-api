@@ -7,7 +7,10 @@ use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 /**
  * Hecho de dominio: una solicitud quedó `abierta` y es visible para
  * los pilotos. La negociación avisa a los pilotos cuyas preferencias coinciden con
- * las hectáreas. DTO de primitivos.
+ * las hectáreas, el departamento y el tipo de aplicación. DTO de primitivos.
+ *
+ * `tipoAplicacion` y `departamentoCodigo` alimentan los filtros del proveedor (ADR 0045); el
+ * departamento llega `null` hasta que la solicitud lo guarde (ubicación por departamento).
  */
 final readonly class SolicitudAbierta implements ShouldDispatchAfterCommit
 {
@@ -17,5 +20,7 @@ final readonly class SolicitudAbierta implements ShouldDispatchAfterCommit
         public int $clienteUsuarioId,
         public string $hectareas,
         public string $precioHa,
+        public ?string $tipoAplicacion = null,
+        public ?string $departamentoCodigo = null,
     ) {}
 }

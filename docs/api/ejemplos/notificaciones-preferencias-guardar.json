@@ -1,6 +1,6 @@
 {
     "operationId": "guardarPreferenciasDeAviso",
-    "descripcion": "Activa o apaga los avisos de nuevas solicitudes y fija las hectáreas mínimas.",
+    "descripcion": "Activa o apaga los avisos de nuevas solicitudes y los filtra: hectáreas mínimas, departamentos y tipos de aplicación excluidos.",
     "peticion": {
         "metodo": "PUT",
         "ruta": "/api/notificaciones/preferencias",
@@ -8,7 +8,13 @@
         "cuerpo": {
             "nuevas_solicitudes": {
                 "activo": true,
-                "hectareas_minimas": "50.0000"
+                "hectareas_minimas": "50.0000",
+                "departamentos_excluidos": [
+                    "09"
+                ],
+                "tipos_aplicacion_excluidos": [
+                    "desecante"
+                ]
             },
             "ofertas": true,
             "mensajes": true,
@@ -22,12 +28,32 @@
             "preferencias": {
                 "nuevas_solicitudes": {
                     "activo": true,
-                    "hectareas_minimas": "50.0000"
+                    "hectareas_minimas": "50.0000",
+                    "departamentos_excluidos": [
+                        "09"
+                    ],
+                    "tipos_aplicacion_excluidos": [
+                        "desecante"
+                    ]
                 },
                 "ofertas": true,
                 "mensajes": true,
                 "avance": true,
-                "calificaciones": true
+                "calificaciones": true,
+                "filtros_disponibles": [
+                    {
+                        "clave": "hectareas_minimas",
+                        "tipo": "decimal"
+                    },
+                    {
+                        "clave": "departamentos_excluidos",
+                        "tipo": "departamentos"
+                    },
+                    {
+                        "clave": "tipos_aplicacion_excluidos",
+                        "tipo": "tipos_aplicacion"
+                    }
+                ]
             }
         }
     }

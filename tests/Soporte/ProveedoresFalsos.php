@@ -86,6 +86,25 @@ final class ProveedoresFalsos implements LecturaProveedores
         return array_values(array_unique(array_filter([$titular, ...$pilotos])));
     }
 
+    public function usuariosParaAvisoDeNuevasSolicitudes(int $proveedorId): array
+    {
+        $proveedor = $this->proveedores[$proveedorId] ?? null;
+
+        if ($proveedor === null || $proveedor->disponibilidad !== 'disponible') {
+            return [];
+        }
+
+        $cuentas = $proveedor->usuarioTitularId === null ? [] : [$proveedor->usuarioTitularId];
+
+        foreach ($this->pilotosDe($proveedorId) as $piloto) {
+            if ($piloto->usuarioId !== $proveedor->usuarioTitularId && $piloto->disponibilidad === 'disponible') {
+                $cuentas[] = $piloto->usuarioId;
+            }
+        }
+
+        return array_values(array_unique($cuentas));
+    }
+
     public function proveedorDeLaCuenta(int $usuarioId): ?DatosProveedor
     {
         $titular = $this->proveedorDelTitular($usuarioId);
