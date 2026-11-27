@@ -745,6 +745,17 @@ return [
         'correo_despedida' => 'Saludos, Agrocom.',
     ],
 
+    // Eliminar mi cuenta (ADR 0047).
+    'eliminacion' => [
+        'bloqueada' => 'No puedes eliminar tu cuenta todavía. Resuelve lo pendiente y vuelve a intentarlo.',
+        'contrasena_incorrecta' => 'La contraseña no es correcta.',
+        'cuenta_en_eliminacion' => 'Tu cuenta está en proceso de eliminación. Puedes conservarla o cerrar sesión.',
+        'sin_solicitud' => 'No hay una eliminación pendiente.',
+        'nombre_anonimo' => 'Cuenta eliminada',
+        'terreno_anonimo' => 'Terreno eliminado',
+        'mensaje_borrado' => '[mensaje eliminado]',
+    ],
+
     // Tipo de cuenta (ADR 0046), tal como se le nombra a quien ingresó en la app equivocada.
     'tipos_de_cuenta' => [
         'panel' => 'panel',
