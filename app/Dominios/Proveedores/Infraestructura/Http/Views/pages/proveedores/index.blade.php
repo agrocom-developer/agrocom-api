@@ -115,7 +115,7 @@
                     />
                 @endif
             @else
-                <x-molecules.index-table columns="3rem minmax(0, 1.6fr) minmax(0, 0.9fr) minmax(0, 0.9fr) minmax(0, 0.8fr) minmax(0, 0.8fr) var(--ag-row-actions-width)">
+                <x-molecules.index-table columns="3rem minmax(0, 1.4fr) minmax(8.5rem, 0.9fr) minmax(6.5rem, 0.8fr) minmax(7.5rem, 0.9fr) minmax(6rem, 0.7fr) var(--ag-row-actions-width)">
                     <x-slot:head>
                         <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('proveedores.proveedores.col_proveedor') }}</span>

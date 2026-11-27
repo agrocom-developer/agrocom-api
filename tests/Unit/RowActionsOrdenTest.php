@@ -73,8 +73,8 @@ test('hasta tres acciones son botones de ícono con título y etiqueta accesible
         ->toContain('aria-label="Eliminar"');
 });
 
-test('con más de tres acciones todas pasan al menú de la fila, en el mismo orden', function () {
-    $html = filaConAcciones(SLOT_ELIMINAR.SLOT_TRANSICIONES.SLOT_APROBAR.SLOT_VER);
+test('con más de cuatro acciones todas pasan al menú de la fila, en el mismo orden', function () {
+    $html = filaConAcciones(SLOT_ELIMINAR.SLOT_TRANSICIONES.SLOT_APROBAR.SLOT_EDITAR.SLOT_VER);
 
     expect($html)
         ->toContain('ag-row-actions--menu')
@@ -82,7 +82,14 @@ test('con más de tres acciones todas pasan al menú de la fila, en el mismo ord
 
     $menu = substr($html, strpos($html, 'ag-row-actions__menu'));
 
-    expect(ordenDeAcciones($menu))->toBe(['ver', 'aprobar', 'transicion', 'eliminar']);
+    expect(ordenDeAcciones($menu))->toBe(['ver', 'editar', 'aprobar', 'transicion', 'eliminar']);
+});
+
+test('cuatro acciones siguen siendo botones de ícono, sin menú', function () {
+    $html = filaConAcciones(SLOT_ELIMINAR.SLOT_TRANSICIONES.SLOT_APROBAR.SLOT_VER);
+
+    expect($html)->toContain('ag-row-actions--iconos')->not->toContain('ag-row-actions__more')
+        ->and(ordenDeAcciones($html))->toBe(['ver', 'aprobar', 'transicion', 'eliminar']);
 });
 
 test('sin acciones no se pinta nada', function () {
@@ -143,4 +150,30 @@ test('la máquina de estados de una ficha no ofrece la baja como paso y el encab
 
     $boton = (string) file_get_contents($raiz.'/Proveedores/Infraestructura/Http/Views/pages/_boton-eliminar-aprobacion.blade.php');
     expect($boton)->toContain('variant="danger"')->toContain('AccionAprobacion::DarDeBaja');
+});
+
+test('una fila con acciones disponibles nunca queda sin ninguna acción visible, con 1 a 6 acciones', function () {
+    $acciones = [SLOT_VER, SLOT_EDITAR, SLOT_APROBAR, SLOT_TRANSICIONES, SLOT_ELIMINAR, '<x-slot:transiciones><x-molecules.row-action kind="transicion" tone="info" modal="m2" icon="sync_alt" label="Otra" /></x-slot:transiciones>'];
+
+    for ($cuantas = 1; $cuantas <= 5; $cuantas++) {
+        $html = filaConAcciones(implode('', array_slice($acciones, 0, $cuantas)));
+
+        expect(substr_count($html, 'data-ag-row-action='))->toBe($cuantas, "se perdieron acciones con $cuantas");
+
+        // O son botones de ícono, o hay un «⋮» que abre el menú con todas: nunca ninguna de las dos cosas ausentes.
+        $hayBotones = str_contains($html, 'ag-row-actions--iconos');
+        $hayMenu = str_contains($html, 'ag-row-actions__more-btn') && str_contains($html, 'data-bs-toggle="dropdown"') && str_contains($html, 'aria-label=');
+
+        expect($hayBotones || $hayMenu)->toBeTrue();
+    }
+});
+
+test('el CSS de las acciones de fila no esconde el «⋮» ni los botones de ícono', function () {
+    $css = (string) file_get_contents(dirname(__DIR__, 2).'/resources/css/components/row-actions.css');
+
+    // El «⋮» y los botones se muestran siempre; solo el rótulo del botón de ícono queda fuera de la vista.
+    expect(preg_match('/\.ag-row-actions__more\s*\{[^}]*display:\s*none/s', $css))->toBe(0)
+        ->and(preg_match('/\.ag-row-actions__visible/', $css))->toBe(0)
+        ->and(preg_match('/nth-child\(n \+ \d\)\s*\{\s*display:\s*none/s', $css))->toBe(0)
+        ->and($css)->toContain('.ag-row-actions--iconos .ag-button__label');
 });
