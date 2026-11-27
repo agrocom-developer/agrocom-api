@@ -7,7 +7,7 @@ use App\Dominios\Negociacion\Contratos\Eventos\AvisoDeNegociacion;
 /**
  * Emite un {@see AvisoDeNegociacion} a las cuentas que lo quieren: filtra por la
  * categoría que cada una dejó activa en sus preferencias. Una categoría `null` es
- * obligatoria (adjudicación, cierre, expiración) y llega siempre.
+ * obligatoria (adjudicación, cierre) y llega siempre.
  */
 final class Avisador
 {

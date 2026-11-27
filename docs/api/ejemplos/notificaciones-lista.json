@@ -17,7 +17,7 @@
                     "recurso_tipo": "cliente",
                     "recurso_id": 1,
                     "leida": false,
-                    "creada_en": "2026-11-26T21:55:49+00:00"
+                    "creada_en": "2026-11-26T22:09:36+00:00"
                 },
                 {
                     "id": 96,
@@ -26,7 +26,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 10,
                     "leida": false,
-                    "creada_en": "2026-11-26T20:55:50+00:00"
+                    "creada_en": "2026-11-26T21:09:37+00:00"
                 },
                 {
                     "id": 92,
@@ -35,7 +35,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 10,
                     "leida": false,
-                    "creada_en": "2026-11-26T19:55:50+00:00"
+                    "creada_en": "2026-11-26T20:09:37+00:00"
                 },
                 {
                     "id": 93,
@@ -44,7 +44,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 10,
                     "leida": false,
-                    "creada_en": "2026-11-26T17:55:50+00:00"
+                    "creada_en": "2026-11-26T18:09:37+00:00"
                 },
                 {
                     "id": 91,
@@ -53,7 +53,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 10,
                     "leida": false,
-                    "creada_en": "2026-11-26T17:55:50+00:00"
+                    "creada_en": "2026-11-26T18:09:37+00:00"
                 },
                 {
                     "id": 90,
@@ -62,7 +62,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 10,
                     "leida": false,
-                    "creada_en": "2026-11-26T16:55:50+00:00"
+                    "creada_en": "2026-11-26T17:09:37+00:00"
                 },
                 {
                     "id": 47,
@@ -71,7 +71,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 6,
                     "leida": false,
-                    "creada_en": "2026-11-26T11:55:50+00:00"
+                    "creada_en": "2026-11-26T12:09:37+00:00"
                 },
                 {
                     "id": 174,
@@ -80,7 +80,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 16,
                     "leida": false,
-                    "creada_en": "2026-11-26T09:55:50+00:00"
+                    "creada_en": "2026-11-26T10:09:37+00:00"
                 },
                 {
                     "id": 44,
@@ -89,7 +89,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 6,
                     "leida": false,
-                    "creada_en": "2026-11-26T01:55:50+00:00"
+                    "creada_en": "2026-11-26T02:09:37+00:00"
                 },
                 {
                     "id": 43,
@@ -98,7 +98,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 6,
                     "leida": false,
-                    "creada_en": "2026-11-25T23:55:50+00:00"
+                    "creada_en": "2026-11-26T00:09:37+00:00"
                 },
                 {
                     "id": 42,
@@ -107,7 +107,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 6,
                     "leida": false,
-                    "creada_en": "2026-11-25T19:55:50+00:00"
+                    "creada_en": "2026-11-25T20:09:37+00:00"
                 },
                 {
                     "id": 173,
@@ -116,7 +116,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 16,
                     "leida": false,
-                    "creada_en": "2026-11-25T15:55:50+00:00"
+                    "creada_en": "2026-11-25T16:09:37+00:00"
                 },
                 {
                     "id": 171,
@@ -125,7 +125,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 16,
                     "leida": false,
-                    "creada_en": "2026-11-25T11:55:50+00:00"
+                    "creada_en": "2026-11-25T12:09:37+00:00"
                 },
                 {
                     "id": 89,
@@ -134,7 +134,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 10,
                     "leida": false,
-                    "creada_en": "2026-11-24T19:55:50+00:00"
+                    "creada_en": "2026-11-24T20:09:37+00:00"
                 },
                 {
                     "id": 86,
@@ -143,7 +143,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 10,
                     "leida": false,
-                    "creada_en": "2026-11-24T11:55:50+00:00"
+                    "creada_en": "2026-11-24T12:09:37+00:00"
                 },
                 {
                     "id": 135,
@@ -152,7 +152,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 13,
                     "leida": false,
-                    "creada_en": "2026-11-24T09:55:50+00:00"
+                    "creada_en": "2026-11-24T10:09:37+00:00"
                 },
                 {
                     "id": 132,
@@ -161,7 +161,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 13,
                     "leida": false,
-                    "creada_en": "2026-11-22T17:55:50+00:00"
+                    "creada_en": "2026-11-22T18:09:37+00:00"
                 },
                 {
                     "id": 131,
@@ -170,7 +170,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 13,
                     "leida": false,
-                    "creada_en": "2026-11-21T22:55:50+00:00"
+                    "creada_en": "2026-11-21T23:09:37+00:00"
                 },
                 {
                     "id": 138,
@@ -179,7 +179,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 13,
                     "leida": false,
-                    "creada_en": "2026-11-21T02:55:50+00:00"
+                    "creada_en": "2026-11-21T03:09:37+00:00"
                 },
                 {
                     "id": 130,
@@ -188,7 +188,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 13,
                     "leida": false,
-                    "creada_en": "2026-11-19T10:55:50+00:00"
+                    "creada_en": "2026-11-19T11:09:37+00:00"
                 },
                 {
                     "id": 127,
@@ -197,7 +197,7 @@
                     "recurso_tipo": "solicitud",
                     "recurso_id": 13,
                     "leida": false,
-                    "creada_en": "2026-11-19T00:55:50+00:00"
+                    "creada_en": "2026-11-19T01:09:37+00:00"
                 }
             ],
             "no_leidas": 21

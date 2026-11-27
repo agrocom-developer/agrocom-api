@@ -1,5 +1,6 @@
 <?php
 
+use App\Dominios\Negociacion\Aplicacion\ProcesarNegociacion;
 use App\Dominios\Solicitudes\Aplicacion\CancelarSolicitud;
 use App\Dominios\Solicitudes\Aplicacion\CrearSolicitud;
 use App\Dominios\Solicitudes\Aplicacion\EstimarSolicitudDelCliente;
@@ -50,6 +51,7 @@ function clienteEsquema(): void
         'agrega_ubicacion_a_sol_terrenos',
         'agrega_ubicacion_a_sol_solicitudes_servicio',
         'retira_zonas',
+        'hace_opcional_la_fecha_deseada_de_la_solicitud',
     ]);
     Ubicaciones::sembrar();
 }
@@ -241,7 +243,7 @@ test('el listado es solo del cliente y separa lo activo del historial', function
         ->and($listar->ejecutar(USUARIO_ANA, null, EstadoSolicitud::Borrador)->pluck('id')->all())->toBe([$viva->id]);
 });
 
-test('abrir congela el monto estimado con el precio propuesto, fija la vigencia y anuncia el hecho', function () {
+test('abrir congela el monto estimado con el precio propuesto, no fija vigencia y anuncia el hecho', function () {
     Event::fake([SolicitudAbierta::class, SolicitudCancelada::class]);
     [, $terreno] = clienteConTerreno(USUARIO_ANA, '100');
     [$solicitud] = app(CrearSolicitud::class)->ejecutar(USUARIO_ANA, datosSolicitud($terreno));
@@ -252,7 +254,7 @@ test('abrir congela el monto estimado con el precio propuesto, fija la vigencia 
     expect($abierta->estado)->toBe(EstadoSolicitud::Abierta)
         ->and($abierta->monto_estimado)->toBe('10000.00')
         ->and($abierta->publicada_en)->not->toBeNull()
-        ->and($abierta->vence_en->toDateTimeString())->toBe('2026-12-09 10:00:00');
+        ->and(DB::table('sol_solicitudes_servicio')->where('id', $solicitud->id)->value('vence_en'))->toBeNull();
     Event::assertDispatched(SolicitudAbierta::class, fn (SolicitudAbierta $e): bool => $e->solicitudId === $solicitud->id);
 });
 
@@ -340,20 +342,46 @@ test('una abierta no se vuelve a abrir', function () {
         ->toThrow(TransicionSolicitudNoPermitida::class);
 });
 
-test('una expirada se renueva dentro del plazo y no después, sin cambiar el precio propuesto', function () {
+test('la solicitud no expira: meses después sigue abierta, con su precio propuesto, hasta que el cliente la cancela', function () {
     [, $terreno] = clienteConTerreno(USUARIO_ANA);
     [$solicitud] = app(CrearSolicitud::class)->ejecutar(USUARIO_ANA, datosSolicitud($terreno));
     app(PublicarSolicitud::class)->ejecutar(USUARIO_ANA, $solicitud->id);
-    DB::table('sol_solicitudes_servicio')->where('id', $solicitud->id)->update(['estado' => 'expirada', 'expirada_en' => now()->subDays(3)]);
 
-    $renovada = app(PublicarSolicitud::class)->ejecutar(USUARIO_ANA, $solicitud->id);
+    Carbon::setTestNow(Carbon::now()->addDays(200));
+    app(ProcesarNegociacion::class)->ejecutar();
 
-    expect($renovada->estado)->toBe(EstadoSolicitud::Abierta)
-        ->and((string) $renovada->precio_ha_propuesto)->toBe('125.0000');
+    $despues = $solicitud->fresh();
+    expect($despues->estado)->toBe(EstadoSolicitud::Abierta)
+        ->and((string) $despues->precio_ha_propuesto)->toBe('125.0000');
 
-    DB::table('sol_solicitudes_servicio')->where('id', $solicitud->id)->update(['estado' => 'expirada', 'expirada_en' => now()->subDays(31)]);
+    app(CancelarSolicitud::class)->porCliente(USUARIO_ANA, $solicitud->id, 'Ya no la necesito');
 
-    expect(fn () => app(PublicarSolicitud::class)->ejecutar(USUARIO_ANA, $solicitud->id))->toThrow(SolicitudInvalida::class);
+    expect($solicitud->fresh()->estado)->toBe(EstadoSolicitud::Cancelada);
+});
+
+test('la fecha deseada es opcional: se crea y se abre sin ventana', function () {
+    [, $terreno] = clienteConTerreno(USUARIO_ANA);
+    [$solicitud] = app(CrearSolicitud::class)->ejecutar(USUARIO_ANA, datosSolicitud($terreno, ['ventana_desde' => null, 'ventana_hasta' => null]));
+
+    $abierta = app(PublicarSolicitud::class)->ejecutar(USUARIO_ANA, $solicitud->id);
+
+    expect($abierta->estado)->toBe(EstadoSolicitud::Abierta)
+        ->and($abierta->ventana_desde)->toBeNull()
+        ->and($abierta->ventana_hasta)->toBeNull();
+});
+
+test('la fecha deseada no puede estar en el pasado ni más allá de la anticipación máxima', function () {
+    [, $terreno] = clienteConTerreno(USUARIO_ANA);
+    $maximo = (int) config('negociacion.anticipacion_maxima_dias');
+    $lejana = Carbon::today()->addDays($maximo + 1)->toDateString();
+    $limite = Carbon::today()->addDays($maximo)->toDateString();
+
+    expect(fn () => app(CrearSolicitud::class)->ejecutar(USUARIO_ANA, datosSolicitud($terreno, ['ventana_desde' => $lejana, 'ventana_hasta' => $lejana])))
+        ->toThrow(SolicitudInvalida::class);
+
+    [$enElLimite] = app(CrearSolicitud::class)->ejecutar(USUARIO_ANA, datosSolicitud($terreno, ['ventana_desde' => $limite, 'ventana_hasta' => $limite]));
+
+    expect($enElLimite->ventana_hasta->toDateString())->toBe($limite);
 });
 
 test('cancelar exige motivo, guarda quién y por qué, y anuncia el hecho', function () {

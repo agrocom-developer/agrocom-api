@@ -10,7 +10,7 @@
         "estado": 200,
         "cuerpo": {
             "puede_calificar": false,
-            "vence_en": "2026-11-29T06:56:35+00:00",
+            "vence_en": "2026-12-01T10:09:37+00:00",
             "plazo_dias": 7,
             "sujetos": [
                 {
@@ -30,7 +30,7 @@
                         ],
                         "comentario": "Cumplieron el precio y la cobertura quedó pareja.",
                         "estado": "visible",
-                        "creada_en": "2026-11-24T18:56:35+00:00"
+                        "creada_en": "2026-11-26T22:09:37+00:00"
                     }
                 },
                 {
@@ -49,7 +49,7 @@
                         ],
                         "comentario": null,
                         "estado": "visible",
-                        "creada_en": "2026-11-24T18:56:35+00:00"
+                        "creada_en": "2026-11-26T22:09:37+00:00"
                     }
                 }
             ],

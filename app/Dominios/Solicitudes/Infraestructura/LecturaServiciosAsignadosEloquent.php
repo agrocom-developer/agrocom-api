@@ -35,8 +35,8 @@ final class LecturaServiciosAsignadosEloquent implements LecturaServiciosAsignad
                 cultivo: $solicitud->cultivo,
                 productoIndicado: $solicitud->producto_indicado,
                 aportaProducto: $solicitud->aporta_producto->value,
-                ventanaDesde: $solicitud->ventana_desde->toDateString(),
-                ventanaHasta: $solicitud->ventana_hasta->toDateString(),
+                ventanaDesde: $solicitud->ventana_desde?->toDateString(),
+                ventanaHasta: $solicitud->ventana_hasta?->toDateString(),
                 urgente: $solicitud->urgente,
                 observaciones: $solicitud->observaciones,
                 terreno: [

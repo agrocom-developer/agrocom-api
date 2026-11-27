@@ -93,7 +93,7 @@ final class ConsultarOfertas
         $solicitud = $this->solicitudes->datos($oferta->solicitud_id);
         $adjudicada = $solicitud !== null
             && $solicitud->proveedorId === $oferta->proveedor_id
-            && ! in_array($solicitud->estado, ['abierta', 'con_ofertas', 'expirada', 'cancelada'], true);
+            && ! in_array($solicitud->estado, ['abierta', 'con_ofertas', 'cancelada'], true);
 
         return [
             'departamento_codigo' => $solicitud?->departamentoCodigo,

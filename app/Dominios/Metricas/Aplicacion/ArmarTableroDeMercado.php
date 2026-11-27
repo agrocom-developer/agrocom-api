@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\DB;
 final class ArmarTableroDeMercado implements LecturaTableroDeMercado
 {
     /** Orden del ciclo de una solicitud, para que el tablero se lea de izquierda a derecha. */
-    private const ESTADOS = ['borrador', 'abierta', 'con_ofertas', 'adjudicada', 'en_ejecucion', 'finalizada', 'calificada', 'disputada', 'expirada', 'cancelada'];
+    private const ESTADOS = ['borrador', 'abierta', 'con_ofertas', 'adjudicada', 'en_ejecucion', 'finalizada', 'calificada', 'disputada', 'cancelada'];
 
     private const EN_MERCADO = ['abierta', 'con_ofertas'];
 
@@ -25,7 +25,7 @@ final class ArmarTableroDeMercado implements LecturaTableroDeMercado
 
     private const CERRADAS = ['finalizada', 'calificada'];
 
-    private const CANCELADAS = ['cancelada', 'expirada'];
+    private const CANCELADAS = ['cancelada'];
 
     /** Departamento de una solicitud sin departamento (un borrador cuyo terreno aún no lo tiene). */
     public const SIN_DEPARTAMENTO = 'sin_departamento';

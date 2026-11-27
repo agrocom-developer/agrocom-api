@@ -60,7 +60,7 @@ use OpenApi\Attributes as OA;
         .'El `id` es el `solicitud_id` que la app envía en el registro `trabajo` de `POST /api/sync`. Sin datos de contacto del cliente. '
         .'Límite conocido del cursor: si el operario entra a un equipo nuevo, los servicios de ese equipo que no cambiaron desde el '
         .'último pull no llegan en el incremental; los trae un pull completo (`desde` vacío).',
-    required: ['id', 'uuid_cliente', 'estado', 'equipo_id', 'tipo_aplicacion', 'hectareas_solicitadas', 'producto_indicado', 'aporta_producto', 'ventana_desde', 'ventana_hasta', 'urgente', 'terreno', 'updated_at'],
+    required: ['id', 'uuid_cliente', 'estado', 'equipo_id', 'tipo_aplicacion', 'hectareas_solicitadas', 'producto_indicado', 'aporta_producto', 'urgente', 'terreno', 'updated_at'],
     properties: [
         new OA\Property(property: 'id', type: 'integer', example: 31),
         new OA\Property(property: 'uuid_cliente', type: 'string', example: '9a1b7e3e-2f7a-4b3d-8c1e-6f2a1d9c4b0a'),
@@ -71,8 +71,8 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'cultivo', type: 'string', nullable: true, example: 'Soya'),
         new OA\Property(property: 'producto_indicado', type: 'string', example: 'Glifosato 480 SL, 2 L/ha'),
         new OA\Property(property: 'aporta_producto', type: 'string', enum: ['cliente', 'proveedor']),
-        new OA\Property(property: 'ventana_desde', type: 'string', format: 'date', example: '2026-12-01'),
-        new OA\Property(property: 'ventana_hasta', type: 'string', format: 'date', example: '2026-12-10'),
+        new OA\Property(property: 'ventana_desde', description: 'Fecha deseada (opcional; nulo si el cliente no pidió fecha).', type: 'string', format: 'date', nullable: true, example: '2026-12-01'),
+        new OA\Property(property: 'ventana_hasta', type: 'string', format: 'date', nullable: true, example: '2026-12-10'),
         new OA\Property(property: 'urgente', type: 'boolean', example: false),
         new OA\Property(property: 'observaciones', type: 'string', nullable: true),
         new OA\Property(property: 'terreno', ref: '#/components/schemas/TerrenoServicioCatalogo'),

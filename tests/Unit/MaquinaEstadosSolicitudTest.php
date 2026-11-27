@@ -14,14 +14,13 @@ function transicionesEsperadas(): array
 {
     return [
         'borrador' => ['abierta', 'cancelada'],
-        'abierta' => ['con_ofertas', 'adjudicada', 'expirada', 'cancelada'],
-        'con_ofertas' => ['abierta', 'adjudicada', 'expirada', 'cancelada'],
+        'abierta' => ['con_ofertas', 'adjudicada', 'cancelada'],
+        'con_ofertas' => ['abierta', 'adjudicada', 'cancelada'],
         'adjudicada' => ['en_ejecucion', 'abierta', 'cancelada'],
         'en_ejecucion' => ['finalizada'],
         'finalizada' => ['calificada', 'disputada'],
         'calificada' => ['disputada'],
         'disputada' => ['finalizada', 'calificada', 'cancelada'],
-        'expirada' => ['abierta'],
         'cancelada' => [],
     ];
 }
@@ -48,8 +47,8 @@ test('el camino feliz recorre el ciclo de punta a punta', function () {
     }
 });
 
-test('calificada, cancelada y expirada son terminales para la lista de activas', function () {
-    foreach ([EstadoSolicitud::Calificada, EstadoSolicitud::Cancelada, EstadoSolicitud::Expirada] as $terminal) {
+test('calificada y cancelada son terminales para la lista de activas', function () {
+    foreach ([EstadoSolicitud::Calificada, EstadoSolicitud::Cancelada] as $terminal) {
         expect($terminal->esTerminal())->toBeTrue();
     }
 
@@ -94,4 +93,14 @@ test('toda transición apunta a un estado que existe y cada estado tiene fila en
     $esperadas = transicionesEsperadas();
 
     expect(array_keys($esperadas))->toEqualCanonicalizing(array_map(fn (EstadoSolicitud $e) => $e->value, EstadoSolicitud::cases()));
+});
+
+test('la solicitud no expira: no existe el estado expirada y ninguna transición del mercado lleva a un estado que cierre sola', function () {
+    expect(EstadoSolicitud::tryFrom('expirada'))->toBeNull();
+
+    foreach ([EstadoSolicitud::Abierta, EstadoSolicitud::ConOfertas] as $enMercado) {
+        expect(array_map(fn (EstadoSolicitud $e) => $e->value, TransicionesSolicitud::destinosDesde($enMercado)))
+            ->not->toContain('expirada')
+            ->and(TransicionesSolicitud::permitida($enMercado, EstadoSolicitud::Cancelada))->toBeTrue();
+    }
 });

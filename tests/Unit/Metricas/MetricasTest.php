@@ -137,7 +137,7 @@ test('el mercado cuenta lo publicado en el período, la adjudicación, los tiemp
 
     $a = metricasSolicitud('finalizada', 7, $hace(5), ['hectareas_ejecutadas' => '90.0000', 'adjudicada_en' => $hace(5)->addMinutes(180), 'departamento_codigo' => '07']);
     $b = metricasSolicitud('adjudicada', 1, $hace(4), ['adjudicada_en' => $hace(4)->addMinutes(60), 'departamento_codigo' => '07']);
-    metricasSolicitud('expirada', null, $hace(3), ['departamento_codigo' => '03']);
+    metricasSolicitud('con_ofertas', null, $hace(3), ['departamento_codigo' => '03']);
     metricasSolicitud('abierta', null, $hace(2));
     metricasSolicitud('finalizada', 7, $hace(60), ['adjudicada_en' => $hace(60)->addMinutes(10)]);
 
@@ -149,12 +149,12 @@ test('el mercado cuenta lo publicado en el período, la adjudicación, los tiemp
     $m = app(CalcularMetricas::class)->ejecutar(PeriodoDeMetricas::de('30', $ahora->toDateTimeImmutable()))['mercado'];
 
     expect($m['solicitudes_publicadas'])->toBe(4)
-        ->and($m['por_estado'])->toEqual(['finalizada' => 1, 'adjudicada' => 1, 'expirada' => 1, 'abierta' => 1])
+        ->and($m['por_estado'])->toEqual(['finalizada' => 1, 'adjudicada' => 1, 'con_ofertas' => 1, 'abierta' => 1])
         ->and($m['por_departamento'])->toEqual(['07' => 2, '03' => 1, 'sin_departamento' => 1])
         ->and($m)->not->toHaveKey('por_region')
         ->and($m['adjudicadas'])->toBe(2)
         ->and($m['tasa_adjudicacion'])->toBe('0.5000')
-        ->and($m['expiradas'])->toBe(1)
+        ->and($m['abiertas'])->toBe(2)
         ->and($m['hectareas_solicitadas'])->toBe('400.0000')
         ->and($m['hectareas_servidas'])->toBe('90.0000')
         ->and($m['aceptaciones'])->toBe(2)

@@ -31,9 +31,8 @@
                 "monto_final": null,
                 "estado": "abierta",
                 "oferta_adjudicada_id": null,
-                "vence_en": "2026-12-03T21:55:58+00:00",
                 "proveedor_id": null,
-                "publicada_en": "2026-11-26T21:55:58+00:00",
+                "publicada_en": "2026-11-26T22:09:43+00:00",
                 "motivo_cancelacion": null,
                 "cancelada_por": null,
                 "departamento_codigo": "07",
@@ -64,7 +63,7 @@
                         {
                             "id": 1,
                             "descripcion": "Borde norte con maleza alta",
-                            "url": "/api/terrenos/fotos/1/archivo?expires=1795731059&signature=1ed745eddb94301406400ee4ead987ac54c82581c70d860607b071a16982f3f9"
+                            "url": "/api/terrenos/fotos/1/archivo?expires=1795731883&signature=6a9ba4a6bff32de5d6b35e0f0f031f6fb407afc50c4e1b50bc4d6411b8aa57cd"
                         }
                     ]
                 },
@@ -74,14 +73,14 @@
                         "estado_nuevo": "borrador",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-26T21:55:58+00:00"
+                        "creado_en": "2026-11-26T22:09:43+00:00"
                     },
                     {
                         "estado_anterior": "borrador",
                         "estado_nuevo": "abierta",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-26T21:55:58+00:00"
+                        "creado_en": "2026-11-26T22:09:43+00:00"
                     }
                 ]
             }

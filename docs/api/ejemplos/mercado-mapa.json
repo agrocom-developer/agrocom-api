@@ -24,8 +24,26 @@
                     "ofertas_vigentes": 0,
                     "mi_negociacion": null,
                     "distancia_km": null,
-                    "publicada_en": "2026-11-26T21:55:58+00:00",
-                    "vence_en": "2026-12-03T21:55:58+00:00"
+                    "publicada_en": "2026-11-26T22:09:43+00:00"
+                },
+                {
+                    "id": 17,
+                    "centro": {
+                        "latitud": -16.9374,
+                        "longitud": -62.5877
+                    },
+                    "hectareas_solicitadas": "55.0000",
+                    "precio_ha_propuesto": "100.0000",
+                    "departamento_codigo": "07",
+                    "provincia_codigo": "0711",
+                    "cultivo": "Soya",
+                    "tipo_aplicacion": "herbicida",
+                    "ventana_desde": null,
+                    "ventana_hasta": null,
+                    "ofertas_vigentes": 0,
+                    "mi_negociacion": null,
+                    "distancia_km": null,
+                    "publicada_en": "2026-11-17T22:09:42+00:00"
                 },
                 {
                     "id": 7,
@@ -44,8 +62,7 @@
                     "ofertas_vigentes": 1,
                     "mi_negociacion": "vigente",
                     "distancia_km": null,
-                    "publicada_en": "2026-11-26T01:55:51+00:00",
-                    "vence_en": "2026-12-03T01:55:51+00:00"
+                    "publicada_en": "2026-11-26T02:09:38+00:00"
                 },
                 {
                     "id": 6,
@@ -64,8 +81,7 @@
                     "ofertas_vigentes": 3,
                     "mi_negociacion": "vigente",
                     "distancia_km": null,
-                    "publicada_en": "2026-11-25T15:55:51+00:00",
-                    "vence_en": "2026-12-02T15:55:51+00:00"
+                    "publicada_en": "2026-11-25T16:09:37+00:00"
                 },
                 {
                     "id": 5,
@@ -84,8 +100,7 @@
                     "ofertas_vigentes": 0,
                     "mi_negociacion": null,
                     "distancia_km": null,
-                    "publicada_en": "2026-11-26T20:55:51+00:00",
-                    "vence_en": "2026-12-03T20:55:51+00:00"
+                    "publicada_en": "2026-11-26T21:09:37+00:00"
                 },
                 {
                     "id": 4,
@@ -104,8 +119,7 @@
                     "ofertas_vigentes": 0,
                     "mi_negociacion": null,
                     "distancia_km": null,
-                    "publicada_en": "2026-11-26T19:55:50+00:00",
-                    "vence_en": "2026-12-03T19:55:50+00:00"
+                    "publicada_en": "2026-11-26T20:09:37+00:00"
                 },
                 {
                     "id": 3,
@@ -124,8 +138,7 @@
                     "ofertas_vigentes": 0,
                     "mi_negociacion": null,
                     "distancia_km": null,
-                    "publicada_en": "2026-11-26T12:55:50+00:00",
-                    "vence_en": "2026-12-03T12:55:50+00:00"
+                    "publicada_en": "2026-11-26T13:09:37+00:00"
                 },
                 {
                     "id": 2,
@@ -144,8 +157,7 @@
                     "ofertas_vigentes": 0,
                     "mi_negociacion": null,
                     "distancia_km": null,
-                    "publicada_en": "2026-11-26T16:55:50+00:00",
-                    "vence_en": "2026-12-03T16:55:50+00:00"
+                    "publicada_en": "2026-11-26T17:09:37+00:00"
                 }
             ],
             "siguiente_cursor": null

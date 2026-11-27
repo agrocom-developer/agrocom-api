@@ -66,7 +66,7 @@ final class SolicitudesController
                     }
                 });
             })
-            ->orderByRaw("CASE estado WHEN 'expirada' THEN 0 WHEN 'abierta' THEN 1 WHEN 'con_ofertas' THEN 2 ELSE 3 END")
+            ->orderByRaw("CASE estado WHEN 'abierta' THEN 0 WHEN 'con_ofertas' THEN 1 ELSE 2 END")
             ->orderByDesc('id')
             ->paginate(15)
             ->withQueryString();

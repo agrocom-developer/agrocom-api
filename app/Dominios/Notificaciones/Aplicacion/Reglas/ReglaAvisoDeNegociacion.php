@@ -12,7 +12,7 @@ use InvalidArgumentException;
 
 /**
  * Los hechos de la negociación (nueva solicitud abierta, oferta o contraoferta, adjudicación,
- * inicio, avance y fin del servicio, mensaje, expiración; `negociacion-contrato.md` §7). El evento ya
+ * inicio, avance y fin del servicio, mensaje, oferta vencida; `negociacion-contrato.md` §7). El evento ya
  * trae el tipo de aviso, la clave que lo hace idempotente y los destinatarios filtrados por sus
  * preferencias: la regla solo lo traduce. Una solicitud avisa a una cuenta una sola vez por hecho.
  */

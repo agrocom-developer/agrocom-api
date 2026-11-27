@@ -100,6 +100,7 @@ function negMundo(): void
         'agrega_ubicacion_a_sol_terrenos',
         'agrega_ubicacion_a_sol_solicitudes_servicio',
         'retira_zonas',
+        'hace_opcional_la_fecha_deseada_de_la_solicitud',
     ]);
     Ubicaciones::sembrar();
 
@@ -186,11 +187,12 @@ function negMundo(): void
 }
 
 /** Crea y abre una solicitud del cliente 1 sobre el terreno 1 (80 ha a 125 por hectárea). */
-function negAbierta(string $precio = '125', string $hectareas = '80', int $usuario = NEG_CLIENTE, int $terreno = 1): int
+function negAbierta(string $precio = '125', string $hectareas = '80', int $usuario = NEG_CLIENTE, int $terreno = 1, bool $conFecha = true): int
 {
     [$solicitud] = app(CrearSolicitud::class)->ejecutar($usuario, [
         'uuid_cliente' => (string) Str::uuid(), 'terreno_id' => $terreno, 'tipo_aplicacion' => 'herbicida', 'hectareas_solicitadas' => $hectareas,
-        'producto_indicado' => 'Glifosato', 'ventana_desde' => '2026-12-12', 'ventana_hasta' => '2026-12-20', 'precio_ha_propuesto' => $precio,
+        'producto_indicado' => 'Glifosato', 'precio_ha_propuesto' => $precio,
+        ...($conFecha ? ['ventana_desde' => '2026-12-12', 'ventana_hasta' => '2026-12-20'] : []),
     ]);
 
     return app(PublicarSolicitud::class)->ejecutar($usuario, $solicitud->id)->id;
@@ -227,7 +229,7 @@ function negAdjudicada(): array
     return [$solicitud, $oferta];
 }
 
-test('abrir una solicitud exige precio propuesto y teléfono, y la deja visible con su vigencia', function () {
+test('abrir una solicitud exige precio propuesto y teléfono, y la deja visible sin vigencia propia', function () {
     negMundo();
 
     [$sinPrecio] = app(CrearSolicitud::class)->ejecutar(NEG_CLIENTE, [
@@ -243,7 +245,7 @@ test('abrir una solicitud exige precio propuesto y teléfono, y la deja visible 
     expect(negEstado($abierta))->toBe('abierta')
         ->and($fila->precio_ha_propuesto)->toEqual('125.0000')
         ->and($fila->monto_estimado)->toEqual('10000.00')
-        ->and(Carbon::parse($fila->vence_en)->toDateString())->toBe('2026-12-17');
+        ->and($fila->vence_en)->toBeNull();
     Event::assertDispatched(SolicitudAbierta::class, fn (SolicitudAbierta $e): bool => $e->solicitudId === $abierta && $e->hectareas === '80.0000');
 });
 
@@ -431,7 +433,7 @@ test('rechazar la última oferta reabre la solicitud y el proveedor no vuelve a 
     expect($nueva->numero)->toBe(3)->and(negEstado($solicitud))->toBe('con_ofertas');
 });
 
-test('una oferta vencida ya no se responde y el proceso programado reabre la solicitud y expira las vencidas', function () {
+test('una oferta vencida ya no se responde y el proceso programado reabre la solicitud, que no expira nunca', function () {
     negMundo();
     $solicitud = negAbierta();
     $oferta = negOfertar(NEG_TITULAR_7, $solicitud);
@@ -445,16 +447,35 @@ test('una oferta vencida ya no se responde y el proceso programado reabre la sol
     expect($resultado['ofertas_vencidas'])->toBe(1)
         ->and($oferta->refresh()->estado->value)->toBe('vencida')
         ->and(negEstado($solicitud))->toBe('abierta')
-        ->and($repetido)->toBe(['ofertas_vencidas' => 0, 'solicitudes_expiradas' => 0]);
+        ->and($repetido)->toBe(['ofertas_vencidas' => 0]);
 
-    Carbon::setTestNow(Carbon::parse('2026-12-20 10:00:00'));
-    $otra = negOfertar(NEG_TITULAR_8, negAbierta());
-    Carbon::setTestNow(Carbon::parse('2026-12-30 10:00:00'));
+    // Un año después la solicitud sin trato sigue abierta: solo se adjudica o la cancela el cliente.
+    Carbon::setTestNow(Carbon::parse('2027-12-12 10:00:00'));
     $cierre = app(ProcesarNegociacion::class)->ejecutar();
 
-    expect($cierre['solicitudes_expiradas'])->toBe(2)
-        ->and(negEstado($solicitud))->toBe('expirada')
-        ->and($otra->refresh()->estado->value)->toBeIn(['vencida', 'cerrada']);
+    expect($cierre)->toBe(['ofertas_vencidas' => 0])
+        ->and(negEstado($solicitud))->toBe('abierta');
+});
+
+test('la oferta vence por su propio parámetro y la solicitud no la acota', function () {
+    negMundo();
+    $solicitud = negAbierta();
+    config(['negociacion.vigencia_oferta_horas' => 720]);
+
+    $oferta = negOfertar(NEG_TITULAR_7, $solicitud);
+
+    expect($oferta->refresh()->vence_en->equalTo(Carbon::now()->addHours(720)))->toBeTrue();
+});
+
+test('una solicitud sin fecha deseada se ofrece, se negocia y se adjudica igual', function () {
+    negMundo();
+    $solicitud = negAbierta(conFecha: false);
+    $oferta = negOfertar(NEG_TITULAR_7, $solicitud, 'contraoferta', '118');
+
+    app(Negociar::class)->aceptar(Negociar::LADO_CLIENTE, NEG_CLIENTE, $oferta->id);
+
+    expect(negEstado($solicitud))->toBe('adjudicada')
+        ->and(DB::table('sol_solicitudes_servicio')->where('id', $solicitud)->value('ventana_desde'))->toBeNull();
 });
 
 test('cambiar el precio propuesto no toca las ofertas vigentes y avisa a los proveedores', function () {

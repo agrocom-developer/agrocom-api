@@ -322,9 +322,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/solicitudes/{id}/precio', [SolicitudesController::class, 'precio'])
         ->whereNumber('id')
         ->name('api.solicitudes.precio');
-    Route::post('/solicitudes/{id}/renovar', [SolicitudesController::class, 'renovar'])
-        ->whereNumber('id')
-        ->name('api.solicitudes.renovar');
 
     // Calificaciones (ADR 0031 y 0039): el cliente califica al proveedor y al piloto
     // de un servicio completado; el proveedor califica al cliente en

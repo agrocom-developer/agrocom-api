@@ -12,10 +12,10 @@ use Throwable;
 
 /**
  * Lo que el reloj hace por la negociación (`negociacion:procesar`, cada minuto;
- * `negociacion-contrato.md` §1): vence las ofertas cuya vigencia pasó, reevalúa las
- * solicitudes que se quedaron sin ofertas vigentes y expira las solicitudes cuya
- * vigencia terminó (cerrando sus ofertas). Idempotente: correrlo dos veces seguidas no
- * repite nada, y un fallo en una solicitud se reporta sin detener a las demás.
+ * `negociacion-contrato.md` §1): vence las ofertas cuya vigencia pasó y reevalúa las
+ * solicitudes que se quedaron sin ofertas vigentes. La solicitud misma no vence: sigue en
+ * el mercado hasta que se adjudica o el cliente la cancela. Idempotente: correrlo dos veces
+ * seguidas no repite nada, y un fallo en una solicitud se reporta sin detener a las demás.
  */
 final class ProcesarNegociacion
 {
@@ -27,12 +27,11 @@ final class ProcesarNegociacion
         private readonly Avisador $avisos,
     ) {}
 
-    /** @return array{ofertas_vencidas: int, solicitudes_expiradas: int} */
+    /** @return array{ofertas_vencidas: int} */
     public function ejecutar(?Carbon $ahora = null): array
     {
         $ahora ??= Carbon::now();
         $vencidas = 0;
-        $expiradas = 0;
 
         $solicitudesAfectadas = [];
 
@@ -58,34 +57,7 @@ final class ProcesarNegociacion
             }
         }
 
-        $vencen = DB::table('sol_solicitudes_servicio')
-            ->whereIn('estado', ['abierta', 'con_ofertas'])
-            ->where('vence_en', '<=', $ahora)
-            ->whereNull('deleted_at')
-            ->orderBy('id')
-            ->pluck('id');
-
-        foreach ($vencen as $solicitudId) {
-            try {
-                DB::transaction(function () use ($solicitudId, &$expiradas): void {
-                    $solicitud = $this->solicitudes->datos((int) $solicitudId, true);
-
-                    if ($solicitud === null || ! $solicitud->enMercado() || ! $this->solicitudes->expirar((int) $solicitudId)) {
-                        return;
-                    }
-
-                    Oferta::query()->where('solicitud_id', $solicitudId)->where('estado', EstadoOferta::Vigente->value)->lockForUpdate()->get()
-                        ->each(fn (Oferta $oferta) => $this->estados->transicionar($oferta, EstadoOferta::Cerrada));
-
-                    $this->avisos->avisar('solicitud_expirada', "solicitud_expirada:{$solicitudId}:".now()->timestamp, ['solicitud' => (int) $solicitudId], (int) $solicitudId, [$solicitud->clienteUsuarioId]);
-                    $expiradas++;
-                });
-            } catch (Throwable $error) {
-                report($error);
-            }
-        }
-
-        return ['ofertas_vencidas' => $vencidas, 'solicitudes_expiradas' => $expiradas];
+        return ['ofertas_vencidas' => $vencidas];
     }
 
     /** @param  array<int, bool>  $solicitudesAfectadas */

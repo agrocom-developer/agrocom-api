@@ -122,7 +122,7 @@
                 <x-molecules.stat-card
                     :label="__('solicitudes.panel.kpi_ventana')"
                     icon="event"
-                    :value="$solicitud->ventana_desde->format('d/m').' – '.$solicitud->ventana_hasta->format('d/m')"
+                    :value="$solicitud->ventana_desde !== null ? $solicitud->ventana_desde->format('d/m').' – '.$solicitud->ventana_hasta->format('d/m') : __('solicitudes.panel.sin_fecha_deseada')"
                     :foot="$solicitud->urgente ? __('solicitudes.panel.urgente') : null"
                     state="distintivo-1"
                 />

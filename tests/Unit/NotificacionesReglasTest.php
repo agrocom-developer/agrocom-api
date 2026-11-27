@@ -176,7 +176,6 @@ test('cada tipo de aviso tiene su texto en lang/es/notificaciones.php y usa solo
         'precio_cambiado' => ['solicitud', 'precio'],
         'solicitud_adjudicada' => ['solicitud', 'proveedor', 'precio'],
         'solicitud_reabierta' => ['solicitud'],
-        'solicitud_expirada' => ['solicitud'],
         'ejecucion_iniciada' => ['solicitud'],
         'avance_registrado' => ['solicitud', 'porcentaje'],
         'solicitud_finalizada' => ['solicitud', 'monto'],

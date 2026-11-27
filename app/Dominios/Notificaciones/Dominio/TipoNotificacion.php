@@ -46,7 +46,6 @@ enum TipoNotificacion: string
     case PrecioCambiado = 'precio_cambiado';
     case SolicitudAdjudicada = 'solicitud_adjudicada';
     case SolicitudReabierta = 'solicitud_reabierta';
-    case SolicitudExpirada = 'solicitud_expirada';
     case EjecucionIniciada = 'ejecucion_iniciada';
     case AvanceRegistrado = 'avance_registrado';
     case SolicitudFinalizada = 'solicitud_finalizada';
@@ -83,7 +82,6 @@ enum TipoNotificacion: string
             self::OfertaRecibida, self::PrecioCambiado => 'request_quote',
             self::SolicitudAdjudicada => 'handshake',
             self::SolicitudReabierta => 'sync_alt',
-            self::SolicitudExpirada => 'timer_off',
             self::EjecucionIniciada => 'flight_takeoff',
             self::AvanceRegistrado => 'photo_camera',
             self::SolicitudFinalizada => 'task_alt',

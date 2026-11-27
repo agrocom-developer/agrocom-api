@@ -7,7 +7,7 @@ final class ParametrosDeNegociacion
 {
     public function vigenciaOfertaHoras(): int
     {
-        return max(1, (int) config('negociacion.vigencia_oferta_horas', 48));
+        return max(1, (int) config('negociacion.vigencia_oferta_horas', 24));
     }
 
     public function maxOfertas(): int
