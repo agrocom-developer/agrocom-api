@@ -20,6 +20,7 @@ import './templates/auth-layout.js';
 import './pages/login.js';
 import './pages/roles-permisos.js';
 import './pages/configuracion-form.js';
+import './pages/metricas-secciones.js';
 // Al final: repone campos y avisa con `change`, así que los átomos y las páginas
 // de arriba ya tienen que estar escuchando.
 import './shared/borrador-formulario.js';

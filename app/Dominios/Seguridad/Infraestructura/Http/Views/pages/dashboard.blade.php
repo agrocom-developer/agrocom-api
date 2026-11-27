@@ -2,9 +2,9 @@
     Page: tablero del panel (GET /panel/dashboard, panel.dashboard) — arquetipo
     Tablero (§6.1 de docs/diseno/guia_pantalla_panel.md).
 
-    Muestra cómo está el mercado hoy, de un vistazo: KPIs, cuatro gráficas (solicitudes por
-    estado, actividad semanal, hectáreas en el mercado por departamento y precio por hectárea) y
-    la cola de lo que espera una decisión del administrador. El detalle por período (embudo,
+    Muestra cómo está el mercado hoy, de un vistazo, en un lienzo (templates/lienzo): la actividad
+    semanal como gráfica principal a todo el ancho y, debajo, solicitudes por estado, la cola de lo
+    que espera una decisión, hectáreas por departamento, precio por hectárea y las tarjetas KPI. El detalle por período (embudo,
     tiempos, rondas, departamentos) vive en «Métricas del mercado». Acá no se calcula nada:
     todo llega resuelto de `LecturaTableroDeMercado`.
 
@@ -55,100 +55,114 @@
                 />
             @endif
 
-            <div class="ag-tablero__kpis">
-                @if ($puedeVerSolicitudes)
-                <x-molecules.stat-card :label="__('seguridad.dashboard.kpi_solicitudes')" icon="request_quote" :value="number_format($tablero['total_solicitudes'], 0, ',', '.')" state="info" />
-                <x-molecules.stat-card :label="__('seguridad.dashboard.kpi_en_mercado')" icon="storefront" :value="number_format($enMercado, 0, ',', '.')" state="success" />
-                <x-molecules.stat-card :label="__('seguridad.dashboard.kpi_en_curso')" icon="flight" :value="number_format($enCurso, 0, ',', '.')" state="primary-2" />
-                <x-molecules.stat-card :label="__('seguridad.dashboard.kpi_hectareas')" icon="landscape" :value="$hectareas($tablero['hectareas_en_mercado'])" value-suffix="ha" state="distintivo-1" />
-                @endif
-                @if ($pendientes !== [])
-                <x-molecules.stat-card :label="__('seguridad.dashboard.kpi_pendientes')" icon="pending_actions" :value="number_format($totalPendientes, 0, ',', '.')" :state="$totalPendientes > 0 ? 'warning' : null" />
-                @endif
-            </div>
+            @if ($puedeVerSolicitudes && $tablero['total_solicitudes'] > 0)
+                {{--
+                    Composición del tablero (templates/lienzo, §Lienzo de docs/diseno/sistema_diseno_panel.md):
 
-            @if (! $puedeVerSolicitudes)
-                {{-- Sin permiso de solicitudes no hay bloque de mercado. --}}
-            @elseif ($tablero['total_solicitudes'] === 0)
-                <x-molecules.empty-state
-                    icon="request_quote"
-                    :title="__('seguridad.dashboard.vacio_titulo')"
-                    :detail="__('seguridad.dashboard.vacio_detalle')"
-                />
+                    +--------------------------------------------------+
+                    |  PRINCIPAL: actividad semanal            (12)    |
+                    +------------------+-------------------------------+
+                    | Solicitudes por  | Hectáreas por   | Precio por  |
+                    | estado      (7/12| departamento    | hectárea    |
+                    +------------------+ (6)             | (6)         |
+                    | Esperan tu       +-----------------+-------------+
+                    | decisión   (5/12)| Tarjetas KPI (12)             |
+                    +------------------+-------------------------------+
+                --}}
+                <x-templates.lienzo :raiz="true" direccion="columna" fracciones="4 8" :alto="21">
+                    <x-molecules.lienzo-bloque>
+                        <x-molecules.grafico
+                            :titulo="__('seguridad.dashboard.semanal_titulo', ['semanas' => count($semanas)])"
+                            :ayuda="__('seguridad.dashboard.semanal_ayuda')"
+                            tipo="lineas"
+                            :categoria="__('seguridad.dashboard.col_semana')"
+                            :etiquetas="$etiquetasSemanas"
+                            :series="[
+                                ['nombre' => __('seguridad.dashboard.serie_publicadas'), 'valores' => $semanas->pluck('publicadas')->all(), 'color' => 'info'],
+                                ['nombre' => __('seguridad.dashboard.serie_adjudicadas'), 'valores' => $semanas->pluck('adjudicadas')->all(), 'color' => 'success'],
+                            ]"
+                        />
+                    </x-molecules.lienzo-bloque>
+
+                    <x-molecules.lienzo-bloque>
+                        <x-templates.lienzo direccion="fila" fracciones="4 8">
+                            <x-molecules.lienzo-bloque>
+                                <x-templates.lienzo direccion="columna" :fracciones="$pendientes === [] ? '12' : '7 5'">
+                                    <x-molecules.lienzo-bloque>
+                                        <x-molecules.grafico
+                                            :titulo="__('seguridad.dashboard.por_estado_titulo')"
+                                            :ayuda="__('seguridad.dashboard.por_estado_ayuda')"
+                                            :horizontal="true"
+                                            :categoria="__('seguridad.dashboard.col_estado')"
+                                            :etiquetas="$porEstado->map(fn (array $fila): string => __('solicitudes.estado.'.$fila['estado']))->all()"
+                                            :series="[['nombre' => __('seguridad.dashboard.col_cantidad'), 'valores' => $porEstado->pluck('cantidad')->all(), 'color' => 'info']]"
+                                        >
+                                            <x-slot:actions>
+                                                <a class="ag-dash__link" href="{{ route('panel.solicitudes.index') }}">{{ __('seguridad.dashboard.ver_solicitudes') }}</a>
+                                            </x-slot:actions>
+                                        </x-molecules.grafico>
+                                    </x-molecules.lienzo-bloque>
+
+                                    @if ($pendientes !== [])
+                                        <x-molecules.lienzo-bloque>
+                                            @include('seguridad::pages.dashboard._pendientes')
+                                        </x-molecules.lienzo-bloque>
+                                    @endif
+                                </x-templates.lienzo>
+                            </x-molecules.lienzo-bloque>
+
+                            <x-molecules.lienzo-bloque>
+                                <x-templates.lienzo direccion="columna" fracciones="6 6">
+                                    <x-molecules.lienzo-bloque>
+                                        <x-templates.lienzo direccion="fila" fracciones="6 6">
+                                            <x-molecules.lienzo-bloque>
+                                                <x-molecules.grafico
+                                                    :titulo="__('seguridad.dashboard.hectareas_departamento_titulo')"
+                                                    :ayuda="__('seguridad.dashboard.hectareas_departamento_ayuda')"
+                                                    :horizontal="true"
+                                                    :categoria="__('seguridad.dashboard.col_departamento')"
+                                                    :etiquetas="$hectareasPorDepartamento->map(fn (array $fila): string => $fila['departamento'] ?? __('seguridad.dashboard.departamento_sin_dato'))->all()"
+                                                    :series="[['nombre' => __('seguridad.dashboard.col_hectareas'), 'valores' => $hectareasPorDepartamento->pluck('hectareas')->all(), 'color' => 'success']]"
+                                                    :formato="['decimales' => 2, 'sufijo' => 'ha']"
+                                                    :vacio="__('seguridad.dashboard.hectareas_departamento_vacio')"
+                                                />
+                                            </x-molecules.lienzo-bloque>
+                                            <x-molecules.lienzo-bloque>
+                                                <x-molecules.grafico
+                                                    :titulo="__('seguridad.dashboard.precio_titulo')"
+                                                    :ayuda="__('seguridad.dashboard.precio_ayuda')"
+                                                    tipo="lineas"
+                                                    :categoria="__('seguridad.dashboard.col_semana')"
+                                                    :etiquetas="$etiquetasSemanas"
+                                                    :series="[['nombre' => __('seguridad.dashboard.serie_precio'), 'valores' => $semanas->pluck('precio_ha_medio')->all(), 'color' => 'distintivo-1']]"
+                                                    :formato="['decimales' => 2]"
+                                                    :vacio="__('seguridad.dashboard.precio_vacio')"
+                                                />
+                                            </x-molecules.lienzo-bloque>
+                                        </x-templates.lienzo>
+                                    </x-molecules.lienzo-bloque>
+
+                                    <x-molecules.lienzo-bloque>
+                                        @include('seguridad::pages.dashboard._kpis')
+                                    </x-molecules.lienzo-bloque>
+                                </x-templates.lienzo>
+                            </x-molecules.lienzo-bloque>
+                        </x-templates.lienzo>
+                    </x-molecules.lienzo-bloque>
+                </x-templates.lienzo>
             @else
-                <div class="ag-grafico-grilla">
-                    <x-molecules.grafico
-                        :titulo="__('seguridad.dashboard.por_estado_titulo')"
-                        :ayuda="__('seguridad.dashboard.por_estado_ayuda')"
-                        :horizontal="true"
-                        :categoria="__('seguridad.dashboard.col_estado')"
-                        :etiquetas="$porEstado->map(fn (array $fila): string => __('solicitudes.estado.'.$fila['estado']))->all()"
-                        :series="[['nombre' => __('seguridad.dashboard.col_cantidad'), 'valores' => $porEstado->pluck('cantidad')->all(), 'color' => 'info']]"
-                    >
-                        @if ($puedeVerSolicitudes)
-                            <x-slot:actions>
-                                <a class="ag-dash__link" href="{{ route('panel.solicitudes.index') }}">{{ __('seguridad.dashboard.ver_solicitudes') }}</a>
-                            </x-slot:actions>
-                        @endif
-                    </x-molecules.grafico>
+                {{-- Sin permiso de solicitudes, o sin solicitudes todavía: no hay mercado que componer. --}}
+                @include('seguridad::pages.dashboard._kpis')
 
-                    <x-molecules.grafico
-                        :titulo="__('seguridad.dashboard.semanal_titulo', ['semanas' => count($semanas)])"
-                        :ayuda="__('seguridad.dashboard.semanal_ayuda')"
-                        tipo="lineas"
-                        :categoria="__('seguridad.dashboard.col_semana')"
-                        :etiquetas="$etiquetasSemanas"
-                        :series="[
-                            ['nombre' => __('seguridad.dashboard.serie_publicadas'), 'valores' => $semanas->pluck('publicadas')->all(), 'color' => 'info'],
-                            ['nombre' => __('seguridad.dashboard.serie_adjudicadas'), 'valores' => $semanas->pluck('adjudicadas')->all(), 'color' => 'success'],
-                        ]"
+                @if ($puedeVerSolicitudes)
+                    <x-molecules.empty-state
+                        icon="request_quote"
+                        :title="__('seguridad.dashboard.vacio_titulo')"
+                        :detail="__('seguridad.dashboard.vacio_detalle')"
                     />
+                @endif
 
-                    <x-molecules.grafico
-                        :titulo="__('seguridad.dashboard.hectareas_departamento_titulo')"
-                        :ayuda="__('seguridad.dashboard.hectareas_departamento_ayuda')"
-                        :horizontal="true"
-                        :categoria="__('seguridad.dashboard.col_departamento')"
-                        :etiquetas="$hectareasPorDepartamento->map(fn (array $fila): string => $fila['departamento'] ?? __('seguridad.dashboard.departamento_sin_dato'))->all()"
-                        :series="[['nombre' => __('seguridad.dashboard.col_hectareas'), 'valores' => $hectareasPorDepartamento->pluck('hectareas')->all(), 'color' => 'success']]"
-                        :formato="['decimales' => 2, 'sufijo' => 'ha']"
-                        :vacio="__('seguridad.dashboard.hectareas_departamento_vacio')"
-                    />
-
-                    <x-molecules.grafico
-                        :titulo="__('seguridad.dashboard.precio_titulo')"
-                        :ayuda="__('seguridad.dashboard.precio_ayuda')"
-                        tipo="lineas"
-                        :categoria="__('seguridad.dashboard.col_semana')"
-                        :etiquetas="$etiquetasSemanas"
-                        :series="[['nombre' => __('seguridad.dashboard.serie_precio'), 'valores' => $semanas->pluck('precio_ha_medio')->all(), 'color' => 'distintivo-1']]"
-                        :formato="['decimales' => 2]"
-                        :vacio="__('seguridad.dashboard.precio_vacio')"
-                    />
-                </div>
-            @endif
-
-            @if ($pendientes !== [])
-                <section class="ag-card ag-card--padded">
-                    <header class="ag-card__head">
-                        <h2 class="ag-card__title">{{ __('seguridad.dashboard.pendientes_titulo') }}</h2>
-                    </header>
-
-                    @if ($totalPendientes === 0)
-                        <p class="ag-tablero__ayuda">{{ __('seguridad.dashboard.pendientes_vacio') }}</p>
-                    @else
-                        <ul class="ag-tablero__pendientes">
-                            @foreach ($pendientes as $pendiente)
-                                @continue($pendiente['cantidad'] === 0)
-                                <li class="ag-tablero__pendiente">
-                                    <span class="ag-tablero__pendiente-cifra">{{ $pendiente['cantidad'] }}</span>
-                                    <span class="ag-tablero__pendiente-texto">{{ __('seguridad.dashboard.pendiente.'.$pendiente['clave']) }}</span>
-                                    <a class="ag-dash__link" href="{{ route($pendiente['ruta']) }}">{{ __('seguridad.dashboard.pendientes_ver') }}</a>
-                                </li>
-                            @endforeach
-                        </ul>
-                    @endif
-                </section>
+                @include('seguridad::pages.dashboard._pendientes')
             @endif
         </div>
     </x-templates.panel-layout>

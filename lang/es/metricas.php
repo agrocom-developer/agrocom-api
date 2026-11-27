@@ -18,7 +18,9 @@ return [
     'sin_cobro' => 'La aplicación no cobra: el volumen suma el precio final de los servicios finalizados y el pago entre cliente y proveedor se hace fuera de ella.',
 
     'seccion_mercado' => 'Mercado',
-    'seccion_graficas' => 'Embudo y negociación',
+    'seccion_negociacion' => 'Negociación',
+    'tabs_aria' => 'Secciones de las métricas',
+    'tab_calidad_ingreso' => 'Calidad e ingreso',
     'graficas_vacio' => 'No hay solicitudes publicadas en este período. Prueba con un período más largo.',
     'embudo_titulo' => 'Embudo de la negociación',
     'embudo_ayuda' => 'Cuántas solicitudes publicadas en el período llegaron al menos hasta cada paso.',
@@ -91,10 +93,9 @@ return [
     'seccion_ingreso' => 'Ingreso',
     'volumen' => 'Volumen bruto de servicios',
     'volumen_pie' => ':servicios servicios completados',
-    'ingreso_hectarea' => 'Ingreso por hectárea',
-    'ingreso_hectarea_pie' => 'Comisión generada por hectárea completada',
 
     'seccion_proveedores' => 'Proveedores con más servicios',
+    'tab_proveedores' => 'Proveedores',
     'proveedores_vacio_titulo' => 'Todavía no hay servicios completados',
     'proveedores_vacio_detalle' => 'Cuando un proveedor complete servicios en el período, aparece aquí con su calificación y su tasa de aceptación.',
     'col_proveedor' => 'Proveedor',

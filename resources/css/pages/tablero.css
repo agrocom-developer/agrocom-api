@@ -93,3 +93,23 @@
     font-size: var(--ag-font-size-sm);
     color: var(--ag-color-text);
 }
+
+/* Dentro de un bloque del lienzo las tarjetas KPI caben en menos ancho: dos por fila en el celular. */
+.ag-lienzo__bloque > .ag-tablero__kpis {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr));
+}
+
+@container ag-lienzo (min-width: 60rem) {
+    .ag-lienzo__bloque > .ag-tablero__kpis {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 12.5rem), 1fr));
+    }
+}
+
+/* La cola de pendientes en un bloque de altura repartida: filas compactas para que quepan más. */
+.ag-lienzo__bloque .ag-tablero__pendientes {
+    gap: var(--ag-space-2);
+}
+
+.ag-lienzo__bloque .ag-tablero__pendiente {
+    padding: var(--ag-space-2) var(--ag-space-3);
+}
