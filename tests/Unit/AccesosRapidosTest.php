@@ -60,7 +60,7 @@ test('cada acceso lleva ícono, etiqueta y módulo del menú, sin traducir', fun
         'icono' => 'request_quote',
         'etiqueta' => 'menu.solicitudes.items.solicitudes',
         'modulo' => 'menu.solicitudes.label',
-        'tono' => 'info',
+        'tono' => 'warning',
     ]]);
 });
 
@@ -115,24 +115,37 @@ test('cada rol con lista propia usa solo rutas que existen en el panel', functio
     }
 });
 
-test('cada acceso lleva el tono de su dominio y uno neutro si no tiene', function () {
-    $menu = [moduloMenu('todo', [
-        itemMenu('panel.solicitudes.index'),
-        itemMenu('panel.documentos.index'),
-        itemMenu('panel.disputas.index'),
-        itemMenu('panel.usuarios.index'),
-        itemMenu('panel.bases.index'),
-    ])];
+test('seis accesos de ejemplo nunca comparten tono y el tono es uno de los tokens del panel', function () {
+    $rutas = ['panel.solicitudes.index', 'panel.proveedores.index', 'panel.documentos.index', 'panel.drones-flota.index', 'panel.disputas.index', 'panel.usuarios.index'];
+    $menu = [moduloMenu('todo', array_map(fn (string $ruta) => itemMenu($ruta), $rutas))];
 
-    $tonos = array_column(AccesosRapidos::para('administrador', $menu), 'tono', 'ruta');
+    $tonos = array_column(AccesosRapidos::para('administrador', $menu), 'tono');
 
-    expect($tonos)->toBe([
-        'panel.solicitudes.index' => 'info',
-        'panel.documentos.index' => 'distintivo-1',
-        'panel.disputas.index' => 'warning',
-        'panel.usuarios.index' => 'distintivo-3',
-        'panel.bases.index' => 'neutral',
-    ]);
+    expect($tonos)->toHaveCount(6)
+        ->and(array_unique($tonos))->toHaveCount(6)
+        ->and(array_diff($tonos, ['info', 'distintivo-1', 'distintivo-2', 'warning', 'distintivo-3', 'success', 'primary-2']))->toBe([]);
+});
+
+test('cualquier conjunto de seis rutas del panel recibe seis tonos distintos', function () {
+    $todas = ['solicitudes', 'proveedores', 'documentos', 'drones-flota', 'disputas', 'usuarios', 'clientes', 'calificaciones', 'roles', 'bitacora', 'avisos', 'metricas'];
+
+    foreach (range(0, count($todas) - 6) as $desde) {
+        $menu = [moduloMenu('todo', array_map(fn (string $d) => itemMenu("panel.$d.index"), array_slice($todas, $desde, 6)))];
+        $tonos = array_column(AccesosRapidos::para(null, $menu), 'tono');
+
+        expect(array_unique($tonos))->toHaveCount(6);
+    }
+});
+
+test('el tono es estable: mismo conjunto, mismo tono, y la ruta que no choca conserva el suyo', function () {
+    $menu = [moduloMenu('todo', [itemMenu('panel.solicitudes.index'), itemMenu('panel.usuarios.index')])];
+
+    expect(AccesosRapidos::para('administrador', $menu))->toBe(AccesosRapidos::para('administrador', $menu));
+
+    $solo = array_column(AccesosRapidos::para(null, [moduloMenu('t', [itemMenu('panel.solicitudes.index')])]), 'tono', 'ruta');
+    $con = array_column(AccesosRapidos::para(null, [moduloMenu('t', [itemMenu('panel.solicitudes.index'), itemMenu('panel.usuarios.index')])]), 'tono', 'ruta');
+
+    expect($con['panel.solicitudes.index'])->toBe($solo['panel.solicitudes.index']);
 });
 
 test('completa con las pantallas del menú cuando la lista preferida no llena los lugares', function () {
