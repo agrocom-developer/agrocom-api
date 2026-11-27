@@ -1963,6 +1963,12 @@ recibe— sigue siendo exacto hasta «9+».
 - **Ficha de detalle con columna lateral.** Toda ficha (`show`) lleva `form-layout` con las tarjetas de datos en la columna principal y una columna lateral derecha (`<x-slot:aside>`) con «Relacionado» (`link-row` a las pantallas vinculadas) y, siempre al final, «Historial» o «Actividad» (`timeline` con eventos reales). Una tarjeta no cierra con un botón en el fondo: el acceso va como `link-row` en «Relacionado».
 - **Bitácora.** La columna «Elemento» muestra la etiqueta de `seguridad.bitacora.entidades.<tabla>`; una tabla sin etiqueta se ve como frase legible, nunca con su nombre técnico.
 
+### Color: tonos distintos y acento ámbar
+
+- **Un tono es un color, no un nombre.** `info`, `distintivo-3` y `primary-2` pintan el mismo azul (mismo valor en `tokens/semantic/theme-*.css`): cuentan como UN tono. Donde se reparten colores sin repetir (accesos rápidos de Mi perfil, módulos de la matriz de permisos) se usan `info`, `distintivo-1`, `distintivo-2`, `warning`, `success`, `distintivo-4` (verde azulado) y `distintivo-5` (oliva), y una prueba comprueba que ningún par comparte valor.
+- **`warning` es café a propósito.** Su relleno (`#996209`) mezcla ámbar y marrón para llegar a 5,12:1 con ícono blanco; el ámbar de marca (`#f5a623`) con ícono blanco solo da 2,03:1. Sirve para chips y avisos de advertencia, con el mismo peso visual que `info` y `success`.
+- **El ámbar vivo es el acento.** `--ag-color-accent` (`#f5a623`; `#ffb52e` en oscuro) es el color de acento de marca (regla 60/30/10: neutros 60 %, identidad 30 %, acento 10 %). Va siempre con texto o ícono oscuro `--ag-color-accent-contrast` (6,29:1 en claro, 9,03:1 en oscuro), nunca con blanco, y nunca se usa como `warning`.
+
 ### Acciones de fila (`organisms/row-actions` + `molecules/row-action`)
 
 Toda tabla del panel pinta sus acciones con un único componente, `organisms/row-actions`, que fija el orden sin importar cómo las declare quien lo usa:
@@ -2133,5 +2139,5 @@ Cada módulo del menú lleva un tono propio y estable, para saber qué módulo e
 | Acciones sin pantalla en el panel | `phone_android` | `neutral` (gris) |
 
 - **Únicos y sin significado de error.** Ningún tono se repite y no se usan `danger` ni `alert` (significan error), ni `primary-2` ni `distintivo-3` (son el mismo azul que `info` y no se distinguirían).
-- **Bloque propio para los que faltan.** Un módulo nuevo toma el primer tono libre de la reserva, `distintivo-4` (verde azulado) y `distintivo-5` (naranja), definidos en un bloque contiguo «Tonos de módulo (roles)» de `theme-light.css` y `theme-dark.css` (con sus escalas `teal` y `orange` en `primitives/base.css`). El relleno sólido de cada uno lleva texto blanco con contraste AA (≥ 4,5:1).
+- **Bloque propio para los que faltan.** Un módulo nuevo toma el primer tono libre de la reserva, `distintivo-4` (verde azulado) y `distintivo-5` (oliva), definidos en un bloque contiguo «Tonos de módulo (roles)» de `theme-light.css` y `theme-dark.css` (con sus escalas `teal` y `olive` en `primitives/base.css`). El relleno sólido de cada uno lleva texto blanco con contraste AA (≥ 4,5:1).
 - **Prueba.** `RolesDelPanelTest` («cada módulo del menú tiene un color propio, estable y distinto») recorre los módulos reales del catálogo: todos tienen su tono declarado, no se repite ninguno, no cambia con el orden y cada tono tiene su clase y sus tokens en claro y oscuro.

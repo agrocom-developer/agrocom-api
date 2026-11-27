@@ -39,9 +39,9 @@
     --ag-color-teal-300: #6fd0c4;
     --ag-color-teal-500: #0f7f74;
     --ag-color-teal-700: #0a4d46;
-    --ag-color-orange-300: #f0b48a;
-    --ag-color-orange-500: #b8531a;
-    --ag-color-orange-700: #7a3410;
+    --ag-color-olive-300: #c5d27a;
+    --ag-color-olive-500: #617018;
+    --ag-color-olive-700: #3d470e;
 
     /* No es color de marca Agrocom — el azul de referencia de Google Maps,
        fallback del polígono del editor de mapa de propiedad cuando la

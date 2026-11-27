@@ -105,11 +105,11 @@
     --ag-color-distintivo-4-strong: var(--ag-color-teal-700);
     --ag-color-distintivo-4-border: color-mix(in srgb, var(--ag-color-teal-500) 30%, var(--ag-brand-light-surface) 70%);
     --ag-color-distintivo-4-contrast-fill: var(--ag-color-teal-500);
-    --ag-color-distintivo-5: var(--ag-color-orange-500);
-    --ag-color-distintivo-5-subtle: color-mix(in srgb, var(--ag-color-orange-500) 16%, var(--ag-brand-light-surface) 84%);
-    --ag-color-distintivo-5-strong: var(--ag-color-orange-700);
-    --ag-color-distintivo-5-border: color-mix(in srgb, var(--ag-color-orange-500) 30%, var(--ag-brand-light-surface) 70%);
-    --ag-color-distintivo-5-contrast-fill: var(--ag-color-orange-500);
+    --ag-color-distintivo-5: var(--ag-color-olive-500);
+    --ag-color-distintivo-5-subtle: color-mix(in srgb, var(--ag-color-olive-500) 16%, var(--ag-brand-light-surface) 84%);
+    --ag-color-distintivo-5-strong: var(--ag-color-olive-700);
+    --ag-color-distintivo-5-border: color-mix(in srgb, var(--ag-color-olive-500) 30%, var(--ag-brand-light-surface) 70%);
+    --ag-color-distintivo-5-contrast-fill: var(--ag-color-olive-500);
 
     /* Estado alert */
     --ag-color-alert: var(--ag-brand-light-on-error-container);
