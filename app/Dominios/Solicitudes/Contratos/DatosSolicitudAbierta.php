@@ -32,5 +32,7 @@ final readonly class DatosSolicitudAbierta
         public ?string $observaciones,
         public ?string $publicadaEn,
         public ?array $terreno,
+        public ?string $montoEstimado = null,
+        public ?string $justificacionPrecio = null,
     ) {}
 }

@@ -1753,7 +1753,7 @@ paths:
       tags:
         - Ofertas
       summary: 'Comparar las ofertas recibidas'
-      description: 'El comparador del cliente: una fila por proveedor con su oferta más reciente, el historial de esa negociación y los datos del proveedor para decidir (calificación, tasa de cancelación, distancia, modelo del dron y fotos aprobadas). Solo el cliente de la solicitud; la de otro cliente responde 404.'
+      description: 'El comparador del cliente: una fila por proveedor con su oferta más reciente, el historial de esa negociación y los datos del proveedor para decidir (tipo, calificación, tasa de cancelación, modelo del dron y fotos aprobadas), con el total estimado y la justificación del precio de cada oferta. Las vigentes van primero. `orden` (por defecto `recomendado`: proveedores propios de Agrocom primero, luego mayor calificación, luego menor precio, luego la más antigua) y los filtros opcionales solo ordenan o reducen la lista, nunca agregan datos de contacto (que llegan tras adjudicar). La disponibilidad del proveedor no es un filtro del cliente. Solo el cliente de la solicitud; la de otro cliente responde 404.'
       operationId: compararOfertas
       parameters:
         -
@@ -1762,6 +1762,68 @@ paths:
           required: true
           schema:
             type: integer
+        -
+          name: orden
+          in: query
+          required: false
+          schema:
+            type: string
+            default: recomendado
+            enum:
+              - recomendado
+              - precio
+              - calificacion
+              - reciente
+        -
+          name: precio_ha_min
+          in: query
+          description: 'Precio por hectárea mínimo (decimal, hasta 4 decimales).'
+          required: false
+          schema:
+            type: string
+            example: '100'
+        -
+          name: precio_ha_max
+          in: query
+          description: 'Precio por hectárea máximo (decimal, hasta 4 decimales; no menor que el mínimo).'
+          required: false
+          schema:
+            type: string
+            example: '130'
+        -
+          name: monto_max
+          in: query
+          description: 'Total estimado máximo (decimal, hasta 2 decimales).'
+          required: false
+          schema:
+            type: string
+            example: '10000'
+        -
+          name: calificacion_min
+          in: query
+          description: 'Calificación promedio mínima del proveedor (0 a 5).'
+          required: false
+          schema:
+            type: string
+            example: '4.5'
+        -
+          name: tipo_proveedor
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - propio
+              - independiente
+              - tercero
+        -
+          name: capacidad_tanque_min
+          in: query
+          description: 'Capacidad mínima del tanque del dron de la oferta, en litros; deja fuera las ofertas sin dron.'
+          required: false
+          schema:
+            type: string
+            example: '30'
       responses:
         200:
           description: Ofertas.
@@ -1782,6 +1844,12 @@ paths:
           description: 'El rol del token no es de cliente.'
         404:
           description: 'No existe o es de otro cliente.'
+        422:
+          description: 'Orden o filtro inválido.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
       security:
         -
           tokenDispositivo: []
@@ -1826,6 +1894,11 @@ paths:
                 nota:
                   type: string
                   example: 'Puedo ir la primera semana.'
+                  nullable: true
+                justificacion_precio:
+                  description: 'Opcional, hasta 500 caracteres: por qué ofreces ese precio. Lo ve el cliente.'
+                  type: string
+                  example: 'Incluye el traslado del dron.'
                   nullable: true
               type: object
       responses:
@@ -1988,6 +2061,10 @@ paths:
                   type: string
                   example: '122'
                 nota:
+                  type: string
+                  nullable: true
+                justificacion_precio:
+                  description: 'Opcional, hasta 500 caracteres: por qué propones ese precio. Lo ve la contraparte.'
                   type: string
                   nullable: true
                 uuid_cliente:
@@ -4737,6 +4814,10 @@ paths:
                   type: string
                   example: '125'
                   nullable: true
+                justificacion_precio:
+                  description: 'Opcional, hasta 500 caracteres: por qué propones ese precio. Lo ve el proveedor.'
+                  type: string
+                  nullable: true
               type: object
       responses:
         201:
@@ -4969,6 +5050,10 @@ paths:
                 precio_ha_propuesto:
                   type: string
                   example: '130'
+                justificacion_precio:
+                  description: 'Opcional, hasta 500 caracteres. Si se envía (incluso nulo) reemplaza la anterior; si se omite, se conserva.'
+                  type: string
+                  nullable: true
               type: object
       responses:
         200:
@@ -5920,6 +6005,11 @@ components:
         precio_ha_propuesto:
           type: string
           example: '125.0000'
+        monto_estimado:
+          description: 'Total estimado: hectáreas por precio propuesto. Lo calcula el servidor y es de solo lectura.'
+          type: string
+          example: '10000.00'
+          nullable: true
         departamento_codigo:
           description: 'Código INE del departamento de la solicitud (`GET /api/catalogos/ubicaciones`).'
           type: string
@@ -5970,6 +6060,10 @@ components:
           type: boolean
         observaciones:
           description: 'Solo en el detalle.'
+          type: string
+          nullable: true
+        justificacion_precio:
+          description: 'Solo en el detalle: texto del cliente (hasta 500 caracteres) que explica el precio que propone; nulo si no escribió nada.'
           type: string
           nullable: true
         terreno:
@@ -6027,7 +6121,7 @@ components:
           type: string
           example: '118.0000'
         monto_estimado:
-          description: 'Hectáreas solicitadas por este precio.'
+          description: 'Total estimado: hectáreas solicitadas por `precio_ha`. Lo calcula el servidor (decimal exacto) y es de solo lectura; si una app lo envía, se ignora.'
           type: string
           example: '9440.00'
         estado:
@@ -6045,6 +6139,11 @@ components:
           type: boolean
         nota:
           type: string
+          nullable: true
+        justificacion_precio:
+          description: 'Texto opcional (hasta 500 caracteres, sin HTML) con que el autor de esta oferta explica su precio; lo ve la contraparte. Lo escribe solo el autor y no se edita: una contraoferta es otra fila.'
+          type: string
+          example: 'Incluye el traslado del dron y dos pasadas.'
           nullable: true
         oferta_anterior_id:
           type: integer
@@ -6075,7 +6174,7 @@ components:
           example: 'Lote Norte'
           nullable: true
         proveedor:
-          description: 'Solo para el cliente: `nombre`, `foto_url` (foto de perfil del piloto del equipo o del titular, URL firmada de corta vida que se pide sin token; `null` si no hay), calificación, tasa de cancelación y dron con fotos aprobadas.'
+          description: 'Solo para el cliente: `nombre`, `tipo` (`propio`, `independiente` o `tercero`), `foto_url` (foto de perfil del piloto del equipo o del titular, URL firmada de corta vida que se pide sin token; `null` si no hay), calificación, tasa de cancelación y dron con fotos aprobadas.'
           type: object
           nullable: true
         historial:
@@ -7346,13 +7445,18 @@ components:
           type: string
           example: '125.0000'
           nullable: true
+        justificacion_precio:
+          description: 'Texto opcional (hasta 500 caracteres, sin HTML) con que el cliente explica el precio que propone; lo escribe solo el cliente y lo ve el proveedor.'
+          type: string
+          example: 'Es la tarifa de la zona del año pasado.'
+          nullable: true
         precio_ha_acordado:
           description: 'Precio de la oferta adjudicada.'
           type: string
           example: '118.0000'
           nullable: true
         monto_estimado:
-          description: 'Hectáreas solicitadas por el precio vigente.'
+          description: 'Total estimado: hectáreas solicitadas por el precio vigente (el propuesto y, tras adjudicar, el acordado). Lo calcula el servidor con decimal exacto y es de solo lectura: si una app lo envía, se ignora.'
           type: string
           example: '9440.00'
           nullable: true

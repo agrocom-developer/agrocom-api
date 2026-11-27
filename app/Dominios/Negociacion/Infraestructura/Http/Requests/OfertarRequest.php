@@ -22,6 +22,7 @@ final class OfertarRequest extends FormRequest
             'precio_ha' => ['required_if:tipo,contraoferta', 'nullable', 'numeric', 'gt:0', 'max:99999999', 'decimal:0,4'],
             'equipo_id' => ['nullable', 'integer'],
             'nota' => ['nullable', 'string', 'max:500'],
+            'justificacion_precio' => ['nullable', 'string', 'max:500'],
         ];
     }
 

@@ -28,6 +28,7 @@ use Illuminate\Support\Carbon;
  * @property EstadoOferta $estado
  * @property bool $es_definitiva
  * @property string|null $nota
+ * @property string|null $justificacion_precio
  * @property int|null $oferta_anterior_id
  * @property Carbon $vence_en
  * @property Carbon|null $respondida_en
@@ -53,6 +54,7 @@ class Oferta extends ModeloDominio
         'monto_estimado',
         'es_definitiva',
         'nota',
+        'justificacion_precio',
         'oferta_anterior_id',
         'vence_en',
         'distancia_km',

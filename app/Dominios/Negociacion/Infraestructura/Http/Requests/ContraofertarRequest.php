@@ -18,6 +18,7 @@ final class ContraofertarRequest extends FormRequest
         return [
             'precio_ha' => ['required', 'numeric', 'gt:0', 'max:99999999', 'decimal:0,4'],
             'nota' => ['nullable', 'string', 'max:500'],
+            'justificacion_precio' => ['nullable', 'string', 'max:500'],
             'uuid_cliente' => ['nullable', 'uuid'],
         ];
     }

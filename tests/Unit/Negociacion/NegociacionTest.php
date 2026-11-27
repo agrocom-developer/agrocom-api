@@ -29,6 +29,9 @@ use App\Dominios\Negociacion\Aplicacion\UbicacionDelPiloto;
 use App\Dominios\Negociacion\Contratos\Eventos\AvisoDeNegociacion;
 use App\Dominios\Negociacion\Dominio\Excepciones\NegociacionInvalida;
 use App\Dominios\Negociacion\Infraestructura\Eloquent\Oferta;
+use App\Dominios\Negociacion\Infraestructura\Http\Requests\CompararOfertasRequest;
+use App\Dominios\Negociacion\Infraestructura\Http\Requests\ContraofertarRequest;
+use App\Dominios\Negociacion\Infraestructura\Http\Requests\OfertarRequest;
 use App\Dominios\Negociacion\Infraestructura\Oyentes\RegistrarEventoEnElChat;
 use App\Dominios\Proveedores\Contratos\DatosPiloto;
 use App\Dominios\Proveedores\Contratos\DatosProveedor;
@@ -46,6 +49,8 @@ use App\Dominios\Solicitudes\Contratos\Eventos\SolicitudAbierta;
 use App\Dominios\Solicitudes\Contratos\Eventos\SolicitudCancelada;
 use App\Dominios\Solicitudes\Dominio\Excepciones\SolicitudInvalida;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\Cliente;
+use App\Dominios\Solicitudes\Infraestructura\Http\Requests\CambiarPrecioRequest;
+use App\Dominios\Solicitudes\Infraestructura\Http\Requests\CrearSolicitudRequest;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -53,6 +58,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Tests\Soporte\CuentasFalsas;
 use Tests\Soporte\Esquema;
@@ -103,6 +109,7 @@ function negMundo(): void
         'agrega_ubicacion_a_sol_solicitudes_servicio',
         'retira_zonas',
         'hace_opcional_la_fecha_deseada_de_la_solicitud',
+        'agrega_justificacion_de_precio',
     ]);
     Ubicaciones::sembrar();
 
@@ -1120,4 +1127,124 @@ test('el cliente sigue el ciclo único: un rechazado reenvía, y de una baja no 
     $cambiar->ejecutar($cliente->id, AccionAprobacion::DarDeBaja, 'Cuenta falsa', 8001);
 
     expect(fn () => $cambiar->ejecutar($cliente->id, AccionAprobacion::Aprobar, null, 8001))->toThrow(TransicionDeAprobacionInvalida::class);
+});
+
+test('el total estimado lo calcula el servidor con decimal exacto y ninguna petición lo fija', function () {
+    negMundo();
+    $solicitud = negAbierta('33.3333', '3');
+    $oferta = app(Negociar::class)->ofertar(NEG_TITULAR_7, $solicitud, ['uuid_cliente' => (string) Str::uuid(), 'tipo' => 'contraoferta', 'precio_ha' => '0.3333', 'monto_estimado' => '999999'])[0];
+
+    expect(DB::table('sol_solicitudes_servicio')->where('id', $solicitud)->value('monto_estimado'))->toEqual('100.00')
+        ->and($oferta->monto_estimado)->toEqual(MontoDelServicio::monto('3.0000', '0.3333'))
+        ->and($oferta->monto_estimado)->toEqual('1.00')
+        ->and(Presentacion::oferta($oferta)['monto_estimado'])->toEqual('1.00');
+
+    [$propuesta] = app(CrearSolicitud::class)->ejecutar(NEG_CLIENTE, [
+        'uuid_cliente' => (string) Str::uuid(), 'terreno_id' => 1, 'tipo_aplicacion' => 'herbicida', 'hectareas_solicitadas' => '80',
+        'producto_indicado' => 'Glifosato', 'precio_ha_propuesto' => '125', 'monto_estimado' => '1',
+    ]);
+    expect($propuesta->fresh()->monto_estimado)->toBeNull();
+
+    $cambiada = app(CambiarPrecioPropuesto::class)->ejecutar(NEG_CLIENTE, $propuesta->id, '110.5');
+
+    expect($cambiada->monto_estimado)->toEqual('8840.00');
+    foreach ([CrearSolicitudRequest::class, CambiarPrecioRequest::class, OfertarRequest::class, ContraofertarRequest::class] as $request) {
+        expect(array_keys((new $request)->rules()))->not->toContain('monto_estimado')->not->toContain('monto_final');
+    }
+});
+
+test('cada parte justifica su precio en su propio registro y la contraparte la ve sanitizada', function () {
+    negMundo();
+    [$borrador] = app(CrearSolicitud::class)->ejecutar(NEG_CLIENTE, [
+        'uuid_cliente' => (string) Str::uuid(), 'terreno_id' => 1, 'tipo_aplicacion' => 'herbicida', 'hectareas_solicitadas' => '80',
+        'producto_indicado' => 'Glifosato', 'precio_ha_propuesto' => '125', 'justificacion_precio' => "  <b>Tarifa</b> del año\n\tpasado <script>alert(1)</script>  ",
+    ]);
+    expect($borrador->justificacion_precio)->toBe('Tarifa del año pasado alert(1)');
+
+    $solicitud = app(PublicarSolicitud::class)->ejecutar(NEG_CLIENTE, $borrador->id)->id;
+    $detalle = app(MercadoDeSolicitudes::class)->detalle(NEG_TITULAR_7, $solicitud);
+    expect($detalle['justificacion_precio'])->toBe('Tarifa del año pasado alert(1)')
+        ->and($detalle['monto_estimado'])->toEqual('10000.00')
+        ->and(app(MercadoDeSolicitudes::class)->listar(NEG_TITULAR_7, [])['items'][0]['monto_estimado'])->toEqual('10000.00');
+
+    // El proveedor escribe la suya en la oferta; el cliente, la suya en la contraoferta. Ninguno toca la solicitud ni la fila del otro.
+    [$o1] = app(Negociar::class)->ofertar(NEG_TITULAR_7, $solicitud, ['uuid_cliente' => (string) Str::uuid(), 'tipo' => 'contraoferta', 'precio_ha' => '140', 'justificacion_precio' => 'Incluye traslado del dron']);
+    [$o2] = app(Negociar::class)->contraofertar(Negociar::LADO_CLIENTE, NEG_CLIENTE, $o1->id, '120', null, null, 'Es lo que pagué el año pasado');
+    [$o3] = app(Negociar::class)->contraofertar(Negociar::LADO_PROVEEDOR, NEG_TITULAR_7, $o2->id, '130', null, null, null);
+
+    expect($o1->fresh()->justificacion_precio)->toBe('Incluye traslado del dron')
+        ->and($o2->justificacion_precio)->toBe('Es lo que pagué el año pasado')
+        ->and($o3->justificacion_precio)->toBeNull()
+        ->and(Presentacion::oferta($o2)['justificacion_precio'])->toBe('Es lo que pagué el año pasado')
+        ->and(DB::table('sol_solicitudes_servicio')->where('id', $solicitud)->value('justificacion_precio'))->toBe('Tarifa del año pasado alert(1)');
+
+    // Cambiar el precio sin la clave conserva la justificación; con ella (nula) la quita; con texto la reemplaza.
+    $cambiar = app(CambiarPrecioPropuesto::class);
+    expect($cambiar->ejecutar(NEG_CLIENTE, $solicitud, '126')->justificacion_precio)->toBe('Tarifa del año pasado alert(1)')
+        ->and($cambiar->ejecutar(NEG_CLIENTE, $solicitud, '127', '  Subí por el combustible ', true)->justificacion_precio)->toBe('Subí por el combustible')
+        ->and($cambiar->ejecutar(NEG_CLIENTE, $solicitud, '128', '   ', true)->justificacion_precio)->toBeNull();
+});
+
+test('la justificación del precio tiene un máximo de 500 caracteres en todas las entradas', function () {
+    foreach ([CrearSolicitudRequest::class, CambiarPrecioRequest::class, OfertarRequest::class, ContraofertarRequest::class] as $request) {
+        $reglas = (new $request)->rules();
+        expect(Validator::make(['justificacion_precio' => str_repeat('a', 500)], ['justificacion_precio' => $reglas['justificacion_precio']])->passes())->toBeTrue()
+            ->and(Validator::make(['justificacion_precio' => str_repeat('a', 501)], ['justificacion_precio' => $reglas['justificacion_precio']])->fails())->toBeTrue();
+    }
+});
+
+test('el comparador ordena y filtra en el servidor sin exponer contacto', function () {
+    negMundo();
+    app()->instance(LecturaProveedores::class, new ProveedoresFalsos(
+        [
+            7 => new DatosProveedor(7, NEG_TITULAR_7, 'independiente', 'Proveedor Siete', 'aprobado', calificacionPromedio: '4.60', calificacionesConteo: 12),
+            8 => new DatosProveedor(8, NEG_TITULAR_8, 'tercero', 'Proveedor Ocho', 'aprobado', calificacionPromedio: '4.90', calificacionesConteo: 1),
+            9 => new DatosProveedor(9, 703, 'propio', 'Agrocom', 'aprobado', calificacionPromedio: '3.00', calificacionesConteo: 40),
+        ],
+        [],
+    ));
+    $solicitud = negAbierta();
+    $o7 = negOfertar(NEG_TITULAR_7, $solicitud, 'contraoferta', '118');
+    $o8 = negOfertar(NEG_TITULAR_8, $solicitud, 'contraoferta', '110');
+    $o9 = negOfertar(703, $solicitud, 'contraoferta', '124');
+    $consultar = app(ConsultarOfertas::class);
+    $ids = fn (array $criterios = []): array => array_map(fn (array $fila): int => $fila['proveedor_id'], $consultar->delCliente(NEG_CLIENTE, $solicitud, $criterios));
+
+    // Recomendado (por defecto): propio primero; luego mayor calificación, y quien tiene pocas calificaciones (8) al final de su grupo.
+    expect($ids())->toBe([9, 7, 8])
+        ->and($ids(['orden' => 'recomendado']))->toBe([9, 7, 8])
+        ->and($ids(['orden' => 'precio']))->toBe([8, 7, 9])
+        ->and($ids(['orden' => 'calificacion']))->toBe([7, 9, 8])
+        ->and($ids(['orden' => 'reciente']))->toBe([9, 8, 7])
+        ->and($ids(['precio_ha_min' => '118', 'precio_ha_max' => '124']))->toBe([9, 7])
+        ->and($ids(['monto_max' => '9000']))->toBe([8])
+        ->and($ids(['calificacion_min' => '4.5']))->toBe([7, 8])
+        ->and($ids(['tipo_proveedor' => 'propio']))->toBe([9])
+        ->and($ids(['capacidad_tanque_min' => '40']))->toBe([9, 7, 8])
+        ->and($ids(['capacidad_tanque_min' => '40.01']))->toBe([])
+        ->and($ids(['tipo_proveedor' => 'tercero', 'precio_ha_max' => '100']))->toBe([]);
+
+    $fila = $consultar->delCliente(NEG_CLIENTE, $solicitud)[0];
+    $publico = json_encode($consultar->delCliente(NEG_CLIENTE, $solicitud), JSON_THROW_ON_ERROR);
+    expect($fila['proveedor']['tipo'])->toBe('propio')
+        ->and($fila)->toHaveKeys(['precio_ha', 'monto_estimado', 'justificacion_precio'])
+        ->and($fila['proveedor'])->not->toHaveKeys(['telefono', 'email', 'documento_fiscal', 'disponibilidad'])
+        ->and($publico)->not->toContain('70011122')->not->toContain('"telefono"')->not->toContain('"disponibilidad"');
+
+    // Las vigentes van primero: la que el cliente ya rechazó baja al final aunque sea la recomendada.
+    app(Negociar::class)->rechazar(Negociar::LADO_CLIENTE, NEG_CLIENTE, $o9->id);
+    expect($ids())->toBe([7, 8, 9]);
+});
+
+test('el orden y los filtros del comparador rechazan valores inválidos', function () {
+    $valida = fn (array $consulta): bool => Validator::make($consulta, CompararOfertasRequest::reglas())->passes();
+
+    expect($valida([]))->toBeTrue()
+        ->and($valida(['orden' => 'precio', 'precio_ha_min' => '100.5', 'calificacion_min' => '4.5', 'tipo_proveedor' => 'tercero', 'capacidad_tanque_min' => '30', 'monto_max' => '9000']))->toBeTrue()
+        ->and($valida(['orden' => 'distancia']))->toBeFalse()
+        ->and($valida(['precio_ha_max' => 'barato']))->toBeFalse()
+        ->and($valida(['calificacion_min' => '6']))->toBeFalse()
+        ->and($valida(['tipo_proveedor' => 'otro']))->toBeFalse()
+        ->and($valida(['precio_ha_min' => '-1']))->toBeFalse()
+        ->and($valida(['capacidad_tanque_min' => '-3']))->toBeFalse();
 });

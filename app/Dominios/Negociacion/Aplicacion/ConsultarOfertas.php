@@ -9,6 +9,7 @@ use App\Dominios\Negociacion\Infraestructura\Eloquent\Oferta;
 use App\Dominios\Proveedores\Contratos\LecturaProveedores;
 use App\Dominios\Seguridad\Contratos\FotosDePerfil;
 use App\Dominios\Solicitudes\Contratos\PasosDeSolicitud;
+use Brick\Math\BigDecimal;
 
 /**
  * Lo que cada parte ve de las ofertas (`negociacion-contrato.md` §3.4). El cliente ve,
@@ -28,16 +29,20 @@ final class ConsultarOfertas
         private readonly ReputacionDelProveedor $reputacion,
         private readonly Negociar $negociar,
         private readonly FotosDePerfil $fotosDePerfil,
+        private readonly ParametrosDeNegociacion $parametros,
     ) {}
 
     /**
      * El comparador del cliente: una fila por negociación (la última oferta de cada proveedor) con su historial.
+     * Las vigentes van primero; dentro de cada grupo rige `orden` (por defecto `recomendado`, ADR 0045 punto 24)
+     * y los filtros opcionales solo reducen la lista (ADR 0049). Nada de lo que se filtra agrega datos de contacto.
      *
+     * @param  array{orden?: ?string, precio_ha_min?: mixed, precio_ha_max?: mixed, monto_max?: mixed, calificacion_min?: mixed, tipo_proveedor?: ?string, capacidad_tanque_min?: mixed}  $criterios
      * @return list<array<string, mixed>>
      *
      * @throws NegociacionInvalida
      */
-    public function delCliente(int $usuarioId, int $solicitudId): array
+    public function delCliente(int $usuarioId, int $solicitudId, array $criterios = []): array
     {
         $solicitud = $this->solicitudes->datos($solicitudId);
 
@@ -47,7 +52,7 @@ final class ConsultarOfertas
 
         $porProveedor = Oferta::query()->where('solicitud_id', $solicitudId)->orderBy('id')->get()->groupBy('proveedor_id');
 
-        return $porProveedor->map(function ($ofertas, $proveedorId): array {
+        $filas = $porProveedor->map(function ($ofertas, $proveedorId): array {
             /** @var Oferta $ultima */
             $ultima = $ofertas->last();
 
@@ -56,7 +61,78 @@ final class ConsultarOfertas
                 'proveedor' => $this->tarjetaDelProveedor((int) $proveedorId, $ultima->equipo_id),
                 'historial' => $ofertas->map(fn (Oferta $o): array => Presentacion::oferta($o))->values()->all(),
             ];
-        })->values()->sortBy(fn (array $fila): int => $fila['estado'] === 'vigente' ? 0 : 1)->values()->all();
+        })->values()->all();
+
+        $filas = array_values(array_filter($filas, fn (array $fila): bool => $this->cumple($fila, $criterios)));
+        usort($filas, $this->comparador($criterios['orden'] ?? 'recomendado'));
+
+        return $filas;
+    }
+
+    /**
+     * Los filtros del comparador, con decimal exacto (nunca `float`). Un filtro de dron deja fuera
+     * las ofertas sin equipo; uno de calificación, las de proveedores sin promedio suficiente.
+     *
+     * @param  array<string, mixed>  $fila
+     * @param  array<string, mixed>  $criterios
+     */
+    private function cumple(array $fila, array $criterios): bool
+    {
+        $precio = BigDecimal::of((string) $fila['precio_ha']);
+        $proveedor = $fila['proveedor'];
+
+        if (isset($criterios['precio_ha_min']) && $precio->isLessThan(BigDecimal::of((string) $criterios['precio_ha_min']))) {
+            return false;
+        }
+        if (isset($criterios['precio_ha_max']) && $precio->isGreaterThan(BigDecimal::of((string) $criterios['precio_ha_max']))) {
+            return false;
+        }
+        if (isset($criterios['monto_max']) && BigDecimal::of((string) $fila['monto_estimado'])->isGreaterThan(BigDecimal::of((string) $criterios['monto_max']))) {
+            return false;
+        }
+        if (isset($criterios['calificacion_min']) && BigDecimal::of((string) ($proveedor['calificacion_promedio'] ?? '0'))->isLessThan(BigDecimal::of((string) $criterios['calificacion_min']))) {
+            return false;
+        }
+        if (isset($criterios['tipo_proveedor']) && ($proveedor['tipo'] ?? null) !== $criterios['tipo_proveedor']) {
+            return false;
+        }
+        if (isset($criterios['capacidad_tanque_min'])) {
+            $capacidad = $proveedor['dron']['capacidad_tanque_l'] ?? null;
+            if ($capacidad === null || BigDecimal::of((string) $capacidad)->isLessThan(BigDecimal::of((string) $criterios['capacidad_tanque_min']))) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Las vigentes primero y, dentro del grupo, el orden pedido. Todos desempatan por la oferta más antigua.
+     *
+     * @return callable(array<string, mixed>, array<string, mixed>): int
+     */
+    private function comparador(string $orden): callable
+    {
+        $minimas = $this->parametros->calificacionesMinimasParaContar();
+        $calificacion = fn (array $f): BigDecimal => BigDecimal::of((string) ($f['proveedor']['calificacion_promedio'] ?? '0'));
+        $cuenta = fn (array $f): bool => (int) ($f['proveedor']['calificaciones_conteo'] ?? 0) >= $minimas;
+        $precio = fn (array $f): BigDecimal => BigDecimal::of((string) $f['precio_ha']);
+        $vigente = fn (array $f): int => $f['estado'] === 'vigente' ? 0 : 1;
+
+        return function (array $a, array $b) use ($orden, $calificacion, $cuenta, $precio, $vigente): int {
+            $porCalificacion = fn (): int => ($cuenta($b) <=> $cuenta($a)) ?: $calificacion($b)->compareTo($calificacion($a));
+
+            $clave = match ($orden) {
+                'precio' => $precio($a)->compareTo($precio($b)),
+                'calificacion' => $porCalificacion() ?: $precio($a)->compareTo($precio($b)),
+                'reciente' => $b['id'] <=> $a['id'],
+                default => ((($b['proveedor']['tipo'] ?? null) === 'propio') <=> (($a['proveedor']['tipo'] ?? null) === 'propio'))
+                    ?: $porCalificacion()
+                    ?: $precio($a)->compareTo($precio($b)),
+            };
+
+            return ($vigente($a) <=> $vigente($b)) ?: $clave ?: ($a['id'] <=> $b['id']);
+        };
     }
 
     /**
@@ -135,6 +211,7 @@ final class ConsultarOfertas
         return [
             'id' => $proveedorId,
             'nombre' => $proveedor?->razonSocial,
+            'tipo' => $proveedor?->tipo,
             'foto_url' => $fotoUrl,
             'calificacion_promedio' => $proveedor?->calificacionPromedio,
             'calificaciones_conteo' => $proveedor?->calificacionesConteo,
