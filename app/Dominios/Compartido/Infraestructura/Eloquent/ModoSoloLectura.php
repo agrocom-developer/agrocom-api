@@ -26,7 +26,7 @@ use Illuminate\Database\Eloquent\Model;
  * eventos; el repo no usa SQL crudo de mutación (ADR 0012).
  *
  * Estado estático a propósito: el modo dura un request y el que lo activa
- * (`AplicarVistaComo`) lo desactiva en un `finally`, así que no se filtra al
+ * lo desactiva en un `finally`, así que no se filtra al
  * siguiente request de un proceso que se reutilice.
  */
 final class ModoSoloLectura

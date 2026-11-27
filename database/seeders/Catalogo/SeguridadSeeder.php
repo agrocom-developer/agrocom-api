@@ -60,7 +60,6 @@ class SeguridadSeeder extends Seeder
         'seguridad.usuario.bloquear' => 'Bloquear o desbloquear el acceso de un usuario (no lo elimina)',
         'seguridad.usuario.eliminar' => 'Eliminar un usuario',
         'seguridad.usuario.asignar_rol_administrador' => 'Asignar o quitar el rol administrador a una cuenta del panel',
-        'seguridad.usuario.ver_como' => 'Ver el panel como una cuenta de panel (solo lectura, solo el administrador)',
         'seguridad.rol.ver' => 'Ver el catálogo de roles y qué permisos tiene cada uno',
         'seguridad.rol.crear' => 'Crear un rol nuevo (nace sin permisos)',
         'seguridad.rol.editar' => 'Editar nombre, descripción y estado de un rol',

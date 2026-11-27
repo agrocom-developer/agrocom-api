@@ -12,10 +12,6 @@
       administran desde acá.
     - $rolesPorUsuario (array<int, list<string>>): nombres legibles de rol
       por id de usuario.
-    - $rolesVerComoPorUsuario (array<int, array<int, string>>): roles vivos de
-      cada cuenta (`id de usuario => [id de rol => nombre legible]`), para el
-      selector de «Ver como». Vacío si el rol activo no tiene
-      `seguridad.usuario.ver_como` (tarea 140).
     - $filtros (array{q: string}): búsqueda aplicada.
     - $tonoPorEstado (array<string, string>): estado de acceso → tono, el mismo
       mapa para el badge, el botón de la fila y el modal
@@ -126,15 +122,6 @@
                             $formIdEliminar = "usuario-eliminar-{$usuario->id}";
                             $modalIdBloqueo = "usuario-bloqueo-modal-{$usuario->id}";
                             $modalIdEliminar = "usuario-eliminar-modal-{$usuario->id}";
-
-                            // «Ver como» (tarea 140; ADR 0046): solo cuentas de panel habilitadas y
-                            // ajenas, con al menos un rol vivo.
-                            $rolesVerComo = $rolesVerComoPorUsuario[$usuario->id] ?? [];
-                            $puedeVerComoEsta = $usuario->state
-                                && $usuario->id !== auth('interno')->id()
-                                && $rolesVerComo !== [];
-                            $formIdVerComo = "usuario-ver-como-{$usuario->id}";
-                            $modalIdVerComo = "usuario-ver-como-modal-{$usuario->id}";
                         @endphp
 
                         <div class="ag-index-table__row" role="row">
@@ -165,37 +152,6 @@
                                      se duplicaría — y el que cae dentro del menú ⋮ queda oculto
                                      con él y nunca abre. Los disparadores sí van adentro (son
                                      botones sin id propio). Mismo criterio que contratos/index. --}}
-                                @puede('seguridad.usuario.ver_como')
-                                    @if ($puedeVerComoEsta)
-                                        <form id="{{ $formIdVerComo }}" method="POST" action="{{ route('panel.usuarios.ver-como', $usuario) }}">
-                                            @csrf
-                                        </form>
-
-                                        <x-molecules.confirm-modal
-                                            :id="$modalIdVerComo"
-                                            :form-id="$formIdVerComo"
-                                            :title="__('seguridad.vista_como.modal_titulo', ['nombre' => $usuario->name])"
-                                            :message="__('seguridad.vista_como.modal_mensaje_interno')"
-                                            :confirm-label="__('seguridad.vista_como.modal_confirmar')"
-                                            tone="info"
-                                            modal-icon="visibility"
-                                        >
-                                            {{-- Con un solo rol el servidor lo infiere; con varios se elige uno. --}}
-                                            @if (count($rolesVerComo) > 1)
-                                                <x-atoms.select
-                                                    name="rol_id"
-                                                    :id="'ver-como-rol-'.$usuario->id"
-                                                    :form="$formIdVerComo"
-                                                    :label="__('seguridad.vista_como.campo_rol')"
-                                                    :placeholder="__('seguridad.vista_como.campo_rol_placeholder')"
-                                                    :options="$rolesVerComo"
-                                                    required
-                                                />
-                                            @endif
-                                        </x-molecules.confirm-modal>
-                                    @endif
-                                @endpuede
-
                                 @puede('seguridad.usuario.bloquear')
                                     <form id="{{ $formIdBloqueo }}" method="POST" action="{{ route('panel.usuarios.bloqueo', $usuario) }}">
                                         @csrf
@@ -247,24 +203,6 @@
                                         >
                                             {{ __($usuario->state ? 'seguridad.usuarios.bloquear' : 'seguridad.usuarios.desbloquear') }}
                                         </x-atoms.button>
-                                    @endpuede
-
-                                    {{-- Tercera a propósito: `row-actions` deja a la vista solo las dos
-                                         primeras (Editar y Bloquear) y manda el resto al menú ⋮. «Ver como»
-                                         es una herramienta de soporte, no una acción de todos los días. --}}
-                                    @puede('seguridad.usuario.ver_como')
-                                        @if ($puedeVerComoEsta)
-                                            <x-atoms.button
-                                                type="button"
-                                                data-bs-toggle="modal"
-                                                :data-bs-target="'#'.$modalIdVerComo"
-                                                variant="info-outline"
-                                                size="sm"
-                                                icon="visibility"
-                                            >
-                                                {{ __('seguridad.vista_como.accion') }}
-                                            </x-atoms.button>
-                                        @endif
                                     @endpuede
 
                                     @puede('seguridad.usuario.eliminar')
