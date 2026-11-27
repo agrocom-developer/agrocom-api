@@ -270,6 +270,7 @@ return [
             'documentos' => 'Documentos por revisar',
             'calificaciones' => 'Calificaciones en moderación',
             'reclamos' => 'Reclamos abiertos',
+            'disputas' => 'Disputas abiertas',
         ],
         'vacio_titulo' => 'Todavía no hay solicitudes',
         'vacio_detalle' => 'Cuando un cliente publique una solicitud, verás aquí cómo avanza el mercado.',
