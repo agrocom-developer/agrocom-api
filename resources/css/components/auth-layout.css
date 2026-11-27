@@ -126,6 +126,8 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+    flex-wrap: wrap;
+    gap: var(--ag-space-3);
     padding: var(--ag-space-5);
     color: var(--ag-color-text-on-scrim);
 }
@@ -135,18 +137,17 @@
     font-family: var(--ag-font-family-display);
     font-optical-sizing: auto;
     font-size: clamp(1.75rem, 0.5rem + 3.5vw, 28px);
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
+    letter-spacing: 0.04em;
     font-weight: var(--ag-font-weight-regular);
     display: flex;
     gap: 0;
 }
 
-.ag-auth-layout__wordmark-agro {
+.ag-auth-layout__wordmark-dron {
     color: var(--ag-color-text-on-scrim);
 }
 
-.ag-auth-layout__wordmark-com {
+.ag-auth-layout__wordmark-agro {
     color: var(--ag-color-wordmark-accent);
 }
 
@@ -160,9 +161,8 @@
     background: transparent;
     color: var(--ag-color-chip-icon);
     font-family: var(--ag-font-family-mono);
-    font-size: 10.5px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+    font-size: 0.8125rem;
+    letter-spacing: 0.02em;
 }
 
 .ag-auth-layout__chip-text {
@@ -304,8 +304,8 @@
     flex-wrap: wrap;
     gap: var(--ag-space-2) var(--ag-space-4);
     font-family: var(--ag-font-family-mono);
-    font-size: 10.5px;
-    letter-spacing: 0.12em;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--ag-color-text-muted-auth);
     margin-top: var(--ag-space-6);
