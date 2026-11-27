@@ -530,6 +530,8 @@
 }
 
 .ag-modulo__nombre {
+    flex: 1 1 auto;
+    min-width: 0;
     margin: 0;
     font-size: var(--ag-font-size-sm);
     font-weight: var(--ag-font-weight-bold);
@@ -538,6 +540,8 @@
 
 .ag-modulo__conteo {
     margin-left: auto;
+    flex-shrink: 0;
+    white-space: nowrap;
     font-family: var(--ag-font-family-mono);
     font-size: var(--ag-font-size-xs);
     font-weight: var(--ag-font-weight-bold);
@@ -552,7 +556,10 @@
     gap: var(--ag-space-1);
 }
 
+/* `relative`: el rótulo `visually-hidden` es absoluto y, sin un ancestro posicionado, se
+   escapaba del área de scroll y alargaba el documento más que la ventana. */
 .ag-modulo__item {
+    position: relative;
     display: flex;
     align-items: center;
     gap: var(--ag-space-2);
