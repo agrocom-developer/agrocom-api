@@ -10,14 +10,15 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Una cuenta con la eliminación pedida (ADR 0047, punto 5) puede iniciar sesión, pero la sesión solo ve el estado, cancela la
- * eliminación y cierra sesión: todo lo demás responde `403 cuenta_en_eliminacion`. La app muestra el aviso y «Conservar mi cuenta».
+ * Una cuenta con la eliminación pedida (ADR 0047, punto 5) puede iniciar sesión, pero la sesión solo ve el estado (también en `GET /api/auth/sesion` y
+ * `POST /api/auth/renovar`, que traen `eliminacion`), cancela la eliminación y cierra sesión: todo lo demás responde `403 cuenta_en_eliminacion`. La app muestra el aviso y «Conservar mi cuenta».
  */
 final class ExigirCuentaSinEliminacion
 {
     /** Rutas que siguen disponibles mientras la eliminación está vigente. */
     private const PERMITIDAS = [
         'api.auth.sesion',
+        'api.auth.renovar',
         'api.auth.token.revocar',
         'api.cuenta.eliminacion.estado',
         'api.cuenta.eliminacion.cancelar',

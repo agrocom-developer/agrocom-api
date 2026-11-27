@@ -77,7 +77,7 @@ beforeEach(function () {
     ParticipanteDePrueba::$impedimentos = [];
     ParticipanteDePrueba::$llamadas = [];
     WhatsappDePruebaEliminacion::$codigos = [];
-    config(['verificacion.modo_desarrollo' => false, 'verificacion.canales.whatsapp.adaptador' => WhatsappDePruebaEliminacion::class]);
+    config(['verificacion.modo_desarrollo' => false, 'verificacion.codigo.intervalo_reenvio_segundos' => 0, 'verificacion.canales.whatsapp.adaptador' => WhatsappDePruebaEliminacion::class]);
 
     Esquema::migrar([
         'create_plt_bitacoras_table', 'create_sec_user_table', 'agrega_foto_perfil_a_sec_user', 'agrega_tipo_cuenta_a_sec_user',
@@ -242,4 +242,58 @@ it('eliminar la cuenta exige sesión', function () {
     $this->getJson('/api/cuenta/eliminacion')->assertStatus(401);
     $this->postJson('/api/cuenta/eliminacion', ['password' => 'abcd'])->assertStatus(401);
     $this->postJson('/api/cuenta/eliminacion/cancelar')->assertStatus(401);
+});
+
+// --- La eliminación viaja en la sesión ---------------------------------------------------------------------
+
+it('la sesión de una cuenta sin solicitud trae eliminacion en null al entrar, al consultarla y al renovarla', function () {
+    $respuesta = test()->postJson('/api/auth/token', ['username' => 'luis.antelo', 'password' => 'abcd', 'uuid_dispositivo' => UUID_ELIM, 'app' => 'cliente'])->assertCreated();
+    expect($respuesta->json())->toHaveKey('eliminacion')->and($respuesta->json('eliminacion'))->toBeNull();
+
+    $token = (string) $respuesta->json('token');
+    $sesion = comoDispositivo($token)->getJson('/api/auth/sesion')->assertOk();
+    expect($sesion->json())->toHaveKey('eliminacion')->and($sesion->json('eliminacion'))->toBeNull();
+
+    $renovada = comoDispositivo($token)->postJson('/api/auth/renovar')->assertCreated();
+    expect($renovada->json())->toHaveKey('eliminacion')->and($renovada->json('eliminacion'))->toBeNull();
+});
+
+it('con una solicitud en gracia la sesión trae el objeto eliminacion al entrar, al consultarla y al renovar, con la sesión restringida', function () {
+    comoDispositivo(entrarParaEliminar())->postJson('/api/cuenta/eliminacion', ['password' => 'abcd'])->assertStatus(202);
+
+    $respuesta = test()->postJson('/api/auth/token', ['username' => 'luis.antelo', 'password' => 'abcd', 'uuid_dispositivo' => UUID_ELIM, 'app' => 'cliente'])->assertCreated();
+    $token = (string) $respuesta->json('token');
+
+    $esperada = comoDispositivo($token)->getJson('/api/cuenta/eliminacion')->assertOk()->json('eliminacion');
+    expect($esperada['estado'])->toBe('solicitada');
+
+    expect($respuesta->json('eliminacion'))->toBe($esperada);
+    expect(comoDispositivo($token)->getJson('/api/auth/sesion')->assertOk()->json('eliminacion'))->toBe($esperada);
+    expect(array_keys($esperada))->toBe(['estado', 'solicitada_en', 'ejecutar_desde', 'cancelada_en', 'motivo_posposicion']);
+
+    // La renovación sigue permitida en la gracia y trae la misma solicitud; lo demás sigue en 403.
+    $renovada = comoDispositivo($token)->postJson('/api/auth/renovar')->assertCreated();
+    expect($renovada->json('eliminacion'))->toBe($esperada);
+    comoDispositivo((string) $renovada->json('token'))->getJson('/api/dispositivos')->assertStatus(403)->assertJsonPath('codigo', 'cuenta_en_eliminacion');
+});
+
+it('una solicitud pospuesta sigue viajando en la sesión', function () {
+    comoDispositivo(entrarParaEliminar())->postJson('/api/cuenta/eliminacion', ['password' => 'abcd'])->assertStatus(202);
+    DB::table('sec_eliminaciones')->update(['estado' => 'pospuesta', 'motivo_posposicion' => 'servicio_en_curso']);
+
+    $token = entrarParaEliminar();
+
+    comoDispositivo($token)->getJson('/api/auth/sesion')->assertOk()
+        ->assertJsonPath('eliminacion.estado', 'pospuesta')->assertJsonPath('eliminacion.motivo_posposicion', 'servicio_en_curso');
+});
+
+it('cancelada la eliminación, la sesión vuelve a traer eliminacion en null', function () {
+    comoDispositivo(entrarParaEliminar())->postJson('/api/cuenta/eliminacion', ['password' => 'abcd'])->assertStatus(202);
+    $token = entrarParaEliminar();
+
+    comoDispositivo($token)->postJson('/api/cuenta/eliminacion/cancelar')->assertOk();
+
+    expect(comoDispositivo($token)->getJson('/api/auth/sesion')->assertOk()->json('eliminacion'))->toBeNull();
+    expect(comoDispositivo($token)->postJson('/api/auth/renovar')->assertCreated()->json('eliminacion'))->toBeNull();
+    expect(test()->postJson('/api/auth/token', ['username' => 'luis.antelo', 'password' => 'abcd', 'uuid_dispositivo' => UUID_ELIM, 'app' => 'cliente'])->assertCreated()->json('eliminacion'))->toBeNull();
 });
