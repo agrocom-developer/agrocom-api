@@ -15,7 +15,7 @@
             <x-slot:eliminar>…</x-slot:eliminar>
         </x-organisms.row-actions>
 
-    Hasta tres acciones se ven como botones de ícono (con `title` y `aria-label`); con
+    Hasta cuatro acciones se ven como botones de ícono (con `title` y `aria-label`); con
     más de tres, todas pasan al menú «⋮» de la fila, con ícono y texto. El slot por
     defecto no existe: una acción suelta no tiene lugar en el orden.
 
@@ -23,11 +23,11 @@
     cada acción se pinta una sola vez, pero un form dentro del menú queda oculto con él.
 
     Props:
-    - maxIconos (int, default 3): cuántas acciones caben como botones de ícono.
+    - maxIconos (int, default 4): cuántas acciones caben como botones de ícono.
     - label (string|null): nombre accesible del grupo; por omisión `ui.tabla.acciones_fila`.
 --}}
 @props([
-    'maxIconos' => 3,
+    'maxIconos' => 4,
     'label' => null,
 ])
 

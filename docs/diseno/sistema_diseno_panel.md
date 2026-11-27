@@ -1968,8 +1968,8 @@ Toda tabla del panel pinta sus acciones con un único componente, `organisms/row
 
 Cada acción es un `<x-molecules.row-action kind="ver|editar|aprobar|transicion|eliminar">` dentro del slot con nombre que le corresponde (`ver`, `editar`, `aprobar`, `transiciones`, `eliminar`). El `kind` fija el color; nadie lo elige a mano. No existe slot por defecto ni se admiten botones sueltos.
 
-- Hasta tres acciones: botones de ícono cuadrados, con `title` y `aria-label` (el texto existe siempre y se oculta solo a la vista).
-- Más de tres: todas pasan al menú «⋮» de la fila, con ícono y texto, en el mismo orden.
+- Hasta cuatro acciones: botones cuadrados de solo ícono (2.5 rem), con `title` y `aria-label` (el texto existe siempre y se oculta solo a la vista). La columna de acciones mide `--ag-row-actions-width` (12 rem) en todas las tablas.
+- Más de cuatro: todas pasan al menú «⋮» de la fila, con ícono y texto, en el mismo orden; se abre con clic o teclado, se cierra con Esc o clic fuera y no lo recorta el desborde de la tabla (Popper con `strategy: fixed`).
 - Solo se ofrecen las acciones válidas para el estado actual y permitidas al rol; el llamador las filtra con `@puede`/`@if`, igual que en la ficha.
 - Los `<form>` y los modales de confirmación van fuera del componente, en la celda.
 - Un objeto con máquina de estados de aprobación (proveedor, piloto, dron) usa `organisms/row-actions-aprobacion`, que arma las acciones y los modales de la ficha (`_modales-aprobacion`) y vuelve al listado tras resolver (`desde=listado`). El «Revisar» aparte desapareció: revisar es abrir la ficha (Ver) y aprobar es una transición. «Dar de baja» se muestra como Eliminar.
