@@ -1,0 +1,143 @@
+/*
+ * Organism: cuadricula-medios (resources/views/components/organisms/cuadricula-medios.blade.php)
+ * Lienzo de bloques de distinto tamaño: rectángulos de superficie sobre un fondo gris claro, con una separación
+ * pequeña y uniforme. El primero es el grande; el primero pendiente se resalta en verde claro. Solo tokens.
+ */
+
+.ag-cuadricula-medios {
+    list-style: none;
+    margin: var(--ag-space-3) 0 0;
+    padding: var(--ag-space-2);
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+    grid-auto-flow: dense;
+    gap: var(--ag-space-2);
+    background-color: var(--ag-color-bg);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-md);
+}
+
+.ag-cuadricula-medios__item {
+    display: flex;
+    min-width: 0;
+}
+
+@media (min-width: 768px) {
+    .ag-cuadricula-medios__item--grande {
+        grid-column: span 2;
+        grid-row: span 2;
+    }
+}
+
+.ag-cuadricula-medios__celda {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 0;
+    overflow: hidden;
+    text-align: start;
+    font: inherit;
+    color: var(--ag-color-text);
+    background-color: var(--ag-color-surface-card);
+    border: 1px solid var(--ag-color-border-card);
+    border-radius: var(--ag-radius-sm);
+    cursor: pointer;
+    transition: box-shadow var(--ag-transition-fast), border-color var(--ag-transition-fast);
+}
+
+.ag-cuadricula-medios__celda:hover {
+    border-color: var(--ag-color-border-strong);
+    box-shadow: var(--ag-shadow-sm);
+}
+
+.ag-cuadricula-medios__celda:focus-visible {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 2px;
+}
+
+.ag-cuadricula-medios__celda--resaltada {
+    background-color: var(--ag-color-success-subtle);
+    border-color: var(--ag-color-success-border);
+}
+
+.ag-cuadricula-medios__imagen {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 7rem;
+    aspect-ratio: 4 / 3;
+    background-color: var(--ag-color-bg-table-head);
+}
+
+.ag-cuadricula-medios__item--grande .ag-cuadricula-medios__imagen {
+    aspect-ratio: auto;
+}
+
+.ag-cuadricula-medios__imagen img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+.ag-cuadricula-medios__sin-vista {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-2);
+    text-align: center;
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-cuadricula-medios__pie {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-2) var(--ag-space-3) 0;
+}
+
+.ag-cuadricula-medios__titulo {
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+.ag-cuadricula-medios__marcas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ag-space-1) var(--ag-space-3);
+    padding: var(--ag-space-1) var(--ag-space-3) var(--ag-space-2);
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
+.ag-cuadricula-medios__celda--resaltada .ag-cuadricula-medios__marcas {
+    color: var(--ag-color-success-strong);
+}
+
+.ag-cuadricula-medios__subtitulo {
+    flex-basis: 100%;
+}
+
+.ag-cuadricula-medios__marca {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-1);
+}
+
+.ag-cuadricula-medios__pie:last-child {
+    padding-bottom: var(--ag-space-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ag-cuadricula-medios__celda {
+        transition: none;
+    }
+}
