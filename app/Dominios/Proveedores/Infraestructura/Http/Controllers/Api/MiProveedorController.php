@@ -11,6 +11,7 @@ use App\Dominios\Proveedores\Aplicacion\EstadoDocumentalDeSujeto;
 use App\Dominios\Proveedores\Aplicacion\ReenviarARevision;
 use App\Dominios\Proveedores\Dominio\Disponibilidad;
 use App\Dominios\Proveedores\Dominio\Excepciones\RegistroInvalido;
+use App\Dominios\Proveedores\Dominio\SiguientePasoDelRegistro;
 use App\Dominios\Proveedores\Dominio\TipoSujeto;
 use App\Dominios\Proveedores\Infraestructura\Http\Requests\CambiarDisponibilidadRequest;
 use App\Dominios\Proveedores\Infraestructura\Http\Resources\DisponibilidadResource;
@@ -69,6 +70,7 @@ final class MiProveedorController
                     properties: [
                         new OA\Property(property: 'proveedor', ref: '#/components/schemas/Proveedor'),
                         new OA\Property(property: 'documentos_faltantes', description: 'Tipos de documento obligatorios del proveedor sin uno aprobado y vigente.', type: 'array', items: new OA\Items(type: 'string', example: 'seguro_responsabilidad')),
+                        new OA\Property(property: 'siguiente_paso', description: 'Qué sigue del registro (ADR 0046, punto 26), siempre presente: `subir_documentos` (pendiente con `documentos_faltantes`; se suben con `POST /api/proveedores/documentos`), `en_revision` (pendiente con todo subido), `corregir` (rechazado; se corrige y se reenvía con `POST /api/proveedores/mi/reenviar`), `suspendido`, `baja` o `listo` (aprobado). Quien intenta registrarse con un teléfono o documento que ya tiene cuenta recibe `409 cuenta_ya_registrada`, inicia sesión y la app sigue desde acá, sin crear otra cuenta.', type: 'string', enum: ['listo', 'subir_documentos', 'en_revision', 'corregir', 'suspendido', 'baja'], example: 'subir_documentos'),
                         new OA\Property(property: 'apto_para_ofertas', type: 'boolean', example: false),
                         new OA\Property(property: 'disponibilidad', ref: '#/components/schemas/Disponibilidad'),
                         new OA\Property(property: 'disponibilidad_empresa', ref: '#/components/schemas/Disponibilidad'),
@@ -99,6 +101,7 @@ final class MiProveedorController
         return response()->json([
             'proveedor' => new ProveedorResource($proveedor),
             'documentos_faltantes' => $faltantes,
+            'siguiente_paso' => SiguientePasoDelRegistro::de($proveedor->estado, $faltantes)->value,
             'apto_para_ofertas' => $this->equipos->tieneEquipoApto($proveedor->id),
             'disponibilidad' => DisponibilidadResource::de($proveedor),
             'disponibilidad_empresa' => DisponibilidadResource::de($proveedor),
@@ -190,6 +193,7 @@ final class MiProveedorController
         return response()->json([
             'proveedor' => [...(new ProveedorResource($proveedor))->resolve($request), 'documento_fiscal' => null],
             'documentos_faltantes' => $faltantes,
+            'siguiente_paso' => SiguientePasoDelRegistro::de($piloto->estado, $faltantes)->value,
             'apto_para_ofertas' => $this->equipos->tieneEquipoApto($proveedor->id),
             'disponibilidad' => DisponibilidadResource::de($piloto),
             'disponibilidad_empresa' => DisponibilidadResource::de($proveedor),
