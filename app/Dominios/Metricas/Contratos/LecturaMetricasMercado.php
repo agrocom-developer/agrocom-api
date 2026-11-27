@@ -28,4 +28,10 @@ interface LecturaMetricasMercado
 
     /** @return array{ofertas: int, rondas: list<int>} ofertas de las solicitudes del período y rondas por (solicitud, proveedor). */
     public function negociaciones(PeriodoDeMetricas $periodo): array;
+
+    /** @return int solicitudes del período que recibieron al menos una oferta. */
+    public function conOfertas(PeriodoDeMetricas $periodo): int;
+
+    /** @return list<array{codigo: string, nombre: ?string, estado: string, cantidad: int}> solicitudes del período por departamento y estado. */
+    public function porDepartamentoYEstado(PeriodoDeMetricas $periodo): array;
 }

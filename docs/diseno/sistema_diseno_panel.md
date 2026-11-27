@@ -153,6 +153,7 @@ Los componentes que necesitan un tono nuevo lo piden como token semántico en am
 | Atom | `button` | `resources/views/components/atoms/button.blade.php` | Implementado |
 | Molecule | `role-selector-item` | — | **Renombrado** a `role-card` (28/8/2026, quinta vuelta). El archivo con este nombre ya no existe. |
 | Molecule | `theme-toggle` | `resources/views/components/molecules/theme-toggle.blade.php` | Implementado |
+| Molecule | `grafico` | `resources/views/components/molecules/grafico.blade.php` | Implementado (ver §19) |
 | Molecule | `menu-item` | `resources/views/components/molecules/menu-item.blade.php` | Implementado |
 | Organism | `collapsible-menu-group` | `resources/views/components/organisms/collapsible-menu-group.blade.php` | Implementado |
 | Organism | `login-form` | `resources/views/components/organisms/login-form.blade.php` | Implementado |
@@ -1981,3 +1982,34 @@ Todo listado lleva `molecules/table-search` (con `clear-label`) y, si tiene filt
 ### Tablero y accesos rápidos por permisos
 
 No hay selector de vista ni «ver como»: el tablero muestra cada bloque solo si la sesión tiene el permiso de lo que contiene (solicitudes con `solicitudes.solicitud.ver`, cada cola pendiente con el permiso de su pantalla). Los accesos rápidos de «Mi perfil» salen del menú del rol y se completan con sus primeras pantallas; el cuadro del ícono toma el tono de su dominio con tokens existentes: mercado `info`, proveedores y flota `distintivo-1`, clientes `distintivo-2`, atención `warning`, seguridad y sistema `distintivo-3`. El color nunca es la única señal: cada tarjeta lleva ícono y texto.
+
+## 19. Gráficas del panel — `molecules/grafico` (Chart.js)
+
+El tablero y las métricas del mercado muestran gráficas en vez de tablas con números: se leen de un vistazo y la tabla queda como alternativa. Se usa **Chart.js 4 (MIT)**, instalado con npm y empaquetado por Vite; no se usa `spatie/laravel-dashboard` ni sus tiles (exigen Livewire, que el panel no tiene, y traen su propio estilo fuera de los tokens). Motivo de la dependencia: es el motor de gráficas más usado y mantenido con licencia MIT, se carga por módulos (solo entran los controladores de barras y líneas) y dibuja en un `<canvas>` que se estila por completo desde JavaScript, lo que permite leer los tokens.
+
+### 19.1. Componente
+
+`<x-molecules.grafico>` (props documentadas en el propio Blade): `titulo`, `ayuda`, `tipo` (`barras` o `lineas`), `horizontal`, `apilado`, `etiquetas`, `series` (nombre, valores y el nombre de un token de color), `formato` (decimales y sufijo), `categoria` y `vacio`. Los datos llegan resueltos del servidor (los lectores de `Metricas`) y viajan en un `data-ag-grafico` en JSON, solo con lo que se grafica. El CSS es `components/grafico.css`; la grilla de dos columnas es `.ag-grafico-grilla`.
+
+### 19.2. Qué tipo de gráfica
+
+- **Línea** para una magnitud en el tiempo (actividad semanal, precio por hectárea); las semanas sin dato quedan sin punto, no en cero.
+- **Barras** para comparar categorías; horizontales cuando los nombres son largos o son más de cinco (estados, departamentos, pasos del embudo).
+- **Apiladas** solo para partes de un mismo total (solicitudes de un departamento por grupo de estado).
+- **Sin dona**: ninguna medición del panel tiene tan pocas partes como para que valga la pena.
+
+### 19.3. Tokens y tema
+
+`resources/js/shared/color-tokens.js` lee los tokens en el momento de dibujar: colores (el token se aplica a un elemento oculto y se lee de vuelta pasando por un píxel de canvas, porque los `color-mix()` no siempre salen como `rgb()`), familias (Manrope para rótulos, JetBrains Mono para cifras de ejes y tooltip), tamaños, radios, espacios y la duración de `--ag-transition-base`. Una serie nombra un token semántico (`success`, `info`, `warning`, `danger`, `distintivo-1`, `distintivo-2`); ninguna gráfica declara un color propio. Un `MutationObserver` sobre `data-bs-theme` las repinta al cambiar de tema.
+
+### 19.4. Accesibilidad y estados
+
+- Sin animación con `prefers-reduced-motion: reduce` (también si cambia con la página abierta); con `prefers-contrast: more` las líneas son más gruesas.
+- Las series de línea se distinguen también por la forma del punto, no solo por el color; las barras apiladas llevan leyenda y borde de superficie.
+- El lienzo es `role="img"`, se rotula con el título y se describe con la tabla «Ver datos», que trae los mismos números con encabezados de fila y de columna. Es la alternativa para lector de pantalla, teclado y para quien no cargue JavaScript.
+- Estados: cargando (hasta que Chart.js dibuja), error (JSON ilegible: se indica abrir la tabla), vacío (texto que orienta, sin lienzo) y sin dato en un punto (la tabla dice «sin datos», el tooltip «—»).
+- El tooltip usa los tokens de scrim (`--ag-color-scrim-strong` y `--ag-color-text-on-scrim`), legibles en ambos temas.
+
+### 19.5. Carga diferida
+
+Chart.js pesa unos 60 KB comprimidos, así que va en un chunk aparte (`grafico-*.js`) que `app.js` pide con `import()` solo si la página tiene un `[data-ag-grafico]`, con la misma convención de la §13.1: el módulo dibuja de inmediato al cargarse porque `DOMContentLoaded` ya pasó.

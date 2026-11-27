@@ -95,4 +95,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.querySelector('[data-ag-mapa-marcador]')) {
         import('./organisms/mapa-marcador.js');
     }
+
+    // molecules/grafico (Chart.js): solo en las páginas con una gráfica.
+    if (document.querySelector('[data-ag-grafico]')) {
+        import('./molecules/grafico.js');
+    }
 });

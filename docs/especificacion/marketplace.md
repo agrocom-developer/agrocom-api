@@ -461,6 +461,7 @@ En el lote: todo registro nace con su `uuid_cliente` en el dispositivo, escribir
 - **Calidad**: calificación promedio, tasa de disputas, incidencias por 1.000 hectáreas.
 - **Oferta**: proveedores activos, drones aprobados, tasa de cancelación del proveedor, tiempo de aprobación de un proveedor.
 - **Volumen**: monto final acumulado de los servicios finalizados e ingreso por hectárea acordado.
+- **Dónde se ve cada cosa**: el tablero (Inicio) muestra cómo está el mercado hoy, de un vistazo: cinco tarjetas y cuatro gráficas (solicitudes por estado, actividad semanal de las últimas 12 semanas —publicadas y adjudicadas—, hectáreas en el mercado por departamento y precio por hectárea acordado, promedio semanal ponderado por hectáreas), más la cola de lo que espera una decisión. Las métricas del mercado (7, 30 o 90 días, permiso `metricas.panel.ver`) suman el análisis del período: las tarjetas, el embudo de la negociación (publicadas, con ofertas, adjudicadas y finalizadas), las solicitudes por departamento según su estado, la distribución del tiempo hasta la adjudicación y de las rondas por negociación, y la tabla de proveedores. Toda gráfica trae su tabla «Ver datos» con las mismas cifras y sale de los lectores de `Metricas`; ninguna cifra se inventa en la vista.
 - **Sincronización**: antigüedad de la cola del outbox, tasa de reintentos, evidencias pendientes.
 
 ## 15. Alcance de la primera versión

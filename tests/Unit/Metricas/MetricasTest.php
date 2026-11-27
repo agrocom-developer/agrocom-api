@@ -27,6 +27,7 @@ function metricasEsquema(): void
         'create_plt_bitacoras_table',
         'create_sol_zonas_table',
         'create_sol_clientes_table',
+        'create_sol_departamentos_table',
         'create_sol_terrenos_table',
         'create_sol_solicitudes_servicio_table',
         'agrega_negociacion_a_sol_solicitudes_servicio',
@@ -163,6 +164,38 @@ test('el mercado cuenta lo publicado en el período, la adjudicación, los tiemp
         ->and($m['ofertas_por_solicitud'])->toBe('0.50')
         ->and($m['rondas_promedio'])->not->toBeNull()
         ->and($m['negociaciones'])->toBe(2);
+});
+
+test('el embudo, las distribuciones y los departamentos salen de lo publicado en el período', function () {
+    metricasEsquema();
+    DB::table('sol_departamentos')->insert(['codigo' => '07', 'nombre' => 'Santa Cruz']);
+    $ahora = Carbon::now();
+    $hace = fn (int $dias): Carbon => $ahora->copy()->subDays($dias);
+
+    $a = metricasSolicitud('finalizada', 7, $hace(5), ['adjudicada_en' => $hace(5)->addMinutes(30), 'departamento_codigo' => '07']);
+    $b = metricasSolicitud('adjudicada', 1, $hace(4), ['adjudicada_en' => $hace(4)->addMinutes(200), 'departamento_codigo' => '07']);
+    $c = metricasSolicitud('con_ofertas', null, $hace(3), ['departamento_codigo' => '07']);
+    metricasSolicitud('cancelada', null, $hace(2));
+    $oa = metricasOferta($a, 7, 'aceptada', $hace(5), $hace(5)->addMinutes(30));
+    $ob = metricasOferta($b, 1, 'aceptada', $hace(4), $hace(4)->addMinutes(200), numero: 3);
+    DB::table('sol_solicitudes_servicio')->where('id', $a)->update(['oferta_adjudicada_id' => $oa]);
+    DB::table('sol_solicitudes_servicio')->where('id', $b)->update(['oferta_adjudicada_id' => $ob]);
+    metricasOferta($c, 7, 'vigente', $hace(3), null);
+
+    $m = app(CalcularMetricas::class)->ejecutar(PeriodoDeMetricas::de('30', $ahora->toDateTimeImmutable()))['mercado'];
+
+    expect($m['embudo'])->toBe(['publicadas' => 4, 'con_ofertas' => 3, 'adjudicadas' => 2, 'finalizadas' => 1])
+        ->and($m['distribucion_tiempo'])->toBe([1, 1, 0, 0, 0])
+        ->and($m['distribucion_rondas'])->toBe([2, 0, 1, 0])
+        ->and($m['departamentos'])->toBe([
+            ['codigo' => '07', 'nombre' => 'Santa Cruz', 'abiertas' => 1, 'en_curso' => 1, 'cerradas' => 1, 'canceladas' => 0, 'total' => 3],
+            ['codigo' => 'sin_departamento', 'nombre' => null, 'abiertas' => 0, 'en_curso' => 0, 'cerradas' => 0, 'canceladas' => 1, 'total' => 1],
+        ]);
+});
+
+test('distribuir reparte los valores en tramos de extremo superior exclusivo', function () {
+    expect(Razones::distribuir([0, 59.9, 60, 100, 360, 9999], [60, 360]))->toBe([2, 2, 2])
+        ->and(Razones::distribuir([], [60, 360]))->toBe([0, 0, 0]);
 });
 
 test('la oferta calcula la tasa de aceptación y de cancelación del proveedor', function () {
