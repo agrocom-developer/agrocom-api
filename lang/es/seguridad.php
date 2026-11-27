@@ -86,6 +86,7 @@ return [
         'correo_expiracion' => 'Este enlace vence en 60 minutos.',
         'correo_ignorar' => 'Si no pediste este cambio, ignora este correo: tu contraseña actual sigue funcionando.',
         'correo_despedida' => 'Saludos, DronAgro.',
+        'correo_no_configurado' => 'Por ahora no podemos enviar correos desde este sistema. Pide al administrador que termine de configurar el correo, o que te ayude a recuperar tu acceso.',
     ],
 
     // Pantalla de "elegir contraseña nueva" (tarea 66), llegada desde el

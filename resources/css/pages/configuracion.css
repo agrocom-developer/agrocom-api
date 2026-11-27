@@ -58,3 +58,31 @@
     color: var(--ag-color-text-muted);
     cursor: pointer;
 }
+
+/* Pestaña Correo: guía de la contraseña de aplicación y botón de prueba. */
+.ag-configuracion__guia {
+    color: var(--ag-color-text-muted);
+}
+
+.ag-configuracion__guia summary {
+    cursor: pointer;
+    color: var(--ag-color-text);
+}
+
+.ag-configuracion__guia ol {
+    margin: var(--ag-space-2) 0 0;
+    padding-left: var(--ag-space-5);
+}
+
+.ag-configuracion__prueba {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--ag-space-2);
+    margin-top: var(--ag-space-4);
+}
+
+.ag-configuracion__ayuda {
+    margin: 0;
+    color: var(--ag-color-text-muted);
+}

@@ -69,7 +69,7 @@ final class ListarConfiguracionPorGrupo
                     'descripcion' => $descripcion,
                     'esSecreto' => true,
                     'configurada' => $configurada,
-                    'ultimos4' => $configurada ? substr((string) $fila->valor, -4) : null,
+                    'ultimos4' => $configurada && ! ($meta['sin_ultimos4'] ?? false) ? substr((string) $fila->valor, -4) : null,
                     'valorVisible' => null,
                     'tipo' => $tipo,
                     'valorActivado' => $valorActivado,

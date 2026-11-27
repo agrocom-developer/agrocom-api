@@ -2,6 +2,8 @@
 
 namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Compartido\Aplicacion\ConfiguracionDeCorreo;
+use App\Dominios\Compartido\Aplicacion\EnviarCorreoDePrueba;
 use App\Dominios\Compartido\Aplicacion\GuardarConfiguracion;
 use App\Dominios\Compartido\Aplicacion\ListarConfiguracionPorGrupo;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
@@ -44,6 +46,7 @@ final class ConfiguracionController
         AutorizacionPanelWeb $autorizacion,
         CascaraPanel $cascara,
         ListarConfiguracionPorGrupo $listar,
+        ConfiguracionDeCorreo $correo,
     ): View {
         abort_unless($autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
@@ -64,6 +67,8 @@ final class ConfiguracionController
                 'filasPorGrupo' => collect((array) config('configuracion.grupos'))
                     ->mapWithKeys(fn (string $grupo): array => [$grupo => $listar->ejecutar($grupo)])
                     ->all(),
+                'correoDeBase' => $correo->definidaEnBase(),
+                'presetsCorreo' => (array) config('configuracion.proveedores_correo'),
                 'puedeEditar' => $autorizacion->tienePermiso($request, self::PERMISO_EDITAR),
             ],
         ));
@@ -85,6 +90,37 @@ final class ConfiguracionController
         return redirect()
             ->route('panel.configuracion.index', ['grupo' => $grupo])
             ->with('estado', __('configuracion.guardada'));
+    }
+
+    /**
+     * `POST /panel/configuracion/correo/prueba`: envía un correo de prueba al correo de la
+     * cuenta de quien pulsa el botón (no a una dirección libre: el botón no sirve de relé)
+     * con la configuración YA guardada. Responde con un resultado legible, sin el mensaje
+     * del servidor ni la contraseña.
+     */
+    public function probarCorreo(
+        Request $request,
+        AutorizacionPanelWeb $autorizacion,
+        EnviarCorreoDePrueba $enviar,
+    ): RedirectResponse {
+        abort_unless($autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
+
+        /** @var SecUser $usuario */
+        $usuario = $request->user('interno');
+        $destino = trim((string) $usuario->email);
+
+        $resultado = $destino === ''
+            ? ['ok' => false, 'categoria' => 'sin_destino']
+            : $enviar->ejecutar($destino);
+
+        return redirect()
+            ->route('panel.configuracion.index', ['grupo' => 'correo'])
+            ->with('correo_prueba', [
+                'ok' => $resultado['ok'],
+                'mensaje' => $resultado['ok']
+                    ? __('configuracion.correo_prueba.exito', ['destino' => $destino])
+                    : __('configuracion.correo_prueba.error.'.$resultado['categoria']),
+            ]);
     }
 
     private function grupoActivo(Request $request): string

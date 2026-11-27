@@ -8,6 +8,7 @@ Este directorio describe los controles de seguridad vigentes. La política de re
 | [`ci-cd.md`](ci-cd.md) | Permisos de los workflows, acciones fijadas por SHA, auditoría de dependencias, Dependabot, CODEOWNERS |
 | [`despliegue.md`](despliegue.md) | Respaldo previo a migrar, verificación, procedimiento de rollback y respaldos de cuentas eliminadas |
 | [`autenticacion.md`](autenticacion.md) | Tipos de cuenta, verificación de identidad, eliminación de cuenta, límite de intentos del login y vigencia de los tokens |
+| [`correo.md`](correo.md) | Servidor de correo configurable desde el panel, contraseña de aplicación, correo de prueba y recuperación del acceso del panel |
 
 ## Hechos de contexto
 

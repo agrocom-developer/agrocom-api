@@ -29,3 +29,46 @@ document.addEventListener('DOMContentLoaded', () => {
     interruptor.addEventListener('change', sincronizar);
     sincronizar();
 });
+
+/**
+ * Pestaña "Correo": al elegir proveedor se vuelcan servidor, puerto y cifrado del
+ * preset (`data-ag-correo-presets` en el formulario). "Otro" limpia host y puerto
+ * para escribirlos a mano. Progresivo: sin JS el formulario guarda igual.
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    const formulario = document.querySelector('[data-ag-correo-presets]');
+    const proveedor = formulario?.querySelector('[data-ag-correo-proveedor]');
+
+    if (! formulario || ! proveedor || proveedor.disabled) {
+        return;
+    }
+
+    let presets = {};
+
+    try {
+        presets = JSON.parse(formulario.dataset.agCorreoPresets);
+    } catch {
+        return;
+    }
+
+    proveedor.addEventListener('change', () => {
+        const preset = presets[proveedor.value];
+
+        if (! preset) {
+            return;
+        }
+
+        const asignar = (selector, valor) => {
+            const campo = formulario.querySelector(selector);
+
+            if (campo) {
+                campo.value = valor;
+                campo.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        };
+
+        asignar('[data-ag-correo-host]', preset.host);
+        asignar('[data-ag-correo-puerto]', preset.puerto);
+        asignar('[data-ag-correo-cifrado]', preset.cifrado);
+    });
+});

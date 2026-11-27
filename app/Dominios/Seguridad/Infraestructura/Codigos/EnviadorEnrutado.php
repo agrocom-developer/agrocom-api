@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Infraestructura\Codigos;
 
+use App\Dominios\Compartido\Aplicacion\ConfiguracionDeCorreo;
 use App\Dominios\Seguridad\Contratos\CanalDeCodigo;
 use App\Dominios\Seguridad\Contratos\DestinoDeCodigo;
 use App\Dominios\Seguridad\Contratos\EnviadorDeCodigo;
@@ -20,10 +21,12 @@ use Illuminate\Support\Facades\Notification;
  */
 final class EnviadorEnrutado implements EnviadorDeCodigo
 {
+    public function __construct(private readonly ConfiguracionDeCorreo $correo) {}
+
     public function disponible(CanalDeCodigo $canal): bool
     {
         if ($canal === CanalDeCodigo::Correo) {
-            return true;
+            return $this->correo->estaConfigurado();
         }
 
         return $this->enModoDeDesarrollo() || $this->adaptador($canal) !== null;
