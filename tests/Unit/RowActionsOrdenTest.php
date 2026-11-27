@@ -21,7 +21,10 @@ function filaConAcciones(string $slots): string
 /** @return list<string> los `kind` de las acciones, en el orden en que salen en el HTML */
 function ordenDeAcciones(string $html): array
 {
-    preg_match_all('/data-ag-row-action="(\w+)"/', $html, $coincidencias);
+    // El contenido se pinta dos veces (visibles + menú «⋮»): se cuenta una sola mitad.
+    $corte = strpos($html, 'ag-row-actions__more');
+    $mitad = $corte === false ? $html : substr($html, 0, $corte);
+    preg_match_all('/data-ag-row-action="(\w+)"/', $mitad, $coincidencias);
 
     return $coincidencias[1];
 }
@@ -63,33 +66,25 @@ test('cada tipo de acción lleva su color fijo y Eliminar el de peligro', functi
     expect(filaConAcciones(SLOT_TRANSICIONES))->toContain('ag-button--warning-outline');
 });
 
-test('hasta tres acciones son botones de ícono con título y etiqueta accesible', function () {
+test('las acciones llevan ícono y texto visibles, nunca solo ícono', function () {
     $html = filaConAcciones(SLOT_VER.SLOT_EDITAR.SLOT_ELIMINAR);
 
     expect($html)
-        ->toContain('ag-row-actions--iconos')
-        ->not->toContain('ag-row-actions__more')
+        ->toContain('ag-row-actions__visible')
+        ->toContain('ag-row-actions__menu')
         ->toContain('title="Eliminar"')
-        ->toContain('aria-label="Eliminar"');
+        ->toContain('aria-label="Eliminar"')
+        ->not->toContain('ag-row-actions--iconos');
 });
 
-test('con más de cuatro acciones todas pasan al menú de la fila, en el mismo orden', function () {
+test('el contenido va en las dos mitades, visibles y menú, en el mismo orden', function () {
     $html = filaConAcciones(SLOT_ELIMINAR.SLOT_TRANSICIONES.SLOT_APROBAR.SLOT_EDITAR.SLOT_VER);
 
-    expect($html)
-        ->toContain('ag-row-actions--menu')
-        ->toContain('ag-row-actions__more');
-
     $menu = substr($html, strpos($html, 'ag-row-actions__menu'));
+    preg_match_all('/data-ag-row-action="(\w+)"/', $menu, $enMenu);
 
-    expect(ordenDeAcciones($menu))->toBe(['ver', 'editar', 'aprobar', 'transicion', 'eliminar']);
-});
-
-test('cuatro acciones siguen siendo botones de ícono, sin menú', function () {
-    $html = filaConAcciones(SLOT_ELIMINAR.SLOT_TRANSICIONES.SLOT_APROBAR.SLOT_VER);
-
-    expect($html)->toContain('ag-row-actions--iconos')->not->toContain('ag-row-actions__more')
-        ->and(ordenDeAcciones($html))->toBe(['ver', 'aprobar', 'transicion', 'eliminar']);
+    expect(ordenDeAcciones($html))->toBe(['ver', 'editar', 'aprobar', 'transicion', 'eliminar'])
+        ->and($enMenu[1])->toBe(['ver', 'editar', 'aprobar', 'transicion', 'eliminar']);
 });
 
 test('sin acciones no se pinta nada', function () {
@@ -109,13 +104,13 @@ test('la última acción de la fila es Eliminar y lleva el rojo vino; ninguna ot
     $orden = ordenDeAcciones($html);
 
     expect(end($orden))->toBe('eliminar')
-        ->and(substr_count($html, 'ag-button--danger-outline'))->toBe(1);
+        ->and(substr_count($html, 'ag-button--danger-outline'))->toBe(2);
 
     // Aun si el llamador pasa una transición con tono de peligro (rechazar), no hereda el rojo vino.
     $rechazar = '<x-slot:transiciones><x-molecules.row-action kind="transicion" tone="danger" modal="m" icon="cancel" label="Rechazar" /></x-slot:transiciones>';
     $conRechazo = filaConAcciones($rechazar.SLOT_ELIMINAR);
 
-    expect(substr_count($conRechazo, 'ag-button--danger-outline'))->toBe(1)
+    expect(substr_count($conRechazo, 'ag-button--danger-outline'))->toBe(2)
         ->and($conRechazo)->toContain('ag-button--alert-outline');
 });
 
@@ -152,28 +147,13 @@ test('la máquina de estados de una ficha no ofrece la baja como paso y el encab
     expect($boton)->toContain('variant="danger"')->toContain('AccionAprobacion::DarDeBaja');
 });
 
-test('una fila con acciones disponibles nunca queda sin ninguna acción visible, con 1 a 6 acciones', function () {
-    $acciones = [SLOT_VER, SLOT_EDITAR, SLOT_APROBAR, SLOT_TRANSICIONES, SLOT_ELIMINAR, '<x-slot:transiciones><x-molecules.row-action kind="transicion" tone="info" modal="m2" icon="sync_alt" label="Otra" /></x-slot:transiciones>'];
-
-    for ($cuantas = 1; $cuantas <= 5; $cuantas++) {
-        $html = filaConAcciones(implode('', array_slice($acciones, 0, $cuantas)));
-
-        expect(substr_count($html, 'data-ag-row-action='))->toBe($cuantas, "se perdieron acciones con $cuantas");
-
-        // O son botones de ícono, o hay un «⋮» que abre el menú con todas: nunca ninguna de las dos cosas ausentes.
-        $hayBotones = str_contains($html, 'ag-row-actions--iconos');
-        $hayMenu = str_contains($html, 'ag-row-actions__more-btn') && str_contains($html, 'data-bs-toggle="dropdown"') && str_contains($html, 'aria-label=');
-
-        expect($hayBotones || $hayMenu)->toBeTrue();
-    }
-});
-
-test('el CSS de las acciones de fila no esconde el «⋮» ni los botones de ícono', function () {
+test('el CSS conserva el cupo de dos acciones sueltas y el «⋮» en móvil', function () {
     $css = (string) file_get_contents(dirname(__DIR__, 2).'/resources/css/components/row-actions.css');
 
-    // El «⋮» y los botones se muestran siempre; solo el rótulo del botón de ícono queda fuera de la vista.
-    expect(preg_match('/\.ag-row-actions__more\s*\{[^}]*display:\s*none/s', $css))->toBe(0)
-        ->and(preg_match('/\.ag-row-actions__visible/', $css))->toBe(0)
-        ->and(preg_match('/nth-child\(n \+ \d\)\s*\{\s*display:\s*none/s', $css))->toBe(0)
-        ->and($css)->toContain('.ag-row-actions--iconos .ag-button__label');
+    expect($css)
+        ->toContain('.ag-row-actions__visible')
+        ->toContain('min-width: 768px')
+        ->toContain('nth-child(n + 3)')
+        ->not->toContain('ag-row-actions--iconos')
+        ->not->toContain('ag-row-action-size');
 });

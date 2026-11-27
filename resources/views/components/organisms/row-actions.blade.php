@@ -15,19 +15,19 @@
             <x-slot:eliminar>…</x-slot:eliminar>
         </x-organisms.row-actions>
 
-    Hasta cuatro acciones se ven como botones de ícono (con `title` y `aria-label`); con
-    más de tres, todas pasan al menú «⋮» de la fila, con ícono y texto. El slot por
-    defecto no existe: una acción suelta no tiene lugar en el orden.
+    Cada acción se pinta con ícono + texto, nunca solo ícono (pedido explícito, 15/9/2026).
+    El contenido se renderiza DOS VECES a propósito: una vez en `.ag-row-actions__visible`
+    y otra dentro del menú «⋮» (`.ag-row-actions__menu`); el CSS decide por breakpoint
+    cuáles se ven en cada mitad (≥768px, hasta 2 sueltas; en móvil, todas en el menú).
+    El slot por defecto no existe: una acción suelta no tiene lugar en el orden.
 
-    Los `<form>` y los `confirm-modal` van FUERA de este componente, en la celda: aquí
-    cada acción se pinta una sola vez, pero un form dentro del menú queda oculto con él.
+    Los `<form>` y los `confirm-modal` van FUERA de este componente, en la celda: el
+    contenido se duplica, y un id repetido o un form dentro del menú oculto no funciona.
 
     Props:
-    - maxIconos (int, default 4): cuántas acciones caben como botones de ícono.
     - label (string|null): nombre accesible del grupo; por omisión `ui.tabla.acciones_fila`.
 --}}
 @props([
-    'maxIconos' => 4,
     'label' => null,
 ])
 
@@ -41,35 +41,31 @@
         'eliminar' => isset($eliminar) ? trim((string) $eliminar) : '',
     ];
     $contenido = implode("\n", array_filter($porOrden, fn (string $html): bool => $html !== ''));
-    $cantidad = substr_count($contenido, 'data-ag-row-action=');
-    $enMenu = $cantidad > $maxIconos;
 @endphp
 
-@if ($cantidad > 0)
+@if ($contenido !== '')
     <div
-        {{ $attributes->class(['ag-row-actions', $enMenu ? 'ag-row-actions--menu' : 'ag-row-actions--iconos']) }}
+        {{ $attributes->class(['ag-row-actions']) }}
         role="group"
         aria-label="{{ $label ?? __('ui.tabla.acciones_fila') }}"
     >
-        @if ($enMenu)
-            <div class="dropdown ag-row-actions__more">
-                <button
-                    type="button"
-                    class="ag-button ag-button--outline ag-button--sm ag-row-actions__more-btn"
-                    data-bs-toggle="dropdown"
-                    aria-expanded="false"
-                    aria-label="{{ __('ui.tabla.mas_acciones') }}"
-                    title="{{ __('ui.tabla.mas_acciones') }}"
-                >
-                    <x-atoms.icon name="more_vert" size="sm" />
-                </button>
-
-                <div class="dropdown-menu dropdown-menu-end ag-row-actions__menu">
-                    {!! $contenido !!}
-                </div>
-            </div>
-        @else
+        <div class="ag-row-actions__visible">
             {!! $contenido !!}
-        @endif
+        </div>
+        <div class="dropdown ag-row-actions__more">
+            <button
+                type="button"
+                class="ag-button ag-button--outline ag-button--sm ag-row-actions__more-btn"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+                aria-label="{{ __('ui.tabla.mas_acciones') }}"
+                title="{{ __('ui.tabla.mas_acciones') }}"
+            >
+                <x-atoms.icon name="more_vert" size="sm" />
+            </button>
+            <div class="dropdown-menu dropdown-menu-end ag-row-actions__menu">
+                {!! $contenido !!}
+            </div>
+        </div>
     </div>
 @endif
