@@ -20,6 +20,9 @@ use Illuminate\Support\Carbon;
  * @property string $categoria_habilitacion
  * @property EstadoAprobacion $estado
  * @property string|null $motivo_estado
+ * @property Disponibilidad|null $disponibilidad
+ * @property Carbon|null $disponibilidad_cambiada_en
+ * @property int|null $disponibilidad_cambiada_por
  * @property-read Proveedor $proveedor
  */
 class Piloto extends ModeloDominio

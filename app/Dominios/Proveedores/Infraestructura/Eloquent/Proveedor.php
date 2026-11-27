@@ -29,6 +29,9 @@ use Illuminate\Support\Carbon;
  * @property int|null $aprobado_por
  * @property Carbon|null $aprobado_en
  * @property Carbon $created_at
+ * @property Disponibilidad|null $disponibilidad
+ * @property Carbon|null $disponibilidad_cambiada_en
+ * @property int|null $disponibilidad_cambiada_por
  */
 class Proveedor extends ModeloDominio
 {
