@@ -17,7 +17,7 @@
                 "telefono": "+591 3 3512000",
                 "estado": "aprobado",
                 "motivo_estado": null,
-                "aprobado_en": "2026-11-26T22:09:42+00:00",
+                "aprobado_en": "2026-11-27T15:16:27+00:00",
                 "calificacion_promedio": "4.59",
                 "calificaciones_conteo": 1,
                 "disponibilidad": {
@@ -28,6 +28,7 @@
                 }
             },
             "documentos_faltantes": [],
+            "siguiente_paso": "listo",
             "apto_para_ofertas": true,
             "disponibilidad": {
                 "valor": "disponible",

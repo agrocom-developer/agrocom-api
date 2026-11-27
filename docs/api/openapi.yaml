@@ -3495,12 +3495,14 @@ paths:
                       type: string
                       example: seguro_responsabilidad
                   siguiente_paso:
-                    description: 'Qué sigue del registro (ADR 0046, punto 26), siempre presente: `subir_documentos` (pendiente con `documentos_faltantes`; se suben con `POST /api/proveedores/documentos`), `en_revision` (pendiente con todo subido), `corregir` (rechazado; se corrige y se reenvía con `POST /api/proveedores/mi/reenviar`), `suspendido`, `baja` o `listo` (aprobado). Quien intenta registrarse con un teléfono o documento que ya tiene cuenta recibe `409 cuenta_ya_registrada`, inicia sesión y la app sigue desde acá, sin crear otra cuenta.'
+                    description: 'Qué sigue del registro (ADR 0046, punto 26), siempre presente: `subir_documentos` (pendiente con `documentos_faltantes`; se suben con `POST /api/proveedores/documentos`), `registrar_dron` (pendiente, documentos al día y sin ningún dron; `POST /api/proveedores/drones`), `subir_fotos_dron` (pendiente con un dron al que le faltan las fotos obligatorias; `POST /api/proveedores/drones/{id}/fotos`), `en_revision` (pendiente con todo subido), `corregir` (rechazado; se corrige y se reenvía con `POST /api/proveedores/mi/reenviar`), `suspendido`, `baja` o `listo` (aprobado). Orden de los pasos de un proveedor pendiente: documentos, dron, fotos del dron, revisión; `registrar_dron` y `subir_fotos_dron` solo los pide el titular independiente o tercero (el piloto de una empresa y Agrocom nunca). Quien intenta registrarse con un teléfono o documento que ya tiene cuenta recibe `409 cuenta_ya_registrada`, inicia sesión y la app sigue desde acá, sin crear otra cuenta.'
                     type: string
                     example: subir_documentos
                     enum:
                       - listo
                       - subir_documentos
+                      - registrar_dron
+                      - subir_fotos_dron
                       - en_revision
                       - corregir
                       - suspendido
@@ -3954,6 +3956,13 @@ paths:
                 $ref: '#/components/schemas/ErrorValidacion'
         429:
           description: 'Demasiados registros desde la misma IP, o demasiados `409` seguidos para esa IP, ese teléfono o ese documento; reintentar tras `Retry-After` segundos.'
+          headers:
+            Retry-After:
+              description: 'Segundos para reintentar, según la ventana real del límite (cupo por hora o día, intervalo entre códigos, bloqueo del login o frecuencia por IP).'
+              schema:
+                type: integer
+                example: 30
+                minimum: 1
   /api/cuenta/contrasena/codigo:
     post:
       tags:
@@ -4004,7 +4013,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDeCodigo'
         429:
-          description: 'La cuenta ya pidió el máximo de códigos; reintentar tras `Retry-After` segundos.'
+          description: '`demasiados_codigos` (la cuenta ya pidió el máximo de códigos: 3 por hora y 10 por día) o `reenvio_demasiado_pronto` (pidió otro por el mismo canal hace menos de 30 segundos). Trae `Retry-After` con los segundos que faltan para poder pedir otro.'
+          headers:
+            Retry-After:
+              description: 'Segundos para reintentar, según la ventana real del límite (cupo por hora o día, intervalo entre códigos, bloqueo del login o frecuencia por IP).'
+              schema:
+                type: integer
+                example: 30
+                minimum: 1
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDeCodigo'
         503:
           description: '`canal_no_disponible`: ese medio no está configurado; ofrecer otro.'
           content:
@@ -4208,6 +4228,13 @@ paths:
                 $ref: '#/components/schemas/ErrorDeCodigo'
         429:
           description: 'Demasiados intentos; reintentar tras `Retry-After` segundos.'
+          headers:
+            Retry-After:
+              description: 'Segundos para reintentar, según la ventana real del límite (cupo por hora o día, intervalo entre códigos, bloqueo del login o frecuencia por IP).'
+              schema:
+                type: integer
+                example: 30
+                minimum: 1
       security:
         -
           tokenDispositivo: []
@@ -4261,7 +4288,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDeCodigo'
         429:
-          description: 'La cuenta ya pidió el máximo de códigos; reintentar tras `Retry-After` segundos.'
+          description: '`demasiados_codigos` (la cuenta ya pidió el máximo de códigos: 3 por hora y 10 por día) o `reenvio_demasiado_pronto` (pidió otro por el mismo canal hace menos de 30 segundos). Trae `Retry-After` con los segundos que faltan para poder pedir otro.'
+          headers:
+            Retry-After:
+              description: 'Segundos para reintentar, según la ventana real del límite (cupo por hora o día, intervalo entre códigos, bloqueo del login o frecuencia por IP).'
+              schema:
+                type: integer
+                example: 30
+                minimum: 1
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDeCodigo'
         503:
           description: '`canal_no_disponible`: ese medio no está configurado; ofrecer otro.'
           content:
@@ -4451,7 +4489,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorValidacion'
         429:
-          description: 'Demasiadas solicitudes desde la misma IP; reintentar tras `Retry-After` segundos.'
+          description: 'Demasiadas solicitudes desde la misma IP o para el mismo usuario (5 por minuto y 30 por hora por IP, 10 cada 15 minutos por usuario); reintentar tras `Retry-After` segundos. El cupo de códigos de la cuenta (3 por hora, 10 por día) y la espera de 30 segundos entre dos códigos por el mismo canal NO responden 429 acá: se callan para no revelar si la cuenta existe, y la app espera 30 segundos antes de ofrecer «Reenviar».'
+          headers:
+            Retry-After:
+              description: 'Segundos para reintentar, según la ventana real del límite (cupo por hora o día, intervalo entre códigos, bloqueo del login o frecuencia por IP).'
+              schema:
+                type: integer
+                example: 30
+                minimum: 1
         503:
           description: '`canal_no_disponible`: ese medio no está configurado; la app ofrece otro.'
           content:
@@ -4520,6 +4565,13 @@ paths:
                 $ref: '#/components/schemas/ErrorDeCodigo'
         429:
           description: 'Demasiados intentos desde la misma IP; reintentar tras `Retry-After` segundos.'
+          headers:
+            Retry-After:
+              description: 'Segundos para reintentar, según la ventana real del límite (cupo por hora o día, intervalo entre códigos, bloqueo del login o frecuencia por IP).'
+              schema:
+                type: integer
+                example: 30
+                minimum: 1
   /api/auth/token:
     post:
       tags:
@@ -4597,6 +4649,12 @@ paths:
                     $ref: '#/components/schemas/RolActivo'
                   dispositivo:
                     $ref: '#/components/schemas/Dispositivo'
+                  eliminacion:
+                    oneOf:
+                      -
+                        $ref: '#/components/schemas/Eliminacion'
+                    nullable: true
+                    description: 'La solicitud de eliminar la cuenta si está vigente (`solicitada` o `pospuesta`, en gracia); `null` si no hay (nunca solicitada, cancelada o ejecutada). La API siempre lo envía. Con una solicitud vigente la sesión es restringida: solo `GET /api/auth/sesion`, `POST /api/auth/renovar`, `GET /api/cuenta/eliminacion`, `POST /api/cuenta/eliminacion/cancelar` y `DELETE /api/auth/token` responden; lo demás da `403 cuenta_en_eliminacion`. La app muestra «Conservar mi cuenta» sin una consulta extra.'
                 type: object
         403:
           description: 'Dos casos. Con `codigo: tipo_de_cuenta_incorrecto`: la cuenta es del otro tipo que la app (ADR 0046: «Esta cuenta es de proveedor: ingresa en la app Agrocom Piloto»); no se emite token. Sin `codigo`: el `role_id` pedido no está entre los roles vivos del usuario.'
@@ -4646,6 +4704,13 @@ paths:
                 $ref: '#/components/schemas/ErrorValidacion'
         429:
           description: 'Demasiados intentos (límite por minuto) o bloqueo temporal por fallos (10 fallos en 15 minutos por usuario o teléfono, 30 por IP; el mismo mensaje exista o no la cuenta); reintentar tras `Retry-After` segundos.'
+          headers:
+            Retry-After:
+              description: 'Segundos para reintentar, según la ventana real del límite (cupo por hora o día, intervalo entre códigos, bloqueo del login o frecuencia por IP).'
+              schema:
+                type: integer
+                example: 30
+                minimum: 1
     delete:
       tags:
         - Seguridad
@@ -4684,6 +4749,12 @@ paths:
                     $ref: '#/components/schemas/RolActivo'
                   dispositivo:
                     $ref: '#/components/schemas/Dispositivo'
+                  eliminacion:
+                    oneOf:
+                      -
+                        $ref: '#/components/schemas/Eliminacion'
+                    nullable: true
+                    description: 'La solicitud de eliminar la cuenta si está vigente (`solicitada` o `pospuesta`, en gracia); `null` si no hay (nunca solicitada, cancelada o ejecutada). La API siempre lo envía. Con una solicitud vigente la sesión es restringida: solo `GET /api/auth/sesion`, `POST /api/auth/renovar`, `GET /api/cuenta/eliminacion`, `POST /api/cuenta/eliminacion/cancelar` y `DELETE /api/auth/token` responden; lo demás da `403 cuenta_en_eliminacion`. La app muestra «Conservar mi cuenta» sin una consulta extra.'
                 type: object
         401:
           description: 'Token ausente, revocado o ya sin rol válido.'
@@ -4723,9 +4794,24 @@ paths:
                     $ref: '#/components/schemas/RolActivo'
                   dispositivo:
                     $ref: '#/components/schemas/Dispositivo'
+                  eliminacion:
+                    oneOf:
+                      -
+                        $ref: '#/components/schemas/Eliminacion'
+                    nullable: true
+                    description: 'La solicitud de eliminar la cuenta si está vigente (`solicitada` o `pospuesta`, en gracia); `null` si no hay (nunca solicitada, cancelada o ejecutada). La API siempre lo envía. Con una solicitud vigente la sesión es restringida: solo `GET /api/auth/sesion`, `POST /api/auth/renovar`, `GET /api/cuenta/eliminacion`, `POST /api/cuenta/eliminacion/cancelar` y `DELETE /api/auth/token` responden; lo demás da `403 cuenta_en_eliminacion`. La app muestra «Conservar mi cuenta» sin una consulta extra.'
                 type: object
         401:
           description: 'Token ausente, caducado o revocado, o la cuenta ya no puede entrar.'
+        429:
+          description: 'Más de 10 renovaciones por minuto; reintentar tras `Retry-After` segundos.'
+          headers:
+            Retry-After:
+              description: 'Segundos para reintentar, según la ventana real del límite (cupo por hora o día, intervalo entre códigos, bloqueo del login o frecuencia por IP).'
+              schema:
+                type: integer
+                example: 30
+                minimum: 1
       security:
         -
           tokenDispositivo: []
@@ -4780,7 +4866,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDeCodigo'
         429:
-          description: 'La cuenta ya pidió el máximo de códigos; reintentar tras `Retry-After` segundos.'
+          description: '`demasiados_codigos` (la cuenta ya pidió el máximo de códigos: 3 por hora y 10 por día) o `reenvio_demasiado_pronto` (pidió otro por el mismo canal hace menos de 30 segundos). Trae `Retry-After` con los segundos que faltan para poder pedir otro.'
+          headers:
+            Retry-After:
+              description: 'Segundos para reintentar, según la ventana real del límite (cupo por hora o día, intervalo entre códigos, bloqueo del login o frecuencia por IP).'
+              schema:
+                type: integer
+                example: 30
+                minimum: 1
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDeCodigo'
         503:
           description: '`canal_no_disponible`: ese medio no está configurado; ofrecer el otro.'
           content:
@@ -5095,6 +5192,13 @@ paths:
                 $ref: '#/components/schemas/ErrorValidacion'
         429:
           description: 'Demasiados registros desde la misma IP, o demasiados `409` seguidos para esa IP, ese teléfono o ese documento; reintentar tras `Retry-After` segundos.'
+          headers:
+            Retry-After:
+              description: 'Segundos para reintentar, según la ventana real del límite (cupo por hora o día, intervalo entre códigos, bloqueo del login o frecuencia por IP).'
+              schema:
+                type: integer
+                example: 30
+                minimum: 1
   /api/clientes/mi:
     get:
       tags:
@@ -6233,7 +6337,7 @@ components:
       type: object
     ErrorDeCodigo:
       title: 'Error de código de un solo uso'
-      description: 'Respuesta de los códigos de verificación (ADR 0046, puntos 27 a 30). `codigo_invalido` (422) cubre cuenta inexistente, código errado, vencido, usado o con los intentos agotados, sin distinguirlos. `canal_no_disponible` (503) dice que el medio no tiene adaptador o no está configurado; la app ofrece otro.'
+      description: 'Respuesta de los códigos de verificación (ADR 0046, puntos 27 a 30). `codigo_invalido` (422) cubre cuenta inexistente, código errado, vencido, usado o con los intentos agotados, sin distinguirlos. `canal_no_disponible` (503) dice que el medio no tiene adaptador o no está configurado; la app ofrece otro. `demasiados_codigos` y `reenvio_demasiado_pronto` (429, con `Retry-After`) dicen que la cuenta agotó su cupo de códigos o pidió otro por el mismo canal hace menos de 30 segundos.'
       required:
         - message
         - codigo
@@ -6248,6 +6352,8 @@ components:
             - codigo_invalido
             - canal_no_disponible
             - sin_destino
+            - demasiados_codigos
+            - reenvio_demasiado_pronto
         canal:
           description: 'Solo en `canal_no_disponible`: el canal que falló.'
           type: string
