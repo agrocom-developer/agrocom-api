@@ -1,0 +1,29 @@
+{
+    "operationId": "verLimitesDeMedios",
+    "descripcion": "Cuántos archivos multimedia admite cada entidad (config/medios.php): la app avisa antes de subir; el servidor responde 422 al pasarse.",
+    "peticion": {
+        "metodo": "GET",
+        "ruta": "/api/medios/limites",
+        "autenticada": true
+    },
+    "respuesta": {
+        "estado": 200,
+        "cuerpo": {
+            "por_subida": 10,
+            "por_entidad": {
+                "dron_fotos": 10,
+                "terreno_fotos": 10,
+                "documentos": 10,
+                "servicio_avance": 10,
+                "servicio_chat": 10
+            },
+            "peso_maximo_kb": 300,
+            "formatos_imagen": [
+                "jpg",
+                "jpeg",
+                "png",
+                "webp"
+            ]
+        }
+    }
+}

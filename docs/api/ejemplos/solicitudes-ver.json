@@ -19,11 +19,12 @@
                 "cultivo": "Soya",
                 "producto_indicado": "Glifosato 480 SL, 2 L/ha",
                 "aporta_producto": "cliente",
-                "ventana_desde": "2026-12-16",
-                "ventana_hasta": "2026-12-22",
+                "ventana_desde": "2026-12-17",
+                "ventana_hasta": "2026-12-23",
                 "urgente": false,
                 "observaciones": "Entrar por el portón sur.",
                 "precio_ha_propuesto": "128.0000",
+                "justificacion_precio": null,
                 "precio_ha_acordado": null,
                 "monto_estimado": "12800.00",
                 "hectareas_ejecutadas": null,
@@ -32,7 +33,7 @@
                 "estado": "abierta",
                 "oferta_adjudicada_id": null,
                 "proveedor_id": null,
-                "publicada_en": "2026-11-26T22:09:43+00:00",
+                "publicada_en": "2026-11-27T17:12:26+00:00",
                 "motivo_cancelacion": null,
                 "cancelada_por": null,
                 "departamento_codigo": "07",
@@ -63,7 +64,9 @@
                         {
                             "id": 1,
                             "descripcion": "Borde norte con maleza alta",
-                            "url": "/api/terrenos/fotos/1/archivo?expires=1795731883&signature=6a9ba4a6bff32de5d6b35e0f0f031f6fb407afc50c4e1b50bc4d6411b8aa57cd"
+                            "url": "/api/terrenos/fotos/1/archivo?expires=1795800446&signature=3f12c9e9f578091c85d8bee013f4501e7805d5222056406fee77c75a5bf43727",
+                            "url_miniatura": "/api/terrenos/fotos/1/archivo?expires=1795800446&variante=miniatura&signature=84eefd835baf2be68d16b03d67e3e15b30b37b3acaa76facdf9f89b3b580c1e8",
+                            "url_media": "/api/terrenos/fotos/1/archivo?expires=1795800446&variante=media&signature=461b273056d3ddda5dc297e562e1f588c6475bb6d2c77918143c83c5994248e2"
                         }
                     ]
                 },
@@ -73,14 +76,14 @@
                         "estado_nuevo": "borrador",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-26T22:09:43+00:00"
+                        "creado_en": "2026-11-27T17:12:26+00:00"
                     },
                     {
                         "estado_anterior": "borrador",
                         "estado_nuevo": "abierta",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-26T22:09:43+00:00"
+                        "creado_en": "2026-11-27T17:12:26+00:00"
                     }
                 ]
             }
