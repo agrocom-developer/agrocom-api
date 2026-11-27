@@ -5,6 +5,7 @@ use App\Dominios\Seguridad\Aplicacion\AnonimizarCuentaDeSeguridad;
 use App\Dominios\Seguridad\Aplicacion\CodigosDeVerificacion;
 use App\Dominios\Seguridad\Aplicacion\EjecutarEliminacionesDeCuenta;
 use App\Dominios\Seguridad\Aplicacion\EliminarMiCuenta;
+use App\Dominios\Seguridad\Aplicacion\MaquinaEstados\MaquinaEstadosEliminacion;
 use App\Dominios\Seguridad\Aplicacion\RevocarTokensDeCuenta;
 use App\Dominios\Seguridad\Contratos\CanalDeCodigo;
 use App\Dominios\Seguridad\Contratos\DestinoDeCodigo;
@@ -96,8 +97,8 @@ beforeEach(function () {
     DB::table('sec_role')->insert(['name' => 'cliente', 'description' => 'cliente', 'state' => true, 'created_at' => now(), 'updated_at' => now()]);
 
     // Solo el participante de mentira: los módulos reales se prueban en sus propias pruebas.
-    app()->bind(EliminarMiCuenta::class, fn ($app) => new EliminarMiCuenta($app->make(CodigosDeVerificacion::class), $app->make(RevocarTokensDeCuenta::class), [new ParticipanteDePrueba]));
-    app()->bind(EjecutarEliminacionesDeCuenta::class, fn ($app) => new EjecutarEliminacionesDeCuenta([new ParticipanteDePrueba], $app->make(AnonimizarCuentaDeSeguridad::class)));
+    app()->bind(EliminarMiCuenta::class, fn ($app) => new EliminarMiCuenta($app->make(CodigosDeVerificacion::class), $app->make(RevocarTokensDeCuenta::class), $app->make(MaquinaEstadosEliminacion::class), [new ParticipanteDePrueba]));
+    app()->bind(EjecutarEliminacionesDeCuenta::class, fn ($app) => new EjecutarEliminacionesDeCuenta([new ParticipanteDePrueba], $app->make(AnonimizarCuentaDeSeguridad::class), $app->make(MaquinaEstadosEliminacion::class)));
 
     test()->postJson('/api/clientes/registro', ['tipo' => 'persona', 'nombre' => 'Luis Antelo', 'username' => 'luis.antelo', 'password' => 'abcd', 'telefono' => '70012345', 'email' => 'luis@correo.test'])->assertCreated();
 });

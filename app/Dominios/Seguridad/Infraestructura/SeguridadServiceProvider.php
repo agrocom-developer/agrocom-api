@@ -8,6 +8,7 @@ use App\Dominios\Seguridad\Aplicacion\CodigosDeVerificacion;
 use App\Dominios\Seguridad\Aplicacion\EjecutarEliminacionesDeCuenta;
 use App\Dominios\Seguridad\Aplicacion\EliminarMiCuenta;
 use App\Dominios\Seguridad\Aplicacion\GestionarFotoDePerfil;
+use App\Dominios\Seguridad\Aplicacion\MaquinaEstados\MaquinaEstadosEliminacion;
 use App\Dominios\Seguridad\Aplicacion\RevocarTokensDeCuenta;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Contratos\EnviadorDeCodigo;
@@ -92,11 +93,13 @@ final class SeguridadServiceProvider extends ServiceProvider
         $this->app->bind(EliminarMiCuenta::class, static fn ($app): EliminarMiCuenta => new EliminarMiCuenta(
             $app->make(CodigosDeVerificacion::class),
             $app->make(RevocarTokensDeCuenta::class),
+            $app->make(MaquinaEstadosEliminacion::class),
             $app->tagged('eliminacion.participantes'),
         ));
         $this->app->bind(EjecutarEliminacionesDeCuenta::class, static fn ($app): EjecutarEliminacionesDeCuenta => new EjecutarEliminacionesDeCuenta(
             $app->tagged('eliminacion.participantes'),
             $app->make(AnonimizarCuentaDeSeguridad::class),
+            $app->make(MaquinaEstadosEliminacion::class),
         ));
 
         // Foto de perfil de la cuenta: otros módulos piden solo su URL firmada.

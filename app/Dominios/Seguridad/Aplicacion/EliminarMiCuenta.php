@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Aplicacion;
 
+use App\Dominios\Seguridad\Aplicacion\MaquinaEstados\MaquinaEstadosEliminacion;
 use App\Dominios\Seguridad\Contratos\CanalDeCodigo;
 use App\Dominios\Seguridad\Contratos\ParticipanteDeEliminacion;
 use App\Dominios\Seguridad\Contratos\PropositoDeCodigo;
@@ -27,6 +28,7 @@ final class EliminarMiCuenta
     public function __construct(
         private readonly CodigosDeVerificacion $codigos,
         private readonly RevocarTokensDeCuenta $revocar,
+        private readonly MaquinaEstadosEliminacion $estados,
         private readonly iterable $participantes,
     ) {}
 
@@ -89,11 +91,10 @@ final class EliminarMiCuenta
         }
 
         return DB::transaction(function () use ($usuario): SecEliminacion {
-            $eliminacion = SecEliminacion::query()->create([
+            $eliminacion = $this->estados->solicitar([
                 'usuario_id' => $usuario->id,
                 'tipo_cuenta' => $usuario->tipo_cuenta->value,
                 'origen' => 'app',
-                'estado' => EstadoDeEliminacion::Solicitada->value,
                 'solicitada_en' => now(),
                 'ejecutar_desde' => now()->addDays((int) config('eliminacion.gracia_dias', 7)),
             ]);
@@ -117,11 +118,7 @@ final class EliminarMiCuenta
             return null;
         }
 
-        $vigente->estado = EstadoDeEliminacion::Cancelada;
-        $vigente->cancelada_en = now();
-        $vigente->save();
-
-        return $vigente;
+        return $this->estados->cancelar($vigente);
     }
 
     /**

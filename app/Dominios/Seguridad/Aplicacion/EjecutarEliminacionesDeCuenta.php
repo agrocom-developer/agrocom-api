@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Aplicacion;
 
+use App\Dominios\Seguridad\Aplicacion\MaquinaEstados\MaquinaEstadosEliminacion;
 use App\Dominios\Seguridad\Contratos\ParticipanteDeEliminacion;
 use App\Dominios\Seguridad\Dominio\EstadoDeEliminacion;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecEliminacion;
@@ -18,6 +19,7 @@ final class EjecutarEliminacionesDeCuenta
     public function __construct(
         private readonly iterable $participantes,
         private readonly AnonimizarCuentaDeSeguridad $seguridad,
+        private readonly MaquinaEstadosEliminacion $estados,
     ) {}
 
     /** @return array{ejecutadas: int, pospuestas: int} */
@@ -47,9 +49,7 @@ final class EjecutarEliminacionesDeCuenta
                 }
 
                 if ($motivos !== []) {
-                    $eliminacion->estado = EstadoDeEliminacion::Pospuesta;
-                    $eliminacion->motivo_posposicion = implode(',', array_unique($motivos));
-                    $eliminacion->save();
+                    $this->estados->posponer($eliminacion, implode(',', array_unique($motivos)));
                     $pospuestas++;
 
                     return;
@@ -61,10 +61,7 @@ final class EjecutarEliminacionesDeCuenta
 
                 $this->seguridad->ejecutar($eliminacion->usuario_id);
 
-                $eliminacion->estado = EstadoDeEliminacion::Ejecutada;
-                $eliminacion->ejecutada_en = now();
-                $eliminacion->motivo_posposicion = null;
-                $eliminacion->save();
+                $this->estados->ejecutar($eliminacion);
                 $ejecutadas++;
             });
         }

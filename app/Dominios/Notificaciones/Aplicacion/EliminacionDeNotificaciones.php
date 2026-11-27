@@ -2,12 +2,14 @@
 
 namespace App\Dominios\Notificaciones\Aplicacion;
 
+use App\Dominios\Notificaciones\Infraestructura\Eloquent\DispositivoPush;
+use App\Dominios\Notificaciones\Infraestructura\Eloquent\Notificacion;
 use App\Dominios\Seguridad\Contratos\ParticipanteDeEliminacion;
-use Illuminate\Support\Facades\DB;
 
 /**
- * Lo que Notificaciones aporta a la eliminación de una cuenta (ADR 0047, punto 6): al ejecutarla se borran, de verdad, los avisos
- * y los tokens de push de la cuenta. No impide nada ni hace nada al pedirla.
+ * Lo que Notificaciones aporta a la eliminación de una cuenta (ADR 0047, punto 6): al pedirla se borran los tokens de push y, al
+ * ejecutarla, también los avisos de la cuenta. El borrado es físico (el lógico dejaría el dato): va por la consulta base, porque el
+ * modelo de dominio no admite `forceDelete` (ADR 0007). No impide nada.
  */
 final class EliminacionDeNotificaciones implements ParticipanteDeEliminacion
 {
@@ -18,12 +20,12 @@ final class EliminacionDeNotificaciones implements ParticipanteDeEliminacion
 
     public function alSolicitar(int $usuarioId): void
     {
-        DB::table('ntf_dispositivos')->where('usuario_id', $usuarioId)->delete();
+        DispositivoPush::withTrashed()->where('usuario_id', $usuarioId)->toBase()->delete();
     }
 
     public function anonimizar(int $usuarioId): void
     {
-        DB::table('ntf_dispositivos')->where('usuario_id', $usuarioId)->delete();
-        DB::table('ntf_notificaciones')->where('usuario_id', $usuarioId)->delete();
+        DispositivoPush::withTrashed()->where('usuario_id', $usuarioId)->toBase()->delete();
+        Notificacion::withTrashed()->deUsuario($usuarioId)->toBase()->delete();
     }
 }
