@@ -236,8 +236,8 @@ final class SolicitudesController
     #[OA\Post(
         path: '/api/solicitudes/{id}/publicar',
         operationId: 'publicarSolicitud',
-        description: 'Abre la solicitud a los pilotos: `borrador` pasa a `abierta` y queda visible en el mapa hasta que se adjudica o el cliente la cancela: la solicitud no vence sola. Exige precio por hectárea propuesto, hectáreas que no superen las del terreno, un teléfono en la cuenta y, si lleva fecha deseada, que no haya pasado. '
-            .'Avisa a los pilotos cuyas preferencias coinciden con la zona y las hectáreas.',
+        description: 'Abre la solicitud a los pilotos: `borrador` pasa a `abierta` y queda visible en el mapa hasta que se adjudica o el cliente la cancela: la solicitud no vence sola. Exige precio por hectárea propuesto, hectáreas que no superen las del terreno, un teléfono en la cuenta, que el terreno tenga departamento y provincia coherentes entre sí y, si lleva fecha deseada, que no haya pasado; esa ubicación (más municipio y comunidad) se congela en la solicitud. '
+            .'Avisa a los pilotos cuyas preferencias coinciden con las hectáreas.',
         summary: 'Abrir una solicitud al mercado',
         security: [['tokenDispositivo' => []]],
         tags: ['Solicitudes'],
@@ -245,9 +245,9 @@ final class SolicitudesController
         responses: [
             new OA\Response(response: 200, description: 'Solicitud abierta.', content: new OA\JsonContent(required: ['solicitud'], properties: [new OA\Property(property: 'solicitud', ref: '#/components/schemas/SolicitudServicio')], type: 'object')),
             new OA\Response(response: 401, description: 'Token ausente o revocado.'),
-            new OA\Response(response: 403, description: 'El rol del token no es de cliente.'),
+            new OA\Response(response: 403, description: 'El rol del token no es de cliente, o la cuenta todavía no está aprobada (`cuenta_no_aprobada`, ADR 0046: entra y arma sus borradores, pero no publica).', content: new OA\JsonContent(ref: '#/components/schemas/CuentaNoAprobada')),
             new OA\Response(response: 404, description: 'No existe o es de otro cliente.'),
-            new OA\Response(response: 422, description: 'Falta el precio o el teléfono, la solicitud no está en un estado que se pueda abrir o la fecha deseada ya pasó.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
+            new OA\Response(response: 422, description: 'Falta el precio o el teléfono, el terreno no tiene departamento o provincia (o no son coherentes), la solicitud no está en un estado que se pueda abrir o la fecha deseada ya pasó.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')),
         ],
     )]
     public function publicar(Request $request, int $id): JsonResponse

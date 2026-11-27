@@ -24,7 +24,7 @@ final class BloqueMercado
         return [
             'solicitudes_publicadas' => $total,
             'por_estado' => $solicitudes['por_estado'],
-            'por_region' => $solicitudes['por_region'],
+            'por_departamento' => $solicitudes['por_departamento'],
             'adjudicadas' => $solicitudes['adjudicadas'],
             'tasa_adjudicacion' => Razones::tasa($solicitudes['adjudicadas'], $total),
             'abiertas' => (int) (($solicitudes['por_estado']['abierta'] ?? 0) + ($solicitudes['por_estado']['con_ofertas'] ?? 0)),

@@ -10,7 +10,7 @@ use Illuminate\Database\Seeder;
  *
  * Los seeders de catálogo llegan con sus módulos: roles y permisos sec_*
  * (Seguridad, HU-01), el menú del panel, las categorías de insumo
- * (Operaciones), las zonas de asignación y el proveedor propio (marketplace).
+ * (Operaciones) y el proveedor propio (marketplace).
  */
 class CatalogoSeeder extends Seeder
 {
@@ -23,10 +23,9 @@ class CatalogoSeeder extends Seeder
         // HU-79 (tarea 110): categorías de insumo (sólido/líquido) de la
         // orden de aplicación — sin dependencia de los anteriores.
         $this->call(OperacionesCategoriasInsumoSeeder::class);
-        // Marketplace (ADR 0028 y 0036): zonas de asignación y el proveedor
-        // propio (Agrocom). El proveedor propio referencia una zona, así que
-        // va después.
-        $this->call(ZonasSeeder::class);
+        // ADR 0045: departamentos y provincias oficiales de Bolivia (INE), de solo lectura.
+        $this->call(UbicacionesSeeder::class);
+        // Marketplace (ADR 0028 y 0036): el proveedor propio (Agrocom).
         $this->call(ProveedorPropioSeeder::class);
     }
 }

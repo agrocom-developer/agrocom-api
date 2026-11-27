@@ -146,7 +146,7 @@ test('los ejemplos cubren las operaciones que las apps necesitan', function () {
         // Sincronización del lote (piloto).
         'obtenerCatalogoSincronizacion', 'sincronizarLote', 'subirEvidencia',
         // Negociación: mapa de abiertas, ofertas y contraofertas (requieren red).
-        'listarSolicitudesAbiertas', 'resumenZonasAbiertas', 'verSolicitudAbierta', 'ofertarSolicitud', 'compararOfertas',
+        'listarSolicitudesAbiertas', 'verSolicitudAbierta', 'ofertarSolicitud', 'compararOfertas',
         'listarOfertas', 'verOferta', 'contraofertarOferta', 'aceptarOferta', 'verReputacion', 'cambiarPrecioSolicitud',
         // Ejecución: avance con fotos, ubicación del piloto y chat.
         'iniciarServicio', 'registrarAvance', 'cerrarServicio', 'verAvance', 'subirEvidenciaDeSolicitud',

@@ -3,7 +3,7 @@
     "descripcion": "Pull incremental desde el cursor: sin cambios, listas vacías.",
     "peticion": {
         "metodo": "GET",
-        "ruta": "/api/sync/catalogo?desde=eyJwZXJzb25hcyI6eyJ1IjoiMjAyNi0xMS0yNlQyMDo0MDo1NyswMDowMCIsImlkIjo1fSwic2VydmljaW9zX2FzaWduYWRvcyI6eyJ1IjoiMjAyNi0xMS0yNlQxODo0MDo1NyswMDowMCIsImlkIjoxMH0sInNlcnZpY2lvc19yZXRpcmFkb3MiOnsidSI6IjIwMjYtMTEtMjZUMjA6NDE6MDcrMDA6MDAiLCJpZCI6MH19",
+        "ruta": "/api/sync/catalogo?desde=eyJwZXJzb25hcyI6eyJ1IjoiMjAyNi0xMS0yNlQyMjowOTozNiswMDowMCIsImlkIjo1fSwic2VydmljaW9zX2FzaWduYWRvcyI6eyJ1IjoiMjAyNi0xMS0yNlQyMDowOTozNyswMDowMCIsImlkIjoxMH0sInNlcnZpY2lvc19yZXRpcmFkb3MiOnsidSI6IjIwMjYtMTEtMjZUMjI6MDk6NDQrMDA6MDAiLCJpZCI6MH19",
         "autenticada": true
     },
     "respuesta": {
@@ -21,7 +21,7 @@
                 "velocidad_vuelo_kmh": null,
                 "ancho_pasada_m": null
             },
-            "cursor": "eyJwZXJzb25hcyI6eyJ1IjoiMjAyNi0xMS0yNlQyMDo0MDo1NyswMDowMCIsImlkIjo1fSwic2VydmljaW9zX2FzaWduYWRvcyI6eyJ1IjoiMjAyNi0xMS0yNlQxODo0MDo1NyswMDowMCIsImlkIjoxMH0sInNlcnZpY2lvc19yZXRpcmFkb3MiOnsidSI6IjIwMjYtMTEtMjZUMjA6NDE6MDcrMDA6MDAiLCJpZCI6MH19"
+            "cursor": "eyJwZXJzb25hcyI6eyJ1IjoiMjAyNi0xMS0yNlQyMjowOTozNiswMDowMCIsImlkIjo1fSwic2VydmljaW9zX2FzaWduYWRvcyI6eyJ1IjoiMjAyNi0xMS0yNlQyMDowOTozNyswMDowMCIsImlkIjoxMH0sInNlcnZpY2lvc19yZXRpcmFkb3MiOnsidSI6IjIwMjYtMTEtMjZUMjI6MDk6NDQrMDA6MDAiLCJpZCI6MH19"
         }
     }
 }

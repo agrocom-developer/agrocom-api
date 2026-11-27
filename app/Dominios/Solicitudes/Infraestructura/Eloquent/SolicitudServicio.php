@@ -50,6 +50,10 @@ use Illuminate\Support\Carbon;
  * @property int|null $equipo_id
  * @property Carbon|null $publicada_en
  * @property string|null $motivo_cancelacion
+ * @property string|null $departamento_codigo Ubicación congelada al publicar (ADR 0045, punto 3).
+ * @property string|null $provincia_codigo
+ * @property string|null $municipio
+ * @property string|null $comunidad
  * @property ActorSolicitud|null $cancelada_por
  * @property-read Terreno $terreno
  * @property-read Cliente $cliente

@@ -37,7 +37,7 @@ use Throwable;
 final class CascaraPanel
 {
     /** Tope de avisos que muestra la campana. */
-    private const MAXIMO_EN_CAMPANA = 10;
+    private const MAXIMO_EN_CAMPANA = 3;
 
     public function __construct(
         private readonly ObtenerMenuPorRolActivo $obtenerMenu,

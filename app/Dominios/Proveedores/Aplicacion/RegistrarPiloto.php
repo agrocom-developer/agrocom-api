@@ -9,7 +9,11 @@ use App\Dominios\Proveedores\Dominio\TipoProveedor;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Piloto;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Proveedor;
 use App\Dominios\Seguridad\Contratos\CuentaDuplicada;
+use App\Dominios\Seguridad\Contratos\CuentaYaRegistrada;
+use App\Dominios\Seguridad\Contratos\DatosDePersona;
 use App\Dominios\Seguridad\Contratos\RegistroCuentas;
+use App\Dominios\Seguridad\Contratos\ReglasDeContacto;
+use App\Dominios\Seguridad\Contratos\TipoCuenta;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -27,10 +31,11 @@ final class RegistrarPiloto
     ) {}
 
     /**
-     * @param  array{nombre: string, username: string, email: ?string, password: string, licencia_numero: string, licencia_vence: string, categoria_habilitacion: string}  $datos
+     * @param  array{nombre: string, username: string, email: ?string, password: string, licencia_numero: string, licencia_vence: string, categoria_habilitacion: string, telefono?: ?string, documento_tipo?: ?string, documento_numero?: ?string, nombres?: ?string, apellidos?: ?string, fecha_nacimiento?: ?string}  $datos
      *
      * @throws RegistroInvalido si la cuenta no es titular de un proveedor, el proveedor no admite altas o es independiente.
      * @throws CuentaDuplicada si el `username` o el `email` ya existen.
+     * @throws CuentaYaRegistrada si el teléfono o el documento ya tienen una cuenta de proveedor.
      */
     public function ejecutar(int $actorUsuarioId, array $datos): Piloto
     {
@@ -43,10 +48,11 @@ final class RegistrarPiloto
      * El alta que carga la oficina desde el panel: el mismo registro, sobre un proveedor
      * elegido por su id y con quien lo carga como autor.
      *
-     * @param  array{nombre: string, username: string, email: ?string, password: string, licencia_numero: string, licencia_vence: string, categoria_habilitacion: string}  $datos
+     * @param  array{nombre: string, username: string, email: ?string, password: string, licencia_numero: string, licencia_vence: string, categoria_habilitacion: string, telefono?: ?string, documento_tipo?: ?string, documento_numero?: ?string, nombres?: ?string, apellidos?: ?string, fecha_nacimiento?: ?string}  $datos
      *
      * @throws RegistroInvalido si el proveedor no existe, no admite altas o es independiente.
      * @throws CuentaDuplicada si el `username` o el `email` ya existen.
+     * @throws CuentaYaRegistrada si el teléfono o el documento ya tienen una cuenta de proveedor.
      */
     public function ejecutarParaProveedor(int $proveedorId, int $registradoPor, array $datos): Piloto
     {
@@ -55,7 +61,7 @@ final class RegistrarPiloto
         return $this->registrarEn($proveedor, $registradoPor, $datos);
     }
 
-    /** @param  array{nombre: string, username: string, email: ?string, password: string, licencia_numero: string, licencia_vence: string, categoria_habilitacion: string}  $datos */
+    /** @param  array{nombre: string, username: string, email: ?string, password: string, licencia_numero: string, licencia_vence: string, categoria_habilitacion: string, telefono?: ?string, documento_tipo?: ?string, documento_numero?: ?string, nombres?: ?string, apellidos?: ?string, fecha_nacimiento?: ?string}  $datos */
     private function registrarEn(Proveedor $proveedor, int $actorUsuarioId, array $datos): Piloto
     {
         if ($proveedor->tipo === TipoProveedor::Independiente) {
@@ -67,7 +73,13 @@ final class RegistrarPiloto
         }
 
         return DB::transaction(function () use ($proveedor, $datos, $actorUsuarioId): Piloto {
-            $usuarioId = $this->cuentas->crear($datos['nombre'], $datos['username'], $datos['email'] ?? null, $datos['password'], ['piloto']);
+            // Teléfono y persona del piloto (ADR 0046): opcionales hasta que la app los envíe (TRANSITORIO).
+            $telefono = ReglasDeContacto::telefono($datos['telefono'] ?? null);
+            $persona = ! empty($datos['documento_numero']) && ! empty($datos['nombres']) && ! empty($datos['apellidos'])
+                ? new DatosDePersona($datos['documento_tipo'] ?? 'ci', $datos['documento_numero'], $datos['nombres'], $datos['apellidos'], $datos['fecha_nacimiento'] ?? null)
+                : null;
+
+            $usuarioId = $this->cuentas->crear($datos['nombre'], $datos['username'], $datos['email'] ?? null, $datos['password'], TipoCuenta::Proveedor, ['piloto'], $telefono, $persona);
 
             return $this->estados->registrarPiloto([
                 'proveedor_id' => $proveedor->id,

@@ -17,8 +17,7 @@
     - $usuario (SecUser|null): null en alta; el modelo en edición.
     - $rolesAsignados (list<int>): ids de rol ya asignados (solo edición).
     - $rolesDisponibles (Collection<int, SecRole>): opciones del selector de
-      roles, ya sin "dueño" si el actor no tiene `asignar_rol_dueno`.
-    - $personasDisponibles (Collection<int, string>): id => nombre.
+      roles del panel, ya sin `administrador` si el actor no tiene `asignar_rol_administrador`.
     - $clientesDisponibles (Collection<int, string>): id => razón social —
       SOLO filtra el select de contrato, no viaja como columna propia (mismo
       criterio que `cliente_id` en `lotes/_formulario.blade.php`).
@@ -57,7 +56,6 @@
     $name = old('name', $usuario?->name ?? '');
     $username = old('username', $usuario?->username ?? '');
     $email = old('email', $usuario?->email ?? '');
-    $personaId = old('persona_id', $usuario?->persona_id ?? '');
     $rolesSeleccionados = array_map('strval', old('roles', $rolesAsignados ?? []));
     $opcionesRoles = $rolesDisponibles->mapWithKeys(fn ($rol) => [
         $rol->id => \App\Dominios\Seguridad\Infraestructura\Http\Presentacion\PresentadorRol::nombreLegible($rol),
@@ -91,7 +89,7 @@
         </x-molecules.alert-strip>
     @endif
 
-    {{-- Los casos de uso rechazan un usuario o una persona duplicados con este
+    {{-- Los casos de uso rechazan un usuario o un correo duplicados con este
          error y el controlador vuelve al formulario: sin pintarlo, guardar no
          mostraba nada. --}}
     @if ($errors->has('estado'))
@@ -163,31 +161,22 @@
 
         <x-molecules.form-section
             :title="__('seguridad.usuarios.seccion_interno')"
-            :count="__('seguridad.usuarios.campos_contador', ['cantidad' => 2])"
+            :count="__('seguridad.usuarios.campos_contador', ['cantidad' => 1])"
             data-ag-usuario-seccion-interno
             :hidden="$esCliente"
         >
-            <x-atoms.select
-                name="persona_id"
-                id="persona_id"
-                :label="__('seguridad.usuarios.campo_persona')"
-                :options="$personasDisponibles"
-                :value="$personaId"
-                :placeholder="__('seguridad.usuarios.campo_persona_placeholder')"
-                :error="$errors->first('persona_id')"
-                :disabled="$esCliente"
-            />
-
-            <x-atoms.checkbox-group
-                name="roles"
+            {{-- Una cuenta de panel tiene un solo rol (ADR 0046): radios, y `roles[]` viaja con un solo valor. --}}
+            <x-atoms.radio-group
+                name="roles[]"
                 id="roles"
                 :label="__('seguridad.usuarios.campo_roles')"
                 :options="$opcionesRoles"
-                :value="$rolesSeleccionados"
+                :value="$rolesSeleccionados[0] ?? null"
                 :help="__('seguridad.usuarios.campo_roles_ayuda')"
-                :error="$errors->first('roles')"
+                :error="$errors->first('roles') ?: $errors->first('roles.0')"
                 class="ag-form-section__field--full"
                 :disabled="$esCliente"
+                required
             />
         </x-molecules.form-section>
 

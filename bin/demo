@@ -171,7 +171,7 @@ levantar_api() {
 
     local i
     for i in $(seq 1 40); do
-        curl -fs -o /dev/null "http://127.0.0.1:${PUERTO}/api/zonas" && return 0
+        curl -fs -o /dev/null "http://127.0.0.1:${PUERTO}/api/catalogos/ubicaciones" && return 0
         api_corriendo || { tail -n 20 "$LOG_API" >&2; falla "la API se detuvo al arrancar"; }
         sleep 0.5
     done

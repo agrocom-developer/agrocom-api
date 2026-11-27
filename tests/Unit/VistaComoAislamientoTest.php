@@ -38,8 +38,7 @@ use Tests\TestCase;
  *   3. La vista se revalida en cada request: si deja de valer, se cierra.
  *   4. Solo lectura con el middleware real: una escritura colada en un GET falla
  *      cerrado y el estado del request se restaura.
- *   5. La vista de una cuenta de portal y la del panel no se mezclan: una no
- *      recorre las rutas de la otra.
+ *   5. Una vista no deja cambiar de rol (cambiarlo es escribir).
  *   6. Toda ruta con sesión pasa por el middleware, en el orden correcto —el
  *      barrido que garantiza que ninguna ruta de escritura escape al rechazo—.
  */
@@ -64,6 +63,7 @@ function vistaComoEsquema(): void
     $migraciones = [
         'create_plt_bitacoras_table',
         'create_sec_user_table',
+        'agrega_tipo_cuenta_a_sec_user',
         'create_sec_role_table',
         'create_sec_permission_table',
         'create_sec_role_permission_table',
@@ -131,6 +131,8 @@ function vistaComoCuenta(TipoUsuario $tipo, array $roles = [], array $extra = []
         'username' => "cuenta.{$secuencia}",
         'password' => 'no-se-usa',
         'type' => $tipo->value,
+        // Cliente = cuenta de app (ADR 0046); interno = cuenta de panel.
+        'tipo_cuenta' => $tipo === TipoUsuario::Cliente ? 'cliente' : 'panel',
         'state' => true,
         'created_at' => $ahora,
         'updated_at' => $ahora,
@@ -144,10 +146,18 @@ function vistaComoCuenta(TipoUsuario $tipo, array $roles = [], array $extra = []
     return SecUser::withTrashed()->findOrFail($id);
 }
 
-/** El administrador de plataforma: interno, con un rol que sí tiene `ver_como`. */
+/** Una cuenta de panel que se puede mirar: habilitada y con un rol vivo (`operador`). */
+function vistaComoObservada(array $extra = []): SecUser
+{
+    $rol = DB::table('sec_role')->where('name', 'operador')->value('id') ?? vistaComoRol('operador');
+
+    return vistaComoCuenta(TipoUsuario::Interno, [(int) $rol], $extra);
+}
+
+/** El administrador: cuenta de panel con un rol que sí tiene `ver_como`. */
 function vistaComoAdministrador(): array
 {
-    $rol = vistaComoRol('admin_plataforma', [VISTA_COMO_PERMISO]);
+    $rol = vistaComoRol('administrador', [VISTA_COMO_PERMISO]);
     $admin = vistaComoCuenta(TipoUsuario::Interno, [$rol]);
 
     // Como en una sesión real: el guard `interno` es el administrador y su rol activo está fijado.
@@ -191,9 +201,9 @@ afterEach(function () {
 
 // --- 1. Bitácora: entrada Y salida, a nombre del administrador real ------------------------
 
-it('la entrada y la salida de una vista quedan en la bitácora, ambas a nombre del administrador real', function () {
+it('la entrada y la salida de una vista quedan en la bitácora, ambas a nombre del administrador', function () {
     [$admin, $rolAdmin] = vistaComoAdministrador();
-    $cliente = vistaComoCuenta(TipoUsuario::Cliente);
+    $cliente = vistaComoObservada();
 
     $vista = (new IniciarVistaComo)->ejecutar($admin, $rolAdmin, $cliente->id, null);
 
@@ -206,7 +216,7 @@ it('la entrada y la salida de una vista quedan en la bitácora, ambas a nombre d
     // Quién iba de verdad, a quién vio y bajo qué tipo: la entrada.
     expect($entrada->accion)->toBe(AccionBitacora::Creado)
         ->and($entrada->user_id)->toBe($admin->id)
-        ->and($entrada->despues)->toMatchArray(['admin_id' => $admin->id, 'usuario_id' => $cliente->id, 'tipo' => 'cliente'])
+        ->and($entrada->despues)->toMatchArray(['admin_id' => $admin->id, 'usuario_id' => $cliente->id, 'tipo' => 'interno'])
         ->and($entrada->despues['iniciada_at'] ?? null)->not->toBeNull();
 
     // Cuándo volvió y cómo: la salida, un cambio de nulo a fecha y motivo.
@@ -222,7 +232,7 @@ it('la entrada y la salida de una vista quedan en la bitácora, ambas a nombre d
 
 it('la salida devuelve al administrador el rol activo con el que entró y borra la bandera', function () {
     [$admin, $rolAdmin] = vistaComoAdministrador();
-    $rolJefe = vistaComoRol('jefe_campo');
+    $rolJefe = vistaComoRol('operador');
     $jefe = vistaComoCuenta(TipoUsuario::Interno, [$rolJefe]);
 
     $vista = (new IniciarVistaComo)->ejecutar($admin, $rolAdmin, $jefe->id, null);
@@ -240,7 +250,7 @@ it('la salida devuelve al administrador el rol activo con el que entró y borra 
 
 it('una vista se cierra una sola vez: cerrarla de nuevo no escribe una segunda salida', function () {
     [$admin, $rolAdmin] = vistaComoAdministrador();
-    $cliente = vistaComoCuenta(TipoUsuario::Cliente);
+    $cliente = vistaComoObservada();
 
     $vista = (new IniciarVistaComo)->ejecutar($admin, $rolAdmin, $cliente->id, null);
     app(TerminarVistaComo::class)->ejecutar($vista, MotivoFinVistaComo::Manual);
@@ -254,7 +264,7 @@ it('una vista se cierra una sola vez: cerrarla de nuevo no escribe una segunda s
 
 it('no se cierra una vista con el guard interno siendo otra persona: la salida quedaría firmada por quien no la hizo', function () {
     [$admin, $rolAdmin] = vistaComoAdministrador();
-    $cliente = vistaComoCuenta(TipoUsuario::Cliente);
+    $cliente = vistaComoObservada();
     $vista = (new IniciarVistaComo)->ejecutar($admin, $rolAdmin, $cliente->id, null);
 
     Auth::guard('interno')->setUser(vistaComoCuenta(TipoUsuario::Interno));
@@ -268,11 +278,11 @@ it('no se cierra una vista con el guard interno siendo otra persona: la salida q
 // --- 2. Quién puede abrirla ------------------------------------------------------------
 
 it('sin el permiso en el rol activo no se abre nada: ni fila, ni bandera, ni bitácora', function () {
-    $rolSinPermiso = vistaComoRol('dueno');
-    $dueno = vistaComoCuenta(TipoUsuario::Interno, [$rolSinPermiso]);
-    $cliente = vistaComoCuenta(TipoUsuario::Cliente);
+    $rolSinPermiso = vistaComoRol('operador');
+    $operador = vistaComoCuenta(TipoUsuario::Interno, [$rolSinPermiso]);
+    $observada = vistaComoCuenta(TipoUsuario::Interno, [vistaComoRol('un_rol')]);
 
-    expect(fn () => (new IniciarVistaComo)->ejecutar($dueno, $rolSinPermiso, $cliente->id, null))
+    expect(fn () => (new IniciarVistaComo)->ejecutar($operador, $rolSinPermiso, $observada->id, null))
         ->toThrow(PermisoDenegado::class);
 
     expect(SecVistaComo::query()->count())->toBe(0)
@@ -281,10 +291,10 @@ it('sin el permiso en el rol activo no se abre nada: ni fila, ni bandera, ni bit
 });
 
 it('el permiso se evalúa contra el rol activo, no contra la unión de los roles del usuario', function () {
-    $rolConPermiso = vistaComoRol('admin_plataforma', [VISTA_COMO_PERMISO]);
-    $rolSinPermiso = vistaComoRol('encargado_operaciones');
+    $rolConPermiso = vistaComoRol('administrador', [VISTA_COMO_PERMISO]);
+    $rolSinPermiso = vistaComoRol('operador');
     $usuario = vistaComoCuenta(TipoUsuario::Interno, [$rolConPermiso, $rolSinPermiso]);
-    $cliente = vistaComoCuenta(TipoUsuario::Cliente);
+    $cliente = vistaComoObservada();
 
     // Con el rol que no lo tiene como activo: denegado, aunque el OTRO rol sí lo tenga.
     expect(fn () => (new IniciarVistaComo)->ejecutar($usuario, $rolSinPermiso, $cliente->id, null))
@@ -295,22 +305,33 @@ it('el permiso se evalúa contra el rol activo, no contra la unión de los roles
 });
 
 it('un rol activo que el usuario no tiene asignado no sirve, aunque ese rol tenga el permiso', function () {
-    $rolAjeno = vistaComoRol('admin_plataforma', [VISTA_COMO_PERMISO]);
+    $rolAjeno = vistaComoRol('administrador', [VISTA_COMO_PERMISO]);
     $usuario = vistaComoCuenta(TipoUsuario::Interno, [vistaComoRol('piloto')]);
-    $cliente = vistaComoCuenta(TipoUsuario::Cliente);
+    $cliente = vistaComoObservada();
 
     expect(fn () => (new IniciarVistaComo)->ejecutar($usuario, $rolAjeno, $cliente->id, null))
         ->toThrow(PermisoDenegado::class);
 });
 
-it('una cuenta de portal no puede abrir una vista aunque su id llegue al caso de uso', function () {
-    $rol = vistaComoRol('admin_plataforma', [VISTA_COMO_PERMISO]);
+it('una cuenta de app no puede abrir una vista aunque su id llegue al caso de uso', function () {
+    $rol = vistaComoRol('administrador', [VISTA_COMO_PERMISO]);
     $cliente = vistaComoCuenta(TipoUsuario::Cliente, [$rol], []);
-    $otro = vistaComoCuenta(TipoUsuario::Cliente);
+    $otra = vistaComoObservada();
 
-    expect(fn () => (new IniciarVistaComo)->ejecutar($cliente, $rol, $otro->id, null))
+    expect(fn () => (new IniciarVistaComo)->ejecutar($cliente, $rol, $otra->id, null))
         ->toThrow(PermisoDenegado::class);
 });
+
+it('«ver como» solo se abre sobre cuentas de panel: una de cliente o de proveedor no se puede mirar', function (string $tipoCuenta) {
+    [$admin, $rolAdmin] = vistaComoAdministrador();
+    $deApp = vistaComoCuenta(TipoUsuario::Interno, [vistaComoRol('piloto')], ['tipo_cuenta' => $tipoCuenta]);
+
+    expect(fn () => (new IniciarVistaComo)->ejecutar($admin, $rolAdmin, $deApp->id, null))
+        ->toThrow(VistaComoNoPermitida::class);
+
+    expect(SecVistaComo::query()->count())->toBe(0)
+        ->and(Session::has(VistaComoActiva::CLAVE_SESION))->toBeFalse();
+})->with(['cliente', 'proveedor']);
 
 it('hay cuentas que no se pueden mirar', function (string $caso, Closure $preparar) {
     [$admin, $rolAdmin] = vistaComoAdministrador();
@@ -323,17 +344,18 @@ it('hay cuentas que no se pueden mirar', function (string $caso, Closure $prepar
 })->with([
     'la propia' => ['propia', fn (SecUser $admin) => [$admin->id, null, null]],
     'una que no existe' => ['inexistente', fn () => [99999, null, null]],
-    'una bloqueada' => ['bloqueada', fn () => [vistaComoCuenta(TipoUsuario::Cliente, [], ['state' => false])->id, null, null]],
-    'una dada de baja' => ['baja', fn () => [vistaComoCuenta(TipoUsuario::Cliente, [], ['deleted_at' => now()])->id, null, null]],
+    'una bloqueada' => ['bloqueada', fn () => [vistaComoObservada(['state' => false])->id, null, null]],
+    'una dada de baja' => ['baja', fn () => [vistaComoObservada(['deleted_at' => now()])->id, null, null]],
+    'una de cliente' => ['de cliente', fn () => [vistaComoCuenta(TipoUsuario::Cliente)->id, null, null]],
     'una interna sin roles' => ['sin roles', fn () => [vistaComoCuenta(TipoUsuario::Interno)->id, null, null]],
     'una interna con dos roles sin elegir uno' => ['dos roles', fn () => [vistaComoCuenta(TipoUsuario::Interno, [vistaComoRol('piloto'), vistaComoRol('proveedor')])->id, null, null]],
-    'una interna bajo un rol que no tiene' => ['rol ajeno', fn () => [vistaComoCuenta(TipoUsuario::Interno, [vistaComoRol('piloto')])->id, vistaComoRol('dueno'), null]],
+    'una interna bajo un rol que no tiene' => ['rol ajeno', fn () => [vistaComoCuenta(TipoUsuario::Interno, [vistaComoRol('piloto')])->id, vistaComoRol('operador'), null]],
 ]);
 
 it('no se abre una segunda vista mientras hay una abierta', function () {
     [$admin, $rolAdmin] = vistaComoAdministrador();
-    $primero = vistaComoCuenta(TipoUsuario::Cliente);
-    $segundo = vistaComoCuenta(TipoUsuario::Cliente);
+    $primero = vistaComoObservada();
+    $segundo = vistaComoObservada();
 
     (new IniciarVistaComo)->ejecutar($admin, $rolAdmin, $primero->id, null);
 
@@ -347,14 +369,14 @@ it('no se abre una segunda vista mientras hay una abierta', function () {
 
 it('si la cuenta observada se bloquea a mitad de la vista, el request no sigue como ella: la vista se cierra', function () {
     [$admin, $rolAdmin] = vistaComoAdministrador();
-    $cliente = vistaComoCuenta(TipoUsuario::Cliente);
+    $cliente = vistaComoObservada();
     $vista = (new IniciarVistaComo)->ejecutar($admin, $rolAdmin, $cliente->id, null);
 
     DB::table('sec_user')->where('id', $cliente->id)->update(['state' => false]);
 
     $llegoAlControlador = false;
     $respuesta = app(AplicarVistaComo::class)->handle(
-        vistaComoPeticion('GET', '/portal/actas', 'portal.actas.index'),
+        vistaComoPeticion('GET', '/panel/solicitudes', 'panel.solicitudes.index'),
         function () use (&$llegoAlControlador) {
             $llegoAlControlador = true;
 
@@ -366,19 +388,18 @@ it('si la cuenta observada se bloquea a mitad de la vista, el request no sigue c
         ->and($respuesta->isRedirect())->toBeTrue()
         ->and(Session::has(VistaComoActiva::CLAVE_SESION))->toBeFalse()
         ->and(SecVistaComo::query()->findOrFail($vista->registroId)->motivo_fin)->toBe(MotivoFinVistaComo::Invalidada)
-        ->and(Auth::guard('cliente')->user())->toBeNull()
         ->and(Auth::guard('interno')->id())->toBe($admin->id);
 });
 
 it('si al administrador le quitan el permiso a mitad de la vista, se cierra igual', function () {
     [$admin, $rolAdmin] = vistaComoAdministrador();
-    $cliente = vistaComoCuenta(TipoUsuario::Cliente);
+    $cliente = vistaComoObservada();
     $vista = (new IniciarVistaComo)->ejecutar($admin, $rolAdmin, $cliente->id, null);
 
     DB::table('sec_role_permission')->where('id_role', $rolAdmin)->update(['deleted_at' => now()]);
 
     app(AplicarVistaComo::class)->handle(
-        vistaComoPeticion('GET', '/portal/actas', 'portal.actas.index'),
+        vistaComoPeticion('GET', '/panel/solicitudes', 'panel.solicitudes.index'),
         fn () => response('no debería verse'),
     );
 
@@ -387,7 +408,7 @@ it('si al administrador le quitan el permiso a mitad de la vista, se cierra igua
 
 it('una bandera de otro administrador no sustituye a nadie ni escribe a su nombre', function () {
     [$admin, $rolAdmin] = vistaComoAdministrador();
-    $cliente = vistaComoCuenta(TipoUsuario::Cliente);
+    $cliente = vistaComoObservada();
     (new IniciarVistaComo)->ejecutar($admin, $rolAdmin, $cliente->id, null);
 
     // La sesión autenticada pasa a ser de otra persona, con la bandera colgada.
@@ -396,15 +417,16 @@ it('una bandera de otro administrador no sustituye a nadie ni escribe a su nombr
 
     $dentro = null;
     app(AplicarVistaComo::class)->handle(
-        vistaComoPeticion('GET', '/portal/actas', 'portal.actas.index'),
+        vistaComoPeticion('GET', '/panel/solicitudes', 'panel.solicitudes.index'),
         function (Request $peticion) use (&$dentro) {
-            $dentro = $peticion->user('cliente');
+            $dentro = $peticion->user('interno');
 
             return response('ok');
         },
     );
 
-    expect($dentro)->toBeNull()
+    // No se sustituyó a nadie: el request sigue con la cuenta autenticada (la del intruso).
+    expect($dentro?->id)->toBe($intruso->id)
         ->and(Session::has(VistaComoActiva::CLAVE_SESION))->toBeFalse()
         ->and(SecVistaComo::query()->count())->toBe(1)
         ->and(SecVistaComo::query()->first()->finalizada_at)->toBeNull();
@@ -414,7 +436,7 @@ it('una bandera de otro administrador no sustituye a nadie ni escribe a su nombr
 
 it('una escritura colada en un GET falla cerrado, no queda guardada y el request se restaura', function () {
     [$admin, $rolAdmin] = vistaComoAdministrador();
-    $rolJefe = vistaComoRol('jefe_campo');
+    $rolJefe = vistaComoRol('operador');
     $jefe = vistaComoCuenta(TipoUsuario::Interno, [$rolJefe]);
     (new IniciarVistaComo)->ejecutar($admin, $rolAdmin, $jefe->id, null);
 
@@ -453,31 +475,27 @@ it('una escritura colada en un GET falla cerrado, no queda guardada y el request
         ->and(Auth::guard('interno')->id())->toBe($admin->id);
 });
 
-// --- 5. La vista de una cuenta de portal y la del panel no se mezclan ---------------------------
+// --- 5. Una vista no deja cambiar de rol ---------------------------------------------------------
 
-it('una vista de portal no deja recorrer el panel, y una del panel no deja entrar al portal', function () {
+it('una vista de panel no deja usar el selector de rol y sí recorrer el resto del panel', function () {
     [$admin, $rolAdmin] = vistaComoAdministrador();
-    $cliente = vistaComoCuenta(TipoUsuario::Cliente);
-    $jefe = vistaComoCuenta(TipoUsuario::Interno, [vistaComoRol('jefe_campo')]);
+    $observada = vistaComoObservada();
 
-    (new IniciarVistaComo)->ejecutar($admin, $rolAdmin, $cliente->id, null);
+    (new IniciarVistaComo)->ejecutar($admin, $rolAdmin, $observada->id, null);
 
     $respuesta = app(AplicarVistaComo::class)->handle(
-        vistaComoPeticion('GET', '/panel/usuarios', 'panel.usuarios.index'),
-        fn () => response('pantalla propia del administrador'),
+        vistaComoPeticion('GET', '/panel/rol-activo', 'panel.rol-activo.mostrar'),
+        fn () => response('selector de rol'),
     );
 
     expect($respuesta->isRedirect())->toBeTrue();
 
-    app(TerminarVistaComo::class)->ejecutar(VistaComoActiva::desdeSesion(Session::get(VistaComoActiva::CLAVE_SESION)), MotivoFinVistaComo::Manual);
-    (new IniciarVistaComo)->ejecutar($admin, $rolAdmin, $jefe->id, null);
-
     $respuesta = app(AplicarVistaComo::class)->handle(
-        vistaComoPeticion('GET', '/portal/actas', 'portal.actas.index'),
-        fn () => response('portal'),
+        vistaComoPeticion('GET', '/panel/solicitudes', 'panel.solicitudes.index'),
+        fn () => response('pantalla del panel'),
     );
 
-    expect($respuesta->isRedirect())->toBeTrue();
+    expect($respuesta->isRedirect())->toBeFalse();
 });
 
 // --- 6. Ninguna ruta con sesión escapa al middleware ---------------------------------------------

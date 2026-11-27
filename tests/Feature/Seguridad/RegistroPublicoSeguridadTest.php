@@ -72,10 +72,10 @@ it('responde 401 sin token a la gestión del proveedor', function () {
     $this->getJson('/api/notificaciones')->assertStatus(401);
 });
 
-it('deja el catálogo de zonas como lectura pública con límite propio', function () {
-    $ruta = collect(Route::getRoutes()->getRoutes())->first(fn ($r) => $r->uri() === 'api/zonas');
+it('ya no publica un catálogo de zonas ni su resumen: el mercado no tiene zonas (ADR 0045)', function () {
+    $rutas = collect(Route::getRoutes()->getRoutes());
 
-    expect($ruta)->not->toBeNull()
-        ->and($ruta->methods())->not->toContain('POST')
-        ->and($ruta->gatherMiddleware())->toContain('throttle:60,1');
+    expect($rutas->first(fn ($r) => $r->uri() === 'api/zonas'))->toBeNull()
+        ->and($rutas->first(fn ($r) => $r->uri() === 'api/solicitudes-abiertas/resumen-zonas'))->toBeNull()
+        ->and($rutas->first(fn ($r) => str_starts_with((string) $r->getName(), 'panel.zonas.')))->toBeNull();
 });

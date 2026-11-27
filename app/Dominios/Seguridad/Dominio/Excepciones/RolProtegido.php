@@ -61,9 +61,9 @@ final class RolProtegido extends DomainException
     }
 
     /**
-     * Permiso de plataforma (`PermisosReservados`) que se quiere otorgar a un
-     * rol que no es el de administrador de plataforma: quien lo tuviera
-     * podría, por ejemplo, ver como un dueño y leer sus contratos.
+     * Permiso reservado al administrador (`PermisosReservados`: usuarios,
+     * roles, configuración, «ver como», carga de verificación) que se quiere
+     * otorgar a otro rol: el operador nunca los tiene.
      */
     public static function porPermisoReservado(string $codigoPermiso, string $nombreRol): self
     {
@@ -87,5 +87,41 @@ final class RolProtegido extends DomainException
     public static function porSerElRolActivo(string $nombreRol): self
     {
         return new self(Texto::de('seguridad.errores.rol_protegido_es_rol_activo', ['rol' => $nombreRol]));
+    }
+
+    /** La matriz del administrador no se edita: tiene todos los permisos del panel. */
+    public static function porMatrizDelAdministrador(): self
+    {
+        return new self(Texto::de('seguridad.errores.rol_protegido_matriz_administrador'));
+    }
+
+    /** Los roles del panel son dos y fijos (ADR 0046, punto 4): no se crean ni se renombran. */
+    public static function porCatalogoFijo(): self
+    {
+        return new self(Texto::de('seguridad.errores.rol_protegido_catalogo_fijo'));
+    }
+
+    /** `administrador` y `operador` no se dan de baja. */
+    public static function porRolDelPanel(string $nombreRol): self
+    {
+        return new self(Texto::de('seguridad.errores.rol_protegido_rol_del_panel', ['rol' => $nombreRol]));
+    }
+
+    /** Una cuenta de panel tiene un solo rol, y es de ámbito panel. */
+    public static function porUnSoloRolDelPanel(): self
+    {
+        return new self(Texto::de('seguridad.errores.rol_protegido_un_solo_rol'));
+    }
+
+    /** Los permisos de las apps no son del panel: no se otorgan a un rol del panel. */
+    public static function porPermisoDeApp(string $codigoPermiso): self
+    {
+        return new self(Texto::de('seguridad.errores.rol_protegido_permiso_de_app', ['permiso' => $codigoPermiso]));
+    }
+
+    /** El panel no cambia el tipo ni el rol de una cuenta de app. */
+    public static function porCuentaDeApp(): self
+    {
+        return new self(Texto::de('seguridad.errores.rol_protegido_cuenta_de_app'));
     }
 }

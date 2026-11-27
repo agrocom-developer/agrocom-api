@@ -18,12 +18,15 @@
                 "referencias_acceso": "Camino vecinal, portón azul a 2 km de la ruta.",
                 "colindantes_sensibles": null,
                 "acceso_dificil": false,
-                "zona_id": null,
+                "departamento_codigo": "07",
+                "provincia_codigo": "0702",
+                "municipio": "Warnes",
+                "comunidad": "Los Álamos",
                 "fotos": [
                     {
                         "id": 1,
                         "descripcion": "Borde norte con maleza alta",
-                        "url": "/api/terrenos/fotos/1/archivo?expires=1795726566&signature=c408cea863e113b8b9661bd7dd8894102ea3e90592035831e5b7dfd49aca45cc"
+                        "url": "/api/terrenos/fotos/1/archivo?expires=1795731883&signature=6a9ba4a6bff32de5d6b35e0f0f031f6fb407afc50c4e1b50bc4d6411b8aa57cd"
                     }
                 ]
             }

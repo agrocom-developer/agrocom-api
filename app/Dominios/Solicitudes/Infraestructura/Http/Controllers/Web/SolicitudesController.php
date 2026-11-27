@@ -13,10 +13,9 @@ use App\Dominios\Solicitudes\Contratos\LecturaContextoSolicitudes;
 use App\Dominios\Solicitudes\Dominio\EstadoSolicitud;
 use App\Dominios\Solicitudes\Dominio\Excepciones\SolicitudInvalida;
 use App\Dominios\Solicitudes\Dominio\Excepciones\TransicionSolicitudNoPermitida;
+use App\Dominios\Solicitudes\Infraestructura\Eloquent\Departamento;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\SolicitudServicio;
-use App\Dominios\Solicitudes\Infraestructura\Eloquent\Zona;
 use App\Dominios\Solicitudes\Infraestructura\Http\Requests\CancelarSolicitudRequest;
-use App\Dominios\Solicitudes\Infraestructura\Http\Requests\GuardarZonaRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -51,13 +50,12 @@ final class SolicitudesController
 
         $busqueda = TextoDeFiltro::de($request, 'q');
         $estado = EstadoSolicitud::tryFrom(TextoDeFiltro::de($request, 'estado'));
-        $region = in_array(TextoDeFiltro::de($request, 'region'), GuardarZonaRequest::REGIONES, true) ? TextoDeFiltro::de($request, 'region') : null;
-        $zonaId = ctype_digit(TextoDeFiltro::de($request, 'zona')) ? (int) TextoDeFiltro::de($request, 'zona') : null;
+        $departamentos = Departamento::query()->orderBy('nombre')->pluck('nombre', 'codigo')->all();
+        $departamento = array_key_exists(TextoDeFiltro::de($request, 'departamento'), $departamentos) ? TextoDeFiltro::de($request, 'departamento') : null;
 
         $solicitudes = SolicitudServicio::query()
             ->with(['terreno:id,nombre', 'cliente:id,razon_social'])
-            ->when($region !== null, fn ($consulta) => $consulta->whereHas('terreno.zona', fn ($zona) => $zona->where('macrorregion', $region)))
-            ->when($zonaId !== null, fn ($consulta) => $consulta->whereHas('terreno', fn ($terreno) => $terreno->where('zona_id', $zonaId)))
+            ->when($departamento !== null, fn ($consulta) => $consulta->where('departamento_codigo', $departamento))
             ->when($estado !== null, fn ($consulta) => $consulta->where('estado', $estado->value))
             ->when($busqueda !== '', function ($consulta) use ($busqueda): void {
                 $consulta->where(function ($interna) use ($busqueda): void {
@@ -76,10 +74,9 @@ final class SolicitudesController
         return view('solicitudes::pages.solicitudes.index', [
             ...$this->autorizacion->cascara($request),
             'solicitudes' => $solicitudes,
-            'filtros' => ['q' => $busqueda, 'estado' => $estado?->value, 'region' => $region, 'zona' => $zonaId],
+            'filtros' => ['q' => $busqueda, 'estado' => $estado?->value, 'departamento' => $departamento],
             'estadosFiltro' => EstadoSolicitud::cases(),
-            'regionesFiltro' => GuardarZonaRequest::REGIONES,
-            'zonasFiltro' => Zona::query()->orderBy('nombre')->pluck('nombre', 'id')->all(),
+            'departamentosFiltro' => $departamentos,
         ]);
     }
 

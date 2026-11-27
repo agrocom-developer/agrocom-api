@@ -8,17 +8,12 @@ namespace App\Dominios\Notificaciones\Dominio;
  * cuentas es una sola clase (`Aplicacion/ResolverDestinatarios`, ADR 0025
  * punto 3):
  *
- * - `rol`: toda cuenta interna activa con ese rol asignado.
- * - `persona`: la cuenta vinculada a esa `per_personas.id`.
- * - `equipo`: los integrantes vigentes hoy de ese `per_equipos_trabajo.id`.
+ * - `rol`: toda cuenta de panel activa con ese rol asignado.
+ * - `usuario`: una cuenta concreta.
  */
 final readonly class Destinatario
 {
     public const string ROL = 'rol';
-
-    public const string PERSONA = 'persona';
-
-    public const string EQUIPO = 'equipo';
 
     public const string USUARIO = 'usuario';
 
@@ -32,11 +27,6 @@ final readonly class Destinatario
         return new self(self::ROL, $rol->value);
     }
 
-    public static function persona(int $personaId): self
-    {
-        return new self(self::PERSONA, $personaId);
-    }
-
     /**
      * Una cuenta concreta. Es la excepción al «nunca un `usuario_id` suelto» del
      * ADR 0025 (extensión del ADR 0036): en el marketplace quien emite el hecho
@@ -46,10 +36,5 @@ final readonly class Destinatario
     public static function usuario(int $usuarioId): self
     {
         return new self(self::USUARIO, $usuarioId);
-    }
-
-    public static function equipo(int $equipoTrabajoId): self
-    {
-        return new self(self::EQUIPO, $equipoTrabajoId);
     }
 }

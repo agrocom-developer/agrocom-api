@@ -32,9 +32,13 @@
                 "estado": "adjudicada",
                 "oferta_adjudicada_id": 18,
                 "proveedor_id": 2,
-                "publicada_en": "2026-11-26T20:41:06+00:00",
+                "publicada_en": "2026-11-26T22:09:43+00:00",
                 "motivo_cancelacion": null,
                 "cancelada_por": null,
+                "departamento_codigo": "07",
+                "provincia_codigo": "0702",
+                "municipio": "Warnes",
+                "comunidad": "Los Álamos",
                 "contacto": {
                     "id": 2,
                     "nombre": "Mario Suárez Rojas",
@@ -51,12 +55,15 @@
                     "referencias_acceso": "Camino vecinal, portón azul a 2 km de la ruta.",
                     "colindantes_sensibles": null,
                     "acceso_dificil": false,
-                    "zona_id": null,
+                    "departamento_codigo": "07",
+                    "provincia_codigo": "0702",
+                    "municipio": "Warnes",
+                    "comunidad": "Los Álamos",
                     "fotos": [
                         {
                             "id": 1,
                             "descripcion": "Borde norte con maleza alta",
-                            "url": "/api/terrenos/fotos/1/archivo?expires=1795726570&signature=e0de7f812f44235420db911c637f1cd38dd7c28b7fb9e545c77b4210c8d5bc45"
+                            "url": "/api/terrenos/fotos/1/archivo?expires=1795731885&signature=a58b64b3302fba449a0c02054ab6008f4424a39c19b413a5379ec8c040217039"
                         }
                     ]
                 },
@@ -66,28 +73,28 @@
                         "estado_nuevo": "borrador",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-26T20:41:06+00:00"
+                        "creado_en": "2026-11-26T22:09:43+00:00"
                     },
                     {
                         "estado_anterior": "borrador",
                         "estado_nuevo": "abierta",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-26T20:41:06+00:00"
+                        "creado_en": "2026-11-26T22:09:43+00:00"
                     },
                     {
                         "estado_anterior": "abierta",
                         "estado_nuevo": "con_ofertas",
                         "origen": "sistema",
                         "motivo": null,
-                        "creado_en": "2026-11-26T20:41:09+00:00"
+                        "creado_en": "2026-11-26T22:09:45+00:00"
                     },
                     {
                         "estado_anterior": "con_ofertas",
                         "estado_nuevo": "adjudicada",
                         "origen": "proveedor",
                         "motivo": null,
-                        "creado_en": "2026-11-26T20:41:09+00:00"
+                        "creado_en": "2026-11-26T22:09:45+00:00"
                     }
                 ]
             }

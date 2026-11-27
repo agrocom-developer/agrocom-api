@@ -1,6 +1,6 @@
 {
     "operationId": "publicarSolicitud",
-    "descripcion": "La deja abierta a ofertas: los pilotos la ven en el mapa y reciben el aviso de su zona.",
+    "descripcion": "La deja abierta a ofertas: los pilotos la ven en el mapa y reciben el aviso.",
     "peticion": {
         "metodo": "POST",
         "ruta": "/api/solicitudes/18/publicar",
@@ -32,9 +32,13 @@
                 "estado": "abierta",
                 "oferta_adjudicada_id": null,
                 "proveedor_id": null,
-                "publicada_en": "2026-11-26T20:41:06+00:00",
+                "publicada_en": "2026-11-26T22:09:43+00:00",
                 "motivo_cancelacion": null,
                 "cancelada_por": null,
+                "departamento_codigo": "07",
+                "provincia_codigo": "0702",
+                "municipio": "Warnes",
+                "comunidad": "Los Álamos",
                 "terreno": {
                     "id": 10,
                     "nombre": "Lote Los Álamos",
@@ -44,7 +48,10 @@
                     "referencias_acceso": "Camino vecinal, portón azul a 2 km de la ruta.",
                     "colindantes_sensibles": null,
                     "acceso_dificil": false,
-                    "zona_id": null
+                    "departamento_codigo": "07",
+                    "provincia_codigo": "0702",
+                    "municipio": "Warnes",
+                    "comunidad": "Los Álamos"
                 },
                 "historial": [
                     {
@@ -52,14 +59,14 @@
                         "estado_nuevo": "borrador",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-26T20:41:06+00:00"
+                        "creado_en": "2026-11-26T22:09:43+00:00"
                     },
                     {
                         "estado_anterior": "borrador",
                         "estado_nuevo": "abierta",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-26T20:41:06+00:00"
+                        "creado_en": "2026-11-26T22:09:43+00:00"
                     }
                 ]
             }

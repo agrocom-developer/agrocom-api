@@ -5,17 +5,15 @@ namespace App\Dominios\Seguridad\Infraestructura;
 use App\Dominios\Seguridad\Aplicacion\BuscarEnElPanel;
 use App\Dominios\Seguridad\Aplicacion\GestionarFotoDePerfil;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
-use App\Dominios\Seguridad\Contratos\AutorizacionPortalCliente;
 use App\Dominios\Seguridad\Contratos\FotosDePerfil;
 use App\Dominios\Seguridad\Contratos\IdentidadOperarioToken;
 use App\Dominios\Seguridad\Contratos\LecturaCuentas;
-use App\Dominios\Seguridad\Contratos\LecturaUsuarioDePersona;
 use App\Dominios\Seguridad\Contratos\LecturaUsuariosPorRol;
 use App\Dominios\Seguridad\Contratos\RegistroCuentas;
+use App\Dominios\Seguridad\Dominio\NumeroDeTelefono;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecTokenDispositivo;
-use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioInterno;
+use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioApp;
 use App\Dominios\Seguridad\Infraestructura\Http\AutorizacionPanelWebSesion;
-use App\Dominios\Seguridad\Infraestructura\Http\AutorizacionPortalClienteSesion;
 use App\Dominios\Seguridad\Infraestructura\Http\IdentidadOperarioTokenSanctum;
 use App\Dominios\Seguridad\Infraestructura\Http\Middleware\ResolverRolActivo;
 use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\PermisoVista;
@@ -62,19 +60,10 @@ final class SeguridadServiceProvider extends ServiceProvider
         // importa `SecUser` — pide el permiso/la cáscara por acá.
         $this->app->bind(AutorizacionPanelWeb::class, AutorizacionPanelWebSesion::class);
 
-        // Misma frontera, para el portal del cliente (HU-41, tarea 55):
-        // `Portal` necesita el `contrato_id` de la sesión sin importar
-        // `SecUser`/`SecUsuarioCliente`.
-        $this->app->bind(AutorizacionPortalCliente::class, AutorizacionPortalClienteSesion::class);
-
         // Misma frontera, para la API de campo (tarea 12): `Sincronizacion`
         // necesita saber qué persona de `Personal` firma el token sin
         // importar `SecUser`.
         $this->app->bind(IdentidadOperarioToken::class, IdentidadOperarioTokenSanctum::class);
-
-        // Misma frontera, para la ficha de una persona (tarea 112): `Personal`
-        // muestra la cuenta vinculada sin importar `SecUser`.
-        $this->app->bind(LecturaUsuarioDePersona::class, LecturaUsuarioDePersonaEloquent::class);
 
         // Misma frontera, para `Notificaciones` (tarea 141, ADR 0025): a qué
         // cuentas avisar cuando un hecho le importa a un rol.
@@ -146,7 +135,9 @@ final class SeguridadServiceProvider extends ServiceProvider
     private function configurarLimitesDeLogin(): void
     {
         RateLimiter::for('login-campo', function (Request $request): array {
-            $usuario = mb_strtolower(trim((string) $request->input('username')));
+            // El teléfono se normaliza igual que en el login: `70012345` y `+591 700-12345` son el mismo cubo.
+            $crudo = trim((string) $request->input('username'));
+            $usuario = NumeroDeTelefono::normalizar($crudo) ?? mb_strtolower($crudo);
 
             return [
                 Limit::perMinute(6)->by('login-campo|usuario|'.sha1($usuario).'|'.$request->ip()),
@@ -184,7 +175,7 @@ final class SeguridadServiceProvider extends ServiceProvider
                     return false;
                 }
 
-                /** @var SecUsuarioInterno|null $usuario */
+                /** @var SecUsuarioApp|null $usuario */
                 $usuario = $token->tokenable;
 
                 if ($usuario === null || ! $usuario->state) {

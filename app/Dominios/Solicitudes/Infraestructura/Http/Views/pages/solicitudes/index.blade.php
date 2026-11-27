@@ -9,7 +9,7 @@
     Datos esperados (ver SolicitudesController::index()): la cáscara de
     CascaraPanel, más:
     - $solicitudes (LengthAwarePaginator<SolicitudServicio>) con `terreno` y `cliente`.
-    - $filtros (array{q, estado, region, zona}), $regionesFiltro y $zonasFiltro.
+    - $filtros (array{q, estado, departamento}) y $departamentosFiltro (código => nombre).
     - $estadosFiltro (list<EstadoSolicitud>).
 
     Gateada por `solicitudes.solicitud.ver`, verificado server-side en el
@@ -43,8 +43,7 @@
 
             @php
                 $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
-                $filtrosPanelActivos = collect([$filtros['estado'], $filtros['region'], $filtros['zona']])->filter(fn ($valor) => $valor !== null && $valor !== '')->count();
-                $opcionesRegion = collect($regionesFiltro)->mapWithKeys(fn ($clave) => [$clave => __('solicitudes.region.'.$clave)])->all();
+                $filtrosPanelActivos = collect([$filtros['estado'], $filtros['departamento']])->filter(fn ($valor) => $valor !== null && $valor !== '')->count();
                 $opcionesEstado = collect($estadosFiltro)->mapWithKeys(fn ($opcion) => [$opcion->value => __('solicitudes.estado.'.$opcion->value)])->all();
             @endphp
 
@@ -64,19 +63,11 @@
                             :placeholder="__('solicitudes.panel.filtro_todos')"
                         />
                         <x-atoms.select
-                            name="region"
-                            id="filtro-region"
-                            :label="__('solicitudes.panel.filtro_region')"
-                            :options="$opcionesRegion"
-                            :value="$filtros['region']"
-                            :placeholder="__('solicitudes.panel.filtro_todos')"
-                        />
-                        <x-atoms.select
-                            name="zona"
-                            id="filtro-zona"
-                            :label="__('solicitudes.panel.filtro_zona')"
-                            :options="$zonasFiltro"
-                            :value="$filtros['zona']"
+                            name="departamento"
+                            id="filtro-departamento"
+                            :label="__('solicitudes.panel.filtro_departamento')"
+                            :options="$departamentosFiltro"
+                            :value="$filtros['departamento']"
                             :placeholder="__('solicitudes.panel.filtro_todos')"
                         />
                     </x-organisms.filter-panel>

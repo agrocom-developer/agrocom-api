@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
 use Tests\Soporte\Esquema;
+use Tests\Soporte\Ubicaciones;
 use Tests\TestCase;
 
 /*
@@ -48,7 +49,11 @@ function clienteEsquema(): void
         'hace_opcional_la_fecha_deseada_de_la_solicitud',
         'crea_sol_cliente_contactos',
         'create_neg_tablas_de_negociacion',
+        'agrega_ubicacion_a_sol_terrenos',
+        'agrega_ubicacion_a_sol_solicitudes_servicio',
+        'retira_zonas',
     ]);
+    Ubicaciones::sembrar();
 }
 
 /** Un cliente con su cuenta y un terreno de `$hectareas`. @return array{0: int, 1: int} cliente_id y terreno_id */
@@ -59,7 +64,7 @@ function clienteConTerreno(int $usuarioId, string $hectareas = '100.0000', bool 
         'tipo' => 'persona',
         'razon_social' => "Cliente {$usuarioId}",
         'telefono' => '70012345',
-        'estado' => 'activo',
+        'estado' => 'aprobado',
         'created_at' => now(),
         'updated_at' => now(),
     ]);
@@ -70,6 +75,10 @@ function clienteConTerreno(int $usuarioId, string $hectareas = '100.0000', bool 
         'hectareas' => $hectareas,
         'cultivo' => 'Soya',
         'acceso_dificil' => $accesoDificil,
+        'departamento_codigo' => Ubicaciones::DEPARTAMENTO,
+        'provincia_codigo' => Ubicaciones::PROVINCIA,
+        'municipio' => 'Warnes',
+        'comunidad' => 'Los Álamos',
         'created_at' => now(),
         'updated_at' => now(),
     ]);
@@ -95,7 +104,7 @@ function datosSolicitud(int $terrenoId, array $cambios = []): array
 
 beforeEach(function () {
     clienteEsquema();
-    foreach (['neg_ofertas', 'sol_solicitud_historial', 'sol_solicitudes_servicio', 'sol_terreno_fotos', 'sol_precios_referencia', 'sol_terrenos', 'sol_clientes'] as $tabla) {
+    foreach (['neg_ofertas', 'sol_solicitud_historial', 'sol_solicitudes_servicio', 'sol_terreno_fotos', 'sol_terrenos', 'sol_clientes'] as $tabla) {
         DB::table($tabla)->delete();
     }
     Carbon::setTestNow('2026-12-02 10:00:00');
@@ -259,6 +268,59 @@ test('abrir exige precio propuesto y teléfono en la cuenta', function () {
     DB::table('sol_clientes')->where('id', $cliente)->update(['telefono' => null]);
 
     expect(fn () => app(PublicarSolicitud::class)->ejecutar(USUARIO_ANA, $conPrecio->id))->toThrow(SolicitudInvalida::class);
+});
+
+test('abrir copia a la solicitud el departamento, la provincia, el municipio y la comunidad del terreno, y no cambian si el terreno se corrige después', function () {
+    [, $terreno] = clienteConTerreno(USUARIO_ANA);
+    [$solicitud] = app(CrearSolicitud::class)->ejecutar(USUARIO_ANA, datosSolicitud($terreno));
+
+    expect($solicitud->departamento_codigo)->toBeNull()->and($solicitud->provincia_codigo)->toBeNull();
+
+    $abierta = app(PublicarSolicitud::class)->ejecutar(USUARIO_ANA, $solicitud->id);
+
+    expect($abierta->departamento_codigo)->toBe('07')
+        ->and($abierta->provincia_codigo)->toBe('0702')
+        ->and($abierta->municipio)->toBe('Warnes')
+        ->and($abierta->comunidad)->toBe('Los Álamos');
+
+    DB::table('sol_terrenos')->where('id', $terreno)->update(['departamento_codigo' => '03', 'provincia_codigo' => '0301', 'municipio' => 'Otro', 'comunidad' => null]);
+
+    $releida = app(ObtenerSolicitudDelCliente::class)->ejecutar(USUARIO_ANA, $solicitud->id);
+    expect($releida->departamento_codigo)->toBe('07')->and($releida->provincia_codigo)->toBe('0702')->and($releida->municipio)->toBe('Warnes');
+});
+
+test('abrir exige departamento y provincia en el terreno y que la provincia sea del departamento', function () {
+    [, $terreno] = clienteConTerreno(USUARIO_ANA);
+    [$solicitud] = app(CrearSolicitud::class)->ejecutar(USUARIO_ANA, datosSolicitud($terreno));
+    $campoRechazado = function () use ($solicitud): ?string {
+        try {
+            app(PublicarSolicitud::class)->ejecutar(USUARIO_ANA, $solicitud->id);
+        } catch (SolicitudInvalida $e) {
+            return $e->campo;
+        }
+
+        return null;
+    };
+
+    DB::table('sol_terrenos')->where('id', $terreno)->update(['departamento_codigo' => null, 'provincia_codigo' => null]);
+    expect($campoRechazado())->toBe('departamento_codigo');
+
+    DB::table('sol_terrenos')->where('id', $terreno)->update(['departamento_codigo' => '07', 'provincia_codigo' => null]);
+    expect($campoRechazado())->toBe('provincia_codigo');
+
+    // Cercado (0301) es de Cochabamba, no de Santa Cruz.
+    DB::table('sol_terrenos')->where('id', $terreno)->update(['departamento_codigo' => '07', 'provincia_codigo' => '0301']);
+    expect($campoRechazado())->toBe('provincia_codigo');
+
+    // Un departamento que ya no está en el catálogo tampoco pasa.
+    DB::table('sol_terrenos')->where('id', $terreno)->update(['departamento_codigo' => '99', 'provincia_codigo' => '9901']);
+    expect($campoRechazado())->toBe('provincia_codigo');
+
+    expect(DB::table('sol_solicitudes_servicio')->where('id', $solicitud->id)->value('estado'))->toBe('borrador');
+
+    DB::table('sol_terrenos')->where('id', $terreno)->update(['departamento_codigo' => '03', 'provincia_codigo' => '0301']);
+    expect($campoRechazado())->toBeNull()
+        ->and(DB::table('sol_solicitudes_servicio')->where('id', $solicitud->id)->value('departamento_codigo'))->toBe('03');
 });
 
 test('la estimación es el monto con el precio propuesto', function () {

@@ -30,6 +30,8 @@ function metricasEsquema(): void
         'create_sol_terrenos_table',
         'create_sol_solicitudes_servicio_table',
         'agrega_negociacion_a_sol_solicitudes_servicio',
+        'agrega_ubicacion_a_sol_terrenos',
+        'agrega_ubicacion_a_sol_solicitudes_servicio',
         'create_neg_tablas_de_negociacion',
         'create_sol_solicitud_historial_table',
         'create_prv_proveedores_table',
@@ -39,6 +41,7 @@ function metricasEsquema(): void
         'create_dsp_disputas_table',
         'create_dsp_resoluciones_table',
         'crea_vistas_de_metricas',
+        'retira_zonas',
     ]);
 
     foreach (['dsp_resoluciones', 'dsp_disputas', 'cal_calificaciones', 'neg_cancelaciones', 'neg_ofertas', 'sol_solicitud_historial', 'sol_solicitudes_servicio', 'flo_drones', 'prv_proveedores'] as $tabla) {
@@ -132,9 +135,9 @@ test('el mercado cuenta lo publicado en el período, la adjudicación, los tiemp
     $ahora = Carbon::now();
     $hace = fn (int $dias): Carbon => $ahora->copy()->subDays($dias);
 
-    $a = metricasSolicitud('finalizada', 7, $hace(5), ['hectareas_ejecutadas' => '90.0000', 'adjudicada_en' => $hace(5)->addMinutes(180)]);
-    $b = metricasSolicitud('adjudicada', 1, $hace(4), ['adjudicada_en' => $hace(4)->addMinutes(60)]);
-    metricasSolicitud('con_ofertas', null, $hace(3));
+    $a = metricasSolicitud('finalizada', 7, $hace(5), ['hectareas_ejecutadas' => '90.0000', 'adjudicada_en' => $hace(5)->addMinutes(180), 'departamento_codigo' => '07']);
+    $b = metricasSolicitud('adjudicada', 1, $hace(4), ['adjudicada_en' => $hace(4)->addMinutes(60), 'departamento_codigo' => '07']);
+    metricasSolicitud('con_ofertas', null, $hace(3), ['departamento_codigo' => '03']);
     metricasSolicitud('abierta', null, $hace(2));
     metricasSolicitud('finalizada', 7, $hace(60), ['adjudicada_en' => $hace(60)->addMinutes(10)]);
 
@@ -147,6 +150,8 @@ test('el mercado cuenta lo publicado en el período, la adjudicación, los tiemp
 
     expect($m['solicitudes_publicadas'])->toBe(4)
         ->and($m['por_estado'])->toEqual(['finalizada' => 1, 'adjudicada' => 1, 'con_ofertas' => 1, 'abierta' => 1])
+        ->and($m['por_departamento'])->toEqual(['07' => 2, '03' => 1, 'sin_departamento' => 1])
+        ->and($m)->not->toHaveKey('por_region')
         ->and($m['adjudicadas'])->toBe(2)
         ->and($m['tasa_adjudicacion'])->toBe('0.5000')
         ->and($m['abiertas'])->toBe(2)

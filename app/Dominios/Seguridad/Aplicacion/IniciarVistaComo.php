@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Seguridad\Aplicacion;
 
+use App\Dominios\Seguridad\Contratos\TipoCuenta;
 use App\Dominios\Seguridad\Dominio\Excepciones\PermisoDenegado;
 use App\Dominios\Seguridad\Dominio\Excepciones\VistaComoNoPermitida;
 use App\Dominios\Seguridad\Dominio\TipoUsuario;
@@ -13,8 +14,8 @@ use Illuminate\Support\Facades\Session;
 
 /**
  * Abre una vista "como otro usuario" para un administrador de la plataforma
- * (tarea 140): a partir del request siguiente, el panel o el portal se
- * evalúan con el alcance de la cuenta observada, en modo estrictamente de
+ * (tarea 140): a partir del request siguiente, el panel se evalúa con el
+ * alcance de la cuenta de panel observada, en modo estrictamente de
  * lectura (ver `AplicarVistaComo`).
  *
  * Qué hace y qué NO hace:
@@ -36,7 +37,7 @@ final class IniciarVistaComo
 
     /**
      * @param  int  $idRolActivoAdmin  rol activo del administrador en su sesión.
-     * @param  int|null  $idRolObservado  rol bajo el que se ve una cuenta interna;
+     * @param  int|null  $idRolObservado  rol bajo el que se ve la cuenta;
      *                                    opcional solo si tiene uno único.
      *
      * @throws PermisoDenegado si el administrador no tiene el permiso en su rol activo.
@@ -46,7 +47,7 @@ final class IniciarVistaComo
     public function ejecutar(SecUser $admin, int $idRolActivoAdmin, int $idUsuarioObservado, ?int $idRolObservado): VistaComoActiva
     {
         if (
-            $admin->type !== TipoUsuario::Interno
+            $admin->tipo_cuenta !== TipoCuenta::Panel
             || ! in_array($idRolActivoAdmin, $admin->idsDeRolesActivos(), true)
             || ! $admin->tienePermisoEnRol(self::PERMISO, $idRolActivoAdmin)
         ) {
@@ -58,13 +59,20 @@ final class IniciarVistaComo
         }
 
         // `find()` sobre la base `SecUser` (sin el scope de tipo de cada
-        // guard): quien se mira puede ser interno o de portal. Una cuenta dada
-        // de baja no aparece (soft delete), y una bloqueada o la propia se
-        // rechazan con el mismo mensaje — no se distingue cuál de las tres.
+        // guard). Una cuenta dada de baja no aparece (soft delete), y una
+        // bloqueada o la propia se rechazan con el mismo mensaje — no se
+        // distingue cuál de las tres.
         $observado = SecUser::query()->find($idUsuarioObservado);
 
         if ($observado === null || ! $observado->state || $observado->id === $admin->id) {
             throw VistaComoNoPermitida::cuentaNoDisponible();
+        }
+
+        // «Ver como» solo sobre cuentas de panel (ADR 0046, punto 5): las cuentas
+        // de app (cliente y proveedor) tienen datos personales que el panel no
+        // recorre en nombre de otro.
+        if ($observado->tipo_cuenta !== TipoCuenta::Panel) {
+            throw VistaComoNoPermitida::soloCuentasDePanel();
         }
 
         $idRol = $this->rolAObservar($observado, $idRolObservado);
@@ -72,14 +80,14 @@ final class IniciarVistaComo
         $registro = DB::transaction(fn (): SecVistaComo => SecVistaComo::query()->create([
             'admin_id' => $admin->id,
             'usuario_id' => $observado->id,
-            'tipo' => $observado->type,
+            'tipo' => TipoUsuario::Interno,
             'rol_id' => $idRol,
             'iniciada_at' => now(),
         ]));
 
         $vista = new VistaComoActiva(
             registroId: $registro->id,
-            tipo: $observado->type,
+            tipo: TipoUsuario::Interno,
             adminId: $admin->id,
             adminRolId: $idRolActivoAdmin,
             usuarioId: $observado->id,
@@ -91,16 +99,9 @@ final class IniciarVistaComo
         return $vista;
     }
 
-    /**
-     * Una cuenta de portal no tiene rol (ADR 0004): se mira sin rol. Una interna se ve bajo UN rol — el que
-     * eligió el administrador, o el único que tiene.
-     */
-    private function rolAObservar(SecUser $observado, ?int $idRolElegido): ?int
+    /** Una cuenta de panel se ve bajo UN rol — el que eligió el administrador, o el único que tiene. */
+    private function rolAObservar(SecUser $observado, ?int $idRolElegido): int
     {
-        if ($observado->type === TipoUsuario::Cliente) {
-            return null;
-        }
-
         $rolesVivos = $observado->idsDeRolesActivos();
 
         if ($rolesVivos === []) {

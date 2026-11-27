@@ -9,7 +9,6 @@ use App\Dominios\Seguridad\Aplicacion\TerminarVistaComo;
 use App\Dominios\Seguridad\Aplicacion\VistaComoResuelta;
 use App\Dominios\Seguridad\Dominio\Excepciones\EscrituraEnVistaComo;
 use App\Dominios\Seguridad\Dominio\MotivoFinVistaComo;
-use App\Dominios\Seguridad\Dominio\TipoUsuario;
 use App\Dominios\Seguridad\Dominio\VistaComoActiva;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
 use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\PresentadorRol;
@@ -158,18 +157,13 @@ final class AplicarVistaComo
     }
 
     /**
-     * Una vista de portal solo recorre el portal; una interna, solo el panel.
-     * Fuera de su alcance el request se desvía en vez de mostrar, bajo un
-     * banner que dice otra cosa, las pantallas propias del administrador. Los
-     * selectores de rol también quedan afuera: cambiar de rol es escribir.
+     * Los selectores de rol quedan afuera de una vista: cambiar de rol es
+     * escribir, y el request se desvía en vez de mostrar, bajo un banner que dice
+     * otra cosa, las pantallas propias del administrador.
      */
     private function desvioPorAlcance(Request $request, VistaComoActiva $vista): ?Response
     {
-        if ($vista->tipo === TipoUsuario::Cliente) {
-            return $request->routeIs('portal.*') ? null : redirect()->route('portal.perfil.edit');
-        }
-
-        return $request->routeIs('portal.*', 'panel.rol-activo.*') ? redirect('/') : null;
+        return $request->routeIs('panel.rol-activo.*') ? redirect('/') : null;
     }
 
     /**
@@ -177,12 +171,12 @@ final class AplicarVistaComo
      */
     private function conVistaAplicada(Request $request, Closure $next, VistaComoActiva $vista, VistaComoResuelta $resuelta): Response
     {
-        // Los dos guards del panel y del portal son de sesión: `setUser()` y
-        // `forgetUser()` no forman parte del contrato genérico `Guard`.
+        // El guard del panel es de sesión: `setUser()` no forma parte del
+        // contrato genérico `Guard`.
         /** @var SessionGuard $guard */
         $guard = Auth::guard($vista->guard());
 
-        if ($vista->tipo === TipoUsuario::Interno && $resuelta->rol !== null) {
+        if ($resuelta->rol !== null) {
             $this->elegirRolActivo->fijarParaVistaComo($resuelta->rol);
         }
 
@@ -202,11 +196,7 @@ final class AplicarVistaComo
         } finally {
             ModoSoloLectura::desactivar();
 
-            if ($vista->tipo === TipoUsuario::Interno) {
-                $guard->setUser($resuelta->admin);
-            } else {
-                $guard->forgetUser();
-            }
+            $guard->setUser($resuelta->admin);
         }
     }
 }

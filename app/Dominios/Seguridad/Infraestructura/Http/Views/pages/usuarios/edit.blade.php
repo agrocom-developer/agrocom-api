@@ -5,8 +5,7 @@
 
     Datos esperados (ver UsuariosController::edit()): la cáscara de
     CascaraPanel, más $usuario (SecUser), $rolesAsignados (list<int>),
-    $rolesDisponibles (Collection<int, SecRole>) y $personasDisponibles
-    (Collection<int, string>).
+    y $rolesDisponibles (Collection<int, SecRole>).
 
     Gateada por `seguridad.usuario.editar`, verificado server-side en el
     controlador.

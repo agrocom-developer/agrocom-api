@@ -2,10 +2,12 @@
 
 namespace App\Dominios\Negociacion\Aplicacion;
 
+use App\Dominios\Compartido\Aplicacion\ExigirCuentaAprobada;
+use App\Dominios\Compartido\Dominio\EstadoAprobacion;
+use App\Dominios\Compartido\Dominio\Excepciones\CuentaNoAprobada;
 use App\Dominios\Flota\Contratos\DatosEquipoApto;
 use App\Dominios\Flota\Contratos\LecturaEquipos;
 use App\Dominios\Negociacion\Aplicacion\MaquinaEstados\MaquinaEstadosOferta;
-use App\Dominios\Negociacion\Dominio\Distancia;
 use App\Dominios\Negociacion\Dominio\EstadoOferta;
 use App\Dominios\Negociacion\Dominio\Excepciones\NegociacionInvalida;
 use App\Dominios\Negociacion\Infraestructura\Eloquent\Cancelacion;
@@ -13,8 +15,7 @@ use App\Dominios\Negociacion\Infraestructura\Eloquent\Oferta;
 use App\Dominios\Proveedores\Contratos\DatosProveedor;
 use App\Dominios\Proveedores\Contratos\LecturaProveedores;
 use App\Dominios\Solicitudes\Contratos\DatosSolicitudNegociable;
-use App\Dominios\Solicitudes\Contratos\LecturaMercado;
-use App\Dominios\Solicitudes\Contratos\LecturaZonas;
+use App\Dominios\Solicitudes\Contratos\LecturaEstadoDeCliente;
 use App\Dominios\Solicitudes\Contratos\PasosDeSolicitud;
 use App\Dominios\Solicitudes\Contratos\SolicitudNoNegociable;
 use Brick\Math\BigDecimal;
@@ -45,11 +46,12 @@ final class Negociar
         private readonly PasosDeSolicitud $solicitudes,
         private readonly LecturaProveedores $proveedores,
         private readonly LecturaEquipos $equipos,
-        private readonly LecturaMercado $mercado,
-        private readonly LecturaZonas $zonas,
         private readonly MaquinaEstadosOferta $estados,
         private readonly ParametrosDeNegociacion $parametros,
         private readonly Avisador $avisos,
+        private readonly SinAutocontratacion $autocontratacion,
+        private readonly ExigirCuentaAprobada $compuerta,
+        private readonly LecturaEstadoDeCliente $estadoDeClientes,
     ) {}
 
     /**
@@ -69,15 +71,15 @@ final class Negociar
             return [$this->deProveedor($existente, $proveedor, $solicitudId), false];
         }
 
-        if (! $proveedor->estaAprobado()) {
-            throw NegociacionInvalida::prohibido('proveedor_no_habilitado');
-        }
+        // Solo un proveedor aprobado oferta (ADR 0046, punto 12): `403 cuenta_no_aprobada` con su estado.
+        $this->exigirAprobada(self::LADO_PROVEEDOR, $usuarioId, $proveedor);
 
         try {
             return [DB::transaction(function () use ($proveedor, $solicitudId, $datos): Oferta {
                 $solicitud = $this->bloquear($solicitudId, true);
 
-                if (in_array($solicitud->clienteUsuarioId, $this->proveedores->usuariosDeAviso($proveedor->id), true)) {
+                // Ni sobre lo publicado por su propia cuenta de cliente ni por otra cuenta de la misma persona (ADR 0046, punto 10).
+                if ($this->autocontratacion->esPropia($solicitud->clienteUsuarioId, $proveedor->id)) {
                     throw NegociacionInvalida::dato('propia_cuenta');
                 }
 
@@ -98,7 +100,6 @@ final class Negociar
                     'es_definitiva' => $numero >= $this->parametros->maxOfertas(),
                     'nota' => $this->nota($datos['nota'] ?? null),
                     'vence_en' => $this->venceEn(),
-                    'distancia_km' => $this->distancia($proveedor, $solicitudId),
                 ]);
 
                 $this->solicitudes->marcarConOfertas($solicitudId);
@@ -142,6 +143,9 @@ final class Negociar
 
         return [DB::transaction(function () use ($lado, $usuarioId, $ofertaId, $precioHa, $nota, $uuidCliente): Oferta {
             [$solicitud, $actual] = $this->bloquearConOferta($lado, $usuarioId, $ofertaId);
+
+            // Contraofertar es de la cuenta aprobada (ADR 0046, punto 12).
+            $this->exigirAprobada($lado, $usuarioId);
 
             $this->exigirRespondible($lado, $solicitud, $actual);
 
@@ -199,6 +203,9 @@ final class Negociar
             if ($actual->estado === EstadoOferta::Aceptada && $solicitud->ofertaAdjudicadaId === $actual->id) {
                 return $actual;
             }
+
+            // Aceptar adjudica: es de la cuenta aprobada, de cualquiera de las dos partes (ADR 0046, punto 12).
+            $this->exigirAprobada($lado, $usuarioId);
 
             if ($solicitud->estado === 'adjudicada' || $solicitud->estado === 'en_ejecucion') {
                 throw NegociacionInvalida::conflicto('solicitud_ya_adjudicada');
@@ -324,6 +331,31 @@ final class Negociar
         $oferta = Oferta::query()->lockForUpdate()->findOrFail($ofertaId);
 
         return [$solicitud, $oferta];
+    }
+
+    /**
+     * La compuerta de la cuenta (ADR 0046, punto 12): el cliente y el proveedor no aprobados entran y miran, pero
+     * no ofertan, contraofertan ni aceptan. Rechazar y retirar no se frenan: salir de una negociación siempre se puede.
+     *
+     * @throws CuentaNoAprobada `403 cuenta_no_aprobada` con el estado de la cuenta.
+     */
+    private function exigirAprobada(string $lado, int $usuarioId, ?DatosProveedor $proveedor = null): void
+    {
+        if ($lado === self::LADO_PROVEEDOR) {
+            $proveedor ??= $this->proveedores->proveedorDeLaCuenta($usuarioId);
+
+            if ($proveedor !== null) {
+                $this->compuerta->exigir(EstadoAprobacion::from($proveedor->estado));
+            }
+
+            return;
+        }
+
+        $estado = $this->estadoDeClientes->deLaCuenta($usuarioId);
+
+        if ($estado !== null) {
+            $this->compuerta->exigir($estado);
+        }
     }
 
     /** @throws NegociacionInvalida 404 si la oferta no es de la cuenta. */
@@ -470,19 +502,6 @@ final class Negociar
         $nota = $nota === null ? null : trim($nota);
 
         return $nota === '' ? null : $nota;
-    }
-
-    /** Distancia del centro de los lotes a la zona base del proveedor, en km (aproximada). */
-    private function distancia(DatosProveedor $proveedor, int $solicitudId): ?string
-    {
-        $abierta = $this->mercado->abierta($solicitudId);
-        $base = $proveedor->zonaBaseId === null ? null : $this->zonas->centroide($proveedor->zonaBaseId);
-
-        if ($abierta === null || $abierta->centro === null || $base === null) {
-            return null;
-        }
-
-        return Distancia::km((float) $base['lat'], (float) $base['lng'], $abierta->centro['latitud'], $abierta->centro['longitud']);
     }
 
     private function nombreDeProveedor(int $proveedorId): string

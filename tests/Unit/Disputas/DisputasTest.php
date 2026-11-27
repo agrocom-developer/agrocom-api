@@ -68,6 +68,9 @@ function dspMundo(): void
         'create_dsp_mensajes_table',
         'create_dsp_resoluciones_table',
         'create_dsp_historial_table',
+        'agrega_ubicacion_a_sol_terrenos',
+        'agrega_ubicacion_a_sol_solicitudes_servicio',
+        'retira_zonas',
     ]);
 
     foreach (['dsp_historial', 'dsp_resoluciones', 'dsp_mensajes', 'dsp_disputas', 'sol_solicitud_historial', 'sol_solicitudes_servicio', 'sol_clientes'] as $tabla) {
@@ -75,7 +78,7 @@ function dspMundo(): void
     }
 
     foreach ([1 => DSP_CLIENTE, 2 => DSP_OTRO_CLIENTE] as $id => $usuario) {
-        DB::table('sol_clientes')->insert(['id' => $id, 'usuario_id' => $usuario, 'tipo' => 'persona', 'razon_social' => "Cliente {$id}", 'estado' => 'activo', 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('sol_clientes')->insert(['id' => $id, 'usuario_id' => $usuario, 'tipo' => 'persona', 'razon_social' => "Cliente {$id}", 'estado' => 'aprobado', 'created_at' => now(), 'updated_at' => now()]);
     }
 
     app()->instance(LecturaProveedores::class, new ProveedoresFalsos(

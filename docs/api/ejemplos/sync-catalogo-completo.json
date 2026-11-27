@@ -16,7 +16,7 @@
                     "rol": "piloto",
                     "base_id": null,
                     "activo": true,
-                    "updated_at": "2026-11-26T20:40:57+00:00"
+                    "updated_at": "2026-11-26T22:09:36+00:00"
                 },
                 {
                     "id": 2,
@@ -24,7 +24,7 @@
                     "rol": "piloto",
                     "base_id": null,
                     "activo": true,
-                    "updated_at": "2026-11-26T20:40:57+00:00"
+                    "updated_at": "2026-11-26T22:09:36+00:00"
                 },
                 {
                     "id": 3,
@@ -32,7 +32,7 @@
                     "rol": "piloto",
                     "base_id": null,
                     "activo": true,
-                    "updated_at": "2026-11-26T20:40:57+00:00"
+                    "updated_at": "2026-11-26T22:09:36+00:00"
                 },
                 {
                     "id": 4,
@@ -40,7 +40,7 @@
                     "rol": "piloto",
                     "base_id": null,
                     "activo": true,
-                    "updated_at": "2026-11-26T20:40:57+00:00"
+                    "updated_at": "2026-11-26T22:09:36+00:00"
                 },
                 {
                     "id": 5,
@@ -48,7 +48,7 @@
                     "rol": "piloto",
                     "base_id": null,
                     "activo": true,
-                    "updated_at": "2026-11-26T20:40:57+00:00"
+                    "updated_at": "2026-11-26T22:09:36+00:00"
                 }
             ],
             "servicios_asignados": [
@@ -110,7 +110,7 @@
                         "cargo": "Gerente",
                         "empresa": "Agropecuaria San Rafael SRL"
                     },
-                    "updated_at": "2026-11-26T18:40:57+00:00"
+                    "updated_at": "2026-11-26T20:09:37+00:00"
                 }
             ],
             "servicios_retirados": [],
@@ -123,7 +123,7 @@
                 "velocidad_vuelo_kmh": null,
                 "ancho_pasada_m": null
             },
-            "cursor": "eyJwZXJzb25hcyI6eyJ1IjoiMjAyNi0xMS0yNlQyMDo0MDo1NyswMDowMCIsImlkIjo1fSwic2VydmljaW9zX2FzaWduYWRvcyI6eyJ1IjoiMjAyNi0xMS0yNlQxODo0MDo1NyswMDowMCIsImlkIjoxMH0sInNlcnZpY2lvc19yZXRpcmFkb3MiOnsidSI6IjIwMjYtMTEtMjZUMjA6NDE6MDcrMDA6MDAiLCJpZCI6MH19"
+            "cursor": "eyJwZXJzb25hcyI6eyJ1IjoiMjAyNi0xMS0yNlQyMjowOTozNiswMDowMCIsImlkIjo1fSwic2VydmljaW9zX2FzaWduYWRvcyI6eyJ1IjoiMjAyNi0xMS0yNlQyMDowOTozNyswMDowMCIsImlkIjoxMH0sInNlcnZpY2lvc19yZXRpcmFkb3MiOnsidSI6IjIwMjYtMTEtMjZUMjI6MDk6NDQrMDA6MDAiLCJpZCI6MH19"
         }
     }
 }

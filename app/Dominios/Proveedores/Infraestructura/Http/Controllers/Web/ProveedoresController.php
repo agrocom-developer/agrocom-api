@@ -17,8 +17,8 @@ use App\Dominios\Proveedores\Infraestructura\Eloquent\Proveedor;
 use App\Dominios\Proveedores\Infraestructura\Http\Requests\RegistrarProveedorDesdePanelRequest;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Contratos\CuentaDuplicada;
+use App\Dominios\Seguridad\Contratos\CuentaYaRegistrada;
 use App\Dominios\Seguridad\Contratos\LecturaCuentas;
-use App\Dominios\Solicitudes\Contratos\LecturaZonas;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -77,14 +77,13 @@ final class ProveedoresController
     }
 
     /** `GET /panel/proveedores/crear`: el formulario de alta a mano. */
-    public function create(Request $request, LecturaZonas $zonas): View
+    public function create(Request $request): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CREAR), 403);
 
         return view('proveedores::pages.proveedores.create', [
             ...$this->autorizacion->cascara($request),
             'tipos' => TipoProveedor::registrables(),
-            'zonas' => $zonas->todas(),
         ]);
     }
 
@@ -100,7 +99,7 @@ final class ProveedoresController
 
         try {
             $proveedor = $registrar->ejecutar($datos);
-        } catch (CuentaDuplicada|RegistroDuplicado $excepcion) {
+        } catch (CuentaYaRegistrada|CuentaDuplicada|RegistroDuplicado $excepcion) {
             return redirect()->back()->withInput($request->except('password'))->withErrors(['estado' => $excepcion->getMessage()]);
         }
 
@@ -111,7 +110,6 @@ final class ProveedoresController
         Request $request,
         Proveedor $proveedor,
         LecturaCuentas $cuentas,
-        LecturaZonas $zonas,
         LecturaEquipos $equipos,
         EstadoDocumentalDeSujeto $estadoDocumental,
     ): View {
@@ -134,7 +132,6 @@ final class ProveedoresController
             ...$cascara,
             'proveedor' => $proveedor,
             'titular' => $titular,
-            'zona' => $proveedor->zona_base_id === null ? null : $zonas->nombre($proveedor->zona_base_id),
             'pilotos' => $pilotos,
             'nombres' => $nombres,
             'documentos' => $this->documentosDe(TipoSujeto::Proveedor, $proveedor->id),

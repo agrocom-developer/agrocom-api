@@ -13,13 +13,8 @@ use App\Dominios\Notificaciones\Dominio\ReglaNotificacion;
 use App\Dominios\Notificaciones\Dominio\RolDestinatario;
 use App\Dominios\Notificaciones\Dominio\TipoNotificacion;
 use App\Dominios\Operaciones\Contratos\Eventos\TrabajoCerrado;
-use App\Dominios\Personal\Contratos\DatosIntegranteEquipo;
-use App\Dominios\Personal\Contratos\LecturaEquipoTrabajo;
-use App\Dominios\Seguridad\Contratos\DatosUsuarioDePersona;
-use App\Dominios\Seguridad\Contratos\LecturaUsuarioDePersona;
 use App\Dominios\Seguridad\Contratos\LecturaUsuariosPorRol;
 use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
-use Illuminate\Support\Carbon;
 
 /*
  * Tarea 141 (ADR 0025) — el motor de notificaciones, lo que no necesita base
@@ -33,7 +28,7 @@ $raizProyecto = dirname(__DIR__, 2);
 
 // ── Las reglas: qué se dice, a quién y a qué recurso ─────────────────────────
 
-test('trabajo cerrado avisa a jefe de campo y a encargado de operaciones, y lleva al trabajo', function () {
+test('trabajo cerrado avisa al administrador y lleva al trabajo', function () {
     $armada = (new ReglaTrabajoCerrado)->armar(new TrabajoCerrado(9, 3, '12.5'));
 
     expect($armada->tipo)->toBe(TipoNotificacion::TrabajoCerrado)
@@ -41,16 +36,7 @@ test('trabajo cerrado avisa a jefe de campo y a encargado de operaciones, y llev
         ->and($armada->recurso)->toBe(RecursoNotificable::Trabajo)
         ->and($armada->recursoId)->toBe(9)
         ->and($armada->parametros)->toBe(['solicitud' => 3, 'hectareas' => '12,50'])
-        ->and($armada->destinatarios)->toEqual([
-            Destinatario::rol(RolDestinatario::JefeCampo),
-            Destinatario::rol(RolDestinatario::EncargadoOperaciones),
-        ]);
-});
-
-test('el dueño no recibe el aviso de trabajo cerrado (ADR 0025, punto 10: es el más frecuente)', function () {
-    $armada = (new ReglaTrabajoCerrado)->armar(new TrabajoCerrado(9, 3, '12'));
-
-    expect($armada->destinatarios)->not->toContainEqual(Destinatario::rol(RolDestinatario::Dueno));
+        ->and($armada->destinatarios)->toEqual([Destinatario::rol(RolDestinatario::Administrador)]);
 });
 
 test('la identidad del hecho es estable: el mismo hecho da la misma clave y hechos distintos, claves distintas', function () {
@@ -104,14 +90,11 @@ test('dos reglas para el mismo evento se rechazan al armar el registro', functio
 // ── Convertir roles, personas y equipos en cuentas ───────────────────────────
 
 /**
- * Fakes de los tres contratos de los que depende la resolución. Sin base:
- * lo que se prueba es la lógica de composición, no las consultas.
+ * Un resolvedor con la lectura de roles de mentira: el reparto no consulta ninguna base.
  *
  * @param  array<string, list<int>>  $cuentasPorRol
- * @param  array<int, array{id: int, activo: bool}>  $cuentaPorPersona
- * @param  array<int, list<int>>  $personasPorEquipo
  */
-function resolvedorConFakes(array $cuentasPorRol, array $cuentaPorPersona, array $personasPorEquipo): ResolverDestinatarios
+function resolvedorConFakes(array $cuentasPorRol): ResolverDestinatarios
 {
     $roles = new class($cuentasPorRol) implements LecturaUsuariosPorRol
     {
@@ -124,115 +107,30 @@ function resolvedorConFakes(array $cuentasPorRol, array $cuentaPorPersona, array
         }
     };
 
-    $personas = new class($cuentaPorPersona) implements LecturaUsuarioDePersona
-    {
-        /** @param array<int, array{id: int, activo: bool}> $porPersona */
-        public function __construct(private array $porPersona) {}
-
-        public function dePersona(int $personaId): ?DatosUsuarioDePersona
-        {
-            $cuenta = $this->porPersona[$personaId] ?? null;
-
-            return $cuenta === null ? null : new DatosUsuarioDePersona($cuenta['id'], "u{$cuenta['id']}", $cuenta['activo'], 1);
-        }
-    };
-
-    $equipos = new class($personasPorEquipo) implements LecturaEquipoTrabajo
-    {
-        public ?string $fechaConsultada = null;
-
-        /** @param array<int, list<int>> $porEquipo */
-        public function __construct(private array $porEquipo) {}
-
-        public function vigentesAFecha(string $fecha): array
-        {
-            return [];
-        }
-
-        public function porIds(array $ids): array
-        {
-            return [];
-        }
-
-        public function integrantesAFecha(int $equipoTrabajoId, string $fecha): array
-        {
-            $this->fechaConsultada = $fecha;
-
-            return array_map(
-                static fn (int $personaId): DatosIntegranteEquipo => new DatosIntegranteEquipo($personaId, $personaId, "P{$personaId}", 'piloto', '2026-01-01', null),
-                $this->porEquipo[$equipoTrabajoId] ?? [],
-            );
-        }
-
-        public function equiposDePersonaAFecha(int $personaId, string $fecha): array
-        {
-            return [];
-        }
-
-        public function equiposHistoricosDePersona(int $personaId): array
-        {
-
-            return [];
-
-        }
-
-        public function recursosAFecha(int $equipoTrabajoId, string $fecha): array
-        {
-            return [];
-        }
-    };
-
-    return new ResolverDestinatarios($roles, $personas, $equipos);
+    return new ResolverDestinatarios($roles);
 }
 
 test('un destinatario por rol resuelve a todas las cuentas que tienen ese rol asignado', function () {
-    $resolver = resolvedorConFakes(['jefe_campo' => [4, 9], 'encargado_operaciones' => [3]], [], []);
+    $resolver = resolvedorConFakes(['administrador' => [4, 9], 'operador' => [3]]);
 
-    expect($resolver->ejecutar([Destinatario::rol(RolDestinatario::JefeCampo)]))->toBe([4, 9])
-        ->and($resolver->ejecutar([Destinatario::rol(RolDestinatario::Dueno)]))->toBe([]);
+    expect($resolver->ejecutar([Destinatario::rol(RolDestinatario::Administrador)]))->toBe([4, 9]);
 });
 
 test('una cuenta que califica por dos destinatarios recibe un solo aviso y el orden es estable', function () {
-    $resolver = resolvedorConFakes(['jefe_campo' => [9, 4], 'encargado_operaciones' => [4, 3]], [], []);
+    $resolver = resolvedorConFakes(['administrador' => [9, 4]]);
 
     expect($resolver->ejecutar([
-        Destinatario::rol(RolDestinatario::JefeCampo),
-        Destinatario::rol(RolDestinatario::EncargadoOperaciones),
+        Destinatario::rol(RolDestinatario::Administrador),
+        Destinatario::usuario(3),
+        Destinatario::usuario(4),
     ]))->toBe([3, 4, 9]);
 });
 
-test('un destinatario por persona resuelve a su cuenta; sin cuenta o bloqueada no hay a quién avisar', function () {
-    $resolver = resolvedorConFakes([], [10 => ['id' => 5, 'activo' => true], 11 => ['id' => 6, 'activo' => false]], []);
+test('un destinatario por cuenta es esa cuenta, y un tipo que ya no existe no avisa a nadie', function () {
+    $resolver = resolvedorConFakes([]);
 
-    expect($resolver->ejecutar([Destinatario::persona(10)]))->toBe([5])
-        ->and($resolver->ejecutar([Destinatario::persona(11)]))->toBe([])
-        ->and($resolver->ejecutar([Destinatario::persona(12)]))->toBe([]);
-});
-
-test('un destinatario por equipo resuelve a las cuentas de sus integrantes vigentes hoy, salteando a quien no tiene cuenta', function () {
-    $resolver = resolvedorConFakes(
-        [],
-        [4 => ['id' => 5, 'activo' => true], 6 => ['id' => 7, 'activo' => true], 8 => ['id' => 9, 'activo' => false]],
-        [1 => [4, 6, 7, 8]],
-    );
-
-    expect($resolver->ejecutar([Destinatario::equipo(1)], '2026-09-23'))->toBe([5, 7])
-        ->and($resolver->ejecutar([Destinatario::equipo(99)], '2026-09-23'))->toBe([]);
-});
-
-test('la vigencia del equipo se evalúa el día del hecho: sin fecha explícita, hoy', function () {
-    Carbon::setTestNow('2026-09-23 10:00:00');
-
-    try {
-        $resolver = resolvedorConFakes([], [4 => ['id' => 5, 'activo' => true]], [1 => [4]]);
-        $resolver->ejecutar([Destinatario::equipo(1)]);
-
-        $equipos = (new ReflectionProperty($resolver, 'equipos'))->getValue($resolver);
-
-        expect($equipos->fechaConsultada)->toBe('2026-09-23');
-    } finally {
-        Carbon::setTestNow();
-    }
+    expect($resolver->ejecutar([Destinatario::usuario(5)]))->toBe([5])
+        ->and($resolver->ejecutar([]))->toBe([]);
 });
 
 // ── El catálogo está completo ────────────────────────────────────────────────
@@ -273,7 +171,7 @@ test('cada tipo de aviso tiene su texto en lang/es/notificaciones.php y usa solo
         'equipo_en_camino' => ['solicitud'],
         'solicitud_ejecutada' => ['solicitud'],
         // Negociación (ADR 0030, 0038 y 0041).
-        'nueva_solicitud_abierta' => ['solicitud', 'hectareas', 'zona', 'precio'],
+        'nueva_solicitud_abierta' => ['solicitud', 'hectareas', 'precio'],
         'oferta_recibida' => ['proveedor', 'precio', 'solicitud'],
         'precio_cambiado' => ['solicitud', 'precio'],
         'solicitud_adjudicada' => ['solicitud', 'proveedor', 'precio'],

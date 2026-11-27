@@ -2,6 +2,8 @@
 
 namespace App\Dominios\Solicitudes\Infraestructura\Http\Requests;
 
+use App\Dominios\Seguridad\Contratos\ReglasDeContacto;
+use App\Dominios\Seguridad\Contratos\TipoCuenta;
 use App\Dominios\Solicitudes\Dominio\TipoCliente;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -35,9 +37,18 @@ final class RegistrarClienteRequest extends FormRequest
                 'required', 'string', 'min:3', 'max:50', 'regex:/^[A-Za-z0-9._-]+$/',
                 Rule::unique('sec_user', 'username')->whereNull('deleted_at'),
             ],
-            'email' => ['nullable', 'email:rfc', 'max:150', Rule::unique('sec_user', 'email')->whereNull('deleted_at')],
+            'email' => ['nullable', 'email:rfc', 'max:150', ReglasDeContacto::correoUnico(TipoCuenta::Cliente)],
             'password' => ['required', 'string', Password::min(8)->letters()->numbers(), 'max:100'],
-            'telefono' => ['required', 'string', 'max:30', 'regex:/^[0-9 +().-]{6,30}$/'],
+            // E.164 con Bolivia por defecto (ADR 0046): único entre las cuentas de cliente.
+            'telefono' => ['required', 'string', 'max:30', ReglasDeContacto::reglaTelefono()],
+            // La persona de la cuenta (ADR 0046): una persona real tiene a lo sumo una cuenta de cliente. TRANSITORIO:
+            // opcional hasta que la app del cliente la envíe (fase F4 de field); sin documento no hay persona y la
+            // cuenta queda sin ella. Con documento, el nombre y los apellidos son obligatorios.
+            'documento_tipo' => ['nullable', 'string', Rule::in(ReglasDeContacto::tiposDeDocumento())],
+            'documento_numero' => ['nullable', 'string', 'max:40'],
+            'nombres' => ['nullable', 'required_with:documento_numero', 'string', 'max:80'],
+            'apellidos' => ['nullable', 'required_with:documento_numero', 'string', 'max:80'],
+            'fecha_nacimiento' => ['nullable', 'date_format:Y-m-d'],
             // Una empresa se identifica por su razón social y su NIT; una persona, por su nombre.
             'razon_social' => ['required_if:tipo,empresa', 'nullable', 'string', 'max:150'],
             'documento_fiscal' => ['required_if:tipo,empresa', 'nullable', 'string', 'max:30'],

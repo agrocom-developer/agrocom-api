@@ -33,9 +33,13 @@
                     "estado": "abierta",
                     "oferta_adjudicada_id": null,
                     "proveedor_id": null,
-                    "publicada_en": "2026-11-25T08:41:04+00:00",
+                    "publicada_en": "2026-11-25T10:09:41+00:00",
                     "motivo_cancelacion": null,
                     "cancelada_por": null,
+                    "departamento_codigo": "07",
+                    "provincia_codigo": "0702",
+                    "municipio": "Warnes",
+                    "comunidad": "Comunidad Lote Norte",
                     "terreno": {
                         "id": 1,
                         "nombre": "Lote Norte",
@@ -71,7 +75,10 @@
                         "referencias_acceso": "Camino vecinal a 3 km de la ruta principal.",
                         "colindantes_sensibles": null,
                         "acceso_dificil": false,
-                        "zona_id": 2
+                        "departamento_codigo": "07",
+                        "provincia_codigo": "0702",
+                        "municipio": "Warnes",
+                        "comunidad": "Comunidad Lote Norte"
                     }
                 },
                 {
@@ -97,9 +104,13 @@
                     "estado": "calificada",
                     "oferta_adjudicada_id": 14,
                     "proveedor_id": 1,
-                    "publicada_en": "2026-11-18T12:41:02+00:00",
+                    "publicada_en": "2026-11-18T14:09:40+00:00",
                     "motivo_cancelacion": null,
                     "cancelada_por": null,
+                    "departamento_codigo": "07",
+                    "provincia_codigo": "0701",
+                    "municipio": "Santa Cruz de la Sierra",
+                    "comunidad": "Comunidad Las Palmas",
                     "terreno": {
                         "id": 2,
                         "nombre": "Las Palmas",
@@ -135,7 +146,10 @@
                         "referencias_acceso": "Camino vecinal a 3 km de la ruta principal.",
                         "colindantes_sensibles": null,
                         "acceso_dificil": false,
-                        "zona_id": 1
+                        "departamento_codigo": "07",
+                        "provincia_codigo": "0701",
+                        "municipio": "Santa Cruz de la Sierra",
+                        "comunidad": "Comunidad Las Palmas"
                     }
                 },
                 {
@@ -161,9 +175,13 @@
                     "estado": "en_ejecucion",
                     "oferta_adjudicada_id": 11,
                     "proveedor_id": 1,
-                    "publicada_en": "2026-11-24T08:41:00+00:00",
+                    "publicada_en": "2026-11-24T10:09:39+00:00",
                     "motivo_cancelacion": null,
                     "cancelada_por": null,
+                    "departamento_codigo": "07",
+                    "provincia_codigo": "0702",
+                    "municipio": "Warnes",
+                    "comunidad": "Comunidad Lote Norte",
                     "terreno": {
                         "id": 1,
                         "nombre": "Lote Norte",
@@ -199,7 +217,10 @@
                         "referencias_acceso": "Camino vecinal a 3 km de la ruta principal.",
                         "colindantes_sensibles": null,
                         "acceso_dificil": false,
-                        "zona_id": 2
+                        "departamento_codigo": "07",
+                        "provincia_codigo": "0702",
+                        "municipio": "Warnes",
+                        "comunidad": "Comunidad Lote Norte"
                     }
                 },
                 {
@@ -225,9 +246,13 @@
                     "estado": "con_ofertas",
                     "oferta_adjudicada_id": null,
                     "proveedor_id": null,
-                    "publicada_en": "2026-11-25T14:40:58+00:00",
+                    "publicada_en": "2026-11-25T16:09:37+00:00",
                     "motivo_cancelacion": null,
                     "cancelada_por": null,
+                    "departamento_codigo": "07",
+                    "provincia_codigo": "0701",
+                    "municipio": "Santa Cruz de la Sierra",
+                    "comunidad": "Comunidad Las Palmas",
                     "terreno": {
                         "id": 2,
                         "nombre": "Las Palmas",
@@ -263,7 +288,10 @@
                         "referencias_acceso": "Camino vecinal a 3 km de la ruta principal.",
                         "colindantes_sensibles": null,
                         "acceso_dificil": false,
-                        "zona_id": 1
+                        "departamento_codigo": "07",
+                        "provincia_codigo": "0701",
+                        "municipio": "Santa Cruz de la Sierra",
+                        "comunidad": "Comunidad Las Palmas"
                     }
                 },
                 {
@@ -289,9 +317,13 @@
                     "estado": "abierta",
                     "oferta_adjudicada_id": null,
                     "proveedor_id": null,
-                    "publicada_en": "2026-11-26T19:40:58+00:00",
+                    "publicada_en": "2026-11-26T21:09:37+00:00",
                     "motivo_cancelacion": null,
                     "cancelada_por": null,
+                    "departamento_codigo": "07",
+                    "provincia_codigo": "0702",
+                    "municipio": "Warnes",
+                    "comunidad": "Comunidad Lote Norte",
                     "terreno": {
                         "id": 1,
                         "nombre": "Lote Norte",
@@ -327,7 +359,10 @@
                         "referencias_acceso": "Camino vecinal a 3 km de la ruta principal.",
                         "colindantes_sensibles": null,
                         "acceso_dificil": false,
-                        "zona_id": 2
+                        "departamento_codigo": "07",
+                        "provincia_codigo": "0702",
+                        "municipio": "Warnes",
+                        "comunidad": "Comunidad Lote Norte"
                     }
                 },
                 {
@@ -356,6 +391,10 @@
                     "publicada_en": null,
                     "motivo_cancelacion": null,
                     "cancelada_por": null,
+                    "departamento_codigo": null,
+                    "provincia_codigo": null,
+                    "municipio": null,
+                    "comunidad": null,
                     "terreno": {
                         "id": 2,
                         "nombre": "Las Palmas",
@@ -391,7 +430,10 @@
                         "referencias_acceso": "Camino vecinal a 3 km de la ruta principal.",
                         "colindantes_sensibles": null,
                         "acceso_dificil": false,
-                        "zona_id": 1
+                        "departamento_codigo": "07",
+                        "provincia_codigo": "0701",
+                        "municipio": "Santa Cruz de la Sierra",
+                        "comunidad": "Comunidad Las Palmas"
                     }
                 }
             ],

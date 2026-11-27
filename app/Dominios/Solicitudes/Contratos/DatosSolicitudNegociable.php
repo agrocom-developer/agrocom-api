@@ -27,7 +27,7 @@ final readonly class DatosSolicitudNegociable
         public string $porcentajeAvance,
         public ?string $ventanaDesde,
         public ?string $ventanaHasta,
-        public ?int $zonaId,
+        public ?string $departamentoCodigo,
         public ?string $finalizadaEn,
         public ?string $cierreSolicitadoEn,
         public ?string $ultimoAvanceEn,

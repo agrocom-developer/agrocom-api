@@ -139,7 +139,7 @@ final class ObtenerMenuPorRolActivo
             return true;
         }
 
-        return $usuario->persona_id !== null;
+        return $usuario->persona_legada_id !== null;
     }
 
     private function cumplePermiso(SecMenu $item, SecUser $usuario, int $idRolActivo): bool

@@ -4,12 +4,10 @@ namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 
 use App\Dominios\Seguridad\Aplicacion\AsignarPermisosRol;
 use App\Dominios\Seguridad\Aplicacion\CatalogoDePermisos;
-use App\Dominios\Seguridad\Aplicacion\EliminarRol;
 use App\Dominios\Seguridad\Aplicacion\GuardarRol;
 use App\Dominios\Seguridad\Aplicacion\ListarRolesConPermisos;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Dominio\Excepciones\PermisoDenegado;
-use App\Dominios\Seguridad\Dominio\Excepciones\RolDuplicado;
 use App\Dominios\Seguridad\Dominio\Excepciones\RolProtegido;
 use App\Dominios\Seguridad\Dominio\PermisosReservados;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
@@ -21,24 +19,21 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
- * `GET/POST/PUT/DELETE /panel/roles*`: administración del catálogo de roles y
- * de la matriz rol↔permiso. Hasta ahora esto solo existía como seeder — la
- * única parte del modelo de seguridad que no tenía pantalla.
+ * `GET/PUT /panel/roles*`: los dos roles del panel, `administrador` y
+ * `operador` (ADR 0046, punto 4), y la matriz rol↔permiso del operador. Los
+ * roles son fijos: no hay alta ni baja (`GuardarRol`/`EliminarRol` lo rechazan
+ * también), y la matriz del administrador no se edita.
  *
- * Adaptador delgado (ADR 0008): las cinco guardas de negocio viven en los
- * casos de uso ({@see GuardarRol}, {@see AsignarPermisosRol},
- * {@see EliminarRol}), no acá. Este controlador resuelve permisos de
- * PANTALLA contra el rol activo, arma los datos de presentación y traduce las
- * excepciones de dominio a mensajes de vuelta.
+ * Adaptador delgado (ADR 0008): las guardas de negocio viven en los casos de
+ * uso ({@see GuardarRol}, {@see AsignarPermisosRol}), no acá. Este
+ * controlador resuelve permisos de PANTALLA contra el rol activo, arma los
+ * datos de presentación y traduce las excepciones de dominio a mensajes de
+ * vuelta.
  *
- * Los cinco permisos de grano fino (`seguridad.rol.ver`/`.crear`/`.editar`/
- * `.eliminar`/`.asignar_permiso`) se siembran SOLO para `dueno`: quien puede
- * editar la matriz puede concederse cualquier permiso del sistema, así que no
- * es una responsabilidad delegable al encargado de operaciones (que sí tiene,
- * por ejemplo, el alta de usuarios). Aun así ninguna guarda mira el nombre
- * del rol — todas miran permisos, para que otorgárselos mañana a un rol nuevo
- * funcione sin tocar código (mismo criterio que la guarda de
- * `asignar_rol_dueno` en {@see UsuariosController}).
+ * Los permisos de grano fino (`seguridad.rol.ver`/`.editar`/`.asignar_permiso`)
+ * son reservados al administrador (`PermisosReservados`): quien puede editar la
+ * matriz puede concederse cualquier permiso del panel, así que no es una
+ * responsabilidad delegable al operador.
  *
  * Por qué `PermisoDenegado` es 403 y `RolProtegido` vuelve como mensaje: al
  * actor le falta un permiso vs. el actor tiene todos los permisos y lo que
@@ -49,11 +44,7 @@ final class RolesController
 {
     private const PERMISO_VER = 'seguridad.rol.ver';
 
-    private const PERMISO_CREAR = 'seguridad.rol.crear';
-
     private const PERMISO_EDITAR = 'seguridad.rol.editar';
-
-    private const PERMISO_ELIMINAR = 'seguridad.rol.eliminar';
 
     private const PERMISO_ASIGNAR = 'seguridad.rol.asignar_permiso';
 
@@ -77,43 +68,10 @@ final class RolesController
         ]);
     }
 
-    public function create(Request $request): View
-    {
-        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CREAR), 403);
-
-        return view('seguridad::pages.roles.create', $this->autorizacion->cascara($request));
-    }
-
-    public function store(GuardarRolRequest $request, GuardarRol $guardar): RedirectResponse
-    {
-        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_CREAR), 403);
-
-        $datos = $request->validated();
-
-        try {
-            $rol = $guardar->ejecutar(
-                actor: $request->user('interno'),
-                rol: null,
-                nombre: (string) $datos['name'],
-                descripcion: (string) $datos['description'],
-                activo: (bool) ($datos['state'] ?? false),
-                idRolActivo: $this->rolActivoId($request),
-            );
-        } catch (RolDuplicado|PermisoDenegado|RolProtegido $excepcion) {
-            return redirect()->back()->withInput()->withErrors(['estado' => $excepcion->getMessage()]);
-        }
-
-        // A permisos, no al listado: un rol sin permisos no le sirve a nadie,
-        // y este es el único momento en que se sabe con certeza que todavía
-        // no se los dieron.
-        return redirect()
-            ->route('panel.roles.permisos.edit', $rol)
-            ->with('estado', __('seguridad.roles.creado'));
-    }
-
     public function edit(Request $request, SecRole $rol): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
+        $this->abortarSiNoEsDelPanel($rol);
 
         return view('seguridad::pages.roles.edit', [
             ...$this->autorizacion->cascara($request),
@@ -125,6 +83,7 @@ final class RolesController
     public function update(GuardarRolRequest $request, SecRole $rol, GuardarRol $guardar): RedirectResponse
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR), 403);
+        $this->abortarSiNoEsDelPanel($rol);
 
         $datos = $request->validated();
 
@@ -137,7 +96,7 @@ final class RolesController
                 activo: (bool) ($datos['state'] ?? false),
                 idRolActivo: $this->rolActivoId($request),
             );
-        } catch (RolDuplicado|PermisoDenegado|RolProtegido $excepcion) {
+        } catch (PermisoDenegado|RolProtegido $excepcion) {
             return redirect()->back()->withInput()->withErrors(['estado' => $excepcion->getMessage()]);
         }
 
@@ -146,23 +105,6 @@ final class RolesController
         return redirect()
             ->route('panel.roles.edit', $rol)
             ->with('estado', __('seguridad.roles.actualizado'));
-    }
-
-    public function destroy(Request $request, SecRole $rol, EliminarRol $eliminar): RedirectResponse
-    {
-        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR), 403);
-
-        try {
-            $eliminar->ejecutar($request->user('interno'), $rol, $this->rolActivoId($request));
-        } catch (PermisoDenegado|RolProtegido $excepcion) {
-            return redirect()
-                ->route('panel.roles.index')
-                ->withErrors(['estado' => $excepcion->getMessage()]);
-        }
-
-        return redirect()
-            ->route('panel.roles.index')
-            ->with('estado', __('seguridad.roles.eliminado'));
     }
 
     /**
@@ -174,15 +116,15 @@ final class RolesController
      *   `<input type="hidden">` — un checkbox deshabilitado no se envía, así
      *   que sin ese hidden "bloqueado" se leería como "revocado" y el caso de
      *   uso rechazaría el guardado entero.
-     * - `concedibles`: los que el actor tiene en su rol activo. El resto se
-     *   pinta deshabilitado porque nadie concede lo que no tiene (guarda
-     *   anti-escalada). Con `dueno` —el único rol que hoy llega acá— son los
-     *   91, así que en la práctica no bloquea nada; existe para el día en que
-     *   estos permisos se le den a un rol más acotado.
+     * - `concedibles`: los que el actor tiene en su rol activo, sin los reservados
+     *   al administrador (que no se otorgan al operador) ni, en la matriz del
+     *   administrador, ninguno (no se edita). El resto se pinta deshabilitado
+     *   porque nadie concede lo que no tiene (guarda anti-escalada).
      */
     public function editarPermisos(Request $request, SecRole $rol): View
     {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_ASIGNAR), 403);
+        $this->abortarSiNoEsDelPanel($rol);
 
         $otorgados = $this->catalogo->idsPermisoDeRol($rol->id);
         $arbol = $this->catalogo->arbolDeConcesiones();
@@ -209,6 +151,7 @@ final class RolesController
         AsignarPermisosRol $asignar,
     ): RedirectResponse {
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_ASIGNAR), 403);
+        $this->abortarSiNoEsDelPanel($rol);
 
         $deseados = array_map('intval', $request->validated()['permisos'] ?? []);
 
@@ -232,9 +175,10 @@ final class RolesController
 
     /**
      * Permisos que el actor puede conceder o retirar: los que él mismo tiene
-     * en su ROL ACTIVO, menos los de plataforma (`PermisosReservados`) en un
-     * rol que no es `admin_plataforma` — salvo que ya los tenga, para poder
-     * quitarlos. Es el reflejo en la vista de las guardas del caso de uso —
+     * en su ROL ACTIVO, menos los reservados al administrador
+     * (`PermisosReservados`) en un rol que no es `administrador` — salvo que ya
+     * los tenga, para poder quitarlos. La matriz del administrador no se edita:
+     * ninguno. Es el reflejo en la vista de las guardas del caso de uso —
      * presentación, no autorización: el servidor revalida.
      *
      * @param  list<int>  $otorgados  los que el rol que se edita ya tiene.
@@ -245,11 +189,11 @@ final class RolesController
         $delActor = $this->catalogo->idsPermisoDeRol($this->rolActivoId($request));
 
         if (PermisosReservados::admiteElRol((string) $rol->name)) {
-            return $delActor;
+            return [];
         }
 
         $reservadosSinOtorgar = array_diff(
-            $this->catalogo->idsPermisoPorCodigo(PermisosReservados::SOLO_ADMIN_PLATAFORMA),
+            $this->catalogo->idsPermisoPorCodigo(PermisosReservados::SOLO_ADMINISTRADOR),
             $otorgados,
         );
 
@@ -265,5 +209,11 @@ final class RolesController
     private function rolActivoId(Request $request): int
     {
         return (int) $request->session()->get('sec_rol_activo_id');
+    }
+
+    /** Los roles de ámbito `app` (transitorios hasta A5) no se administran desde el panel. */
+    private function abortarSiNoEsDelPanel(SecRole $rol): void
+    {
+        abort_unless(PermisosReservados::esRolDelPanel((string) $rol->name), 404);
     }
 }

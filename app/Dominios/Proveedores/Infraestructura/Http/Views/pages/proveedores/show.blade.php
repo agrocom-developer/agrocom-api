@@ -7,7 +7,7 @@
     KPIs, los datos, los documentos con su revisión, el personal y el historial.
 
     Datos esperados (ver ProveedoresController::show()): la cáscara de
-    CascaraPanel, más $proveedor, $titular (?DatosCuenta), $zona (?string),
+    CascaraPanel, más $proveedor, $titular (?DatosCuenta),
     $pilotos (Collection), $nombres (array<int, DatosCuenta>),
     $documentos (list<DatosDocumento>), $documentosFaltantes, $aptoParaOfertas,
     $acciones (list<AccionAprobacion>), los permisos `$puede*` y $lineaDeTiempo.
@@ -137,10 +137,6 @@
                     <div class="ag-detalle__campo">
                         <p class="ag-detalle__campo-label">{{ __('proveedores.proveedores.campo_telefono') }}</p>
                         <p class="ag-detalle__campo-valor">{{ $proveedor->telefono ?? __('proveedores.sin_dato') }}</p>
-                    </div>
-                    <div class="ag-detalle__campo">
-                        <p class="ag-detalle__campo-label">{{ __('proveedores.proveedores.campo_zona') }}</p>
-                        <p class="ag-detalle__campo-valor">{{ $zona ?? __('proveedores.sin_dato') }}</p>
                     </div>
                     <div class="ag-detalle__campo">
                         <p class="ag-detalle__campo-label">{{ __('proveedores.proveedores.campo_aprobado') }}</p>

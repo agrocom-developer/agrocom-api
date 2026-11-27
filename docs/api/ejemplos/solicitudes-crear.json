@@ -49,6 +49,10 @@
                 "publicada_en": null,
                 "motivo_cancelacion": null,
                 "cancelada_por": null,
+                "departamento_codigo": null,
+                "provincia_codigo": null,
+                "municipio": null,
+                "comunidad": null,
                 "contacto": {
                     "id": 2,
                     "nombre": "Mario Suárez Rojas",
@@ -65,7 +69,10 @@
                     "referencias_acceso": "Camino vecinal, portón azul a 2 km de la ruta.",
                     "colindantes_sensibles": null,
                     "acceso_dificil": false,
-                    "zona_id": null
+                    "departamento_codigo": "07",
+                    "provincia_codigo": "0702",
+                    "municipio": "Warnes",
+                    "comunidad": "Los Álamos"
                 },
                 "historial": [
                     {
@@ -73,7 +80,7 @@
                         "estado_nuevo": "borrador",
                         "origen": "cliente",
                         "motivo": null,
-                        "creado_en": "2026-11-26T20:41:06+00:00"
+                        "creado_en": "2026-11-26T22:09:43+00:00"
                     }
                 ]
             }

@@ -1,6 +1,6 @@
 # Política de verificación de proveedores, pilotos y drones
 
-**Agrocom SRL · Vigente** · Decisión: ADR 0032, ADR 0042, ADR 0046 · Especificación: `docs/especificacion/marketplace.md` §4.3, §5.2, §9.1
+**Agrocom SRL · Vigente** · Decisión: ADR 0032, ADR 0042, ADR 0046, ADR 0047 · Especificación: `docs/especificacion/marketplace.md` §4.3, §5.2, §9.1
 
 ## Quién se verifica
 
@@ -52,7 +52,7 @@ El administrador puede crear cuentas de app desde el panel y aprobarlas él mism
 
 ## Pilotos de una empresa
 
-Cada piloto de una empresa tiene su **cuenta propia** de proveedor, con su verificación de identidad y su licencia, y la empresa tiene un **encargado** con su propia cuenta, que gestiona el vínculo. El vínculo se crea por invitación del encargado o por solicitud del piloto con el código de la empresa, y necesita el consentimiento de los dos. El encargado puede **liberar** al piloto para que trabaje por su cuenta con la misma cuenta, sin volver a registrarse como piloto ni repetir su selfie y su documento; para ofrecer por su cuenta, el piloto liberado completa lo que pide un proveedor independiente (dron con fotos, seguro, domicilio de operación) y un administrador lo aprueba. El cliente ve el equipo, y quién es el piloto, solo después de adjudicar. Quién ofrece en nombre de la empresa está por decidir (ADR 0046, punto 38); mientras tanto ofrece el encargado con un equipo de la empresa.
+Cada piloto de una empresa tiene su **cuenta propia** de proveedor, con su verificación de identidad y su licencia, y la empresa tiene un **encargado** con su propia cuenta, que gestiona el vínculo. El vínculo se crea por invitación del encargado o por solicitud del piloto con el código de la empresa, y necesita el consentimiento de los dos. El encargado puede **liberar** al piloto para que trabaje por su cuenta con la misma cuenta, sin volver a registrarse como piloto ni repetir su selfie y su documento; para ofrecer por su cuenta, el piloto liberado completa lo que pide un proveedor independiente (dron con fotos, seguro, domicilio de operación) y un administrador lo aprueba. El cliente ve el equipo, y quién es el piloto, solo después de adjudicar. En nombre de la empresa **ofrece el encargado**, con un equipo de la empresa; puede delegar la oferta a pilotos concretos (opción apagada por defecto) y el piloto sin delegación ve el mapa pero no ofrece (ADR 0045, punto 36; ADR 0046, punto 38).
 
 ## Equipo del servicio
 
@@ -70,7 +70,8 @@ El proveedor puede registrar, de forma opcional, nombre y celular de las persona
 - Suspensión inmediata por incidente grave probado, falsedad documental o reclamo de la autoridad.
 - Baja definitiva por fraude, daño intencional o reincidencia en suspensión.
 - Toda suspensión o baja incluye motivo, autor y vía de apelación.
+- La **baja administrativa** la decide un administrador y cierra la cuenta; no es lo mismo que la **eliminación de cuenta** que pide la persona, que anonimiza sus datos (`eliminacion_de_cuenta.md`). Una baja, una suspensión o un rechazo por fraude cuentan como antecedentes para la retención de la selfie y el documento.
 
 ## Privacidad
 
-Los documentos, la selfie y el documento de identidad se guardan con acceso restringido a quien tiene permiso para revisarlos (ADR 0026) y no se escriben en logs ni en la bitácora (sí queda registrado cada acceso); la app borra su copia local al subirlos. **Se conservan mientras exista la cuenta y 12 meses después de darla de baja**, por temas legales; las verificaciones rechazadas o reemplazadas, 90 días. Cumplido el plazo se eliminan los archivos y, si la persona ya no tiene ninguna cuenta viva ni un reclamo abierto, se anonimizan sus datos de identidad; cada purga queda registrada en la bitácora sin los datos eliminados. El cliente ve el nombre, la foto de perfil, la calificación, el modelo y las fotos aprobadas del dron y que el proveedor está verificado, no los documentos. El teléfono y el documento del piloto, y los datos de su equipo, los ve solo tras adjudicar.
+Los documentos, la selfie y el documento de identidad se guardan con acceso restringido a quien tiene permiso para revisarlos (ADR 0026) y no se escriben en logs ni en la bitácora (sí queda registrado cada acceso); la app borra su copia local al subirlos. **Se conservan mientras exista la cuenta.** Después: **12 meses** tras una baja administrativa, una eliminación con antecedentes (suspensión, rechazo por fraude, incidencia grave o reclamo con responsabilidad de la cuenta) o la eliminación de una cuenta falsa; **90 días** tras una eliminación voluntaria sin antecedentes, el plazo de reclamos; y 90 días las verificaciones rechazadas o reemplazadas. El motivo es prevenir la suplantación y defender a Agrocom y a la contraparte en un reclamo. Cumplido el plazo se eliminan los archivos y, si la persona ya no tiene ninguna cuenta viva ni un reclamo abierto, se anonimizan sus datos de identidad; queda solo un registro mínimo antifraude (una huella del documento con clave del servidor, el motivo y la fecha, sin imágenes ni nombre). Cada purga queda registrada en la bitácora sin los datos eliminados. El cliente ve el nombre, la foto de perfil, la calificación, el modelo y las fotos aprobadas del dron y que el proveedor está verificado, no los documentos. El teléfono y el documento del piloto, y los datos de su equipo, los ve solo tras adjudicar.

@@ -3,7 +3,7 @@
     Tablero (§6.1 de docs/diseno/guia_pantalla_panel.md).
 
     Muestra cómo está el mercado: KPIs, solicitudes por estado, solicitudes por
-    región y la cola de lo que espera una decisión del administrador. Acá no se
+    departamento y la cola de lo que espera una decisión del administrador. Acá no se
     calcula nada: todo llega resuelto de `LecturaTableroDeMercado`.
 
     Datos esperados: la cáscara de CascaraPanel (menu/roles/…/tema/version), más
@@ -95,8 +95,8 @@
                     <section class="ag-card ag-card--padded">
                         <header class="ag-card__head">
                             <div>
-                                <h2 class="ag-card__title">{{ __('seguridad.dashboard.por_region_titulo') }}</h2>
-                                <p class="ag-tablero__ayuda">{{ __('seguridad.dashboard.por_region_ayuda') }}</p>
+                                <h2 class="ag-card__title">{{ __('seguridad.dashboard.por_departamento_titulo') }}</h2>
+                                <p class="ag-tablero__ayuda">{{ __('seguridad.dashboard.por_departamento_ayuda') }}</p>
                             </div>
                         </header>
 
@@ -104,7 +104,7 @@
                             <table class="ag-tablero__tabla">
                                 <thead>
                                     <tr>
-                                        <th scope="col">{{ __('seguridad.dashboard.col_region') }}</th>
+                                        <th scope="col">{{ __('seguridad.dashboard.col_departamento') }}</th>
                                         <th scope="col" class="ag-tablero__num">{{ __('seguridad.dashboard.col_abiertas') }}</th>
                                         <th scope="col" class="ag-tablero__num">{{ __('seguridad.dashboard.col_en_curso') }}</th>
                                         <th scope="col" class="ag-tablero__num">{{ __('seguridad.dashboard.col_cerradas') }}</th>
@@ -113,9 +113,9 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach ($tablero['por_region'] as $fila)
+                                    @foreach ($tablero['por_departamento'] as $fila)
                                         <tr>
-                                            <th scope="row">{{ $fila['region'] === 'sin_region' ? __('seguridad.dashboard.region_sin_zona') : __('solicitudes.region.'.$fila['region']) }}</th>
+                                            <th scope="row">{{ $fila['departamento'] ?? __('seguridad.dashboard.departamento_sin_dato') }}</th>
                                             <td class="ag-tablero__num">{{ $fila['abiertas'] }}</td>
                                             <td class="ag-tablero__num">{{ $fila['en_curso'] }}</td>
                                             <td class="ag-tablero__num">{{ $fila['cerradas'] }}</td>

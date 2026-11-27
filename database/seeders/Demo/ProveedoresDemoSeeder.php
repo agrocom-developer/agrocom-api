@@ -20,9 +20,9 @@ use App\Dominios\Proveedores\Dominio\TipoProveedor;
 use App\Dominios\Proveedores\Dominio\TipoSujeto;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Documento;
 use App\Dominios\Proveedores\Infraestructura\Eloquent\Proveedor;
+use App\Dominios\Solicitudes\Aplicacion\CambiarEstadoDeCliente;
 use App\Dominios\Solicitudes\Aplicacion\RegistrarCliente;
 use App\Dominios\Solicitudes\Infraestructura\Eloquent\Cliente;
-use App\Dominios\Solicitudes\Infraestructura\Eloquent\Zona;
 use Database\Seeders\Catalogo\ProveedorPropioSeeder;
 use Illuminate\Database\Seeder;
 use Illuminate\Http\UploadedFile;
@@ -62,6 +62,7 @@ class ProveedoresDemoSeeder extends Seeder
         private readonly RegistrarProveedor $registrarProveedor,
         private readonly RegistrarPiloto $registrarPiloto,
         private readonly RegistrarCliente $registrarCliente,
+        private readonly CambiarEstadoDeCliente $cambiarEstadoDeCliente,
         private readonly RegistrarDron $registrarDron,
         private readonly CrearEquipo $crearEquipo,
         private readonly CargarDocumento $cargarDocumento,
@@ -161,7 +162,6 @@ class ProveedoresDemoSeeder extends Seeder
             'tipo' => 'independiente', 'nombre' => 'Carlos Mamani Quispe', 'username' => 'carlos.mamani',
             'email' => 'carlos@mamaniagro.example', 'password' => self::PASSWORD, 'telefono' => '+591 70012345',
             'razon_social' => 'Mamani Agroservicios', 'documento_fiscal' => '4521897012',
-            'zona_base_id' => $this->zona('Montero'), 'radio_operacion_km' => '90',
             'licencia_numero' => 'RPA-2291', 'licencia_vence' => now()->addMonths(18)->toDateString(),
             'categoria_habilitacion' => 'RPAS agrícola',
         ]);
@@ -185,7 +185,6 @@ class ProveedoresDemoSeeder extends Seeder
             'tipo' => 'tercero', 'nombre' => 'Jhonny Salvatierra Rivero', 'username' => self::CENTINELA_TERCERO,
             'email' => 'gerencia@fumigacionesoriente.example', 'password' => self::PASSWORD, 'telefono' => '+591 3 3461122',
             'razon_social' => 'Fumigaciones del Oriente SRL', 'documento_fiscal' => '1023456028',
-            'zona_base_id' => $this->zona('San Julián'), 'radio_operacion_km' => '120',
         ]);
         $titular = (int) $proveedor->usuario_titular_id;
 
@@ -230,7 +229,6 @@ class ProveedoresDemoSeeder extends Seeder
             'tipo' => 'independiente', 'nombre' => 'Rosa Condori Vargas', 'username' => 'rosa.condori',
             'email' => null, 'password' => self::PASSWORD, 'telefono' => '+591 76543210',
             'razon_social' => 'Condori Drones Agrícolas', 'documento_fiscal' => '6718342015',
-            'zona_base_id' => $this->zona('Cuatro Cañadas'), 'radio_operacion_km' => '70',
             'licencia_numero' => 'RPA-2488', 'licencia_vence' => now()->addMonths(16)->toDateString(),
             'categoria_habilitacion' => 'RPAS agrícola',
         ]);
@@ -245,7 +243,6 @@ class ProveedoresDemoSeeder extends Seeder
             'tipo' => 'tercero', 'nombre' => 'Alberto Hurtado Cruz', 'username' => 'alberto.hurtado',
             'email' => null, 'password' => self::PASSWORD, 'telefono' => '+591 3 9462210',
             'razon_social' => 'Servicios Aéreos Chiquitano', 'documento_fiscal' => '1029384027',
-            'zona_base_id' => $this->zona('San José de Chiquitos'), 'radio_operacion_km' => '100',
         ]);
 
         $this->resolverAprobacion->ejecutar(
@@ -273,10 +270,13 @@ class ProveedoresDemoSeeder extends Seeder
                 continue;
             }
 
-            $this->registrarCliente->ejecutar([
+            $cliente = $this->registrarCliente->ejecutar([
                 'tipo' => $tipo, 'nombre' => $nombre, 'username' => $username, 'email' => null, 'password' => self::PASSWORD,
                 'razon_social' => $razonSocial, 'documento_fiscal' => $documento, 'telefono' => $telefono, 'contactos' => $contactos,
             ]);
+
+            // Un cliente nace pendiente (ADR 0046): los de la demo ya están aprobados, para recorrer la negociación.
+            $this->cambiarEstadoDeCliente->ejecutar($cliente->id, AccionAprobacion::Aprobar, null, $this->admin);
         }
     }
 
@@ -378,10 +378,5 @@ class ProveedoresDemoSeeder extends Seeder
         file_put_contents($ruta, "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 300 120]>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n% Documento de demostración: {$tipo}\n");
 
         return new UploadedFile($ruta, "{$tipo}-demo.pdf", 'application/pdf', null, true);
-    }
-
-    private function zona(string $nombre): ?int
-    {
-        return Zona::query()->where('nombre', $nombre)->value('id');
     }
 }

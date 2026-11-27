@@ -15,7 +15,7 @@ use OpenApi\Attributes as OA;
  * solicitudes `abierta` y `con_ofertas` de Santa Cruz con filtros del usuario, sin radio
  * fijo de operación y sin datos privados del cliente. Requiere red.
  */
-#[OA\Tag(name: 'Mercado', description: 'El piloto ve en un mapa las solicitudes abiertas para decidir a qué zona ir con su equipo (los valles frente a la Chiquitania) y a cuáles ofertar.')]
+#[OA\Tag(name: 'Mercado', description: 'El piloto ve en un mapa las solicitudes abiertas para decidir a cuáles ofertar.')]
 #[OA\Schema(
     schema: 'SolicitudAbierta',
     title: 'Solicitud abierta (mapa)',
@@ -26,9 +26,8 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'centro', description: 'Centroide de los lotes.', properties: [new OA\Property(property: 'latitud', type: 'number', example: -17.7833), new OA\Property(property: 'longitud', type: 'number', example: -63.1821)], type: 'object', nullable: true),
         new OA\Property(property: 'hectareas_solicitadas', type: 'string', example: '80.0000'),
         new OA\Property(property: 'precio_ha_propuesto', type: 'string', example: '125.0000'),
-        new OA\Property(property: 'zona', type: 'string', nullable: true, example: 'Warnes'),
-        new OA\Property(property: 'zona_id', type: 'integer', nullable: true),
-        new OA\Property(property: 'macrorregion', type: 'string', nullable: true, enum: ['cercado', 'norte_integrado', 'chiquitania', 'valles', 'chaco']),
+        new OA\Property(property: 'departamento_codigo', description: 'Código INE del departamento de la solicitud (`GET /api/catalogos/ubicaciones`).', type: 'string', nullable: true, example: '07'),
+        new OA\Property(property: 'provincia_codigo', description: 'Código INE de la provincia, del mismo departamento.', type: 'string', nullable: true, example: '0702'),
         new OA\Property(property: 'cultivo', type: 'string', nullable: true),
         new OA\Property(property: 'tipo_aplicacion', type: 'string'),
         new OA\Property(property: 'ventana_desde', description: 'Fecha deseada (opcional; nulo si el cliente no pidió fecha).', type: 'string', format: 'date', nullable: true),
@@ -64,8 +63,6 @@ final class MercadoController
         tags: ['Mercado'],
         parameters: [
             new OA\Parameter(name: 'bbox', in: 'query', required: false, description: 'Encuadre del mapa: `oeste,sur,este,norte`.', schema: new OA\Schema(type: 'string', example: '-64.5,-18.5,-61.0,-16.5')),
-            new OA\Parameter(name: 'zona_id', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
-            new OA\Parameter(name: 'macrorregion', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['cercado', 'norte_integrado', 'chiquitania', 'valles', 'chaco'])),
             new OA\Parameter(name: 'hectareas_min', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
             new OA\Parameter(name: 'hectareas_max', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
             new OA\Parameter(name: 'precio_ha_min', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
@@ -97,30 +94,6 @@ final class MercadoController
         }
 
         return response()->json(['solicitudes' => $pagina['items'], 'siguiente_cursor' => $pagina['siguiente_cursor']]);
-    }
-
-    #[OA\Get(
-        path: '/api/solicitudes-abiertas/resumen-zonas',
-        operationId: 'resumenZonasAbiertas',
-        description: 'Cuántas solicitudes, hectáreas y qué precio promedio hay por zona y macrorregión, con los mismos filtros del mapa: responde «cuántos clientes y cuántas hectáreas hay en los valles frente a la Chiquitania».',
-        summary: 'Resumen por zona y macrorregión',
-        security: [['tokenDispositivo' => []]],
-        tags: ['Mercado'],
-        responses: [
-            new OA\Response(response: 200, description: 'Una fila por zona.', content: new OA\JsonContent(required: ['zonas'], properties: [new OA\Property(property: 'zonas', type: 'array', items: new OA\Items(type: 'object'))], type: 'object')),
-            new OA\Response(response: 401, description: 'Token ausente o revocado.'),
-            new OA\Response(response: 403, description: 'El rol no ve el mapa o el proveedor no está habilitado.', content: new OA\JsonContent(ref: '#/components/schemas/ErrorConflicto')),
-        ],
-    )]
-    public function resumen(Request $request): JsonResponse
-    {
-        $this->exigirPermiso($request, 'negociacion.mercado.ver');
-
-        try {
-            return response()->json(['zonas' => $this->mercado->resumenDeZonas($this->usuarioId(), $request->query())]);
-        } catch (NegociacionInvalida $excepcion) {
-            return RespuestaDeNegociacion::de($excepcion);
-        }
     }
 
     #[OA\Get(

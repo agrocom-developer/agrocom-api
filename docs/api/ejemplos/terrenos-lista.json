@@ -45,7 +45,10 @@
                     "referencias_acceso": "Camino vecinal a 3 km de la ruta principal.",
                     "colindantes_sensibles": null,
                     "acceso_dificil": false,
-                    "zona_id": 1,
+                    "departamento_codigo": "07",
+                    "provincia_codigo": "0701",
+                    "municipio": "Santa Cruz de la Sierra",
+                    "comunidad": "Comunidad Las Palmas",
                     "fotos": []
                 },
                 {
@@ -83,7 +86,10 @@
                     "referencias_acceso": "Camino vecinal a 3 km de la ruta principal.",
                     "colindantes_sensibles": null,
                     "acceso_dificil": false,
-                    "zona_id": 2,
+                    "departamento_codigo": "07",
+                    "provincia_codigo": "0702",
+                    "municipio": "Warnes",
+                    "comunidad": "Comunidad Lote Norte",
                     "fotos": []
                 }
             ]

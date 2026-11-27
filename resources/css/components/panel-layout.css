@@ -136,6 +136,11 @@
     font-weight: var(--ag-font-weight-bold);
 }
 
+/* Página actual fuera del menú (Inicio): seleccionada, pero no es un enlace. */
+span.ag-module-band__pill {
+    cursor: default;
+}
+
 .ag-module-band__pill:focus-visible {
     outline: 2px solid var(--ag-color-focus-ring);
     outline-offset: 2px;

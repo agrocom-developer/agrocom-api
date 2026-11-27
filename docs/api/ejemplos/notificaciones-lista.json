@@ -11,187 +11,196 @@
         "cuerpo": {
             "data": [
                 {
-                    "id": 87,
+                    "id": 12,
+                    "tipo": "sujeto_aprobado",
+                    "titulo": "El cliente «Agropecuaria San Rafael SRL» fue aprobado.",
+                    "recurso_tipo": "cliente",
+                    "recurso_id": 1,
+                    "leida": false,
+                    "creada_en": "2026-11-26T22:09:36+00:00"
+                },
+                {
+                    "id": 96,
                     "tipo": "mensaje_nuevo",
                     "titulo": "Tienes un mensaje nuevo en la solicitud #10.",
                     "recurso_tipo": "solicitud",
                     "recurso_id": 10,
                     "leida": false,
-                    "creada_en": "2026-11-26T19:40:57+00:00"
+                    "creada_en": "2026-11-26T21:09:37+00:00"
                 },
                 {
-                    "id": 83,
+                    "id": 92,
                     "tipo": "avance_registrado",
                     "titulo": "La solicitud #10 lleva 64.00 % de avance.",
                     "recurso_tipo": "solicitud",
                     "recurso_id": 10,
                     "leida": false,
-                    "creada_en": "2026-11-26T18:40:57+00:00"
+                    "creada_en": "2026-11-26T20:09:37+00:00"
                 },
                 {
-                    "id": 84,
+                    "id": 93,
                     "tipo": "mensaje_nuevo",
                     "titulo": "Tienes un mensaje nuevo en la solicitud #10.",
                     "recurso_tipo": "solicitud",
                     "recurso_id": 10,
                     "leida": false,
-                    "creada_en": "2026-11-26T16:40:57+00:00"
+                    "creada_en": "2026-11-26T18:09:37+00:00"
                 },
                 {
-                    "id": 82,
+                    "id": 91,
                     "tipo": "avance_registrado",
                     "titulo": "La solicitud #10 lleva 32.00 % de avance.",
                     "recurso_tipo": "solicitud",
                     "recurso_id": 10,
                     "leida": false,
-                    "creada_en": "2026-11-26T16:40:57+00:00"
+                    "creada_en": "2026-11-26T18:09:37+00:00"
                 },
                 {
-                    "id": 81,
+                    "id": 90,
                     "tipo": "ejecucion_iniciada",
                     "titulo": "El piloto inició el servicio de la solicitud #10.",
                     "recurso_tipo": "solicitud",
                     "recurso_id": 10,
                     "leida": false,
-                    "creada_en": "2026-11-26T15:40:57+00:00"
+                    "creada_en": "2026-11-26T17:09:37+00:00"
                 },
                 {
-                    "id": 42,
+                    "id": 47,
                     "tipo": "oferta_recibida",
-                    "titulo": "«Agrocom SRL» ofrece 128.0000 por hectárea en la solicitud #6. Acéptala, contraoferta o recházala antes de que venza.",
+                    "titulo": "«Agrocom SRL» ofrece 128.0000 por hectárea en la solicitud #6. Acéptala, haz una contraoferta o recházala antes de que venza.",
                     "recurso_tipo": "solicitud",
                     "recurso_id": 6,
                     "leida": false,
-                    "creada_en": "2026-11-26T10:40:57+00:00"
+                    "creada_en": "2026-11-26T12:09:37+00:00"
                 },
                 {
-                    "id": 160,
+                    "id": 174,
                     "tipo": "solicitud_reabierta",
                     "titulo": "El proveedor devolvió la solicitud #16: vuelve a estar abierta para recibir ofertas.",
                     "recurso_tipo": "solicitud",
                     "recurso_id": 16,
                     "leida": false,
-                    "creada_en": "2026-11-26T08:40:57+00:00"
+                    "creada_en": "2026-11-26T10:09:37+00:00"
                 },
                 {
-                    "id": 39,
+                    "id": 44,
                     "tipo": "oferta_recibida",
-                    "titulo": "«Fumigaciones del Oriente SRL» ofrece 110.0000 por hectárea en la solicitud #6. Acéptala, contraoferta o recházala antes de que venza.",
+                    "titulo": "«Fumigaciones del Oriente SRL» ofrece 110.0000 por hectárea en la solicitud #6. Acéptala, haz una contraoferta o recházala antes de que venza.",
                     "recurso_tipo": "solicitud",
                     "recurso_id": 6,
                     "leida": false,
-                    "creada_en": "2026-11-26T00:40:57+00:00"
+                    "creada_en": "2026-11-26T02:09:37+00:00"
                 },
                 {
-                    "id": 38,
+                    "id": 43,
                     "tipo": "oferta_recibida",
-                    "titulo": "«Mamani Agroservicios» ofrece 118.0000 por hectárea en la solicitud #6. Acéptala, contraoferta o recházala antes de que venza.",
+                    "titulo": "«Mamani Agroservicios» ofrece 118.0000 por hectárea en la solicitud #6. Acéptala, haz una contraoferta o recházala antes de que venza.",
                     "recurso_tipo": "solicitud",
                     "recurso_id": 6,
                     "leida": false,
-                    "creada_en": "2026-11-25T22:40:57+00:00"
+                    "creada_en": "2026-11-26T00:09:37+00:00"
                 },
                 {
-                    "id": 37,
+                    "id": 42,
                     "tipo": "oferta_recibida",
-                    "titulo": "«Agrocom SRL» ofrece 135.0000 por hectárea en la solicitud #6. Acéptala, contraoferta o recházala antes de que venza.",
+                    "titulo": "«Agrocom SRL» ofrece 135.0000 por hectárea en la solicitud #6. Acéptala, haz una contraoferta o recházala antes de que venza.",
                     "recurso_tipo": "solicitud",
                     "recurso_id": 6,
                     "leida": false,
-                    "creada_en": "2026-11-25T18:40:57+00:00"
+                    "creada_en": "2026-11-25T20:09:37+00:00"
                 },
                 {
-                    "id": 159,
+                    "id": 173,
                     "tipo": "solicitud_adjudicada",
                     "titulo": "La solicitud #16 quedó adjudicada a «Mamani Agroservicios» a 121.0000 por hectárea. Ya pueden coordinar por el chat.",
                     "recurso_tipo": "solicitud",
                     "recurso_id": 16,
                     "leida": false,
-                    "creada_en": "2026-11-25T14:40:57+00:00"
+                    "creada_en": "2026-11-25T16:09:37+00:00"
                 },
                 {
-                    "id": 157,
+                    "id": 171,
                     "tipo": "oferta_recibida",
-                    "titulo": "«Mamani Agroservicios» ofrece 121.0000 por hectárea en la solicitud #16. Acéptala, contraoferta o recházala antes de que venza.",
+                    "titulo": "«Mamani Agroservicios» ofrece 121.0000 por hectárea en la solicitud #16. Acéptala, haz una contraoferta o recházala antes de que venza.",
                     "recurso_tipo": "solicitud",
                     "recurso_id": 16,
                     "leida": false,
-                    "creada_en": "2026-11-25T10:40:57+00:00"
+                    "creada_en": "2026-11-25T12:09:37+00:00"
                 },
                 {
-                    "id": 80,
+                    "id": 89,
                     "tipo": "solicitud_adjudicada",
                     "titulo": "La solicitud #10 quedó adjudicada a «Agrocom SRL» a 115.0000 por hectárea. Ya pueden coordinar por el chat.",
                     "recurso_tipo": "solicitud",
                     "recurso_id": 10,
                     "leida": false,
-                    "creada_en": "2026-11-24T18:40:57+00:00"
+                    "creada_en": "2026-11-24T20:09:37+00:00"
                 },
                 {
-                    "id": 77,
+                    "id": 86,
                     "tipo": "oferta_recibida",
-                    "titulo": "«Agrocom SRL» ofrece 115.0000 por hectárea en la solicitud #10. Acéptala, contraoferta o recházala antes de que venza.",
+                    "titulo": "«Agrocom SRL» ofrece 115.0000 por hectárea en la solicitud #10. Acéptala, haz una contraoferta o recházala antes de que venza.",
                     "recurso_tipo": "solicitud",
                     "recurso_id": 10,
                     "leida": false,
-                    "creada_en": "2026-11-24T10:40:57+00:00"
+                    "creada_en": "2026-11-24T12:09:37+00:00"
                 },
                 {
-                    "id": 123,
+                    "id": 135,
                     "tipo": "solicitud_finalizada",
                     "titulo": "El servicio #13 quedó finalizado. Monto a pagar al proveedor: 14880.00. Puedes calificarlo durante 7 días o abrir un reclamo.",
                     "recurso_tipo": "solicitud",
                     "recurso_id": 13,
                     "leida": false,
-                    "creada_en": "2026-11-24T08:40:57+00:00"
+                    "creada_en": "2026-11-24T10:09:37+00:00"
                 },
                 {
-                    "id": 120,
+                    "id": 132,
                     "tipo": "avance_registrado",
                     "titulo": "La solicitud #13 lleva 50.00 % de avance.",
                     "recurso_tipo": "solicitud",
                     "recurso_id": 13,
                     "leida": false,
-                    "creada_en": "2026-11-22T16:40:57+00:00"
+                    "creada_en": "2026-11-22T18:09:37+00:00"
                 },
                 {
-                    "id": 119,
+                    "id": 131,
                     "tipo": "ejecucion_iniciada",
                     "titulo": "El piloto inició el servicio de la solicitud #13.",
                     "recurso_tipo": "solicitud",
                     "recurso_id": 13,
                     "leida": false,
-                    "creada_en": "2026-11-21T21:40:57+00:00"
+                    "creada_en": "2026-11-21T23:09:37+00:00"
                 },
                 {
-                    "id": 126,
+                    "id": 138,
                     "tipo": "mensaje_nuevo",
                     "titulo": "Tienes un mensaje nuevo en la solicitud #13.",
                     "recurso_tipo": "solicitud",
                     "recurso_id": 13,
                     "leida": false,
-                    "creada_en": "2026-11-21T01:40:57+00:00"
+                    "creada_en": "2026-11-21T03:09:37+00:00"
                 },
                 {
-                    "id": 118,
+                    "id": 130,
                     "tipo": "solicitud_adjudicada",
                     "titulo": "La solicitud #13 quedó adjudicada a «Agrocom SRL» a 124.0000 por hectárea. Ya pueden coordinar por el chat.",
                     "recurso_tipo": "solicitud",
                     "recurso_id": 13,
                     "leida": false,
-                    "creada_en": "2026-11-19T09:40:57+00:00"
+                    "creada_en": "2026-11-19T11:09:37+00:00"
                 },
                 {
-                    "id": 115,
+                    "id": 127,
                     "tipo": "oferta_recibida",
-                    "titulo": "«Agrocom SRL» ofrece 124.0000 por hectárea en la solicitud #13. Acéptala, contraoferta o recházala antes de que venza.",
+                    "titulo": "«Agrocom SRL» ofrece 124.0000 por hectárea en la solicitud #13. Acéptala, haz una contraoferta o recházala antes de que venza.",
                     "recurso_tipo": "solicitud",
                     "recurso_id": 13,
                     "leida": false,
-                    "creada_en": "2026-11-18T23:40:57+00:00"
+                    "creada_en": "2026-11-19T01:09:37+00:00"
                 }
             ],
-            "no_leidas": 20
+            "no_leidas": 21
         }
     }
 }

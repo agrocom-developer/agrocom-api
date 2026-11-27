@@ -25,7 +25,7 @@
                 "foto_url": null
             },
             "rol": {
-                "id": 1,
+                "id": 3,
                 "name": "piloto",
                 "description": "Piloto de dron: ofrece, ejecuta los servicios adjudicados y sube las fotos desde la app."
             },
@@ -34,12 +34,12 @@
                 "uuid_dispositivo": "6f1d0a2e-1f34-4c9f-9a8b-2b7c1d5e0f31",
                 "nombre_dispositivo": "Control remoto del dron",
                 "rol": {
-                    "id": 1,
+                    "id": 3,
                     "name": "piloto",
                     "description": "Piloto de dron: ofrece, ejecuta los servicios adjudicados y sube las fotos desde la app."
                 },
                 "last_used_at": null,
-                "created_at": "2026-11-26T20:41:07+00:00"
+                "created_at": "2026-11-26T22:09:44+00:00"
             }
         }
     }

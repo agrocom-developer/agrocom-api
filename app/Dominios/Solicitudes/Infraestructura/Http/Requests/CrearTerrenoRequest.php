@@ -27,7 +27,18 @@ final class CrearTerrenoRequest extends FormRequest
             'referencias_acceso' => ['nullable', 'string', 'max:1000'],
             'colindantes_sensibles' => ['nullable', 'string', 'max:1000'],
             'acceso_dificil' => ['nullable', 'boolean'],
-            'zona_id' => ['nullable', 'integer', Rule::exists('sol_zonas', 'id')->whereNull('deleted_at')],
+            // Ubicación (ADR 0045, punto 3): departamento y provincia del catálogo oficial, la provincia
+            // del departamento elegido; municipio y comunidad son texto de referencia. Se exigen al publicar.
+            'departamento_codigo' => ['nullable', 'string', 'required_with:provincia_codigo', Rule::exists('sol_departamentos', 'codigo')->whereNull('deleted_at')],
+            'provincia_codigo' => [
+                'nullable',
+                'string',
+                Rule::exists('sol_provincias', 'codigo')
+                    ->where('departamento_codigo', (string) $this->input('departamento_codigo'))
+                    ->whereNull('deleted_at'),
+            ],
+            'municipio' => ['nullable', 'string', 'max:120'],
+            'comunidad' => ['nullable', 'string', 'max:120'],
         ];
     }
 
