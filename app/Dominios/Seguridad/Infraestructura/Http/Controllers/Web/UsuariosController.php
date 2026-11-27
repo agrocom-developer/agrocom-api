@@ -89,7 +89,7 @@ final class UsuariosController
         $estado = TextoDeFiltro::de($request, 'estado');
         $estado = array_key_exists($estado, self::TONO_POR_ESTADO) ? $estado : '';
 
-        $roles = SecRole::query()->whereIn('name', PermisosReservados::ROLES_DEL_PANEL)->orderBy('name')->get();
+        $roles = SecRole::query()->delPanel()->orderBy('name')->get();
         $opcionesRol = $roles->mapWithKeys(fn (SecRole $rol) => [$rol->id => PresentadorRol::nombreLegible($rol)])->all();
 
         $rolId = TextoDeFiltro::de($request, 'rol');
@@ -106,7 +106,8 @@ final class UsuariosController
         return view('seguridad::pages.usuarios.index', [
             ...$this->autorizacion->cascara($request),
             'usuarios' => $usuarios,
-            'rolesPorUsuario' => $this->tarjetas->rolesPorUsuario($idsUsuario),
+            'rolesPorUsuario' => $this->tarjetas->rolesEnlazablesPorUsuario($idsUsuario),
+            'puedeVerRoles' => $this->autorizacion->tienePermiso($request, 'seguridad.rol.ver'),
             'filtros' => ['q' => $busqueda, 'estado' => $estado !== '' ? $estado : null, 'rol' => $rolId !== '' ? $rolId : null],
             'opcionesRol' => $opcionesRol,
             'tonoPorEstado' => self::TONO_POR_ESTADO,
@@ -351,7 +352,7 @@ final class UsuariosController
     }
 
     /**
-     * Los dos roles del panel; `administrador` solo se ofrece si el actor puede
+     * Los roles activos del panel; `administrador` solo se ofrece si el actor puede
      * asignarlo (`asignar_rol_administrador`). Es solo para no ofrecer una opción
      * que el submit va a rechazar — la guarda real es
      * {@see self::abortarSiFaltaPermisoRolAdministrador()}.
@@ -360,7 +361,7 @@ final class UsuariosController
      */
     private function rolesDisponibles(Request $request): Collection
     {
-        $roles = SecRole::query()->whereIn('name', PermisosReservados::ROLES_DEL_PANEL)->orderBy('name')->get();
+        $roles = SecRole::query()->delPanel()->where('state', true)->orderBy('name')->get();
 
         if (! $this->autorizacion->tienePermiso($request, self::PERMISO_ROL_ADMINISTRADOR)) {
             $roles = $roles->reject(fn (SecRole $rol) => $rol->name === PermisosReservados::ROL_ADMINISTRADOR)->values();

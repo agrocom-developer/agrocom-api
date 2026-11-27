@@ -21,8 +21,8 @@ use Illuminate\Support\Facades\DB;
  * asignarse el rol `administrador` editando después de la creación — la guarda
  * tiene que estar en un único lugar que ambos caminos atraviesen.
  *
- * Una cuenta de panel tiene UN solo rol, `administrador` u `operador` (ADR 0046,
- * punto 4). Asignar o quitar `administrador` exige además
+ * Una cuenta de panel tiene UN solo rol, y es un rol del panel (`administrador`,
+ * `operador` o uno creado desde /panel/roles; ADR 0046, punto 4). Asignar o quitar `administrador` exige además
  * `seguridad.usuario.asignar_rol_administrador`.
  *
  * No hay controlador ni ruta HTTP en HU-01 (es puro backend, ADR 0008): lo
@@ -50,8 +50,7 @@ final class AsignarRolesUsuario
      * @param  string|null  $email  Correo de la cuenta (tarea 66, ampliación
      *                              ADR 0004 9/9/2026) — de la cuenta, no de
      *                              la persona. `null` = sin correo.
-     * @param  list<int>  $roleIds  El rol deseado: exactamente uno, de los dos del
-     *                              panel. Set completo y definitivo, no un delta:
+     * @param  list<int>  $roleIds  El rol deseado: exactamente uno, del panel. Set completo y definitivo, no un delta:
      *                              el que falte respecto a los actuales se revoca
      *                              (soft delete) y el nuevo se asigna, así
      *                              "editar" nunca deja un rol huérfano por omisión.
@@ -124,6 +123,7 @@ final class AsignarRolesUsuario
             $rolesActuales = $esAlta ? [] : $usuario->idsDeRoles();
 
             $this->verificarGuardaRolAdministrador($actor, $idRolActivo, $rolesActuales, $roleIds);
+            $this->verificarQueQuedaUnAdministrador($usuario, $rolesActuales, $roleIds);
 
             $usuario->name = $name;
             $usuario->username = $username;
@@ -164,7 +164,7 @@ final class AsignarRolesUsuario
     }
 
     /**
-     * Una cuenta de panel tiene un solo rol y es uno de los dos del panel.
+     * Una cuenta de panel tiene un solo rol y es un rol del panel (de ámbito `panel`, vivo).
      *
      * @param  list<int>  $roleIds
      *
@@ -172,10 +172,40 @@ final class AsignarRolesUsuario
      */
     private function verificarUnSoloRolDelPanel(array $roleIds): void
     {
-        $nombres = $roleIds === [] ? [] : SecRole::query()->whereIn('id', $roleIds)->pluck('name')->all();
+        $delPanel = $roleIds === [] ? 0 : SecRole::query()->delPanel()->whereIn('id', $roleIds)->count();
 
-        if (count($roleIds) !== 1 || count($nombres) !== 1 || ! PermisosReservados::esRolDelPanel((string) $nombres[0])) {
+        if (count($roleIds) !== 1 || $delPanel !== 1) {
             throw RolProtegido::porUnSoloRolDelPanel();
+        }
+    }
+
+    /**
+     * El sistema no se queda sin administrador: quitarle el rol a la única cuenta
+     * de panel activa que lo tiene (cambiándola a otro rol) se rechaza.
+     *
+     * @param  list<int>  $rolesActuales
+     * @param  list<int>  $rolesDeseados
+     *
+     * @throws RolProtegido
+     */
+    private function verificarQueQuedaUnAdministrador(SecUser $usuario, array $rolesActuales, array $rolesDeseados): void
+    {
+        $idAdministrador = (int) SecRole::query()
+            ->where('name', PermisosReservados::ROL_ADMINISTRADOR)
+            ->value('id');
+
+        if ($idAdministrador === 0 || ! in_array($idAdministrador, $rolesActuales, true) || in_array($idAdministrador, $rolesDeseados, true)) {
+            return;
+        }
+
+        $otros = SecUserRole::query()
+            ->where('id_role', $idAdministrador)
+            ->where('id_user', '!=', $usuario->id)
+            ->whereIn('id_user', SecUser::query()->where('state', true)->select('id'))
+            ->exists();
+
+        if (! $otros) {
+            throw RolProtegido::porUltimoAdministrador();
         }
     }
 

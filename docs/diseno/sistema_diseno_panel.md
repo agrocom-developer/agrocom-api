@@ -1962,11 +1962,12 @@ Toda tabla del panel pinta sus acciones con un único componente, `organisms/row
 
 1. **Ver** (`info-outline`)
 2. **Editar** (`warning-outline`)
-3. **Aprobar** (`success-outline`)
-4. **Transiciones de la máquina de estados** (`<tono del estado de llegada>-outline`): rechazar, suspender, rehabilitar, bloquear, ocultar, etc.
-5. **Eliminar** (`danger-outline`, token de peligro `--ag-color-danger`), siempre al final.
+3. **Permisos** (`distintivo-1-outline`, violeta: ni estado ni baja; solo Roles, lleva a la asignación de permisos del rol)
+4. **Aprobar** (`success-outline`)
+5. **Transiciones de la máquina de estados** (`<tono del estado de llegada>-outline`): rechazar, suspender, rehabilitar, bloquear, ocultar, etc.
+6. **Eliminar** (`danger-outline`, token de peligro `--ag-color-danger`), siempre al final.
 
-Cada acción es un `<x-molecules.row-action kind="ver|revisar|editar|aprobar|transicion|eliminar">` dentro del slot con nombre que le corresponde (`ver`, `editar`, `aprobar`, `transiciones`, `eliminar`). El `kind` fija el color; nadie lo elige a mano. No existe slot por defecto ni se admiten botones sueltos.
+Cada acción es un `<x-molecules.row-action kind="ver|revisar|editar|permisos|aprobar|transicion|eliminar">` dentro del slot con nombre que le corresponde (`ver`, `editar`, `permisos`, `aprobar`, `transiciones`, `eliminar`). El `kind` fija el color; nadie lo elige a mano. No existe slot por defecto ni se admiten botones sueltos.
 
 - Las acciones llevan **ícono y texto, nunca solo ícono** (pedido explícito, 15/9/2026). En pantallas de 768 px o más se ven hasta 2 sueltas; el resto va en el menú «⋮» de la fila, con ícono y texto, en el mismo orden. En móvil van todas en el menú. El organism pinta el contenido dos veces (mitad visible y menú) y el CSS decide por breakpoint cuáles se ven; por eso la columna de acciones mide `--ag-row-actions-width` en todas las tablas. El menú se abre con clic o teclado, se cierra con Esc o clic fuera y no lo recorta el desborde de la tabla (Popper con `strategy: fixed`).
 - Solo se ofrecen las acciones válidas para el estado actual y permitidas al rol; el llamador las filtra con `@puede`/`@if`, igual que en la ficha.
@@ -1984,6 +1985,7 @@ El rojo vino (`danger`) es solo de **Eliminar**. Lo que no elimina nada nunca lo
 | --- | --- | --- |
 | Ver | `info-outline` | fila |
 | Editar | `warning-outline` | fila y encabezado |
+| Permisos | `distintivo-1-outline` | fila y encabezado de la ficha del rol |
 | Aprobar, rehabilitar, restablecer, reactivar | `success-outline` | fila / paso de la máquina |
 | Suspender, bloquear, ocultar (baja temporal, reversible) | `neutral-outline` (gris); el paso «Suspendido» y su badge también son grises | fila / paso de la máquina |
 | Rechazar, cancelar (cierran sin eliminar) | `alert-outline` (token `alert`, no el rojo vino) | fila / encabezado |
@@ -1991,10 +1993,10 @@ El rojo vino (`danger`) es solo de **Eliminar**. Lo que no elimina nada nunca lo
 
 - `molecules/row-action` traduce una transición de tono `danger` a `alert`: ninguna transición puede heredar el rojo vino por el tono de su estado de llegada.
 - **Eliminar no es un paso de la máquina de estados.** En las fichas de proveedor, piloto y dron «Dar de baja» sale de `step-arrow` (la baja solo se dibuja si ya es el estado actual) y es un botón del encabezado: Volver, Editar y, al final, Eliminar en `danger`, solo con permiso y solo si el servidor ofreció la acción (`_boton-eliminar-aprobacion`); abre el mismo modal con motivo que usaba el paso.
-- **Toda tabla termina en Eliminar cuando su entidad lo admite.** Si la política no lo admite (bitácora de auditoría, métricas, historiales, avisos, solicitudes con negociación, reclamos, calificaciones, roles) la fila queda sin él: no se inventa.
+- **Toda tabla termina en Eliminar cuando su entidad lo admite.** Si la política no lo admite (bitácora de auditoría, métricas, historiales, avisos, solicitudes con negociación, reclamos, calificaciones) la fila queda sin él: no se inventa. Roles sí lo admite, salvo el rol 1 (administrador, el rol del sistema), que no lo ofrece ni en la fila ni en la ficha; el servidor lo rechaza igual si llega un `DELETE` a mano.
 - **Documentos** (`proveedores.documento.eliminar`, permiso sensible): borrado lógico con motivo obligatorio y archivo retirado del almacén; no se elimina el documento aprobado y vigente de un sujeto aprobado. La cuadrícula y el modal de revisión de medios no llevan Eliminar.
 
-`RowActionsOrdenTest` congela el orden y el color (la última acción es Eliminar y es la única en `danger`; Suspender es gris); `PanelHomogeneoTest` exige que ningún listado tenga botones sueltos ni una acción en un slot ajeno.
+`RowActionsOrdenTest` congela el orden y el color (Permisos entre Editar y Eliminar, la última acción es Eliminar y es la única en `danger`; Suspender es gris); `PanelHomogeneoTest` exige que ningún listado tenga botones sueltos ni una acción en un slot ajeno.
 
 ### Paginación y consulta
 
@@ -2100,3 +2102,29 @@ Mercado                      Negociación               Proveedores            C
 - Salió: la tarjeta «Ingreso por hectárea» (decía «comisión generada», y la aplicación no cobra comisión; el precio por hectárea acordado ya está en el tablero) y el encabezado «Embudo y negociación». El dato sigue calculándose en `BloqueIngreso`.
 - Se fundieron: «Solicitudes publicadas» y «Tasa de adjudicación» quedan junto al embudo con la tercera cifra (hectáreas servidas) en vez de repetirse en una tira aparte; las dos cifras de negociación (tiempo hasta aceptar, ofertas por solicitud) quedan sobre sus gráficas.
 - Detrás de «Ver datos en una tabla» siguen las tablas de cada gráfica; el ranking de proveedores queda a la vista porque no tiene gráfica que lo reemplace.
+
+## Roles y permisos: plantilla estándar y color por módulo
+
+`/panel/roles` sigue la plantilla del resto del panel, sin exenciones en `PanelHomogeneoTest` (la prueba «Roles sigue la plantilla de las demás páginas, sin exenciones»):
+
+- **Listado** (`roles/index`): encabezado con «Nuevo rol», buscador (`table-search`), «Filtros» con el estado y «Limpiar filtros» (`filter-panel`), tabla común (`index-table`), paginación, vacío y filtro sin resultados, flash de éxito y de error. Acciones de fila: Ver, Editar, Permisos y Eliminar al final; el rol 1 no ofrece Eliminar.
+- **Ficha «Ver rol»** (`roles/show`, el molde de Usuarios): encabezado con el estado, «Sistema» si es el rol 1 y las acciones Volver, Editar, Permisos y, al final, Eliminar en `danger`; tres KPI; datos del rol; las cuentas que lo tienen (cada una enlaza a su ficha de usuario); el resumen de permisos agrupado por módulo con su color; y los últimos movimientos de la bitácora con `seguridad.bitacora.ver`. En Usuarios, el rol de la cuenta (listado y ficha) enlaza a «Ver rol».
+- **Formulario** (`roles/_formulario`, compartido por crear y editar): nombre, descripción y estado en una sección, barra de acciones y, al editar, un aside con el resumen del rol. Crear aterriza en la matriz de permisos (el rol nace sin permisos); editar vuelve a la ficha. En el rol 1 el nombre y el estado quedan fijos.
+- **Permisos** (`roles/permisos`): la matriz por módulo, con un interruptor por pantalla y sus acciones como chips, la vista previa del menú, el contador de permisos activos de cada módulo (`6 de 7 permisos`), el interruptor «Todo el módulo» (calcula su estado: encendido, a medias o apagado; solo mueve lo que el actor puede tocar), el estado de guardado en la barra (`role="status"`: «N cambios sin guardar», «Guardando los permisos…») y los errores del servidor en un aviso. Todo es teclado: Tab llega a cada interruptor, Espacio alterna.
+
+### Color identificativo de cada módulo
+
+Cada módulo del menú lleva un tono propio y estable, para saber qué módulo está moviendo cada interruptor. Lo decide `ColorDeModulo` (PHP) y vale igual en la matriz, en la vista previa, en la ficha del rol y en la lista de permisos; la clase `ag-modulo-tono--<tono>` (`components/modulo-tono.css`) traduce el tono a las variables `--ag-modulo`, `-subtle`, `-strong`, `-border` y `-fill` desde los tokens `--ag-color-<tono>-*`, que cambian solos con el tema oscuro. El módulo pinta su franja izquierda, el fondo tenue del encabezado, su ícono sobre el relleno sólido, el nombre, el interruptor encendido y los chips encendidos. El color nunca va solo: cada módulo lleva su nombre y su ícono.
+
+| Módulo (clave de menú) | Ícono | Tono |
+| --- | --- | --- |
+| Mercado (`menu.solicitudes.label`) | `storefront` | `success` (verde) |
+| Proveedores (`menu.proveedores.label`) | `local_shipping` | `info` (azul) |
+| Atención (`menu.atencion.label`) | `support_agent` | `distintivo-2` (magenta) |
+| Seguridad (`menu.seguridad.label`) | `admin_panel_settings` | `distintivo-1` (violeta) |
+| Sistema (`menu.sistema.label`) | `tune` | `warning` (ámbar) |
+| Acciones sin pantalla en el panel | `phone_android` | `neutral` (gris) |
+
+- **Únicos y sin significado de error.** Ningún tono se repite y no se usan `danger` ni `alert` (significan error), ni `primary-2` ni `distintivo-3` (son el mismo azul que `info` y no se distinguirían).
+- **Bloque propio para los que faltan.** Un módulo nuevo toma el primer tono libre de la reserva, `distintivo-4` (verde azulado) y `distintivo-5` (naranja), definidos en un bloque contiguo «Tonos de módulo (roles)» de `theme-light.css` y `theme-dark.css` (con sus escalas `teal` y `orange` en `primitives/base.css`). El relleno sólido de cada uno lleva texto blanco con contraste AA (≥ 4,5:1).
+- **Prueba.** `RolesDelPanelTest` («cada módulo del menú tiene un color propio, estable y distinto») recorre los módulos reales del catálogo: todos tienen su tono declarado, no se repite ninguno, no cambia con el orden y cada tono tiene su clase y sus tokens en claro y oscuro.

@@ -31,6 +31,7 @@ function ordenDeAcciones(string $html): array
 
 const SLOT_VER = '<x-slot:ver><x-molecules.row-action kind="ver" href="/ver" icon="visibility" label="Ver" /></x-slot:ver>';
 const SLOT_EDITAR = '<x-slot:editar><x-molecules.row-action kind="editar" href="/editar" icon="edit" label="Editar" /></x-slot:editar>';
+const SLOT_PERMISOS = '<x-slot:permisos><x-molecules.row-action kind="permisos" href="/permisos" icon="key" label="Permisos" /></x-slot:permisos>';
 const SLOT_APROBAR = '<x-slot:aprobar><x-molecules.row-action kind="aprobar" modal="m-aprobar" icon="check_circle" label="Aprobar" /></x-slot:aprobar>';
 const SLOT_TRANSICIONES = '<x-slot:transiciones><x-molecules.row-action kind="transicion" tone="warning" modal="m-suspender" icon="pause_circle" label="Suspender" /></x-slot:transiciones>';
 const SLOT_ELIMINAR = '<x-slot:eliminar><x-molecules.row-action kind="eliminar" modal="m-eliminar" icon="delete" label="Eliminar" /></x-slot:eliminar>';
@@ -40,6 +41,18 @@ test('el orden es Ver, Editar, Aprobar, transiciones y Eliminar, sin importar c�
 
     expect(ordenDeAcciones(filaConAcciones($desordenadas)))
         ->toBe(['ver', 'editar', 'aprobar', 'transicion', 'eliminar']);
+});
+
+test('Permisos va después de Editar y antes de Eliminar, con su tono propio y sin el rojo vino', function () {
+    $html = filaConAcciones(SLOT_ELIMINAR.SLOT_PERMISOS.SLOT_EDITAR.SLOT_VER);
+
+    $menu = substr($html, (int) strpos($html, 'ag-row-actions__menu'));
+
+    expect(ordenDeAcciones($html))->toBe(['ver', 'editar', 'permisos', 'eliminar'])
+        ->and(ordenDeAcciones($menu))->toBe(['ver', 'editar', 'permisos', 'eliminar'])
+        ->and($html)->toContain('ag-button--distintivo-1-outline')
+        ->and($html)->toContain('title="Permisos"')
+        ->and(substr_count($html, 'ag-button--danger-outline'))->toBe(2);
 });
 
 test('Eliminar va siempre al final, también con varias transiciones', function () {

@@ -100,3 +100,21 @@
     background-color: var(--ag-color-alert-contrast-fill);
     color: var(--ag-color-gray-0);
 }
+
+/* Insignia que enlaza a otra pantalla (p. ej. el rol de una cuenta en Usuarios lleva a «Ver rol»):
+   sin subrayado, con el mismo foco visible que el resto de los enlaces del panel. */
+.ag-enlace-insignia {
+    display: inline-flex;
+    border-radius: var(--ag-radius-pill);
+    color: inherit;
+    text-decoration: none;
+}
+
+.ag-enlace-insignia:hover {
+    text-decoration: underline;
+}
+
+.ag-enlace-insignia:focus-visible {
+    outline: 2px solid var(--ag-color-focus-ring);
+    outline-offset: 2px;
+}

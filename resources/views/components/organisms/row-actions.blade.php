@@ -3,13 +3,14 @@
     fila del panel.
 
     Fuerza el orden en todas las tablas, sin importar en qué orden las declare el
-    llamador: Ver, Editar, Aprobar, transiciones de la máquina de estados, Eliminar
+    llamador: Ver, Editar, Permisos, Aprobar, transiciones de la máquina de estados, Eliminar
     (Eliminar siempre al final y siempre en peligro). Cada acción es un
     `<x-molecules.row-action>` dentro del slot con nombre que le corresponde:
 
         <x-organisms.row-actions>
             <x-slot:ver><x-molecules.row-action kind="ver" … /></x-slot:ver>
             <x-slot:editar>…</x-slot:editar>
+            <x-slot:permisos>…solo Roles: lleva a la asignación de permisos…</x-slot:permisos>
             <x-slot:aprobar>…</x-slot:aprobar>
             <x-slot:transiciones>…varias, ya filtradas por estado y permiso…</x-slot:transiciones>
             <x-slot:eliminar>…</x-slot:eliminar>
@@ -36,6 +37,7 @@
     $porOrden = [
         'ver' => isset($ver) ? trim((string) $ver) : '',
         'editar' => isset($editar) ? trim((string) $editar) : '',
+        'permisos' => isset($permisos) ? trim((string) $permisos) : '',
         'aprobar' => isset($aprobar) ? trim((string) $aprobar) : '',
         'transiciones' => isset($transiciones) ? trim((string) $transiciones) : '',
         'eliminar' => isset($eliminar) ? trim((string) $eliminar) : '',

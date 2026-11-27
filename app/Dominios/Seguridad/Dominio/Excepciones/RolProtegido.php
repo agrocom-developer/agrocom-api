@@ -12,7 +12,7 @@ use DomainException;
  * ({@see PermisoDenegado}): el actor está autorizado, la operación misma es
  * la que no puede existir.
  *
- * Son las cuatro formas de tirar la llave adentro de la casa que la pantalla
+ * Son las formas de tirar la llave adentro de la casa que la pantalla
  * de roles hace posibles por primera vez — antes roles y permisos solo se
  * tocaban por seeder, donde el error se corrige editando el archivo y
  * volviendo a sembrar. Desde el panel no hay tal salida: si el último rol que
@@ -95,16 +95,31 @@ final class RolProtegido extends DomainException
         return new self(Texto::de('seguridad.errores.rol_protegido_matriz_administrador'));
     }
 
-    /** Los roles del panel son dos y fijos (ADR 0046, punto 4): no se crean ni se renombran. */
-    public static function porCatalogoFijo(): self
+    /**
+     * El rol del sistema (el administrador, id 1) no se elimina, no se renombra y
+     * no se desactiva: es el que sostiene todo el panel.
+     */
+    public static function porRolDelSistema(string $nombreRol): self
     {
-        return new self(Texto::de('seguridad.errores.rol_protegido_catalogo_fijo'));
+        return new self(Texto::de('seguridad.errores.rol_protegido_rol_del_sistema', ['rol' => $nombreRol]));
     }
 
-    /** `administrador` y `operador` no se dan de baja. */
-    public static function porRolDelPanel(string $nombreRol): self
+    /** Un rol de las apps no es del panel: no se crea, edita ni elimina desde acá. */
+    public static function porRolQueNoEsDelPanel(string $nombreRol): self
     {
-        return new self(Texto::de('seguridad.errores.rol_protegido_rol_del_panel', ['rol' => $nombreRol]));
+        return new self(Texto::de('seguridad.errores.rol_protegido_no_es_del_panel', ['rol' => $nombreRol]));
+    }
+
+    /** Ya hay un rol con ese nombre (sin distinguir mayúsculas), también uno eliminado. */
+    public static function porNombreDuplicado(string $nombreRol): self
+    {
+        return new self(Texto::de('seguridad.errores.rol_protegido_nombre_duplicado', ['rol' => $nombreRol]));
+    }
+
+    /** Quitarle el rol administrador a la única cuenta activa que lo tiene dejaría el sistema sin administrador. */
+    public static function porUltimoAdministrador(): self
+    {
+        return new self(Texto::de('seguridad.errores.rol_protegido_ultimo_administrador'));
     }
 
     /** Una cuenta de panel tiene un solo rol, y es de ámbito panel. */

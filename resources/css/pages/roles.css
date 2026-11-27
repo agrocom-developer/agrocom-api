@@ -1,119 +1,11 @@
 /*
- * Pages: roles/index, roles/create, roles/edit y roles/permisos
+ * Pages: roles/permisos y roles/show
  * (app/Dominios/Seguridad/Infraestructura/Http/Views/pages/roles/).
- * Administración del catálogo de roles y de la matriz rol↔permiso.
+ * La matriz rol↔permiso y el resumen de permisos de la ficha del rol. El listado,
+ * el formulario y la ficha usan la plantilla común del panel y no declaran CSS propio.
+ * Cada módulo toma su color de `components/modulo-tono.css` (`--ag-modulo*`).
  * Todo color y medida por token (CLAUDE.md invariante 11).
  */
-
-/* ---------------------------------------------------------------- listado */
-
-.ag-roles__aviso {
-    margin-top: var(--ag-space-4);
-}
-
-.ag-roles__tabla {
-    margin-top: var(--ag-space-5);
-    border: 1px solid var(--ag-color-border-card);
-    border-radius: var(--ag-radius-md);
-    background-color: var(--ag-color-surface-card);
-    overflow: hidden;
-}
-
-/* La columna del rol lleva tres líneas (nombre, slug, descripción), así que
-   pesa más que las tres métricas juntas. */
-.ag-roles__head,
-.ag-roles__fila {
-    display: grid;
-    grid-template-columns: 2.4fr 1fr 1fr 0.9fr 0.9fr 1.6fr;
-    gap: var(--ag-space-4);
-    align-items: center;
-    padding: var(--ag-space-3) var(--ag-space-5);
-}
-
-.ag-roles__head {
-    background: var(--ag-color-bg-table-head);
-    border-bottom: 1px solid var(--ag-color-border);
-    font-family: var(--ag-font-family-mono);
-    font-size: 0.625rem;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    color: var(--ag-color-text-muted);
-}
-
-.ag-roles__fila {
-    border-bottom: 1px solid var(--ag-color-border-row);
-    padding-block: var(--ag-space-4);
-}
-
-.ag-roles__fila:last-child {
-    border-bottom: 0;
-}
-
-.ag-roles__identidad {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-1);
-    min-width: 0;
-}
-
-.ag-roles__nombre {
-    display: flex;
-    align-items: center;
-    gap: var(--ag-space-2);
-    font-weight: var(--ag-font-weight-bold);
-    color: var(--ag-color-text);
-}
-
-.ag-roles__slug {
-    font-family: var(--ag-font-family-mono);
-    font-size: var(--ag-font-size-xs);
-    color: var(--ag-color-text-faint);
-}
-
-.ag-roles__descripcion {
-    font-size: var(--ag-font-size-sm);
-    line-height: var(--ag-line-height-base);
-    color: var(--ag-color-text-muted);
-}
-
-.ag-roles__metrica {
-    display: flex;
-    align-items: baseline;
-    gap: var(--ag-space-2);
-}
-
-/* Cifra en la familia de interfaz con `tabular-nums`, no en mono: §8 regla 7
-   del sistema de diseño (el mono abre demasiado el tracking de una cifra). */
-.ag-roles__cifra {
-    font-size: var(--ag-font-size-xl);
-    font-variant-numeric: tabular-nums;
-    color: var(--ag-color-text);
-}
-
-.ag-roles__denominador {
-    font-size: var(--ag-font-size-xs);
-    color: var(--ag-color-text-faint);
-}
-
-.ag-roles__acciones {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: var(--ag-space-2);
-    flex-wrap: wrap;
-}
-
-/* ------------------------------------------------------------- formulario */
-
-.ag-rol-form {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ag-space-5);
-}
-
-.ag-rol-form__aviso {
-    margin: 0;
-}
 
 /* ------------------------------------------------------- matriz de permisos */
 
@@ -194,7 +86,11 @@
     font-size: 0.625rem;
     letter-spacing: 0.07em;
     text-transform: uppercase;
-    color: var(--ag-color-text-muted);
+    color: var(--ag-modulo-strong);
+}
+
+.ag-permisos__preview-modulo-head .ag-icon {
+    color: var(--ag-modulo);
 }
 
 .ag-permisos__preview-modulo-conteo {
@@ -236,7 +132,7 @@
 }
 
 .ag-permisos__preview-item.is-visible .ag-permisos__preview-punto {
-    background: var(--ag-color-success);
+    background: var(--ag-modulo);
 }
 
 .ag-permisos__preview-pie {
@@ -259,6 +155,8 @@
 
 .ag-permisos__modulo {
     border: 1px solid var(--ag-color-border-card);
+    /* La franja izquierda es el color del módulo; el nombre y el ícono del encabezado lo repiten. */
+    border-left: var(--ag-space-1) solid var(--ag-modulo);
     border-radius: var(--ag-radius-md);
     background-color: var(--ag-color-surface-card);
     overflow: hidden;
@@ -267,10 +165,23 @@
 .ag-permisos__modulo-head {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: var(--ag-space-3);
     padding: var(--ag-space-3) var(--ag-space-4);
-    background: var(--ag-color-bg-table-head);
-    border-bottom: 1px solid var(--ag-color-border);
+    background: var(--ag-modulo-subtle);
+    border-bottom: 1px solid var(--ag-modulo-border);
+}
+
+.ag-permisos__modulo-icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--ag-space-6);
+    height: var(--ag-space-6);
+    border-radius: var(--ag-radius-sm);
+    background: var(--ag-modulo-fill);
+    color: var(--ag-color-gray-0);
+    flex-shrink: 0;
 }
 
 .ag-permisos__modulo-nombre {
@@ -278,13 +189,47 @@
     font-family: var(--ag-font-family-display);
     font-weight: var(--ag-font-weight-bold);
     font-size: var(--ag-font-size-lg);
+    color: var(--ag-modulo-strong);
+}
+
+/* Contador de permisos activos del módulo: ocupa el espacio libre y empuja «Todo el módulo» a la derecha. */
+.ag-permisos__modulo-resumen {
+    margin-left: auto;
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-modulo-strong);
+}
+
+/* Interruptor «Todo el módulo»: el mismo switch de la matriz, con su texto al lado. */
+.ag-permisos__todo {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    cursor: pointer;
+}
+
+.ag-permisos__todo:has(.ag-permisos__switch-input:disabled) {
+    cursor: not-allowed;
+}
+
+.ag-permisos__todo-texto {
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-medium);
     color: var(--ag-color-text);
 }
 
-.ag-permisos__modulo-resumen {
-    margin-left: auto;
-    font-size: var(--ag-font-size-xs);
-    color: var(--ag-color-text-muted);
+/* A medias: algunos permisos del módulo encendidos y otros no. Ni apagado ni encendido: la perilla
+   queda al centro y la pista lleva el tono tenue del módulo. */
+.ag-permisos__switch-input:indeterminate + .ag-permisos__switch-pista {
+    background: var(--ag-modulo-subtle);
+    border-color: var(--ag-modulo);
+}
+
+.ag-permisos__switch-input:indeterminate + .ag-permisos__switch-pista .ag-permisos__switch-perilla {
+    transform: translateX(8px);
+    background: var(--ag-modulo);
 }
 
 .ag-permisos__pantalla {
@@ -366,8 +311,8 @@
 }
 
 .ag-permisos__switch-input:checked + .ag-permisos__switch-pista {
-    background: var(--ag-color-primary);
-    border-color: var(--ag-color-primary);
+    background: var(--ag-modulo-fill);
+    border-color: var(--ag-modulo-fill);
 }
 
 .ag-permisos__switch-input:checked + .ag-permisos__switch-pista .ag-permisos__switch-perilla {
@@ -478,16 +423,16 @@
 }
 
 .ag-permisos__chip:has(.ag-permisos__chip-input:checked) {
-    background: var(--ag-color-success-subtle);
-    border-color: var(--ag-color-success-border);
+    background: var(--ag-modulo-subtle);
+    border-color: var(--ag-modulo-border);
 }
 
 .ag-permisos__chip:has(.ag-permisos__chip-input:checked) .ag-permisos__chip-punto {
-    background: var(--ag-color-success);
+    background: var(--ag-modulo);
 }
 
 .ag-permisos__chip:has(.ag-permisos__chip-input:checked) .ag-permisos__chip-texto {
-    color: var(--ag-color-success-strong);
+    color: var(--ag-modulo-strong);
 }
 
 /* Acción encendida sobre una pantalla apagada: el chip pasa a ámbar. No es un
@@ -547,6 +492,89 @@
     color: var(--ag-color-warning-strong);
 }
 
+/* Guardando: la barra lo dice con texto y el botón queda inerte (no se envía dos veces). */
+.ag-permisos .ag-form-actions-bar.is-guardando .ag-form-actions-bar__status {
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-color-info-strong);
+}
+
+.ag-permisos .ag-button.is-guardando {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+/* ------------------------------------------- ficha: permisos por módulo */
+
+.ag-modulos-resumen {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+    gap: var(--ag-space-3);
+    margin-bottom: var(--ag-space-4);
+}
+
+.ag-modulo {
+    border: 1px solid var(--ag-modulo-border);
+    border-left: var(--ag-space-1) solid var(--ag-modulo);
+    border-radius: var(--ag-radius-md);
+    background: var(--ag-color-surface-card);
+    overflow: hidden;
+}
+
+.ag-modulo__cabecera {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-2) var(--ag-space-3);
+    background: var(--ag-modulo-subtle);
+    color: var(--ag-modulo-strong);
+}
+
+.ag-modulo__nombre {
+    margin: 0;
+    font-size: var(--ag-font-size-sm);
+    font-weight: var(--ag-font-weight-bold);
+    color: var(--ag-modulo-strong);
+}
+
+.ag-modulo__conteo {
+    margin-left: auto;
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
+    font-weight: var(--ag-font-weight-bold);
+}
+
+.ag-modulo__lista {
+    margin: 0;
+    padding: var(--ag-space-2) var(--ag-space-3);
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ag-space-1);
+}
+
+.ag-modulo__item {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    font-size: var(--ag-font-size-sm);
+    color: var(--ag-color-text-faint);
+}
+
+.ag-modulo__item.is-activo {
+    color: var(--ag-color-text);
+}
+
+.ag-modulo__item.is-activo .ag-icon {
+    color: var(--ag-modulo);
+}
+
+.ag-modulo__acciones {
+    margin-left: auto;
+    font-family: var(--ag-font-family-mono);
+    font-size: var(--ag-font-size-xs);
+    color: var(--ag-color-text-muted);
+}
+
 @media (max-width: 1199.98px) {
     .ag-permisos__layout {
         flex-direction: column;
@@ -564,20 +592,5 @@
 
     .ag-permisos__preview-cuerpo {
         max-height: 28rem;
-    }
-}
-
-@media (max-width: 991.98px) {
-    .ag-roles__head {
-        display: none;
-    }
-
-    .ag-roles__fila {
-        grid-template-columns: 1fr;
-        gap: var(--ag-space-2);
-    }
-
-    .ag-roles__acciones {
-        justify-content: flex-start;
     }
 }

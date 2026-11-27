@@ -14,9 +14,11 @@ use Illuminate\Database\Seeder;
  * todos los entornos, producción incluida — sin roles ni permisos no hay con
  * qué autorizar al primer usuario.
  *
- * Roles del panel (ADR 0046, punto 4): solo `administrador` (todos los
+ * Roles del panel (ADR 0046, punto 4): siembra `administrador` (id 1, todos los
  * permisos del panel, siempre) y `operador` (su preset de solo lectura; el
- * resto lo marca el administrador en la matriz). Los roles `cliente`,
+ * resto lo marca el administrador en la matriz); el administrador crea, edita y
+ * elimina los demás desde /panel/roles con `seguridad.rol.crear|editar|eliminar`
+ * (reservados al administrador: ningún preset los incluye). Los roles `cliente`,
  * `proveedor` y `piloto` son de ámbito `app`: TRANSITORIOS hasta la fase A5,
  * porque el token del dispositivo aún resuelve permisos por ellos; sus
  * permisos salen de `config/permisos_app.php`.
@@ -385,7 +387,10 @@ class SeguridadSeeder extends Seeder
 
     private function rol(string $name, string $description, string $ambito): SecRole
     {
-        $rol = SecRole::query()->firstOrCreate(
+        // `withTrashed()`: un rol eliminado desde el panel (el operador, por ejemplo) sigue
+        // ocupando su nombre —el índice único no lo libera—, así que sembrar de nuevo no lo
+        // resucita ni intenta crearlo otra vez.
+        $rol = SecRole::withTrashed()->firstOrCreate(
             ['name' => $name],
             ['description' => $description, 'ambito' => $ambito, 'state' => true],
         );

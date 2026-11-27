@@ -4,7 +4,7 @@ namespace App\Dominios\Seguridad\Contratos;
 
 /**
  * Tipo de cuenta de `sec_user` (ADR 0046, punto 1): `panel` es el personal de
- * Agrocom (un solo rol, administrador u operador), `cliente` entra solo a la app
+ * Agrocom (un solo rol del panel), `cliente` entra solo a la app
  * del cliente y `proveedor` solo a la app del piloto. Una cuenta tiene un solo
  * tipo para siempre: no hay conversión, ni selector de rol, ni un login que sirva
  * a las dos apps.

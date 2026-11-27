@@ -106,6 +106,11 @@ final class AsignarPermisosRol
             throw PermisoDenegado::porFaltaDePermiso(self::PERMISO_ASIGNAR);
         }
 
+        // Los roles de app no se administran desde el panel (y su matriz sale de config/permisos_app.php).
+        if (! $rol->esDelPanel()) {
+            throw RolProtegido::porRolQueNoEsDelPanel((string) $rol->name);
+        }
+
         $actuales = $this->catalogo->idsPermisoDeRol($rol->id);
 
         $aOtorgar = array_values(array_diff($deseados, $actuales));
@@ -138,7 +143,7 @@ final class AsignarPermisosRol
      */
     private function verificarQueNoSeEditaLaMatrizDelAdministrador(SecRole $rol): void
     {
-        if (PermisosReservados::admiteElRol((string) $rol->name)) {
+        if ($rol->esDelSistema()) {
             throw RolProtegido::porMatrizDelAdministrador();
         }
     }

@@ -90,7 +90,7 @@ function panelHomogeneoExcluida(array $vista): bool
     $segmento = $vista['directorio'] === '' ? $vista['archivo'] : explode('/', $vista['directorio'])[0];
 
     return str_starts_with($segmento, 'dashboard')
-        || in_array($segmento, ['roles', 'organizacion', 'bitacora', 'perfil', 'configuracion', 'busqueda'], true);
+        || in_array($segmento, ['organizacion', 'bitacora', 'perfil', 'configuracion', 'busqueda'], true);
 }
 
 /**
@@ -611,7 +611,7 @@ function panelHomogeneoViolacionesListado(string $raiz, array $pantalla): array
         }
 
         $sinSlots = $cuerpo;
-        foreach (['ver', 'editar', 'aprobar', 'transiciones', 'eliminar'] as $slot) {
+        foreach (['ver', 'editar', 'permisos', 'aprobar', 'transiciones', 'eliminar'] as $slot) {
             $sinSlots = preg_replace('~<x-slot:'.$slot.'\b[^>]*>.*?</x-slot:'.$slot.'>~s', '', $sinSlots) ?? $sinSlots;
         }
 
@@ -620,7 +620,7 @@ function panelHomogeneoViolacionesListado(string $raiz, array $pantalla): array
         }
 
         // Cada tipo de acción va solo en su slot: Eliminar nunca entre las transiciones, ni una transición como Ver.
-        $kindPorSlot = ['ver' => ['ver', 'revisar'], 'editar' => ['editar'], 'aprobar' => ['aprobar'], 'transiciones' => ['transicion'], 'eliminar' => ['eliminar']];
+        $kindPorSlot = ['ver' => ['ver', 'revisar'], 'editar' => ['editar'], 'permisos' => ['permisos'], 'aprobar' => ['aprobar'], 'transiciones' => ['transicion'], 'eliminar' => ['eliminar']];
 
         foreach ($kindPorSlot as $slot => $permitidos) {
             if (preg_match('~<x-slot:'.$slot.'\b[^>]*>(.*?)</x-slot:'.$slot.'>~s', $cuerpo, $coincidencia) !== 1) {
@@ -815,7 +815,9 @@ test('el descubrimiento encuentra las pantallas de referencia y deja afuera las 
         ->toContain('Seguridad/usuarios/index.blade.php')
         ->toContain('Seguridad/usuarios/_formulario.blade.php')
         ->toContain('Seguridad/usuarios/show.blade.php')
-        ->not->toContain('Seguridad/roles/index.blade.php')
+        ->toContain('Seguridad/roles/index.blade.php')
+        ->toContain('Seguridad/roles/_formulario.blade.php')
+        ->toContain('Seguridad/roles/show.blade.php')
         ->not->toContain('Seguridad/usuarios/create.blade.php')
         ->not->toContain('Portal/actas/index.blade.php');
 });
@@ -1312,4 +1314,59 @@ test('Usuarios sigue la plantilla de las demás páginas, sin exenciones', funct
     }
 
     expect(file_exists($raizProyecto.'/resources/css/pages/usuarios.css'))->toBeFalse();
+});
+
+test('Roles sigue la plantilla de las demás páginas, sin exenciones', function () use ($raizProyecto) {
+    $carpeta = $raizProyecto.'/app/Dominios/Seguridad/Infraestructura/Http/Views/pages/roles';
+    $propias = array_values(array_filter(
+        panelHomogeneoPantallas($raizProyecto),
+        fn (array $pantalla): bool => $pantalla['modulo'] === 'Seguridad' && $pantalla['directorio'] === 'roles',
+    ));
+
+    // Listado, formulario y ficha se evalúan con las mismas reglas que Usuarios, Proveedores o Clientes.
+    expect(array_column($propias, 'tipo'))->toEqualCanonicalizing(['listado', 'formulario', 'ficha'])
+        ->and(panelHomogeneoPendientes($raizProyecto))->not->toContain('Seguridad/roles/index.blade.php')
+        ->and(array_keys(panelHomogeneoListadosSinBuscador()))->not->toContain('Seguridad/roles/index.blade.php');
+
+    foreach ($propias as $pantalla) {
+        expect(panelHomogeneoViolaciones($raizProyecto, $pantalla))->toBe([], $pantalla['ruta']);
+    }
+
+    $indice = panelHomogeneoSinComentarios((string) file_get_contents($carpeta.'/index.blade.php'));
+    $ficha = panelHomogeneoSinComentarios((string) file_get_contents($carpeta.'/show.blade.php'));
+
+    // Filtro por estado y buscador con los componentes comunes, y las cuatro acciones de fila en su slot.
+    expect($indice)
+        ->toContain('x-organisms.filter-panel')
+        ->toContain('x-molecules.table-search')
+        ->toContain('x-molecules.pagination')
+        ->toContain('<x-slot:ver>')
+        ->toContain('<x-slot:editar>')
+        ->toContain('<x-slot:permisos>')
+        ->toContain('<x-slot:eliminar>')
+        ->toContain("route('panel.roles.show'")
+        ->toContain("route('panel.roles.permisos.edit'")
+        ->not->toContain('ag-roles');
+
+    // Permisos va antes de Eliminar, y Eliminar solo se ofrece si el rol no es el del sistema.
+    expect(strpos($indice, '<x-slot:permisos>'))->toBeLessThan(strpos($indice, '<x-slot:eliminar>'))
+        ->and($indice)->toContain('! $fila[\'esDelSistema\']');
+
+    // Ficha: Volver, Editar, Permisos y, al final, Eliminar en peligro, antes de cerrar las acciones del encabezado.
+    $volver = strpos($ficha, 'x-molecules.boton-volver');
+    $editar = strpos($ficha, "route('panel.roles.edit'");
+    $permisos = strpos($ficha, "route('panel.roles.permisos.edit'");
+    $eliminar = strpos($ficha, 'variant="danger"');
+
+    expect($volver)->not->toBeFalse()
+        ->and($editar)->toBeGreaterThan($volver)
+        ->and($permisos)->toBeGreaterThan($editar)
+        ->and($eliminar)->toBeGreaterThan($permisos)
+        ->and($eliminar)->toBeLessThan(strpos($ficha, '</x-slot:actions>'))
+        ->and($ficha)->toContain('! $esDelSistema')
+        ->and($ficha)->toContain("route('panel.usuarios.show'");
+
+    // El CSS propio del listado y del formulario viejo ya no existe: solo quedan la matriz y el resumen por módulo.
+    $css = (string) file_get_contents($raizProyecto.'/resources/css/pages/roles.css');
+    expect($css)->not->toContain('.ag-roles__')->not->toContain('.ag-rol-form');
 });

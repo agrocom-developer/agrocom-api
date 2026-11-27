@@ -30,6 +30,24 @@ final class TarjetasDeUsuario
         );
     }
 
+    /**
+     * Roles de cada usuario con id y nombre legible, para que la columna «Roles»
+     * enlace cada uno a su ficha.
+     *
+     * @param  list<int>  $idsUsuario
+     * @return array<int, list<array{id: int, nombre: string}>>
+     */
+    public function rolesEnlazablesPorUsuario(array $idsUsuario): array
+    {
+        return array_map(
+            fn (array $roles): array => array_map(
+                fn (array $rol): array => ['id' => $rol['id'], 'nombre' => NombreLegibleRol::de($rol['slug'])],
+                $roles,
+            ),
+            $this->roles->rolesPorUsuario($idsUsuario),
+        );
+    }
+
     /** @return array{titulo: string, icono: string, tieneDatos: bool, items: list<array<string, mixed>>, vacioTitulo: string, vacioDetalle: string, acciones: list<array{label: string, href: string, icono?: string}>} */
     public function tarjetaRoles(SecUser $usuario): array
     {

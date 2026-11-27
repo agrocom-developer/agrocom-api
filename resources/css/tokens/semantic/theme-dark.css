@@ -91,6 +91,18 @@
     --ag-color-distintivo-2-strong: var(--ag-color-magenta-300);
     --ag-color-distintivo-2-border: color-mix(in srgb, var(--ag-color-magenta-300) 30%, var(--ag-brand-dark-surface) 70%);
 
+    /* Tonos de módulo (roles): par oscuro del bloque de theme-light.css. Texto y borde claros sobre la superficie oscura; el relleno sólido es el mismo que en claro. */
+    --ag-color-distintivo-4: var(--ag-color-teal-300);
+    --ag-color-distintivo-4-subtle: color-mix(in srgb, var(--ag-color-teal-300) 10%, var(--ag-brand-dark-surface) 90%);
+    --ag-color-distintivo-4-strong: var(--ag-color-teal-300);
+    --ag-color-distintivo-4-border: color-mix(in srgb, var(--ag-color-teal-300) 30%, var(--ag-brand-dark-surface) 70%);
+    --ag-color-distintivo-4-contrast-fill: var(--ag-color-teal-500);
+    --ag-color-distintivo-5: var(--ag-color-orange-300);
+    --ag-color-distintivo-5-subtle: color-mix(in srgb, var(--ag-color-orange-300) 10%, var(--ag-brand-dark-surface) 90%);
+    --ag-color-distintivo-5-strong: var(--ag-color-orange-300);
+    --ag-color-distintivo-5-border: color-mix(in srgb, var(--ag-color-orange-300) 30%, var(--ag-brand-dark-surface) 70%);
+    --ag-color-distintivo-5-contrast-fill: var(--ag-color-orange-500);
+
     /* Estado alert */
     --ag-color-alert: var(--ag-brand-dark-on-error-container);
     --ag-color-alert-subtle: color-mix(in srgb, var(--ag-brand-dark-on-error-container) 16%, var(--ag-brand-dark-surface) 84%);

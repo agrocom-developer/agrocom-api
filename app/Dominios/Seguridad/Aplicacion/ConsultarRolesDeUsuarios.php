@@ -37,6 +37,35 @@ final class ConsultarRolesDeUsuarios
     }
 
     /**
+     * Roles de cada cuenta con su id, para enlazar cada uno a su ficha: asignación
+     * no revocada y rol no eliminado (aunque esté desactivado), en una sola
+     * consulta, ordenados por nombre.
+     *
+     * @param  list<int>  $idsUsuario
+     * @return array<int, list<array{id: int, slug: string}>> `id de usuario => [{id, slug}]`
+     */
+    public function rolesPorUsuario(array $idsUsuario): array
+    {
+        if ($idsUsuario === []) {
+            return [];
+        }
+
+        return DB::table('sec_user_role as ur')
+            ->join('sec_role as r', 'r.id', '=', 'ur.id_role')
+            ->whereIn('ur.id_user', $idsUsuario)
+            ->whereNull('ur.deleted_at')
+            ->whereNull('r.deleted_at')
+            ->orderBy('r.name')
+            ->get(['ur.id_user', 'r.id', 'r.name'])
+            ->groupBy(fn (object $fila): int => (int) $fila->id_user)
+            ->map(fn (Collection $filas) => $filas
+                ->map(fn (object $fila): array => ['id' => (int) $fila->id, 'slug' => (string) $fila->name])
+                ->values()
+                ->all())
+            ->all();
+    }
+
+    /**
      * Roles VIVOS y habilitados de cada cuenta: asignación no revocada y rol
      * habilitado en el catálogo (mismos criterios que
      * `SecUser::idsDeRolesActivos()`), en una sola consulta.

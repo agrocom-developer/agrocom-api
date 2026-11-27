@@ -177,7 +177,13 @@
                         @else
                             @foreach ($rolesCuenta as $rol)
                                 <div class="ag-detalle__campo">
-                                    <p class="ag-detalle__campo-label">{{ $rol['nombre'] }}</p>
+                                    <p class="ag-detalle__campo-label">
+                                        @if ($puedeVerRoles)
+                                            <a href="{{ route('panel.roles.show', $rol['id']) }}" class="ag-enlace-insignia" title="{{ __('seguridad.usuarios.ver_rol') }}">{{ $rol['nombre'] }}</a>
+                                        @else
+                                            {{ $rol['nombre'] }}
+                                        @endif
+                                    </p>
                                     @if ($rol['descripcion'])
                                         <p class="ag-detalle__campo-valor">{{ $rol['descripcion'] }}</p>
                                     @endif
@@ -191,7 +197,7 @@
                                 </div>
                             @endforeach
                             @if ($puedeVerRoles)
-                                <x-atoms.button :href="route('panel.roles.index')" variant="outline" icon="list">{{ __('seguridad.usuarios.aside_roles_accion') }}</x-atoms.button>
+                                <x-atoms.button :href="route('panel.roles.show', $rolesCuenta[0]['id'])" variant="outline" icon="shield_person">{{ __('seguridad.usuarios.ver_rol') }}</x-atoms.button>
                             @endif
                         @endif
                     </div>

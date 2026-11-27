@@ -4,7 +4,6 @@ namespace App\Dominios\Seguridad\Aplicacion;
 
 use App\Dominios\Seguridad\Dominio\Excepciones\PermisoDenegado;
 use App\Dominios\Seguridad\Dominio\Excepciones\RolProtegido;
-use App\Dominios\Seguridad\Dominio\PermisosReservados;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRolePermission;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
@@ -12,12 +11,16 @@ use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUserRole;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Baja lógica de un rol (ADR 0007: soft delete, nunca `DELETE` físico). Los dos
- * roles del panel, `administrador` y `operador`, no se dan de baja (ADR 0046).
+ * Baja lógica de un rol del panel (ADR 0007: soft delete, nunca `DELETE`
+ * físico). Es lo que hay detrás del botón «Eliminar» de /panel/roles, y la regla
+ * vive acá, no en la vista: ocultar el botón no protege nada si alguien manda el
+ * `DELETE` a mano.
  *
- * Tres guardas, y las tres son sobre cosas que la base aceptaría sin
- * chistar:
+ * Cuatro guardas (de la 0 a la 3), todas sobre cosas que la base aceptaría sin chistar:
  *
+ * 0. SOLO ROLES DEL PANEL, Y NUNCA EL DEL SISTEMA. El administrador (id 1) es el
+ *    único rol que no se elimina; los de ámbito `app` no se administran desde el
+ *    panel.
  * 1. NO CON USUARIOS DETRÁS. La FK no lo impide (el rol sigue existiendo,
  *    solo con `deleted_at`), así que quien lo tuviera asignado quedaría con
  *    un rol fantasma: elegible en el selector hasta que `ResolverRolActivo`
@@ -55,9 +58,13 @@ final class EliminarRol
             throw PermisoDenegado::porFaltaDePermiso(self::PERMISO_ELIMINAR);
         }
 
-        // `administrador` y `operador` son del sistema (ADR 0046, punto 4).
-        if (PermisosReservados::esRolDelPanel((string) $rol->name)) {
-            throw RolProtegido::porRolDelPanel((string) $rol->name);
+        // El administrador (id 1) es el único rol que no se elimina; los de app no son del panel.
+        if ($rol->esDelSistema()) {
+            throw RolProtegido::porRolDelSistema((string) $rol->name);
+        }
+
+        if (! $rol->esDelPanel()) {
+            throw RolProtegido::porRolQueNoEsDelPanel((string) $rol->name);
         }
 
         if ($idRolActivo !== null && $rol->id === $idRolActivo) {

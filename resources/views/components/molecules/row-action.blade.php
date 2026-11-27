@@ -1,13 +1,15 @@
 {{--
     Molecule: row-action (`.ag-row-action`)
     Una acción de fila de tabla. Solo se usa DENTRO de un slot de
-    `organisms/row-actions`, que es quien fija el orden (Ver, Editar, Aprobar,
+    `organisms/row-actions`, que es quien fija el orden (Ver, Editar, Permisos, Aprobar,
     transiciones, Eliminar) y decide si las acciones se ven como botones de ícono
     o dentro del menú de fila.
 
     El `kind` fija el color, para que nadie lo elija a mano:
     - ver → info-outline · revisar → distintivo-1-outline (violeta, ícono `fact_check`; solo la
       cola de documentos, donde abre el modal de revisión: en el resto, revisar es Ver) · editar → warning-outline · aprobar → success-outline
+    - permisos → distintivo-1-outline (violeta: no es un estado ni una baja; lleva a la
+      asignación de permisos de un rol)
     - transicion → `<tono>-outline` del estado de llegada (prop `tone`); `danger` se
       traduce a `alert` (el rojo vino es solo de Eliminar) y suspender, bloquear u
       ocultar usan `neutral` (gris)
@@ -17,7 +19,7 @@
     como texto visible dentro del menú. Nunca es un botón mudo.
 
     Props:
-    - kind (ver|revisar|editar|aprobar|transicion|eliminar, requerido).
+    - kind (ver|revisar|editar|permisos|aprobar|transicion|eliminar, requerido).
     - label (requerido): ya traducido.
     - icon (requerido): ícono Material Symbols.
     - href (nullable): si se pasa, es un enlace (Ver y Editar).
@@ -41,6 +43,7 @@
         'revisar' => 'distintivo-1-outline',
         'editar' => 'warning-outline',
         'aprobar' => 'success-outline',
+        'permisos' => 'distintivo-1-outline',
         'eliminar' => 'danger-outline',
         // El rojo vino (`danger`) es solo de Eliminar: una transición cuyo estado de llegada
         // es de peligro (rechazar) se pinta `alert`, y suspender/bloquear/ocultar van en gris.
