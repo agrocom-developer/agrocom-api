@@ -49,4 +49,23 @@ final class LecturaMetricasMercadoVistas implements LecturaMetricasMercado
             'rondas' => $pares()->pluck('rondas')->map(fn ($n): int => (int) $n)->all(),
         ];
     }
+
+    public function conOfertas(PeriodoDeMetricas $periodo): int
+    {
+        $publicadas = DB::table('vw_metricas_solicitudes')->whereBetween('publicada_en', VentanaSql::de($periodo))->select('solicitud_id');
+
+        return DB::table('vw_metricas_negociaciones')->whereIn('solicitud_id', $publicadas)->distinct()->count('solicitud_id');
+    }
+
+    public function porDepartamentoYEstado(PeriodoDeMetricas $periodo): array
+    {
+        return DB::table('vw_metricas_solicitudes as v')
+            ->leftJoin('sol_departamentos as d', 'd.codigo', '=', 'v.departamento_codigo')
+            ->whereBetween('v.publicada_en', VentanaSql::de($periodo))
+            ->selectRaw("COALESCE(v.departamento_codigo, 'sin_departamento') as codigo, d.nombre as nombre, v.estado as estado, COUNT(*) as cantidad")
+            ->groupBy('v.departamento_codigo', 'd.nombre', 'v.estado')
+            ->get()
+            ->map(fn (object $fila): array => ['codigo' => (string) $fila->codigo, 'nombre' => $fila->nombre === null ? null : (string) $fila->nombre, 'estado' => (string) $fila->estado, 'cantidad' => (int) $fila->cantidad])
+            ->all();
+    }
 }
