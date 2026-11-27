@@ -1966,13 +1966,14 @@ Toda tabla del panel pinta sus acciones con un único componente, `organisms/row
 4. **Transiciones de la máquina de estados** (`<tono del estado de llegada>-outline`): rechazar, suspender, rehabilitar, bloquear, ocultar, etc.
 5. **Eliminar** (`danger-outline`, token de peligro `--ag-color-danger`), siempre al final.
 
-Cada acción es un `<x-molecules.row-action kind="ver|editar|aprobar|transicion|eliminar">` dentro del slot con nombre que le corresponde (`ver`, `editar`, `aprobar`, `transiciones`, `eliminar`). El `kind` fija el color; nadie lo elige a mano. No existe slot por defecto ni se admiten botones sueltos.
+Cada acción es un `<x-molecules.row-action kind="ver|revisar|editar|aprobar|transicion|eliminar">` dentro del slot con nombre que le corresponde (`ver`, `editar`, `aprobar`, `transiciones`, `eliminar`). El `kind` fija el color; nadie lo elige a mano. No existe slot por defecto ni se admiten botones sueltos.
 
 - Hasta tres acciones: botones de ícono cuadrados, con `title` y `aria-label` (el texto existe siempre y se oculta solo a la vista).
 - Más de tres: todas pasan al menú «⋮» de la fila, con ícono y texto, en el mismo orden.
 - Solo se ofrecen las acciones válidas para el estado actual y permitidas al rol; el llamador las filtra con `@puede`/`@if`, igual que en la ficha.
 - Los `<form>` y los modales de confirmación van fuera del componente, en la celda.
 - Un objeto con máquina de estados de aprobación (proveedor, piloto, dron) usa `organisms/row-actions-aprobacion`, que arma las acciones y los modales de la ficha (`_modales-aprobacion`) y vuelve al listado tras resolver (`desde=listado`). El «Revisar» aparte desapareció: revisar es abrir la ficha (Ver) y aprobar es una transición. «Dar de baja» se muestra como Eliminar.
+- **Excepción: «Revisar» en la cola de documentos** (`/panel/documentos`). `kind="revisar"` (`distintivo-1-outline`, violeta, ícono `fact_check`) ocupa la posición de Ver (slot `ver`) solo mientras el documento está EN REVISIÓN y quien mira tiene `proveedores.documento.revisar`; abre el modal de revisión de medios con aprobar, rechazar y descargar. Motivo: ahí sí lleva a una acción distinta de Ver (decidir sobre el archivo), mientras que en proveedores, pilotos y drones revisar era un duplicado de Ver y no se reintroduce. Cuando el documento deja de estar en revisión (aprobado, rechazado, vencido) o falta el permiso, la misma posición es «Ver» (`info-outline`) y abre el mismo modal en solo lectura. Eliminar sigue siendo la última acción.
 - Clientes, calificaciones, documentos y usuarios exponen sus transiciones con el mismo componente. Las disputas y las solicitudes tienen transiciones con formularios propios (resultado, reembolso, motivo) y siguen en su ficha.
 
 #### Tabla acción → variante
@@ -1995,6 +1996,10 @@ El rojo vino (`danger`) es solo de **Eliminar**. Lo que no elimina nada nunca lo
 
 `RowActionsOrdenTest` congela el orden y el color (la última acción es Eliminar y es la única en `danger`; Suspender es gris); `PanelHomogeneoTest` exige que ningún listado tenga botones sueltos ni una acción en un slot ajeno.
 
+### Paginación y consulta
+
+Todo listado que pagina llama a `->withQueryString()` y los enlaces de `molecules/pagination` conservan filtros y búsqueda; los filtros y el buscador son formularios GET sin `page`, así que al cambiarlos se vuelve a la página 1. Un filtro cuyo valor vacío significa algo («todos» en `?estado=` de documentos, frente al «En revisión» por omisión) se agrega con `->appends()`, porque el middleware vuelve null el valor vacío y `withQueryString()` lo descarta. `PaginacionDelPanelTest` congela ambas cosas.
+
 ### Imágenes y documentos: cuadrícula y modal de revisión (`organisms/cuadricula-medios` + `organisms/modal-revision-medio`)
 
 Toda ficha con imágenes o documentos por aprobar (fotos del dron; documentos de proveedor, piloto y dron) los muestra como un lienzo de bloques, no como miniaturas con botones debajo, y la revisión ocurre en un modal con el contenido completo. Nunca se actúa sobre una miniatura.
@@ -2002,7 +2007,7 @@ Toda ficha con imágenes o documentos por aprobar (fotos del dron; documentos de
 - **Cuadrícula.** Rectángulos de `--ag-color-surface-card` sobre `--ag-color-bg`, con separación pequeña y uniforme (`--ag-space-2`). El primer bloque es el grande (2x2 desde 768 px) y el primero pendiente de aprobación se resalta con `--ag-color-success-subtle`. Cada bloque lleva la miniatura (`url_miniatura`, `cover` centrada), el nombre del tipo, el badge de estado y las marcas «Obligatoria» y «Pendiente de aprobación» (ícono y texto, el color no es la única señal). Un PDF u otro archivo sin vista previa muestra un ícono por tipo y la etiqueta «Sin vista previa»; un archivo ausente, «Archivo no disponible». El bloque es un botón que abre el modal: sin formularios, sin Aprobar, Rechazar ni Descargar.
 - **Modal.** Contenido completo (`url_media`; imagen ajustada con «Ampliar», que pide el original; PDF embebido con enlace a la pestaña nueva), datos (tipo, estado, fecha, peso, formato, obligatoria), Aprobar, Rechazar (el motivo es obligatorio y aparece al pulsar Rechazar) y Descargar original. Anterior y Siguiente (y las flechas del teclado) recorren los archivos de la ficha. Es el modal de Bootstrap: foco atrapado, Esc cierra, el foco vuelve al bloque, y sin movimiento con `prefers-reduced-motion`.
 - **Contrato.** Cada ítem es un `ItemDeRevisionDeMedio::aArray()` (el `ArchivoDeMedio` más estado, `puede_aprobar`, `puede_rechazar`, `url_revisar`). Los permisos se deciden al armar el ítem (`ItemsDeRevisionDeDocumentos`, `ItemsDeRevisionDeFotos`): sin `proveedores.documento.descargar` no hay `url_descarga` y el botón no existe; si `existe` es falso el modal lo avisa y bloquea Aprobar. Las fotos del dron no tienen descarga.
-- **Flujo.** Aprobar o rechazar envía el formulario del modal, la página se recarga y el modal se reabre en el siguiente pendiente (`sessionStorage`). La cola `/panel/documentos` conserva su tabla: su acción «Revisar el archivo» abre el mismo modal. El visor aislado `/panel/documentos/{id}/archivo` se conserva.
+- **Flujo.** Aprobar o rechazar envía el formulario del modal, la página se recarga y el modal se reabre en el siguiente pendiente (`sessionStorage`). La cola `/panel/documentos` conserva su tabla: su acción «Revisar» (o «Ver», si ya no está en revisión) abre el mismo modal. El visor aislado `/panel/documentos/{id}/archivo` se conserva.
 - **Uso.** `<x-organisms.cuadricula-medios id="…" :items="$items" />` (incluye su modal); cualquier otro disparador usa `data-medio-modal` y `data-medio-clave`. JS en `resources/js/organisms/modal-revision-medio.js`; textos en `lang/es/revision_medios.php`.
 
 ### Buscador y «Limpiar filtros»
