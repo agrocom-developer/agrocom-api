@@ -144,6 +144,10 @@ Route::middleware('auth:interno')->group(function () {
         Route::post('/panel/usuarios', [UsuariosController::class, 'store'])
             ->name('panel.usuarios.store');
 
+        Route::get('/panel/usuarios/{usuario}', [UsuariosController::class, 'show'])
+            ->whereNumber('usuario')
+            ->name('panel.usuarios.show');
+
         Route::get('/panel/usuarios/{usuario}/editar', [UsuariosController::class, 'edit'])
             ->name('panel.usuarios.edit');
 

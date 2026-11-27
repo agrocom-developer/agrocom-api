@@ -1,32 +1,24 @@
 {{--
     Page: usuarios/index (GET /panel/usuarios, panel.usuarios.index)
     Listado de cuentas del panel, solo personal de Agrocom (HU-45, tarea 39; ADR 0046): arquetipo
-    Listado, §6.2 de docs/diseno/guia_pantalla_panel.md — cabecera →
-    filtros → tabla → paginación. Mismo molde que clientes/index.blade.php,
-    con una columna de roles (chips) y con el estado de
-    acceso de la cuenta (activo/bloqueado).
+    Listado, §6.2 de docs/diseno/guia_pantalla_panel.md — cabecera → buscador y
+    filtros → tabla → paginación. Mismo molde que clientes/index.blade.php y
+    pilotos/index.blade.php, con una columna de roles (chips) y el estado de acceso
+    de la cuenta (activo/bloqueado).
 
-    Datos esperados (ver UsuariosController::index()):
-    - $usuarios (LengthAwarePaginator<SecUser>): nombre ascendente, solo
-      cuentas de tipo `panel`. Las cuentas de app (cliente y proveedor) no se
-      administran desde acá.
-    - $rolesPorUsuario (array<int, list<string>>): nombres legibles de rol
-      por id de usuario.
-    - $filtros (array{q: string}): búsqueda aplicada.
-    - $tonoPorEstado (array<string, string>): estado de acceso → tono, el mismo
-      mapa para el badge, el botón de la fila y el modal
-      (`UsuariosController::TONO_POR_ESTADO`).
+    Datos esperados (ver UsuariosController::index()): la cáscara de CascaraPanel, más
+    - $usuarios (LengthAwarePaginator<SecUser>): nombre ascendente, solo cuentas de tipo
+      `panel`. Las cuentas de app (cliente y proveedor) no se administran desde acá.
+    - $rolesPorUsuario (array<int, list<string>>): nombres legibles de rol por id de usuario.
+    - $filtros (array{q: string, estado: ?string, rol: ?string}): filtros aplicados.
+    - $opcionesRol (array<int, string>): id de rol → nombre legible, para el filtro.
+    - $tonoPorEstado (array<string, string>): estado de acceso → tono, el mismo mapa para el
+      badge, el botón de la fila y el modal (`UsuariosController::TONO_POR_ESTADO`).
+    - $puedeCrear, $puedeEditar, $puedeBloquear, $puedeEliminar (bool): presentación; el
+      servidor revalida cada acción en UsuariosController.
 
-    El estado (activo/bloqueado) SÍ se muestra, a diferencia de un catálogo con
-    `activo` sin editor: bloquear es una acción de esta misma fila, con su
-    propio permiso, y sin verlo el botón «Desbloquear» no tendría contexto.
-
-    Gateada por `seguridad.usuario.ver`. Los botones "Nuevo usuario"/
-    "Editar"/bloqueo/"Eliminar" se ocultan con `@puede` (presentación, no
-    autorización — el servidor revalida en UsuariosController).
-
-    Estilos en resources/css/pages/usuarios.css — cero color hardcodeado
-    (CLAUDE.md invariante 11).
+    Acciones de fila en el orden del panel: Ver, Editar, Bloquear/Desbloquear (transición
+    en gris) y Eliminar al final. Gateada por `seguridad.usuario.ver`.
 --}}
 <x-templates.panel-shell :title="__('seguridad.usuarios.titulo')" :tema="$tema">
     <x-templates.panel-layout
@@ -41,38 +33,63 @@
         :version="$version"
         :vista-actual="__('seguridad.usuarios.titulo')"
     >
-        <div class="ag-usuarios">
+        <div class="ag-proveedores">
             <x-organisms.page-header
                 :title="__('seguridad.usuarios.titulo')"
                 :subtitle="__('seguridad.usuarios.subtitulo')"
             >
-                @puede('seguridad.usuario.crear')
+                @if ($puedeCrear)
                     <x-slot:actions>
-                        <x-atoms.button :href="route('panel.usuarios.create')" variant="primary" icon="add">
-                            {{ __('seguridad.usuarios.nueva') }}
-                        </x-atoms.button>
+                        <x-atoms.button :href="route('panel.usuarios.create')" variant="primary" icon="add">{{ __('seguridad.usuarios.nueva') }}</x-atoms.button>
                     </x-slot:actions>
-                @endpuede
+                @endif
             </x-organisms.page-header>
 
             @if (session('estado'))
-                <x-molecules.alert-strip variant="success" icon="check_circle" class="ag-usuarios__aviso">
+                <x-molecules.alert-strip variant="success" icon="check_circle">
                     {{ session('estado') }}
                 </x-molecules.alert-strip>
             @endif
 
-            @if ($errors->has('estado'))
-                <x-molecules.alert-strip variant="danger" icon="error" class="ag-usuarios__aviso">
-                    {{ $errors->first('estado') }}
+            @if ($errors->any())
+                <x-molecules.alert-strip variant="danger" icon="error">
+                    {{ $errors->first() }}
                 </x-molecules.alert-strip>
             @endif
 
             @php
                 $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
+                $filtrosPanelActivos = collect(['estado', 'rol'])
+                    ->filter(fn ($campo) => $filtros[$campo] !== null && $filtros[$campo] !== '')
+                    ->count();
+                $opcionesEstado = collect(array_keys($tonoPorEstado))->mapWithKeys(fn ($estado) => [$estado => __('seguridad.usuarios.estado_'.$estado)])->all();
             @endphp
 
             @if ($hayFiltrosActivos || $usuarios->isNotEmpty())
                 <div class="ag-table-toolbar">
+                    <x-organisms.filter-panel
+                        :action="route('panel.usuarios.index')"
+                        :active-count="$filtrosPanelActivos"
+                    >
+                        <input type="hidden" name="q" value="{{ $filtros['q'] }}">
+                        <x-atoms.select
+                            name="estado"
+                            id="filtro-estado"
+                            :label="__('seguridad.usuarios.filtro_estado')"
+                            :options="$opcionesEstado"
+                            :value="$filtros['estado']"
+                            :placeholder="__('seguridad.usuarios.filtro_todos')"
+                        />
+                        <x-atoms.select
+                            name="rol"
+                            id="filtro-rol"
+                            :label="__('seguridad.usuarios.filtro_rol')"
+                            :options="$opcionesRol"
+                            :value="$filtros['rol']"
+                            :placeholder="__('seguridad.usuarios.filtro_todos')"
+                        />
+                    </x-organisms.filter-panel>
+
                     <x-molecules.table-search
                         :action="route('panel.usuarios.index')"
                         :value="$filtros['q']"
@@ -97,15 +114,7 @@
                     />
                 @endif
             @else
-                {{-- Las columnas de un badge (tipo, estado) y la de acciones son de ancho
-                     fijo —nunca `auto`: ver el comentario de
-                     resources/css/components/row-actions.css—; el usuario va bajo el
-                     nombre en vez de en su propia columna, porque con ~1050 px útiles
-                     (1440 con el menú lateral) ocho columnas no dejan sitio al texto. --}}
-                <x-molecules.index-table
-                    class="ag-usuarios__listado"
-                    columns="3rem minmax(0, 1.8fr) minmax(0, 1.8fr) 6rem var(--ag-row-actions-width)"
-                >
+                <x-molecules.index-table columns="3rem minmax(0, 1.8fr) minmax(0, 1.8fr) minmax(0, 0.8fr) var(--ag-row-actions-width)">
                     <x-slot:head>
                         <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('seguridad.usuarios.col_nombre_usuario') }}</span>
@@ -129,10 +138,10 @@
                                 {{ ($usuarios->currentPage() - 1) * $usuarios->perPage() + $loop->iteration }}
                             </span>
                             <span role="cell">
-                                <span class="ag-usuarios__nombre">{{ $usuario->name }}</span>
-                                <span class="ag-usuarios__username">{{ $usuario->username }}</span>
+                                <span class="ag-proveedores__nombre">{{ $usuario->name }}</span>
+                                <span class="ag-proveedores__sub">{{ $usuario->username }}</span>
                             </span>
-                            <span role="cell" class="ag-usuarios__roles">
+                            <span role="cell">
                                 @forelse (($rolesPorUsuario[$usuario->id] ?? []) as $nombreRol)
                                     <x-atoms.badge variant="neutral">{{ $nombreRol }}</x-atoms.badge>
                                 @empty
@@ -152,7 +161,7 @@
                                      se duplicaría — y el que cae dentro del menú ⋮ queda oculto
                                      con él y nunca abre. Los disparadores sí van adentro (son
                                      botones sin id propio). Mismo criterio que contratos/index. --}}
-                                @puede('seguridad.usuario.bloquear')
+                                @if ($puedeBloquear)
                                     <form id="{{ $formIdBloqueo }}" method="POST" action="{{ route('panel.usuarios.bloqueo', $usuario) }}">
                                         @csrf
                                     </form>
@@ -168,9 +177,9 @@
                                     >
                                         @include('seguridad::pages.usuarios._estado-transicion', ['desde' => $estadoValor, 'hacia' => $estadoDestino])
                                     </x-molecules.confirm-modal>
-                                @endpuede
+                                @endif
 
-                                @puede('seguridad.usuario.eliminar')
+                                @if ($puedeEliminar)
                                     <form id="{{ $formIdEliminar }}" method="POST" action="{{ route('panel.usuarios.destroy', $usuario) }}">
                                         @csrf
                                         @method('DELETE')
@@ -183,16 +192,20 @@
                                         :message="__('seguridad.usuarios.confirmar_baja')"
                                         :confirm-label="__('seguridad.usuarios.eliminar_accion')"
                                     />
-                                @endpuede
+                                @endif
 
                                 <x-organisms.row-actions>
-                                    @puede('seguridad.usuario.editar')
+                                    <x-slot:ver>
+                                        <x-molecules.row-action kind="ver" :href="route('panel.usuarios.show', $usuario)" icon="visibility" :label="__('seguridad.usuarios.ver')" />
+                                    </x-slot:ver>
+
+                                    @if ($puedeEditar)
                                         <x-slot:editar>
                                             <x-molecules.row-action kind="editar" :href="route('panel.usuarios.edit', $usuario)" icon="edit" :label="__('seguridad.usuarios.editar')" />
                                         </x-slot:editar>
-                                    @endpuede
+                                    @endif
 
-                                    @puede('seguridad.usuario.bloquear')
+                                    @if ($puedeBloquear)
                                         <x-slot:transiciones>
                                             <x-molecules.row-action
                                                 kind="transicion"
@@ -202,13 +215,13 @@
                                                 :label="__($usuario->state ? 'seguridad.usuarios.bloquear' : 'seguridad.usuarios.desbloquear')"
                                             />
                                         </x-slot:transiciones>
-                                    @endpuede
+                                    @endif
 
-                                    @puede('seguridad.usuario.eliminar')
+                                    @if ($puedeEliminar)
                                         <x-slot:eliminar>
                                             <x-molecules.row-action kind="eliminar" :modal="$modalIdEliminar" icon="delete" :label="__('seguridad.usuarios.eliminar_accion')" />
                                         </x-slot:eliminar>
-                                    @endpuede
+                                    @endif
                                 </x-organisms.row-actions>
                             </span>
                         </div>
