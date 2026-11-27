@@ -2,9 +2,7 @@
  * Template: legal-layout (resources/views/components/templates/legal-layout.blade.php)
  * y página de documento legal (resources/views/legal/documento.blade.php).
  * Columna de lectura única, sin riel ni menú: es una página pública de texto
- * largo. Todo valor sale de tokens (invariante 11); el aviso de borrador es la
- * molecule `alert-strip` y el marcador `[POR DEFINIR]` usa los tokens de
- * advertencia, para que se vea igual en tema claro y oscuro.
+ * largo. Todo valor sale de tokens (invariante 11).
  */
 
 .ag-legal {
@@ -14,11 +12,6 @@
     width: 100%;
     background: var(--ag-color-bg);
     color: var(--ag-color-text);
-}
-
-.ag-legal__banner {
-    flex: 0 0 auto;
-    border-bottom: 1px solid var(--ag-color-border);
 }
 
 .ag-legal__header {
@@ -144,17 +137,6 @@
 
 .ag-legal__lista > li {
     margin-bottom: var(--ag-space-3);
-}
-
-/* Lo que todavía no está decidido: visible, no solo por color (lleva el texto
-   «[POR DEFINIR]» y un borde). */
-.ag-legal__por-definir {
-    padding: 0 var(--ag-space-1);
-    background: var(--ag-color-warning-subtle);
-    color: var(--ag-color-warning-strong);
-    border: 1px solid var(--ag-color-warning-border);
-    border-radius: var(--ag-radius-sm);
-    font-weight: var(--ag-font-weight-bold);
 }
 
 .ag-legal__footer {

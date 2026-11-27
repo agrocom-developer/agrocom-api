@@ -4,9 +4,10 @@ use Illuminate\Support\Facades\Route;
 
 /*
  * Humo de las páginas legales públicas (docs/politicas/legal.md): términos y
- * privacidad existen, responden sin sesión y muestran la versión, la vigencia
- * y el aviso de borrador que salen de `config/legal.php`. No toca la base de
- * datos ni valida el texto legal.
+ * privacidad existen, responden sin sesión, muestran la versión y la vigencia
+ * de `config/legal.php`, no llevan aviso de borrador ni marcas pendientes, y
+ * omiten sin marcas los datos de contacto que no están configurados. No toca
+ * la base de datos.
  */
 
 beforeEach(function () {
@@ -45,37 +46,87 @@ it('tiene nombre de ruta y no pide autenticación', function (string $documento,
     expect($autenticacion)->toBeEmpty();
 })->with('documentos legales');
 
-it('muestra el aviso de borrador mientras el parámetro está activado', function (string $documento, string $ruta) {
-    config(['legal.borrador' => true]);
-
+it('no muestra aviso de borrador ni marcas de pendiente', function (string $documento, string $ruta) {
     $this->get($ruta)
         ->assertOk()
-        ->assertSee(__('legal.comun.borrador_titulo'))
-        ->assertSee('data-ag-legal-borrador', false);
-})->with('documentos legales');
-
-it('oculta el aviso de borrador cuando el parámetro se apaga', function (string $documento, string $ruta) {
-    config(['legal.borrador' => false]);
-
-    $this->get($ruta)
-        ->assertOk()
-        ->assertDontSee(__('legal.comun.borrador_titulo'))
+        ->assertDontSee('BORRADOR')
+        ->assertDontSee('POR DEFINIR')
         ->assertDontSee('data-ag-legal-borrador', false);
+
+    expect(file_get_contents(base_path('lang/es/legal.php')))
+        ->not->toContain('[POR DEFINIR]')
+        ->not->toContain('borrador_titulo');
 })->with('documentos legales');
 
-it('trae el aviso de borrador activado por defecto', function () {
-    $porDefecto = require base_path('config/legal.php');
+it('trae la versión 2026-2 vigente desde el 27 de noviembre de 2026', function (string $documento) {
+    expect(config("legal.documentos.{$documento}.version"))->toBe('2026-2')
+        ->and(config("legal.documentos.{$documento}.vigente_desde"))->toBe('2026-11-27');
+})->with(['terminos', 'privacidad']);
 
-    expect($porDefecto['borrador'])->toBeTrue();
+it('nombra el producto y el titular y no deja marcadores sin resolver', function (string $documento, string $ruta) {
+    $this->get($ruta)
+        ->assertOk()
+        ->assertSee('DronAgro')
+        ->assertSee('Ciudad Comercio, pasillo J, oficina 229')
+        ->assertDontSee(':producto')
+        ->assertDontSee(':titular')
+        ->assertDontSee(':meses')
+        ->assertDontSee(':dias_sin_antecedentes')
+        ->assertDontSee(':gracia')
+        ->assertDontSee(':plazo')
+        ->assertDontSee(':respaldos')
+        ->assertDontSee(':servicio_meses')
+        ->assertDontSee(':emergencia_dias')
+        ->assertDontSee(':valor');
+})->with('documentos legales');
+
+it('omite sin marcas los datos de contacto que no están configurados', function (string $documento, string $ruta) {
+    config([
+        'legal.contacto' => ['correo' => null, 'telefono' => null, 'whatsapp' => null],
+        'legal.redes' => ['facebook' => null, 'instagram' => null, 'tiktok' => null, 'youtube' => null],
+        'legal.empresa' => ['razon_social' => null, 'nit' => null, 'representante' => null, 'jurisdiccion' => null],
+    ]);
+
+    $this->get($ruta)
+        ->assertOk()
+        ->assertSee('data-ag-legal-contacto', false)
+        ->assertDontSee('Correo electrónico')
+        ->assertDontSee('NIT')
+        ->assertDontSee('Redes sociales oficiales')
+        ->assertDontSee('tribunales de');
+})->with('documentos legales');
+
+it('muestra los datos de contacto cuando están configurados', function (string $documento, string $ruta) {
+    config([
+        'legal.contacto' => ['correo' => 'soporte@ejemplo.test', 'telefono' => '+591 70000000', 'whatsapp' => null],
+        'legal.redes' => ['facebook' => 'dronagro.bo', 'instagram' => null, 'tiktok' => null, 'youtube' => null],
+        'legal.empresa' => ['razon_social' => 'Agrocom Ejemplo S.R.L.', 'nit' => '123456', 'representante' => null, 'jurisdiccion' => 'Santa Cruz de la Sierra'],
+    ]);
+
+    $this->get($ruta)
+        ->assertOk()
+        ->assertSee('soporte@ejemplo.test')
+        ->assertSee('+591 70000000')
+        ->assertSee('Agrocom Ejemplo S.R.L.')
+        ->assertSee('123456')
+        ->assertSee('Facebook (dronagro.bo)')
+        ->assertDontSee('WhatsApp:');
+})->with('documentos legales');
+
+it('los términos dicen que el uso es sin costo por ahora y que los precios se avisarán', function () {
+    $this->get('/terminos')
+        ->assertOk()
+        ->assertSee('Por ahora, usar DronAgro no tiene costo')
+        ->assertSee('con anticipación');
 });
 
-it('resalta lo que falta definir y no deja marcadores sin resolver', function (string $documento, string $ruta) {
-    $this->get($ruta)
+it('la política da los plazos de conservación y eliminación del código', function () {
+    $this->get('/privacidad')
         ->assertOk()
-        ->assertSee('ag-legal__por-definir', false)
-        ->assertSee('[POR DEFINIR]')
-        ->assertDontSee(':meses');
-})->with('documentos legales');
+        ->assertSee('Tienes 7 días para arrepentirte')
+        ->assertSee('90 días si no tuviste antecedentes y 12 meses si los tuviste')
+        ->assertSee('hash irreversible');
+});
 
 it('cada documento enlaza al otro y el pie del login enlaza a los dos', function () {
     $this->get('/terminos')->assertSee(route('legal.privacidad'), false);

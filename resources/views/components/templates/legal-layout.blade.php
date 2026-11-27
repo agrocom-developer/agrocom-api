@@ -1,7 +1,6 @@
 {{--
     Template: legal-layout (documentos legales públicos: términos y privacidad)
-    Cáscara mínima y pública (sin sesión, sin menú): el aviso de borrador
-    arriba, una cabecera con la marca, el cambio de tema y el regreso al
+    Cáscara mínima y pública (sin sesión, sin menú): una cabecera con la marca, el cambio de tema y el regreso al
     inicio, el contenido en una columna de lectura y un pie con el otro
     documento legal. Es el hermano de `auth-layout` para texto largo: la
     pantalla dividida con foto de `auth-layout` no sirve para leer un
@@ -12,7 +11,6 @@
     - pieAriaLabel (string): etiqueta accesible del pie, ya traducida.
 
     Slots:
-    - banner (opcional): franja de aviso sobre la cabecera (el borrador).
     - footer (opcional): contenido del pie (el enlace al otro documento).
     - default: el documento, dentro de <main>.
 --}}
@@ -22,10 +20,6 @@
 ])
 
 <div class="ag-legal">
-    @isset($banner)
-        <div class="ag-legal__banner">{{ $banner }}</div>
-    @endisset
-
     <header class="ag-legal__header">
         <x-atoms.logo size="md" />
 
