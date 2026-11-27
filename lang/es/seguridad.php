@@ -17,7 +17,7 @@ return [
     // Copy del panel editorial de templates/auth-layout (galería de fotos +
     // wordmark + headline) — compartido por login y selección de rol, ambos
     // armados sobre ese mismo template. El wordmark reutiliza `ui.logo.alt`
-    // ("Agrocom"), no hace falta una clave nueva para eso.
+    // ("DronAgro"), no hace falta una clave nueva para eso.
     'auth' => [
         // Galería de 3 imágenes (rediseño de login, cuarta vuelta): un
         // headline/subheadline por slide, en el mismo orden que
@@ -44,7 +44,7 @@ return [
         ],
         'galeria_aria_label' => 'Elige qué imagen mostrar',
         'galeria_dot' => 'Mostrar imagen :numero de :total',
-        'tagline' => 'Fumigación con drones',
+        'tagline' => 'Conectamos tu campo con pilotos de drones',
         'sin_alta_publica' => '¿No tienes cuenta? Las cuentas las crea el administrador de tu operación.',
     ],
 
@@ -79,13 +79,13 @@ return [
         'estado_generico' => 'Si el correo existe en el sistema, recibirás un enlace para restablecer tu contraseña.',
 
         // Correo enviado por RestablecerContrasena (Notification).
-        'correo_asunto' => 'Restablece tu contraseña — Agrocom',
+        'correo_asunto' => 'Restablece tu contraseña — DronAgro',
         'correo_saludo' => 'Hola, :nombre.',
         'correo_cuerpo' => 'Recibimos la petición de restablecer la contraseña de tu cuenta. Si fuiste tú, haz clic en el botón de abajo para elegir una nueva.',
         'correo_boton' => 'Restablecer contraseña',
         'correo_expiracion' => 'Este enlace vence en 60 minutos.',
         'correo_ignorar' => 'Si no pediste este cambio, ignora este correo: tu contraseña actual sigue funcionando.',
-        'correo_despedida' => 'Saludos, Agrocom.',
+        'correo_despedida' => 'Saludos, DronAgro.',
     ],
 
     // Pantalla de "elegir contraseña nueva" (tarea 66), llegada desde el
@@ -731,7 +731,7 @@ return [
         'acceso_recuperado' => 'Tu contraseña se cambió. Ya puedes iniciar sesión con tu usuario.',
         'telefono_verificado' => 'Tu teléfono quedó verificado.',
         'login_bloqueado' => 'Hiciste demasiados intentos. Espera unos minutos e inténtalo de nuevo.',
-        'correo_asunto' => 'Tu código de Agrocom',
+        'correo_asunto' => 'Tu código de DronAgro',
         'correo_saludo' => 'Hola, :nombre.',
         'correo_motivo' => [
             'verificar_telefono' => 'Usa este código para verificar tu teléfono.',
@@ -743,7 +743,7 @@ return [
         'correo_codigo' => 'Tu código es :codigo',
         'correo_vigencia' => 'Vence en :minutos minutos y sirve una sola vez.',
         'correo_ignorar' => 'Si no lo pediste tú, ignora este correo: tu cuenta sigue segura.',
-        'correo_despedida' => 'Saludos, Agrocom.',
+        'correo_despedida' => 'Saludos, DronAgro.',
     ],
 
     // Eliminar mi cuenta (ADR 0047).

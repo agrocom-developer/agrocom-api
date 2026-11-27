@@ -120,7 +120,7 @@ Regla operativa: **un chip tenue usa siempre el par `-subtle` (fondo) + `-strong
 | `--ag-color-track`, `--ag-color-bar-unassigned` | Pista de las barras y barra «sin causa asignada» |
 | `--ag-color-bg-rail`, `-bg-rail-active`, `-text-rail`, `-text-rail-active` | Riel de módulos y header móvil: grafito en ambos temas; el activo usa el verde claro del tema oscuro |
 | `--ag-color-scrim-strong`, `-scrim`, `-text-on-scrim`, `-text-on-scrim-muted`, `-chip-border`, `-chip-text` | Overlay y texto sobre la fotografía de `auth-layout`; constantes entre temas (nunca usar `-text-inverse` sobre la foto) |
-| `--ag-color-wordmark-accent`, `--ag-color-chip-icon` | Ámbar del «COM» del wordmark y verde del ícono del chip de `auth-layout`; constantes entre temas |
+| `--ag-color-wordmark-accent`, `--ag-color-chip-icon` | Ámbar del «Agro» del wordmark «DronAgro» y verde del ícono del chip de `auth-layout`; constantes entre temas |
 | `--ag-color-focus-ring` | Contorno de foco de teclado |
 | `--ag-color-overlay` | Velo de modales |
 | `--ag-space-1`…`--ag-space-8` | Espaciado, escala de 8 px |

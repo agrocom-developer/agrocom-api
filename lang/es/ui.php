@@ -13,7 +13,7 @@
 return [
 
     'logo' => [
-        'alt' => 'Agrocom',
+        'alt' => 'DronAgro',
     ],
 
     'input' => [
