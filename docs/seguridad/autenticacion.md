@@ -34,7 +34,7 @@ Un mismo mecanismo sirve a la verificación del teléfono, la recuperación del 
 
 `EnviadorDeCodigo` es la interfaz de dominio; el dominio no conoce a ningún proveedor. Un canal sin adaptador responde `503 canal_no_disponible` (sin tocar la cuenta) y la app ofrece otro. La persona elige el canal; la verificación del teléfono solo admite `whatsapp` y `sms`.
 
-- **El código**: 6 dígitos, guardado con hash, vence a los 10 minutos (`verificacion.codigo.vigencia_minutos`), un solo uso, 5 intentos, un código vigente por cuenta y propósito (pedir otro anula el anterior), máximo 3 envíos por hora y 10 por día por cuenta, más el límite por IP. No se escribe en logs, bitácora ni respuestas; la bitácora registra que se pidió y que se confirmó.
+- **El código**: 6 dígitos, guardado con hash, vence a los 10 minutos (`verificacion.codigo.vigencia_minutos`), un solo uso, 5 intentos, un código vigente por cuenta y propósito (pedir otro anula el anterior), máximo 3 envíos por hora y 10 por día por cuenta, más el límite por IP. No se escribe en logs, bitácora ni respuestas; la fila guarda cuándo se pidió y cuándo se confirmó, y los cambios de la cuenta que provoca (contraseña, teléfono verificado) quedan en la bitácora sin valores.
 - **Canal probado**: confirmar un código por WhatsApp o SMS marca `telefono_verificado_en`; por correo, `email_verificado_en`.
 - **Modo de desarrollo**: `VERIFICACION_MODO_DESARROLLO=true` fija el código en `000000`, hace que `whatsapp` y `sms` no envíen nada, y solo se respeta con `APP_ENV` en `local` o `testing`. Sin correo configurado el envío por correo falla con `503`.
 

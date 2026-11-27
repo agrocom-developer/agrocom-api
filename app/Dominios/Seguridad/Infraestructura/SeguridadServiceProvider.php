@@ -5,12 +5,14 @@ namespace App\Dominios\Seguridad\Infraestructura;
 use App\Dominios\Seguridad\Aplicacion\BuscarEnElPanel;
 use App\Dominios\Seguridad\Aplicacion\GestionarFotoDePerfil;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
+use App\Dominios\Seguridad\Contratos\EnviadorDeCodigo;
 use App\Dominios\Seguridad\Contratos\FotosDePerfil;
 use App\Dominios\Seguridad\Contratos\IdentidadOperarioToken;
 use App\Dominios\Seguridad\Contratos\LecturaCuentas;
 use App\Dominios\Seguridad\Contratos\LecturaUsuariosPorRol;
 use App\Dominios\Seguridad\Contratos\RegistroCuentas;
 use App\Dominios\Seguridad\Dominio\NumeroDeTelefono;
+use App\Dominios\Seguridad\Infraestructura\Codigos\EnviadorEnrutado;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecTokenDispositivo;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUsuarioApp;
 use App\Dominios\Seguridad\Infraestructura\Http\AutorizacionPanelWebSesion;
@@ -75,6 +77,10 @@ final class SeguridadServiceProvider extends ServiceProvider
         $this->app->bind(RegistroCuentas::class, RegistroCuentasEloquent::class);
         $this->app->bind(LecturaCuentas::class, RegistroCuentasEloquent::class);
 
+        // Códigos de un solo uso (ADR 0046, punto 29): el dominio pide `EnviadorDeCodigo`; el correo sale por `Notification` y
+        // WhatsApp y SMS por el adaptador de `config/verificacion.php`.
+        $this->app->bind(EnviadorDeCodigo::class, EnviadorEnrutado::class);
+
         // Foto de perfil de la cuenta: otros módulos piden solo su URL firmada.
         $this->app->bind(FotosDePerfil::class, GestionarFotoDePerfil::class);
 
@@ -101,6 +107,26 @@ final class SeguridadServiceProvider extends ServiceProvider
         $this->configurarTokensDeDispositivo();
         $this->configurarLimitesDeLogin();
         $this->configurarLimiteDeRegistroPublico();
+        $this->configurarLimiteDeCodigosPublicos();
+    }
+
+    /**
+     * Límite de los códigos sin sesión (`POST /api/auth/recuperar` y `/confirmar`, ADR 0046, punto 27). Cuenta por IP (5 por
+     * minuto y 30 por hora) y por identificador escrito (10 cada 15 minutos), exista o no la cuenta, para que el límite no
+     * revele nada y nadie agote los códigos de otra persona desde muchas IP.
+     */
+    private function configurarLimiteDeCodigosPublicos(): void
+    {
+        RateLimiter::for('codigos-publicos', function (Request $request): array {
+            $crudo = trim((string) $request->input('identificador'));
+            $identificador = NumeroDeTelefono::normalizar($crudo) ?? mb_strtolower($crudo);
+
+            return [
+                Limit::perMinute(5)->by('codigos-publicos|minuto|'.$request->ip()),
+                Limit::perHour(30)->by('codigos-publicos|hora|'.$request->ip()),
+                Limit::perMinutes(15, 10)->by('codigos-publicos|identificador|'.sha1($request->input('app').'|'.$identificador)),
+            ];
+        });
     }
 
     /**

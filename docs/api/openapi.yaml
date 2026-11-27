@@ -3779,7 +3779,7 @@ paths:
                   format: email
                   nullable: true
                 password:
-                  description: 'Mínimo 8 caracteres con letras y números.'
+                  description: 'Mínimo 4 caracteres, sin otras reglas.'
                   type: string
                   format: password
                 telefono:
@@ -3866,6 +3866,114 @@ paths:
                 $ref: '#/components/schemas/ErrorValidacion'
         429:
           description: 'Demasiados registros desde la misma IP, o demasiados `409` seguidos para esa IP, ese teléfono o ese documento; reintentar tras `Retry-After` segundos.'
+  /api/cuenta/contrasena/codigo:
+    post:
+      tags:
+        - Seguridad
+      summary: 'Pedir un código para cambiar mi contraseña'
+      description: 'La cuenta del token pide un código de 6 dígitos para cambiar su contraseña, por el canal que elige: `whatsapp` o `sms` (al teléfono de la cuenta) o `correo` (al correo de respaldo). El código vence a los 10 minutos, se usa una vez y admite 5 intentos; pedir otro anula el anterior. Cada cuenta puede pedir 3 códigos por hora y 10 por día (entre todos los propósitos).'
+      operationId: pedirCodigoParaCambiarContrasena
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - canal
+              properties:
+                canal:
+                  type: string
+                  example: whatsapp
+                  enum:
+                    - whatsapp
+                    - sms
+                    - correo
+              type: object
+      responses:
+        202:
+          description: 'Código enviado.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - message
+                  - destino
+                properties:
+                  message:
+                    type: string
+                    example: 'Te enviamos un código. Revisa el medio que elegiste.'
+                  destino:
+                    description: 'Adónde fue, enmascarado.'
+                    type: string
+                    example: '+591 ••••• 45'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        422:
+          description: '`sin_destino` (la cuenta no tiene teléfono o correo para ese canal) o canal inválido.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDeCodigo'
+        429:
+          description: 'La cuenta ya pidió el máximo de códigos; reintentar tras `Retry-After` segundos.'
+        503:
+          description: '`canal_no_disponible`: ese medio no está configurado; ofrecer otro.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDeCodigo'
+      security:
+        -
+          tokenDispositivo: []
+  /api/cuenta/contrasena:
+    put:
+      tags:
+        - Seguridad
+      summary: 'Cambiar mi contraseña con un código'
+      description: 'Cambia la contraseña de la cuenta del token con el código recibido (mínimo 4 caracteres, sin otras reglas). Revoca los tokens de los demás dispositivos y conserva el actual. Confirmar el código prueba la posesión del canal.'
+      operationId: cambiarMiContrasena
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - codigo
+                - password_nueva
+              properties:
+                codigo:
+                  type: string
+                  example: '482913'
+                password_nueva:
+                  type: string
+                  format: password
+                  example: abcd
+              type: object
+      responses:
+        200:
+          description: 'Contraseña cambiada; los demás dispositivos quedaron sin sesión.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
+                    example: 'Tu contraseña se cambió. Tus otros dispositivos deberán iniciar sesión de nuevo.'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        422:
+          description: '`codigo_invalido` o datos inválidos (`errors`).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDeCodigo'
+      security:
+        -
+          tokenDispositivo: []
   '/api/dispositivos/{id}':
     get:
       tags:
@@ -3997,6 +4105,133 @@ paths:
           description: 'Firma inválida o vencida.'
         404:
           description: 'La cuenta ya no tiene foto.'
+  /api/auth/recuperar:
+    post:
+      tags:
+        - Seguridad
+      summary: 'Pedir un código para recuperar el acceso'
+      description: 'La persona que olvidó su usuario o su contraseña da su usuario, teléfono o correo, la app desde la que escribe y el canal por el que quiere recibir un código de 6 dígitos: `whatsapp` o `sms` (al teléfono de la cuenta) o `correo` (al correo de respaldo). Responde siempre `202` con el mismo mensaje, exista o no la cuenta, esté o no bloqueada. Solo `503 canal_no_disponible` (el medio no está configurado en el sistema, independiente de la cuenta) lo distingue. El código vence a los 10 minutos, se usa una vez y admite 5 intentos; hay un solo código vigente por cuenta y propósito.'
+      operationId: solicitarRecuperacionDeAcceso
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - identificador
+                - app
+                - canal
+              properties:
+                identificador:
+                  description: 'Usuario, teléfono (en cualquier formato) o correo de respaldo.'
+                  type: string
+                  example: '70012345'
+                app:
+                  description: 'App desde la que escribe; el mismo teléfono puede estar en una cuenta de cada tipo. `piloto` es alias de `proveedor`.'
+                  type: string
+                  example: cliente
+                  enum:
+                    - cliente
+                    - proveedor
+                    - piloto
+                canal:
+                  description: 'Por dónde recibe el código.'
+                  type: string
+                  example: whatsapp
+                  enum:
+                    - whatsapp
+                    - sms
+                    - correo
+              type: object
+      responses:
+        202:
+          description: 'Solicitud recibida (siempre igual).'
+          content:
+            application/json:
+              schema:
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
+                    example: 'Si existe una cuenta con esos datos, enviamos un código. Revisa el medio que elegiste.'
+                type: object
+        422:
+          description: 'Datos inválidos.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+        429:
+          description: 'Demasiadas solicitudes desde la misma IP; reintentar tras `Retry-After` segundos.'
+        503:
+          description: '`canal_no_disponible`: ese medio no está configurado; la app ofrece otro.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDeCodigo'
+  /api/auth/recuperar/confirmar:
+    post:
+      tags:
+        - Seguridad
+      summary: 'Fijar una contraseña nueva con el código de recuperación'
+      description: 'Con el código recibido fija una contraseña nueva (mínimo 4 caracteres, sin otras reglas) y devuelve el usuario de la cuenta, para que la app se lo muestre. Confirmar el código prueba la posesión del canal (marca el teléfono o el correo como verificado). Al cambiarla se cierran las sesiones y se revocan todos los tokens de dispositivo; la app inicia sesión con `POST /api/auth/token`. Cualquier falla del código responde el mismo `422 codigo_invalido`.'
+      operationId: confirmarRecuperacionDeAcceso
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - identificador
+                - app
+                - codigo
+                - password_nueva
+              properties:
+                identificador:
+                  type: string
+                  example: '70012345'
+                app:
+                  type: string
+                  example: cliente
+                  enum:
+                    - cliente
+                    - proveedor
+                    - piloto
+                codigo:
+                  type: string
+                  example: '482913'
+                password_nueva:
+                  type: string
+                  format: password
+                  example: abcd
+              type: object
+      responses:
+        200:
+          description: 'Contraseña cambiada.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - message
+                  - username
+                properties:
+                  message:
+                    type: string
+                    example: 'Tu contraseña se cambió. Ya puedes iniciar sesión con tu usuario.'
+                  username:
+                    description: 'El usuario de la cuenta, para que la persona lo recuerde.'
+                    type: string
+                    example: camila.rojas
+                type: object
+        422:
+          description: '`codigo_invalido` (el mismo cuerpo para cuenta inexistente, código errado, vencido, usado o con los intentos agotados) o datos inválidos (`errors`, por ejemplo una contraseña de menos de 4 caracteres).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDeCodigo'
+        429:
+          description: 'Demasiados intentos desde la misma IP; reintentar tras `Retry-After` segundos.'
   /api/auth/token:
     post:
       tags:
@@ -4019,6 +4254,7 @@ paths:
                   type: string
                   example: camila.rojas
                 password:
+                  description: 'Mínimo 4 caracteres, sin otras reglas de composición.'
                   type: string
                   format: password
                   example: password
@@ -4121,7 +4357,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorValidacion'
         429:
-          description: 'Demasiados intentos; reintentar tras `Retry-After` segundos.'
+          description: 'Demasiados intentos (límite por minuto) o bloqueo temporal por fallos (10 fallos en 15 minutos por usuario o teléfono, 30 por IP; el mismo mensaje exista o no la cuenta); reintentar tras `Retry-After` segundos.'
     delete:
       tags:
         - Seguridad
@@ -4163,6 +4399,114 @@ paths:
                 type: object
         401:
           description: 'Token ausente, revocado o ya sin rol válido.'
+      security:
+        -
+          tokenDispositivo: []
+  /api/cuenta/telefono/verificacion:
+    post:
+      tags:
+        - Seguridad
+      summary: 'Pedir un código para verificar mi teléfono'
+      description: 'Envía un código de 6 dígitos al teléfono de la cuenta por `whatsapp` (WhatsApp Business, el canal principal) o `sms`. Con el código, `POST /api/cuenta/telefono/verificacion/confirmar` marca el teléfono como verificado. La app lo pide mientras `telefono_verificado_en` sea nulo. El código vence a los 10 minutos, se usa una vez y admite 5 intentos; 3 códigos por hora y 10 por día por cuenta.'
+      operationId: pedirCodigoParaVerificarTelefono
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - canal
+              properties:
+                canal:
+                  type: string
+                  example: whatsapp
+                  enum:
+                    - whatsapp
+                    - sms
+              type: object
+      responses:
+        202:
+          description: 'Código enviado.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - message
+                  - destino
+                properties:
+                  message:
+                    type: string
+                    example: 'Te enviamos un código. Revisa el medio que elegiste.'
+                  destino:
+                    description: 'Adónde fue, enmascarado.'
+                    type: string
+                    example: '+591 ••••• 45'
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        409:
+          description: '`telefono_ya_verificado`: la cuenta ya tiene su teléfono verificado.'
+        422:
+          description: '`sin_destino` (la cuenta no tiene teléfono) o canal inválido.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDeCodigo'
+        429:
+          description: 'La cuenta ya pidió el máximo de códigos; reintentar tras `Retry-After` segundos.'
+        503:
+          description: '`canal_no_disponible`: ese medio no está configurado; ofrecer el otro.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDeCodigo'
+      security:
+        -
+          tokenDispositivo: []
+  /api/cuenta/telefono/verificacion/confirmar:
+    post:
+      tags:
+        - Seguridad
+      summary: 'Confirmar el código de verificación del teléfono'
+      description: 'Confirma el código recibido y marca `telefono_verificado_en` de la cuenta. Un código errado gasta un intento; al quinto o al vencer, hay que pedir otro.'
+      operationId: confirmarVerificacionDeTelefono
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - codigo
+              properties:
+                codigo:
+                  type: string
+                  example: '482913'
+              type: object
+      responses:
+        200:
+          description: 'Teléfono verificado.'
+          content:
+            application/json:
+              schema:
+                required:
+                  - message
+                  - telefono_verificado_en
+                properties:
+                  message:
+                    type: string
+                    example: 'Tu teléfono quedó verificado.'
+                  telefono_verificado_en:
+                    type: string
+                    format: date-time
+                type: object
+        401:
+          description: 'Token ausente o revocado.'
+        422:
+          description: '`codigo_invalido` (errado, vencido, usado o con los intentos agotados).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDeCodigo'
       security:
         -
           tokenDispositivo: []
@@ -4350,7 +4694,7 @@ paths:
                   format: email
                   nullable: true
                 password:
-                  description: 'Mínimo 8 caracteres con letras y números.'
+                  description: 'Mínimo 4 caracteres, sin otras reglas.'
                   type: string
                   format: password
                 telefono:
@@ -5551,6 +5895,33 @@ components:
           enum:
             - cliente
             - proveedor
+      type: object
+    ErrorDeCodigo:
+      title: 'Error de código de un solo uso'
+      description: 'Respuesta de los códigos de verificación (ADR 0046, puntos 27 a 30). `codigo_invalido` (422) cubre cuenta inexistente, código errado, vencido, usado o con los intentos agotados, sin distinguirlos. `canal_no_disponible` (503) dice que el medio no tiene adaptador o no está configurado; la app ofrece otro.'
+      required:
+        - message
+        - codigo
+      properties:
+        message:
+          type: string
+          example: 'El código no es válido o venció. Pide uno nuevo.'
+        codigo:
+          type: string
+          example: codigo_invalido
+          enum:
+            - codigo_invalido
+            - canal_no_disponible
+            - sin_destino
+        canal:
+          description: 'Solo en `canal_no_disponible`: el canal que falló.'
+          type: string
+          example: whatsapp
+          nullable: true
+          enum:
+            - whatsapp
+            - sms
+            - correo
       type: object
     Disputa:
       title: Disputa
