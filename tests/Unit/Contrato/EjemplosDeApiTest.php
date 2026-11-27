@@ -158,7 +158,7 @@ test('los ejemplos cubren las operaciones que las apps necesitan', function () {
         'listarTerrenos', 'crearTerreno', 'actualizarTerreno', 'listarSolicitudes', 'crearSolicitud', 'estimarSolicitud',
         'publicarSolicitud', 'verSolicitud', 'cancelarSolicitud',
         // Posventa y avisos.
-        'verCalificacionesDelServicio', 'listarDisputas', 'listarNotificaciones',
+        'verCalificacionesDelServicio', 'listarReclamos', 'listarNotificaciones',
     ];
 
     expect(array_values(array_diff($necesarias, $cubiertas)))->toBe([]);

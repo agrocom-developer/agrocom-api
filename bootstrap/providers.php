@@ -2,7 +2,6 @@
 
 use App\Dominios\Calificaciones\Infraestructura\CalificacionesServiceProvider;
 use App\Dominios\Compartido\Infraestructura\CompartidoServiceProvider;
-use App\Dominios\Disputas\Infraestructura\DisputasServiceProvider;
 use App\Dominios\Flota\Infraestructura\FlotaServiceProvider;
 use App\Dominios\Mantenimiento\Infraestructura\MantenimientoServiceProvider;
 use App\Dominios\Metricas\Infraestructura\MetricasServiceProvider;
@@ -12,6 +11,7 @@ use App\Dominios\Notificaciones\Infraestructura\NotificacionesServiceProvider;
 use App\Dominios\Operaciones\Infraestructura\OperacionesServiceProvider;
 use App\Dominios\Personal\Infraestructura\PersonalServiceProvider;
 use App\Dominios\Proveedores\Infraestructura\ProveedoresServiceProvider;
+use App\Dominios\Reclamos\Infraestructura\ReclamosServiceProvider;
 use App\Dominios\Seguridad\Infraestructura\SeguridadServiceProvider;
 use App\Dominios\Solicitudes\Infraestructura\SolicitudesServiceProvider;
 use App\Providers\AppServiceProvider;
@@ -30,6 +30,6 @@ return [
     SolicitudesServiceProvider::class,
     NegociacionServiceProvider::class,
     CalificacionesServiceProvider::class,
-    DisputasServiceProvider::class,
+    ReclamosServiceProvider::class,
     MetricasServiceProvider::class,
 ];

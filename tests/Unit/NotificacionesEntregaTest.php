@@ -6,9 +6,6 @@ use App\Dominios\Compartido\Contratos\Eventos\EstadoDeAprobacionCambiado;
 use App\Dominios\Compartido\Dominio\Excepciones\BorradoFisicoNoPermitido;
 use App\Dominios\Compartido\Infraestructura\Eloquent\Bitacora;
 use App\Dominios\Compartido\Infraestructura\Eloquent\ModoSoloLectura;
-use App\Dominios\Disputas\Contratos\Eventos\DisputaAbierta;
-use App\Dominios\Disputas\Contratos\Eventos\DisputaApelada;
-use App\Dominios\Disputas\Contratos\Eventos\DisputaResuelta;
 use App\Dominios\Negociacion\Contratos\Eventos\AvisoDeNegociacion;
 use App\Dominios\Notificaciones\Aplicacion\AbrirNotificacion;
 use App\Dominios\Notificaciones\Aplicacion\EntregarNotificacion;
@@ -29,6 +26,9 @@ use App\Dominios\Operaciones\Contratos\Eventos\TrabajoCerrado;
 use App\Dominios\Proveedores\Contratos\Eventos\DocumentoPorVencer;
 use App\Dominios\Proveedores\Contratos\Eventos\DocumentoVencido;
 use App\Dominios\Proveedores\Contratos\Eventos\ProveedorRegistrado;
+use App\Dominios\Reclamos\Contratos\Eventos\ReclamoAbierto;
+use App\Dominios\Reclamos\Contratos\Eventos\ReclamoApelado;
+use App\Dominios\Reclamos\Contratos\Eventos\ReclamoResuelto;
 use App\Dominios\Seguridad\Contratos\AutorizacionPanelWeb;
 use App\Dominios\Seguridad\Contratos\LecturaUsuariosPorRol;
 use App\Dominios\Seguridad\Dominio\TipoUsuario;
@@ -497,12 +497,12 @@ test('el listener está registrado para cada evento que tiene regla, y para ning
         ProveedorRegistrado::class,
         // Negociación (ADR 0030, 0038 y 0041).
         AvisoDeNegociacion::class,
-        // Calificaciones, disputas y cierre del servicio (ADR 0031, 0033 y 0039).
+        // Calificaciones, reclamos y cierre del servicio (ADR 0031, 0033 y 0039).
         CalificacionRegistrada::class,
         CalificacionReportada::class,
-        DisputaAbierta::class,
-        DisputaResuelta::class,
-        DisputaApelada::class,
+        ReclamoAbierto::class,
+        ReclamoResuelto::class,
+        ReclamoApelado::class,
         ClienteAvisadoPorCalificacion::class,
         PublicacionDeClienteLimitada::class,
     ];

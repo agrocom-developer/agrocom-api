@@ -8,7 +8,7 @@ use App\Dominios\Metricas\Dominio\Razones;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 
-/** Cifras de calidad leídas de `vw_metricas_finalizaciones`, `_solicitudes`, `_calificaciones`, `_disputas` y `_resoluciones`. */
+/** Cifras de calidad leídas de `vw_metricas_finalizaciones`, `_solicitudes`, `_calificaciones`, `_reclamos` y `_resoluciones`. */
 final class LecturaMetricasCalidadVistas implements LecturaMetricasCalidad
 {
     public function serviciosEjecutados(PeriodoDeMetricas $periodo): int
@@ -39,9 +39,9 @@ final class LecturaMetricasCalidadVistas implements LecturaMetricasCalidad
         return DB::table('vw_metricas_calificaciones')->where('estado', 'en_moderacion')->count();
     }
 
-    public function disputasPorEstado(PeriodoDeMetricas $periodo): array
+    public function reclamosPorEstado(PeriodoDeMetricas $periodo): array
     {
-        return DB::table('vw_metricas_disputas')
+        return DB::table('vw_metricas_reclamos')
             ->whereBetween('abierta_en', VentanaSql::de($periodo))
             ->selectRaw('estado, COUNT(*) as cantidad')
             ->groupBy('estado')
@@ -57,7 +57,7 @@ final class LecturaMetricasCalidadVistas implements LecturaMetricasCalidad
         $ultimas = DB::table('vw_metricas_resoluciones as r')
             ->whereBetween('r.resuelta_en', $ventana)
             ->whereRaw(
-                'r.ronda = (SELECT MAX(x.ronda) FROM vw_metricas_resoluciones x WHERE x.disputa_id = r.disputa_id AND x.resuelta_en BETWEEN ? AND ?)',
+                'r.ronda = (SELECT MAX(x.ronda) FROM vw_metricas_resoluciones x WHERE x.reclamo_id = r.reclamo_id AND x.resuelta_en BETWEEN ? AND ?)',
                 $ventana,
             );
 

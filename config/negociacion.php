@@ -36,8 +36,8 @@ return [
     /** Ventana de la tasa de cancelación, en días. */
     'ventana_cancelacion_dias' => (int) env('NEGOCIACION_VENTANA_CANCELACION_DIAS', 90),
 
-    /** Plazo para disputar desde `finalizada`, en horas. */
-    'plazo_disputa_horas' => (int) env('NEGOCIACION_PLAZO_DISPUTA_HORAS', 72),
+    /** Plazo para reclamar desde `finalizada`, en horas. */
+    'plazo_reclamo_horas' => (int) env('NEGOCIACION_PLAZO_RECLAMO_HORAS', 72),
 
     /** Oleadas de aviso y comparador (ADR 0045). */
     'oleadas' => [

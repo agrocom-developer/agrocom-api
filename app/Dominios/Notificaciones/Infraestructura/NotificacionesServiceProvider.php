@@ -7,14 +7,14 @@ use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaAvisoDeNegociacion;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaCalificacionRegistrada;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaCalificacionReportada;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaClienteConAviso;
-use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaDisputaAbierta;
-use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaDisputaApelada;
-use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaDisputaResuelta;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaDocumentoPorVencer;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaDocumentoVencido;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaEstadoDeAprobacionCambiado;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaProveedorRegistrado;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaPublicacionLimitada;
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaReclamoAbierto;
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaReclamoApelado;
+use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaReclamoResuelto;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaTrabajoCerrado;
 use App\Dominios\Notificaciones\Aplicacion\ReglasDeNotificacion;
 use App\Dominios\Notificaciones\Contratos\EnviadorDePush;
@@ -47,9 +47,9 @@ final class NotificacionesServiceProvider extends ServiceProvider
         ReglaProveedorRegistrado::class,
         ReglaCalificacionRegistrada::class,
         ReglaCalificacionReportada::class,
-        ReglaDisputaAbierta::class,
-        ReglaDisputaResuelta::class,
-        ReglaDisputaApelada::class,
+        ReglaReclamoAbierto::class,
+        ReglaReclamoResuelto::class,
+        ReglaReclamoApelado::class,
         ReglaClienteConAviso::class,
         ReglaPublicacionLimitada::class,
     ];

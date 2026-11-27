@@ -26,9 +26,9 @@ return [
         'precio_final_confirmado' => 'El cliente confirmó el precio final del servicio #:solicitud: :monto. El pago se acuerda directamente con él.',
         'calificacion_registrada' => 'Recibiste una calificación de :estrellas estrellas en el servicio #:solicitud.',
         'calificacion_reportada' => '«:proveedor» reportó una calificación del servicio #:solicitud: espera tu decisión en el panel.',
-        'disputa_abierta' => 'Se abrió un reclamo por :motivo en el servicio #:solicitud. Responde antes del plazo.',
-        'disputa_resuelta' => 'El reclamo del servicio #:solicitud se cerró: :resultado. Reembolso: :monto.',
-        'disputa_apelada' => 'Se apeló la resolución del reclamo del servicio #:solicitud: vuelve a revisión.',
+        'reclamo_abierto' => 'Se abrió un reclamo por :motivo en el servicio #:solicitud. Responde antes del plazo.',
+        'reclamo_resuelto' => 'El reclamo del servicio #:solicitud se cerró: :resultado. Reembolso: :monto.',
+        'reclamo_apelado' => 'Se apeló la resolución del reclamo del servicio #:solicitud: vuelve a revisión.',
         'cliente_con_aviso' => 'El promedio de las calificaciones que recibes de los proveedores es :promedio. Si no mejora, se limitará tu publicación de solicitudes.',
         'publicacion_limitada' => 'La publicación de solicitudes de «:cliente» quedó limitada por su calificación promedio (:promedio) hasta una revisión.',
         // Avisos del modelo anterior de asignación: se conservan para leer los ya entregados.

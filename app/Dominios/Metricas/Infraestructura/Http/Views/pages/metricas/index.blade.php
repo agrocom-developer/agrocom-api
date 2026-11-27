@@ -216,7 +216,7 @@
                                 </header>
                                 <div class="ag-metricas__kpis ag-metricas__kpis--fila">
                                     <x-molecules.stat-card :label="__('metricas.calificacion')" icon="star" :value="$m['calidad']['calificacion_promedio'] ?? $sinDatos" :value-suffix="$m['calidad']['calificacion_promedio'] === null ? null : '/ 5'" :foot="__('metricas.calificacion_pie', ['conteo' => $m['calidad']['calificaciones_conteo'], 'reportadas' => $m['calidad']['calificaciones_reportadas']])" state="alert" />
-                                    <x-molecules.stat-card :label="__('metricas.tasa_disputas')" icon="report" :value="$pct($m['calidad']['tasa_disputas'])" :foot="__('metricas.tasa_disputas_pie', ['abiertas' => $m['calidad']['disputas_abiertas'], 'ejecutados' => $m['calidad']['servicios_ejecutados']])" state="warning" />
+                                    <x-molecules.stat-card :label="__('metricas.tasa_reclamos')" icon="report" :value="$pct($m['calidad']['tasa_reclamos'])" :foot="__('metricas.tasa_reclamos_pie', ['abiertas' => $m['calidad']['reclamos_abiertos'], 'ejecutados' => $m['calidad']['servicios_ejecutados']])" state="warning" />
                                     <x-molecules.stat-card :label="__('metricas.tasa_reembolso')" icon="undo" :value="$pct($m['calidad']['tasa_reembolso'])" :foot="__('metricas.tasa_reembolso_pie', ['monto' => $dinero($m['calidad']['monto_reembolsado'])])" state="danger" />
                                 </div>
                             </section>

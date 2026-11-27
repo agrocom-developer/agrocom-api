@@ -93,7 +93,7 @@ return [
         'finalizada' => 'Finalizada',
         'calificada' => 'Calificada',
         'cancelada' => 'Cancelada',
-        'disputada' => 'En reclamo',
+        'en_reclamo' => 'En reclamo',
     ],
 
     'tipo_aplicacion' => [

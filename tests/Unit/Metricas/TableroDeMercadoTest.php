@@ -32,6 +32,7 @@ function tableroEsquema(): void
         'create_cal_calificaciones_table',
         'create_neg_tablas_de_negociacion',
         'create_dsp_disputas_table',
+        'renombra_el_modulo_de_reclamos',
     ]);
 
     DB::table('sol_solicitudes_servicio')->delete();

@@ -29,7 +29,7 @@ Referencia rápida de vocabulario, de negocio y técnico, para que cualquier per
 | **Anonimización** | Reemplazar o borrar los datos personales de una cuenta eliminada (nombre, teléfono, correo, foto, documento, textos), conservando servicios, ofertas y calificaciones sin datos identificables | ADR 0047 |
 | **Antecedentes** | Suspensión, rechazo por fraude o falsedad documental, incidencia grave o reclamo con responsabilidad de la cuenta, o baja administrativa; alargan a 12 meses la retención de la selfie y el documento | ADR 0047 |
 | **Registro mínimo antifraude** | Lo único que queda de una cuenta eliminada: una huella del documento con clave del servidor, el motivo y la fecha, sin imágenes ni nombre | ADR 0047 |
-| **Reclamo de conducta** | Reclamo que nace al reportar un mensaje, una conversación o una foto; sin monto; soporte lee solo lo reportado | ADR 0047; `politicas/disputas.md` |
+| **Reclamo de conducta** | Reclamo que nace al reportar un mensaje, una conversación o una foto; sin monto; soporte lee solo lo reportado | ADR 0047; `politicas/reclamos.md` |
 | **Reportar** | Avisar a soporte de un mensaje, una conversación o una foto que incumple la política de conducta, con un motivo | ADR 0047 |
 | **Bloquear** | Cerrar el chat y la negociación con la otra parte y dejar de verse en el mapa y en los avisos; un servicio adjudicado sigue | ADR 0047 |
 | **Ubicación de emergencia** | Posición que acompaña a un SOS o una incidencia; se guarda 90 días después de cerrar la incidencia | ADR 0047 |
@@ -82,10 +82,10 @@ Referencia rápida de vocabulario, de negocio y técnico, para que cualquier per
 | **Mensajes** | Chat de texto entre el cliente y el proveedor adjudicado | ADR 0040 |
 | **Ubicación del piloto** | Última posición de la app del piloto durante la ejecución; se elimina al finalizar | ADR 0040 |
 | **Preferencias de notificación** | Categorías de aviso que cada cuenta activa o desactiva; para las nuevas solicitudes, los filtros del proveedor (hectáreas mínimas, tipos de aplicación que no quiere y solicitudes urgentes; los departamentos donde trabaja son su alcance, no un filtro de aviso) | ADR 0041, 0045 |
-| **Evidencia** | Foto comprimida (menos de 300 KB) que respalda un avance, una incidencia o una disputa | especificación §4.6 |
+| **Evidencia** | Foto comprimida (menos de 300 KB) que respalda un avance, una incidencia o un reclamo | especificación §4.6 |
 | **Calificación** | Valoración de 1 a 5 estrellas con etiquetas que el cliente da a un proveedor; el proveedor la ve y un administrador la modera | ADR 0031 |
 | **Moderación** | Ocultamiento con motivo y autor de una calificación que incumple la política | `politicas/calificacion.md` |
-| **Reclamo** | Queja sobre un servicio ya prestado que abre un cliente o un proveedor y atiende un administrador, con evidencia y un monto ajustado; la solicitud en reclamo tiene el estado interno `disputada` | ADR 0033 |
+| **Reclamo** | Queja sobre un servicio ya prestado que abre un cliente o un proveedor y atiende un administrador, con evidencia y un monto ajustado | ADR 0033 |
 | **Incidencia** | Evento anómalo (deriva, caída, lesión, derrame, conflicto) reportado durante o tras un servicio | `politicas/seguridad.md` |
 | **SOS** | Botón de emergencia que avisa a soporte con la ubicación (la del dispositivo en el piloto; la del terreno en el cliente) | `politicas/seguridad.md`; ADR 0047 |
 | **Tasa de cancelación** | Proporción de servicios adjudicados que cancela una parte; es visible y alimenta alertas, no sanciones automáticas | ADR 0033 |

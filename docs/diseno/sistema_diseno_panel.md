@@ -1973,7 +1973,7 @@ Cada acción es un `<x-molecules.row-action kind="ver|editar|aprobar|transicion|
 - Solo se ofrecen las acciones válidas para el estado actual y permitidas al rol; el llamador las filtra con `@puede`/`@if`, igual que en la ficha.
 - Los `<form>` y los modales de confirmación van fuera del componente, en la celda.
 - Un objeto con máquina de estados de aprobación (proveedor, piloto, dron) usa `organisms/row-actions-aprobacion`, que arma las acciones y los modales de la ficha (`_modales-aprobacion`) y vuelve al listado tras resolver (`desde=listado`). El «Revisar» aparte desapareció: revisar es abrir la ficha (Ver) y aprobar es una transición. «Dar de baja» se muestra como Eliminar.
-- Clientes, calificaciones, documentos y usuarios exponen sus transiciones con el mismo componente. Las disputas y las solicitudes tienen transiciones con formularios propios (resultado, reembolso, motivo) y siguen en su ficha.
+- Clientes, calificaciones, documentos y usuarios exponen sus transiciones con el mismo componente. Los reclamos y las solicitudes tienen transiciones con formularios propios (resultado, reembolso, motivo) y siguen en su ficha.
 
 #### Tabla acción → variante
 

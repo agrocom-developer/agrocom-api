@@ -65,7 +65,7 @@ test('cada acceso lleva ícono, etiqueta y módulo del menú, sin traducir', fun
 });
 
 test('no pasa de seis accesos', function () {
-    $rutas = ['panel.solicitudes.index', 'panel.proveedores.index', 'panel.documentos.index', 'panel.drones-flota.index', 'panel.disputas.index', 'panel.usuarios.index'];
+    $rutas = ['panel.solicitudes.index', 'panel.proveedores.index', 'panel.documentos.index', 'panel.drones-flota.index', 'panel.reclamos.index', 'panel.usuarios.index'];
     $menu = [moduloMenu('todo', [...array_map(itemMenu(...), $rutas), itemMenu('panel.clientes.index')])];
 
     expect(AccesosRapidos::para('administrador', $menu))->toHaveCount(AccesosRapidos::MAXIMO)
@@ -116,7 +116,7 @@ test('cada rol con lista propia usa solo rutas que existen en el panel', functio
 });
 
 test('seis accesos de ejemplo nunca comparten tono y el tono es uno de los tokens del panel', function () {
-    $rutas = ['panel.solicitudes.index', 'panel.proveedores.index', 'panel.documentos.index', 'panel.drones-flota.index', 'panel.disputas.index', 'panel.usuarios.index'];
+    $rutas = ['panel.solicitudes.index', 'panel.proveedores.index', 'panel.documentos.index', 'panel.drones-flota.index', 'panel.reclamos.index', 'panel.usuarios.index'];
     $menu = [moduloMenu('todo', array_map(fn (string $ruta) => itemMenu($ruta), $rutas))];
 
     $tonos = array_column(AccesosRapidos::para('administrador', $menu), 'tono');
@@ -127,7 +127,7 @@ test('seis accesos de ejemplo nunca comparten tono y el tono es uno de los token
 });
 
 test('cualquier conjunto de seis rutas del panel recibe seis tonos distintos', function () {
-    $todas = ['solicitudes', 'proveedores', 'documentos', 'drones-flota', 'disputas', 'usuarios', 'clientes', 'calificaciones', 'roles', 'bitacora', 'avisos', 'metricas'];
+    $todas = ['solicitudes', 'proveedores', 'documentos', 'drones-flota', 'reclamos', 'usuarios', 'clientes', 'calificaciones', 'roles', 'bitacora', 'avisos', 'metricas'];
 
     foreach (range(0, count($todas) - 6) as $desde) {
         $menu = [moduloMenu('todo', array_map(fn (string $d) => itemMenu("panel.$d.index"), array_slice($todas, $desde, 6)))];

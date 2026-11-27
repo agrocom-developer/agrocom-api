@@ -77,7 +77,7 @@ final class LecturaServiciosAsignadosEloquent implements LecturaServiciosAsignad
                 uuidCliente: $solicitud->uuid_cliente,
                 motivo: match ($solicitud->estado) {
                     EstadoSolicitud::Cancelada => 'cancelada',
-                    EstadoSolicitud::Finalizada, EstadoSolicitud::Calificada, EstadoSolicitud::Disputada => 'ejecutada',
+                    EstadoSolicitud::Finalizada, EstadoSolicitud::Calificada, EstadoSolicitud::EnReclamo => 'ejecutada',
                     default => 'reasignada',
                 },
                 updatedAt: Carbon::parse($solicitud->updated_at)->toIso8601String(),

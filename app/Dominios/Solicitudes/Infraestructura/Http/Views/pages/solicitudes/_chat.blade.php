@@ -1,6 +1,6 @@
 {{--
     Parcial: el chat entre el cliente y el proveedor adjudicado, en solo lectura.
-    El administrador lo lee para atender una disputa o una intervención; no
+    El administrador lo lee para atender un reclamo o una intervención; no
     escribe en él (un solo rol escritor por registro).
 
     Espera: $mensajes (ver LecturaNegociacionParaPanel) y $fecha (Closure).

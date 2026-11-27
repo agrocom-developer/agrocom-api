@@ -5,7 +5,7 @@
 ## Precio por hectárea
 
 - Lo propone el cliente al publicar y se negocia con cada piloto (política de negociación).
-- Al adjudicar queda congelado como `precio_ha_acordado`; no cambia después, salvo por la resolución de una disputa.
+- Al adjudicar queda congelado como `precio_ha_acordado`; no cambia después, salvo por la resolución de un reclamo.
 - No hay precio de referencia: lo ponen el cliente y el proveedor. El sistema solo rechaza un precio por encima de un máximo de sanidad (parámetro) para evitar errores de digitación.
 
 ## Monto
