@@ -76,7 +76,10 @@ final class DocumentosController
             ->when($tipo !== null, fn ($consulta) => $consulta->where('tipo', $tipo->value))
             ->orderBy('created_at')
             ->paginate(15)
-            ->withQueryString();
+            ->withQueryString()
+            // `?estado=` (todos) llega vacío y el middleware lo vuelve null: sin esto el enlace de la página 2
+            // pierde el parámetro y se reaplica «En revisión» por omisión (la página 2 salía vacía).
+            ->appends($request->has('estado') ? ['estado' => (string) $request->query('estado')] : []);
 
         $etiquetas = [];
         foreach ($documentos->getCollection() as $documento) {

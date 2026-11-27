@@ -6,7 +6,8 @@
     o dentro del menú de fila.
 
     El `kind` fija el color, para que nadie lo elija a mano:
-    - ver → info-outline · editar → warning-outline · aprobar → success-outline
+    - ver → info-outline · revisar → distintivo-1-outline (violeta, ícono `fact_check`; solo la
+      cola de documentos, donde abre el modal de revisión: en el resto, revisar es Ver) · editar → warning-outline · aprobar → success-outline
     - transicion → `<tono>-outline` del estado de llegada (prop `tone`); `danger` se
       traduce a `alert` (el rojo vino es solo de Eliminar) y suspender, bloquear u
       ocultar usan `neutral` (gris)
@@ -16,7 +17,7 @@
     como texto visible dentro del menú. Nunca es un botón mudo.
 
     Props:
-    - kind (ver|editar|aprobar|transicion|eliminar, requerido).
+    - kind (ver|revisar|editar|aprobar|transicion|eliminar, requerido).
     - label (requerido): ya traducido.
     - icon (requerido): ícono Material Symbols.
     - href (nullable): si se pasa, es un enlace (Ver y Editar).
@@ -37,6 +38,7 @@
 @php
     $variante = match ($kind) {
         'ver' => 'info-outline',
+        'revisar' => 'distintivo-1-outline',
         'editar' => 'warning-outline',
         'aprobar' => 'success-outline',
         'eliminar' => 'danger-outline',

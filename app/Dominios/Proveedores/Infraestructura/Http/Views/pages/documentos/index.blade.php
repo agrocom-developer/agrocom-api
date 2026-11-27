@@ -149,13 +149,25 @@
                             <span role="cell" class="ag-index-table__acciones">
                                 <x-organisms.row-actions>
                                     <x-slot:ver>
-                                        <x-molecules.row-action
-                                            kind="ver"
-                                            icon="visibility"
-                                            :label="__('proveedores.documentos.revisar_archivo')"
-                                            data-medio-modal="documentos-cola-modal"
-                                            data-medio-clave="d{{ $documento->id }}"
-                                        />
+                                        {{-- «Revisar» solo mientras el documento espera revisión y quien mira puede revisar (esta pantalla es
+                                             la única donde lleva a una acción distinta de Ver); después, la misma posición pasa a «Ver». --}}
+                                        @if ($puedeRevisar && $documento->estado === \App\Dominios\Proveedores\Dominio\EstadoDocumento::EnRevision)
+                                            <x-molecules.row-action
+                                                kind="revisar"
+                                                icon="fact_check"
+                                                :label="__('proveedores.documentos.revisar')"
+                                                data-medio-modal="documentos-cola-modal"
+                                                data-medio-clave="d{{ $documento->id }}"
+                                            />
+                                        @else
+                                            <x-molecules.row-action
+                                                kind="ver"
+                                                icon="visibility"
+                                                :label="__('proveedores.documentos.ver_archivo')"
+                                                data-medio-modal="documentos-cola-modal"
+                                                data-medio-clave="d{{ $documento->id }}"
+                                            />
+                                        @endif
                                     </x-slot:ver>
                                     @if ($puedeEliminar)
                                         <x-slot:eliminar>

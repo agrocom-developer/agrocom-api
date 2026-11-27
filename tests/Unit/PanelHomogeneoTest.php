@@ -620,7 +620,7 @@ function panelHomogeneoViolacionesListado(string $raiz, array $pantalla): array
         }
 
         // Cada tipo de acción va solo en su slot: Eliminar nunca entre las transiciones, ni una transición como Ver.
-        $kindPorSlot = ['ver' => ['ver'], 'editar' => ['editar'], 'aprobar' => ['aprobar'], 'transiciones' => ['transicion'], 'eliminar' => ['eliminar']];
+        $kindPorSlot = ['ver' => ['ver', 'revisar'], 'editar' => ['editar'], 'aprobar' => ['aprobar'], 'transiciones' => ['transicion'], 'eliminar' => ['eliminar']];
 
         foreach ($kindPorSlot as $slot => $permitidos) {
             if (preg_match('~<x-slot:'.$slot.'\b[^>]*>(.*?)</x-slot:'.$slot.'>~s', $cuerpo, $coincidencia) !== 1) {
