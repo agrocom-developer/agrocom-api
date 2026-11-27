@@ -49,7 +49,7 @@ final class ClientesController
                     new OA\Property(property: 'nombre', description: 'Nombre de quien usa la cuenta.', type: 'string', example: 'Rosa Condori Vargas'),
                     new OA\Property(property: 'username', description: 'Login (nunca un correo): letras, números, punto, guion.', type: 'string', example: 'rosa.condori'),
                     new OA\Property(property: 'email', type: 'string', format: 'email', nullable: true),
-                    new OA\Property(property: 'password', description: 'Mínimo 8 caracteres con letras y números.', type: 'string', format: 'password'),
+                    new OA\Property(property: 'password', description: 'Mínimo 4 caracteres, sin otras reglas.', type: 'string', format: 'password'),
                     new OA\Property(property: 'telefono', description: 'Teléfono de la cuenta: un celular de Bolivia de 8 dígitos o un número con su código de país. Se guarda en E.164 y es único entre las cuentas de cliente (el mismo teléfono puede ser además de una cuenta de proveedor).', type: 'string', example: '+591 76543210'),
                     new OA\Property(property: 'documento_tipo', description: 'Tipo del documento de la persona (por defecto `ci`). TRANSITORIO: el documento es opcional hasta que la app lo envíe; con él, `nombres` y `apellidos` son obligatorios.', type: 'string', enum: ['ci', 'pasaporte', 'licencia_conducir'], example: 'ci', nullable: true),
                     new OA\Property(property: 'documento_numero', description: 'Número del documento: la persona es única por tipo y número normalizado (mayúsculas, sin espacios ni puntos) y tiene a lo sumo una cuenta de cliente.', type: 'string', example: '7845123 SC', nullable: true),

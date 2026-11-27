@@ -32,6 +32,17 @@ final class ReglasDeContacto
         };
     }
 
+    /**
+     * Contraseña de una cuenta de app (ADR 0046, punto 31): 4 caracteres como mínimo y ninguna otra regla de composición.
+     * Lo compensan el límite de intentos y el bloqueo temporal del login.
+     *
+     * @return list<string>
+     */
+    public static function reglasDeContrasena(): array
+    {
+        return ['required', 'string', 'min:4', 'max:100'];
+    }
+
     /** El correo es único entre las cuentas vivas del MISMO tipo (el mismo correo puede estar en una de cliente y una de proveedor). */
     public static function correoUnico(TipoCuenta $tipo): Unique
     {
