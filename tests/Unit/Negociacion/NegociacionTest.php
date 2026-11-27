@@ -90,7 +90,6 @@ function negMundo(): void
         'agrega_motivo_estado_a_sol_clientes',
         'lleva_sol_clientes_al_ciclo_de_aprobacion',
         'agrega_negociacion_a_sol_solicitudes_servicio',
-        'hace_opcional_la_fecha_deseada_de_la_solicitud',
         'crea_sol_cliente_contactos',
         'create_neg_tablas_de_negociacion',
         'agrega_adjuntos_y_eventos_a_neg_mensajes',
@@ -101,6 +100,7 @@ function negMundo(): void
         'agrega_ubicacion_a_sol_terrenos',
         'agrega_ubicacion_a_sol_solicitudes_servicio',
         'retira_zonas',
+        'hace_opcional_la_fecha_deseada_de_la_solicitud',
     ]);
     Ubicaciones::sembrar();
 
