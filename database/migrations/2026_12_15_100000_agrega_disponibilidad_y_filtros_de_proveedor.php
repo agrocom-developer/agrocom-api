@@ -15,9 +15,7 @@ use Illuminate\Support\Facades\Schema;
  *   los avisos (departamentos excluidos, hectáreas mínimas, tipos de aplicación
  *   excluidos…). Es un mecanismo extensible: agregar un filtro no exige migración.
  *
- * Solo agrega. Las columnas de zona (`zona_base_id`, `radio_operacion_km`, `zonas`,
- * `macrorregiones`) quedan sin uso en el contrato y salen en la reconsolidación final.
- * Cada tabla se toca solo si existe, para que las pruebas con esquema parcial la corran.
+ * Solo agrega. Cada tabla se toca solo si existe, para que las pruebas con esquema parcial la corran.
  */
 return new class extends Migration
 {
