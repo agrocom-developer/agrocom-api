@@ -128,6 +128,20 @@ use OpenApi\Attributes as OA;
     ],
     type: 'object',
 )]
+#[OA\Schema(
+    schema: 'Eliminacion',
+    title: 'Eliminación de cuenta',
+    description: 'Solicitud de eliminar la cuenta (ADR 0047). `solicitada`: dentro de la gracia se puede cancelar; `pospuesta`: vencida la gracia algo la impide todavía y se reintenta cada día (`motivo_posposicion`); `cancelada`: la persona conservó su cuenta; `ejecutada`: los datos personales ya se anonimizaron.',
+    required: ['estado', 'solicitada_en', 'ejecutar_desde', 'cancelada_en', 'motivo_posposicion'],
+    properties: [
+        new OA\Property(property: 'estado', type: 'string', enum: ['solicitada', 'pospuesta', 'cancelada', 'ejecutada'], example: 'solicitada'),
+        new OA\Property(property: 'solicitada_en', type: 'string', format: 'date-time'),
+        new OA\Property(property: 'ejecutar_desde', description: 'Hasta esta fecha la persona puede arrepentirse; después la tarea diaria la ejecuta.', type: 'string', format: 'date-time'),
+        new OA\Property(property: 'cancelada_en', type: 'string', format: 'date-time', nullable: true),
+        new OA\Property(property: 'motivo_posposicion', description: 'Solo si está `pospuesta`: los motivos que la impiden, separados por coma.', type: 'string', nullable: true),
+    ],
+    type: 'object',
+)]
 final class DocumentacionApi
 {
     // Intencionalmente vacía: existe solo como ancla de los atributos OpenAPI.

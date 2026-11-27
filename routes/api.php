@@ -22,6 +22,7 @@ use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\PilotosControl
 use App\Dominios\Proveedores\Infraestructura\Http\Controllers\Api\RegistroProveedorController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\ContrasenaDeCuentaController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\DispositivoController;
+use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\EliminacionDeCuentaController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\FotoDePerfilController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\RecuperarAccesoController;
 use App\Dominios\Seguridad\Infraestructura\Http\Controllers\Api\SesionCampoController;
@@ -103,7 +104,8 @@ Route::get('/personas/{usuario}/foto', [FotoDePerfilController::class, 'archivo'
     ->whereNumber('usuario')
     ->name('api.personas.foto');
 
-Route::middleware('auth:sanctum')->group(function () {
+// Una cuenta con la eliminación pedida solo ve su estado, la cancela y cierra sesión (`cuenta.sin-eliminacion`, ADR 0047).
+Route::middleware(['auth:sanctum', 'cuenta.sin-eliminacion'])->group(function () {
     Route::get('/auth/sesion', [SesionCampoController::class, 'show'])->name('api.auth.sesion');
 
     // Renueva el token de ESTE dispositivo antes de que caduque (sesión por biometría: el desbloqueo es local, ADR 0046, punto 32).
@@ -118,6 +120,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/cuenta/contrasena', [ContrasenaDeCuentaController::class, 'update'])->name('api.cuenta.contrasena.update');
     Route::post('/cuenta/telefono/verificacion', [VerificacionDeTelefonoController::class, 'solicitar'])->name('api.cuenta.telefono.verificacion');
     Route::post('/cuenta/telefono/verificacion/confirmar', [VerificacionDeTelefonoController::class, 'confirmar'])->name('api.cuenta.telefono.verificacion.confirmar');
+
+    // Eliminar mi cuenta (ADR 0047): estado e impedimentos, código por el canal elegido, solicitud con contraseña o código y cancelación en la gracia.
+    Route::get('/cuenta/eliminacion', [EliminacionDeCuentaController::class, 'estado'])->name('api.cuenta.eliminacion.estado');
+    Route::post('/cuenta/eliminacion/codigo', [EliminacionDeCuentaController::class, 'codigo'])->name('api.cuenta.eliminacion.codigo');
+    Route::post('/cuenta/eliminacion', [EliminacionDeCuentaController::class, 'store'])->middleware('throttle:5,1')->name('api.cuenta.eliminacion.solicitar');
+    Route::post('/cuenta/eliminacion/cancelar', [EliminacionDeCuentaController::class, 'cancelar'])->name('api.cuenta.eliminacion.cancelar');
 
     // Foto de perfil de la propia cuenta (cliente, proveedor o piloto).
     Route::put('/perfil/foto', [FotoDePerfilController::class, 'update'])->name('api.perfil.foto.update');

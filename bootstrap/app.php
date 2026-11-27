@@ -4,6 +4,7 @@ use App\Dominios\Compartido\Dominio\Excepciones\CuentaNoAprobada;
 use App\Dominios\Compartido\Infraestructura\Http\ErroresHttpEnEspanol;
 use App\Dominios\Compartido\Infraestructura\Http\Middleware\RecordarOrigenNavegacion;
 use App\Dominios\Seguridad\Infraestructura\Http\Middleware\AplicarVistaComo;
+use App\Dominios\Seguridad\Infraestructura\Http\Middleware\ExigirCuentaSinEliminacion;
 use App\Dominios\Seguridad\Infraestructura\Http\Middleware\LimitarSondeoDeCuentas;
 use App\Dominios\Seguridad\Infraestructura\Http\Middleware\ResolverRolActivo;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
@@ -38,6 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'rol.activo' => ResolverRolActivo::class,
             'origen.navegacion' => RecordarOrigenNavegacion::class,
             'sondeo.cuentas' => LimitarSondeoDeCuentas::class,
+            'cuenta.sin-eliminacion' => ExigirCuentaSinEliminacion::class,
         ]);
 
         // Tarea 140: "ver como otro usuario". Va en el grupo `web` (todo el

@@ -5,6 +5,7 @@ namespace App\Dominios\Proveedores\Infraestructura;
 use App\Dominios\Proveedores\Aplicacion\ActualizarCalificacionDeProveedor;
 use App\Dominios\Proveedores\Aplicacion\ActualizarTasasDeProveedor;
 use App\Dominios\Proveedores\Aplicacion\CargarDocumento;
+use App\Dominios\Proveedores\Aplicacion\EliminacionDeProveedor;
 use App\Dominios\Proveedores\Aplicacion\EstadoDocumentalDeSujeto;
 use App\Dominios\Proveedores\Aplicacion\ListarDocumentosDeSujeto;
 use App\Dominios\Proveedores\Contratos\CalificacionDeProveedores;
@@ -28,6 +29,9 @@ final class ProveedoresServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // Eliminación de cuenta (ADR 0047): lo que este módulo aporta; Seguridad lo recibe por tag.
+        $this->app->tag(EliminacionDeProveedor::class, 'eliminacion.participantes');
+
         $this->app->bind(LecturaProveedores::class, LecturaProveedoresEloquent::class);
         $this->app->bind(CargaDocumentos::class, CargarDocumento::class);
         $this->app->bind(VerificacionDocumental::class, EstadoDocumentalDeSujeto::class);

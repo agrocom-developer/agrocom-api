@@ -28,6 +28,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'name', description: 'Nombre para mostrar.', type: 'string', example: 'Camila Rojas'),
         new OA\Property(property: 'username', description: 'Identificador de login (nunca un correo).', type: 'string', example: 'camila.rojas'),
         new OA\Property(property: 'persona_id', description: 'Persona operativa enlazada (módulo Personal, solo ID).', type: 'integer', example: 3, nullable: true),
+        new OA\Property(property: 'telefono_verificado', description: 'Si ya se probó la posesión del teléfono con un código (ADR 0046, punto 29). La app ofrece verificarlo (`POST /api/cuenta/telefono/verificacion`) mientras sea `false`. Siempre presente.', type: 'boolean', example: false),
         new OA\Property(property: 'foto_url', description: 'Foto de perfil de la cuenta: URL firmada y de corta vida (se pide sin token); `null` si no tiene.', type: 'string', nullable: true, example: '/api/personas/7/foto?expires=1764000000&signature=ab12'),
     ],
     type: 'object',
@@ -43,6 +44,7 @@ final class UsuarioCampoResource extends JsonResource
             'username' => $this->username,
             // Contrato vigente hasta A5: el vínculo con el personal anterior, nulo en toda cuenta de app.
             'persona_id' => $this->persona_legada_id,
+            'telefono_verificado' => $this->telefono_verificado_en !== null,
             'foto_url' => app(FotosDePerfil::class)->urlDe($this->id),
         ];
     }

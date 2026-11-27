@@ -76,6 +76,7 @@ beforeEach(function () {
         'retira_zonas',
         'create_sec_user_preferencia_table',
         'crea_sec_codigos_verificacion',
+        'crea_sec_eliminaciones',
     ]);
 
     foreach (['sec_codigos_verificacion', 'sec_user_preferencia', 'sec_token_dispositivo', 'sol_cliente_contactos', 'sol_clientes', 'sec_user_role', 'sec_user', 'sec_personas', 'sec_role'] as $tabla) {
@@ -309,6 +310,7 @@ it('verifica el teléfono con un código por WhatsApp', function () {
     usarWhatsapp();
     $token = entrarComo('luis.antelo', 'abcd');
 
+    comoDispositivo($token)->getJson('/api/auth/sesion')->assertJsonPath('usuario.telefono_verificado', false);
     comoDispositivo($token)->postJson('/api/cuenta/telefono/verificacion', ['canal' => 'whatsapp'])->assertStatus(202);
     $codigo = EnviadorDePrueba::$enviados[0]['codigo'];
     expect(EnviadorDePrueba::$enviados[0]['destino'])->toBe('+59170012345');
@@ -317,6 +319,7 @@ it('verifica el teléfono con un código por WhatsApp', function () {
         ->assertOk()->assertJsonStructure(['message', 'telefono_verificado_en']);
 
     expect(DB::table('sec_user')->where('username', 'luis.antelo')->value('telefono_verificado_en'))->not->toBeNull();
+    comoDispositivo($token)->getJson('/api/auth/sesion')->assertJsonPath('usuario.telefono_verificado', true);
     comoDispositivo($token)->postJson('/api/cuenta/telefono/verificacion', ['canal' => 'whatsapp'])->assertStatus(409)->assertJsonPath('codigo', 'telefono_ya_verificado');
 });
 

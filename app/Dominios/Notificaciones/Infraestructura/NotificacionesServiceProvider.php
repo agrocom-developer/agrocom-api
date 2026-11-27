@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Notificaciones\Infraestructura;
 
+use App\Dominios\Notificaciones\Aplicacion\EliminacionDeNotificaciones;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaAvisoDeNegociacion;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaCalificacionRegistrada;
 use App\Dominios\Notificaciones\Aplicacion\Reglas\ReglaCalificacionReportada;
@@ -55,6 +56,9 @@ final class NotificacionesServiceProvider extends ServiceProvider
 
     public function register(): void
     {
+        // Eliminación de cuenta (ADR 0047): se borran los avisos y los tokens de push; Seguridad lo recibe por tag.
+        $this->app->tag(EliminacionDeNotificaciones::class, 'eliminacion.participantes');
+
         $this->app->tag(self::REGLAS, 'notificaciones.reglas');
 
         $this->app->singleton(

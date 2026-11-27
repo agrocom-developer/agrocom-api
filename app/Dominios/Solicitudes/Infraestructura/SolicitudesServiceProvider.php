@@ -3,6 +3,7 @@
 namespace App\Dominios\Solicitudes\Infraestructura;
 
 use App\Dominios\Solicitudes\Aplicacion\AvanceDeSolicitud;
+use App\Dominios\Solicitudes\Aplicacion\EliminacionDeCliente;
 use App\Dominios\Solicitudes\Aplicacion\PasosDeSolicitudPorMaquina;
 use App\Dominios\Solicitudes\Aplicacion\ReputacionDeClientePorSolicitudes;
 use App\Dominios\Solicitudes\Aplicacion\ResolucionDeServicioPorMaquina;
@@ -30,6 +31,9 @@ final class SolicitudesServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // Eliminación de cuenta (ADR 0047): lo que este módulo aporta; Seguridad lo recibe por tag.
+        $this->app->tag(EliminacionDeCliente::class, 'eliminacion.participantes');
+
         $this->app->bind(LecturaUbicaciones::class, LecturaUbicacionesEloquent::class);
         $this->app->bind(SolicitudParaTrabajo::class, AvanceDeSolicitud::class);
         $this->app->bind(LecturaServiciosAsignados::class, LecturaServiciosAsignadosEloquent::class);
