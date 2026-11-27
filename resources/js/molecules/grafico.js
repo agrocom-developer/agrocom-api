@@ -109,7 +109,9 @@ function opciones(config, estilo, formato) {
         stacked: config.apilado === true,
         grid: { display: false },
         border: { color: estilo.eje },
-        ticks: { color: estilo.textoSuave, font: fuente(false), autoSkip: false, maxRotation: 0 },
+        // Las barras muestran todas sus categorías. En las líneas (una etiqueta por semana), si no caben todas
+        // en una gráfica angosta, Chart.js omite las que se pisarían en vez de apilarlas.
+        ticks: { color: estilo.textoSuave, font: fuente(false), autoSkip: config.tipo === 'lineas', maxRotation: 0 },
     };
     const ejeValores = {
         type: 'linear',
@@ -120,6 +122,8 @@ function opciones(config, estilo, formato) {
         ticks: {
             color: estilo.textoSuave,
             font: fuente(true),
+            maxRotation: 0,
+            autoSkip: true,
             precision: config.formato?.decimales ? undefined : 0,
             callback: (valor) => formatoEje(valor),
         },

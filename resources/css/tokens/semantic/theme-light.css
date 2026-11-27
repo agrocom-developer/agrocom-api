@@ -19,6 +19,8 @@
     --ag-color-bg-elevated: var(--ag-brand-light-surface);
     --ag-color-bg-chrome: var(--ag-brand-light-surface);
     --ag-color-overlay: rgba(0, 0, 0, 0.5);
+    /* Fondo del lienzo (templates/lienzo): un gris apenas más hondo que la página, para que los bloques blancos se lean como piezas. */
+    --ag-color-bg-lienzo: color-mix(in srgb, var(--ag-brand-light-bg) 65%, var(--ag-brand-light-border) 35%);
 
     /* Texto y bordes */
     --ag-color-text: var(--ag-brand-light-text);
