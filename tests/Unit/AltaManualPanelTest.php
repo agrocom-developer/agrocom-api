@@ -153,7 +153,7 @@ test('un cliente persona se registra sin contactos y comparte las reglas de cuen
     $this->post('/panel/clientes', clienteDelPanel())->assertRedirect();
     expect(DB::table('sol_clientes')->count())->toBe(1)->and(DB::table('sol_cliente_contactos')->count())->toBe(0);
 
-    $this->postJson('/panel/clientes', clienteDelPanel(['username' => 'otro', 'password' => 'corta']))->assertJsonValidationErrors('password');
+    $this->postJson('/panel/clientes', clienteDelPanel(['username' => 'otro', 'password' => 'abc']))->assertJsonValidationErrors('password');
 });
 
 test('sin el permiso de crear, el alta a mano responde 403', function () {
