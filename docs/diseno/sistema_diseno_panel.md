@@ -154,6 +154,8 @@ Los componentes que necesitan un tono nuevo lo piden como token semántico en am
 | Molecule | `role-selector-item` | — | **Renombrado** a `role-card` (28/8/2026, quinta vuelta). El archivo con este nombre ya no existe. |
 | Molecule | `theme-toggle` | `resources/views/components/molecules/theme-toggle.blade.php` | Implementado |
 | Molecule | `grafico` | `resources/views/components/molecules/grafico.blade.php` | Implementado (ver §19) |
+| Molecule | `lienzo-bloque` | `resources/views/components/molecules/lienzo-bloque.blade.php` | Implementado (ver §23) |
+| Template | `lienzo` | `resources/views/components/templates/lienzo.blade.php` | Implementado (ver §23) |
 | Molecule | `menu-item` | `resources/views/components/molecules/menu-item.blade.php` | Implementado |
 | Organism | `collapsible-menu-group` | `resources/views/components/organisms/collapsible-menu-group.blade.php` | Implementado |
 | Organism | `login-form` | `resources/views/components/organisms/login-form.blade.php` | Implementado |
@@ -1999,7 +2001,7 @@ El tablero y las métricas del mercado muestran gráficas en vez de tablas con n
 
 ### 19.1. Componente
 
-`<x-molecules.grafico>` (props documentadas en el propio Blade): `titulo`, `ayuda`, `tipo` (`barras` o `lineas`), `horizontal`, `apilado`, `etiquetas`, `series` (nombre, valores y el nombre de un token de color), `formato` (decimales y sufijo), `categoria` y `vacio`. Los datos llegan resueltos del servidor (los lectores de `Metricas`) y viajan en un `data-ag-grafico` en JSON, solo con lo que se grafica. El CSS es `components/grafico.css`; la grilla de dos columnas es `.ag-grafico-grilla`.
+`<x-molecules.grafico>` (props documentadas en el propio Blade): `titulo`, `ayuda`, `tipo` (`barras` o `lineas`), `horizontal`, `apilado`, `etiquetas`, `series` (nombre, valores y el nombre de un token de color), `formato` (decimales y sufijo), `categoria` y `vacio`. Los datos llegan resueltos del servidor (los lectores de `Metricas`) y viajan en un `data-ag-grafico` en JSON, solo con lo que se grafica. El CSS es `components/grafico.css`; las páginas con varias gráficas las componen en un lienzo (§23); `.ag-grafico-grilla` queda como grilla simple de dos columnas.
 
 ### 19.2. Qué tipo de gráfica
 
@@ -2023,3 +2025,55 @@ El tablero y las métricas del mercado muestran gráficas en vez de tablas con n
 ### 19.5. Carga diferida
 
 Chart.js pesa unos 60 KB comprimidos, así que va en un chunk aparte (`grafico-*.js`) que `app.js` pide con `import()` solo si la página tiene un `[data-ag-grafico]`, con la misma convención de la §13.1: el módulo dibuja de inmediato al cargarse porque `DOMContentLoaded` ya pasó.
+
+## 23. Lienzo — composición de bloques por fracciones (`templates/lienzo`)
+
+Las páginas con varias gráficas y tarjetas (el tablero y Métricas del mercado) no las reparten en una grilla uniforme: las componen como un lienzo, bloques blancos sobre un fondo gris con separación pequeña y uniforme, una pieza principal y columnas de distinta anchura.
+
+**Piezas.** `<x-templates.lienzo>` es una fila o una columna de bloques; `<x-molecules.lienzo-bloque>` envuelve cada pieza (una tarjeta, una gráfica, una tira de KPI u otro lienzo) y la hace llenar su espacio. Es recursivo: un bloque puede llevar otro lienzo.
+
+- `direccion="fila"`: los hijos van lado a lado y `fracciones` reparte el ancho. `direccion="columna"`: van uno bajo otro y `fracciones` reparte el alto.
+- `fracciones`: números sobre una base de 12 («4 8», «6 6», «12»). Se pintan como `minmax(0, Nfr)` con CSS grid; no hay alturas fijas en píxeles.
+- `raiz`: el lienzo más externo. Pone el fondo (`--ag-color-bg-lienzo`), mide su propio ancho con una container query y fija su alto (`alto` unidades de `--ag-space-8`) para que las fracciones de las columnas tengan sobre qué repartirse. Los anidados toman el alto de su bloque.
+- Separación `--ag-space-3`, radios `--ag-radius-lg`; todo color y medida sale de tokens.
+
+**Responsive.** Mientras el lienzo mida menos de 60rem (celular, o escritorio con poco contenido) no reparte nada: apila en una columna en el orden del código, así que la pieza principal va primero. Desde 60rem aplica las fracciones; la gráfica toma el alto que sobra de su tarjeta (`flex: 1 1 0`) y Chart.js, con `responsive` y `maintainAspectRatio: false`, se redibuja cuando cambia el bloque. Un bloque de alto repartido no crece con su contenido: si no cabe (la tabla «Ver datos» abierta, la cola de pendientes) se desplaza dentro de su tarjeta. La medida es la del lienzo, no la de la pantalla: con el menú lateral abierto a 1024 px el tablero todavía apila.
+
+**Accesibilidad.** Cada gráfica conserva su título, su `canvas` con etiqueta y su tabla alternativa «Ver datos»; las tarjetas y enlaces mantienen el foco visible. El orden del código es el orden de lectura.
+
+**Tablero** (`/panel`), `alto=21`:
+
+```
++---------------------------------------------------------+
+|  PRINCIPAL  Actividad semanal (líneas)            (12)  |  fila 4/12
++--------------------+------------------------------------+
+| Solicitudes por    | Hectáreas por     | Precio por     |
+| estado             | departamento (6)  | hectárea (6)   |  fila 8/12
+| (barras)    (7/12) |                   |                |
++--------------------+-------------------+----------------+
+| Esperan tu         | Tarjetas KPI                 (12)  |
+| decisión    (5/12) |                                    |
++--------------------+------------------------------------+
+   columna 4/12          columna 8/12 (filas 6/6)
+```
+
+La actividad semanal es la principal porque cuenta la historia del mercado de un vistazo. Las barras largas de estados piden altura (diez categorías) y van en la columna angosta y alta; los departamentos y el precio por semana piden ancho medio. Si el rol no puede abrir pendientes, el bloque de estados toma toda la columna; sin permiso de solicitudes o sin solicitudes no hay lienzo y se muestran las tarjetas, el estado vacío y la cola.
+
+**Métricas del mercado** (`/panel/metricas`): una composición más calmada, una sección por pestaña (`molecules/tabs`, Bootstrap `tab`), con el selector de período siempre arriba. La pestaña activa viaja en el hash de la URL (`pages/metricas-secciones.js`), también en los enlaces de período.
+
+```
+Mercado                      Negociación               Proveedores            Calidad e ingreso
++----------------+-----+     +---------------------+   +---------------------+ +------------+-----+
+| Embudo   (8)   | KPI |     | KPI tiempo | KPI of.|   | KPI x4              | | Calidad(8) | Ing.|
+|                | (4) |     +--------------------+    +---------------------+ | 3 KPI      | (4) |
++----------------+-----+     | Tiempo (7) | Rondas |   | Ranking             | +------------+-----+
+| Departamentos (12)   |     |            |  (5)   |   | (solo lectura)      |
++----------------------+     +--------------------+    +---------------------+
+```
+
+*Qué salió y por qué (decisión del dueño si quiere algo de vuelta).*
+
+- Se quedó en análisis: embudo, departamentos, tiempo hasta adjudicar, rondas, las tarjetas de calidad y de oferta y el ranking de proveedores. Nada se movió al tablero: lo accionable (pendientes, solicitudes en mercado, precio por hectárea) ya estaba allí y las cifras de Métricas dependen del período elegido, que el tablero no tiene.
+- Salió: la tarjeta «Ingreso por hectárea» (decía «comisión generada», y la aplicación no cobra comisión; el precio por hectárea acordado ya está en el tablero) y el encabezado «Embudo y negociación». El dato sigue calculándose en `BloqueIngreso`.
+- Se fundieron: «Solicitudes publicadas» y «Tasa de adjudicación» quedan junto al embudo con la tercera cifra (hectáreas servidas) en vez de repetirse en una tira aparte; las dos cifras de negociación (tiempo hasta aceptar, ofertas por solicitud) quedan sobre sus gráficas.
+- Detrás de «Ver datos en una tabla» siguen las tablas de cada gráfica; el ranking de proveedores queda a la vista porque no tiene gráfica que lo reemplace.
