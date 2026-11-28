@@ -31,6 +31,9 @@ use Tests\TestCase;
 uses(TestCase::class);
 
 beforeEach(function () {
+    // La prueba no compila assets: la vista no debe pedir el manifiesto de Vite.
+    $this->withoutVite();
+
     Esquema::migrar([
         'create_plt_bitacoras_table',
         'create_sec_user_table',
