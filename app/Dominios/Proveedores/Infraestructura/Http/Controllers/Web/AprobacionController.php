@@ -30,6 +30,11 @@ final class AprobacionController
         'piloto' => 'proveedores.piloto',
     ];
 
+    private const RUTA_LISTADO_POR_SUJETO = [
+        'proveedor' => 'panel.proveedores.index',
+        'piloto' => 'panel.pilotos.index',
+    ];
+
     private const RUTA_POR_SUJETO = [
         'proveedor' => 'panel.proveedores.show',
         'piloto' => 'panel.pilotos.show',
@@ -57,7 +62,10 @@ final class AprobacionController
 
         abort_unless($this->autorizacion->tienePermiso($request, $permiso), 403);
 
-        $volver = redirect()->route(self::RUTA_POR_SUJETO[$tipo->value], $id);
+        // Desde una fila del listado se vuelve al listado, con sus filtros; desde la ficha, a la ficha.
+        $volver = $request->input('desde') === 'listado'
+            ? redirect()->to(url()->previous(route(self::RUTA_LISTADO_POR_SUJETO[$tipo->value])))
+            : redirect()->route(self::RUTA_POR_SUJETO[$tipo->value], $id);
 
         try {
             $this->resolver->ejecutar($tipo, $id, $accion, (int) Auth::guard('interno')->id(), $request->validated('motivo'));

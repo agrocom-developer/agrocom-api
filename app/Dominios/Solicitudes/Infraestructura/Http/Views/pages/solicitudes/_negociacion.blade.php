@@ -28,7 +28,7 @@
                         <x-atoms.button
                             type="button"
                             size="sm"
-                            variant="danger-outline"
+                            variant="alert-outline"
                             icon="block"
                             data-bs-toggle="modal"
                             data-bs-target="#negociacion-cerrar-modal-{{ $negociacion['proveedor_id'] }}"

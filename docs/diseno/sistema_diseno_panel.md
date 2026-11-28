@@ -153,6 +153,9 @@ Los componentes que necesitan un tono nuevo lo piden como token semántico en am
 | Atom | `button` | `resources/views/components/atoms/button.blade.php` | Implementado |
 | Molecule | `role-selector-item` | — | **Renombrado** a `role-card` (28/8/2026, quinta vuelta). El archivo con este nombre ya no existe. |
 | Molecule | `theme-toggle` | `resources/views/components/molecules/theme-toggle.blade.php` | Implementado |
+| Molecule | `grafico` | `resources/views/components/molecules/grafico.blade.php` | Implementado (ver §19) |
+| Molecule | `lienzo-bloque` | `resources/views/components/molecules/lienzo-bloque.blade.php` | Implementado (ver §23) |
+| Template | `lienzo` | `resources/views/components/templates/lienzo.blade.php` | Implementado (ver §23) |
 | Molecule | `menu-item` | `resources/views/components/molecules/menu-item.blade.php` | Implementado |
 | Organism | `collapsible-menu-group` | `resources/views/components/organisms/collapsible-menu-group.blade.php` | Implementado |
 | Organism | `login-form` | `resources/views/components/organisms/login-form.blade.php` | Implementado |
@@ -1950,3 +1953,191 @@ Qué entra en la lista lo decide `Seguridad\...\Presentacion\CampanaDeAvisos`
 (no la molécula): todo lo no leído primero, hasta el tope de 10, y después los
 leídos más recientes. Así el badge —que cuenta lo no leído de la lista que
 recibe— sigue siendo exacto hasta «9+».
+
+## Acciones de fila, buscador y tablero por permisos
+
+### Columnas numéricas y fichas de detalle
+
+- **Cifras en mono.** Toda columna numérica de un listado (conteos, hectáreas, montos, calificaciones, ciclos, capacidad) usa la fuente mono con cifras de ancho fijo: `ag-index-table__mono` (o `ag-index-table__cifra` si va a la derecha). Es la misma fuente de «Capacidad» y «Ciclos» en Drones.
+- **Tarjetas de cifra solo para cifras.** `stat-card` muestra números (conteos, montos, hectáreas, calificaciones, fracciones como `52 / 52`), nunca un texto ni una fecha. Un dato de texto o de fecha (estado, rol, «Sí/No», fecha de alta, fecha límite) no va en una tarjeta de cifra: el estado va en el badge de la cabecera y el resto en la tarjeta de datos de la ficha. `TarjetasDeCifraTest` lo hace cumplir.
+- **Ficha de detalle con columna lateral.** Toda ficha (`show`) lleva `form-layout` con las tarjetas de datos en la columna principal y una columna lateral derecha (`<x-slot:aside>`) con «Relacionado» (`link-row` a las pantallas vinculadas) y, siempre al final, «Historial» o «Actividad» (`timeline` con eventos reales). Una tarjeta no cierra con un botón en el fondo: el acceso va como `link-row` en «Relacionado».
+- **Bitácora.** La columna «Elemento» muestra la etiqueta de `seguridad.bitacora.entidades.<tabla>`; una tabla sin etiqueta se ve como frase legible, nunca con su nombre técnico.
+
+### Color: tonos distintos y acento ámbar
+
+- **Un tono es un color, no un nombre.** `info`, `distintivo-3` y `primary-2` pintan el mismo azul (mismo valor en `tokens/semantic/theme-*.css`): cuentan como UN tono. Donde se reparten colores sin repetir (accesos rápidos de Mi perfil, módulos de la matriz de permisos) se usan `info`, `distintivo-1`, `distintivo-2`, `warning`, `success`, `distintivo-4` (verde azulado) y `distintivo-5` (oliva), y una prueba comprueba que ningún par comparte valor.
+- **`warning` es café a propósito.** Su relleno (`#996209`) mezcla ámbar y marrón para llegar a 5,12:1 con ícono blanco; el ámbar de marca (`#f5a623`) con ícono blanco solo da 2,03:1. Sirve para chips y avisos de advertencia, con el mismo peso visual que `info` y `success`.
+- **El ámbar vivo es el acento.** `--ag-color-accent` (`#f5a623`; `#ffb52e` en oscuro) es el color de acento de marca (regla 60/30/10: neutros 60 %, identidad 30 %, acento 10 %). Va siempre con texto o ícono oscuro `--ag-color-accent-contrast` (6,29:1 en claro, 9,03:1 en oscuro), nunca con blanco, y nunca se usa como `warning`.
+
+### Acciones de fila (`organisms/row-actions` + `molecules/row-action`)
+
+Toda tabla del panel pinta sus acciones con un único componente, `organisms/row-actions`, que fija el orden sin importar cómo las declare quien lo usa:
+
+1. **Ver** (`info-outline`)
+2. **Editar** (`warning-outline`)
+3. **Permisos** (`distintivo-1-outline`, violeta: ni estado ni baja; solo Roles, lleva a la asignación de permisos del rol)
+4. **Aprobar** (`success-outline`)
+5. **Transiciones de la máquina de estados** (`<tono del estado de llegada>-outline`): rechazar, suspender, rehabilitar, bloquear, ocultar, etc.
+6. **Eliminar** (`danger-outline`, token de peligro `--ag-color-danger`), siempre al final.
+
+Cada acción es un `<x-molecules.row-action kind="ver|revisar|editar|permisos|aprobar|transicion|eliminar">` dentro del slot con nombre que le corresponde (`ver`, `editar`, `permisos`, `aprobar`, `transiciones`, `eliminar`). El `kind` fija el color; nadie lo elige a mano. No existe slot por defecto ni se admiten botones sueltos.
+
+- Las acciones llevan **ícono y texto, nunca solo ícono** (pedido explícito, 15/9/2026). En pantallas de 768 px o más se ven hasta 2 sueltas; el resto va en el menú «⋮» de la fila, con ícono y texto, en el mismo orden. En móvil van todas en el menú. El organism pinta el contenido dos veces (mitad visible y menú) y el CSS decide por breakpoint cuáles se ven; por eso la columna de acciones mide `--ag-row-actions-width` en todas las tablas. El menú se abre con clic o teclado, se cierra con Esc o clic fuera y no lo recorta el desborde de la tabla (Popper con `strategy: fixed`).
+- Solo se ofrecen las acciones válidas para el estado actual y permitidas al rol; el llamador las filtra con `@puede`/`@if`, igual que en la ficha.
+- Los `<form>` y los modales de confirmación van fuera del componente, en la celda.
+- Un objeto con máquina de estados de aprobación (proveedor, piloto, dron) usa `organisms/row-actions-aprobacion`, que arma las acciones y los modales de la ficha (`_modales-aprobacion`) y vuelve al listado tras resolver (`desde=listado`). El «Revisar» aparte desapareció: revisar es abrir la ficha (Ver) y aprobar es una transición. «Dar de baja» se muestra como Eliminar.
+- Clientes, calificaciones, documentos y usuarios exponen sus transiciones con el mismo componente. Los reclamos y las solicitudes tienen transiciones con formularios propios (resultado, reembolso, motivo) y siguen en su ficha.
+- **Excepción: «Revisar» en la cola de documentos** (`/panel/documentos`). `kind="revisar"` (`distintivo-1-outline`, violeta, ícono `fact_check`) ocupa la posición de Ver (slot `ver`) solo mientras el documento está EN REVISIÓN y quien mira tiene `proveedores.documento.revisar`; abre el modal de revisión de medios con aprobar, rechazar y descargar. Motivo: ahí sí lleva a una acción distinta de Ver (decidir sobre el archivo), mientras que en proveedores, pilotos y drones revisar era un duplicado de Ver y no se reintroduce. Cuando el documento deja de estar en revisión (aprobado, rechazado, vencido) o falta el permiso, la misma posición es «Ver» (`info-outline`) y abre el mismo modal en solo lectura. Eliminar sigue siendo la última acción.
+- Clientes, calificaciones, documentos y usuarios exponen sus transiciones con el mismo componente. Los reclamos y las solicitudes tienen transiciones con formularios propios (resultado, reembolso, motivo) y siguen en su ficha.
+
+#### Tabla acción → variante
+
+El rojo vino (`danger`) es solo de **Eliminar**. Lo que no elimina nada nunca lo lleva.
+
+| Acción | Variante | Dónde |
+| --- | --- | --- |
+| Ver | `info-outline` | fila |
+| Editar | `warning-outline` | fila y encabezado |
+| Permisos | `distintivo-1-outline` | fila y encabezado de la ficha del rol |
+| Aprobar, rehabilitar, restablecer, reactivar | `success-outline` | fila / paso de la máquina |
+| Suspender, bloquear, ocultar (baja temporal, reversible) | `neutral-outline` (gris); el paso «Suspendido» y su badge también son grises | fila / paso de la máquina |
+| Rechazar, cancelar (cierran sin eliminar) | `alert-outline` (token `alert`, no el rojo vino) | fila / encabezado |
+| Eliminar, «Dar de baja» (eliminación definitiva) | `danger-outline` en la fila; `danger` sólido en el encabezado de la ficha | **última** acción de la fila; en la ficha, botón del encabezado |
+
+- `molecules/row-action` traduce una transición de tono `danger` a `alert`: ninguna transición puede heredar el rojo vino por el tono de su estado de llegada.
+- **Eliminar no es un paso de la máquina de estados.** En las fichas de proveedor, piloto y dron «Dar de baja» sale de `step-arrow` (la baja solo se dibuja si ya es el estado actual) y es un botón del encabezado: Volver, Editar y, al final, Eliminar en `danger`, solo con permiso y solo si el servidor ofreció la acción (`_boton-eliminar-aprobacion`); abre el mismo modal con motivo que usaba el paso.
+- **Toda tabla termina en Eliminar cuando su entidad lo admite.** Si la política no lo admite (bitácora de auditoría, métricas, historiales, avisos, solicitudes con negociación, reclamos, calificaciones) la fila queda sin él: no se inventa. Roles sí lo admite, salvo el rol 1 (administrador, el rol del sistema), que no lo ofrece ni en la fila ni en la ficha; el servidor lo rechaza igual si llega un `DELETE` a mano.
+- **Documentos** (`proveedores.documento.eliminar`, permiso sensible): borrado lógico con motivo obligatorio y archivo retirado del almacén; no se elimina el documento aprobado y vigente de un sujeto aprobado. La cuadrícula y el modal de revisión de medios no llevan Eliminar.
+
+`RowActionsOrdenTest` congela el orden y el color (Permisos entre Editar y Eliminar, la última acción es Eliminar y es la única en `danger`; Suspender es gris); `PanelHomogeneoTest` exige que ningún listado tenga botones sueltos ni una acción en un slot ajeno.
+
+### Paginación y consulta
+
+Todo listado que pagina llama a `->withQueryString()` y los enlaces de `molecules/pagination` conservan filtros y búsqueda; los filtros y el buscador son formularios GET sin `page`, así que al cambiarlos se vuelve a la página 1. Un filtro cuyo valor vacío significa algo («todos» en `?estado=` de documentos, frente al «En revisión» por omisión) se agrega con `->appends()`, porque el middleware vuelve null el valor vacío y `withQueryString()` lo descarta. `PaginacionDelPanelTest` congela ambas cosas.
+
+### Imágenes y documentos: cuadrícula y modal de revisión (`organisms/cuadricula-medios` + `organisms/modal-revision-medio`)
+
+Toda ficha con imágenes o documentos por aprobar (fotos del dron; documentos de proveedor, piloto y dron) los muestra como un lienzo de bloques, no como miniaturas con botones debajo, y la revisión ocurre en un modal con el contenido completo. Nunca se actúa sobre una miniatura.
+
+- **Cuadrícula.** Rectángulos de `--ag-color-surface-card` sobre `--ag-color-bg`, con separación pequeña y uniforme (`--ag-space-2`). El primer bloque es el grande (2x2 desde 768 px) y el primero pendiente de aprobación se resalta con `--ag-color-success-subtle`. Cada bloque lleva la miniatura (`url_miniatura`, `cover` centrada), el nombre del tipo, el badge de estado y las marcas «Obligatoria» y «Pendiente de aprobación» (ícono y texto, el color no es la única señal). Un PDF u otro archivo sin vista previa muestra un ícono por tipo y la etiqueta «Sin vista previa»; un archivo ausente, «Archivo no disponible». El bloque es un botón que abre el modal: sin formularios, sin Aprobar, Rechazar ni Descargar.
+- **Modal.** Contenido completo (`url_media`; imagen ajustada con «Ampliar», que pide el original; PDF embebido con enlace a la pestaña nueva), datos (tipo, estado, fecha, peso, formato, obligatoria), Aprobar, Rechazar (el motivo es obligatorio y aparece al pulsar Rechazar) y Descargar original. Anterior y Siguiente (y las flechas del teclado) recorren los archivos de la ficha. Es el modal de Bootstrap: foco atrapado, Esc cierra, el foco vuelve al bloque, y sin movimiento con `prefers-reduced-motion`.
+- **Contrato.** Cada ítem es un `ItemDeRevisionDeMedio::aArray()` (el `ArchivoDeMedio` más estado, `puede_aprobar`, `puede_rechazar`, `url_revisar`). Los permisos se deciden al armar el ítem (`ItemsDeRevisionDeDocumentos`, `ItemsDeRevisionDeFotos`): sin `proveedores.documento.descargar` no hay `url_descarga` y el botón no existe; si `existe` es falso el modal lo avisa y bloquea Aprobar. Las fotos del dron no tienen descarga.
+- **Flujo.** Aprobar o rechazar envía el formulario del modal, la página se recarga y el modal se reabre en el siguiente pendiente (`sessionStorage`). La cola `/panel/documentos` conserva su tabla: su acción «Revisar» (o «Ver», si ya no está en revisión) abre el mismo modal. El visor aislado `/panel/documentos/{id}/archivo` se conserva.
+- **Uso.** `<x-organisms.cuadricula-medios id="…" :items="$items" />` (incluye su modal); cualquier otro disparador usa `data-medio-modal` y `data-medio-clave`. JS en `resources/js/organisms/modal-revision-medio.js`; textos en `lang/es/revision_medios.php`.
+
+### Buscador y «Limpiar filtros»
+
+Todo listado lleva `molecules/table-search` (con `clear-label`) y, si tiene filtros, `organisms/filter-panel` con `active-count`, que pinta «Limpiar filtros» cuando hay alguno activo. Si un listado abre con un filtro por omisión (documentos, en «En revisión»), `filter-panel` recibe `clear-url` hacia la URL que significa «todos» (`?estado=`); si no, limpiar volvería a aplicar el filtro. `table-search` acepta `preserve` para no perder los demás filtros al buscar. Única excepción documentada en `PanelHomogeneoTest`: el ranking de métricas, de solo lectura.
+
+### Tablero y accesos rápidos por permisos
+
+No hay selector de vista ni «ver como»: el tablero muestra cada bloque solo si la sesión tiene el permiso de lo que contiene (solicitudes con `solicitudes.solicitud.ver`, cada cola pendiente con el permiso de su pantalla). Los accesos rápidos de «Mi perfil» salen del menú del rol y se completan con sus primeras pantallas; cada tarjeta lleva un color distinto dentro de la lista mostrada (hasta 6): el cuadro del ícono toma uno de siete tonos con tokens existentes (`info`, `distintivo-1`, `distintivo-2`, `warning`, `distintivo-3`, `success`, `primary-2`; `danger` y `neutral` quedan fuera porque significan error y «sin estado»). El tono preferido sale de la ruta de destino (`crc32` de la ruta), no del dominio ni de la posición, así no cambia entre visitas; si ya lo tiene una tarjeta anterior se desplaza al siguiente libre, en orden fijo. No hizo falta un token nuevo: los siete usan el relleno sólido `-contrast-fill` con ícono blanco, el mismo par que ya se usa en `link-row`. El color nunca es la única señal: cada tarjeta lleva ícono y texto.
+
+## 19. Gráficas del panel — `molecules/grafico` (Chart.js)
+
+El tablero y las métricas del mercado muestran gráficas en vez de tablas con números: se leen de un vistazo y la tabla queda como alternativa. Se usa **Chart.js 4 (MIT)**, instalado con npm y empaquetado por Vite; no se usa `spatie/laravel-dashboard` ni sus tiles (exigen Livewire, que el panel no tiene, y traen su propio estilo fuera de los tokens). Motivo de la dependencia: es el motor de gráficas más usado y mantenido con licencia MIT, se carga por módulos (solo entran los controladores de barras y líneas) y dibuja en un `<canvas>` que se estila por completo desde JavaScript, lo que permite leer los tokens.
+
+### 19.1. Componente
+
+`<x-molecules.grafico>` (props documentadas en el propio Blade): `titulo`, `ayuda`, `tipo` (`barras` o `lineas`), `horizontal`, `apilado`, `etiquetas`, `series` (nombre, valores y el nombre de un token de color), `formato` (decimales y sufijo), `categoria` y `vacio`. Los datos llegan resueltos del servidor (los lectores de `Metricas`) y viajan en un `data-ag-grafico` en JSON, solo con lo que se grafica. El CSS es `components/grafico.css`; las páginas con varias gráficas las componen en un lienzo (§23); `.ag-grafico-grilla` queda como grilla simple de dos columnas.
+
+### 19.2. Qué tipo de gráfica
+
+- **Línea** para una magnitud en el tiempo (actividad semanal, precio por hectárea); las semanas sin dato quedan sin punto, no en cero.
+- **Barras** para comparar categorías; horizontales cuando los nombres son largos o son más de cinco (estados, departamentos, pasos del embudo).
+- **Apiladas** solo para partes de un mismo total (solicitudes de un departamento por grupo de estado).
+- **Sin dona**: ninguna medición del panel tiene tan pocas partes como para que valga la pena.
+
+### 19.3. Tokens y tema
+
+`resources/js/shared/color-tokens.js` lee los tokens en el momento de dibujar: colores (el token se aplica a un elemento oculto y se lee de vuelta pasando por un píxel de canvas, porque los `color-mix()` no siempre salen como `rgb()`), familias (Manrope para rótulos, JetBrains Mono para cifras de ejes y tooltip), tamaños, radios, espacios y la duración de `--ag-transition-base`. Una serie nombra un token semántico (`success`, `info`, `warning`, `danger`, `distintivo-1`, `distintivo-2`); ninguna gráfica declara un color propio. Un `MutationObserver` sobre `data-bs-theme` las repinta al cambiar de tema.
+
+### 19.4. Accesibilidad y estados
+
+- Sin animación con `prefers-reduced-motion: reduce` (también si cambia con la página abierta); con `prefers-contrast: more` las líneas son más gruesas.
+- Las series de línea se distinguen también por la forma del punto, no solo por el color; las barras apiladas llevan leyenda y borde de superficie.
+- El lienzo es `role="img"`, se rotula con el título y se describe con la tabla «Ver datos», que trae los mismos números con encabezados de fila y de columna. Es la alternativa para lector de pantalla, teclado y para quien no cargue JavaScript.
+- Estados: cargando (hasta que Chart.js dibuja), error (JSON ilegible: se indica abrir la tabla), vacío (texto que orienta, sin lienzo) y sin dato en un punto (la tabla dice «sin datos», el tooltip «—»).
+- El tooltip usa los tokens de scrim (`--ag-color-scrim-strong` y `--ag-color-text-on-scrim`), legibles en ambos temas.
+
+### 19.5. Carga diferida
+
+Chart.js pesa unos 60 KB comprimidos, así que va en un chunk aparte (`grafico-*.js`) que `app.js` pide con `import()` solo si la página tiene un `[data-ag-grafico]`, con la misma convención de la §13.1: el módulo dibuja de inmediato al cargarse porque `DOMContentLoaded` ya pasó.
+
+## 23. Lienzo — composición de bloques por fracciones (`templates/lienzo`)
+
+Las páginas con varias gráficas y tarjetas (el tablero y Métricas del mercado) no las reparten en una grilla uniforme: las componen como un lienzo, bloques blancos sobre un fondo gris con separación pequeña y uniforme, una pieza principal y columnas de distinta anchura.
+
+**Piezas.** `<x-templates.lienzo>` es una fila o una columna de bloques; `<x-molecules.lienzo-bloque>` envuelve cada pieza (una tarjeta, una gráfica, una tira de KPI u otro lienzo) y la hace llenar su espacio. Es recursivo: un bloque puede llevar otro lienzo.
+
+- `direccion="fila"`: los hijos van lado a lado y `fracciones` reparte el ancho. `direccion="columna"`: van uno bajo otro y `fracciones` reparte el alto.
+- `fracciones`: números sobre una base de 12 («4 8», «6 6», «12»). Se pintan como `minmax(0, Nfr)` con CSS grid; no hay alturas fijas en píxeles.
+- `raiz`: el lienzo más externo. Pone el fondo (`--ag-color-bg-lienzo`), mide su propio ancho con una container query y fija su alto (`alto` unidades de `--ag-space-8`) para que las fracciones de las columnas tengan sobre qué repartirse. Los anidados toman el alto de su bloque.
+- Separación `--ag-space-3`, radios `--ag-radius-lg`; todo color y medida sale de tokens.
+
+**Responsive.** Mientras el lienzo mida menos de 60rem (celular, o escritorio con poco contenido) no reparte nada: apila en una columna en el orden del código, así que la pieza principal va primero. Desde 60rem aplica las fracciones; la gráfica toma el alto que sobra de su tarjeta (`flex: 1 1 0`) y Chart.js, con `responsive` y `maintainAspectRatio: false`, se redibuja cuando cambia el bloque. Un bloque de alto repartido no crece con su contenido: si no cabe (la tabla «Ver datos» abierta, la cola de pendientes) se desplaza dentro de su tarjeta. La medida es la del lienzo, no la de la pantalla: con el menú lateral abierto a 1024 px el tablero todavía apila.
+
+**Accesibilidad.** Cada gráfica conserva su título, su `canvas` con etiqueta y su tabla alternativa «Ver datos»; las tarjetas y enlaces mantienen el foco visible. El orden del código es el orden de lectura.
+
+**Tablero** (`/panel`), `alto=21`:
+
+```
++---------------------------------------------------------+
+|  PRINCIPAL  Actividad semanal (líneas)            (12)  |  fila 4/12
++--------------------+------------------------------------+
+| Solicitudes por    | Hectáreas por     | Precio por     |
+| estado             | departamento (6)  | hectárea (6)   |  fila 8/12
+| (barras)    (7/12) |                   |                |
++--------------------+-------------------+----------------+
+| Esperan tu         | Tarjetas KPI                 (12)  |
+| decisión    (5/12) |                                    |
++--------------------+------------------------------------+
+   columna 4/12          columna 8/12 (filas 6/6)
+```
+
+La actividad semanal es la principal porque cuenta la historia del mercado de un vistazo. Las barras largas de estados piden altura (diez categorías) y van en la columna angosta y alta; los departamentos y el precio por semana piden ancho medio. Si el rol no puede abrir pendientes, el bloque de estados toma toda la columna; sin permiso de solicitudes o sin solicitudes no hay lienzo y se muestran las tarjetas, el estado vacío y la cola.
+
+**Métricas del mercado** (`/panel/metricas`): una composición más calmada, una sección por pestaña (`molecules/tabs`, Bootstrap `tab`), con el selector de período siempre arriba. La pestaña activa viaja en el hash de la URL (`pages/metricas-secciones.js`), también en los enlaces de período.
+
+```
+Mercado                      Negociación               Proveedores            Calidad e ingreso
++----------------+-----+     +---------------------+   +---------------------+ +------------+-----+
+| Embudo   (8)   | KPI |     | KPI tiempo | KPI of.|   | KPI x4              | | Calidad(8) | Ing.|
+|                | (4) |     +--------------------+    +---------------------+ | 3 KPI      | (4) |
++----------------+-----+     | Tiempo (7) | Rondas |   | Ranking             | +------------+-----+
+| Departamentos (12)   |     |            |  (5)   |   | (solo lectura)      |
++----------------------+     +--------------------+    +---------------------+
+```
+
+*Qué salió y por qué (decisión del dueño si quiere algo de vuelta).*
+
+- Se quedó en análisis: embudo, departamentos, tiempo hasta adjudicar, rondas, las tarjetas de calidad y de oferta y el ranking de proveedores. Nada se movió al tablero: lo accionable (pendientes, solicitudes en mercado, precio por hectárea) ya estaba allí y las cifras de Métricas dependen del período elegido, que el tablero no tiene.
+- Salió: la tarjeta «Ingreso por hectárea» (decía «comisión generada», y la aplicación no cobra comisión; el precio por hectárea acordado ya está en el tablero) y el encabezado «Embudo y negociación». El dato sigue calculándose en `BloqueIngreso`.
+- Se fundieron: «Solicitudes publicadas» y «Tasa de adjudicación» quedan junto al embudo con la tercera cifra (hectáreas servidas) en vez de repetirse en una tira aparte; las dos cifras de negociación (tiempo hasta aceptar, ofertas por solicitud) quedan sobre sus gráficas.
+- Detrás de «Ver datos en una tabla» siguen las tablas de cada gráfica; el ranking de proveedores queda a la vista porque no tiene gráfica que lo reemplace.
+
+## Roles y permisos: plantilla estándar y color por módulo
+
+`/panel/roles` sigue la plantilla del resto del panel, sin exenciones en `PanelHomogeneoTest` (la prueba «Roles sigue la plantilla de las demás páginas, sin exenciones»):
+
+- **Listado** (`roles/index`): encabezado con «Nuevo rol», buscador (`table-search`), «Filtros» con el estado y «Limpiar filtros» (`filter-panel`), tabla común (`index-table`), paginación, vacío y filtro sin resultados, flash de éxito y de error. Acciones de fila: Ver, Editar, Permisos y Eliminar al final; el rol 1 no ofrece Eliminar.
+- **Ficha «Ver rol»** (`roles/show`, el molde de Usuarios): encabezado con el estado, «Sistema» si es el rol 1 y las acciones Volver, Editar, Permisos y, al final, Eliminar en `danger`; tres KPI; datos del rol; las cuentas que lo tienen (cada una enlaza a su ficha de usuario); el resumen de permisos agrupado por módulo con su color; y los últimos movimientos de la bitácora con `seguridad.bitacora.ver`. En Usuarios, el rol de la cuenta (listado y ficha) enlaza a «Ver rol».
+- **Formulario** (`roles/_formulario`, compartido por crear y editar): nombre, descripción y estado en una sección, barra de acciones y, al editar, un aside con el resumen del rol. Crear aterriza en la matriz de permisos (el rol nace sin permisos); editar vuelve a la ficha. En el rol 1 el nombre y el estado quedan fijos.
+- **Permisos** (`roles/permisos`): la matriz por módulo, con un interruptor por pantalla y sus acciones como chips, la vista previa del menú, el contador de permisos activos de cada módulo (`6 de 7 permisos`), el interruptor «Todo el módulo» (calcula su estado: encendido, a medias o apagado; solo mueve lo que el actor puede tocar), el estado de guardado en la barra (`role="status"`: «N cambios sin guardar», «Guardando los permisos…») y los errores del servidor en un aviso. Todo es teclado: Tab llega a cada interruptor, Espacio alterna.
+
+### Color identificativo de cada módulo
+
+Cada módulo del menú lleva un tono propio y estable, para saber qué módulo está moviendo cada interruptor. Lo decide `ColorDeModulo` (PHP) y vale igual en la matriz, en la vista previa, en la ficha del rol y en la lista de permisos; la clase `ag-modulo-tono--<tono>` (`components/modulo-tono.css`) traduce el tono a las variables `--ag-modulo`, `-subtle`, `-strong`, `-border` y `-fill` desde los tokens `--ag-color-<tono>-*`, que cambian solos con el tema oscuro. El módulo pinta su franja izquierda, el fondo tenue del encabezado, su ícono sobre el relleno sólido, el nombre, el interruptor encendido y los chips encendidos. El color nunca va solo: cada módulo lleva su nombre y su ícono.
+
+| Módulo (clave de menú) | Ícono | Tono |
+| --- | --- | --- |
+| Mercado (`menu.solicitudes.label`) | `storefront` | `success` (verde) |
+| Proveedores (`menu.proveedores.label`) | `local_shipping` | `info` (azul) |
+| Atención (`menu.atencion.label`) | `support_agent` | `distintivo-2` (magenta) |
+| Seguridad (`menu.seguridad.label`) | `admin_panel_settings` | `distintivo-1` (violeta) |
+| Sistema (`menu.sistema.label`) | `tune` | `warning` (ámbar) |
+| Acciones sin pantalla en el panel | `phone_android` | `neutral` (gris) |
+
+- **Únicos y sin significado de error.** Ningún tono se repite y no se usan `danger` ni `alert` (significan error), ni `primary-2` ni `distintivo-3` (son el mismo azul que `info` y no se distinguirían).
+- **Bloque propio para los que faltan.** Un módulo nuevo toma el primer tono libre de la reserva, `distintivo-4` (verde azulado) y `distintivo-5` (oliva), definidos en un bloque contiguo «Tonos de módulo (roles)» de `theme-light.css` y `theme-dark.css` (con sus escalas `teal` y `olive` en `primitives/base.css`). El relleno sólido de cada uno lleva texto blanco con contraste AA (≥ 4,5:1).
+- **Prueba.** `RolesDelPanelTest` («cada módulo del menú tiene un color propio, estable y distinto») recorre los módulos reales del catálogo: todos tienen su tono declarado, no se repite ninguno, no cambia con el orden y cada tono tiene su clase y sus tokens en claro y oscuro.

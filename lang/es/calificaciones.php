@@ -76,6 +76,7 @@ return [
 
     // Panel del administrador: moderación (política de calificación, «Moderación»).
     'panel' => [
+        'filtro_busqueda_placeholder' => 'Buscar en los comentarios',
         'titulo' => 'Calificaciones',
         'subtitulo' => 'Modera las calificaciones que incumplen la política. Ocultar no borra: la calificación deja de contar para el promedio, pero queda guardada.',
         'vacio_titulo' => 'Todavía no hay calificaciones',

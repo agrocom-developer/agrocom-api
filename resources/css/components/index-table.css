@@ -82,9 +82,11 @@
     text-align: right;
 }
 
-/* Dato técnico corto (una fecha, un código): en mono, alineado a la izquierda. */
+/* Dato técnico corto o cifra (una fecha, un código, un conteo): en mono, alineado a la
+   izquierda, con cifras de ancho fijo — la misma fuente que ciclos y capacidad en Drones. */
 .ag-index-table__mono {
     font-family: var(--ag-font-family-mono);
+    font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: 992px) {

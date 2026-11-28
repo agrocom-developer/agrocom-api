@@ -52,7 +52,7 @@
                             type="button"
                             data-bs-toggle="modal"
                             data-bs-target="#solicitud-cancelar-modal"
-                            variant="danger-outline"
+                            variant="alert-outline"
                             icon="cancel"
                         >
                             {{ __('solicitudes.panel.cancelar_accion') }}
@@ -72,7 +72,7 @@
                     :title="__('solicitudes.panel.cancelar_titulo', ['id' => $solicitud->id])"
                     :message="__('solicitudes.panel.cancelar_mensaje')"
                     :confirm-label="__('solicitudes.panel.cancelar_accion')"
-                    tone="danger"
+                    tone="alert"
                 >
                     <x-atoms.textarea
                         name="motivo"
@@ -119,17 +119,10 @@
                     :foot="$solicitud->precio_ha_propuesto !== null ? __('solicitudes.panel.kpi_tarifa_pie', ['tarifa' => number_format((float) $solicitud->precio_ha_propuesto, 2, ',', '.')]) : __('solicitudes.panel.kpi_sin_publicar')"
                     state="success"
                 />
-                <x-molecules.stat-card
-                    :label="__('solicitudes.panel.kpi_ventana')"
-                    icon="event"
-                    :value="$solicitud->ventana_desde !== null ? $solicitud->ventana_desde->format('d/m').' – '.$solicitud->ventana_hasta->format('d/m') : __('solicitudes.panel.sin_fecha_deseada')"
-                    :foot="$solicitud->urgente ? __('solicitudes.panel.urgente') : null"
-                    state="distintivo-1"
-                />
             </div>
 
             <x-molecules.form-layout>
-                <x-molecules.form-section accent="primary-2" :title="__('solicitudes.panel.seccion_servicio')" :count="__('solicitudes.panel.campos_contador', ['cantidad' => 7])">
+                <x-molecules.form-section accent="primary-2" :title="__('solicitudes.panel.seccion_servicio')" :count="__('solicitudes.panel.campos_contador', ['cantidad' => 8])">
                     <div class="ag-detalle__campo">
                         <p class="ag-detalle__campo-label">{{ __('solicitudes.panel.campo_aplicacion') }}</p>
                         <p class="ag-detalle__campo-valor">{{ __('solicitudes.tipo_aplicacion.'.$solicitud->tipo_aplicacion->value) }}</p>
@@ -164,7 +157,16 @@
                         <p class="ag-detalle__campo-label">{{ __('solicitudes.panel.campo_observaciones') }}</p>
                         <p class="ag-detalle__campo-valor">{{ $solicitud->observaciones ?? '—' }}</p>
                     </div>
-                </x-molecules.form-section>
+                                    <div class="ag-detalle__campo">
+                        <p class="ag-detalle__campo-label">{{ __('solicitudes.panel.campo_ventana') }}</p>
+                        <p class="ag-detalle__campo-valor">
+                            {{ $solicitud->ventana_desde !== null ? $solicitud->ventana_desde->format('d/m').' – '.$solicitud->ventana_hasta->format('d/m') : __('solicitudes.panel.sin_fecha_deseada') }}
+                            @if ($solicitud->urgente)
+                                <x-atoms.badge variant="warning">{{ __('solicitudes.panel.urgente') }}</x-atoms.badge>
+                            @endif
+                        </p>
+                    </div>
+</x-molecules.form-section>
 
                 <x-molecules.form-section accent="info" :title="__('solicitudes.panel.seccion_terreno')" :count="__('solicitudes.panel.campos_contador', ['cantidad' => 4])">
                     <div class="ag-detalle__campo">

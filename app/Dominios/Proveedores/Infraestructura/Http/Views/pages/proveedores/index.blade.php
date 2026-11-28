@@ -3,8 +3,10 @@
     Cola de proveedores del marketplace (ADR 0028 y 0032): arquetipo Listado,
     §6.2 de docs/diseno/guia_pantalla_panel.md — cabecera → toolbar → tabla →
     paginación. Los pendientes de revisión van primero, del más antiguo al más
-    nuevo. La aprobación vive en la ficha (`show`), no en la fila: decidir sobre
-    un proveedor exige ver sus documentos y su gente.
+    nuevo. Las acciones de fila son Ver y las
+    transiciones de la máquina de aprobación que el estado y el permiso admiten
+    (aprobar, rechazar, suspender, rehabilitar, eliminar), en el orden fijo de
+    `organisms/row-actions`; la ficha (`show`) sigue mostrando documentos y gente.
 
     Datos esperados (ver ProveedoresController::index()): la cáscara de
     CascaraPanel, más:
@@ -12,6 +14,7 @@
     - $titulares (array<int, DatosCuenta>): cuenta titular por id.
     - $filtros (array{q: string, estado: ?string, tipo: ?string}).
     - $estadosFiltro (list<EstadoAprobacion>), $tiposFiltro (list<TipoProveedor>).
+    - $accionesPorEstado (array<string, list<AccionAprobacion>>): acciones de fila por estado.
 
     Gateada por `proveedores.proveedor.ver`, verificado server-side en el
     controlador. Estilos en resources/css/pages/proveedores.css — cero color
@@ -45,6 +48,12 @@
             @if (session('estado'))
                 <x-molecules.alert-strip variant="success" icon="check_circle">
                     {{ session('estado') }}
+                </x-molecules.alert-strip>
+            @endif
+
+            @if ($errors->any())
+                <x-molecules.alert-strip variant="danger" icon="error">
+                    {{ $errors->first() }}
                 </x-molecules.alert-strip>
             @endif
 
@@ -106,7 +115,7 @@
                     />
                 @endif
             @else
-                <x-molecules.index-table columns="3rem minmax(0, 1.6fr) minmax(0, 0.9fr) minmax(0, 0.9fr) minmax(0, 0.8fr) minmax(0, 0.8fr) var(--ag-row-actions-width)">
+                <x-molecules.index-table columns="3rem minmax(0, 1.4fr) minmax(8.5rem, 0.9fr) minmax(6.5rem, 0.8fr) minmax(7.5rem, 0.9fr) minmax(6rem, 0.7fr) var(--ag-row-actions-width)">
                     <x-slot:head>
                         <span role="columnheader" class="ag-index-table__indice">{{ __('ui.tabla.col_indice') }}</span>
                         <span role="columnheader">{{ __('proveedores.proveedores.col_proveedor') }}</span>
@@ -148,11 +157,15 @@
                             </span>
                             <span role="cell">{{ $proveedor->created_at->format('d/m/Y') }}</span>
                             <span role="cell" class="ag-index-table__acciones">
-                                <x-organisms.row-actions>
-                                    <x-atoms.button :href="route('panel.proveedores.show', $proveedor)" :variant="$proveedor->estado->value === 'pendiente' ? 'distintivo-1-outline' : 'info-outline'" size="sm" :icon="$proveedor->estado->value === 'pendiente' ? 'fact_check' : 'visibility'">
-                                        {{ $proveedor->estado->value === 'pendiente' ? __('proveedores.revisar') : __('proveedores.ver') }}
-                                    </x-atoms.button>
-                                </x-organisms.row-actions>
+                                <x-organisms.row-actions-aprobacion
+                                    :acciones="$accionesPorEstado[$proveedor->estado->value] ?? []"
+                                    :estado="$proveedor->estado"
+                                    :nombre="$proveedor->razon_social"
+                                    :url-resolver="route('panel.proveedores.resolver', $proveedor->id)"
+                                    :modal-base="'proveedor-'.$proveedor->id"
+                                    :href-ver="route('panel.proveedores.show', $proveedor)"
+                                    :label-ver="__('proveedores.ver')"
+                                />
                             </span>
                         </div>
                     @endforeach

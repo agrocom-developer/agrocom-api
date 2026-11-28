@@ -16,6 +16,7 @@ use App\Dominios\Compartido\Infraestructura\Busqueda\BusquedaTexto;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Flota\Aplicacion\FotosObligatorias;
 use App\Dominios\Flota\Aplicacion\GestionarFotosDeDron;
+use App\Dominios\Flota\Aplicacion\ItemsDeRevisionDeFotos;
 use App\Dominios\Flota\Aplicacion\RegistrarDron;
 use App\Dominios\Flota\Aplicacion\ResolverAprobacionDron;
 use App\Dominios\Flota\Dominio\Excepciones\OperacionDeFlotaInvalida;
@@ -26,6 +27,7 @@ use App\Dominios\Flota\Infraestructura\Eloquent\HistorialEstadoDron;
 use App\Dominios\Flota\Infraestructura\Http\Requests\RegistrarDronDesdePanelRequest;
 use App\Dominios\Flota\Infraestructura\Http\Requests\ResolverAprobacionDronRequest;
 use App\Dominios\Proveedores\Contratos\DatosDocumento;
+use App\Dominios\Proveedores\Contratos\ItemsDeRevisionDeDocumentosDeSujeto;
 use App\Dominios\Proveedores\Contratos\LecturaDocumentos;
 use App\Dominios\Proveedores\Contratos\LecturaProveedores;
 use App\Dominios\Proveedores\Contratos\VerificacionDocumental;
@@ -61,6 +63,7 @@ final class DronesController
         private readonly AutorizacionPanelWeb $autorizacion,
         private readonly LecturaProveedores $proveedores,
         private readonly LecturaDocumentos $documentos,
+        private readonly ItemsDeRevisionDeDocumentosDeSujeto $itemsDocumentos,
         private readonly AlmacenDeMedios $almacen,
     ) {}
 
@@ -94,7 +97,28 @@ final class DronesController
             'estadosFiltro' => EstadoAprobacion::cases(),
             'origenesFiltro' => OrigenDron::cases(),
             'puedeCrear' => $this->autorizacion->tienePermiso($request, self::PERMISO_CREAR),
+            'accionesPorEstado' => $this->accionesPorEstado($request),
         ]);
+    }
+
+    /**
+     * Las acciones de aprobación que el rol activo ofrece en cada estado, para las filas del listado.
+     *
+     * @return array<string, list<AccionAprobacion>>
+     */
+    private function accionesPorEstado(Request $request): array
+    {
+        $porEstado = [];
+
+        foreach (EstadoAprobacion::cases() as $estado) {
+            $porEstado[$estado->value] = array_values(array_filter(
+                TransicionesAprobacion::accionesDesde($estado),
+                fn (AccionAprobacion $accion): bool => ! $accion->esDelSolicitante()
+                    && $this->autorizacion->tienePermiso($request, 'flota.dron.'.self::permisoDeAccion($accion)),
+            ));
+        }
+
+        return $porEstado;
     }
 
     /** `GET /panel/drones-flota/crear`: el formulario de alta a mano; `?proveedor=` preselecciona al proveedor. */
@@ -146,21 +170,31 @@ final class DronesController
             $pilotos[$equipo->piloto_id] = $this->proveedores->piloto($equipo->piloto_id)->nombre ?? "#{$equipo->piloto_id}";
         }
 
+        $puedeRevisarFotos = $this->autorizacion->tienePermiso($request, 'flota.dron.revisar_foto');
+        $puedeRevisarDocumentos = $this->autorizacion->tienePermiso($request, 'proveedores.documento.revisar');
+        $puedeDescargarDocumentos = $this->autorizacion->tienePermiso($request, 'proveedores.documento.descargar');
+        $documentosDelDron = $this->documentosDe($dron->id);
+
         return view('flota::pages.drones.show', [
             ...$cascara,
             'dron' => $dron,
             'dueno' => $this->proveedores->proveedor($dron->dueno_proveedor_id),
             'operador' => $this->proveedores->proveedor($dron->operador_proveedor_id),
-            'documentos' => $this->documentosDe($dron->id),
+            'documentos' => $documentosDelDron,
             'documentosFaltantes' => array_map(static fn (string $tipo): TipoDocumento => TipoDocumento::from($tipo), $documentos->faltantes('dron', $dron->id)),
             'equipos' => $equipos,
             'pilotos' => $pilotos,
             'acciones' => $acciones,
-            'fotos' => DB::table('flo_dron_fotos')->where('dron_id', $dron->id)->whereNull('deleted_at')->orderBy('id')->get(['id', 'tipo', 'estado', 'motivo'])->all(),
+            'itemsFotos' => ItemsDeRevisionDeFotos::de(
+                DB::table('flo_dron_fotos')->where('dron_id', $dron->id)->whereNull('deleted_at')->orderBy('id')->get(['id', 'tipo', 'estado', 'motivo', 'archivo', 'created_at'])->all(),
+                $obligatorias->tipos(),
+                $puedeRevisarFotos,
+            ),
+            'itemsDocumentos' => $this->itemsDocumentos->deFicha($documentosDelDron, $puedeRevisarDocumentos, $puedeDescargarDocumentos),
             'fotosObligatorias' => $obligatorias->tipos(),
             'fotosFaltantes' => $obligatorias->faltantes($dron->id),
-            'puedeRevisarFotos' => $this->autorizacion->tienePermiso($request, 'flota.dron.revisar_foto'),
-            'puedeRevisarDocumentos' => $this->autorizacion->tienePermiso($request, 'proveedores.documento.revisar'),
+            'puedeRevisarFotos' => $puedeRevisarFotos,
+            'puedeRevisarDocumentos' => $puedeRevisarDocumentos,
             'puedeVerDocumentos' => $this->autorizacion->tienePermiso($request, 'proveedores.documento.ver'),
             'puedeVerProveedor' => $this->autorizacion->tienePermiso($request, 'proveedores.proveedor.ver'),
             'lineaDeTiempo' => $historial->map(fn (HistorialEstadoDron $fila): array => [
@@ -186,7 +220,10 @@ final class DronesController
 
         abort_unless($this->autorizacion->tienePermiso($request, 'flota.dron.'.self::permisoDeAccion($accion)), 403);
 
-        $volver = redirect()->route('panel.drones-flota.show', $dron);
+        // Desde una fila del listado se vuelve al listado, con sus filtros; desde la ficha, a la ficha.
+        $volver = $request->input('desde') === 'listado'
+            ? redirect()->to(url()->previous(route('panel.drones-flota.index')))
+            : redirect()->route('panel.drones-flota.show', $dron);
 
         try {
             $resolver->ejecutar($dron->id, $accion, (int) Auth::guard('interno')->id(), $request->validated('motivo'));

@@ -5,9 +5,10 @@ namespace App\Dominios\Seguridad\Dominio;
 /**
  * Clases de permiso del panel (ADR 0046, puntos 4 y 5; plan de cuentas §7).
  *
- * El panel tiene dos roles. El `administrador` ve y hace todo; el `operador`
- * tiene los permisos que el administrador marca en la matriz de su rol (una
- * matriz por rol, no por persona). Tres clases de permiso:
+ * El panel parte de dos roles sembrados. El `administrador` (id 1, el rol del
+ * sistema) ve y hace todo; el `operador` y cualquier rol que el administrador
+ * cree tienen los permisos que él marca en la matriz de su rol (una matriz por
+ * rol, no por persona). Tres clases de permiso:
  *
  * - **Reservados** ({@see self::SOLO_ADMINISTRADOR}): usuarios, roles,
  *   configuración, edición de la organización, «ver como» y la carga de
@@ -29,7 +30,10 @@ final class PermisosReservados
 
     public const ROL_OPERADOR = 'operador';
 
-    /** @var list<string> Los dos roles del panel (ADR 0046, punto 4). */
+    /** El rol del sistema: el administrador es el id 1 y no se elimina, renombra ni desactiva. */
+    public const ID_ROL_ADMINISTRADOR = 1;
+
+    /** @var list<string> Los dos roles que siembra el catálogo (ADR 0046, punto 4). */
     public const ROLES_DEL_PANEL = [self::ROL_ADMINISTRADOR, self::ROL_OPERADOR];
 
     /** @var list<string> */
@@ -39,7 +43,6 @@ final class PermisosReservados
         'seguridad.usuario.editar',
         'seguridad.usuario.bloquear',
         'seguridad.usuario.eliminar',
-        'seguridad.usuario.ver_como',
         'seguridad.usuario.asignar_rol_administrador',
         'seguridad.rol.ver',
         'seguridad.rol.crear',
@@ -57,6 +60,7 @@ final class PermisosReservados
         'seguridad.verificacion.ver',
         'proveedores.documento.ver',
         'proveedores.documento.descargar',
+        'proveedores.documento.eliminar',
         'solicitudes.solicitud.ver_seguimiento',
         'seguridad.bitacora.ver',
     ];
@@ -94,9 +98,13 @@ final class PermisosReservados
         return $nombreRol === self::ROL_ADMINISTRADOR;
     }
 
-    /** Si el nombre es el de uno de los dos roles del panel (catálogo fijo, ADR 0046 punto 4). */
-    public static function esRolDelPanel(string $nombreRol): bool
+    /**
+     * Si es el rol del sistema (el administrador): el id 1 o el nombre
+     * `administrador`. Es el único rol que no se elimina, no se renombra ni se
+     * desactiva, y el único cuya matriz no se edita.
+     */
+    public static function esRolDelSistema(int $idRol, string $nombreRol): bool
     {
-        return in_array($nombreRol, self::ROLES_DEL_PANEL, true);
+        return $idRol === self::ID_ROL_ADMINISTRADOR || $nombreRol === self::ROL_ADMINISTRADOR;
     }
 }

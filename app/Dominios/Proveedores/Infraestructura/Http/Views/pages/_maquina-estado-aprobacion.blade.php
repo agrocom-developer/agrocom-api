@@ -32,9 +32,13 @@
     $tonos = collect(EstadoAprobacion::cases())->mapWithKeys(fn (EstadoAprobacion $e) => [$e->value => $e->tono()])->all();
 
     $pasos = PasosDeEstado::armar(
-        ruta: [EstadoAprobacion::Pendiente, EstadoAprobacion::Aprobado, EstadoAprobacion::Suspendido, EstadoAprobacion::Rechazado, EstadoAprobacion::Baja],
+        // «Dar de baja» es Eliminar y vive en el encabezado de la ficha, no en la máquina: la baja
+        // solo se dibuja como paso cuando ya es el estado actual (el sujeto fue dado de baja).
+        ruta: $estado === EstadoAprobacion::Baja
+            ? [EstadoAprobacion::Pendiente, EstadoAprobacion::Aprobado, EstadoAprobacion::Suspendido, EstadoAprobacion::Rechazado, EstadoAprobacion::Baja]
+            : [EstadoAprobacion::Pendiente, EstadoAprobacion::Aprobado, EstadoAprobacion::Suspendido, EstadoAprobacion::Rechazado],
         actual: $estado,
-        permitida: fn (EstadoAprobacion $desde, EstadoAprobacion $hacia): bool => $hacia !== EstadoAprobacion::Pendiente
+        permitida: fn (EstadoAprobacion $desde, EstadoAprobacion $hacia): bool => ! in_array($hacia, [EstadoAprobacion::Pendiente, EstadoAprobacion::Baja], true)
             && TransicionesAprobacion::permitida($desde, $hacia),
         tonos: $tonos,
         claveEtiqueta: 'aprobacion.estado',

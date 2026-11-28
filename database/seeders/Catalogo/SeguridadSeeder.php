@@ -14,9 +14,11 @@ use Illuminate\Database\Seeder;
  * todos los entornos, producción incluida — sin roles ni permisos no hay con
  * qué autorizar al primer usuario.
  *
- * Roles del panel (ADR 0046, punto 4): solo `administrador` (todos los
+ * Roles del panel (ADR 0046, punto 4): siembra `administrador` (id 1, todos los
  * permisos del panel, siempre) y `operador` (su preset de solo lectura; el
- * resto lo marca el administrador en la matriz). Los roles `cliente`,
+ * resto lo marca el administrador en la matriz); el administrador crea, edita y
+ * elimina los demás desde /panel/roles con `seguridad.rol.crear|editar|eliminar`
+ * (reservados al administrador: ningún preset los incluye). Los roles `cliente`,
  * `proveedor` y `piloto` son de ámbito `app`: TRANSITORIOS hasta la fase A5,
  * porque el token del dispositivo aún resuelve permisos por ellos; sus
  * permisos salen de `config/permisos_app.php`.
@@ -60,7 +62,6 @@ class SeguridadSeeder extends Seeder
         'seguridad.usuario.bloquear' => 'Bloquear o desbloquear el acceso de un usuario (no lo elimina)',
         'seguridad.usuario.eliminar' => 'Eliminar un usuario',
         'seguridad.usuario.asignar_rol_administrador' => 'Asignar o quitar el rol administrador a una cuenta del panel',
-        'seguridad.usuario.ver_como' => 'Ver el panel como una cuenta de panel (solo lectura, solo el administrador)',
         'seguridad.rol.ver' => 'Ver el catálogo de roles y qué permisos tiene cada uno',
         'seguridad.rol.crear' => 'Crear un rol nuevo (nace sin permisos)',
         'seguridad.rol.editar' => 'Editar nombre, descripción y estado de un rol',
@@ -86,6 +87,7 @@ class SeguridadSeeder extends Seeder
         'proveedores.piloto.dar_baja' => 'Eliminar a un piloto, con motivo',
         'proveedores.documento.ver' => 'Ver los documentos por revisar y abrir su archivo en el visor (acceso restringido; cada apertura del original queda en la bitácora)',
         'proveedores.documento.descargar' => 'Descargar el ORIGINAL de un documento (queda en la bitácora: quién, qué y cuándo)',
+        'proveedores.documento.eliminar' => 'Eliminar un documento, con motivo (borrado lógico: se retira el archivo y queda constancia en la bitácora de quién y cuándo, sin el contenido)',
         'proveedores.documento.revisar' => 'Aprobar o rechazar un documento, con motivo en el rechazo',
         'flota.dron.ver' => 'Ver el listado y la ficha de drones del marketplace',
         'flota.dron.aprobar' => 'Aprobar o rechazar un dron y rehabilitar a uno suspendido',
@@ -385,7 +387,10 @@ class SeguridadSeeder extends Seeder
 
     private function rol(string $name, string $description, string $ambito): SecRole
     {
-        $rol = SecRole::query()->firstOrCreate(
+        // `withTrashed()`: un rol eliminado desde el panel (el operador, por ejemplo) sigue
+        // ocupando su nombre —el índice único no lo libera—, así que sembrar de nuevo no lo
+        // resucita ni intenta crearlo otra vez.
+        $rol = SecRole::withTrashed()->firstOrCreate(
             ['name' => $name],
             ['description' => $description, 'ambito' => $ambito, 'state' => true],
         );

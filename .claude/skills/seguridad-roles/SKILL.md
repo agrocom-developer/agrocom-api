@@ -1,6 +1,6 @@
 ---
 name: seguridad-roles
-description: Modelo de seguridad sec_* de agrocom-api — cuentas de panel (un rol: administrador u operador) y cuentas de app (cliente o proveedor, cada una con verificación), permisos efectivos y menú dinámico. Usar antes de tocar autenticación, permisos, roles, menú del panel o cualquier pantalla que dependa de quién está mirando.
+description: Modelo de seguridad sec_* de agrocom-api — cuentas de panel (un rol del panel: administrador, operador o uno creado en /panel/roles) y cuentas de app (cliente o proveedor, cada una con verificación), permisos efectivos y menú dinámico. Usar antes de tocar autenticación, permisos, roles, menú del panel o cualquier pantalla que dependa de quién está mirando.
 ---
 
 # Seguridad y roles — agrocom-api

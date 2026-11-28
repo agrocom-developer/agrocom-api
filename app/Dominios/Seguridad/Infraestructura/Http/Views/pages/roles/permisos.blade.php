@@ -16,23 +16,45 @@
     navegador (resources/js/pages/roles-permisos.js) a medida que se togglea,
     sin ida y vuelta al servidor.
 
+    Cada MÓDULO lleva un color identificativo propio y estable (`ColorDeModulo`, clases
+    `ag-modulo-tono--*` de components/modulo-tono.css), el mismo en la ficha del rol: el
+    encabezado del módulo, sus interruptores encendidos y su ítem de la vista previa toman
+    ese tono, para saber qué módulo está moviendo cada interruptor. El color nunca va solo:
+    cada módulo lleva su nombre y su ícono. Cada módulo trae un interruptor «Todo el módulo»
+    y su contador de permisos activos.
+
     Datos esperados (ver RolesController::editarPermisos()):
-    - $rol (SecRole), $nombreRol (string), $esRolActivo (bool).
+    - $rol (SecRole), $nombreRol (string), $esRolActivo, $esDelSistema, $puedeVerRol (bool).
     - $modulos: árbol de módulos de menú → pantallas → acciones.
+    - $tonos (array<string, string>): clave de módulo → tono (`ColorDeModulo::asignar()`).
     - $sueltos: acciones que no cuelgan de ninguna pantalla del panel.
     - $otorgados (list<int>): lo que el rol tiene hoy.
     - $bloqueados (list<int>): permisos que SOLO este rol sostiene.
     - $concedibles (list<int>): los que el actor tiene en su rol activo.
 
     Gateada por `seguridad.rol.asignar_permiso`, verificado server-side. Las
-    cuatro guardas de negocio viven en AsignarPermisosRol: lo de acá es no
-    ofrecer lo que el servidor va a rechazar.
+    guardas de negocio viven en AsignarPermisosRol: lo de acá es no ofrecer lo que el
+    servidor va a rechazar. La matriz del administrador (rol del sistema) no se edita:
+    se muestra completa y de solo lectura.
 
     Estilos en resources/css/pages/roles.css — cero color hardcodeado
     (CLAUDE.md invariante 11).
 --}}
 @php
     $tiene = fn (int $id): bool => in_array($id, $otorgados, true);
+    $claveSueltos = \App\Dominios\Seguridad\Infraestructura\Http\Presentacion\ColorDeModulo::CLAVE_SUELTOS;
+    $nombreModulo = fn (string $clave): string => $clave === $claveSueltos ? __('seguridad.roles.permisos_sueltos_titulo') : __($clave);
+    // Cuántos permisos del módulo tiene el rol hoy (pantallas y acciones) y cuántos hay en total.
+    $conteoModulo = function (array $modulo) use ($tiene): array {
+        $ids = [];
+        foreach ($modulo['pantallas'] as $pantalla) {
+            $ids[] = $pantalla['id'];
+            foreach ($pantalla['acciones'] as $accion) {
+                $ids[] = $accion['id'];
+            }
+        }
+        return [count(array_filter($ids, $tiene)), count($ids)];
+    };
     $bloqueado = fn (int $id): bool => in_array($id, $bloqueados, true);
     $concedible = fn (int $id): bool => in_array($id, $concedibles, true);
 @endphp
@@ -64,9 +86,10 @@
                 :subtitle="__('seguridad.roles.permisos_subtitulo')"
             >
                 <x-slot:actions>
-                    <x-atoms.button :href="route('panel.roles.index')" variant="outline" icon="arrow_back">
-                        {{ __('seguridad.roles.permisos_volver') }}
-                    </x-atoms.button>
+                    <x-molecules.boton-volver
+                        :href="$puedeVerRol ? route('panel.roles.show', $rol) : route('panel.roles.index')"
+                        :label="__($puedeVerRol ? 'seguridad.roles.volver_ficha' : 'seguridad.roles.volver')"
+                    />
                 </x-slot:actions>
             </x-organisms.page-header>
 
@@ -82,7 +105,11 @@
                 </x-molecules.alert-strip>
             @endif
 
-            @if ($esRolActivo)
+            @if ($esDelSistema)
+                <x-molecules.alert-strip variant="info" icon="lock" class="ag-permisos__aviso">
+                    {{ __('seguridad.roles.permisos_aviso_sistema') }}
+                </x-molecules.alert-strip>
+            @elseif ($esRolActivo)
                 <x-molecules.alert-strip variant="warning" icon="warning" class="ag-permisos__aviso">
                     {{ __('seguridad.roles.permisos_aviso_rol_propio') }}
                 </x-molecules.alert-strip>
@@ -101,7 +128,7 @@
                         @foreach ($modulos as $modulo)
                             @php $visibles = collect($modulo['pantallas'])->filter(fn ($p) => $tiene($p['id']))->count(); @endphp
                             <div
-                                class="ag-permisos__preview-modulo"
+                                class="ag-permisos__preview-modulo ag-modulo-tono--{{ $tonos[$modulo['clave']] }}"
                                 data-ag-preview-modulo
                                 @class(['is-oculto' => $visibles === 0])
                             >
@@ -137,18 +164,23 @@
                 {{-- Editor --}}
                 <div class="ag-permisos__editor">
                     @foreach ($modulos as $modulo)
-                        @php $encendidas = collect($modulo['pantallas'])->filter(fn ($p) => $tiene($p['id']))->count(); @endphp
-                        <section class="ag-permisos__modulo" data-ag-modulo>
+                        @php
+                            [$activosModulo, $totalModulo] = $conteoModulo($modulo);
+                            $habilitadosModulo = collect($modulo['pantallas'])->flatMap(fn ($p) => [$p, ...$p['acciones']])->filter(fn ($p) => ! $bloqueado($p['id']) && $concedible($p['id']));
+                            $todoEncendido = $habilitadosModulo->isNotEmpty() && $habilitadosModulo->every(fn ($p) => $tiene($p['id']));
+                        @endphp
+                        <section class="ag-permisos__modulo ag-modulo-tono--{{ $tonos[$modulo['clave']] }}" data-ag-modulo>
                             <header class="ag-permisos__modulo-head">
-                                <x-atoms.icon :name="$modulo['icono']" size="sm" />
+                                <span class="ag-permisos__modulo-icono" aria-hidden="true"><x-atoms.icon :name="$modulo['icono']" size="sm" /></span>
                                 <h2 class="ag-permisos__modulo-nombre">{{ __($modulo['clave']) }}</h2>
                                 <span
                                     class="ag-permisos__modulo-resumen"
                                     data-ag-modulo-resumen
-                                    data-ag-plantilla="{{ __('seguridad.roles.permisos_modulo_resumen') }}"
+                                    data-ag-plantilla="{{ __('seguridad.roles.modulo_conteo') }}"
                                 >
-                                    {{ __('seguridad.roles.permisos_modulo_resumen', ['encendidas' => $encendidas, 'total' => count($modulo['pantallas'])]) }}
+                                    {{ __('seguridad.roles.modulo_conteo', ['activos' => $activosModulo, 'total' => $totalModulo]) }}
                                 </span>
+                                @include('seguridad::pages.roles._todo-el-modulo', ['nombre' => __($modulo['clave']), 'encendido' => $todoEncendido, 'deshabilitado' => $habilitadosModulo->isEmpty()])
                             </header>
 
                             @foreach ($modulo['pantallas'] as $pantalla)
@@ -267,10 +299,22 @@
                     @endforeach
 
                     @if ($sueltos !== [])
-                        <section class="ag-permisos__modulo">
+                        @php
+                            $habilitadosSueltos = collect($sueltos)->filter(fn ($p) => ! $bloqueado($p['id']) && $concedible($p['id']));
+                            $activosSueltos = collect($sueltos)->filter(fn ($p) => $tiene($p['id']))->count();
+                        @endphp
+                        <section class="ag-permisos__modulo ag-modulo-tono--{{ $tonos[$claveSueltos] }}" data-ag-modulo>
                             <header class="ag-permisos__modulo-head">
-                                <x-atoms.icon name="phone_android" size="sm" />
+                                <span class="ag-permisos__modulo-icono" aria-hidden="true"><x-atoms.icon name="phone_android" size="sm" /></span>
                                 <h2 class="ag-permisos__modulo-nombre">{{ __('seguridad.roles.permisos_sueltos_titulo') }}</h2>
+                                <span
+                                    class="ag-permisos__modulo-resumen"
+                                    data-ag-modulo-resumen
+                                    data-ag-plantilla="{{ __('seguridad.roles.modulo_conteo') }}"
+                                >
+                                    {{ __('seguridad.roles.modulo_conteo', ['activos' => $activosSueltos, 'total' => count($sueltos)]) }}
+                                </span>
+                                @include('seguridad::pages.roles._todo-el-modulo', ['nombre' => __('seguridad.roles.permisos_sueltos_titulo'), 'encendido' => $habilitadosSueltos->isNotEmpty() && $habilitadosSueltos->every(fn ($p) => $tiene($p['id'])), 'deshabilitado' => $habilitadosSueltos->isEmpty()])
                             </header>
 
                             <div class="ag-permisos__pantalla is-activa">
@@ -294,6 +338,7 @@
                                                 name="permisos[]"
                                                 value="{{ $suelto['id'] }}"
                                                 class="ag-permisos__chip-input"
+                                                data-ag-chip-suelto
                                                 @checked($sueltoActivo)
                                                 @disabled($sueltoTrabado)
                                             >
@@ -317,14 +362,17 @@
                 data-ag-permisos-barra
                 data-ag-sin-cambios="{{ __('seguridad.roles.permisos_sin_cambios') }}"
                 data-ag-con-cambios="{{ __('seguridad.roles.permisos_con_cambios') }}"
+                data-ag-guardando="{{ __('seguridad.roles.permisos_guardando') }}"
             >
                 <x-slot:actions>
-                    <x-atoms.button type="reset" variant="outline">
-                        {{ __('seguridad.roles.permisos_descartar') }}
-                    </x-atoms.button>
-                    <x-atoms.button type="submit" variant="primary">
-                        {{ __('seguridad.roles.permisos_guardar') }}
-                    </x-atoms.button>
+                    @unless ($esDelSistema)
+                        <x-atoms.button type="reset" variant="outline">
+                            {{ __('seguridad.roles.permisos_descartar') }}
+                        </x-atoms.button>
+                        <x-atoms.button type="submit" variant="primary" data-ag-permisos-guardar>
+                            {{ __('seguridad.roles.permisos_guardar') }}
+                        </x-atoms.button>
+                    @endunless
                 </x-slot:actions>
             </x-organisms.form-actions-bar>
         </form>

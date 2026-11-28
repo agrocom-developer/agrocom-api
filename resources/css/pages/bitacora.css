@@ -3,9 +3,9 @@
  * (app/Dominios/Seguridad/Infraestructura/Http/Views/pages/bitacora/) —
  * HU-63, tarea 63: pantalla de auditoría. Listado de solo lectura (quién
  * hizo qué, cuándo, en qué zona). CSS propio de ESTA página — mismo patrón
- * que usuarios.css.
+ * que proveedores.css.
  *
- * El wrapper `.ag-bitacora` sigue el mismo patrón que `.ag-usuarios`: flex
+ * El wrapper `.ag-bitacora` sigue el mismo patrón que `.ag-proveedores`: flex
  * en columna con un único `gap` en vez de `margin-top` repetido en cada
  * hijo. Todo color y medida por token (CLAUDE.md invariante 11).
  */

@@ -33,7 +33,7 @@ use Tests\TestCase;
 
 uses(TestCase::class);
 
-const RESERVADOS_VER_COMO = 'seguridad.usuario.ver_como';
+const RESERVADOS_ELIMINAR_USUARIO = 'seguridad.usuario.eliminar';
 const RESERVADOS_ASIGNAR = 'seguridad.rol.asignar_permiso';
 
 /**
@@ -162,8 +162,8 @@ beforeEach(function () {
 // --- La regla, en limpio ---------------------------------------------------------------
 
 it('solo el rol administrador admite los permisos reservados', function () {
-    expect(PermisosReservados::SOLO_ADMINISTRADOR)->toContain(RESERVADOS_VER_COMO, RESERVADOS_ASIGNAR, 'seguridad.usuario.asignar_rol_administrador', 'seguridad.configuracion.editar')
-        ->and(PermisosReservados::esReservado(RESERVADOS_VER_COMO))->toBeTrue()
+    expect(PermisosReservados::SOLO_ADMINISTRADOR)->toContain(RESERVADOS_ELIMINAR_USUARIO, RESERVADOS_ASIGNAR, 'seguridad.usuario.asignar_rol_administrador', 'seguridad.configuracion.editar')
+        ->and(PermisosReservados::esReservado(RESERVADOS_ELIMINAR_USUARIO))->toBeTrue()
         ->and(PermisosReservados::esReservado('solicitudes.solicitud.ver'))->toBeFalse()
         ->and(PermisosReservados::admiteElRol('administrador'))->toBeTrue()
         ->and(PermisosReservados::admiteElRol('operador'))->toBeFalse()
@@ -200,34 +200,34 @@ it('no otorga un reservado a un rol que no es administrador, aunque quien lo oto
 
     expect(reservadosDelRol($destino))->toBe([]);
 })->with([
-    'operador y ver_como' => ['operador', RESERVADOS_VER_COMO],
+    'operador y eliminar usuarios' => ['operador', RESERVADOS_ELIMINAR_USUARIO],
     'operador y editar usuarios' => ['operador', 'seguridad.usuario.editar'],
     'operador y editar la matriz' => ['operador', RESERVADOS_ASIGNAR],
     'operador y configuración' => ['operador', 'seguridad.configuracion.editar'],
     'operador y carga de verificación' => ['operador', 'seguridad.verificacion.cargar'],
-    'un rol cualquiera' => ['un_rol_nuevo', RESERVADOS_VER_COMO],
+    'un rol cualquiera' => ['un_rol_nuevo', RESERVADOS_ELIMINAR_USUARIO],
 ]);
 
 it('rechaza la operación entera: junto a un reservado no se escribe ni el resto', function () {
-    [$actor, $rolActor] = reservadosActor('administrador', [RESERVADOS_ASIGNAR, RESERVADOS_VER_COMO, 'solicitudes.solicitud.ver']);
+    [$actor, $rolActor] = reservadosActor('administrador', [RESERVADOS_ASIGNAR, RESERVADOS_ELIMINAR_USUARIO, 'solicitudes.solicitud.ver']);
     $destino = reservadosRol('operador');
 
-    expect(fn () => reservadosAsignar($actor, $rolActor, $destino, ['solicitudes.solicitud.ver', RESERVADOS_VER_COMO]))
+    expect(fn () => reservadosAsignar($actor, $rolActor, $destino, ['solicitudes.solicitud.ver', RESERVADOS_ELIMINAR_USUARIO]))
         ->toThrow(RolProtegido::class);
 
     expect(reservadosDelRol($destino))->toBe([]);
 });
 
 it('el mensaje dice qué permiso y qué rol', function () {
-    [$actor, $rolActor] = reservadosActor('administrador', [RESERVADOS_ASIGNAR, RESERVADOS_VER_COMO]);
+    [$actor, $rolActor] = reservadosActor('administrador', [RESERVADOS_ASIGNAR, RESERVADOS_ELIMINAR_USUARIO]);
     $destino = reservadosRol('operador');
 
     try {
-        reservadosAsignar($actor, $rolActor, $destino, [RESERVADOS_VER_COMO]);
+        reservadosAsignar($actor, $rolActor, $destino, [RESERVADOS_ELIMINAR_USUARIO]);
         $this->fail('Debió rechazar el otorgamiento.');
     } catch (RolProtegido $excepcion) {
         expect($excepcion->getMessage())
-            ->toContain(RESERVADOS_VER_COMO)
+            ->toContain(RESERVADOS_ELIMINAR_USUARIO)
             ->toContain('operador')
             ->toContain('exclusivo del administrador');
     }
@@ -247,8 +247,8 @@ it('otorga al operador los permisos asignables y también los sensibles', functi
 // --- 3. Quitarlo siempre se puede ---------------------------------------------------------------
 
 it('quita un reservado de un rol que lo tenía por un otorgamiento anterior', function () {
-    [$actor, $rolActor] = reservadosActor('administrador', [RESERVADOS_ASIGNAR, RESERVADOS_VER_COMO]);
-    $destino = reservadosRol('operador', [RESERVADOS_VER_COMO]);
+    [$actor, $rolActor] = reservadosActor('administrador', [RESERVADOS_ASIGNAR, RESERVADOS_ELIMINAR_USUARIO]);
+    $destino = reservadosRol('operador', [RESERVADOS_ELIMINAR_USUARIO]);
 
     reservadosAsignar($actor, $rolActor, $destino, []);
 
@@ -256,12 +256,12 @@ it('quita un reservado de un rol que lo tenía por un otorgamiento anterior', fu
 });
 
 it('conservar un reservado ya otorgado no cuenta como otorgarlo de nuevo', function () {
-    [$actor, $rolActor] = reservadosActor('administrador', [RESERVADOS_ASIGNAR, RESERVADOS_VER_COMO, 'solicitudes.solicitud.ver']);
-    $destino = reservadosRol('operador', [RESERVADOS_VER_COMO]);
+    [$actor, $rolActor] = reservadosActor('administrador', [RESERVADOS_ASIGNAR, RESERVADOS_ELIMINAR_USUARIO, 'solicitudes.solicitud.ver']);
+    $destino = reservadosRol('operador', [RESERVADOS_ELIMINAR_USUARIO]);
 
-    reservadosAsignar($actor, $rolActor, $destino, [RESERVADOS_VER_COMO, 'solicitudes.solicitud.ver']);
+    reservadosAsignar($actor, $rolActor, $destino, [RESERVADOS_ELIMINAR_USUARIO, 'solicitudes.solicitud.ver']);
 
-    expect(reservadosDelRol($destino))->toBe(['seguridad.usuario.ver_como', 'solicitudes.solicitud.ver']);
+    expect(reservadosDelRol($destino))->toBe(['seguridad.usuario.eliminar', 'solicitudes.solicitud.ver']);
 });
 
 // --- 4. Matriz del administrador y permisos de app ---------------------------------------------------------------

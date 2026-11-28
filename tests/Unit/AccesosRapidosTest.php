@@ -60,6 +60,7 @@ test('cada acceso lleva ícono, etiqueta y módulo del menú, sin traducir', fun
         'icono' => 'request_quote',
         'etiqueta' => 'menu.solicitudes.items.solicitudes',
         'modulo' => 'menu.solicitudes.label',
+        'tono' => 'warning',
     ]]);
 });
 
@@ -112,4 +113,81 @@ test('cada rol con lista propia usa solo rutas que existen en el panel', functio
             expect($rutasRegistradas->contains($ruta))->toBeTrue("«{$rol}» prefiere «{$ruta}», que no existe");
         }
     }
+});
+
+test('seis accesos de ejemplo nunca comparten tono y el tono es uno de los tokens del panel', function () {
+    $rutas = ['panel.solicitudes.index', 'panel.proveedores.index', 'panel.documentos.index', 'panel.drones-flota.index', 'panel.reclamos.index', 'panel.usuarios.index'];
+    $menu = [moduloMenu('todo', array_map(fn (string $ruta) => itemMenu($ruta), $rutas))];
+
+    $tonos = array_column(AccesosRapidos::para('administrador', $menu), 'tono');
+
+    expect($tonos)->toHaveCount(6)
+        ->and(array_unique($tonos))->toHaveCount(6)
+        ->and(array_diff($tonos, AccesosRapidos::TONOS))->toBe([]);
+});
+
+test('cualquier conjunto de seis rutas del panel recibe seis tonos distintos', function () {
+    $todas = ['solicitudes', 'proveedores', 'documentos', 'drones-flota', 'reclamos', 'usuarios', 'clientes', 'calificaciones', 'roles', 'bitacora', 'avisos', 'metricas'];
+
+    foreach (range(0, count($todas) - 6) as $desde) {
+        $menu = [moduloMenu('todo', array_map(fn (string $d) => itemMenu("panel.$d.index"), array_slice($todas, $desde, 6)))];
+        $tonos = array_column(AccesosRapidos::para(null, $menu), 'tono');
+
+        expect(array_unique($tonos))->toHaveCount(6);
+    }
+});
+
+test('el tono es estable: mismo conjunto, mismo tono, y la ruta que no choca conserva el suyo', function () {
+    $menu = [moduloMenu('todo', [itemMenu('panel.solicitudes.index'), itemMenu('panel.usuarios.index')])];
+
+    expect(AccesosRapidos::para('administrador', $menu))->toBe(AccesosRapidos::para('administrador', $menu));
+
+    $solo = array_column(AccesosRapidos::para(null, [moduloMenu('t', [itemMenu('panel.solicitudes.index')])]), 'tono', 'ruta');
+    $con = array_column(AccesosRapidos::para(null, [moduloMenu('t', [itemMenu('panel.solicitudes.index'), itemMenu('panel.usuarios.index')])]), 'tono', 'ruta');
+
+    expect($con['panel.solicitudes.index'])->toBe($solo['panel.solicitudes.index']);
+});
+
+test('completa con las pantallas del menú cuando la lista preferida no llena los lugares', function () {
+    $menu = [moduloMenu('todo', [itemMenu('panel.usuarios.index'), itemMenu('panel.bitacora.index'), itemMenu('panel.dashboard')])];
+
+    expect(rutasDe(AccesosRapidos::para('administrador', $menu)))->toBe(['panel.usuarios.index', 'panel.bitacora.index']);
+});
+
+/** El valor de `--ag-color-<tono>-contrast-fill` en un tema, tal como está escrito en el CSS de tokens. */
+function colorDeRelleno(string $tema, string $tono): string
+{
+    $css = (string) file_get_contents(dirname(__DIR__, 2)."/resources/css/tokens/semantic/theme-{$tema}.css");
+
+    preg_match('~--ag-color-'.preg_quote($tono, '~').'-contrast-fill:\s*([^;]+);~s', $css, $coincidencia);
+
+    return preg_replace('~\s+~', ' ', trim($coincidencia[1] ?? '')) ?: '';
+}
+
+test('cada tono de los accesos rápidos es un color distinto, no solo un nombre distinto', function () {
+    foreach (['light', 'dark'] as $tema) {
+        $colores = [];
+
+        foreach (AccesosRapidos::TONOS as $tono) {
+            $color = colorDeRelleno($tema, $tono);
+
+            expect($color)->not->toBe('', "el tono {$tono} no tiene relleno en el tema {$tema}");
+            $colores[$tono] = $color;
+        }
+
+        // Dos tonos con el mismo valor se ven como la misma tarjeta repetida (`info`, `distintivo-3`
+        // y `primary-2` pintan el mismo azul).
+        $repetidos = array_filter(array_count_values($colores), fn (int $veces): bool => $veces > 1);
+
+        expect($repetidos)->toBe([], "tonos con el mismo color en el tema {$tema}: ".implode(', ', array_keys(array_intersect($colores, array_keys($repetidos)))));
+    }
+});
+
+test('seis accesos nunca repiten color, con cualquier orden de rutas', function () {
+    $rutas = ['panel.solicitudes.index', 'panel.proveedores.index', 'panel.documentos.index', 'panel.drones-flota.index', 'panel.reclamos.index', 'panel.usuarios.index'];
+
+    $menu = [moduloMenu('todo', array_map(fn (string $ruta): ItemMenu => itemMenu($ruta), $rutas))];
+    $tonos = array_column(AccesosRapidos::para('administrador', $menu), 'tono');
+
+    expect($tonos)->toHaveCount(6)->and(array_unique($tonos))->toHaveCount(6);
 });

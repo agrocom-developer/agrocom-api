@@ -53,6 +53,7 @@ return [
         'independiente_sin_pilotos' => 'Un proveedor independiente es su propio piloto y no suma otros pilotos. Si quieres operar con más pilotos, regístrate como proveedor tercero.',
         'sujeto_ajeno' => 'No encontramos ese proveedor, piloto o dron entre los tuyos.',
         'documento_ya_revisado' => 'Este documento ya fue revisado.',
+        'documento_vigente_de_sujeto_aprobado' => 'Este documento está aprobado y vigente, y su titular sigue aprobado: suspéndelo antes de eliminarlo o espera a que venza.',
         'documento_vencido' => 'El documento ya está vencido: sube uno vigente.',
         'archivo_no_disponible' => 'No se pudo guardar o encontrar el archivo del documento.',
         'limite_de_documentos' => 'Ya hay :maximo documentos esperando revisión. Espera a que se revisen para subir otro.',
@@ -60,6 +61,7 @@ return [
     ],
 
     'documentos' => [
+        'filtro_busqueda_placeholder' => 'Buscar por nombre del archivo',
         'titulo' => 'Documentos',
         'tipo' => [
             'identidad' => 'Documento de identidad',
@@ -93,6 +95,7 @@ return [
         'subido_el' => 'Subido el :fecha',
         'aprobar' => 'Aprobar',
         'rechazar' => 'Rechazar',
+        'revisar' => 'Revisar',
         'ver_archivo' => 'Ver',
         'modal' => [
             'aprobar_titulo' => 'Aprobar «:documento»',
@@ -100,6 +103,14 @@ return [
             'rechazar_titulo' => 'Rechazar «:documento»',
             'rechazar_mensaje' => 'El solicitante verá el motivo y podrá subir un documento corregido.',
             'motivo_ayuda' => 'Explica qué está mal para que el solicitante pueda corregirlo.',
+        ],
+        'eliminar' => [
+            'accion' => 'Eliminar',
+            'titulo' => 'Eliminar «:documento»',
+            'mensaje' => 'El documento deja de listarse y su archivo se borra del almacén; queda constancia de quién lo eliminó y cuándo. No se puede deshacer.',
+            'motivo_ayuda' => 'Explica por qué se elimina; queda en la bitácora.',
+            'motivo_requerido' => 'Indica el motivo para eliminar el documento.',
+            'hecho' => 'Documento eliminado.',
         ],
         'revisado' => [
             'aprobar' => 'Documento aprobado.',
@@ -230,8 +241,7 @@ return [
         'detalle_subtitulo' => 'Proveedor :tipo',
         'volver' => 'Volver a proveedores',
         'motivo_estado' => 'Quedó :estado. Motivo: :motivo',
-        'kpi_estado' => 'Estado',
-        'kpi_ofertas' => 'Puede ofertar',
+        'campo_ofertas' => 'Puede ofertar',
         'apto_si' => 'Sí',
         'apto_no' => 'No',
         'apto_si_pie' => 'Tiene un equipo aprobado',
@@ -269,7 +279,6 @@ return [
         'paginacion_aria' => 'Paginación de pilotos',
         'detalle_subtitulo' => 'Piloto de :proveedor',
         'volver' => 'Volver a pilotos',
-        'kpi_licencia' => 'Licencia',
         'kpi_documentos' => 'Documentos',
         'seccion_datos' => 'Datos del piloto',
         'campo_nombre' => 'Nombre',

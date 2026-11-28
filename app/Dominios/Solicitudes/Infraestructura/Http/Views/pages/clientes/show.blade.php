@@ -49,7 +49,7 @@
                             @csrf
                             <x-atoms.button type="submit" variant="primary" icon="check_circle">{{ __('solicitudes.clientes.aprobar') }}</x-atoms.button>
                         </form>
-                        <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#cliente-rechazar-modal" variant="danger-outline" icon="cancel">
+                        <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#cliente-rechazar-modal" variant="alert-outline" icon="cancel">
                             {{ __('solicitudes.clientes.rechazar') }}
                         </x-atoms.button>
                     @endif
@@ -60,7 +60,7 @@
                                 <x-atoms.button type="submit" variant="primary" icon="lock_open">{{ __('solicitudes.clientes.reactivar') }}</x-atoms.button>
                             </form>
                         @elseif ($aprobado)
-                            <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#cliente-suspender-modal" variant="danger-outline" icon="block">
+                            <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#cliente-suspender-modal" variant="neutral-outline" icon="block">
                                 {{ __('solicitudes.clientes.suspender') }}
                             </x-atoms.button>
                         @endif
@@ -79,7 +79,7 @@
                     :title="__('solicitudes.clientes.rechazar_titulo', ['cliente' => $cliente->razon_social])"
                     :message="__('solicitudes.clientes.rechazar_mensaje')"
                     :confirm-label="__('solicitudes.clientes.rechazar')"
-                    tone="danger"
+                    tone="alert"
                 >
                     <x-atoms.textarea
                         name="motivo"
@@ -104,7 +104,7 @@
                     :title="__('solicitudes.clientes.suspender_titulo', ['cliente' => $cliente->razon_social])"
                     :message="__('solicitudes.clientes.suspender_mensaje')"
                     :confirm-label="__('solicitudes.clientes.suspender')"
-                    tone="danger"
+                    tone="neutral"
                 >
                     <x-atoms.textarea
                         name="motivo"
@@ -251,6 +251,31 @@
                         @endif
                     </div>
                 </x-molecules.form-section>
+                <x-slot:aside>
+                    <x-molecules.form-section accent="info" :title="__('solicitudes.clientes.seccion_relacionado')">
+                        <div class="ag-form-section__field--full">
+                            @if ($puedeVerSolicitudes)
+                                <x-molecules.link-row
+                                    :href="route('panel.solicitudes.index')"
+                                    icon="request_quote"
+                                    :title="__('solicitudes.clientes.seccion_solicitudes')"
+                                    :meta="(string) $totalSolicitudes"
+                                    tone="info"
+                                />
+                            @endif
+                        </div>
+                    </x-molecules.form-section>
+
+                    <x-molecules.form-section accent="distintivo-2" :title="__('solicitudes.clientes.historial_titulo')" :count="(string) count($lineaDeTiempo)">
+                        <div class="ag-form-section__field--full">
+                            @if ($lineaDeTiempo === [])
+                                <p class="ag-detalle__campo-valor">{{ __('solicitudes.clientes.historial_vacio') }}</p>
+                            @else
+                                <x-molecules.timeline :items="$lineaDeTiempo" />
+                            @endif
+                        </div>
+                    </x-molecules.form-section>
+                </x-slot:aside>
             </x-molecules.form-layout>
         </div>
     </x-templates.panel-layout>

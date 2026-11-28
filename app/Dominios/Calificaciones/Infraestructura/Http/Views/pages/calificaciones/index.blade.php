@@ -50,7 +50,7 @@
 
             @php
                 $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
-                $filtrosPanelActivos = collect($filtros)->filter(fn ($valor) => $valor !== null && $valor !== '')->count();
+                $filtrosPanelActivos = collect($filtros)->except('q')->filter(fn ($valor) => $valor !== null && $valor !== '')->count();
                 $opcionesEstado = collect($estadosFiltro)->mapWithKeys(fn ($opcion) => [$opcion->value => __('calificaciones.estado.'.$opcion->value)])->all();
                 $opcionesSujeto = collect($sujetosFiltro)->mapWithKeys(fn ($opcion) => [$opcion->value => __('calificaciones.sujeto.'.$opcion->value)])->all();
                 $opcionesCausa = collect($causas)->mapWithKeys(fn ($opcion) => [$opcion->value => __('calificaciones.causa.'.$opcion->value)])->all();
@@ -62,6 +62,7 @@
                         :action="route('panel.calificaciones.index')"
                         :active-count="$filtrosPanelActivos"
                     >
+                        <input type="hidden" name="q" value="{{ $filtros['q'] }}">
                         <x-atoms.select
                             name="estado"
                             id="filtro-estado"
@@ -79,6 +80,13 @@
                             :placeholder="__('calificaciones.panel.filtro_todos')"
                         />
                     </x-organisms.filter-panel>
+
+                    <x-molecules.table-search
+                        :action="route('panel.calificaciones.index')"
+                        :value="$filtros['q']"
+                        :placeholder="__('calificaciones.panel.filtro_busqueda_placeholder')"
+                        :clear-label="__('ui.tabla.buscador_limpiar')"
+                    />
                 </div>
             @endif
 
@@ -149,7 +157,7 @@
                                             :title="__('calificaciones.panel.ocultar_titulo')"
                                             :message="__('calificaciones.panel.ocultar_mensaje')"
                                             :confirm-label="__('calificaciones.panel.ocultar')"
-                                            tone="danger"
+                                            tone="neutral"
                                         >
                                             <x-atoms.select
                                                 name="causa"
@@ -194,16 +202,14 @@
                                         </x-molecules.confirm-modal>
                                     @endif
                                     <x-organisms.row-actions>
-                                        @if ($calificacion->estado->value !== 'oculta')
-                                            <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#calificacion-ocultar-modal-{{ $calificacion->id }}" variant="danger-outline" size="sm" icon="visibility_off">
-                                                {{ __('calificaciones.panel.ocultar') }}
-                                            </x-atoms.button>
-                                        @endif
-                                        @if ($calificacion->estado->value !== 'visible')
-                                            <x-atoms.button type="button" data-bs-toggle="modal" data-bs-target="#calificacion-restablecer-modal-{{ $calificacion->id }}" variant="success-outline" size="sm" icon="check_circle">
-                                                {{ __('calificaciones.panel.restablecer') }}
-                                            </x-atoms.button>
-                                        @endif
+                                        <x-slot:transiciones>
+                                            @if ($calificacion->estado->value !== 'oculta')
+                                                <x-molecules.row-action kind="transicion" tone="neutral" :modal="'calificacion-ocultar-modal-'.$calificacion->id" icon="visibility_off" :label="__('calificaciones.panel.ocultar')" />
+                                            @endif
+                                            @if ($calificacion->estado->value !== 'visible')
+                                                <x-molecules.row-action kind="transicion" tone="success" :modal="'calificacion-restablecer-modal-'.$calificacion->id" icon="check_circle" :label="__('calificaciones.panel.restablecer')" />
+                                            @endif
+                                        </x-slot:transiciones>
                                     </x-organisms.row-actions>
                                 @endif
                             </span>

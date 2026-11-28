@@ -1,54 +1,24 @@
 {{--
-    Partial: formulario de usuario, compartido por create.blade.php y
-    edit.blade.php (HU-45, tarea 39; tarea 65 le agrega el camino portal).
-    Arquetipo Formulario, §6.3 de docs/diseno/guia_pantalla_panel.md.
+    Partial: formulario de usuario, compartido por create.blade.php y edit.blade.php
+    (HU-45, tarea 39). Arquetipo Formulario, §6.3 de docs/diseno/guia_pantalla_panel.md.
 
-    Un solo formulario para los dos `type`: en ALTA, un `<select>` de tipo
-    (oculto si el actor no tiene `seguridad.usuario.portal`: nunca ofrece una
-    opción que el submit va a rechazar) alterna entre la sección "interna"
-    (persona + roles) y la "portal" (cliente → contrato, select dependiente,
-    mismo patrón que cliente→propiedad de `lotes/_formulario.blade.php` vía
-    `resources/js/pages/usuarios-form.js`). En EDICIÓN no hay `<select>` de
-    tipo — se muestra como dato fijo (CLAUDE.md, tarea 65: una cuenta no
-    muta de interna a cliente ni al revés) y solo se renderiza la sección
-    que corresponde al `type` ya persistido.
+    Solo cuentas de panel (ADR 0046): datos de la cuenta y un solo rol, administrador u
+    operador. El alta termina en la ficha (`show`); desde la edición, Volver y Cancelar
+    regresan a la ficha de la cuenta.
 
     Espera:
     - $usuario (SecUser|null): null en alta; el modelo en edición.
     - $rolesAsignados (list<int>): ids de rol ya asignados (solo edición).
-    - $rolesDisponibles (Collection<int, SecRole>): opciones del selector de
-      roles del panel, ya sin `administrador` si el actor no tiene `asignar_rol_administrador`.
-    - $clientesDisponibles (Collection<int, string>): id => razón social —
-      SOLO filtra el select de contrato, no viaja como columna propia (mismo
-      criterio que `cliente_id` en `lotes/_formulario.blade.php`).
-    - $contratosVigentesDisponibles (Collection<int, object{id,cliente_id,razon_social,hectareas_contratadas}>).
-    - $puedeCrearPortal (bool): solo en alta — si falta, la opción `cliente`
-      ni aparece en el `<select>` de tipo (la guarda real sigue siendo
-      `seguridad.usuario.portal` en el controlador/caso de uso).
-    - $emailPorCliente (array<int, string>): id de cliente => correo
-      sugerido (tarea 66) — SOLO precarga el campo `email` cuando se elige
-      un cliente en el camino portal, vía `usuarios-form.js`; no viaja como
-      columna propia (mismo criterio que $clientesDisponibles). No hay
-      precarga equivalente para el camino interno: `per_personas` no tiene
-      correo ni teléfono (decisión de la tarea 66).
-
-    - $resumenRelacionado (list<array>, solo edición): las tarjetas del aside
-      (`titulo`, `icono`, `tieneDatos`, `items`, `vacioTitulo`,
-      `vacioDetalle`, `acciones`), armadas por
-      UsuariosController::resumenRelacionado() y ya gateadas por el permiso
-      `.ver` del módulo de cada una; un rol sin ninguno no tiene aside. En el
-      alta no hay aside: una cuenta que todavía no existe no tiene nada
+    - $rolesDisponibles (Collection<int, SecRole>): opciones del selector de rol, ya sin
+      `administrador` si el actor no tiene `asignar_rol_administrador`.
+    - $resumenRelacionado (list<array>, solo edición): las tarjetas del aside (`titulo`,
+      `icono`, `tieneDatos`, `items`, `vacioTitulo`, `vacioDetalle`, `acciones`), armadas por
+      UsuariosController::resumenRelacionado() y ya gateadas por el permiso `.ver` del módulo
+      de cada una. En el alta no hay aside: una cuenta que todavía no existe no tiene nada
       relacionado.
 
-    Las dos secciones según el tipo (persona y roles / contrato del portal)
-    son alternativas excluyentes de una misma cuenta, no un dato previo que
-    falta: una cuenta es interna O de portal, así que solo una aplica y la
-    otra se esconde (§6.3.5 habla de secciones que dependen de un dato aún no
-    elegido, no de esto).
-
-    Tras un error de validación, `old()` pisa los valores del modelo/vacíos
-    — mismo criterio en alta y en edición. `password` NUNCA se repuebla con
-    `old()`.
+    Tras un error de validación, `old()` pisa los valores del modelo/vacíos — mismo criterio
+    en alta y en edición. `password` NUNCA se repuebla con `old()`.
 --}}
 @php
     $esEdicion = $usuario !== null;
@@ -60,12 +30,10 @@
     $opcionesRoles = $rolesDisponibles->mapWithKeys(fn ($rol) => [
         $rol->id => \App\Dominios\Seguridad\Infraestructura\Http\Presentacion\PresentadorRol::nombreLegible($rol),
     ]);
-
-    $tipoActual = $usuario?->type?->value ?? old('type', 'interno');
-    $esCliente = $tipoActual === 'cliente';
+    $urlVolver = $esEdicion ? route('panel.usuarios.show', $usuario) : route('panel.usuarios.index');
 @endphp
 
-<form method="POST" action="{{ $accion }}" class="ag-usuarios-form" novalidate data-ag-usuarios-form data-tipo-inicial="{{ $tipoActual }}">
+<form method="POST" action="{{ $accion }}" class="ag-proveedores" novalidate>
     @csrf
     @if ($esEdicion)
         @method('PUT')
@@ -77,8 +45,8 @@
     >
         <x-slot:actions>
             <x-molecules.boton-volver
-                :href="route('panel.usuarios.index')"
-                :label="__('seguridad.usuarios.volver')"
+                :href="$urlVolver"
+                :label="__($esEdicion ? 'seguridad.usuarios.volver_ficha' : 'seguridad.usuarios.volver')"
             />
         </x-slot:actions>
     </x-organisms.page-header>
@@ -100,8 +68,9 @@
 
     <x-molecules.form-layout>
         <x-molecules.form-section
+            accent="primary-2"
             :title="__('seguridad.usuarios.seccion_datos')"
-            :count="__('seguridad.usuarios.campos_contador', ['cantidad' => 5])"
+            :count="__('seguridad.usuarios.campos_contador', ['cantidad' => 4])"
         >
             <x-atoms.input
                 type="text"
@@ -128,7 +97,6 @@
                 :value="$email"
                 :help="__('seguridad.usuarios.campo_email_ayuda')"
                 :error="$errors->first('email')"
-                data-ag-usuario-email
             />
 
             <x-atoms.input
@@ -140,30 +108,16 @@
                 :error="$errors->first('password')"
             />
 
-            @if ($esEdicion)
-                {{-- Sin `name`: no viaja en el POST (la cuenta no cambia de tipo) y
-                     no hay nada que `old()` repueble, así que el `id` va explícito.
-                     `readonly` y no `disabled`, como el nombre en /panel/perfil. --}}
-                <x-atoms.input
-                    type="text"
-                    id="tipo_cuenta"
-                    :label="__('seguridad.usuarios.campo_tipo')"
-                    :value="__($esCliente ? 'seguridad.usuarios.tipo_cliente' : 'seguridad.usuarios.tipo_interno')"
-                    :help="__('seguridad.usuarios.campo_tipo_ayuda_edicion')"
-                    readonly
-                />
-            @else
-                {{-- Las cuentas que se crean desde el panel son internas; el cliente
-                     del marketplace se registra solo desde la app (ADR 0036). --}}
+            @unless ($esEdicion)
+                {{-- Las cuentas que se crean desde el panel son de panel; las de app se registran desde la app (ADR 0046). --}}
                 <input type="hidden" name="type" value="interno">
-            @endif
+            @endunless
         </x-molecules.form-section>
 
         <x-molecules.form-section
-            :title="__('seguridad.usuarios.seccion_interno')"
+            accent="info"
+            :title="__('seguridad.usuarios.seccion_rol')"
             :count="__('seguridad.usuarios.campos_contador', ['cantidad' => 1])"
-            data-ag-usuario-seccion-interno
-            :hidden="$esCliente"
         >
             {{-- Una cuenta de panel tiene un solo rol (ADR 0046): radios, y `roles[]` viaja con un solo valor. --}}
             <x-atoms.radio-group
@@ -175,14 +129,13 @@
                 :help="__('seguridad.usuarios.campo_roles_ayuda')"
                 :error="$errors->first('roles') ?: $errors->first('roles.0')"
                 class="ag-form-section__field--full"
-                :disabled="$esCliente"
                 required
             />
         </x-molecules.form-section>
 
         <x-organisms.form-actions-bar :status="__('seguridad.usuarios.estado_form')">
             <x-slot:actions>
-                <x-molecules.boton-volver :href="route('panel.usuarios.index')" cancelar />
+                <x-molecules.boton-volver :href="$urlVolver" cancelar />
                 <x-atoms.button type="submit" variant="primary">
                     {{ __('ui.action.save') }}
                 </x-atoms.button>

@@ -1,0 +1,78 @@
+/*
+ * Template: lienzo (`.ag-lienzo`, resources/views/components/templates/lienzo.blade.php).
+ * Composición recursiva de filas y columnas por fracción sobre un fondo gris (referencia: lienzo
+ * de modelo de negocio). Todo por token; las fracciones llegan en `--ag-lienzo-fracciones`
+ * (`minmax(0, Nfr) ...`), nunca como alturas fijas.
+ *
+ * Apilado por defecto (celular o ancho angosto); desde 60rem de ancho del lienzo aplica las
+ * fracciones. La medida es la del propio marco (container query), no la de la pantalla.
+ */
+
+.ag-lienzo-marco {
+    container: ag-lienzo / inline-size;
+    padding: var(--ag-space-3);
+    border-radius: var(--ag-radius-lg);
+    background-color: var(--ag-color-bg-lienzo);
+}
+
+.ag-lienzo {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--ag-space-3);
+    min-width: 0;
+}
+
+.ag-lienzo__bloque {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+}
+
+/* Lo que llena el bloque: la tarjeta, la gráfica o el lienzo de dentro. */
+.ag-lienzo__bloque > * {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+}
+
+@container ag-lienzo (min-width: 60rem) {
+    .ag-lienzo--raiz {
+        block-size: calc(var(--ag-space-8) * var(--ag-lienzo-unidades, 20));
+    }
+
+    .ag-lienzo--fila {
+        grid-template-columns: var(--ag-lienzo-fracciones);
+        grid-auto-rows: minmax(0, 1fr);
+    }
+
+    .ag-lienzo--columna {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: var(--ag-lienzo-fracciones);
+    }
+
+    /* Un bloque de altura repartida no crece con su contenido: lo que no cabe se desplaza dentro. */
+    .ag-lienzo__bloque > .ag-card,
+    .ag-lienzo__bloque > .ag-tablero__kpis,
+    .ag-lienzo__bloque > .ag-metricas__kpis {
+        overflow: auto;
+    }
+
+    /* La gráfica toma el alto que sobra en su tarjeta, en vez de un alto propio. */
+    .ag-lienzo__bloque .ag-grafico__marco,
+    .ag-lienzo__bloque .ag-grafico__marco--horizontal {
+        flex: 1 1 0;
+        height: auto;
+        min-height: calc(var(--ag-space-8) * 2);
+    }
+
+    .ag-lienzo__bloque .ag-grafico__datos {
+        flex: none;
+    }
+
+    /* Las tarjetas KPI se reparten el alto del bloque en vez de quedar pegadas arriba. */
+    .ag-lienzo__bloque > .ag-tablero__kpis {
+        grid-auto-rows: minmax(0, 1fr);
+        align-content: stretch;
+    }
+}

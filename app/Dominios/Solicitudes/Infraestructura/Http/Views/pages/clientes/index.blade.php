@@ -43,6 +43,12 @@
                 </x-molecules.alert-strip>
             @endif
 
+            @if ($errors->any())
+                <x-molecules.alert-strip variant="danger" icon="error">
+                    {{ $errors->first() }}
+                </x-molecules.alert-strip>
+            @endif
+
             @php
                 $hayFiltrosActivos = collect($filtros)->contains(fn ($valor) => $valor !== null && $valor !== '');
                 $opcionesEstado = collect($estadosFiltro)->mapWithKeys(fn ($opcion) => [$opcion->value => __('solicitudes.clientes.estado.'.$opcion->value)])->all();
@@ -122,10 +128,101 @@
                             </span>
                             <span role="cell">{{ $cliente->created_at->format('d/m/Y') }}</span>
                             <span role="cell" class="ag-index-table__acciones">
+                                @php
+                                    $esPendiente = $cliente->estado->value === 'pendiente';
+                                    $esAprobado = $cliente->estado->value === 'aprobado';
+                                    $esSuspendido = $cliente->estado->value === 'suspendido';
+                                    $conAprobar = $puedeAprobar && $esPendiente;
+                                    $conSuspender = $puedeSuspender && $esAprobado;
+                                    $conReactivar = $puedeSuspender && $esSuspendido;
+                                @endphp
+
+                                {{-- Forms y modales FUERA de row-actions (ver su docblock). --}}
+                                @if ($conAprobar)
+                                    <form id="cliente-aprobar-form-{{ $cliente->id }}" method="POST" action="{{ route('panel.clientes.aprobar', $cliente) }}" hidden>
+                                        @csrf
+                                        <input type="hidden" name="desde" value="listado">
+                                    </form>
+                                    <form id="cliente-rechazar-form-{{ $cliente->id }}" method="POST" action="{{ route('panel.clientes.rechazar', $cliente) }}" hidden>
+                                        @csrf
+                                        <input type="hidden" name="desde" value="listado">
+                                    </form>
+                                    <x-molecules.confirm-modal
+                                        :id="'cliente-rechazar-modal-'.$cliente->id"
+                                        :form-id="'cliente-rechazar-form-'.$cliente->id"
+                                        :title="__('solicitudes.clientes.rechazar_titulo', ['cliente' => $cliente->razon_social])"
+                                        :message="__('solicitudes.clientes.rechazar_mensaje')"
+                                        :confirm-label="__('solicitudes.clientes.rechazar')"
+                                        tone="alert"
+                                    >
+                                        <x-atoms.textarea
+                                            name="motivo"
+                                            :id="'cliente-rechazar-motivo-'.$cliente->id"
+                                            :form="'cliente-rechazar-form-'.$cliente->id"
+                                            :label="__('solicitudes.clientes.motivo_etiqueta_rechazo')"
+                                            :help="__('solicitudes.clientes.motivo_ayuda')"
+                                            :rows="3"
+                                            required
+                                        />
+                                    </x-molecules.confirm-modal>
+                                @endif
+
+                                @if ($conSuspender)
+                                    <form id="cliente-suspender-form-{{ $cliente->id }}" method="POST" action="{{ route('panel.clientes.suspender', $cliente) }}" hidden>
+                                        @csrf
+                                        <input type="hidden" name="desde" value="listado">
+                                    </form>
+                                    <x-molecules.confirm-modal
+                                        :id="'cliente-suspender-modal-'.$cliente->id"
+                                        :form-id="'cliente-suspender-form-'.$cliente->id"
+                                        :title="__('solicitudes.clientes.suspender_titulo', ['cliente' => $cliente->razon_social])"
+                                        :message="__('solicitudes.clientes.suspender_mensaje')"
+                                        :confirm-label="__('solicitudes.clientes.suspender')"
+                                        tone="neutral"
+                                    >
+                                        <x-atoms.textarea
+                                            name="motivo"
+                                            :id="'cliente-suspender-motivo-'.$cliente->id"
+                                            :form="'cliente-suspender-form-'.$cliente->id"
+                                            :label="__('solicitudes.clientes.motivo_etiqueta')"
+                                            :help="__('solicitudes.clientes.motivo_ayuda')"
+                                            :rows="3"
+                                            required
+                                        />
+                                    </x-molecules.confirm-modal>
+                                @endif
+
+                                @if ($conReactivar)
+                                    <form id="cliente-reactivar-form-{{ $cliente->id }}" method="POST" action="{{ route('panel.clientes.reactivar', $cliente) }}" hidden>
+                                        @csrf
+                                        <input type="hidden" name="desde" value="listado">
+                                    </form>
+                                @endif
+
                                 <x-organisms.row-actions>
-                                    <x-atoms.button :href="route('panel.clientes.show', $cliente)" variant="info-outline" size="sm" icon="visibility">
-                                        {{ __('solicitudes.clientes.ver') }}
-                                    </x-atoms.button>
+                                    <x-slot:ver>
+                                        <x-molecules.row-action kind="ver" :href="route('panel.clientes.show', $cliente)" icon="visibility" :label="__('solicitudes.clientes.ver')" />
+                                    </x-slot:ver>
+
+                                    @if ($conAprobar)
+                                        <x-slot:aprobar>
+                                            <x-molecules.row-action kind="aprobar" type="submit" :form="'cliente-aprobar-form-'.$cliente->id" icon="check_circle" :label="__('solicitudes.clientes.aprobar')" />
+                                        </x-slot:aprobar>
+                                    @endif
+
+                                    @if ($conAprobar || $conSuspender || $conReactivar)
+                                        <x-slot:transiciones>
+                                            @if ($conAprobar)
+                                                <x-molecules.row-action kind="transicion" tone="alert" :modal="'cliente-rechazar-modal-'.$cliente->id" icon="cancel" :label="__('solicitudes.clientes.rechazar')" />
+                                            @endif
+                                            @if ($conSuspender)
+                                                <x-molecules.row-action kind="transicion" tone="neutral" :modal="'cliente-suspender-modal-'.$cliente->id" icon="block" :label="__('solicitudes.clientes.suspender')" />
+                                            @endif
+                                            @if ($conReactivar)
+                                                <x-molecules.row-action kind="transicion" tone="success" type="submit" :form="'cliente-reactivar-form-'.$cliente->id" icon="lock_open" :label="__('solicitudes.clientes.reactivar')" />
+                                            @endif
+                                        </x-slot:transiciones>
+                                    @endif
                                 </x-organisms.row-actions>
                             </span>
                         </div>

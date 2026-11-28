@@ -1,0 +1,48 @@
+/*
+ * Page: métricas del mercado (app/Dominios/Metricas/Infraestructura/Http/Views/pages/metricas/index.blade.php).
+ * Pestañas por tema y, en cada una, un lienzo (components/lienzo.css). Todo por token.
+ */
+
+.ag-metricas__panes {
+    margin-block-start: var(--ag-space-4);
+}
+
+/* Tarjetas KPI: una columna (apiladas, pieza lateral del lienzo) o en fila que se reparte el ancho. */
+.ag-metricas__kpis {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--ag-space-3);
+    align-content: start;
+}
+
+.ag-metricas__kpis--fila {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+}
+
+@container ag-lienzo (min-width: 60rem) {
+    /* Dentro de un bloque de altura repartida, las tarjetas se reparten el alto. */
+    .ag-lienzo__bloque > .ag-metricas__kpis {
+        grid-auto-rows: minmax(0, 1fr);
+        align-content: stretch;
+        overflow: auto;
+    }
+
+    .ag-lienzo__bloque > .ag-card > .ag-metricas__kpis {
+        flex: 1 1 auto;
+        grid-auto-rows: minmax(0, 1fr);
+    }
+}
+
+/* El ranking dentro de su tarjeta: se desplaza dentro si no cabe, sin romper el lienzo. */
+.ag-metricas__panes .ag-card .ag-index-table {
+    min-width: 0;
+}
+
+/* Las pestañas no se parten en dos líneas en el celular: se desplazan de lado. */
+.ag-tabs:has(+ .ag-metricas__panes) {
+    overflow-x: auto;
+}
+
+.ag-tabs:has(+ .ag-metricas__panes) .ag-tabs__tab {
+    white-space: nowrap;
+}

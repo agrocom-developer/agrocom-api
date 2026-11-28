@@ -10,7 +10,7 @@ Referencia rápida de vocabulario, de negocio y técnico, para que cualquier per
 |---|---|---|
 | **Marketplace** | Plataforma donde clientes publican solicitudes de fumigación con drones y proveedores ofertan; el precio se negocia. Agrocom es el nexo y el registro del resultado | `especificacion/marketplace.md` |
 | **Cliente** | Tipo de cuenta de app: quien publica la solicitud, elige la oferta, sigue el avance y califica; persona o empresa; debe estar aprobado para publicar y aceptar | especificación §2; ADR 0046 |
-| **Cuenta de panel** | Cuenta del personal de Agrocom; tiene un solo rol, Administrador u Operador | ADR 0046 |
+| **Cuenta de panel** | Cuenta del personal de Agrocom; tiene un solo rol: Administrador (el rol del sistema) u otro rol del panel (Operador o uno creado en Roles) | ADR 0046 |
 | **Cuenta de app** | Cuenta de una persona en una de las dos apps; es de cliente o de proveedor, sin roles ni conversión entre tipos; con su propia verificación y aprobación | ADR 0046 |
 | **Administrador** | Rol del panel que ve todo: verifica y aprueba, atiende, modera y configura | ADR 0046 |
 | **Operador** | Rol del panel que ve las partes de algunos módulos que el administrador le asigna | ADR 0046 |

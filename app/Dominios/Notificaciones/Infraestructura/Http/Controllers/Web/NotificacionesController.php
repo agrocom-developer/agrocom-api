@@ -2,6 +2,7 @@
 
 namespace App\Dominios\Notificaciones\Infraestructura\Http\Controllers\Web;
 
+use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Notificaciones\Aplicacion\AbrirNotificacion;
 use App\Dominios\Notificaciones\Aplicacion\LimpiarNotificaciones;
 use App\Dominios\Notificaciones\Aplicacion\MarcarTodasLeidas;
@@ -23,6 +24,8 @@ use Illuminate\View\View;
  */
 final class NotificacionesController
 {
+    use BuscaAvisosPorTitulo;
+
     public function __construct(private readonly AutorizacionPanelWeb $autorizacion) {}
 
     /**
@@ -35,8 +38,11 @@ final class NotificacionesController
      */
     public function index(Request $request): View
     {
+        $busqueda = TextoDeFiltro::de($request, 'q');
+
         $avisos = Notificacion::query()
             ->deUsuario($this->cuenta($request))
+            ->when($busqueda !== '', fn ($consulta) => $consulta->whereIn('tipo', $this->tiposPorTitulo($busqueda)))
             ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->paginate(20)
@@ -57,6 +63,7 @@ final class NotificacionesController
             ...$cascara,
             'avisos' => $avisos,
             'filas' => $filas,
+            'filtros' => ['q' => $busqueda],
         ]);
     }
 

@@ -5,7 +5,6 @@ namespace App\Dominios\Seguridad\Infraestructura\Http\Controllers\Web;
 use App\Dominios\Compartido\Infraestructura\Http\TextoDeFiltro;
 use App\Dominios\Seguridad\Aplicacion\AlternarBloqueoUsuario;
 use App\Dominios\Seguridad\Aplicacion\AsignarRolesUsuario;
-use App\Dominios\Seguridad\Aplicacion\ConsultarRolesDeUsuarios;
 use App\Dominios\Seguridad\Aplicacion\EliminarUsuario;
 use App\Dominios\Seguridad\Aplicacion\ListarBitacora;
 use App\Dominios\Seguridad\Aplicacion\ListarUsuarios;
@@ -18,7 +17,7 @@ use App\Dominios\Seguridad\Dominio\PermisosReservados;
 use App\Dominios\Seguridad\Dominio\TipoUsuario;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecRole;
 use App\Dominios\Seguridad\Infraestructura\Eloquent\SecUser;
-use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\NombreLegibleRol;
+use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\PresentadorRol;
 use App\Dominios\Seguridad\Infraestructura\Http\Presentacion\TarjetasDeUsuario;
 use App\Dominios\Seguridad\Infraestructura\Http\Requests\ActualizarUsuarioRequest;
 use App\Dominios\Seguridad\Infraestructura\Http\Requests\CrearUsuarioRequest;
@@ -62,7 +61,7 @@ final class UsuariosController
      */
     public const TONO_POR_ESTADO = [
         'activo' => 'success',
-        'bloqueado' => 'danger',
+        'bloqueado' => 'neutral',
     ];
 
     private const PERMISO_VER = 'seguridad.usuario.ver';
@@ -77,11 +76,8 @@ final class UsuariosController
 
     private const PERMISO_ROL_ADMINISTRADOR = 'seguridad.usuario.asignar_rol_administrador';
 
-    private const PERMISO_VER_COMO = 'seguridad.usuario.ver_como';
-
     public function __construct(
         private readonly AutorizacionPanelWeb $autorizacion,
-        private readonly ConsultarRolesDeUsuarios $roles,
         private readonly TarjetasDeUsuario $tarjetas,
     ) {}
 
@@ -90,19 +86,78 @@ final class UsuariosController
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
 
         $busqueda = TextoDeFiltro::de($request, 'q');
-        $usuarios = $listarUsuarios->ejecutar($busqueda !== '' ? $busqueda : null);
+        $estado = TextoDeFiltro::de($request, 'estado');
+        $estado = array_key_exists($estado, self::TONO_POR_ESTADO) ? $estado : '';
+
+        $roles = SecRole::query()->delPanel()->orderBy('name')->get();
+        $opcionesRol = $roles->mapWithKeys(fn (SecRole $rol) => [$rol->id => PresentadorRol::nombreLegible($rol)])->all();
+
+        $rolId = TextoDeFiltro::de($request, 'rol');
+        $rolId = array_key_exists($rolId, $opcionesRol) ? $rolId : '';
+
+        $usuarios = $listarUsuarios->ejecutar(
+            $busqueda !== '' ? $busqueda : null,
+            estado: $estado !== '' ? $estado : null,
+            rolId: $rolId !== '' ? (int) $rolId : null,
+        );
 
         $idsUsuario = $usuarios->pluck('id')->map(fn ($id) => (int) $id)->all();
 
         return view('seguridad::pages.usuarios.index', [
             ...$this->autorizacion->cascara($request),
             'usuarios' => $usuarios,
-            'rolesPorUsuario' => $this->tarjetas->rolesPorUsuario($idsUsuario),
-            'rolesVerComoPorUsuario' => $this->autorizacion->tienePermiso($request, self::PERMISO_VER_COMO)
-                ? $this->rolesVivosPorUsuario($idsUsuario)
-                : [],
-            'filtros' => ['q' => $busqueda],
+            'rolesPorUsuario' => $this->tarjetas->rolesEnlazablesPorUsuario($idsUsuario),
+            'puedeVerRoles' => $this->autorizacion->tienePermiso($request, 'seguridad.rol.ver'),
+            'filtros' => ['q' => $busqueda, 'estado' => $estado !== '' ? $estado : null, 'rol' => $rolId !== '' ? $rolId : null],
+            'opcionesRol' => $opcionesRol,
             'tonoPorEstado' => self::TONO_POR_ESTADO,
+            'puedeCrear' => $this->autorizacion->tienePermiso($request, self::PERMISO_CREAR),
+            'puedeEditar' => $this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR),
+            'puedeBloquear' => $this->autorizacion->tienePermiso($request, self::PERMISO_BLOQUEAR),
+            'puedeEliminar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR),
+        ]);
+    }
+
+    public function show(
+        Request $request,
+        SecUser $usuario,
+        ListarBitacora $listarBitacora,
+    ): View {
+        abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_VER), 403);
+        $this->abortarSiNoEsDePanel($usuario);
+
+        $cascara = $this->autorizacion->cascara($request);
+        $zona = (string) ($cascara['zonaHoraria'] ?? config('app.timezone'));
+
+        $rolesCuenta = SecRole::query()->whereIn('id', $usuario->idsDeRoles())->orderBy('name')->get()
+            ->map(fn (SecRole $rol): array => PresentadorRol::presentar($rol))
+            ->all();
+
+        $puedeVerBitacora = $this->autorizacion->tienePermiso($request, 'seguridad.bitacora.ver');
+        $paginaDeMovimientos = $puedeVerBitacora
+            ? $listarBitacora->ejecutar(zonaQueVe: $zona, tabla: 'sec_user', registroId: (int) $usuario->id, porPagina: 10)
+            : null;
+        $movimientos = $paginaDeMovimientos?->items() ?? [];
+
+        return view('seguridad::pages.usuarios.show', [
+            ...$cascara,
+            'usuario' => $usuario,
+            'rolesCuenta' => $rolesCuenta,
+            'tonoPorEstado' => self::TONO_POR_ESTADO,
+            'puedeEditar' => $this->autorizacion->tienePermiso($request, self::PERMISO_EDITAR),
+            'puedeBloquear' => $this->autorizacion->tienePermiso($request, self::PERMISO_BLOQUEAR),
+            'puedeEliminar' => $this->autorizacion->tienePermiso($request, self::PERMISO_ELIMINAR),
+            'puedeVerRoles' => $this->autorizacion->tienePermiso($request, 'seguridad.rol.ver'),
+            'puedeVerBitacora' => $puedeVerBitacora,
+            'totalMovimientos' => $paginaDeMovimientos?->total() ?? 0,
+            'lineaDeTiempo' => array_map(fn ($fila): array => [
+                'title' => __('seguridad.bitacora.acciones.'.$fila->accion->value),
+                'meta' => implode(' · ', [
+                    $fila->instante->format('d/m/Y H:i'),
+                    $fila->actorNombre ?? __('seguridad.usuarios.actor_sistema'),
+                ]),
+                'tone' => 'neutral',
+            ], $movimientos),
         ]);
     }
 
@@ -139,12 +194,12 @@ final class UsuariosController
                 idRolActivo: $this->rolActivoId($request),
             );
         } catch (UsuarioDuplicado|PermisoDenegado|RolProtegido $excepcion) {
-            return redirect()->back()->withErrors(['estado' => $excepcion->getMessage()]);
+            return redirect()->back()->withInput($request->except('password'))->withErrors(['estado' => $excepcion->getMessage()]);
         }
 
-        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
+        // Aterriza en la ficha de la cuenta, como Clientes (el alta se lee ahí, con su Editar a mano).
         return redirect()
-            ->route('panel.usuarios.edit', $usuario)
+            ->route('panel.usuarios.show', $usuario)
             ->with('estado', __('seguridad.usuarios.creado'));
     }
 
@@ -199,12 +254,12 @@ final class UsuariosController
                 idRolActivo: $this->rolActivoId($request),
             );
         } catch (UsuarioDuplicado|PermisoDenegado|RolProtegido $excepcion) {
-            return redirect()->back()->withErrors(['estado' => $excepcion->getMessage()]);
+            return redirect()->back()->withInput($request->except('password'))->withErrors(['estado' => $excepcion->getMessage()]);
         }
 
-        // Se queda en la propia ficha de edición (no vuelve al listado, 16/9/2026 — mismo criterio que ClientesController::store()/update()).
+        // Aterriza en la ficha de la cuenta, como Clientes (el alta se lee ahí, con su Editar a mano).
         return redirect()
-            ->route('panel.usuarios.edit', $usuario)
+            ->route('panel.usuarios.show', $usuario)
             ->with('estado', __('seguridad.usuarios.actualizado'));
     }
 
@@ -216,8 +271,9 @@ final class UsuariosController
         try {
             $eliminarUsuario->ejecutar($request->user('interno'), $usuario);
         } catch (PermisoDenegado $excepcion) {
-            return redirect()
-                ->route('panel.usuarios.index')
+            return ($request->input('desde') === 'ficha'
+                ? redirect()->route('panel.usuarios.show', $usuario)
+                : redirect()->route('panel.usuarios.index'))
                 ->withErrors(['estado' => $excepcion->getMessage()]);
         }
 
@@ -231,17 +287,18 @@ final class UsuariosController
         abort_unless($this->autorizacion->tienePermiso($request, self::PERMISO_BLOQUEAR), 403);
         $this->abortarSiNoEsDePanel($usuario);
 
+        // Desde la ficha se vuelve a la ficha; desde el listado, al listado.
+        $destino = $request->input('desde') === 'ficha'
+            ? redirect()->route('panel.usuarios.show', $usuario)
+            : redirect()->route('panel.usuarios.index');
+
         try {
             $alternarBloqueo->ejecutar($request->user('interno'), $usuario);
         } catch (PermisoDenegado $excepcion) {
-            return redirect()
-                ->route('panel.usuarios.index')
-                ->withErrors(['estado' => $excepcion->getMessage()]);
+            return $destino->withErrors(['estado' => $excepcion->getMessage()]);
         }
 
-        return redirect()
-            ->route('panel.usuarios.index')
-            ->with('estado', __('seguridad.usuarios.bloqueo_actualizado'));
+        return $destino->with('estado', __('seguridad.usuarios.bloqueo_actualizado'));
     }
 
     /**
@@ -297,7 +354,7 @@ final class UsuariosController
     }
 
     /**
-     * Los dos roles del panel; `administrador` solo se ofrece si el actor puede
+     * Los roles activos del panel; `administrador` solo se ofrece si el actor puede
      * asignarlo (`asignar_rol_administrador`). Es solo para no ofrecer una opción
      * que el submit va a rechazar — la guarda real es
      * {@see self::abortarSiFaltaPermisoRolAdministrador()}.
@@ -306,7 +363,7 @@ final class UsuariosController
      */
     private function rolesDisponibles(Request $request): Collection
     {
-        $roles = SecRole::query()->whereIn('name', PermisosReservados::ROLES_DEL_PANEL)->orderBy('name')->get();
+        $roles = SecRole::query()->delPanel()->where('state', true)->orderBy('name')->get();
 
         if (! $this->autorizacion->tienePermiso($request, self::PERMISO_ROL_ADMINISTRADOR)) {
             $roles = $roles->reject(fn (SecRole $rol) => $rol->name === PermisosReservados::ROL_ADMINISTRADOR)->values();
@@ -349,20 +406,5 @@ final class UsuariosController
     private function abortarSiNoEsDePanel(SecUser $usuario): void
     {
         abort_unless($usuario->tipo_cuenta === TipoCuenta::Panel, 404);
-    }
-
-    /**
-     * Roles vivos y habilitados de cada cuenta con su id, para el selector de
-     * «Ver como» (tarea 140), con nombre legible.
-     *
-     * @param  list<int>  $idsUsuario
-     * @return array<int, array<int, string>> `id de usuario => [id de rol => nombre legible]`
-     */
-    private function rolesVivosPorUsuario(array $idsUsuario): array
-    {
-        return array_map(
-            fn (array $roles): array => array_map(NombreLegibleRol::de(...), $roles),
-            $this->roles->slugsVivosPorUsuario($idsUsuario),
-        );
     }
 }

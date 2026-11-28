@@ -41,6 +41,23 @@ trait ArmaFichasDeAprobacion
         ));
     }
 
+    /**
+     * Las acciones ofrecidas para cada estado, para las filas de un listado: se calculan una vez
+     * por estado y no por fila.
+     *
+     * @return array<string, list<AccionAprobacion>> estado → acciones
+     */
+    private function accionesPorEstado(Request $request, AutorizacionPanelWeb $autorizacion, string $prefijoPermiso): array
+    {
+        $porEstado = [];
+
+        foreach (EstadoAprobacion::cases() as $estado) {
+            $porEstado[$estado->value] = $this->accionesOfrecidas($request, $autorizacion, $prefijoPermiso, $estado);
+        }
+
+        return $porEstado;
+    }
+
     /** Permiso (sufijo) que exige cada acción: aprobar, rechazar y rehabilitar comparten `aprobar`. */
     public static function permisoDeAccion(AccionAprobacion $accion): string
     {

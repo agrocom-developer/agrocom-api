@@ -25,7 +25,7 @@ Este `docs/` contiene la documentación vigente de Agrocom, un marketplace de se
   - 0043 contactos de referencia del cliente
   - 0044 alta manual en el panel
   - 0045 mercado sin zonas: filtros combinados, avisos por oleadas, bandeja con cupo y cola, solicitud «En acuerdo» y solicitud sin vencimiento (reemplaza en parte 0030, 0034, 0038 y 0041)
-  - 0046 cuentas separadas por app (cliente y proveedor), persona única, verificación de identidad y roles del panel (Administrador y Operador)
+  - 0046 cuentas separadas por app (cliente y proveedor), persona única, verificación de identidad y roles del panel (Administrador, Operador y los que se crean)
   - 0047 lo que exigen las tiendas: eliminación de cuenta, retención mínima de la selfie y el documento, reportar y bloquear en el chat y ubicación de emergencia
   - 0049 precio total de solo lectura, justificación del precio de cada parte y comparador de ofertas filtrable
   - 0050 organización de los archivos multimedia: ruta relativa, derivados (miniatura y medio), límite de archivos por entidad y descarga auditada de documentos

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Lang;
+use Illuminate\Support\Str;
 
 /**
  * Caso de uso de lectura para `/panel/bitacora` (tarea 63): listado paginado
@@ -166,7 +167,13 @@ final class ListarBitacora
     {
         $clave = "seguridad.bitacora.entidades.{$tabla}";
 
-        return Lang::has($clave) ? __($clave) : $tabla;
+        if (Lang::has($clave)) {
+            return __($clave);
+        }
+
+        // Una tabla sin etiqueta nunca se muestra con su nombre técnico (`neg_evidencias`): se quita el
+        // prefijo del módulo y se deja una frase legible. La etiqueta propia va en `lang/es/seguridad.php`.
+        return (string) Str::of($tabla)->after('_')->replace('_', ' ')->ucfirst();
     }
 
     /**

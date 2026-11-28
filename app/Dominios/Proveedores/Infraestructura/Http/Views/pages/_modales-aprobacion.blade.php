@@ -9,13 +9,15 @@
     - $acciones (list<AccionAprobacion>), $estado (EstadoAprobacion), $nombre (string).
     - $urlResolver (string): a dónde se envía la decisión (POST).
     - $modalBase (string): prefijo del id de los modales (el mismo de `_maquina-estado-aprobacion`).
+    - $desde (string|null): `listado` cuando las acciones salen de una fila del listado; el servidor
+      vuelve entonces al listado y no a la ficha.
 --}}
 @php
     $tonoPorAccion = [
         'aprobar' => 'success',
         'rehabilitar' => 'success',
-        'rechazar' => 'danger',
-        'suspender' => 'warning',
+        'rechazar' => 'alert',
+        'suspender' => 'neutral',
         'dar_de_baja' => 'danger',
     ];
 @endphp
@@ -27,6 +29,9 @@
     <form id="{{ $formId }}" method="POST" action="{{ $urlResolver }}" hidden>
         @csrf
         <input type="hidden" name="accion" value="{{ $accion->value }}">
+        @if (($desde ?? null) !== null)
+            <input type="hidden" name="desde" value="{{ $desde }}">
+        @endif
     </form>
 
     <x-molecules.confirm-modal
