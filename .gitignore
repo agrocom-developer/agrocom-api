@@ -46,7 +46,7 @@ phpunit.afectadas.xml
 # storage/app/private (y r2 en local) y NUNCA se versionan; esas carpetas se ignoran en storage/app/.gitignore.
 # `storage/demo/` queda LIBRE (sin ignorar) mientras dure el desarrollo: es para las
 # imágenes y PDF de EJEMPLO que el equipo quiera versionar. Solo medios ficticios, nunca de una persona real.
-# El estado de la demo local (clave de la app, pid, log) nunca se versiona.
-/storage/demo/app.key
+# El estado de la demo local (clave de la app, PID y log) nunca se versiona.
+/storage/demo/*.key
 /storage/demo/*.pid
 /storage/demo/*.log
